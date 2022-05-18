@@ -1,0 +1,1 @@
+ cd G:\Dropbox\GameDev\UnrealProjects\NimForUEDemo\Plugins\NimForUE && nimble host

@@ -1,0 +1,9 @@
+{
+  "genFilePath": "G:\\Dropbox\\GameDev\\UnrealProjects\\NimForUEDemo\\Plugins\\NimForUE\\src\\hostnimforue\\ffigen.nim",
+  "nimForUELibPath": "G:\\Dropbox\\GameDev\\UnrealProjects\\NimForUEDemo\\Plugins\\NimForUE\\Binaries\\nim\\ue\\nimforue.dll",
+  "hostLibPath": "G:\\Dropbox\\GameDev\\UnrealProjects\\NimForUEDemo\\Plugins\\NimForUE\\Binaries\\nim\\ue\\hostnimforue.dll",
+  "engineDir": "C:\\Program Files\\Epic Games\\UE_5.0\\Engine",
+  "pluginDir": "G:\\Dropbox\\GameDev\\UnrealProjects\\NimForUEDemo\\Plugins\\NimForUE",
+  "targetConfiguration": "Development",
+  "targetPlatform": "Win64"
+}

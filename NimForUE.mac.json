@@ -1,0 +1,9 @@
+{
+  "genFilePath": "/Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/Plugins/NimForUE/src/hostnimforue/ffigen.nim",
+  "nimForUELibPath": "/Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/Plugins/NimForUE/Binaries/nim/ue/libnimforue.dylib",
+  "hostLibPath": "/Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/Plugins/NimForUE/Binaries/nim/ue/libhostnimforue.dylib",
+  "engineDir": "/Volumes/Store/UnrealSources/UE_5.0/Engine",
+  "pluginDir": "/Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/MacOs/Plugins/NimForUE",
+  "targetConfiguration": "Development",
+  "targetPlatform": "Mac"
+}
