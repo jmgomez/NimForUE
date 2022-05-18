@@ -12,6 +12,13 @@ The plugin outputs native dynamic libraries (dlls) that are hooked into UnrealEn
 The design philosophy is to dont change any unreal convention on the API side of things, so anyone that knows Unreal can reuse its knowledge. The code guidelines follows (for the most part) the Nim conventions when no in contradiction with the Unreal ones. 
 
 
+
+### Hot reloading and debugging POC video:
+
+[![Hot reloading and debugging POC video](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=4NBE9sEMn28)
+
+
+
 ### Why Nim?
 
 
