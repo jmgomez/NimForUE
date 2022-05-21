@@ -1,6 +1,6 @@
 import src/buildscripts/[buildscripts, nimForUEConfig]
-import std/[strutils, strformat]
-
+import std/[strutils, sequtils, strformat]
+import sugar
 import std/os
 
 
@@ -59,17 +59,80 @@ when defined withue:
     proc addHeaders() = 
         let pluginDefinitionsPaths = "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
         let nimForUEBindingsHeaders =  pluginDir/ "Source/NimForUEBindings/Public/"
-        
-        proc getEngineRuntimeIncludePathFor(moduleName:string) : string = "\"" & engineDir / "Source"/"Runtime"/moduleName/"Public" & "\""
-        proc setEngineRuntimeIncludeForModules(modules:seq[string]) =
-            for module in modules:
-                switch("passC", "-I" & getEngineRuntimeIncludePathFor(module))
+        let nimForUEBindingsGeneratedHeaders =  pluginDir/ "Intermediate/Build/Mac/x86_64/UnrealEditor/Inc/NimForUEBindings"
+
+        proc getEngineRuntimeIncludePathFor( moduleName, engineFolder:string) : string = "\"" & engineDir / "Source" / engineFolder / moduleName / "Public" & "\""
+        proc setEngineRuntimeIncludeForModules(modules:seq[string], engineFolder:string) =
+            for moduleName in modules:
+                switch("passC", "-I" & getEngineRuntimeIncludePathFor(moduleName, engineFolder))
 
         switch("passC", "-I" & pluginDefinitionsPaths /  "NimForUE")
         switch("passC", "-I" & pluginDefinitionsPaths /  "NimForUEBindings")
         switch("passC", "-I" & nimForUEBindingsHeaders)
-        setEngineRuntimeIncludeForModules(@["CoreUObject", "Core", "TraceLog"])
+        switch("passC", "-I" & nimForUEBindingsGeneratedHeaders)
+        switch("passC", "-I" & engineDir/"Source")
+        switch("passC", "-I" & engineDir/"Public")
+
+
+        switch("passC", "-I" & engineDir/"/Source/Runtime/InputCore/Classes")
+
+
         
+        setEngineRuntimeIncludeForModules(@["CoreUObject", "Core", "TraceLog"], "Runtime")
+
+        when defined test:
+
+            let runtimeTestModules = @["Launch", "ApplicationCore", 
+            "Projects", "Json", "PakFile", "RSA", "Engine", "RenderCore",
+            "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
+            "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore", 
+            #EDITOR 
+            "DeveloperSettings", "SlateCore", "Slate", "AssetRegistry", "TypedElementFramework", 
+            "Renderer", "MeshDescription", "Experimental/Interchange/Core"
+
+            ]
+            #/Volumes/Store/UnrealSources/UE_5.0/Engine/Source/Runtime/Experimental/Interchange/Core/Public
+            let developerTestModules = @["DesktopPlatform", "ToolMenus", "TargetPlatform", "SourceControl"]
+            switch("passC", "-I" & "/Volumes/Store/UnrealSources/UE_5.0/")
+
+            setEngineRuntimeIncludeForModules(runtimeTestModules, "Runtime")
+            setEngineRuntimeIncludeForModules(developerTestModules, "Developer")
+            switch("passC", "-I" & engineDir/"Source/Runtime/Engine/Classes/")
+            switch("passC", "-I" & engineDir/"Source"/"Runtime/Net/Core/Public/")
+            switch("passC", "-I" & engineDir/"Source"/"Runtime/Net/Core/Classes/")
+            switch("passC", "-I" & engineDir/"Source/Runtime/")
+            switch("passC", "-I" & engineDir/"Source/Editor/UnrealEd/Classes")
+            switch("passC", "-I" & engineDir/"Source/Editor/UnrealEd/Public")
+            switch("passC", "-I" & engineDir/"Shaders/Shared")
+          
+            let editorModules = @["EditorStyle", "PropertyEditor", "EditorSubsystem", "PIEPreviewDeviceProfileSelector", "AudioEditor"]
+            setEngineRuntimeIncludeForModules(editorModules, "Editor")
+
+            #/Volumes/Store/UnrealSources/UE_5.0/Engine/Source/Editor/PropertyEditor/Public          
+            proc setIntermediateEngine(moduleName:string) = #TODO change
+                switch("passC", "-I" & fmt("/Volumes/Store/UnrealSources/UE_5.0/Engine/Intermediate/Build/Mac/x86_64/UnrealEditor/Inc/{moduleName}/"))
+    
+            setIntermediateEngine("NetCore")
+            setIntermediateEngine("Engine")
+            setIntermediateEngine("PhysicsCore")
+            setIntermediateEngine("InputCore")
+            setIntermediateEngine("DeveloperSettings")
+            setIntermediateEngine("SlateCore")
+            setIntermediateEngine("Slate")
+            setIntermediateEngine("UnrealEd")
+            setIntermediateEngine("ToolMenus")
+            setIntermediateEngine("TypedElementFramework")
+            setIntermediateEngine("Chaos")
+            setIntermediateEngine("EditorSubsystem")
+            setIntermediateEngine("MeshDescription")
+            setIntermediateEngine("InterchangeCore")
+
+            
+
+
+
+
+            #HAD TO MODIFY THE NETINE FOR TICKABLE ON WorldSubsystem.h
 
     proc addSymbols() =
         proc getEngineRuntimeIncludePathFor(moduleName:string) : string =  
@@ -85,10 +148,35 @@ when defined withue:
             for module in modules:
                 switch("passL",  getEngineRuntimeIncludePathFor(module))
         
-        # switch("passL",  nimForUEBindingsLib)
-              
         
-        setEngineWeakSymbolsForModules(@["CoreUObject", "Core"])
+        let nimForUEBindingsLib =  "/Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/Plugins/NimForUE/Binaries/Mac/UnrealEditor-NimForUEBindings.dylib"
+        switch("passL",  nimForUEBindingsLib)
+        # switch("passC", "--rpath "&nimForUEBindingsLib)
+        exec("rm  /usr/local/lib/UnrealEditor-NimForUEBindings.dylib")
+        exec(fmt("ln -s {nimForUEBindingsLib} /usr/local/lib/"))
+
+
+        let libs = readFile("./libs.txt").split("\n")
+        let libToSkip = @["CrashDebugHelper", "AGXRHI"]
+        for libname in libs:
+            var name = libname
+            if libToSkip.any(skipLib => skipLib in name):
+                continue
+            switch("passL", libname)
+
+        # setEngineWeakSymbolsForModules(@["CoreUObject", "Core"])
+
+        # when defined test:
+        #     let runtimeTestModules = @["Launch", "ApplicationCore", "Projects", "Json", "PakFile", "RSA"]
+        #     let developerTestModules = @["DesktopPlatform"]
+        #     #  setEngineWeakSymbolsForModules(@["ApplicationCore"])
+        #     switch("passL", "/Volumes/Store/UnrealSources/UE_5.0/Engine/Binaries/Mac/UnrealEditor-ApplicationCore.dylib")
+        #     switch("passL", "/Volumes/Store/UnrealSources/UE_5.0/Engine/Binaries/Mac/UnrealEditor-Projects.dylib")
+
+        #     switch("passL", "/Volumes/Store/UnrealSources/UE_5.0/Engine/Binaries/Mac/UnrealEditor-Core.dylib")
+        #     switch("passL", "/Volumes/Store/UnrealSources/UE_5.0/Engine/Binaries/Mac/UnrealEditor-Engine.dylib")
+        #     switch("passL", "/Volumes/Store/UnrealSources/UE_5.0/Engine/Binaries/Mac/UnrealEditor-BuildSettings.dylib")
+        #     # setEngineWeakSymbolsForModules(runtimeTestModules)
     
 
     addHeaders()
