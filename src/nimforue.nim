@@ -1,5 +1,4 @@
-import nimforue/[ffinimforue]
-import nimforue/macros/ffi
+import nimforue / [ffinimforue, macros/ffi]
 
 # const genFilePath* {.strdefine.} : string = ""
 
