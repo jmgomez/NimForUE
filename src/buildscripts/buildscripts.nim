@@ -13,26 +13,15 @@ func tryParseInt*(s:string) : Option[int] =
 
 
 
-
-func getExtensionFromFile(filename:string) : Option[string] = 
-  let fileSplit : seq[string] = filename.split(".")
-  if fileSplit.len == 1:
-    return none(string)
- 
-  some ("." & fileSplit[1])
-
-func getFileWithoutExtension(filename:string) : string = filename.split(".")[0]
-  
 func getNextFileName*(currentFilename : string) : string = 
   const splitter = "-"
-  let extension = getExtensionFromFile(currentFilename).get("")
-  let filename = getFileWithoutExtension(currentFilename)
-  
+  let (dir, filename, extension) = splitFile(currentFilename)
+
   let fileSplit = filename.split(splitter)
   if fileSplit.len > 1:
     let num = fileSplit[1].tryParseInt().get(0) + 1
-    return fileSplit[0] & splitter & $num & extension
-  filename & splitter & "1" & extension
+    return &"{fileSplit[0]}{splitter}{num}.{extension}"
+  &"{filename}{splitter}1.{extension}"
   
 
 
