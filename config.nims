@@ -1,8 +1,7 @@
 import src/buildscripts/[buildscripts, nimForUEConfig]
 import std/[strutils, strformat]
 
-import std/os
-
+import std / [os]
 
 # let compiledFileName = projectPath().split("/")[^1].split(".")[0]
 # switch("nimcache", "./Binaries/nim/nimcache/" & compiledFileName)
@@ -31,7 +30,7 @@ case nueConfig.targetConfiguration:
 
 when defined windows:
     switch("cc", "vcc")
-    switch("passC", "/FS")
+    switch("passC", "/MP") # build with multiple processes, enables /FS force synchronous writes
     switch("passC", "/std:c++17")
 
 when defined macosx:
