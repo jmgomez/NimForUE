@@ -1,7 +1,6 @@
 # tooling for NimForUE
 
 import std / [os, osproc, parseopt, tables, strformat, strutils, times]
-
 #import buildscripts / [buildscripts, nimforueconfig]
 
 type Task = object
@@ -38,10 +37,9 @@ task watch, "Monitors the components folder for changes to recompile.":
       if lastTime > lastTimes[path]:
         lastTimes[path] = lastTime
         echo &"-- Recompiling {path} --"
-        let p = startProcess("nimble", getCurrentDir(), ["nimforue"])
-        for line in p.lines:
-          echo line
-        p.close
+        let (output, _) = execCmdEx("nimble nimforue")
+        echo output
+
     sleep watchInterval
 
 var options: Table[string, string]

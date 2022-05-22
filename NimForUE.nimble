@@ -27,7 +27,10 @@ task nimforue, "Builds the main lib. The one that makes sense to hot reload.":
     exec("nim c -d:release --run src/buildscripts/copyLib.nim")
 
 task watch, "Watchs the main lib and rebuilds it when something changes.":
-    exec("nue watch")
+    when defined macosx:
+        exec("./nue watch")
+    when defined windows:
+        exec("nue watch")
 
 task host, "Builds the library that's hooked to unreal":
     exec("nim cpp --app:lib --d:host src/hostnimforue/hostnimforue.nim")

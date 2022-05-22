@@ -29,9 +29,8 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
 
    executor.saySomething("This isw a test function")
    
-   executor.setColorByStringInMesh("(R=0.0,G=0,B=0,A=1)")
+   executor.setColorByStringInMesh("(R=1.0,G=1.0,B=0,A=1)")
 
-    # discard o.callUFuncOn("test")
+    # discard o.callUFuncOn("test") 
 {.pop.}
-
 
