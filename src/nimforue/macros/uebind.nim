@@ -40,10 +40,12 @@ func getParamsTypeDef(fn:NimNode, params:seq[NimNode], returnType:Option[string]
                 )
             )
         )
-    typeDefNodeTree[0][2][2].add(returnType.map(returnParamNode).get(newEmptyNode()))
     
     for p in params:
         typeDefNodeTree[0][2][2].add p 
+
+    typeDefNodeTree[0][2][2].add(returnType.map(returnParamNode).get(newEmptyNode()))
+
     
     return typeDefNodeTree
     
@@ -139,7 +141,7 @@ macro uebind* (fn : untyped) : untyped =
     fn.body = rootNode
     # echo repr fn
     result = fn
-
+ 
 
 
 #example declaration    

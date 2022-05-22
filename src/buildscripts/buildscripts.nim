@@ -104,6 +104,8 @@ import hostbase
 
 
 """
+  # if nnot fileExists(genFilePath):
+    
   writeFile(genFilePath, content)
 
 proc generateUBTScriptFile*() =

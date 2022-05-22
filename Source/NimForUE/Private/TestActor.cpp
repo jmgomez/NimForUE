@@ -55,7 +55,7 @@ void ATestActor::SetColorByStringInMesh(FString ColorStr) {
 	if(bIsValid && MeshActor && MeshActor->GetStaticMeshComponent()) {
 		UStaticMeshComponent* MeshComp = MeshActor->GetStaticMeshComponent();
 		MeshComp->SetVectorParameterValueOnMaterials(FName("Base Color"), UKismetMathLibrary::Conv_LinearColorToVector(Color));
-	} else {
+	} else if(!bIsValid) {
 		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Color Invalid %s"), *ColorStr), true, false, FLinearColor::Red, 2);
 	}
 }

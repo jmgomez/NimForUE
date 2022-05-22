@@ -270,3 +270,25 @@ bool ShouldHandleTheSignature_Floats::RunTest(const FString& Parameters) {
 	TestTrue("It's the same", Result == ExpectedResult);
 	return true;
 };
+
+//Issue reproduction
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(ShouldHandleTheSignature_FString_Int_RetFString, "NimForUETest.ShouldHandleTheSignature_FString_Int_RetFString", TestFlags)
+bool ShouldHandleTheSignature_FString_Int_RetFString::RunTest(const FString& Parameters) {
+	UFunctionTestObject* TestObject = NewObject<UFunctionTestObject>();
+
+	struct Params {
+		FString A;
+		int B;
+	};
+	Params Parms = { "Hello", 5};
+	
+	
+	FString ExpectedResult = TestObject->TestMultipleParams(Parms.A, Parms.B);
+	FString Result;
+	FString FunctionName = GET_FUNCTION_NAME_CHECKED(UFunctionTestObject, TestMultipleParams).ToString();
+	UFunctionCaller::CallUFunctionOn(TestObject, FunctionName, &Parms, &Result);
+
+	UE_LOG(LogTemp, Warning, TEXT("The expected value is %s"), *ExpectedResult);
+	TestTrue("It's the same", Result == ExpectedResult);
+	return true;
+};
