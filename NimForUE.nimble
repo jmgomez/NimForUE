@@ -27,10 +27,7 @@ task nimforue, "Builds the main lib. The one that makes sense to hot reload.":
     exec("nim c -d:release --run src/buildscripts/copyLib.nim")
 
 task watch, "Watchs the main lib and rebuilds it when something changes.":
-    when defined macosx:
-        exec("./nue watch")
-    when defined windows:
-        exec("nue watch")
+    exec("./nue watch") # use nimble to call the watcher. Typically the user will call `nue watch` since nue will be installed in `.nimble/bin`.
 
 task host, "Builds the library that's hooked to unreal":
     if not fileExists(getNimForUEConfig().genFilePath):
