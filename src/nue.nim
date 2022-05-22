@@ -28,11 +28,15 @@ task watch, "Monitors the components folder for changes to recompile.":
   let srcDir = getCurrentDir() / "src/nimforue/"
   echo &"Monitoring components for changes in \"{srcDir}\".  Ctrl+C to stop"
   var lastTimes = newTable[string, Time]()
-  for path in walkFiles(srcDir & "*.nim"):
+  for path in walkDirRec(srcDir ):
+    if not path.endsWith(".nim"):
+      continue
     lastTimes[path] = getLastModificationTime(path)
 
   while true:
-    for path in walkFiles(srcDir & "*.nim"):
+    for path in walkDirRec(srcDir ):
+      if not path.endsWith(".nim"):
+        continue
       var lastTime = getLastModificationTime(path)
       if lastTime > lastTimes[path]:
         lastTimes[path] = lastTime

@@ -33,6 +33,8 @@ task watch, "Watchs the main lib and rebuilds it when something changes.":
         exec("nue watch")
 
 task host, "Builds the library that's hooked to unreal":
+    if not fileExists(getNimForUEConfig().genFilePath):
+        generateFFIGenFile() #makes sure FFI gen file exists (not tracked) so it can be imported from hostnimforue but only if it doesnt exists so it doesnt override its content
     exec("nim cpp --app:lib --d:host src/hostnimforue/hostnimforue.nim")
     
     #TODO using a custom cache dir would be better
