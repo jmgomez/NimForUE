@@ -84,5 +84,9 @@ public:
 		UE_LOG(LogTemp, Warning, TEXT("Call from Nim in Cpp"))
 		return Param1.Append(FString::FromInt(Test));
 	}
+	UFUNCTION()
+	bool OR(bool Param1, bool Param2) {
+		return Param1 || Param2;
+	}
 	
 };

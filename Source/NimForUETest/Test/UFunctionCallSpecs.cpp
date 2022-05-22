@@ -292,3 +292,23 @@ bool ShouldHandleTheSignature_FString_Int_RetFString::RunTest(const FString& Par
 	TestTrue("It's the same", Result == ExpectedResult);
 	return true;
 };
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(ShouldHandleDataType_Bool, "NimForUETest.ShouldHandleDataType_Bool", TestFlags)
+bool ShouldHandleDataType_Bool::RunTest(const FString& Parameters) {
+	UFunctionTestObject* TestObject = NewObject<UFunctionTestObject>();
+
+	struct Params {
+		bool A;
+		bool B;
+	};
+	Params Parms = { true, false};
+	
+	
+	bool ExpectedResult = TestObject->OR(Parms.A, Parms.B);
+	bool Result;
+	FString FunctionName = GET_FUNCTION_NAME_CHECKED(UFunctionTestObject, OR).ToString();
+	UFunctionCaller::CallUFunctionOn(TestObject, FunctionName, &Parms, &Result);
+	
+	TestTrue("It's the same", Result == ExpectedResult);
+	return true;
+};

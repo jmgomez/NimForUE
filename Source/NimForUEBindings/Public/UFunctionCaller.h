@@ -13,6 +13,12 @@ static void FPropertyGetter(FProperty* Property, void* ReturnResult, void* Conta
 	if(FFloatProperty* FloatProperty = CastField<FFloatProperty>(Property)) {
 		ToReturn = FloatProperty->GetPropertyValuePtr_InContainer(Container);
 	}
+	if(FBoolProperty* BoolProperty = CastField<FBoolProperty>(Property)) {
+		bool Value = BoolProperty->GetPropertyValue_InContainer(Container);
+		bool* ReturnResultBool = (bool*) ReturnResult;
+		*ReturnResultBool = Value;
+		return;
+	}
 	
 	if(FObjectProperty* ObjProp = CastField<FObjectProperty>(Property)) {
 		ToReturn = ObjProp->GetPropertyValuePtr_InContainer(Container);
@@ -74,6 +80,12 @@ public:
 					float* Value = FloatProperty->GetPropertyValuePtr_InContainer(Params);
 					FloatProperty->SetPropertyValue_InContainer(MemoryFrame, *Value);
 				}
+				if(FBoolProperty* BoolProperty = CastField<FBoolProperty>(Prop)) {
+					bool Value = BoolProperty->GetPropertyValue_InContainer(Params);
+					BoolProperty->SetPropertyValue_InContainer(MemoryFrame, Value);
+					auto BoolToStr = [](bool Value){ return FString(Value?"True":"False");};
+					UE_LOG(LogTemp, Warning, TEXT("Bool value %s"),  *BoolToStr(Value));
+				}
 				
 				if(FObjectProperty* ObjProp = CastField<FObjectProperty>(Prop)) {
 					if(Function->NumParms == 1) {
@@ -97,7 +109,7 @@ public:
 		}
 
 		for (TFieldIterator<FProperty> It(Function); It; ++It) {
-			FProperty* OutProp = *It;
+			FProperty* OutProp = *It; //TODO Reuse the return code above
 			if (OutProp->HasAnyPropertyFlags(CPF_OutParm) & !OutProp->HasAnyPropertyFlags(CPF_ReturnParm)) {
 				if(FStrProperty* StrProperty = CastField<FStrProperty>(OutProp)) {
 					FString Value = *StrProperty->GetPropertyValuePtr_InContainer(MemoryFrame);

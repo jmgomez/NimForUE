@@ -34,6 +34,13 @@ public:
 	FString TestMultipleParams(FString Param1, int Number);
 
 	UFUNCTION()
+	bool BoolTestFromNimAreEquals(FString NumberStr, int Number, bool TestParam) {
+		bool ToReturn = NumberStr.Equals(FString::FromInt(Number)) && TestParam;
+		auto BoolToStr = [](bool Value){ return FString(Value?"True":"False");};
+		UE_LOG(LogTemp, Warning, TEXT("Str: %s Num: %d bool: %s, Return: %s"), *NumberStr, Number, *BoolToStr(TestParam), *BoolToStr(ToReturn));
+		return ToReturn;
+	}
+	UFUNCTION()
 	void SaySomething(FString Msg);
 
 	UFUNCTION()
