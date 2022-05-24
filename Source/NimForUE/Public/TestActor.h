@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include <stdbool.h>
 #include "TestActor.generated.h"
 
 UCLASS(BlueprintType, Blueprintable)
@@ -35,10 +36,13 @@ public:
 
 	UFUNCTION()
 	bool BoolTestFromNimAreEquals(FString NumberStr, int Number, bool TestParam) {
-		bool ToReturn = NumberStr.Equals(FString::FromInt(Number)) && TestParam;
 		auto BoolToStr = [](bool Value){ return FString(Value?"True":"False");};
-		UE_LOG(LogTemp, Warning, TEXT("Str: %s Num: %d bool: %s, Return: %s"), *NumberStr, Number, *BoolToStr(TestParam), *BoolToStr(ToReturn));
-		return ToReturn;
+		UE_LOG(LogTemp, Log, TEXT("The value of the bool is %s"), *BoolToStr(TestParam));
+		return TestParam;
+		// bool ToReturn = NumberStr.Equals(FString::FromInt(Number)) && TestParam;
+		// auto BoolToStr = [](bool Value){ return FString(Value?"True":"False");};
+		// UE_LOG(LogTemp, Warning, TEXT("Str: %s Num: %d bool: %s, Return: %s"), *NumberStr, Number, *BoolToStr(TestParam), *BoolToStr(ToReturn));
+		// return ToReturn;
 	}
 	UFUNCTION()
 	void SaySomething(FString Msg);

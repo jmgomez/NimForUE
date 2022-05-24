@@ -18,7 +18,7 @@ import strformat
 proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
 proc testMultipleParams(obj:UObjectPtr, msg:FString,  num:int) : FString {.uebind.}
 
-proc boolTestFromNimAreEquals(obj:UObjectPtr, numberStr:FString, number:int, boolParam:bool) : bool {.uebind.}
+proc boolTestFromNimAreEquals(obj:UObjectPtr, numberStr:FString, number:int, boolParam:byte) : byte {.uebind.}
 
 proc setColorByStringInMesh(obj:UObjectPtr, color:FString): void  {.uebind.}
 #define on config.nims
@@ -31,9 +31,9 @@ proc testCallUFuncOnWrapper(executor:UObjectPtr; str:FString; n:int) : FString  
             n: int
             toReturn: FString #Output paramaeters 
         
-    var parms = Params(str: str, n: n)
+    var parms = Params(str: str, n: n) 
     var funcName = makeFString("TestMultipleParams")
-    callUFuncOn(executor, funcName, parms.addr, parms.toReturn.addr)
+    callUFuncOn(executor, funcName, parms.addr)
     return parms.toReturn
 
 
@@ -46,12 +46,13 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     let msg = testMultipleParams(executor, "hola", 34)
     executor.saySomething(msg)
 
-    executor.setColorByStringInMesh("(R=1.0 ,G=0,B=1,A=1)") 
-    if executor.boolTestFromNimAreEquals("5", 5, true):
-        executor.saySomething("true")
-    else:
-        executor.saySomething("false")
+    executor.setColorByStringInMesh("(R=1.0 ,G=0,B=1,A=1)")
 
-   
+    if executor.boolTestFromNimAreEquals("5", 5, 1) == 1:
+        executor.saySomething("true?")
+    else:
+        executor.saySomething("false" & $ sizeof(bool))
+
+
 {.pop.}
 

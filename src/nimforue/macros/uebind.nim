@@ -110,10 +110,7 @@ macro uebind* (fn : untyped) : untyped =
     
 
     let parmInFuncCallNode = nnkDotExpr.newTree(newIdentNode("params"), newIdentNode("addr"))
-    let parmRetInFnCallNode = if returnType.isSome():
-                                 nnkDotExpr.newTree(nnkDotExpr.newTree(newIdentNode("params"),newIdentNode("toReturn")),newIdentNode("addr")) 
-                              else:
-                                  newNilLit() #if no param to return, we just pass nil over the ufunc call
+
 
     let funcNameDeclNode = nnkVarSection.newTree(
                                 nnkIdentDefs.newTree(
@@ -124,7 +121,7 @@ macro uebind* (fn : untyped) : untyped =
             
     )
     let callUFuncNode = nnkCall.newTree(newIdentNode("callUFuncOn"), newIdentNode("obj"), 
-                                newIdentNode("fnName"), parmInFuncCallNode, parmRetInFnCallNode)
+                                newIdentNode("fnName"), parmInFuncCallNode)
 
     rootNode.add(paramsTypeDefinitionNode)
     rootNode.add(paramsInstDeclNode)
@@ -139,8 +136,9 @@ macro uebind* (fn : untyped) : untyped =
         )
         rootNode.add(paramsReturnNode)
     fn.body = rootNode
-    # echo repr fn
+    echo repr fn
     result = fn
+
  
 
 

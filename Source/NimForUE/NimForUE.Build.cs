@@ -105,7 +105,7 @@ public class NimForUE : ModuleRules
 		//PublicDefinitions.Add($"NIM_FOR_UE_LIB_PATH  \"{dynLibPath}\"");
 		//TRY?
 		try {
-			// BuildNim();
+			//BuildNim();
 			//setNimForUEConfig(PluginDirectory, EngineDirectory, Target.Platform.ToString(), Target.Configuration.ToString());
 		}
 		catch (Exception e) {

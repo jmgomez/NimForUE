@@ -7,6 +7,24 @@
 #include "FunctionTestObject.generated.h"
 
 
+USTRUCT()
+struct FMyStructParam {
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int TestProp;
+};
+USTRUCT()
+struct FMyStructParamWithStr {
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int TestProp;
+
+	UPROPERTY()
+	FString StrProp;
+};
+
 UCLASS()
 class UMyReturnClass : public UObject {
 	GENERATED_BODY()
@@ -87,6 +105,37 @@ public:
 	UFUNCTION()
 	bool OR(bool Param1, bool Param2) {
 		return Param1 || Param2;
+	}
+
+	UFUNCTION()
+	TArray<FString> ArrayIntsToArrayStrings(TArray<int> Ints) {
+		TArray<FString> ToReturn = {};
+		for(int N : Ints) {
+			ToReturn.Add(FString::FromInt(N));
+		}
+		return ToReturn;
+	}
+	UFUNCTION()
+	int ArrayLength(TArray<int> Ints) {
+		return Ints.Num();
+	}
+	UFUNCTION()
+	FString Reduce(TArray<FString> Strs) {
+		FString Result = "";
+		for(FString Str : Strs)
+			Result += Str;
+		
+		UE_LOG(LogTemp, Log, TEXT("REDUCE CALL %s"), *Result);
+		return Result;
+	}
+
+	UFUNCTION()
+	int GetValueFromStruct(FMyStructParam Struct) {
+		return Struct.TestProp;
+	}
+		UFUNCTION()
+	FString GetStrValueFromStruct(FMyStructParamWithStr Struct) {
+		return Struct.StrProp;
 	}
 	
 };
