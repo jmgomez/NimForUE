@@ -41,8 +41,16 @@ task watch, "Monitors the components folder for changes to recompile.":
       if lastTime > lastTimes[path]:
         lastTimes[path] = lastTime
         echo &"-- Recompiling {path} --"
-        let (output, _) = execCmdEx("nimble nimforue")
-        echo output
+        when defined windows:
+          let p = startProcess("nimble", getCurrentDir(), ["nimforue"])
+          for line in p.lines:
+            echo line
+          p.close
+        elif defined macosx:
+          # startProcess is crashing on macosx for some reason
+          let (output, _) = execCmdEx("nimble nimforue")
+          echo output
+        echo &"-- Finished Recompiling {path} --"
 
     sleep watchInterval
 
