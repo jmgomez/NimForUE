@@ -38,7 +38,7 @@ func getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNo
     for p in params:
         typeDefNodeTree[0][2][2].add p
 
-    if retType.kind != nnkEmpty:
+    if retType.kind != nnkEmpty and not retType.eqIdent("void"):
         typeDefNodeTree[0][2][2].add nnkIdentDefs.newTree(ident("toReturn"), retType, newEmptyNode())
 
     return typeDefNodeTree
@@ -114,7 +114,7 @@ macro uebind* (fn : untyped) : untyped =
                                 newIdentNode("fnName"), parmInFuncCallNode)
 
     let rootNode = nnkStmtList.newTree(paramsTypeDefinitionNode, paramsInstDeclNode, funcNameDeclNode, callUFuncNode)
-    if retType.kind != nnkEmpty: #Add return, move from here
+    if retType.kind != nnkEmpty and not retType.eqIdent("void"): #Add return, move from here
         let paramsReturnNode =  nnkReturnStmt.newTree(
             nnkDotExpr.newTree(
                 newIdentNode("params"),

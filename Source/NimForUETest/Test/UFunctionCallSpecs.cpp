@@ -317,7 +317,7 @@ bool ShouldHandleDataType_BoolIssue::RunTest(const FString& Parameters) {
 	UFunctionTestObject* TestObject = NewObject<UFunctionTestObject>();
 
 	struct Params {
-		int A;
+		bool A;
 		bool B;
 		bool Result;
 	};
