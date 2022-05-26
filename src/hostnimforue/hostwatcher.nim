@@ -22,8 +22,7 @@ proc checkAndReload*(libPath:string) =
         reloadlib(nextLibName.cstring)
         notifyOnReloaded(nextLibName)
         lastLoaded = nextLibName
-    
-    
+
 proc watchChangesInLib*() {.thread.}  =
     let libPath = getNimForUEConfig(pluginDir).nimForUELibPath
     while true:

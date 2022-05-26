@@ -11,6 +11,7 @@ import unreal/coreuobject/uobject
 import unreal/core/containers/[unrealstring, array]
 import unreal/nimforue/nimForUEBindings
 import macros/[ffi, uebind]
+import std/[times]
 import strformat
 
 # proc testArrays(obj: UObjectPtr): TArray[FString] =
@@ -51,13 +52,20 @@ proc testCallUFuncOnWrapper(executor:UObjectPtr; str:FString; n:int) : FString  
     return parms.toReturn
 ]#
 
+
 var returnString = ""
 
 proc printArray(obj:UObjectPtr, arr:TArray[FString]) =
     for str in arr: #add posibility to iterate over
         obj.saySomething(str) 
 
+proc NimMain() {.importc.}
+var loaded = false
+
 proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
+    if not loaded:
+        NimMain()
+        loaded = true
 
     let executor = cast[UObjectPtr](obj)
 
@@ -65,7 +73,7 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
 
     executor.saySomething(msg)
 
-    executor.setColorByStringInMesh("(R=0.0 ,G=1,B=1,A=1)")
+    executor.setColorByStringInMesh("(R=0.0,G=1,B=1,A=1)")
 
     if executor.boolTestFromNimAreEquals("5", 5, true) == true:
         executor.saySomething("true")
@@ -83,7 +91,7 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     arr2.add("hola3")
     arr2[0] = "hola3-replaced"
 
-    arr2.add("hola5")
+    arr2.add($now() & " is the TIME!")
 
     # printArray(executor, arr)
     let lastElement : FString = arr2[0]

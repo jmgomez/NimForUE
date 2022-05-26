@@ -23,8 +23,10 @@ var logger : LoggerSignature
 # call to initialize gc for guest dll, or Nim will crash on memory (re)alloc
 # must be called on thread (usually main thread) which is calling guest dll functions
 proc initNimForUE*() {.ex.} =
-    withLock libLock:
-        (cast[proc(){.cdecl.}](lib.symAddr("NimMain")))()
+    discard
+
+#    withLock libLock:
+#        (cast[proc(){.cdecl.}](lib.symAddr("NimMain")))()
 
 proc notifyOnReloaded*(msg:string) = 
     if not onReload.isnil():
