@@ -24,7 +24,6 @@ import strformat
 #   return params.toReturn
 
 
-
 proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
 
 
@@ -52,30 +51,16 @@ proc testCallUFuncOnWrapper(executor:UObjectPtr; str:FString; n:int) : FString  
     return parms.toReturn
 ]#
 
+var returnString = ""
 
-
-# call functions without obj.
-proc printArray(obj:UObjectPtr, arr:TArray[FString]) : void = 
+proc printArray(obj:UObjectPtr, arr:TArray[FString]) =
     for str in arr: #add posibility to iterate over
         obj.saySomething(str) 
 
-proc NimMain*() {.importc.}
-var loaded = false
-
-{.push exportc, cdecl, dynlib.} 
-#called from UE immediately after the library is hot reloeaded
-proc initNimForUE() : void   = 
-    if not loaded:
-        NimMain()
-    loaded = true
-
-var returnString = ""
 proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
-    initNimForUE()
 
     let executor = cast[UObjectPtr](obj)
 
- 
     let msg = testMultipleParams(executor, "hola", 10)
 
     executor.saySomething(msg)
@@ -91,7 +76,7 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     let number = arr.num()
 
     # let str = $arr.num()
-    
+
     arr.add("hola")
     arr.add("hola2")
     let arr2 = makeTArray[FString]()
@@ -99,7 +84,7 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     arr2[0] = "hola3-replaced"
 
     arr2.add("hola5")
-   
+
     # printArray(executor, arr)
     let lastElement : FString = arr2[0]
     # let lastElement = makeFString("")
@@ -109,13 +94,8 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     # let msgArr = "The length of the array is " & $ arr.num()
     executor.saySomething(returnString)
     executor.printArray arr2
-    
+
     executor.saySomething("length of the array2 is " & $ arr2.num())
     arr2.removeAt(0)
     arr2.remove("hola5")
     executor.saySomething("length of the array2 is after removed " & $ arr2.num())
-    
-
-{.pop.}
-
-

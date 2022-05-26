@@ -17,7 +17,7 @@ proc appendFile(path: string, content: string) =
 
 macro ffi* (pathToGenFile: static string, fn : typed) : untyped = 
     #[ Generates the following based on Fn signature 
-        proc saluteFFI(name: cstring) : cstring = 
+        proc saluteFFI(name: cstring) : cstring {.exportc, cdecl, dynlib.} = 
             type SaluteFFIWrapper = proc(name: cstring): cstring {.gcsafe, stdcall.}
             let salute = cast[SaluteFFIWrapper](lib.symAddr("salute"))
             return salute(name)
@@ -43,13 +43,13 @@ macro ffi* (pathToGenFile: static string, fn : typed) : untyped =
         withLock libLock:
             let fun {. inject .} = cast[ProcType](lib.symAddr(fnSymbolName))
             callNode
-    # echo treeRepr fn
-    var ffiProc = fn.copy()
+
+    result = fn.copy()
+    result[4] = nnkPragma.newTree(ident("exportc"), ident("cdecl"), ident("dynlib"))
+
+    var ffiProc = result.copy()
     ffiProc[0] = nnkPostfix.newTree(ident("*"), ffiProc[0]) #Make them public so it's easier to test the workflos when runFFI
     ffiProc.body = procFFIBody
 
     when defined genffi:
         appendFile(pathToGenFile, ffiProc.repr & "\n")
-    
-    result = fn
-   

@@ -35,19 +35,19 @@ proc watchChangesInLib*() {.thread.}  =
 
         sleep(1000)
 
-proc NimMain() {.importc.}
+proc NimMain() {.importc.} # needed to initialize the gc in startWatch
 
-{.push exportc, cdecl, dynlib.}
+{.pragma: ex, exportc, cdecl, dynlib.} # defined, so we can use the `once` pragma in startWatch for NimMain
 
-
-proc startWatch*() = 
-    NimMain() # initialize the gc
+var watchStarted = false # startWatch and stopWatch are called in pairs
+proc startWatch*() {.ex.} = 
+    once:
+        NimMain()
+    watchStarted = true
     chan.open()
     withLock libLock:   
         createThread(thread, watchChangesInLib)
 
-proc stopWatch*() = 
-    discard chan.trySend(Stop)
-    
-{.pop.}
-
+proc stopWatch*() {.ex} =
+    if watchStarted:
+        discard chan.trySend(Stop)
