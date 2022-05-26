@@ -1,5 +1,4 @@
 import macros
-import fusion/matching
 {.experimental: "caseStmtMacros".}
 
 import std/[options, strutils]
