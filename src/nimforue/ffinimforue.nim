@@ -52,8 +52,6 @@ proc testCallUFuncOnWrapper(executor:UObjectPtr; str:FString; n:int) : FString  
     return parms.toReturn
 ]#
 
-var loaded = false
-proc NimMain() {.importc.}
 
 
 # call functions without obj.
@@ -61,20 +59,22 @@ proc printArray(obj:UObjectPtr, arr:TArray[FString]) : void =
     for str in arr: #add posibility to iterate over
         obj.saySomething(str) 
 
+proc NimMain*() {.importc.}
+var loaded = false
+proc initNimForUE() = 
+    if not loaded:
+        NimMain()
+    loaded = true
 
 {.push exportc, cdecl, dynlib.} 
-
-# proc testPointerBoolOut(boolean: var bool) : ptr bool {.ffi:genFilePath.} = 
-#     return boolean.addr
-
+#called from UE immediately after the library is hot reloeaded
 
 var returnString = ""
 proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
-    if not loaded: #TODO move this to a global init for nimforue
-        loaded = true
-        NimMain()
+    initNimForUE()
 
     let executor = cast[UObjectPtr](obj)
+
  
     let msg = testMultipleParams(executor, "hola", 10)
 

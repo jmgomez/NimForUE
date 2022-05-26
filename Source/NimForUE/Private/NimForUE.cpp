@@ -14,7 +14,6 @@ DEFINE_LOG_CATEGORY(NimForUE);
 #define LOCTEXT_NAMESPACE "FNimForUEModule"
 
 
-
 void FNimForUEModule::StartupModule()
 {
 #if PLATFORM_WINDOWS
@@ -31,7 +30,10 @@ void FNimForUEModule::StartupModule()
 #endif
 	//TODO Do it only for development target and maybe based on config (retrieved from nim)
 	subscribeToReload([](NCSTRING msg) {
+		
+
 		AsyncTask(ENamedThreads::GameThread, [] {
+			
 			FNotificationInfo Info( LOCTEXT("HotReloadFinished", "Nim Hot Reload Complete!") );
 			Info.Image = FEditorStyle::GetBrush(TEXT("LevelEditor.RecompileGameCode"));
 			Info.FadeInDuration = 0.1f;
