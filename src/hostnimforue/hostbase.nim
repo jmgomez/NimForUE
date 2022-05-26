@@ -12,8 +12,19 @@ var lib* {.guard:libLock.} : LibHandle
 
 type 
     OnReloadSingature* = proc(msg:cstring):void  {. cdecl, gcsafe .}
+    LoggerSignature* = proc(msg:cstring):void  {. cdecl, gcsafe .}
+
 
 var onReload : OnReloadSingature; #callback called to notify UE when NimForUE changed
+var logger : LoggerSignature
+
+proc initNimForUE*(): void {.exportc, cdecl, dynlib.} =
+  type
+    ProcType {.inject.} = proc (): void {.cdecl.}
+  withLock libLock:
+    let fun {.inject.} = cast[ProcType](lib.symAddr("initNimForUE"))
+    fun()
+
 
 proc notifyOnReloaded*(msg:string) = 
     if not onReload.isnil():
@@ -21,6 +32,8 @@ proc notifyOnReloaded*(msg:string) =
 
 proc subscribeToReload*(inOnReload: OnReloadSingature) : void {.exportc, cdecl, dynlib.}= 
     onReload = inOnReload
+proc registerLogger*(inLogger: LoggerSignature) : void {.exportc, cdecl, dynlib.}= 
+    logger = inLogger
 
 proc reloadlib*(path:cstring) : void {.exportc, cdecl, dynlib.} = 
     withLock libLock:
@@ -28,13 +41,16 @@ proc reloadlib*(path:cstring) : void {.exportc, cdecl, dynlib.} =
         lib = loadLib($path)
         if lib.isNil():
             echo "Failed to load lib: " & $path
+      
 
 proc reloadWithHandle*(path:cstring, lib: var LibHandle) : void =
     withLock libLock:
         unloadLib(lib)
         lib = loadLib($path)
         #Not sure if I have to do this from the main thread
-        
+
+
+
 
         
 

@@ -20,7 +20,7 @@
 //
 // 	return true;
 // };
-//
+
 // // //FIND SHORTER TESTS DECLARATION
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(ShouldBeAbleToHandleFStringAsArgumentAndOutPut, "NimForUETest.ShouldBeAbleToHandleFStringAsArgumentAndOutPut", TestFlags)

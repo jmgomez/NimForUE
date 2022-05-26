@@ -61,13 +61,13 @@ proc printArray(obj:UObjectPtr, arr:TArray[FString]) : void =
 
 proc NimMain*() {.importc.}
 var loaded = false
-proc initNimForUE() = 
-    if not loaded:
-        NimMain()
-    loaded = true
 
 {.push exportc, cdecl, dynlib.} 
 #called from UE immediately after the library is hot reloeaded
+proc initNimForUE() : void   = 
+    if not loaded:
+        NimMain()
+    loaded = true
 
 var returnString = ""
 proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
