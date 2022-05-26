@@ -12,22 +12,22 @@ type WatcherMessage = enum
 
 var thread : Thread[void]
 var chan : Channel[WatcherMessage]
+var lastLoaded {.threadvar.} : string
 
-proc checkAndReload*(lastLoaded:var string, libPath:string) = 
+proc checkAndReload*(libPath:string) = 
     let mbNext = getLastLibPath(libPath)
     if mbNext.isSome() and mbNext.get() != lastLoaded:
         let nextLibName = mbNext.get()
         echo "Reloading " & nextLibName
-        reloadlib(nextLibName)
+        reloadlib(nextLibName.cstring)
         notifyOnReloaded(nextLibName)
         lastLoaded = nextLibName
     
     
 proc watchChangesInLib*() {.thread.}  =
     let libPath = getNimForUEConfig(pluginDir).nimForUELibPath
-    var nextLibName = libPath
     while true:
-        checkAndReload(nextLibName, libPath)
+        checkAndReload(libPath)
         let recv = chan.tryRecv()
         if recv.dataAvailable:
             #since only Stop available 
@@ -35,10 +35,13 @@ proc watchChangesInLib*() {.thread.}  =
 
         sleep(1000)
 
+proc NimMain() {.importc.}
+
 {.push exportc, cdecl, dynlib.}
 
 
 proc startWatch*() = 
+    NimMain() # initialize the gc
     chan.open()
     withLock libLock:   
         createThread(thread, watchChangesInLib)

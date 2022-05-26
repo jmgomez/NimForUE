@@ -1,5 +1,4 @@
 import macros
-import fusion/matching
 {.experimental: "caseStmtMacros".}
 
 import std/[options, strutils]
@@ -7,10 +6,8 @@ import std/[options, strutils]
 import sequtils
 import sugar
 
-# import ../unreal/core/containers/[ array]
-
-proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], returnType:Option[string]) : NimNode = 
-      # nnkTypeSection.newTree(
+func getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
+    # nnkTypeSection.newTree(
     #         nnkTypeDef.newTree(
     #         newIdentNode("Params"),
     #         newEmptyNode(),
@@ -18,17 +15,12 @@ proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], returnType:Option[string]
     #             newEmptyNode(),
     #             newEmptyNode(),
     #             nnkRecList.newTree(
-    #                 #HERE
-    #                 returnType.map(returnParamNode)
-    #                           .getOrDefault(newEmptyNode()) 
+    #                 #params
+    #                 retType
     #                 )
     #             )
     #         )
     # )
-    
-    #This can be better expresed for sure
-    let returnParamNode = (ret:string) => 
-                            nnkIdentDefs.newTree(newIdentNode("toReturn"), newIdentNode(ret),newEmptyNode())
     let typeDefNodeTree = 
         nnkTypeSection.newTree(
             nnkTypeDef.newTree(
@@ -43,14 +35,14 @@ proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], returnType:Option[string]
         )
     
     for p in params:
-        typeDefNodeTree[0][2][2].add p 
-    typeDefNodeTree[0][2][2].add(returnType.map(returnParamNode).get(newEmptyNode()))
+        typeDefNodeTree[0][2][2].add p
 
-   
+    if retType.kind != nnkEmpty and not retType.eqIdent("void"):
+        typeDefNodeTree[0][2][2].add nnkIdentDefs.newTree(ident("toReturn"), retType, newEmptyNode())
+
     return typeDefNodeTree
     
-func getParamsInstanceDeclNode(fn:NimNode, returnType:Option[string], paramNames:seq[string]) : NimNode =
-    #array strings and them 
+func getParamsInstanceDeclNode(fn:NimNode, params:seq[NimNode]) : NimNode =
      #[
           nnkVarSection.newTree(
         nnkIdentDefs.newTree(
@@ -69,19 +61,17 @@ func getParamsInstanceDeclNode(fn:NimNode, returnType:Option[string], paramNames
           )
         )
      ]#
-    let paramNodes =  (paramName:string) => nnkExprColonExpr.newTree(newIdentNode(paramName), newIdentNode(paramName))
-
     let typeDeclTree = nnkVarSection.newTree(
             nnkIdentDefs.newTree(
-            newIdentNode("params"),
-            newEmptyNode(),
-            nnkObjConstr.newTree(newIdentNode("Params")
-            
+                newIdentNode("params"),
+                newEmptyNode(),
+                nnkObjConstr.newTree(newIdentNode("Params")
             )
         )
     )
-    for paramName in paramNames:
-        typeDeclTree[0][2].add paramNodes(paramName)
+    # initialize the Params' fields
+    for p in params:
+        typeDeclTree[0][2].add nnkExprColonExpr.newTree(p[0], p[0])
     return typeDeclTree
 
 #TODO Rewrite this using genAst
@@ -99,15 +89,13 @@ macro uebind* (fn : untyped) : untyped =
         callUFuncOn(executor, funcName, parms.addr, parms.toReturn.addr)
         return params.toReturn
     ]#
-    echo treeRepr fn
-    let rootNode = nnkStmtList.newTree()
-    let returnType : Option[string] = if (repr fn.params[0]) == "void": none[string]() else: some(repr fn.params[0])
 
-    let paramsNodesDef = fn.params[2..len(fn.params)-1]
-    let paramsNames : seq[string]= paramsNodesDef.map(p=>(repr p[0]))
+    let retType = fn.params[0]
+    # skip first arg: UObjectPtr
+    let paramsNodesDef = fn.params[2..len(fn.params)-1] 
    
-    let paramsTypeDefinitionNode = getParamsTypeDef(fn, paramsNodesDef, returnType)
-    let paramsInstDeclNode = getParamsInstanceDeclNode(fn, returnType, paramsNames)
+    let paramsTypeDefinitionNode = getParamsTypeDef(fn, paramsNodesDef, retType)
+    let paramsInstDeclNode = getParamsInstanceDeclNode(fn, paramsNodesDef)
     
 
     let parmInFuncCallNode = nnkDotExpr.newTree(newIdentNode("params"), newIdentNode("addr"))
@@ -124,25 +112,18 @@ macro uebind* (fn : untyped) : untyped =
     let callUFuncNode = nnkCall.newTree(newIdentNode("callUFuncOn"), newIdentNode("obj"), 
                                 newIdentNode("fnName"), parmInFuncCallNode)
 
-    rootNode.add(paramsTypeDefinitionNode)
-    rootNode.add(paramsInstDeclNode)
-    rootNode.add(funcNameDeclNode)
-    rootNode.add(callUFuncNode)
-    if returnType.isSome(): #Add return, move from here
+    let rootNode = nnkStmtList.newTree(paramsTypeDefinitionNode, paramsInstDeclNode, funcNameDeclNode, callUFuncNode)
+    if retType.kind != nnkEmpty and not retType.eqIdent("void"): #Add return, move from here
         let paramsReturnNode =  nnkReturnStmt.newTree(
             nnkDotExpr.newTree(
-            newIdentNode("params"),
-            newIdentNode("toReturn")
+                newIdentNode("params"),
+                newIdentNode("toReturn")
             )
         )
         rootNode.add(paramsReturnNode)
     fn.body = rootNode
-    echo repr fn
-    result = fn
+    fn
 
-
-# dumpTree:
-#     type Test = seq[string]
 
 #example declaration    
 # proc testFunction(obj:UObjPtr) : void {.uebind.}

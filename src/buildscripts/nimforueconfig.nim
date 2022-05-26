@@ -4,9 +4,9 @@ import system
 func getFullLibName(baseLibName:string) :string  = 
     when defined macosx:
         return "lib" & baseLibName & ".dylib"
-    when defined windows:
+    elif defined windows:
         return  baseLibName & ".dll"
-    when defined linux:
+    elif defined linux:
         return ""
 
 

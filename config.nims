@@ -10,7 +10,6 @@ when defined host:
     switch("header", "NimForUEFFI.h")
     switch("threads") #needed to watch
    
-# switch("mm", "orc") #Doest compile with ORC. TODO Investigate why
 switch("outdir", "./Binaries/nim/")
 switch("backend", "cpp")
 
@@ -29,11 +28,13 @@ case nueConfig.targetConfiguration:
       
 
 when defined windows:
+    # switch("mm", "orc") # This works fine on windows
     switch("cc", "vcc")
-    switch("passC", "/MP") # build with multiple processes, enables /FS force synchronous writes
+    #switch("passC", "/MP") # build with multiple processes, enables /FS force synchronous writes
+    switch("passC", "/FS") # build with multiple processes, enables /FS force synchronous writes
     switch("passC", "/std:c++17")
 
-when defined macosx:
+when defined macosx: #Doesn't compile with ORC. TODO Investigate why
     switch("passC", "-x objective-c++")
     switch("passC", "-stdlib=libc++")
     switch("passC", "-fno-unsigned-char")

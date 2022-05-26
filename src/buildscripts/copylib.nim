@@ -3,15 +3,14 @@ import std/[times, os, dynlib, strutils, sequtils, algorithm]
 import sugar
 import options
 import nimforueconfig
-import fusion/matching
 
 
 func getFullLibName(baseLibName:string) :string  = 
     when defined macosx:
         return "lib" & baseLibName & ".dylib"
-    when defined windows:
+    elif defined windows:
         return  baseLibName & ".dll"
-    when defined linux:
+    elif defined linux:
         return ""
 
 proc getAllLibsFromPath*(libPath:string) : seq[string] =

@@ -6,7 +6,6 @@
 type
   FString* {. exportc, header: "Containers/UnrealString.h", importcpp: "FString", bycopy.} = object
 
-
 proc makeFString*(cstr : cstring) : FString {.importcpp: "FString(ANSI_TO_TCHAR(#))" noSideEffect.}
 proc toCString*(fstr: FString): cstring {.importcpp: " TCHAR_TO_ANSI(*#)", nodecl, noSideEffect.}
 
