@@ -12,29 +12,23 @@ import unreal/core/containers/[unrealstring, array]
 import unreal/nimforue/nimForUEBindings
 import macros/[ffi, uebind]
 import strformat
-<<<<<<< HEAD
 
-proc testArrays(obj: UObjectPtr): TArray[FString] =
-  type
-    Params = object
-      toReturn: TArray[FString]
+# proc testArrays(obj: UObjectPtr): TArray[FString] =
+#   type
+#     Params = object
+#       toReturn: TArray[FString]
 
-  var params = Params()
-  var fnName: FString = "TestArrays"
-  callUFuncOn(obj, fnName, params.addr)
-  return params.toReturn
+#   var params = Params()
+#   var fnName: FString = "TestArrays"
+#   callUFuncOn(obj, fnName, params.addr)
+#   return params.toReturn
 
-proc nimMain() {.importc: "NimMain".}
-=======
-import std / [times]
->>>>>>> master
 
 
 proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
 
 
-
-# proc testArrays2(obj:UObjectPtr) : seq[string] {.uebind.}
+proc testArrays(obj:UObjectPtr) : TArray[FString] {.uebind.}
 
 proc testMultipleParams(obj:UObjectPtr, msg:FString,  num:int) : FString {.uebind.}
 
@@ -58,8 +52,10 @@ proc testCallUFuncOnWrapper(executor:UObjectPtr; str:FString; n:int) : FString  
     return parms.toReturn
 ]#
 
+var loaded = false
+proc NimMain() {.importc.}
 
-<<<<<<< HEAD
+
 # call functions without obj.
 proc printArray(obj:UObjectPtr, arr:TArray[FString]) : void = 
     for str in arr: #add posibility to iterate over
@@ -67,20 +63,6 @@ proc printArray(obj:UObjectPtr, arr:TArray[FString]) : void =
 
 
 {.push exportc, cdecl, dynlib.} 
-=======
-var loaded = false
-proc NimMain() {.importc.}
-
-{.push exportc, cdecl, dynlib.} 
-
-proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
-    if not loaded:
-        loaded = true
-        NimMain()
-
-    let str = "Test"
-    let str2 = str.cstring
->>>>>>> master
 
 # proc testPointerBoolOut(boolean: var bool) : ptr bool {.ffi:genFilePath.} = 
 #     return boolean.addr
@@ -88,15 +70,14 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
 
 var returnString = ""
 proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
-    nimMain()
+    if not loaded: #TODO move this to a global init for nimforue
+        loaded = true
+        NimMain()
+
     let executor = cast[UObjectPtr](obj)
  
     let msg = testMultipleParams(executor, "hola", 10)
 
-<<<<<<< HEAD
-=======
-    let msg = testMultipleParams(executor, $now(), 34)
->>>>>>> master
     executor.saySomething(msg)
 
     executor.setColorByStringInMesh("(R=0.0 ,G=1,B=1,A=1)")
@@ -106,7 +87,6 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     else:
         executor.saySomething("false" & $ sizeof(bool))
 
-<<<<<<< HEAD
     let arr = testArrays(executor)
     let number = arr.num()
 
@@ -116,7 +96,10 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     arr.add("hola2")
     let arr2 = makeTArray[FString]()
     arr2.add("hola3")
-    arr2.add("hola8")
+    arr2[0] = "hola3-replaced"
+
+    arr2.add("hola5")
+   
     # printArray(executor, arr)
     let lastElement : FString = arr2[0]
     # let lastElement = makeFString("")
@@ -127,9 +110,12 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     executor.saySomething(returnString)
     executor.printArray arr2
     
+    executor.saySomething("length of the array2 is " & $ arr2.num())
+    arr2.removeAt(0)
+    arr2.remove("hola5")
+    executor.saySomething("length of the array2 is after removed " & $ arr2.num())
+    
+
 {.pop.}
 
 
-=======
-{.pop.}
->>>>>>> master
