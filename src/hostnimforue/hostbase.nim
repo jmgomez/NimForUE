@@ -48,3 +48,4 @@ proc setNimForUEConfig(pluginDir, engineDir, targetPlatform, targetConfig:cstrin
     nueConfig.targetConfiguration = parseEnum[TargetConfiguration]($targetConfig)
     nueConfig.saveConfig($pluginDir)
 
+

@@ -1,4 +1,4 @@
-import core/containers/unrealstring
+import core/containers/[unrealstring, array]
 import coreuobject/uobject
 import nimforue/nimforuebindings
 

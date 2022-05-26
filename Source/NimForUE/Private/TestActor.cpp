@@ -40,9 +40,19 @@ void ATestActor::CallUFuncFFI(UObject* Object) {
 	testCallUFuncOn(Object);
 }
 
+void ATestActor::ReproduceStringIssue() { //Doesnt happen
+}
+
 FString ATestActor::TestMultipleParams(FString Param1, int Test) {
 	UE_LOG(LogTemp, Warning, TEXT("Call from Nim in Cpp"))
 	return Param1.Append(FString::FromInt(Test));
+}
+
+bool ATestActor::BoolTestFromNimAreEquals(FString NumberStr, int Number, bool TestParam) {
+	auto BoolToStr = [](bool Value){ return FString(Value?"True":"False");};
+	UE_LOG(LogTemp, Log, TEXT("The value of the bool is %s"), *BoolToStr(TestParam));
+	return TestParam;
+	
 }
 
 void ATestActor::SaySomething(FString Msg) {

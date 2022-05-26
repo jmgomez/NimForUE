@@ -1,3 +1,4 @@
+using System.IO;
 using UnrealBuildTool;
  
 public class NimForUETest : ModuleRules
@@ -13,6 +14,7 @@ public class NimForUETest : ModuleRules
 			"NimForUEBindings"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
-		
+		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
+		PublicIncludePaths.Add(nimHeadersPath);
 	}
 }

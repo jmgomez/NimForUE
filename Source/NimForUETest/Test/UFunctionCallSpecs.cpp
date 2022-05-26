@@ -3,6 +3,7 @@
 #include "TestUtils.h"
 #include "UFunctionCaller.h"
 #include "Misc/AutomationTest.h"
+#include "NimForUEFFI.h"
 #include "NimForUETest/Public/TestObjects/FunctionTestObject.h"
 
 // IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNimForUETestSpec, "NimForUETest.NaiveTest", TestFlags)
@@ -316,21 +317,24 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(ShouldHandleDataType_BoolIssue, "NimForUETest.S
 bool ShouldHandleDataType_BoolIssue::RunTest(const FString& Parameters) {
 	UFunctionTestObject* TestObject = NewObject<UFunctionTestObject>();
 
-	struct Params {
-		int A;
-		bool B;
-		bool Result;
+	struct tyObject_Params__9bwRb9c9cdyy2b1lJnAtEZevQ {
+		FString numberStr;
+		NI number;
+		NIM_BOOL boolParam;
+		NIM_BOOL toReturn;
 	};
-	Params Parms = { 1, false};
+
+	tyObject_Params__9bwRb9c9cdyy2b1lJnAtEZevQ Parms = { "", 1, false};
 	
 	
-	bool ExpectedResult = TestObject->OR(Parms.A, Parms.B);
-	FString FunctionName = GET_FUNCTION_NAME_CHECKED(UFunctionTestObject, OR).ToString();
+	bool ExpectedResult = TestObject->BoolTestFromNimAreEquals(Parms.numberStr, Parms.number, true);
+	FString FunctionName = GET_FUNCTION_NAME_CHECKED(UFunctionTestObject, BoolTestFromNimAreEquals).ToString();
 	UFunctionCaller::CallUFunctionOn(TestObject, FunctionName, &Parms);
-	UE_LOG(LogTemp, Warning, TEXT("bool size: %d interger size: %d"), sizeof(bool), sizeof(int));
-	TestTrue("It's the same", Parms.Result == ExpectedResult);
+	TestTrue("It's the same", Parms.toReturn == ExpectedResult);
 	return true;
 };
+
+
 
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(ShouldHandleDataType_TArrayInt_AsArgument, "NimForUETest.ShouldHandleDataType_TArrayInt_AsArgument", TestFlags)
@@ -355,7 +359,6 @@ bool ShouldHandleDataType_TArrayInt_AsArgument::RunTest(const FString& Parameter
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(ShouldHandleDataType_TArrayFString_AsArgument, "NimForUETest.ShouldHandleDataType_TArrayFString_AsArgument", TestFlags)
 bool ShouldHandleDataType_TArrayFString_AsArgument::RunTest(const FString& Parameters) {
 	UFunctionTestObject* TestObject = NewObject<UFunctionTestObject>();
-
 	struct Params {
 		TArray<FString> Words;
 		FString Result;

@@ -7,9 +7,9 @@ import std/[options, strutils]
 import sequtils
 import sugar
 
+# import ../unreal/core/containers/[ array]
 
-
-func getParamsTypeDef(fn:NimNode, params:seq[NimNode], returnType:Option[string]) : NimNode = 
+proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], returnType:Option[string]) : NimNode = 
       # nnkTypeSection.newTree(
     #         nnkTypeDef.newTree(
     #         newIdentNode("Params"),
@@ -25,6 +25,7 @@ func getParamsTypeDef(fn:NimNode, params:seq[NimNode], returnType:Option[string]
     #             )
     #         )
     # )
+    
     #This can be better expresed for sure
     let returnParamNode = (ret:string) => 
                             nnkIdentDefs.newTree(newIdentNode("toReturn"), newIdentNode(ret),newEmptyNode())
@@ -43,10 +44,9 @@ func getParamsTypeDef(fn:NimNode, params:seq[NimNode], returnType:Option[string]
     
     for p in params:
         typeDefNodeTree[0][2][2].add p 
-
     typeDefNodeTree[0][2][2].add(returnType.map(returnParamNode).get(newEmptyNode()))
 
-    
+   
     return typeDefNodeTree
     
 func getParamsInstanceDeclNode(fn:NimNode, returnType:Option[string], paramNames:seq[string]) : NimNode =
@@ -99,6 +99,7 @@ macro uebind* (fn : untyped) : untyped =
         callUFuncOn(executor, funcName, parms.addr, parms.toReturn.addr)
         return params.toReturn
     ]#
+    echo treeRepr fn
     let rootNode = nnkStmtList.newTree()
     let returnType : Option[string] = if (repr fn.params[0]) == "void": none[string]() else: some(repr fn.params[0])
 
@@ -139,8 +140,9 @@ macro uebind* (fn : untyped) : untyped =
     echo repr fn
     result = fn
 
- 
 
+# dumpTree:
+#     type Test = seq[string]
 
 #example declaration    
 # proc testFunction(obj:UObjPtr) : void {.uebind.}

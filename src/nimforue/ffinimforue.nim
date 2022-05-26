@@ -8,17 +8,33 @@
 """.}
 
 import unreal/coreuobject/uobject
-import unreal/core/containers/unrealstring
+import unreal/core/containers/[unrealstring, array]
 import unreal/nimforue/nimForUEBindings
 import macros/[ffi, uebind]
 import strformat
 
+proc testArrays(obj: UObjectPtr): TArray[FString] =
+  type
+    Params = object
+      toReturn: TArray[FString]
+
+  var params = Params()
+  var fnName: FString = "TestArrays"
+  callUFuncOn(obj, fnName, params.addr)
+  return params.toReturn
+
+proc nimMain() {.importc: "NimMain".}
 
 
 proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
+
+
+
+# proc testArrays2(obj:UObjectPtr) : seq[string] {.uebind.}
+
 proc testMultipleParams(obj:UObjectPtr, msg:FString,  num:int) : FString {.uebind.}
 
-proc boolTestFromNimAreEquals(obj:UObjectPtr, numberStr:FString, number:int, boolParam:byte) : byte {.uebind.}
+proc boolTestFromNimAreEquals(obj:UObjectPtr, numberStr:FString, number:cint, boolParam:bool) : bool {.uebind.}
 
 proc setColorByStringInMesh(obj:UObjectPtr, color:FString): void  {.uebind.}
 #define on config.nims
@@ -36,23 +52,54 @@ proc testCallUFuncOnWrapper(executor:UObjectPtr; str:FString; n:int) : FString  
     callUFuncOn(executor, funcName, parms.addr)
     return parms.toReturn
 
+# call functions without obj.
+proc printArray(obj:UObjectPtr, arr:TArray[FString]) : void = 
+    for str in arr: #add posibility to iterate over
+        obj.saySomething(str) 
+
 
 {.push exportc, cdecl, dynlib.} 
- 
+
+# proc testPointerBoolOut(boolean: var bool) : ptr bool {.ffi:genFilePath.} = 
+#     return boolean.addr
+
+
+var returnString = ""
 proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
-
+    nimMain()
     let executor = cast[UObjectPtr](obj)
+ 
+    let msg = testMultipleParams(executor, "hola", 10)
 
-    let msg = testMultipleParams(executor, "hola", 34)
     executor.saySomething(msg)
 
     executor.setColorByStringInMesh("(R=1.0 ,G=0,B=1,A=1)")
 
-    if executor.boolTestFromNimAreEquals("5", 5, 1) == 1:
-        executor.saySomething("true?")
+    if executor.boolTestFromNimAreEquals("5", 5, true) == true:
+        executor.saySomething("true")
     else:
         executor.saySomething("false" & $ sizeof(bool))
 
+    let arr = testArrays(executor)
+    let number = arr.num()
 
+    # let str = $arr.num()
+    
+    arr.add("hola")
+    arr.add("hola2")
+    let arr2 = makeTArray[FString]()
+    arr2.add("hola3")
+    arr2.add("hola8")
+    # printArray(executor, arr)
+    let lastElement : FString = arr2[0]
+    # let lastElement = makeFString("")
+    returnString = "number of elements " & $arr.num() & "the element last element is " & lastElement
+
+    # let nowDontCrash = 
+    # let msgArr = "The length of the array is " & $ arr.num()
+    executor.saySomething(returnString)
+    executor.printArray arr2
+    
 {.pop.}
+
 

@@ -137,5 +137,12 @@ public:
 	FString GetStrValueFromStruct(FMyStructParamWithStr Struct) {
 		return Struct.StrProp;
 	}
+	UFUNCTION()
+    bool BoolTestFromNimAreEquals(FString NumberStr, int Number, bool TestParam) {
+    	auto BoolToStr = [](bool Value){ return FString(Value?"True":"False");};
+    	UE_LOG(LogTemp, Log, TEXT("The value of the bool is %s"), *BoolToStr(TestParam));
+    	return TestParam;
+    	
+    }
 	
 };

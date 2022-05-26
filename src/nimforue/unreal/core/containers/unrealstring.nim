@@ -12,12 +12,12 @@ proc toCString*(fstr: FString): cstring {.importcpp: " TCHAR_TO_ANSI(*#)", nodec
 
 proc `$`*(fstr: FString): string = $ fstr.toCString
 
-proc string*(fstr :FString) : string = $ fstr
-proc fstring*(str :string) : FString = makeFString(str.cstring)
+proc fStringToString*(fstr :FString) : string = $ fstr
+proc stringToFString*(str :string) : FString = makeFString(str.cstring)
 
 
 
 
 #TODO should we be explicit about fstrings?
 converter toStr*(fstr :Fstring) : string = $ fstr
-converter toFStr*(str :string) : FString =  fstring(str)
+converter toFStr*(str :string) : FString =  stringToFString(str)
