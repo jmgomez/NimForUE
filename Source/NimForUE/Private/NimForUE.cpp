@@ -7,6 +7,7 @@
 #include "Async/Async.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
+
 DEFINE_LOG_CATEGORY(NimForUE);
 
 #include "Interfaces/IPluginManager.h"
@@ -31,6 +32,7 @@ void FNimForUEModule::StartupModule()
 	//TODO Do it only for development target and maybe based on config (retrieved from nim)
 	subscribeToReload([](NCSTRING msg) {
 		
+		initNimForUE(); // There's a race between TestActor CallUFuncFFI and this. The world tick needs to stop when a reload is detected.
 
 		AsyncTask(ENamedThreads::GameThread, [] {
 			
@@ -44,7 +46,7 @@ void FNimForUEModule::StartupModule()
 			Info.bUseLargeFont = true;
 			Info.bFireAndForget = false;
 			Info.bAllowThrottleWhenFrameRateIsLow = false;
-			// //Fails because it's on antother thread?
+			// //Fails because it's on another thread?
 			auto NotificationItem = FSlateNotificationManager::Get().AddNotification( Info );
 			NotificationItem->SetCompletionState(SNotificationItem::CS_Success);
 			NotificationItem->ExpireAndFadeout();
@@ -53,7 +55,6 @@ void FNimForUEModule::StartupModule()
 			
 		});
 
-		initNimForUE();
 		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded! %s"), ANSI_TO_TCHAR(msg));
 	});
 	startWatch();
@@ -69,30 +70,6 @@ void FNimForUEModule::ShutdownModule()
 #endif
 	//TODO Implement
 	stopWatch();
-}
-
-//"OLD" way of reloading where it starts in UE. Remove it when we know there arent major caveats with the way we are reloading now
-void FNimForUEModule::PerformHotReload() {
-	
-#if WITH_EDITOR
-	// FPlatformProcess::CreatePro
-	// perfomHotReloadFFI();
-	FString LibraryPath;
-#if PLATFORM_WINDOWS
-	
-	// LibraryPath = GetLastFile(LibraryDirPath, CandidateLib);
-#elif PLATFORM_MAC
-	//TODO Replace this from getting the path via the FFI
-	//TODO Define log category
-	LibraryPath = "/Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/Plugins/NimForUE/Binaries/nim/ue/libNimForUE-1.dylib";
-#endif
-	FString PathToProcess =  IPluginManager::Get().FindPlugin("NimForUE")->GetBaseDir();
-	FProcHandle ProcHandle = FPlatformProcess::CreateProc(TEXT("nimble"), TEXT("buildnimforue"), false, false, false, 0, 0, *PathToProcess, nullptr, nullptr);
-	FPlatformProcess::WaitForProc(ProcHandle); //TODO This whole thing can be made in another proc so the user doesnt have to wait
-	char* NewLibChar = TCHAR_TO_ANSI(*LibraryPath);
-	reloadlib(NewLibChar);
-	UE_LOG(NimForUE, Warning, TEXT("Using %s as new lib"), *LibraryPath);
-#endif
 }
 
 #undef LOCTEXT_NAMESPACE

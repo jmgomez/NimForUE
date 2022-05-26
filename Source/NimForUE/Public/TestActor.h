@@ -25,9 +25,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	AStaticMeshActor* MeshActor;
 	
-	UFUNCTION(BlueprintCallable, CallInEditor, Category=NimForUE)
-	static void PerformHotReload();
-	
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = TestActor)
 	static void CallUFuncFFI(UObject* Object);
 
