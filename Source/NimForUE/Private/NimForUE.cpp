@@ -29,7 +29,6 @@ void FNimForUEModule::StartupModule()
 	UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib loaded %s"), *DllPath);
 
 #endif
-	/*
 	//TODO Do it only for development target and maybe based on config (retrieved from nim)
 	subscribeToReload([](NCSTRING msg) {
 		
@@ -56,7 +55,6 @@ void FNimForUEModule::StartupModule()
 
 		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded! %s"), ANSI_TO_TCHAR(msg));
 	});
-	*/
 }
 
 void FNimForUEModule::ShutdownModule()
