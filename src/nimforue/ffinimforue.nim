@@ -59,21 +59,14 @@ proc printArray(obj:UObjectPtr, arr:TArray[FString]) =
     for str in arr: #add posibility to iterate over
         obj.saySomething(str) 
 
-proc NimMain() {.importc.}
-var loaded = false
-
 proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
-    if not loaded:
-        NimMain()
-        loaded = true
-
     let executor = cast[UObjectPtr](obj)
 
     let msg = testMultipleParams(executor, "hola", 10)
 
     executor.saySomething(msg)
 
-    executor.setColorByStringInMesh("(R=1.0,G=0.25,B=0,A=1)")
+    executor.setColorByStringInMesh("(R=1.0,G=0.2,B=0.1,A=1)")
 
     if executor.boolTestFromNimAreEquals("5", 5, true) == true:
         executor.saySomething("true")
@@ -91,7 +84,7 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     arr2.add("hola3")
     arr2[0] = "hola3-replaced"
 
-    arr2.add($now() & " is the TIME!")
+    arr2.add($now() & " is it Nim TIME?")
 
     # printArray(executor, arr)
     let lastElement : FString = arr2[0]

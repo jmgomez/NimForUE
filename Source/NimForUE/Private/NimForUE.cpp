@@ -29,11 +29,10 @@ void FNimForUEModule::StartupModule()
 	UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib loaded %s"), *DllPath);
 
 #endif
+	/*
 	//TODO Do it only for development target and maybe based on config (retrieved from nim)
 	subscribeToReload([](NCSTRING msg) {
 		
-		initNimForUE(); // There's a race between TestActor CallUFuncFFI and this. The world tick needs to stop when a reload is detected.
-
 		AsyncTask(ENamedThreads::GameThread, [] {
 			
 			FNotificationInfo Info( LOCTEXT("HotReloadFinished", "Nim Hot Reload Complete!") );
@@ -57,8 +56,7 @@ void FNimForUEModule::StartupModule()
 
 		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded! %s"), ANSI_TO_TCHAR(msg));
 	});
-	startWatch();
-	
+	*/
 }
 
 void FNimForUEModule::ShutdownModule()
@@ -68,8 +66,6 @@ void FNimForUEModule::ShutdownModule()
 	NimForUEHandle = nullptr;
 	UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib unloaded %d"));
 #endif
-	//TODO Implement
-	stopWatch();
 }
 
 #undef LOCTEXT_NAMESPACE
