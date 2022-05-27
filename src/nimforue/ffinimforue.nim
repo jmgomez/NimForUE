@@ -13,90 +13,12 @@ import unreal/nimforue/nimForUEBindings
 import macros/[ffi, uebind]
 import std/[times]
 import strformat
+import manualtests/manualtestsarray
 
-# proc testArrays(obj: UObjectPtr): TArray[FString] =
-#   type
-#     Params = object
-#       toReturn: TArray[FString]
-
-#   var params = Params()
-#   var fnName: FString = "TestArrays"
-#   callUFuncOn(obj, fnName, params.addr)
-#   return params.toReturn
-
-
-proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
-
-
-proc testArrays(obj:UObjectPtr) : TArray[FString] {.uebind.}
-
-proc testMultipleParams(obj:UObjectPtr, msg:FString,  num:int) : FString {.uebind.}
-
-proc boolTestFromNimAreEquals(obj:UObjectPtr, numberStr:FString, number:cint, boolParam:bool) : bool {.uebind.}
-
-proc setColorByStringInMesh(obj:UObjectPtr, color:FString): void  {.uebind.}
 #define on config.nims
 const genFilePath* {.strdefine.} : string = ""
 
-#it's here for ref
-#[
-proc testCallUFuncOnWrapper(executor:UObjectPtr; str:FString; n:int) : FString    =     
-    type Params = object 
-            str: FString
-            n: int
-            toReturn: FString #Output paramaeters 
-        
-    var parms = Params(str: str, n: n) 
-    var funcName = makeFString("TestMultipleParams")
-    callUFuncOn(executor, funcName, parms.addr)
-    return parms.toReturn
-]#
-
-
-var returnString = ""
-
-proc printArray(obj:UObjectPtr, arr:TArray[FString]) =
-    for str in arr: #add posibility to iterate over
-        obj.saySomething(str) 
-
 proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
     let executor = cast[UObjectPtr](obj)
-
-    let msg = testMultipleParams(executor, "hola", 10)
-
-    executor.saySomething(msg)
-
-    executor.setColorByStringInMesh("(R=1.0,G=0.35,B=0,A=1)")
-
-    if executor.boolTestFromNimAreEquals("5", 5, true) == true:
-        executor.saySomething("true")
-    else:
-        executor.saySomething("false" & $ sizeof(bool))
-
-    let arr = testArrays(executor)
-    let number = arr.num()
-
-    # let str = $arr.num()
-
-    arr.add("hola")
-    arr.add("hola2")
-    let arr2 = makeTArray[FString]()
-    arr2.add("hola3")
-    arr2[0] = "hola3-replaced"
-
-    arr2.add($now() & " is it Nim TIME?")
-
-    # printArray(executor, arr)
-    let lastElement : FString = arr2[0]
-    # let lastElement = makeFString("")
-    returnString = "number of elements " & $arr.num() & "the element last element is " & lastElement
-
-    # let nowDontCrash = 
-    # let msgArr = "The length of the array is " & $ arr.num()
-    executor.saySomething(returnString)
-    executor.printArray arr2
-
-    executor.saySomething("length of the array2 is " & $ arr2.num())
-    arr2.removeAt(0)
-    arr2.remove("hola5")
-    executor.saySomething("length of the array2 is after removed " & $ arr2.num())
+    testArrayEntryPoint(executor)
+    testVectorEntryPoint(executor)
