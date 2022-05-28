@@ -48,31 +48,59 @@ when defined macosx: #Doesn't compile with ORC. TODO Investigate why
     # exec(fmt("ln -s {nueConfig.engineDir}/Binaries/Mac/*.dylib /usr/local/lib/"))
 
 when defined withue:   
-   
+    #EDITOR VS GAME is just switching UnrealEditor with UnrealGame?
+
     let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform
     #Im pretty sure theere will moref specific handles for the other platforms
     let confDir = $ nueConfig.targetConfiguration
     let engineDir = nueConfig.engineDir
     let pluginDir = nueConfig.pluginDir
     
+    #Epics adds a space in the installation directory (Epic Games) on Windows so it has to be quoted. Maybe we should do this for all user paths?
+    proc addQuotes(fullPath: string) : string = 
+        echo "\"" & fullPath & "\""
+        "\"" & fullPath & "\""
 
     proc addHeaders() = 
         let pluginDefinitionsPaths = "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
         let nimForUEBindingsHeaders =  pluginDir/ "Source/NimForUEBindings/Public/"
         
-        proc getEngineRuntimeIncludePathFor(moduleName:string) : string = "\"" & engineDir / "Source"/"Runtime"/moduleName/"Public" & "\""
-        proc setEngineRuntimeIncludeForModules(modules:seq[string]) =
+        proc getEngineRuntimeIncludePathFor(engineFolder, moduleName:string) : string = "\"" & engineDir / "Source"/engineFolder/moduleName/"Public" & "\""
+        proc getEngineIntermediateIncludePathFor(moduleName:string) : string = addQuotes(engineDir / "Intermediate"/"Build"/platformDir/"UnrealEditor"/"Inc"/moduleName)
+        proc setEngineRuntimeIncludeForModules(engineFolder:string, modules:seq[string]) =
             for module in modules:
-                switch("passC", "-I" & getEngineRuntimeIncludePathFor(module))
+                switch("passC", "-I" & getEngineRuntimeIncludePathFor(engineFolder, module))
+
+        proc setEngineIntermediateIncludePathFor(modules:seq[string]) = #TODO change
+            for module in modules:
+                switch("passC", "-I" & getEngineIntermediateIncludePathFor(module))
+    
 
         switch("passC", "-I" & pluginDefinitionsPaths /  "NimForUE")
         switch("passC", "-I" & pluginDefinitionsPaths /  "NimForUEBindings")
-        switch("passC", "-I" & nimForUEBindingsHeaders)
-        setEngineRuntimeIncludeForModules(@["CoreUObject", "Core", "TraceLog"])
+        switch("passC", "-I" & nimForUEBindingsHeaders) 
+        #engine
+        switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"))
+        switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"/"Engine"))
+        switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Public"))
+        switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Classes"))
+
+        let runtimeModules = @["CoreUObject", "Core", "Engine", "TraceLog", "Launch", "ApplicationCore", 
+            "Projects", "Json", "PakFile", "RSA", "Engine", "RenderCore",
+            "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
+            "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore"]
+
+        let developerModules = @["DesktopPlatform", "ToolMenus", "TargetPlatform", "SourceControl"]
+
+        setEngineRuntimeIncludeForModules("Runtime", runtimeModules)
+        setEngineRuntimeIncludeForModules("Developer", developerModules)
+
+        let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore"]
+        setEngineIntermediateIncludePathFor(intermediateGenModules)
         
 
     proc addSymbols() =
-        proc getEngineRuntimeIncludePathFor(moduleName:string) : string =  
+        proc getEngineRuntimeSymbolPathFor(moduleName:string) : string =  
             when defined windows:
                 let libName = fmt "UnrealEditor-{moduleName}.lib" 
                 return "\"" & engineDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / moduleName / libName & "\""
@@ -80,15 +108,13 @@ when defined withue:
                 let platform = $nueConfig.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
                 let libName = fmt "UnrealEditor-{moduleName}.dylib"
                 return  engineDir / "Binaries" / platform / libName
-
+ 
         proc setEngineWeakSymbolsForModules(modules:seq[string]) =
             for module in modules:
-                switch("passL",  getEngineRuntimeIncludePathFor(module))
+                switch("passL",  getEngineRuntimeSymbolPathFor(module))
         
-        # switch("passL",  nimForUEBindingsLib)
-              
-        
-        setEngineWeakSymbolsForModules(@["CoreUObject", "Core"])
+
+        setEngineWeakSymbolsForModules(@["CoreUObject", "Core", "Engine"])
     
 
     addHeaders()

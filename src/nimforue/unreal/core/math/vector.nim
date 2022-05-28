@@ -7,9 +7,9 @@ import ../containers/unrealstring
 #Not sure if it will be better to just do an alias 
 
 type FVector*{.importcpp: "FVector", bycopy } = object
-  x*: cfloat
-  y*: cfloat
-  z*: cfloat
+  x*: float32
+  y*: float32
+  z*: float32
 
 proc makeFVector*(x, y, z: cfloat): FVector {.importcpp:"FVector(@)", constructor.}
 

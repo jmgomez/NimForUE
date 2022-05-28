@@ -3,6 +3,7 @@ import ../macros/uebind
 import ../unreal/coreuobject/uobject
 import ../unreal/core/containers/[unrealstring, array]
 import ../unreal/core/math/[vector]
+import ../unreal/core/[enginetypes]
 import ../unreal/nimforue/nimForUEBindings
 import std/[times]
 import strformat
@@ -71,11 +72,32 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
     arr2.remove("hola5")
     executor.saySomething("length of the array2 is after removed yeah " & $ arr2.num())
 
+proc K2_SetActorLocation(obj: UObjectPtr; newLocation: FVector; bSweep: bool;
+                         SweepHitResult: var FHitResult; bTeleport: bool) =
+  type
+    Params = object
+      newLocation: FVector
+      bSweep: bool
+      SweepHitResult: FHitResult
+      bTeleport: bool
+
+  var params = Params(newLocation: newLocation, bSweep: bSweep,
+                      SweepHitResult: SweepHitResult, bTeleport: bTeleport)
+  var fnName: FString = "K2_SetActorLocation"
+  callUFuncOn(obj, fnName, params.addr)
+
+
+
+# proc K2_SetActorLocation(obj:UObjectPtr, newLocation: FVector, bSweep:bool, SweepHitResult: var FHitResult, bTeleport: bool) {.uebind.}
 
 proc testVectorEntryPoint*(executor:UObjectPtr) = 
     let v : FVector = makeFVector(10, 50, 30)
     let v2 = v+v 
-
+    let position = makeFVector(1000, 500, 100)
+    var hitResult = makeFHitResult()
+    K2_SetActorLocation(executor, position, false, hitResult, true)
     executor.saySomething(v2.toString())
     executor.saySomething(upVector.toString())
+
+
 
