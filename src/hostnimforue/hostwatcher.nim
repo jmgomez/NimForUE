@@ -14,6 +14,7 @@ type
 
 const pluginDir* {.strdefine.} : string = ""
 
+var libPath:string
 var lastLoaded : string
 
 var onReload : ReloadCallback; #callback called to notify UE when NimForUE changed
@@ -28,16 +29,14 @@ proc registerLogger*(inLogger: LoggerSignature) {.ex.} =
     logger = inLogger
 
 
-proc NimMain() {.importc.} # needed to initialize the gc in startWatch
+proc NimMain() {.importc.} # needed to initialize the gc
 
-var libPath:string
-
-# call in an Actor while game is running
-proc checkReload*() {.ex.} = 
+proc initializeHost() {.ex.} =
     once:
         NimMain()
         libPath = getNimForUEConfig(pluginDir).nimForUELibPath
 
+proc checkReload*() {.ex.} =
     let mbNext = getLastLibPath(libPath)
     if mbNext.isSome() and mbNext.get() != lastLoaded:
         let nextLibName = mbNext.get()
