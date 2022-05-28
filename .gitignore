@@ -39,3 +39,6 @@ Binaries/*
 
 # Compiled source files for the engine to use
 Intermediate/*
+
+#Confs files
+NimForUE.*.json
