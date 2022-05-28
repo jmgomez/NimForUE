@@ -6,7 +6,7 @@ import std/[options, strutils]
 import sequtils
 import sugar
 
-func getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
+proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
     # nnkTypeSection.newTree(
     #         nnkTypeDef.newTree(
     #         newIdentNode("Params"),
@@ -35,11 +35,14 @@ func getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNo
         )
     
     for p in params:
+        if p[1].kind == nnkVarTy: #removes var for the type definition 
+            p[1] = p[1][0]
         typeDefNodeTree[0][2][2].add p
 
     if retType.kind != nnkEmpty and not retType.eqIdent("void"):
         typeDefNodeTree[0][2][2].add nnkIdentDefs.newTree(ident("toReturn"), retType, newEmptyNode())
 
+    
     return typeDefNodeTree
     
 func getParamsInstanceDeclNode(fn:NimNode, params:seq[NimNode]) : NimNode =
@@ -122,6 +125,7 @@ macro uebind* (fn : untyped) : untyped =
         )
         rootNode.add(paramsReturnNode)
     fn.body = rootNode
+    # echo fn.repr
     fn
 
 
