@@ -43,13 +43,14 @@ task watch, "Monitors the components folder for changes to recompile.":
         echo &"-- Recompiling {path} --"
         when defined windows:
           let p = startProcess("nimble", getCurrentDir(), ["nimforue"])
-          for line in p.lines:
-            echo line
-          p.close
         elif defined macosx:
-          # startProcess is crashing on macosx for some reason
-          let (output, _) = execCmdEx("nimble nimforue")
-          echo output
+          let p = startProcess("/bin/zsh", getCurrentDir(), ["nueMac.sh"])
+          
+        for line in p.lines:
+          echo line
+        p.close
+        
+        
         echo &"-- Finished Recompiling {path} --"
 
     sleep watchInterval
