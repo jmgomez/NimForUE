@@ -26,6 +26,7 @@ case nueConfig.targetConfiguration:
         #TODO Maybe for shipping we need to get rid of the FFI dll and to use only NimForUE.dll
         switch("d", "release")  
       
+switch("mm", "orc") # This works fine on windows
 
 when defined windows:
     # switch("mm", "orc") # This works fine on windows
@@ -57,15 +58,13 @@ when defined withue:
     let pluginDir = nueConfig.pluginDir
     
     #Epics adds a space in the installation directory (Epic Games) on Windows so it has to be quoted. Maybe we should do this for all user paths?
-    proc addQuotes(fullPath: string) : string = 
-        echo "\"" & fullPath & "\""
-        "\"" & fullPath & "\""
+    proc addQuotes(fullPath: string) : string = "\"" & fullPath & "\""
 
     proc addHeaders() = 
         let pluginDefinitionsPaths = "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
         let nimForUEBindingsHeaders =  pluginDir/ "Source/NimForUEBindings/Public/"
         
-        proc getEngineRuntimeIncludePathFor(engineFolder, moduleName:string) : string = "\"" & engineDir / "Source"/engineFolder/moduleName/"Public" & "\""
+        proc getEngineRuntimeIncludePathFor(engineFolder, moduleName:string) : string = addQuotes(engineDir / "Source"/engineFolder/moduleName/"Public")
         proc getEngineIntermediateIncludePathFor(moduleName:string) : string = addQuotes(engineDir / "Intermediate"/"Build"/platformDir/"UnrealEditor"/"Inc"/moduleName)
         proc setEngineRuntimeIncludeForModules(engineFolder:string, modules:seq[string]) =
             for module in modules:
@@ -103,8 +102,8 @@ when defined withue:
         proc getEngineRuntimeSymbolPathFor(moduleName:string) : string =  
             when defined windows:
                 let libName = fmt "UnrealEditor-{moduleName}.lib" 
-                return "\"" & engineDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / moduleName / libName & "\""
-            when defined macosx:
+                return addQuotes(engineDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / moduleName / libName)
+            elif defined macosx:
                 let platform = $nueConfig.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
                 let libName = fmt "UnrealEditor-{moduleName}.dylib"
                 return  engineDir / "Binaries" / platform / libName
