@@ -9,9 +9,11 @@ import std / [os]
 when defined host:
     switch("header", "NimForUEFFI.h")
     switch("threads") #needed to watch
-   
+    switch("tlsEmulation", "off")
+
 switch("outdir", "./Binaries/nim/")
 switch("backend", "cpp")
+switch("mm", "orc") 
 
 let nueConfig = getNimForUEConfig()
 switch("define", "genFilePath:"& nueConfig.genFilePath)
@@ -24,12 +26,10 @@ case nueConfig.targetConfiguration:
         switch("stacktrace", "on")
     of Shipping: 
         #TODO Maybe for shipping we need to get rid of the FFI dll and to use only NimForUE.dll
-        switch("d", "release")  
-      
-switch("mm", "orc") # This works fine on windows
+        switch("d", "release")
+
 
 when defined windows:
-    # switch("mm", "orc") # This works fine on windows
     switch("cc", "vcc")
     #switch("passC", "/MP") # build with multiple processes, enables /FS force synchronous writes
     switch("passC", "/FS") # build with multiple processes, enables /FS force synchronous writes
