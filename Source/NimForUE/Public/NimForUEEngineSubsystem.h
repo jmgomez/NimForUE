@@ -25,5 +25,4 @@ private:
 
 	bool Tick(float DeltaTime);
 	FTSTicker::FDelegateHandle TickDelegateHandle;
-	float elapsedSeconds;
 };

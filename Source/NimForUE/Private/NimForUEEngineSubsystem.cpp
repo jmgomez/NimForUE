@@ -11,8 +11,7 @@ void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	initializeHost();
 	checkReload();
-	elapsedSeconds = 0.0;
-	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick));
+	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick), 0.3);
 }
 
 void UNimForUEEngineSubsystem::Deinitialize()
@@ -22,11 +21,6 @@ void UNimForUEEngineSubsystem::Deinitialize()
 
 bool UNimForUEEngineSubsystem::Tick(float DeltaTime)
 {
-	elapsedSeconds += DeltaTime;
-	if (elapsedSeconds > 0.1)
-	{
-		checkReload();
-		elapsedSeconds = 0.0;
-	}
+	checkReload();
 	return true;
 }
