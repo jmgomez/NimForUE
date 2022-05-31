@@ -12,19 +12,15 @@ void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	initializeHost();
 	checkReload();
 	elapsedSeconds = 0.0;
+	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick));
 }
 
 void UNimForUEEngineSubsystem::Deinitialize()
 {
+	FTSTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
 }
 
-// FTickableObjectBase methods //
-TStatId UNimForUEEngineSubsystem::GetStatId() const
-{
-	RETURN_QUICK_DECLARE_CYCLE_STAT(NimForUEEngineSubsystem, STATGROUP_Tickables);
-}
-
-void UNimForUEEngineSubsystem::Tick(float DeltaTime)
+bool UNimForUEEngineSubsystem::Tick(float DeltaTime)
 {
 	elapsedSeconds += DeltaTime;
 	if (elapsedSeconds > 0.1)
@@ -32,4 +28,5 @@ void UNimForUEEngineSubsystem::Tick(float DeltaTime)
 		checkReload();
 		elapsedSeconds = 0.0;
 	}
+	return true;
 }

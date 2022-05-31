@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 DECLARE_LOG_CATEGORY_EXTERN(NimForUE, Log, All);
 
 class FNimForUEModule : public IModuleInterface
