@@ -20,6 +20,7 @@ switch("define", "genFilePath:"& nueConfig.genFilePath)
 switch("define", "pluginDir:"& nueConfig.pluginDir)
 
 
+
 case nueConfig.targetConfiguration:
     of Debug, Development:
         switch("debugger", "native")
@@ -27,7 +28,6 @@ case nueConfig.targetConfiguration:
     of Shipping: 
         #TODO Maybe for shipping we need to get rid of the FFI dll and to use only NimForUE.dll
         switch("d", "release")
-
 
 when defined windows:
     switch("cc", "vcc")
@@ -40,6 +40,7 @@ when defined macosx: #Doesn't compile with ORC. TODO Investigate why
     switch("passC", "-stdlib=libc++")
     switch("passC", "-fno-unsigned-char")
     switch("passC", "-std=c++17")
+    switch("passC", "-fno-rtti")   
     switch("cc", "clang")
     putEnv("MACOSX_DEPLOYMENT_TARGET", "10.15") #sets compatibility with the same macos version as ue5 was build to
     
@@ -84,6 +85,7 @@ when defined withue:
         switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Public"))
         switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Classes"))
 
+
         let runtimeModules = @["CoreUObject", "Core", "Engine", "TraceLog", "Launch", "ApplicationCore", 
             "Projects", "Json", "PakFile", "RSA", "Engine", "RenderCore",
             "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
@@ -99,22 +101,35 @@ when defined withue:
         
 
     proc addSymbols() =
-        proc getEngineRuntimeSymbolPathFor(moduleName:string) : string =  
+
+        proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string) : string =  
             when defined windows:
-                let libName = fmt "UnrealEditor-{moduleName}.lib" 
+                let libName = fmt "{prefix}-{moduleName}.lib" 
                 return addQuotes(engineDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / moduleName / libName)
             elif defined macosx:
                 let platform = $nueConfig.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
-                let libName = fmt "UnrealEditor-{moduleName}.dylib"
+
+                let libName = fmt "{prefix}-{moduleName}.dylib"
                 return  engineDir / "Binaries" / platform / libName
  
-        proc setEngineWeakSymbolsForModules(modules:seq[string]) =
+        proc setEngineWeakSymbolsForModules(prefix:string, modules:seq[string]) =
             for module in modules:
-                switch("passL",  getEngineRuntimeSymbolPathFor(module))
+                switch("passL",  getEngineRuntimeSymbolPathFor(prefix, module))
         
 
-        setEngineWeakSymbolsForModules(@["CoreUObject", "Core", "Engine"])
-    
+        proc addNewForUEBindings() = 
+
+            when defined macosx:
+                let libpath  = pluginDir / "Binaries"/ $nueConfig.targetPlatform/"UnrealEditor-NimForUEBindings.dylib"
+                switch("passL", libPath )
+            elif defined windows:
+                let libName = fmt "UnrealEditor-NimForUEBindings.lib" 
+                let libPath = addQuotes(pluginDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / "NimForUEBindings" / libName)
+                switch("passL", libPath)
+
+        setEngineWeakSymbolsForModules("UnrealEditor", @["Core", "CoreUObject", "Engine"]) 
+        addNewForUEBindings()   
+
 
     addHeaders()
     addSymbols()
