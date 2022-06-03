@@ -2,31 +2,7 @@
 
 
 class NIMFORUEBINDINGS_API FNimTestBase : public FAutomationTestBase {
-public:
-	// virtual ~FNimTestBase() override;
-	// virtual FString GetTestFullName() const override;
-	// virtual void AddError(const FString& InError, int32 StackOffset) override;
-	// virtual void AddErrorIfFalse(bool bCondition, const FString& InError, int32 StackOffset) override;
-	// virtual void AddErrorS(const FString& InError, const FString& InFilename, int32 InLineNumber) override;
-	// virtual void AddWarningS(const FString& InWarning, const FString& InFilename, int32 InLineNumber) override;
-	// virtual void AddWarning(const FString& InWarning, int32 StackOffset) override;
-	// virtual void AddInfo(const FString& InLogItem, int32 StackOffset) override;
-	// virtual void AddEvent(const FAutomationEvent& InEvent, int32 StackOffset) override;
-	// virtual void AddAnalyticsItem(const FString& InAnalyticsItem) override;
-	// virtual void AddTelemetryData(const FString& DataPoint, double Measurement, const FString& Context) override;
-	// virtual void AddTelemetryData(const TMap<FString, double>& ValuePairs, const FString& Context) override;
-	// virtual void SetTelemetryStorage(const FString& StorageName) override;
-	// virtual bool SuppressLogs() override;
-	// virtual bool SuppressLogErrors() override;
-	// virtual bool SuppressLogWarnings() override;
-	// virtual bool ElevateLogWarningsToErrors() override;
-	// virtual FString GetTestSourceFileName(const FString& InTestName) const override;
-	// virtual int32 GetTestSourceFileLine(const FString& InTestName) const override;
-	// virtual FString GetTestAssetPath(const FString& Parameter) const override;
-	// virtual FString GetTestOpenCommand(const FString& Parameter) const override;
-protected:
-	// virtual void SetTestContext(FString Context) override;
-private:
+
 	FString TestName;
 public:
 	
