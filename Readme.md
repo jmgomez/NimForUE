@@ -52,7 +52,7 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 - [x] Hot Reloading Windows
 - [x] Hot Reloading MacOS
 - [x] Debugging
-- [ ] Test Nim code that consumes Unreal Code without starting the editor. 
+- [x] Test Integration via Unreal Frontend
 - [ ] Cover all Unreal Reflected Types
 - [ ] Getter/Setters macro for UProps
 - [ ] Generate Nim definitions from Unreal Reflection system 
@@ -81,9 +81,9 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
                 More props
 
     ```
-
-
+- [ ] Nimscripter support? (allows nim in runtime)
 - [ ] Improve Debugger
+- [ ] Test Nim code that consumes Unreal Code without starting the editor. 
 - [ ] REPL
 - [ ] Editor Extension for auto completation on the DSL
 
