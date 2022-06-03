@@ -70,6 +70,7 @@ public class NimForUE : ModuleRules
 
 	}
 	
+	
 
 
 	
@@ -78,9 +79,8 @@ public class NimForUE : ModuleRules
 	
 	//WIN ONLY
 	[DllImport("kernel32.dll")]
-	static extern bool SetDllDirectory(string lpPathName); 
-	
-	
+	static extern bool SetDllDirectory(string lpPathName);
+
 	//TODO Run buildlibs from here so the correct config/platform is picked when building
 	void AddNimForUEDev() { //ONLY FOR WIN/MAC with EDITOR (dev) target
 
@@ -96,6 +96,8 @@ public class NimForUE : ModuleRules
 			RuntimeDependencies.Add(dynLibPath);
 			PublicDelayLoadDLLs.Add(dllName);
 			PublicAdditionalLibraries.Add(Path.Combine(nimBinPath, libSymbolsName));
+			
+			
 		}
 		else {
 			dynLibPath = Path.Combine(nimBinPath, "libhostnimforue.dylib");
@@ -113,6 +115,7 @@ public class NimForUE : ModuleRules
 			Console.WriteLine(e.Message);
 			Console.WriteLine(e.StackTrace);
 			//TODO Print JSON Here
+			
 		}
 	}
 	

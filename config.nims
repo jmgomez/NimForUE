@@ -103,12 +103,14 @@ when defined withue:
         
 
     proc addSymbols() =
+
         proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string) : string =  
             when defined windows:
                 let libName = fmt "{prefix}-{moduleName}.lib" 
                 return addQuotes(engineDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / moduleName / libName)
             elif defined macosx:
                 let platform = $nueConfig.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
+
                 let libName = fmt "{prefix}-{moduleName}.dylib"
                 return  engineDir / "Binaries" / platform / libName
  
@@ -116,7 +118,20 @@ when defined withue:
             for module in modules:
                 switch("passL",  getEngineRuntimeSymbolPathFor(prefix, module))
         
-        setEngineWeakSymbolsForModules("UnrealEditor", @["Core", "CoreUObject", "Engine"])    
+
+        proc addNewForUEBindings() = 
+
+            when defined macosx:
+                let libpath  = pluginDir / "Binaries"/ $nueConfig.targetPlatform/"UnrealEditor-NimForUEBindings.dylib"
+                switch("passL", libPath )
+            elif defined windows:
+                let libName = fmt "UnrealEditor-NimForUEBindings.lib" 
+                let libPath = addQuotes(pluginDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / "NimForUEBindings" / libName)
+                switch("passL", libPath)
+
+        setEngineWeakSymbolsForModules("UnrealEditor", @["Core", "CoreUObject", "Engine"]) 
+        addNewForUEBindings()   
+
 
     addHeaders()
     addSymbols()
