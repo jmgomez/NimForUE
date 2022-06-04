@@ -20,6 +20,7 @@ proc `[]=`*[T](arr:TArray[T], i: int32, val : T)  {. importcpp: "#[#]=#",  }
 
 
 proc makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
+# proc makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
 
 # proc makeTArray*[T](values:openarray[T]): TArray[T] {.importcpp: "'0({@})", constructor, nodecl.} #TODO
 

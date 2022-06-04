@@ -1,22 +1,34 @@
-import ../unreal/core/containers/unrealstring
 import ../unreal/nimforue/nimforuebindings
+import ../macros/uebind
+import ../unreal/coreuobject/uobject
+import ../unreal/core/containers/[unrealstring, array]
+import ../unreal/core/math/[vector]
+import ../unreal/core/[enginetypes]
 import macros
-
+import unittest
+import strutils
 {.emit: """/*INCLUDESECTION*/
 #include "Definitions.NimForUE.h"
 #include "Definitions.NimForUEBindings.h"
-#include "UObject/UnrealType.h"
-#include "Misc/AutomationTest.h"
-#include "NimBase.h"
-#include <typeinfo>
-""".}
-#TODO remove hooked tests
 
+""".}
+
+template suite* (suitName: static string, body:untyped) = 
+    block:
+        body
+        
+
+#TODO remove hooked tests
 template ueTest*(name:string, body:untyped) = 
     block:
-        var test = makeFNimTestBase(name)
+        when declared(suiteName):
+            echo "SUITE NAME DEFINED"
+            var test = makeFNimTestBase(suiteName & "." & name)
+        else:
+            echo "SUITE NAME ***NOT*** DEFINED"
+
+            var test = makeFNimTestBase(name)
         proc actualTest (test: var FNimTestBase){.cdecl.} =   
-            # test.testTrue("whatever", true)
             try:
                 body
             except Exception as e:
@@ -27,16 +39,54 @@ template ueTest*(name:string, body:untyped) =
         test.reloadTest()
 
 
+#suite NimForUE
 
 
 
+ueTest "NimForUE.ShouldBeBleToCreateAndOperateWithVectors":
+    let v : FVector = makeFVector(10, 50, 30)
+    let v2 = v+v 
+
+    let expectedResult = makeFVector(20, 100, 60)
+
+    assert expectedResult == v2
 
 
-ueTest "MyTest.Whatever":
-    assert len([2]) == 2
-ueTest "MyTest.Whatever2":
-    assert len([2]) == 1
+#suite TArrays
+ueTest "NimForUE.TArrays.ShouldbeAbleToInteropWithTArrays":
+    let arr : TArray[FString] = makeTArray[FString]()
+    arr.add FString("Hello")
+    arr.add FString("World")
 
-ueTest "MyTest.AnotherTest":
-    assert true
+    assert arr.num() == 2
+    
+
+
+ueTest "NimForUE.TArrays.ShouldBeAbleToIterateArrays":
+    let arr : TArray[int32] = makeTArray[int32]()
+    arr.add 5
+    arr.add 10
+
+    var result = 0
+    for n in arr:
+        result = result + n
+
+    assert result == 15
+    
+
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToGetAClassByName":
+    let cls = getClassByName("Actor")
+
+    assert not cls.isNil()
+    assert cls.getName() == FString("Actor")
+    
+    
+ueTest "NimForUE.UObjects.ShouldBeAbleToCreateAObjectByClass":
+    let cls = getClassByName("Actor")
+    let obj = newObjectFromClass(cls)
+
+    assert not cls.isNil()
+    assert cls.getName()==(obj.getClass().getName())
+
 

@@ -64,7 +64,8 @@ when defined withue:
     proc addHeaders() = 
         let pluginDefinitionsPaths = "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
         let nimForUEBindingsHeaders =  pluginDir/ "Source/NimForUEBindings/Public/"
-        
+        let nimForUEBindingsIntermidateHeaders = pluginDir/ "Intermediate"/ "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
+
         proc getEngineRuntimeIncludePathFor(engineFolder, moduleName:string) : string = addQuotes(engineDir / "Source"/engineFolder/moduleName/"Public")
         proc getEngineIntermediateIncludePathFor(moduleName:string) : string = addQuotes(engineDir / "Intermediate"/"Build"/platformDir/"UnrealEditor"/"Inc"/moduleName)
         proc setEngineRuntimeIncludeForModules(engineFolder:string, modules:seq[string]) =
@@ -79,6 +80,7 @@ when defined withue:
         switch("passC", "-I" & pluginDefinitionsPaths /  "NimForUE")
         switch("passC", "-I" & pluginDefinitionsPaths /  "NimForUEBindings")
         switch("passC", "-I" & nimForUEBindingsHeaders) 
+        switch("passC", "-I" & nimForUEBindingsIntermidateHeaders) 
         #engine
         switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"))
         switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"/"Engine"))

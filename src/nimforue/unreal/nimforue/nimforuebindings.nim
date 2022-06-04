@@ -49,6 +49,15 @@ proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.T
 
 
 
+# UClass* GetClassByName
+
+
+proc getClassByName*(className:FString) : UClassPtr {.importcpp:"UReflectionHelpers::GetClassByName(@)", header:  "ReflectionHelpers.h".}
+
+#NewObjectFromClass
+proc newObjectFromClass*(className:UClassPtr) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)", header:  "ReflectionHelpers.h".}
+
+
 
 
 

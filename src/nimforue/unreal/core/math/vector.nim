@@ -22,5 +22,6 @@ var forwardVector* {.importc: "FVector::ForwardVector".}: FVector
 var rightVector* {.importc: "FVector::RightVector".}: FVector
 
 func `+`*(a,b: FVector): FVector {.importcpp:"# + #", noSideEffect.}
+func `==`*(a,b: FVector): bool {.importcpp:"# == #", noSideEffect.}
 
 {.pop.}
