@@ -125,7 +125,7 @@ macro uebind* (fn : untyped) : untyped =
         )
         rootNode.add(paramsReturnNode)
     fn.body = rootNode
-    # echo fn.repr
+    echo fn.repr
     fn
 
 

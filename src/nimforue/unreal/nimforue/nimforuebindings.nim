@@ -25,6 +25,7 @@ proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:p
 proc invoke*(functionCaller: UFunctionCaller, executor:ptr UObject, returnResult:pointer) : void {.importcpp: "#.Invoke(@)", header:  "UObject/Object.h".}
 
 proc callUFuncOn*(executor:UObjectPtr, funcName : var FString, InParams : pointer) : void {.importcpp: "UFunctionCaller::CallUFunctionOn(@)", header:  "UFunctionCaller.h"}
+proc callUFuncOn*(class:UClassPtr, funcName : var FString, InParams : pointer) : void {.importcpp: "UFunctionCaller::CallUFunctionOn(@)", header:  "UFunctionCaller.h"}
 
 proc UE_Log*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUELog(@)" header: "UFunctionCaller.h".}
 # proc UE_Log*(msg: var FString) : void {.importcpp: "HelpersBindings::NimForUELog(@)" header: "HelpersBindings.h".}

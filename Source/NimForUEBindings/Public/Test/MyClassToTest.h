@@ -18,4 +18,6 @@ public:
 		return "Hello World!";
 	}
 
+	UFUNCTION()
+	static FString GetHelloWorldStatic() { return "Hello World!";}
 };

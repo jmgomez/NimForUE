@@ -96,8 +96,34 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToCallAFunctionInAnUObject":
 
     let expectedResult = FString("Hello World!")
 
+
     proc getHelloWorld(obj:UObjectPtr) : FString {.uebind.}
     
     let result = obj.getHelloWorld()
+
+
+    assert result == expectedResult
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToCallAStaticFunctionInAClass":
+    let cls = getClassByName("MyClassToTest")
+
+    let expectedResult = FString("Hello World!")
+
+    proc getHelloWorld(): FString =
+        type
+            Params = object
+                toReturn: FString
+
+        let cls = getClassByName("MyClassToTest")
+        var params = Params()
+        var fnName: FString = "GetHelloWorld"
+        callUFuncOn(cls, fnName, params.addr)
+        return params.toReturn
+
+
+    proc getHelloWorld(obj:UObjectPtr) : FString {.uebind.}
+    
+    let result = getHelloWorld()
+
 
     assert result == expectedResult
