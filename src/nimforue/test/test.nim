@@ -73,7 +73,7 @@ ueTest "NimForUE.TArrays.ShouldBeAbleToIterateArrays":
 
     assert result == 15
     
-
+#suite uobjects
 
 ueTest "NimForUE.UObjects.ShouldBeAbleToGetAClassByName":
     let cls = getClassByName("Actor")

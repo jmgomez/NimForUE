@@ -59,6 +59,10 @@ public:
 	static void CallUFunctionOn(UObject* Executor, FString& FunctionName, void* InParams) {
 		UFunctionCaller(Executor->GetClass(), FunctionName, InParams).Invoke(Executor);
 	}
+	static void CallUFunctionOn(UClass* Class, FString& FunctionName, void* InParams) {
+		UFunctionCaller(Class, FunctionName, InParams).Invoke(Class->GetDefaultObject());
+	}
+	
 	UFunctionCaller(UFunction* InFunction, void* InParams) {
 		Function = InFunction;
 		Params = (uint8*)InParams;
@@ -156,7 +160,6 @@ public:
 
 					
 					
-				
 				if(FObjectProperty* ObjProp = CastField<FObjectProperty>(Prop)) {
 					if(Function->NumParms == 1) {
 						ObjProp->SetObjectPropertyValue_InContainer(MemoryFrame, (UObject*)Params);

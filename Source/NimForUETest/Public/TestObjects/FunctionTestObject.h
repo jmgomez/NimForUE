@@ -40,6 +40,7 @@ class NIMFORUETEST_API UFunctionTestObject : public UObject {
 	GENERATED_BODY()
 
 public:
+	
 	bool bWasCalled = false;
 	UFUNCTION()
 	void ModifiedWasCalled();
@@ -119,6 +120,13 @@ public:
 	int ArrayLength(TArray<int> Ints) {
 		return Ints.Num();
 	}
+
+	UFUNCTION()
+	static int StaticArrayLength(TArray<int> Ints) {
+		return Ints.Num();
+	}
+
+	
 	UFUNCTION()
 	FString Reduce(TArray<FString> Strs) {
 		FString Result = "";
@@ -137,6 +145,8 @@ public:
 	FString GetStrValueFromStruct(FMyStructParamWithStr Struct) {
 		return Struct.StrProp;
 	}
+
+	
 	UFUNCTION()
     bool BoolTestFromNimAreEquals(FString NumberStr, int Number, bool TestParam) {
     	auto BoolToStr = [](bool Value){ return FString(Value?"True":"False");};
