@@ -90,3 +90,14 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToCreateAObjectByClass":
     assert cls.getName()==(obj.getClass().getName())
 
 
+ueTest "NimForUE.UObjects.ShouldBeAbleToCallAFunctionInAnUObject":
+    let cls = getClassByName("MyClassToTest")
+    let obj = newObjectFromClass(cls)
+
+    let expectedResult = FString("Hello World!")
+
+    proc getHelloWorld(obj:UObjectPtr) : FString {.uebind.}
+    
+    let result = obj.getHelloWorld()
+
+    assert result == expectedResult
