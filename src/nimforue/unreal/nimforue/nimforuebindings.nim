@@ -1,6 +1,6 @@
 import ../coreuobject/[uobject, unrealtype]
 import ../core/containers/unrealstring 
-import sugar
+import std/[typetraits, strutils]
 
 {.emit: """/*INCLUDESECTION*/
 #define WITH_AUTOMATION_TESTS 1
@@ -69,4 +69,9 @@ proc newObjectFromClass*(className:UClassPtr) : UObjectPtr {.importcpp:"UReflect
 
 
 
+
+proc newUObject*[T:UObject]() : ptr T = 
+    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
+    let cls = getClassByName(className)
+    return cast[ptr T](newObjectFromClass(cls))
 

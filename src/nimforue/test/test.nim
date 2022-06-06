@@ -153,11 +153,29 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObject":
     let prop = cls.getFPropertyByName propName 
     var obj = newObjectFromClass(cls)
 
-    
     let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
 
     let expectedResult = FString("Hello World!")
 
+
+    assert result == expectedResult
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObjectUsingAGetter_PreMacro":
+    type 
+        UMyClassToTest = object of UObject
+        UMyClassToTestPtr = ptr UMyClassToTest
+    
+    proc testProperty(obj:UMyClassToTestPtr) : FString = 
+        let cls = getClassByName("MyClassToTest")
+        var propName : FString = "TestProperty"
+        let prop = cls.getFPropertyByName propName 
+        let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
+        result
+
+    var obj = newUObject[UMyClassToTest]()
+
+    let result = obj.testProperty
+    let expectedResult = FString("Hello World!")
 
     assert result == expectedResult
 

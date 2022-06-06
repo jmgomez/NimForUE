@@ -194,6 +194,3 @@ macro uebindstatic* (className: string, fn : untyped) : untyped =
 # obj.testFunction()
 
 # echo obj.testParamsFunction("test", 3)
-
-dumpTree:
-    let cls = getClassByName("MyClassToTest")

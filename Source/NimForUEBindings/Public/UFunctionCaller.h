@@ -102,6 +102,7 @@ public:
 		Function = Class->FindFunctionByName(FName(FunctionName));
 		checkf(Function, TEXT("Cant find function %s in class %s"), *FunctionName, *Class->GetName());
 		Params = (uint8*)InParams;
+		
 	}
 	
 	void Invoke2(UObject* Executor, void* ReturnResult = nullptr) {

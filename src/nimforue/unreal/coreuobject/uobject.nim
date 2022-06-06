@@ -21,6 +21,8 @@ proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
 
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
 
+
+# proc staticClass*(_: typedesc[UObject]) : UClassPtr {. importcpp: "#::StaticClass()" .}
 {. pop .}
 #CamelCase
 #camelCase
