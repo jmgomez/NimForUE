@@ -30,13 +30,16 @@ proc callUFuncOn*(executor:UObjectPtr, funcName : var FString, InParams : pointe
 proc callUFuncOn*(class:UClassPtr, funcName : var FString, InParams : pointer) : void {.importcpp: "UFunctionCaller::CallUFunctionOn(@)".}
 
 
-proc getFPropertyValue*(property:FPropertyPtr, container : pointer) : pointer {.importcpp: "GetFPropertyValue(@)".}
 
 proc UE_Log*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUELog(@)".}
 # proc UE_Log*(msg: var FString) : void {.importcpp: "HelpersBindings::NimForUELog(@)" header: "HelpersBindings.h".}
 # proc UE_Log2*(msg: var FString) : void {.importcpp: "UE_LOG(LogTemp, Log, *#)" .}
 
 {.pop.}
+
+proc getFPropertyValue*(property:FPropertyPtr, container : pointer) : pointer {.importcpp: "GetFPropertyValue(@)", header:"UPropertyCaller.h".}
+proc setFPropertyValue*(property:FPropertyPtr, container, value : pointer) : void {.importcpp: "SetFPropertyValue(@)", header:"UPropertyCaller.h".}
+
 
 type 
     # ActualTestSignature = 
@@ -65,8 +68,6 @@ proc getClassByName*(className:FString) : UClassPtr {.importcpp:"UReflectionHelp
 proc newObjectFromClass*(className:UClassPtr) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
 
 {. pop .}
-
-
 
 
 

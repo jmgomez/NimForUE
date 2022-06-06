@@ -179,3 +179,48 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObjectUsingAGet
 
     assert result == expectedResult
 
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject":
+    let cls = getClassByName("MyClassToTest")
+    var propName : FString = "TestProperty"
+    let prop = cls.getFPropertyByName propName 
+    var obj = newObjectFromClass(cls)
+    var expectedResult = FString("New Value!")
+
+    prop.setFPropertyValue(obj, expectedResult.addr)
+
+    let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
+
+
+    assert result == expectedResult
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro":
+    type 
+        UMyClassToTest = object of UObject
+        UMyClassToTestPtr = ptr UMyClassToTest
+
+    proc testProperty(obj:UMyClassToTestPtr) : FString = 
+        let cls = getClassByName("MyClassToTest")
+        var propName : FString = "TestProperty"
+        let prop = cls.getFPropertyByName propName 
+        let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
+        result
+
+    proc `testProperty=`(obj:UMyClassToTestPtr, val:FString) = 
+        let cls = getClassByName("MyClassToTest")
+        var propName : FString = "TestProperty"
+        var value : FString = val
+        let prop = cls.getFPropertyByName propName
+        prop.setFPropertyValue(obj, value.addr)
+        
+
+    var obj = newUObject[UMyClassToTest]()
+    var expectedResult = FString("New Value!")
+
+    assert obj.testProperty != expectedResult
+    
+    obj.testProperty = expectedResult
+
+    assert obj.testProperty == expectedResult
+
+    
