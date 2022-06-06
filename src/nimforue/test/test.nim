@@ -149,11 +149,15 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyNameFromAClass":
 
 ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObject":
     let cls = getClassByName("MyClassToTest")
-    let obj = newObjectFromClass(cls)
+    var propName : FString = "TestProperty"
+    let prop = cls.getFPropertyByName propName 
+    var obj = newObjectFromClass(cls)
+
+    
+    let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
 
     let expectedResult = FString("Hello World!")
 
-    
 
     assert result == expectedResult
 
