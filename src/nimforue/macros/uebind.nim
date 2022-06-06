@@ -1,4 +1,4 @@
-import macros
+import std/[macros, genasts]
 {.experimental: "caseStmtMacros".}
 
 import std/[options, strutils]
@@ -79,6 +79,7 @@ func getParamsInstanceDeclNode(fn:NimNode, params:seq[NimNode]) : NimNode =
 
 #TODO Rewrite this using genAst
 #Notice the function is capitalized to follow unreal conventions
+
 macro uebind* (fn : untyped) : untyped = 
     expectKind(fn, RoutineNodes)
     #[ Generates the following based on Fn signature
@@ -125,7 +126,60 @@ macro uebind* (fn : untyped) : untyped =
         )
         rootNode.add(paramsReturnNode)
     fn.body = rootNode
-    echo fn.repr
+    # echo fn.repr
+    fn
+
+
+#TODO WHEN DOING THE REFACTOR OF THE MACRO CONSIDER UNIFY IT WITH UEBIND
+macro uebindstatic* (className: string, fn : untyped) : untyped = 
+    expectKind(fn, RoutineNodes)
+    #[ Generates the following based on Fn signature
+    proc generatedFunc(param1:FString, param2:int) : FString =
+        type Params = object 
+            param1: FString
+            param2: int
+            toReturn: FString #Output paramaeters 
+        var parms = Params(param1: param1, param2: param2)
+        var funcName = makeFString("TestMultipleParams")
+        callUFuncOn(executor, funcName, parms.addr, parms.toReturn.addr)
+        return params.toReturn
+    ]#
+    let instCls = genAst(className):
+                    let cls {.inject.} = getClassByName(className)
+
+    let retType = fn.params[0]
+    # skip first arg and return type (NOTICE THIS IS DIFFERENT WITH THE UEBIND obj Instnace MACRO)
+    let paramsNodesDef = fn.params[1..len(fn.params)-1] 
+   
+    let paramsTypeDefinitionNode = getParamsTypeDef(fn, paramsNodesDef, retType)
+    let paramsInstDeclNode = getParamsInstanceDeclNode(fn, paramsNodesDef)
+    
+
+    let parmInFuncCallNode = nnkDotExpr.newTree(newIdentNode("params"), newIdentNode("addr"))
+
+
+    let funcNameDeclNode = nnkVarSection.newTree(
+                                nnkIdentDefs.newTree(
+                                newIdentNode("fnName"),
+                                newIdentNode("FString"),
+                                newLit(($name(fn)).capitalizeAscii())
+                                )
+            
+    )
+    let callUFuncNode = nnkCall.newTree(newIdentNode("callUFuncOn"), newIdentNode("cls"), 
+                                newIdentNode("fnName"), parmInFuncCallNode)
+
+    let rootNode = nnkStmtList.newTree(paramsTypeDefinitionNode, paramsInstDeclNode, funcNameDeclNode, callUFuncNode)
+    if retType.kind != nnkEmpty and not retType.eqIdent("void"): #Add return, move from here
+        let paramsReturnNode =  nnkReturnStmt.newTree(
+            nnkDotExpr.newTree(
+                newIdentNode("params"),
+                newIdentNode("toReturn")
+            )
+        )
+        rootNode.add(paramsReturnNode)
+    fn.body = rootNode
+    # echo fn.repr
     fn
 
 
@@ -141,3 +195,5 @@ macro uebind* (fn : untyped) : untyped =
 
 # echo obj.testParamsFunction("test", 3)
 
+dumpTree:
+    let cls = getClassByName("MyClassToTest")

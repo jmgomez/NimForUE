@@ -127,3 +127,14 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToCallAStaticFunctionInAClass":
 
 
     assert result == expectedResult
+
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToCallAStaticFunctionInAClassWithUEBind":
+    let cls = getClassByName("MyClassToTest")
+
+    let expectedResult = FString("Hello World!")
+
+    proc getHelloWorld() : FString {.uebindstatic:"MyClassToTest"}
+
+    let result = getHelloWorld()
+    assert result == expectedResult
