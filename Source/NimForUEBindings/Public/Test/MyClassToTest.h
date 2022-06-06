@@ -13,6 +13,9 @@ UCLASS()
 class NIMFORUEBINDINGS_API UMyClassToTest : public UObject {
 	GENERATED_BODY()
 public:
+	UPROPERTY()
+	FString TestProperty = "Hello World!";
+	
 	UFUNCTION()
 	FString GetHelloWorld() {
 		return "Hello World!";

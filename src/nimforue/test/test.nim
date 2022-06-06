@@ -1,6 +1,6 @@
 import ../unreal/nimforue/nimforuebindings
 import ../macros/uebind
-import ../unreal/coreuobject/uobject
+import ../unreal/coreuobject/[uobject, unrealtype]
 import ../unreal/core/containers/[unrealstring, array]
 import ../unreal/core/math/[vector]
 import ../unreal/core/[enginetypes]
@@ -22,11 +22,8 @@ template suite* (suitName: static string, body:untyped) =
 template ueTest*(name:string, body:untyped) = 
     block:
         when declared(suiteName):
-            echo "SUITE NAME DEFINED"
             var test = makeFNimTestBase(suiteName & "." & name)
         else:
-            echo "SUITE NAME ***NOT*** DEFINED"
-
             var test = makeFNimTestBase(name)
         proc actualTest (test: var FNimTestBase){.cdecl.} =   
             try:
@@ -138,3 +135,25 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToCallAStaticFunctionInAClassWithUEBind":
 
     let result = getHelloWorld()
     assert result == expectedResult
+
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyNameFromAClass":
+    let cls = getClassByName("MyClassToTest")
+    var propName : FString = "TestProperty"
+    let prop = cls.getFPropertyByName propName 
+
+    assert not prop.isNil()
+
+    assert prop.getName() == propName
+
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObject":
+    let cls = getClassByName("MyClassToTest")
+    let obj = newObjectFromClass(cls)
+
+    let expectedResult = FString("Hello World!")
+
+    
+
+    assert result == expectedResult
+

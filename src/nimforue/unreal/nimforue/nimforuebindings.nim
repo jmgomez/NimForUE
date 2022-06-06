@@ -1,6 +1,7 @@
-import ../coreuobject/uobject
+import ../coreuobject/[uobject, unrealtype]
 import ../core/containers/unrealstring 
 import sugar
+
 {.emit: """/*INCLUDESECTION*/
 #define WITH_AUTOMATION_TESTS 1
 #define WITH_DEV_AUTOMATION_TESTS 1
@@ -27,6 +28,9 @@ proc invoke*(functionCaller: UFunctionCaller, executor:ptr UObject, returnResult
 proc callUFuncOn*(executor:UObjectPtr, funcName : var FString, InParams : pointer) : void {.importcpp: "UFunctionCaller::CallUFunctionOn(@)", header:  "UFunctionCaller.h"}
 proc callUFuncOn*(class:UClassPtr, funcName : var FString, InParams : pointer) : void {.importcpp: "UFunctionCaller::CallUFunctionOn(@)", header:  "UFunctionCaller.h"}
 
+
+
+
 proc UE_Log*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUELog(@)" header: "UFunctionCaller.h".}
 # proc UE_Log*(msg: var FString) : void {.importcpp: "HelpersBindings::NimForUELog(@)" header: "HelpersBindings.h".}
 # proc UE_Log2*(msg: var FString) : void {.importcpp: "UE_LOG(LogTemp, Log, *#)" .}
@@ -51,12 +55,16 @@ proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.T
 
 
 # UClass* GetClassByName
+{.push header:"ReflectionHelpers.h"}
 
+proc getFPropertyByName*(class:UClassPtr, propName:var FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
 
-proc getClassByName*(className:FString) : UClassPtr {.importcpp:"UReflectionHelpers::GetClassByName(@)", header:  "ReflectionHelpers.h".}
+proc getClassByName*(className:FString) : UClassPtr {.importcpp:"UReflectionHelpers::GetClassByName(@)".}
 
 #NewObjectFromClass
-proc newObjectFromClass*(className:UClassPtr) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)", header:  "ReflectionHelpers.h".}
+proc newObjectFromClass*(className:UClassPtr) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
+
+{. pop .}
 
 
 

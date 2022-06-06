@@ -22,3 +22,14 @@ UObject* UReflectionHelpers::NewObjectFromClass(UClass* Class) {
 	Params.ExternalPackage = nullptr;
 	return (StaticConstructObject_Internal(Params));
 }
+
+FProperty* UReflectionHelpers::GetFPropetyByName(UClass* Class, FString& Name) {
+	for (TFieldIterator<FProperty> It(Class); It; ++It) {
+		FProperty* Prop = *It;
+		if(Prop->GetName().Equals(Name)) {
+			return Prop;
+		}
+	}
+	return nullptr;
+
+}

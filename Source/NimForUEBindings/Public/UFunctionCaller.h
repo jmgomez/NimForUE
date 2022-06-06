@@ -17,7 +17,6 @@ static void FPropertyGetter(FProperty* Property, void* ReturnResult, void* Conta
 	void* ToReturn = nullptr;
 	if(FStrProperty* StrProperty = CastField<FStrProperty>(Property)) {
 		ToReturn = StrProperty->GetPropertyValuePtr_InContainer(Container);
-
 	}
 	if(FIntProperty* IntProperty = CastField<FIntProperty>(Property)) {
 		ToReturn = IntProperty->GetPropertyValuePtr_InContainer(Container);
@@ -31,7 +30,6 @@ static void FPropertyGetter(FProperty* Property, void* ReturnResult, void* Conta
 		*ReturnResultBool = Value;
 		return;
 	}
-	
 	
 	if(FArrayProperty* ArrayProp = CastField<FArrayProperty>(Property)) {
 		ToReturn = ArrayProp->GetPropertyValuePtr_InContainer(Container);
