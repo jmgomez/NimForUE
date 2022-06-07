@@ -223,4 +223,18 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro
 
     assert obj.testProperty == expectedResult
 
+
+
+
+
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSetters":
+    const ueType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass, 
+                    properties: @[UEProperty(name: "TestProperty", kind: "FString")])
+    genType(ueType) #Notice we wont be using genType directly
     
+    let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+    let expectedResult = FString("Hello from Test")
+    obj.testProperty = "Hello from Test"
+    
+    assert expectedResult == obj.testProperty   

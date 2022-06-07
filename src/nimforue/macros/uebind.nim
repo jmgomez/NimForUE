@@ -183,14 +183,79 @@ macro uebindstatic* (className: string, fn : untyped) : untyped =
     fn
 
 
-#example declaration    
-# proc testFunction(obj:UObjPtr) : void {.uebind.}
-# proc testReturnFunction(obj:UObjPtr) : FString {.uebind.}
-# proc testParamsFunction(obj:UObjPtr, oneParam:FString, anotherParam:int) : FString {.uebind.}
-#Example usage
-# var obj : UObjPtr = cast[UObjPtr] (nil)
 
-# echo obj.testReturnFunction()
-# obj.testFunction()
+# macro bindprop(body:untyped) : untyped =
+#     echo treeRepr body
+#     result = body
 
-# echo obj.testParamsFunction("test", 3)
+
+macro bindprop(body:untyped) : untyped = 
+    # body
+    echo treeRepr(body)
+    result = body
+    
+type FuncTest = object 
+    name : string 
+
+
+proc genFun(funcDef : FuncTest) : NimNode = 
+    result = 
+        genAst(name = ident funcDef.name):
+            proc name (param: int, param2: int) : void  = discard 2
+    
+
+type
+    UETypeKind* = enum
+        uClass
+    
+    UEProperty* = object
+        name* : string
+        kind* : string #Do a close set of types
+
+    UEType* = object 
+        name* : string 
+        parent* : string
+        kind* : UETypeKind
+        properties* : seq[UEProperty]
+
+
+
+proc genGetter(typeDef : UEType, prop : UEProperty) : NimNode = 
+    let ptrName = ident typeDef.name & "Ptr"
+    let className = typeDef.name.substr(1)
+    let typName = ident prop.kind
+    var propName = prop.name 
+    propName[0] = propName[0].toLowerAscii()
+    let propIdent = ident propName
+    result = 
+        genAst(propIdent, ptrName, typName, className, propUEName = prop.name):
+            proc propIdent (obj {.inject.} : ptrName ) : typName =
+                let cls = getClassByName(className) #need to remove the U
+                var propRefUEName : FString = propUEName #transform it to a reference so we dont copy
+                let prop = cls.getFPropertyByName propRefUEName
+                cast[ptr typName](prop.getFPropertyValue(obj))[]
+            
+            proc `propIdent=` (obj {.inject.} : ptrName, val :typName) = 
+                let cls = getClassByName(className) #need to remove the U
+                var propRefUEName : FString = propUEName #transform it to a reference so we dont copy
+                var value : typName = val
+                let prop = cls.getFPropertyByName propRefUEName
+                prop.setFPropertyValue(obj, value.addr)
+
+
+proc genUETypeDef(typeDef : UEType) : NimNode =
+    let ptrName = ident typeDef.name & "Ptr"
+    let parent = ident typedef.parent
+    let prop = genGetter(typeDef, typeDef.properties[0])
+    result = 
+        genAst(name = ident typeDef.name, ptrName, parent, prop):
+                type 
+                    name {.inject.} = object of parent #TODO OF BASE CLASS 
+                    ptrName {.inject.} = ptr name
+                prop
+
+
+macro genType*(typeDef : static UEType) : untyped = 
+    result = genUETypeDef(typeDef)
+    echo result.repr
+
