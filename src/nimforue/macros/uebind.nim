@@ -1,10 +1,6 @@
-import std/[macros, genasts]
 {.experimental: "caseStmtMacros".}
 
-import std/[options, strutils]
-# import coreutils
-import sequtils
-import sugar
+import std/[options, strutils,sugar, sequtils, genasts, macros]
 
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
     # nnkTypeSection.newTree(
@@ -220,7 +216,7 @@ type
 
 
 
-proc genGetter(typeDef : UEType, prop : UEProperty) : NimNode = 
+proc genProp(typeDef : UEType, prop : UEProperty) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
     let className = typeDef.name.substr(1)
     let typName = ident prop.kind
@@ -246,13 +242,13 @@ proc genGetter(typeDef : UEType, prop : UEProperty) : NimNode =
 proc genUETypeDef(typeDef : UEType) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
     let parent = ident typedef.parent
-    let prop = genGetter(typeDef, typeDef.properties[0])
+    let props = nnkStmtList.newTree(typeDef.properties.map(prop=>genProp(typeDef, prop)))
     result = 
-        genAst(name = ident typeDef.name, ptrName, parent, prop):
+        genAst(name = ident typeDef.name, ptrName, parent, props):
                 type 
                     name {.inject.} = object of parent #TODO OF BASE CLASS 
                     ptrName {.inject.} = ptr name
-                prop
+                props
 
 
 macro genType*(typeDef : static UEType) : untyped = 
