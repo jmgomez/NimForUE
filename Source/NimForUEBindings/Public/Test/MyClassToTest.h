@@ -15,6 +15,14 @@ class NIMFORUEBINDINGS_API UMyClassToTest : public UObject {
 public:
 	UPROPERTY()
 	FString TestProperty = "Hello World!";
+
+	UPROPERTY()
+	int32 IntProperty = 2;
+
+	
+
+	
+
 	
 	UFUNCTION()
 	FString GetHelloWorld() {

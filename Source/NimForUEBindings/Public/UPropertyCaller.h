@@ -38,12 +38,12 @@ static void SetFPropertyValue(FProperty* Property,  void* Container, void* Value
 		FString* StrVal = static_cast<FString*>(ValuePtr);
 		StrProperty->SetPropertyValue_InContainer(Container, *StrVal);
 	}
-
-	return;
 	
-	// if(FIntProperty* IntProperty = CastField<FIntProperty>(Property)) {
-	// 	return IntProperty->GetPropertyValuePtr_InContainer(Container);
-	// }
+	if(FIntProperty* IntProperty = CastField<FIntProperty>(Property)) {
+		int32* IntVal = static_cast<int32*>(ValuePtr);
+		return IntProperty->SetPropertyValue_InContainer(Container, *IntVal);
+	}
+	
 	// if(FFloatProperty* FloatProperty = CastField<FFloatProperty>(Property)) {
 	// 	return FloatProperty->GetPropertyValuePtr_InContainer(Container);
 	// }
