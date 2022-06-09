@@ -9,6 +9,15 @@
 /**
  * 
  */
+
+UCLASS()
+class UClassToUseAsVar : public UObject {
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	FString TestProperty = "Im a valid var";
+};
+
 UCLASS()
 class NIMFORUEBINDINGS_API UMyClassToTest : public UObject {
 	GENERATED_BODY()
@@ -27,6 +36,9 @@ public:
 
 	UPROPERTY()
 	TArray<FString> ArrayProperty;
+
+	UPROPERTY()
+	UClassToUseAsVar* ObjectProperty;
 	
 	UFUNCTION()
 	FString GetHelloWorld() {
