@@ -43,7 +43,7 @@ when defined macosx: #Doesn't compile with ORC. TODO Investigate why
     switch("passC", "-fno-rtti")   
     switch("cc", "clang")
     putEnv("MACOSX_DEPLOYMENT_TARGET", "10.15") #sets compatibility with the same macos version as ue5 was build to
-    
+    switch("passC", "-mincremental-linker-compatible")
     #(DYLD_LIBRARY_PATH cant be set without modifiying macosx permissions)
     #TODO try again passing the compiler --rpath
     #Uncomment the line above to being able to use executables that uses the engine libraries 

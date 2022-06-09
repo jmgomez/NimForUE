@@ -164,12 +164,13 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObjectUsingAGet
     type 
         UMyClassToTest = object of UObject
         UMyClassToTestPtr = ptr UMyClassToTest
-    
+     
     proc testProperty(obj:UMyClassToTestPtr) : FString = 
         let cls = getClassByName("MyClassToTest")
         var propName : FString = "TestProperty"
         let prop = cls.getFPropertyByName propName 
-        let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
+        let result = cast[ptr FString](getPropertyValuePtr[FString](prop, obj))[]
+        # let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
         result
 
     var obj = newUObject[UMyClassToTest]()
@@ -187,8 +188,9 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject":
     var obj = newObjectFromClass(cls)
     var expectedResult = FString("New Value!")
 
-    prop.setFPropertyValue(obj, expectedResult.addr)
-
+    # setFPropertyValuePtr[FString](prop, obj, expectedResult.addr)
+    prop.setFPropertyValue(obj, expectedResult.addr) 
+ 
     let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
 
 
@@ -204,19 +206,23 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro
         var propName : FString = "TestProperty"
         let prop = cls.getFPropertyByName propName 
         let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
-        result
+        result 
 
     proc `testProperty=`(obj:UMyClassToTestPtr, val:FString) = 
         let cls = getClassByName("MyClassToTest")
         var propName : FString = "TestProperty"
-        var value : FString = val
+        var value : FString = val 
         let prop = cls.getFPropertyByName propName
-        prop.setFPropertyValue(obj, value.addr)
-        
+        # setFPropertyValue(prop, obj, value.addr)
 
+
+
+        setPropertyValuePtr[FString](prop, obj, value.addr)
+         
+    
     var obj = newUObject[UMyClassToTest]()
     var expectedResult = FString("New Value!")
-
+    
     assert obj.testProperty != expectedResult
     
     obj.testProperty = expectedResult
@@ -227,27 +233,35 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro
 const ueType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass, 
                     properties: @[
                         UEProperty(name: "TestProperty", kind: "FString"),
-                        UEProperty(name: "IntProperty", kind: "int32")
-                        
+                        UEProperty(name: "IntProperty", kind: "int32"),
+                        UEProperty(name: "FloatProperty", kind: "float32")
+                    
                         ])
+                        
 
 genType(ueType) #Notice we wont be using genType directly
 
 ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForFString":
-    
     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
     let expectedResult = FString("Hello from Test")
-    obj.testProperty = expectedResult
+    obj.testProperty = expectedResult 
     
     assert expectedResult == obj.testProperty 
 
-
 ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForint32":
-   
+ 
     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
     let expectedResult = int32 5
     obj.intProperty = expectedResult
     
     assert expectedResult == obj.intProperty 
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForFloat":
+    let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+    let expectedResult = 5.0f
+    obj.floatProperty = expectedResult
+      
+    assert expectedResult == obj.floatProperty 
+
 
 

@@ -19,6 +19,9 @@ public:
 	UPROPERTY()
 	int32 IntProperty = 2;
 
+	UPROPERTY()
+	float FloatProperty;
+
 	
 
 	
