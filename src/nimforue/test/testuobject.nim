@@ -14,15 +14,16 @@ import testutils
 
 """.}
 
+let suiteName = "NimForUE.UObject."
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToGetAClassByName":
+ueTest suiteName & "ShouldBeAbleToGetAClassByName":
     let cls = getClassByName("Actor")
 
     assert not cls.isNil()
     assert cls.getName() == FString("Actor")
     
     
-ueTest "NimForUE.UObjects.ShouldBeAbleToCreateAObjectByClass":
+ueTest suiteName & "ShouldBeAbleToCreateAObjectByClass":
     let cls = getClassByName("Actor")
     let obj = newObjectFromClass(cls)
 
@@ -30,7 +31,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToCreateAObjectByClass":
     assert cls.getName()==(obj.getClass().getName())
 
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToCallAFunctionInAnUObject":
+ueTest suiteName & "ShouldBeAbleToCallAFunctionInAnUObject":
     let cls = getClassByName("MyClassToTest")
     let obj = newObjectFromClass(cls)
 
@@ -44,7 +45,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToCallAFunctionInAnUObject":
 
     assert result == expectedResult
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToCallAStaticFunctionInAClass":
+ueTest suiteName & "ShouldBeAbleToCallAStaticFunctionInAClass":
     let cls = getClassByName("MyClassToTest")
 
     let expectedResult = FString("Hello World!")
@@ -69,7 +70,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToCallAStaticFunctionInAClass":
     assert result == expectedResult
 
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToCallAStaticFunctionInAClassWithUEBind":
+ueTest suiteName & "ShouldBeAbleToCallAStaticFunctionInAClassWithUEBind":
     let cls = getClassByName("MyClassToTest")
 
     let expectedResult = FString("Hello World!")
@@ -80,7 +81,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToCallAStaticFunctionInAClassWithUEBind":
     assert result == expectedResult
 
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyNameFromAClass":
+ueTest suiteName & "ShouldBeAbleToGetThePropertyNameFromAClass":
     let cls = getClassByName("MyClassToTest")
     var propName : FString = "TestProperty"
     let prop = cls.getFPropertyByName propName 
@@ -90,7 +91,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyNameFromAClass":
     assert prop.getName() == propName
 
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObject":
+ueTest suiteName & "ShouldBeAbleToGetThePropertyValueFromAnObject":
     let cls = getClassByName("MyClassToTest")
     var propName : FString = "TestProperty"
     let prop = cls.getFPropertyByName propName 
@@ -103,7 +104,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObject":
 
     assert result == expectedResult
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObjectUsingAGetter_PreMacro":
+ueTest suiteName & "ShouldBeAbleToGetThePropertyValueFromAnObjectUsingAGetter_PreMacro":
     type 
         UMyClassToTest = object of UObject
         UMyClassToTestPtr = ptr UMyClassToTest
@@ -124,7 +125,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObjectUsingAGet
     assert result == expectedResult
 
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject":
+ueTest suiteName & "ShouldBeAbleToSetThePropertyValueFromAnObject":
     let cls = getClassByName("MyClassToTest")
     var propName : FString = "TestProperty"
     let prop = cls.getFPropertyByName propName 
@@ -138,7 +139,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject":
 
     assert result == expectedResult
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro":
+ueTest suiteName & "ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro":
     type 
         UMyClassToTest = object of UObject
         UMyClassToTestPtr = ptr UMyClassToTest
@@ -180,21 +181,21 @@ const ueType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass,
 
 genType(ueType) #Notice we wont be using genType directly
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForFString":
+ueTest suiteName & "ShouldBeAbleToUseAutoGenGettersAndSettersForFString":
     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
     let expectedResult = FString("Hello from Test")
     obj.testProperty = expectedResult 
     
     assert expectedResult == obj.testProperty 
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForint32":
+ueTest suiteName & "ShouldBeAbleToUseAutoGenGettersAndSettersForint32":
     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
     let expectedResult = int32 5
     obj.intProperty = expectedResult
     
     assert expectedResult == obj.intProperty 
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForFloat":
+ueTest suiteName & "ShouldBeAbleToUseAutoGenGettersAndSettersForFloat":
     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
     let expectedResult = 5.0f
     obj.floatProperty = expectedResult
@@ -203,7 +204,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForFloat":
 
 
 
-ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForBool":
+ueTest suiteName & "ShouldBeAbleToUseAutoGenGettersAndSettersForBool":
     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
     let expectedResult = true
     obj.boolProperty = expectedResult
