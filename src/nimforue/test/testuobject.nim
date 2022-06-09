@@ -168,6 +168,9 @@ ueTest "ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro":
 
     assert obj.testProperty == expectedResult
 
+#This struct is defined in Cpp. TODO: Integrate it into the macro
+type FStructToUseAsVar = object 
+    testProperty : FString  
 
 
 const ueVarType = UEType(name: "UClassToUseAsVar", parent: "UObject", kind: uClass, 
@@ -184,6 +187,7 @@ const ueType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass,
                         UEProperty(name: "BoolProperty", kind: "bool"),
                         UEProperty(name: "ArrayProperty", kind: "TArray[FString]"),
                         UEProperty(name: "ObjectProperty", kind: "UClassToUseAsVarPtr"),
+                        UEProperty(name: "StructProperty", kind: "FStructToUseAsVar"),
                     
                         ])
                         
@@ -232,4 +236,13 @@ ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForUObjectProps":
     assert obj.objectProperty.testProperty == expectedResult.testProperty
   
 
-     
+ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForStructs_PreMacro":
+    let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+
+    let expectedResult = FString("Some String")
+
+    let structProp = FStructToUseAsVar(testProperty: expectedResult)
+
+    obj.structProperty = structProp
+
+    assert obj.structProperty.testProperty == expectedResult

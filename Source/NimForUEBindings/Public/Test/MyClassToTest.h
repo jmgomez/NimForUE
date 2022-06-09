@@ -10,6 +10,13 @@
  * 
  */
 
+USTRUCT()
+struct FStructToUseAsVar {
+	GENERATED_BODY()
+	UPROPERTY()
+	FString TestProperty = "Hello World!";
+};
+
 UCLASS()
 class UClassToUseAsVar : public UObject {
 	GENERATED_BODY()
@@ -39,6 +46,9 @@ public:
 
 	UPROPERTY()
 	UClassToUseAsVar* ObjectProperty;
+
+	UPROPERTY()
+	FStructToUseAsVar StructProperty;
 	
 	UFUNCTION()
 	FString GetHelloWorld() {
