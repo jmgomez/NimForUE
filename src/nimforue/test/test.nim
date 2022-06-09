@@ -153,7 +153,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObject":
     let prop = cls.getFPropertyByName propName 
     var obj = newObjectFromClass(cls)
 
-    let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
+    let result = getPropertyValuePtr[FString](prop, obj)[]
 
     let expectedResult = FString("Hello World!")
 
@@ -169,7 +169,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToGetThePropertyValueFromAnObjectUsingAGet
         let cls = getClassByName("MyClassToTest")
         var propName : FString = "TestProperty"
         let prop = cls.getFPropertyByName propName 
-        let result = cast[ptr FString](getPropertyValuePtr[FString](prop, obj))[]
+        let result = getPropertyValuePtr[FString](prop, obj)[]
         # let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
         result
 
@@ -188,10 +188,9 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject":
     var obj = newObjectFromClass(cls)
     var expectedResult = FString("New Value!")
 
-    # setFPropertyValuePtr[FString](prop, obj, expectedResult.addr)
-    prop.setFPropertyValue(obj, expectedResult.addr) 
+    setPropertyValuePtr(prop, obj, expectedResult.addr) 
  
-    let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
+    let result = getPropertyValuePtr[FString](prop, obj)[]
 
 
     assert result == expectedResult
@@ -205,7 +204,7 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro
         let cls = getClassByName("MyClassToTest")
         var propName : FString = "TestProperty"
         let prop = cls.getFPropertyByName propName 
-        let result = cast[ptr FString](prop.getFPropertyValue(obj))[]
+        let result = getPropertyValuePtr[FString](prop, obj)[]
         result 
 
     proc `testProperty=`(obj:UMyClassToTestPtr, val:FString) = 
@@ -213,10 +212,6 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro
         var propName : FString = "TestProperty"
         var value : FString = val 
         let prop = cls.getFPropertyByName propName
-        # setFPropertyValue(prop, obj, value.addr)
-
-
-
         setPropertyValuePtr[FString](prop, obj, value.addr)
          
     

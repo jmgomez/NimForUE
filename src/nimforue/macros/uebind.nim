@@ -229,7 +229,7 @@ proc genProp(typeDef : UEType, prop : UEProperty) : NimNode =
                 let cls = getClassByName(className) #need to remove the U
                 var propRefUEName : FString = propUEName #transform it to a reference so we dont copy
                 let prop = cls.getFPropertyByName propRefUEName
-                cast[ptr typName](getPropertyValuePtr[typName](prop, obj))[]
+                getPropertyValuePtr[typName](prop, obj)[]
             
             proc `propIdent=` (obj {.inject.} : ptrName, val :typName) = 
                 let cls = getClassByName(className) #need to remove the U

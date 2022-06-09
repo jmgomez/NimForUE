@@ -37,10 +37,8 @@ proc UE_Log*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUELog(@)"
 
 {.pop.}
 
-proc getFPropertyValue*(property:FPropertyPtr, container : pointer) : pointer {.importcpp: "GetFPropertyValue(@)", header:"UPropertyCaller.h".}
-proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : pointer {.importcpp: "GetPropertyValuePtr<'0>(@)", header:"UPropertyCaller.h".}
 
-proc setFPropertyValue*(property:FPropertyPtr, container, value : pointer) : void {.importcpp: "SetFPropertyValue(@)", header:"UPropertyCaller.h".}
+proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
 proc setPropertyValuePtr*[T](property:FPropertyPtr, container : pointer, value : ptr T) : void {.importcpp: "SetPropertyValuePtr<'*3>(@)", header:"UPropertyCaller.h".}
 
 type 
