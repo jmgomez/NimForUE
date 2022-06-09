@@ -245,3 +245,4 @@ ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForStructs_PreMacro":
 
     assert obj.structProperty.testProperty == expectedResult
 
+

@@ -60,9 +60,10 @@ proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.T
 # UClass* GetClassByName
 {.push header:"ReflectionHelpers.h"}
 
-proc getFPropertyByName*(class:UClassPtr, propName:var FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
+proc getFPropertyByName*(class:UStructPtr, propName:var FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
 
 proc getClassByName*(className:FString) : UClassPtr {.importcpp:"UReflectionHelpers::GetClassByName(@)".}
+proc getStructByName*(structName:FString) : UScriptStructPtr {.importcpp:"UReflectionHelpers::GetStructByName(@)".}
 
 #NewObjectFromClass
 proc newObjectFromClass*(className:UClassPtr) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}

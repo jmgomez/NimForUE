@@ -28,8 +28,8 @@ UObject* UReflectionHelpers::NewObjectFromClass(UClass* Class) {
 	return (StaticConstructObject_Internal(Params));
 }
 
-FProperty* UReflectionHelpers::GetFPropetyByName(UClass* Class, FString& Name) {
-	for (TFieldIterator<FProperty> It(Class); It; ++It) {
+FProperty* UReflectionHelpers::GetFPropetyByName(UStruct* Struct, FString& Name) {
+	for (TFieldIterator<FProperty> It(Struct); It; ++It) {
 		FProperty* Prop = *It;
 		if(Prop->GetName().Equals(Name)) {
 			return Prop;

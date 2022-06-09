@@ -60,5 +60,13 @@ ueTest "NimForUE.UStructs.ShouldBeAbleToGetTheClassOfAStruct":
     assert not scriptStruct.isNil()
 
 
+ueTest "NimForUE.UStructs.ShouldBeAbleToGetTheFPropOfAStruct":
+    let scriptStruct = getStructByName("StructToUseAsVar")
+   
+    var propName : FString = "TestProperty"
+    let prop = scriptStruct.getFPropertyByName propName 
 
+    assert not prop.isNil()
 
+    assert prop.getName() == propName
+    assert not scriptStruct.isNil()
