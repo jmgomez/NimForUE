@@ -214,29 +214,48 @@ type
         kind* : UETypeKind
         properties* : seq[UEProperty]
 
+#  IdentDefs
+#             Ident "regularProperty"
+#             Ident "int32"
+#             Empty
+#           IdentDefs
+#             Ident "genericProp"
+#             BracketExpr
+#               Ident "TArray"
+#               Ident "FString"
 
+
+func getTypeNodeFromProp(prop : UEProperty) : NimNode = 
+    #naive check on generic types:
+    let supportedGenericTypes = ["TArray"]
+    let genType = supportedGenericTypes[0]
+    let isGenericType = genType in prop.kind
+    if not isGenericType:
+        return ident prop.kind
+    let innerType = prop.kind.replace(genType, "").replace("[").replace("]", "")
+    return nnkBracketExpr.newTree(ident genType, ident innerType)
 
 proc genProp(typeDef : UEType, prop : UEProperty) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
     let className = typeDef.name.substr(1)
-    let typName = ident prop.kind
+    let typeNode = getTypeNodeFromProp(prop)
     var propName = prop.name 
     propName[0] = propName[0].toLowerAscii()
     let propIdent = ident propName
     result = 
-        genAst(propIdent, ptrName, typName, className, propUEName = prop.name):
-            proc propIdent (obj {.inject.} : ptrName ) : typName =
+        genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name):
+            proc propIdent (obj {.inject.} : ptrName ) : typeNode =
                 let cls = getClassByName(className) #need to remove the U
                 var propRefUEName : FString = propUEName #transform it to a reference so we dont copy
                 let prop = cls.getFPropertyByName propRefUEName
-                getPropertyValuePtr[typName](prop, obj)[]
+                getPropertyValuePtr[typeNode](prop, obj)[]
             
-            proc `propIdent=` (obj {.inject.} : ptrName, val :typName) = 
+            proc `propIdent=` (obj {.inject.} : ptrName, val :typeNode) = 
                 let cls = getClassByName(className) #need to remove the U
                 var propRefUEName : FString = propUEName #transform it to a reference so we dont copy
-                var value {.inject.} : typName = val
+                var value {.inject.} : typeNode = val
                 let prop {.inject.} = cls.getFPropertyByName propRefUEName
-                setPropertyValuePtr[typName](prop, obj, value.addr)
+                setPropertyValuePtr[typeNode](prop, obj, value.addr)
 
 
 

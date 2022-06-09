@@ -25,6 +25,8 @@ public:
 	UPROPERTY()
 	bool BoolProperty;
 
+	UPROPERTY()
+	TArray<FString> ArrayProperty;
 	
 	UFUNCTION()
 	FString GetHelloWorld() {

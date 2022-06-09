@@ -5,7 +5,7 @@ import ../unreal/coreuobject/[uobject, unrealtype]
 import ../unreal/core/containers/[unrealstring, array]
 import ../unreal/core/math/[vector]
 import ../unreal/core/[enginetypes]
-
+import macros
 
 import testutils
 {.emit: """/*INCLUDESECTION*/
@@ -169,12 +169,14 @@ ueTest suiteName & "ShouldBeAbleToSetThePropertyValueFromAnObject_PreMacro":
     assert obj.testProperty == expectedResult
 
 
+
 const ueType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass, 
                     properties: @[
                         UEProperty(name: "TestProperty", kind: "FString"),
                         UEProperty(name: "IntProperty", kind: "int32"),
                         UEProperty(name: "FloatProperty", kind: "float32"),
                         UEProperty(name: "BoolProperty", kind: "bool"),
+                        UEProperty(name: "ArrayProperty", kind: "TArray[FString]"),
                     
                         ])
                         
@@ -185,7 +187,6 @@ ueTest suiteName & "ShouldBeAbleToUseAutoGenGettersAndSettersForFString":
     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
     let expectedResult = FString("Hello from Test")
     obj.testProperty = expectedResult 
-    
     assert expectedResult == obj.testProperty 
 
 ueTest suiteName & "ShouldBeAbleToUseAutoGenGettersAndSettersForint32":
@@ -213,3 +214,24 @@ ueTest suiteName & "ShouldBeAbleToUseAutoGenGettersAndSettersForBool":
 
 
 
+ueTest suiteName & "ShouldBeAbleToUseAutoGenGettersAndSettersForArray":
+    let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+    let expectedResult : TArray[FString] = makeTArray[FString]()
+    expectedResult.add(FString("Hello"))
+    expectedResult.add(FString("World"))
+
+    obj.arrayProperty = expectedResult
+      
+    assert expectedResult.num() == obj.arrayProperty.num()
+    assert expectedResult[0] == obj.arrayProperty[0]
+    assert expectedResult[1] == obj.arrayProperty[1]
+    # assert expectedResult == obj.arrayProperty #TODO define comparison for TArray
+
+     
+
+
+
+# dumpTree:
+#     type Whatever = object 
+#         regularProperty : int32
+#         genericProp : TArray[FString]
