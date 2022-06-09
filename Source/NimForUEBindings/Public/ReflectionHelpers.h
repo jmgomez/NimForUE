@@ -16,7 +16,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static UClass* GetClassByName(FString ClassName);
 	UFUNCTION(BlueprintCallable)
-	static UScriptStruct* GetStructByName(FString StructName);
+	static UScriptStruct* GetScriptStructByName(FString StructName);
+	UFUNCTION(BlueprintCallable)
+	static UStruct* GetUStructByName(FString StructName);
+
+	template<typename T>
+	static T* GetUTypeByName(FString& StructName) {
+		UObject* ClassPackage = ANY_PACKAGE;
+		T* Struct = FindObject<T>(ClassPackage, *StructName);
+		return Struct;
+	}
 
 	static UObject* NewObjectFromClass(UClass* Class);
 

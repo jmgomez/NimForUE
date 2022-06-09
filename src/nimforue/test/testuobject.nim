@@ -14,7 +14,7 @@ import testutils
 
 """.}
 
-let suiteName = "NimForUE.UObject."
+let suiteName = "NimForUE.UObject"
 
 ueTest "ShouldBeAbleToGetAClassByName":
     let cls = getClassByName("Actor")

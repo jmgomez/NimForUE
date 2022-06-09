@@ -62,18 +62,23 @@ proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.T
 
 proc getFPropertyByName*(class:UStructPtr, propName:var FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
 
-proc getClassByName*(className:FString) : UClassPtr {.importcpp:"UReflectionHelpers::GetClassByName(@)".}
-proc getStructByName*(structName:FString) : UScriptStructPtr {.importcpp:"UReflectionHelpers::GetStructByName(@)".}
+proc getUTypeByName*[T :UStruct](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
 
-#NewObjectFromClass
+
 proc newObjectFromClass*(className:UClassPtr) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
 
 {. pop .}
 
-
+proc getClassByName*(className:FString) : UClassPtr = getUTypeByName[UClass](className)
+proc getScriptStructByName*(structName:FString) : UScriptStructPtr = getUTypeByName[UScriptStruct](structName)
+proc getUStructByName*(structName:FString) : UStructPtr = getUTypeByName[UStruct](structName)
 
 proc newUObject*[T:UObject]() : ptr T = 
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     let cls = getClassByName(className)
     return cast[ptr T](newObjectFromClass(cls)) 
+
+
+
+
 

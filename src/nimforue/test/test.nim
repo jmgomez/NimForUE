@@ -55,13 +55,13 @@ ueTest "NimForUE.TArrays.ShouldBeAbleToIterateArrays":
 #     testProperty : FString  
 
 ueTest "NimForUE.UStructs.ShouldBeAbleToGetTheClassOfAStruct":
-    let scriptStruct = getStructByName("StructToUseAsVar")
+    let scriptStruct = getUStructByName("StructToUseAsVar")
    
     assert not scriptStruct.isNil()
 
 
 ueTest "NimForUE.UStructs.ShouldBeAbleToGetTheFPropOfAStruct":
-    let scriptStruct = getStructByName("StructToUseAsVar")
+    let scriptStruct = getScriptStructByName("StructToUseAsVar")
    
     var propName : FString = "TestProperty"
     let prop = scriptStruct.getFPropertyByName propName 
@@ -70,3 +70,5 @@ ueTest "NimForUE.UStructs.ShouldBeAbleToGetTheFPropOfAStruct":
 
     assert prop.getName() == propName
     assert not scriptStruct.isNil()
+
+#I think there is no need for adding getters and setters to ustructs, just mirroring the types should be enough. Not 100% sure though.

@@ -9,9 +9,15 @@ UClass* UReflectionHelpers::GetClassByName(FString ClassName) {
 	return Class;
 }
 
-UScriptStruct* UReflectionHelpers::GetStructByName(FString StructName) {
+UScriptStruct* UReflectionHelpers::GetScriptStructByName(FString StructName) {
 	UObject* ClassPackage = ANY_PACKAGE;
 	UScriptStruct* Struct = FindObject<UScriptStruct>(ClassPackage, *StructName);
+	return Struct;
+}
+
+UStruct* UReflectionHelpers::GetUStructByName(FString StructName) {
+	UObject* StructPackage = ANY_PACKAGE;
+	UStruct* Struct = FindObject<UStruct>(StructPackage, *StructName);
 	return Struct;
 }
 
