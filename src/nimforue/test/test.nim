@@ -234,7 +234,8 @@ const ueType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass,
                     properties: @[
                         UEProperty(name: "TestProperty", kind: "FString"),
                         UEProperty(name: "IntProperty", kind: "int32"),
-                        UEProperty(name: "FloatProperty", kind: "float32")
+                        UEProperty(name: "FloatProperty", kind: "float32"),
+                        UEProperty(name: "BoolProperty", kind: "bool"),
                     
                         ])
                         
@@ -262,6 +263,15 @@ ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForFloat":
     obj.floatProperty = expectedResult
       
     assert expectedResult == obj.floatProperty 
+
+
+
+ueTest "NimForUE.UObjects.ShouldBeAbleToUseAutoGenGettersAndSettersForBool":
+    let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+    let expectedResult = true
+    obj.boolProperty = expectedResult
+      
+    assert expectedResult == obj.boolProperty 
 
 
 

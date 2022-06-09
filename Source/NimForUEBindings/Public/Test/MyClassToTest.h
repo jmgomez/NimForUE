@@ -22,9 +22,8 @@ public:
 	UPROPERTY()
 	float FloatProperty;
 
-	
-
-	
+	UPROPERTY()
+	bool BoolProperty;
 
 	
 	UFUNCTION()
