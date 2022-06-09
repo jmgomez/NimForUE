@@ -11,6 +11,9 @@ type
     UClass* {.importcpp: "UClass", inheritable, pure .} = object of UObject
     UClassPtr* = ptr UClass
 
+    UScriptStruct* {.importcpp: "UScriptStruct", inheritable, pure .} = object of UObject
+    UScriptStructPtr* = ptr UScriptStruct
+
     UFunction* {.importcpp: "UFunction", inheritable, pure .} = object
     UFunctionPtr* = ptr UFunction
 

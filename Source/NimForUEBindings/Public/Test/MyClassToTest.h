@@ -52,7 +52,9 @@ public:
 	
 	UFUNCTION()
 	FString GetHelloWorld() {
+		FStructToUseAsVar::StaticStruct();
 		return "Hello World!";
+		
 	}
 
 	UFUNCTION()

@@ -232,13 +232,11 @@ ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForUObjectProps":
     
     obj.objectProperty = expectedResult
 
-      
     assert obj.objectProperty.testProperty == expectedResult.testProperty
   
 
 ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForStructs_PreMacro":
     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-
     let expectedResult = FString("Some String")
 
     let structProp = FStructToUseAsVar(testProperty: expectedResult)
@@ -246,3 +244,4 @@ ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForStructs_PreMacro":
     obj.structProperty = structProp
 
     assert obj.structProperty.testProperty == expectedResult
+

@@ -6,8 +6,13 @@
 UClass* UReflectionHelpers::GetClassByName(FString ClassName) {
 	UObject* ClassPackage = ANY_PACKAGE;
 	UClass* Class = FindObject<UClass>(ClassPackage, *ClassName);
-	// UClass* Class = LoadClass<UClass>(ClassPackage, *ClassName);
 	return Class;
+}
+
+UScriptStruct* UReflectionHelpers::GetStructByName(FString StructName) {
+	UObject* ClassPackage = ANY_PACKAGE;
+	UScriptStruct* Struct = FindObject<UScriptStruct>(ClassPackage, *StructName);
+	return Struct;
 }
 
 UObject* UReflectionHelpers::NewObjectFromClass(UClass* Class) {
