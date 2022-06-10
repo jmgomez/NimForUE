@@ -188,11 +188,16 @@ const ueType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass,
                         UEProperty(name: "ArrayProperty", kind: "TArray[FString]"),
                         UEProperty(name: "ObjectProperty", kind: "UClassToUseAsVarPtr"),
                         UEProperty(name: "StructProperty", kind: "FStructToUseAsVar"),
+                        UEProperty(name: "ClassProperty", kind: "UClassPtr"),
                     
                         ])
+
                         
 genType(ueVarType)
 genType(ueType) #Notice we wont be using genType directly
+
+
+
 
 ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForFString":
     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
@@ -230,6 +235,9 @@ ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForUObjectProps":
     let expectedResult : UClassToUseAsVarPtr = newUObject[UClassToUseAsVar]()
     expectedResult.testProperty = "Hello another prop!"
     
+
+    
+
     obj.objectProperty = expectedResult
 
     assert obj.objectProperty.testProperty == expectedResult.testProperty
@@ -246,3 +254,12 @@ ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForStructs_PreMacro":
     assert obj.structProperty.testProperty == expectedResult
 
 
+ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForUClass":
+    let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+    
+    let cls = getClassByName("Actor")
+
+
+    obj.classProperty = cls
+
+    assert obj.classProperty == cls

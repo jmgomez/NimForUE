@@ -49,6 +49,9 @@ public:
 
 	UPROPERTY()
 	FStructToUseAsVar StructProperty;
+
+	UPROPERTY()
+	UClass* ClassProperty;
 	
 	UFUNCTION()
 	FString GetHelloWorld() {

@@ -51,9 +51,6 @@ ueTest "NimForUE.TArrays.ShouldBeAbleToIterateArrays":
     assert result == 15
     
 
-# type FStructToUseAsVar = object 
-#     testProperty : FString  
-
 ueTest "NimForUE.UStructs.ShouldBeAbleToGetTheClassOfAStruct":
     let scriptStruct = getUStructByName("StructToUseAsVar")
    
