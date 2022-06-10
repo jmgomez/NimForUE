@@ -1,5 +1,4 @@
 import std/[times, os, dynlib, strutils, sequtils, algorithm, locks, sugar, options]
-import system/io
 import pure/asyncdispatch
 import ../buildscripts/[nimforueconfig, copyLib]
 
