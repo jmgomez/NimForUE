@@ -16,56 +16,52 @@ import testuobject
 """.}
 
 
-#suite NimForUE
+suite "NimForUE":
 
+    ueTest "FVectors.ShouldBeBleToCreateAndOperateWithVectors":
+        let v : FVector = makeFVector(10, 50, 30)
+        let v2 = v+v 
 
+        let expectedResult = makeFVector(20, 100, 60)
 
-ueTest "NimForUE.ShouldBeBleToCreateAndOperateWithVectors":
-    let v : FVector = makeFVector(10, 50, 30)
-    let v2 = v+v 
+        assert expectedResult == v2
 
-    let expectedResult = makeFVector(20, 100, 60)
-
-    assert expectedResult == v2
-
-
-#suite TArrays
-ueTest "NimForUE.TArrays.ShouldbeAbleToInteropWithTArrays":
-    let arr : TArray[FString] = makeTArray[FString]()
-    arr.add FString("Hello")
-    arr.add FString("World")
-
-    assert arr.num() == 2
+    suite "TArrays":
     
+        ueTest "ShouldbeAbleToInteropWithTArrays":
+            let arr : TArray[FString] = makeTArray[FString]()
+            arr.add FString("Hello")
+            arr.add FString("World")
+
+            assert arr.num() == 2
+
+        ueTest "ShouldBeAbleToIterateArrays":
+            let arr : TArray[int32] = makeTArray[int32]()
+            arr.add 5
+            arr.add 10
+
+            var result = 0
+            for n in arr:
+                result = result + n
+
+            assert result == 15
+        
+    suite "UStructs":
+        ueTest "ShouldBeAbleToGetTheClassOfAStruct":
+            let scriptStruct = getUStructByName("StructToUseAsVar")
+        
+            assert not scriptStruct.isNil()
 
 
-ueTest "NimForUE.TArrays.ShouldBeAbleToIterateArrays":
-    let arr : TArray[int32] = makeTArray[int32]()
-    arr.add 5
-    arr.add 10
+        ueTest "ShouldBeAbleToGetTheFPropOfAStruct":
+            let scriptStruct = getScriptStructByName("StructToUseAsVar")
+        
+            var propName : FString = "TestProperty"
+            let prop = scriptStruct.getFPropertyByName propName 
 
-    var result = 0
-    for n in arr:
-        result = result + n
+            assert not prop.isNil()
 
-    assert result == 15
-    
-
-ueTest "NimForUE.UStructs.ShouldBeAbleToGetTheClassOfAStruct":
-    let scriptStruct = getUStructByName("StructToUseAsVar")
-   
-    assert not scriptStruct.isNil()
-
-
-ueTest "NimForUE.UStructs.ShouldBeAbleToGetTheFPropOfAStruct":
-    let scriptStruct = getScriptStructByName("StructToUseAsVar")
-   
-    var propName : FString = "TestProperty"
-    let prop = scriptStruct.getFPropertyByName propName 
-
-    assert not prop.isNil()
-
-    assert prop.getName() == propName
-    assert not scriptStruct.isNil()
+            assert prop.getName() == propName
+            assert not scriptStruct.isNil()
 
 #I think there is no need for adding getters and setters to ustructs, just mirroring the types should be enough. Not 100% sure though.
