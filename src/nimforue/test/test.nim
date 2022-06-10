@@ -1,20 +1,8 @@
-import ../unreal/nimforue/nimforuebindings
-import ../macros/uebind
-import ../unreal/coreuobject/[uobject, unrealtype]
-import ../unreal/core/containers/[unrealstring, array]
-import ../unreal/core/math/[vector]
-import ../unreal/core/[enginetypes]
+include ../unreal/prelude
 
 import testutils
 
 import testuobject
-
-{.emit: """/*INCLUDESECTION*/
-#include "Definitions.NimForUE.h"
-#include "Definitions.NimForUEBindings.h"
-
-""".}
-
 
 suite "NimForUE":
 

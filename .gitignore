@@ -2,6 +2,7 @@
 src/hostnimforue/ffigen.nim
 NimHeaders/NimForUEFFI.h
 src/buildscripts/buildlibs.bat
+.nimcache
 
 # Visual Studio 2015 user specific files
 .vs/

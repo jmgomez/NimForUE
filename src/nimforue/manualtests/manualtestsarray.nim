@@ -1,17 +1,10 @@
 #this is temp until we have tests working (have to bind dyn delegates first)
-import ../macros/uebind
-import ../unreal/coreuobject/uobject
-import ../unreal/core/containers/[unrealstring, array]
-import ../unreal/core/math/[vector]
-import ../unreal/core/[enginetypes]
-import ../unreal/nimforue/nimForUEBindings
+include ../unreal/prelude
 import std/[times]
 import strformat
 
 
 {.emit: """/*INCLUDESECTION*/
-#include "Definitions.NimForUE.h"
-#include "Definitions.NimForUEBindings.h"
 #include "UObject/UnrealType.h"
 """.}
 
@@ -37,7 +30,7 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
 
     executor.saySomething(msg)
 
-    executor.setColorByStringInMesh("(R=1.0,G=0.15,B=0,A=1)")
+    executor.setColorByStringInMesh("(R=1.0,G=0.15,B=1,A=1)")
 
     if executor.boolTestFromNimAreEquals("5", 5, true) == true:
         executor.saySomething("true")

@@ -22,7 +22,7 @@ template callTask(name: untyped) =
 
 task nimforue, "Builds the main lib. The one that makes sense to hot reload.":
     generateFFIGenFile()
-    exec("nim cpp --app:lib --nomain --d:genffi -d:withue src/nimforue.nim")
+    exec("nim cpp --app:lib --nomain --d:genffi -d:withue --nimcache:.nimcache/nimforue src/nimforue.nim")
     exec("nim c -d:release --run src/buildscripts/copyLib.nim")
 
 task watch, "Watchs the main lib and rebuilds it when something changes.":
@@ -33,7 +33,7 @@ task watch, "Watchs the main lib and rebuilds it when something changes.":
 task host, "Builds the library that's hooked to unreal":
     if not fileExists(getNimForUEConfig().genFilePath):
         generateFFIGenFile() #makes sure FFI gen file exists (not tracked) so it can be imported from hostnimforue but only if it doesnt exists so it doesnt override its content
-    exec("nim cpp --app:lib --nomain --d:host src/hostnimforue/hostnimforue.nim")
+    exec("nim cpp --app:lib --nomain --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim")
     
     #TODO using a custom cache dir would be better
     let cacheFolderName = if getNimForUEConfig().targetConfiguration == Shipping: "hostnimforue_r" else: "hostnimforue_d" 

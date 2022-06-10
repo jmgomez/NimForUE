@@ -41,8 +41,8 @@ proc UE_Log*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUELog(@)"
 proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
 proc setPropertyValuePtr*[T](property:FPropertyPtr, container : pointer, value : ptr T) : void {.importcpp: "SetPropertyValuePtr<'*3>(@)", header:"UPropertyCaller.h".}
 
+
 type 
-    # ActualTestSignature = 
     FNimTestBase* {.importcpp, inheritable, pure, header:  "Test/NimTestBase.h".} = object
         ActualTest* : proc (test:var FNimTestBase) : void {.cdecl.}
 
