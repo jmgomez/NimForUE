@@ -4,7 +4,7 @@ template suite* (name: static string , body:untyped) =
         var suiteName {.inject.} = name
     else: 
         suiteName = suiteName & "." & name 
-    
+    body
 
 #TODO remove hooked tests
 template ueTest*(name:string, body:untyped) = 
@@ -22,3 +22,5 @@ template ueTest*(name:string, body:untyped) =
             test.testTrue(msg, false)
     test.reloadTest()
         
+
+
