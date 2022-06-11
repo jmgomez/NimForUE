@@ -16,7 +16,7 @@ public class NimForUE : ModuleRules
 	public NimForUE(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
+		PrivatePCHHeaderFile = "PCHNimForUE.h";
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...

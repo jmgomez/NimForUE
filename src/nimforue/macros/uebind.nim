@@ -275,5 +275,8 @@ proc genUETypeDef(typeDef : UEType) : NimNode =
 
 macro genType*(typeDef : static UEType) : untyped = 
     result = genUETypeDef(typeDef)
-    echo result.repr
+    # echo result.repr
+
+
+    
 
