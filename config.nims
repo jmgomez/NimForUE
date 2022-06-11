@@ -1,5 +1,5 @@
 import src/buildscripts/[buildscripts, nimForUEConfig]
-import std/[strutils, strformat]
+import std/[strutils,sequtils, sugar, strformat]
 
 import std / [os]
 
@@ -64,47 +64,47 @@ when defined withue:
     #Epics adds a space in the installation directory (Epic Games) on Windows so it has to be quoted. Maybe we should do this for all user paths?
     proc addQuotes(fullPath: string) : string = "\"" & fullPath & "\""
 
-    proc addHeaders() = 
+    
+    proc getHeadersIncludePaths() : seq[string] = 
         let pluginDefinitionsPaths = "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
         let nimForUEBindingsHeaders =  pluginDir/ "Source/NimForUEBindings/Public/"
         let nimForUEBindingsIntermidateHeaders = pluginDir/ "Intermediate"/ "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
 
         proc getEngineRuntimeIncludePathFor(engineFolder, moduleName:string) : string = addQuotes(engineDir / "Source"/engineFolder/moduleName/"Public")
         proc getEngineIntermediateIncludePathFor(moduleName:string) : string = addQuotes(engineDir / "Intermediate"/"Build"/platformDir/"UnrealEditor"/"Inc"/moduleName)
-        proc setEngineRuntimeIncludeForModules(engineFolder:string, modules:seq[string]) =
-            for module in modules:
-                switch("passC", "-I" & getEngineRuntimeIncludePathFor(engineFolder, module))
 
-        proc setEngineIntermediateIncludePathFor(modules:seq[string]) = #TODO change
-            for module in modules:
-                switch("passC", "-I" & getEngineIntermediateIncludePathFor(module))
-    
-
-        switch("passC", "-I" & pluginDefinitionsPaths /  "NimForUE")
-        switch("passC", "-I" & pluginDefinitionsPaths /  "NimForUEBindings")
-        switch("passC", "-I" & nimForUEBindingsHeaders) 
-        switch("passC", "-I" & nimForUEBindingsIntermidateHeaders) 
-        switch("passC", "-I" & pluginDir/"NimHeaders") 
-        #engine
-        switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"))
-        switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"/"Engine"))
-        switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Public"))
-        switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Classes"))
-
-
+        let essentialHeaders = @[
+            pluginDefinitionsPaths /  "NimForUE",
+            pluginDefinitionsPaths /  "NimForUEBindings",
+            nimForUEBindingsHeaders,
+            nimForUEBindingsIntermidateHeaders,
+            pluginDir/"NimHeaders",
+            #engine
+            addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"),
+            addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"/"Engine"),
+            addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Public"),
+            addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Classes")
+        ]
         let runtimeModules = @["CoreUObject", "Core", "Engine", "TraceLog", "Launch", "ApplicationCore", 
             "Projects", "Json", "PakFile", "RSA", "Engine", "RenderCore",
             "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
             "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore"]
 
         let developerModules = @["DesktopPlatform", "ToolMenus", "TargetPlatform", "SourceControl"]
-
-        setEngineRuntimeIncludeForModules("Runtime", runtimeModules)
-        setEngineRuntimeIncludeForModules("Developer", developerModules)
-
         let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore"]
-        setEngineIntermediateIncludePathFor(intermediateGenModules)
-        
+
+        let moduleHeaders = 
+            runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
+            developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
+            intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module))
+
+        essentialHeaders & moduleHeaders
+
+    proc addHeaders() = 
+        let headers = getHeadersIncludePaths()
+        for headerPath in headers:
+            switch("passC", "-I" & headerPath)
+       
 
     proc addSymbols() =
 
