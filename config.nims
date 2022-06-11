@@ -49,6 +49,9 @@ when defined macosx: #Doesn't compile with ORC. TODO Investigate why
     #Uncomment the line above to being able to use executables that uses the engine libraries 
     # exec(fmt("ln -s {nueConfig.engineDir}/Binaries/Mac/*.dylib /usr/local/lib/"))
 
+
+
+
 when defined withue:   
     #EDITOR VS GAME is just switching UnrealEditor with UnrealGame?
 
@@ -81,6 +84,7 @@ when defined withue:
         switch("passC", "-I" & pluginDefinitionsPaths /  "NimForUEBindings")
         switch("passC", "-I" & nimForUEBindingsHeaders) 
         switch("passC", "-I" & nimForUEBindingsIntermidateHeaders) 
+        switch("passC", "-I" & pluginDir/"NimHeaders") 
         #engine
         switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"))
         switch("passC", "-I" & addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"/"Engine"))
