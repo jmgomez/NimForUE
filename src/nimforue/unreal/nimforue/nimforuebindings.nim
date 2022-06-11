@@ -1,24 +1,11 @@
 import ../coreuobject/[uobject, unrealtype]
 import ../core/containers/unrealstring 
 import std/[typetraits, strutils]
+include ../definitions
 
-{.emit: """/*INCLUDESECTION*/
-#define WITH_AUTOMATION_TESTS 1
-#define WITH_DEV_AUTOMATION_TESTS 1
-#define WITH_AUTOMATION_WORKER 1
-
-#include "Definitions.NimForUE.h"
-#include "Definitions.NimForUEBindings.h"
-#include "CoreMinimal.h"
-
-#include  "Misc/AutomationTest.h"
-
-""".}
-
-{.push header: "UFunctionCaller.h"}
 
 type 
-    UFunctionCaller* {.importc, inheritable, pure, header:  "UFunctionCaller.h".} = object
+    UFunctionCaller* {.importc, inheritable, pure .} = object
 
     
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
@@ -32,10 +19,6 @@ proc callUFuncOn*(class:UClassPtr, funcName : var FString, InParams : pointer) :
 
 
 proc UE_Log*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUELog(@)".}
-# proc UE_Log*(msg: var FString) : void {.importcpp: "HelpersBindings::NimForUELog(@)" header: "HelpersBindings.h".}
-# proc UE_Log2*(msg: var FString) : void {.importcpp: "UE_LOG(LogTemp, Log, *#)" .}
-
-{.pop.}
 
 
 proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
@@ -43,22 +26,14 @@ proc setPropertyValuePtr*[T](property:FPropertyPtr, container : pointer, value :
 
 
 type 
-    FNimTestBase* {.importcpp, inheritable, pure, header:  "Test/NimTestBase.h".} = object
+    FNimTestBase* {.importcpp, inheritable, pure.} = object
         ActualTest* : proc (test:var FNimTestBase) : void {.cdecl.}
 
 
-# proc makeFNimTestBase*(testName:FString): FNimTestBase {.importcpp:"FNimTestBase::MakeTestBase(#)".}
 proc makeFNimTestBase*(testName:FString): FNimTestBase {.importcpp:"FNimTestBase(#)", constructor.}
 proc reloadTest*(test:FNimTestBase):void {.importcpp:"#.ReloadTest()".}
 proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.TestTrue(@)".}
 
-
-# proc runTest(this:FNimTestBasePtr, params:var FString) :bool {.importcpp:"#->RunTest(#)", header:  "Test/NimTestBase.h".}
-
-
-
-# UClass* GetClassByName
-{.push header:"ReflectionHelpers.h"}
 
 proc getFPropertyByName*(class:UStructPtr, propName:var FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
 
@@ -67,7 +42,7 @@ proc getUTypeByName*[T :UStruct](typeName:FString) : ptr T {.importcpp:"UReflect
 
 proc newObjectFromClass*(className:UClassPtr) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
 
-{. pop .}
+
 
 proc getClassByName*(className:FString) : UClassPtr = getUTypeByName[UClass](className)
 proc getScriptStructByName*(structName:FString) : UScriptStructPtr = getUTypeByName[UScriptStruct](structName)

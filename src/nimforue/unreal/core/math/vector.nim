@@ -1,7 +1,8 @@
+include ../../definitions
 import ../containers/unrealstring
 
 
-{.push header:"Math/Vector.h" .}
+
 
 #TODO now vectors are defined as TVector[T] and there are FVector3f (this) and FVector3d 
 #Not sure if it will be better to just do an alias 
@@ -15,13 +16,12 @@ proc makeFVector*(x, y, z: cfloat): FVector {.importcpp:"FVector(@)", constructo
 
 proc toString*(v: FVector): FString {.importcpp:"#.ToString()"}
 
-
-var zeroVector* {.importc: "FVector::ZeroVector".}: FVector
-var upVector* {.importc: "FVector::UpVector".}: FVector
-var forwardVector* {.importc: "FVector::ForwardVector".}: FVector
-var rightVector* {.importc: "FVector::RightVector".}: FVector
-
+# {.push header:"Math/Vector.h".} #Seems like variables cant be imported without the header pragma? Commented it out for PCH, worth case scenario they can be manually recreated
+# var zeroVector* {.importcpp: "FVector::ZeroVector".}: FVector
+# var upVector* {.importcpp: "FVector::UpVector".}: FVector
+# var forwardVector* {.importcpp: "FVector::ForwardVector".}: FVector
+# var rightVector* {.importcpp: "FVector::RightVector".}: FVector
+# {.pop.}
 func `+`*(a,b: FVector): FVector {.importcpp:"# + #", noSideEffect.}
 func `==`*(a,b: FVector): bool {.importcpp:"# == #", noSideEffect.}
 
-{.pop.}

@@ -4,9 +4,7 @@ import std/[times]
 import strformat
 
 
-{.emit: """/*INCLUDESECTION*/
-#include "UObject/UnrealType.h"
-""".}
+
 
 proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
 
@@ -75,7 +73,7 @@ proc testVectorEntryPoint*(executor:UObjectPtr) =
     var hitResult = makeFHitResult()
     K2_SetActorLocation(executor, position, false, hitResult, true)
     executor.saySomething(v2.toString())
-    executor.saySomething(upVector.toString())
+    # executor.saySomething(upVector.toString())
 
 
 

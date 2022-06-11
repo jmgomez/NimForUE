@@ -1,7 +1,5 @@
+include ../definitions
 import math/vector
-
-
-{.push header:"Engine/EngineTypes.h" .}
 
 
 type FHitResult* {.importc, bycopy} = object
@@ -16,5 +14,3 @@ type
         None,
         TeleportPhysics,
         ResetPhysics
-
-{.pop.}

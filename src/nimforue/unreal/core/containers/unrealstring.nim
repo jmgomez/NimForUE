@@ -1,10 +1,9 @@
-{.emit: """/*INCLUDESECTION*/
-#include "Definitions.NimForUE.h"
-#include "CoreMinimal.h"
-""".}
+include ../../definitions
+
+
 
 type
-  FString* {. exportc, header: "Containers/UnrealString.h", bycopy.} = object
+  FString* {. exportc, importcpp, bycopy.} = object
 
 proc makeFString*(cstr : cstring) : FString {.importcpp: "FString(ANSI_TO_TCHAR(#))" noSideEffect.}
 proc toCString*(fstr: FString): cstring {.importcpp: " TCHAR_TO_ANSI(*#)", nodecl, noSideEffect.}

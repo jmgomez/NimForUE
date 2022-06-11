@@ -1,5 +1,5 @@
+#pragma once
 #include "Misc/AutomationTest.h"
-
 
 class NIMFORUEBINDINGS_API FNimTestBase : public FAutomationTestBase {
 

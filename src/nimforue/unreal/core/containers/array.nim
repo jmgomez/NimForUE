@@ -1,6 +1,6 @@
 
 
-{.push header:"Containers/Array.h" .}
+
 
 type TArray*[T] {.importcpp: "TArray<'0>", bycopy } = object
 
@@ -12,8 +12,6 @@ proc add*[T](arr:TArray[T], value:T) {.importcpp: "#.Add(#)".}
 proc `[]`*[T](arr:TArray[T], i: int32): var T {. importcpp: "#[#]",  noSideEffect.}
 proc `[]=`*[T](arr:TArray[T], i: int32, val : T)  {. importcpp: "#[#]=#",  }
 
-
-{.pop.}
 # proc `[]`*[T](arr:TArray[T], i: int): var T {. inline, noSideEffect.} = arr[i.int32]
 
 # proc `[]=`*[T](arr:TArray[T], i: int, val : T)  {. inline  .} = arr[i.int32] = val why this doesnt work like so?

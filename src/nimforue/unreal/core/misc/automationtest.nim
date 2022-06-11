@@ -1,11 +1,11 @@
 
-import ../containers/unrealstring
+# import ../containers/unrealstring
 
-{.push header:"Misc/AutomationTest.h".}
+# {.push header:"Misc/AutomationTest.h".}
 
-# type FAutomationTestBase* {. importcpp, pure, inheritable .} = object
+# # type FAutomationTestBase* {. importcpp, pure, inheritable .} = object
 
-#RESERVE THIS FILE FOR THE REGISTERING
+# #RESERVE THIS FILE FOR THE REGISTERING
 
 
-{.pop.}
+# {.pop.}
