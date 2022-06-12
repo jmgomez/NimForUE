@@ -15,12 +15,12 @@ switch("outdir", "./Binaries/nim/")
 switch("backend", "cpp")
 switch("mm", "orc") 
 switch("exceptions", "cpp") #need to investigate further how to get Unreal exceptions and nim exceptions to work together so UE doesn't crash when generating an exception in cpp
-switch("opt", "none")
+# switch("opt", "none")
+# switch("listcmd")
 let nueConfig = getNimForUEConfig()
 switch("define", "genFilePath:"& nueConfig.genFilePath)
 switch("define", "pluginDir:"& nueConfig.pluginDir)
 #todo get from NueConfig?
-
 let withPCH = true
 let withDebug = false
 
@@ -30,7 +30,10 @@ let confDir = $ nueConfig.targetConfiguration
 let engineDir = nueConfig.engineDir
 let pluginDir = nueConfig.pluginDir
 #/Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/MacOs/Plugins/NimForUE/Intermediate/Build/Mac/x86_64/UnrealEditor/Development/NimForUE/PCH.NimForUE.h.gch
-let pchPath = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir / "NimForUE" / "PCH.NimForUE.h.gch"
+#let pchPath = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir / "NimForUE" / "PCH.NimForUE.h.gch"
+let pchPath = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir / "NimForUE" / "PCH.NimForUE.h"
+# if not fileExists(pchPath):
+#     quit("PCH file not found: " & pchPath)
 
 case nueConfig.targetConfiguration:
     of Debug, Development:
@@ -47,6 +50,9 @@ when defined windows:
     #switch("passC", "/MP") # build with multiple processes, enables /FS force synchronous writes
     switch("passC", "/FS") # build with multiple processes, enables /FS force synchronous writes
     switch("passC", "/std:c++17")
+    if withPCH:
+        switch("passC", "/Yu" & pchPath)
+        switch("passC", "/Fp" & pchPath&".pch")
 
 when defined macosx: #Doesn't compile with ORC. TODO Investigate why
     switch("passC", "-x objective-c++")
@@ -60,7 +66,6 @@ when defined macosx: #Doesn't compile with ORC. TODO Investigate why
     switch("passC", "-fno-delete-null-pointer-checks")   
     switch("passC", "-pipe")   
     switch("passC", "-fmessage-length=0")   
-    switch("passC", "-D__OPTIMIZE__=0")   
     
     # switch("passC", "-O3")   
     if withPCH:
@@ -124,6 +129,7 @@ when defined withue:
         let headers = getHeadersIncludePaths()
         for headerPath in headers:
             switch("passC", "-I" & headerPath)
+        switch("passC", "-I" & r"G:\Dropbox\GameDev\UnrealProjects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE\")
        
 
     proc addSymbols() =
