@@ -3,11 +3,11 @@ Cant include modules because it's used from the modules itself.
 The file that mixes them is prelude which is not used inside the unreal directory.
 ]#
 {.emit: """/*INCLUDESECTION*/
-
+#include "G:\Dropbox\GameDev\UnrealProjects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE\PCH.NimForUE.h"
 #include "Definitions.NimForUE.h"
 #include "Definitions.NimForUEBindings.h"
 #include "UEDeps.h"
-
+//#include "PCH.NimForUE.h"
 """.}
 
 
@@ -20,4 +20,3 @@ when defined(vcc):
 #pragma warning(disable: 4101) 
 """.}
  
-# CompileArgs: -arm64 /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++  -fmessage-length=0 -pipe -fpascal-strings -fexceptions -DPLATFORM_EXCEPTIONS_DISABLED=0 -fasm-blocks -fvisibility-ms-compat -fvisibility-inlines-hidden -Wall -Werror -Wdelete-non-virtual-dtor -Wno-range-loop-analysis   -Wshadow -Wundef -c -arch x86_64 -isysroot "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk" -mmacosx-version-min=10.15 -O3 -gdwarf-2
