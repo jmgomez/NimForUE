@@ -1,0 +1,9 @@
+{
+  "genFilePath": "",
+  "nimForUELibPath": "",
+  "hostLibPath": "",
+  "engineDir": "C:\\Program Files\\Epic Games\\UE_5.0\\Engine",
+  "pluginDir": "C:\\NimForUEDemo\\Plugins\\NimForUE",
+  "targetConfiguration": "Development",
+  "targetPlatform": "Win64"
+}
