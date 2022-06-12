@@ -23,7 +23,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	UPROPERTY(EditAnywhere)
-	AStaticMeshActor* MeshActor;
+	class AStaticMeshActor* MeshActor;
 	
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = TestActor)
 	static void CallUFuncFFI(UObject* Object);

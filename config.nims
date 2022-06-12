@@ -14,17 +14,30 @@ when defined host:
 switch("outdir", "./Binaries/nim/")
 switch("backend", "cpp")
 switch("mm", "orc") 
-
+switch("exceptions", "cpp") #need to investigate further how to get Unreal exceptions and nim exceptions to work together so UE doesn't crash when generating an exception in cpp
+switch("opt", "none")
 let nueConfig = getNimForUEConfig()
 switch("define", "genFilePath:"& nueConfig.genFilePath)
 switch("define", "pluginDir:"& nueConfig.pluginDir)
+#todo get from NueConfig?
 
+let withPCH = true
+let withDebug = false
 
+let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform
+#Im pretty sure theere will moref specific handles for the other platforms
+let confDir = $ nueConfig.targetConfiguration
+let engineDir = nueConfig.engineDir
+let pluginDir = nueConfig.pluginDir
+#/Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/MacOs/Plugins/NimForUE/Intermediate/Build/Mac/x86_64/UnrealEditor/Development/NimForUE/PCH.NimForUE.h.gch
+let pchPath = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir / "NimForUE" / "PCH.NimForUE.h.gch"
 
 case nueConfig.targetConfiguration:
     of Debug, Development:
-        switch("debugger", "native")
-        switch("stacktrace", "on")
+        if withDebug:
+            switch("debugger", "native")
+            switch("stacktrace", "on")
+
     of Shipping: 
         #TODO Maybe for shipping we need to get rid of the FFI dll and to use only NimForUE.dll
         switch("d", "release")
@@ -41,8 +54,19 @@ when defined macosx: #Doesn't compile with ORC. TODO Investigate why
     switch("passC", "-fno-unsigned-char")
     switch("passC", "-std=c++17")
     switch("passC", "-fno-rtti")   
+    switch("passC", "-fasm-blocks")   
+    switch("passC", "-fvisibility-ms-compat")   
+    switch("passC", "-fvisibility-inlines-hidden")   
+    switch("passC", "-fno-delete-null-pointer-checks")   
+    switch("passC", "-pipe")   
+    switch("passC", "-fmessage-length=0")   
+    switch("passC", "-D__OPTIMIZE__=0")   
+    
+    # switch("passC", "-O3")   
+    if withPCH:
+        switch("passC", "-include-pch " & pchPath)
     switch("cc", "clang")
-    putEnv("MACOSX_DEPLOYMENT_TARGET", "10.15") #sets compatibility with the same macos version as ue5 was build to
+    putEnv("MACOSX_DEPLOYMENT_TARGET", "10.15") #sets compatibility with the same macos version as ue5 was build to. Update: it can be passed as compiler option
     switch("passC", "-mincremental-linker-compatible")
     #(DYLD_LIBRARY_PATH cant be set without modifiying macosx permissions)
     #TODO try again passing the compiler --rpath
@@ -55,11 +79,7 @@ when defined macosx: #Doesn't compile with ORC. TODO Investigate why
 when defined withue:   
     #EDITOR VS GAME is just switching UnrealEditor with UnrealGame?
 
-    let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform
-    #Im pretty sure theere will moref specific handles for the other platforms
-    let confDir = $ nueConfig.targetConfiguration
-    let engineDir = nueConfig.engineDir
-    let pluginDir = nueConfig.pluginDir
+    
     
     #Epics adds a space in the installation directory (Epic Games) on Windows so it has to be quoted. Maybe we should do this for all user paths?
     proc addQuotes(fullPath: string) : string = "\"" & fullPath & "\""

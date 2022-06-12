@@ -1,5 +1,4 @@
-#include "Definitions.NimForUE.h"
-#include "Definitions.NimForUEBindings.h"
+#pragma once
 #include "UObject/UnrealType.h"
 #include "Containers/UnrealString.h"
 #include "Containers/Array.h"

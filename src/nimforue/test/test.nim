@@ -5,7 +5,7 @@ import testutils
 import testuobject
 
 suite "NimForUE":
-
+ 
     ueTest "FVectors.ShouldBeBleToCreateAndOperateWithVectors":
         let v : FVector = makeFVector(10, 50, 30)
         let v2 = v+v 
@@ -14,14 +14,15 @@ suite "NimForUE":
 
         assert expectedResult == v2
 
-    suite "TArrays":
-    
+
+    suite "TArrays": 
+      
         ueTest "ShouldbeAbleToInteropWithTArrays":
             let arr : TArray[FString] = makeTArray[FString]()
             arr.add FString("Hello")
             arr.add FString("World")
-
-            assert arr.num() == 2
+                
+            assert arr.num() == 2   
 
         ueTest "ShouldBeAbleToIterateArrays":
             let arr : TArray[int32] = makeTArray[int32]()

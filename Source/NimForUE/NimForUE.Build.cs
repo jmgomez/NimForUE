@@ -10,14 +10,13 @@ using UnrealBuildTool;
 public class NimForUE : ModuleRules
 {
 	//Bind a few methods to set the EngineDir, Platform, etc.
-
 	
 	
-	public NimForUE(ReadOnlyTargetRules Target) : base(Target)
-	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		PublicIncludePaths.AddRange(
+	public NimForUE(ReadOnlyTargetRules Target) : base(Target) {
+	    PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		PrivatePCHHeaderFile = "../../NimHeaders/UEDeps.h";
+		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
+				PublicIncludePaths.AddRange(   
 			new string[] {
 				// ... add public include paths required here ...
 			}
@@ -49,7 +48,7 @@ public class NimForUE : ModuleRules
 				"Slate",
 				"SlateCore",
 				"UnrealEd",
-				
+				"NimForUEBindings",
 				"EditorStyle",
 				"Projects",
 				// ... add private dependencies that you statically link with here ...	
@@ -67,8 +66,10 @@ public class NimForUE : ModuleRules
 		// CppStandard = CppStandardVersion.Cpp14;
 		//TODO This is only for dev. Research build path. Especially for platforms like iOS
 		AddNimForUEDev();
+		
 
 	}
+
 	
 	
 

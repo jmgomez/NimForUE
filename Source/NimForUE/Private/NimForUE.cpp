@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "NimForUE.h"
-
+#include "Modules/ModuleManager.h"
 #include "Editor.h"
 #include "NimForUEFFI.h"
 #include "Async/Async.h"

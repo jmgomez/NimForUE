@@ -1,6 +1,4 @@
 include ../unreal/prelude
-import macros
-
 import testutils
 
 suite "NimForUE.UObject":
@@ -10,19 +8,20 @@ suite "NimForUE.UObject":
 
         assert not cls.isNil()
         assert cls.getName() == FString("Actor")
-        
-        
+
     ueTest  "ShouldBeAbleToCreateAObjectByClass":
         let cls = getClassByName("Actor")
         let obj = newObjectFromClass(cls)
 
         assert not cls.isNil()
         assert cls.getName()==(obj.getClass().getName())
+    
 
 
     ueTest "ShouldBeAbleToCallAFunctionInAnUObject":
-        let cls = getClassByName("MyClassToTest")
+        let cls = getClassByName("MyClassToTest") 
         let obj = newObjectFromClass(cls)
+        
 
         let expectedResult = FString("Hello World!")
 

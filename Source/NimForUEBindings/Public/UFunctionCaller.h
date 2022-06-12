@@ -54,6 +54,9 @@ public:
 	static void NimForUELog(FString& Msg) {
 		UE_LOG(LogTemp, Log, TEXT("From Nim: %s"), *Msg);
 	}
+	static void NimForUEWarn(FString& Msg) {
+		UE_LOG(LogTemp, Warning, TEXT("From Nim: %s"), *Msg);
+	}
 	static void CallUFunctionOn(UObject* Executor, FString& FunctionName, void* InParams) {
 		UFunctionCaller(Executor->GetClass(), FunctionName, InParams).Invoke(Executor);
 	}
