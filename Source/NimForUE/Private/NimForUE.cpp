@@ -31,7 +31,7 @@ void FNimForUEModule::StartupModule()
 #endif
 	//TODO Do it only for development target and maybe based on config (retrieved from nim)
 	subscribeToReload([](NCSTRING msg) {
-		
+/*		
 		AsyncTask(ENamedThreads::GameThread, [] {
 			
 			FNotificationInfo Info( LOCTEXT("HotReloadFinished", "Nim Hot Reload Complete!") );
@@ -52,7 +52,7 @@ void FNimForUEModule::StartupModule()
 			GEditor->PlayEditorSound(TEXT("/Engine/EditorSounds/Notifications/CompileSuccess_Cue.CompileSuccess_Cue"));
 			
 		});
-
+*/
 		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded! %s"), ANSI_TO_TCHAR(msg));
 	});
 }

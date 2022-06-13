@@ -11,11 +11,8 @@ public class NimForUE : ModuleRules
 {
 	//Bind a few methods to set the EngineDir, Platform, etc.
 	
-	
 	public NimForUE(ReadOnlyTargetRules Target) : base(Target) {
 	    PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		PrivatePCHHeaderFile = "../../NimHeaders/UEDeps.h";
-		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 				PublicIncludePaths.AddRange(   
 			new string[] {
 				// ... add public include paths required here ...
