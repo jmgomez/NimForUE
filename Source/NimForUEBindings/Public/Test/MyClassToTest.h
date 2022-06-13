@@ -10,6 +10,12 @@
  * 
  */
 
+UENUM()
+enum EMyTestEnum {
+	TestValue,
+	TestValue2
+};
+
 USTRUCT()
 struct FStructToUseAsVar {
 	GENERATED_BODY()
@@ -55,6 +61,9 @@ public:
 
 	UPROPERTY()
 	TSubclassOf<UObject> SubclassOfProperty;
+
+	UPROPERTY()
+	TEnumAsByte<EMyTestEnum> EnumProperty;
 	
 	UFUNCTION()
 	FString GetHelloWorld() {

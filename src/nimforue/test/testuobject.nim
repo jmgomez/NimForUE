@@ -160,6 +160,10 @@ suite "NimForUE.UObject":
     type FStructToUseAsVar = object 
         testProperty : FString  
 
+    #This enum is defined in Cpp. TODO: Integrate it into the macro
+    type EMyTestEnum = enum uint8 
+        TestValue,
+        TestValue2
 
     const ueVarType = UEType(name: "UClassToUseAsVar", parent: "UObject", kind: uClass, 
                         properties: @[
@@ -178,7 +182,8 @@ suite "NimForUE.UObject":
                             UEProperty(name: "StructProperty", kind: "FStructToUseAsVar"),
                             UEProperty(name: "ClassProperty", kind: "UClassPtr"),
                             UEProperty(name: "SubclassOfProperty", kind: "TSubclassOf[UObject]"), #Couldnt bind it
-                        
+                            UEProperty(name: "EnumProperty", kind: "EMyTestEnum"), #Couldnt bind it
+
                             ])
 
                             
@@ -261,4 +266,17 @@ suite "NimForUE.UObject":
     #     # assert obj.subclassOfProperty.toUClassPtr() == expectedCls
 
     #     # assert obj.subclassOfProperty == obj
+
+ 
+ 
+    ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForTEnums":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        
+        let expectedValue = TestValue2
+
+        obj.enumProperty = expectedValue
+
+        assert obj.enumProperty == TestValue2
+    
+
 
