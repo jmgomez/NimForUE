@@ -1,0 +1,9 @@
+{
+  "genFilePath": "",
+  "nimForUELibPath": "",
+  "hostLibPath": "",
+  "engineDir": "/UE_5.0/Engine",
+  "pluginDir": "/NimForUEDemo/Plugins/NimForUE",
+  "targetConfiguration": "Development",
+  "targetPlatform": "Mac"
+}
