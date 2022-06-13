@@ -52,6 +52,9 @@ public:
 
 	UPROPERTY()
 	UClass* ClassProperty;
+
+	UPROPERTY()
+	TSubclassOf<UObject> SubclassOfProperty;
 	
 	UFUNCTION()
 	FString GetHelloWorld() {

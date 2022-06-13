@@ -15,12 +15,13 @@ switch("outdir", "./Binaries/nim/")
 switch("backend", "cpp")
 switch("mm", "orc") 
 switch("exceptions", "cpp") #need to investigate further how to get Unreal exceptions and nim exceptions to work together so UE doesn't crash when generating an exception in cpp
-switch("opt", "none")
+
+# switch("listcmd")
+# switch("f")
 let nueConfig = getNimForUEConfig()
 switch("define", "genFilePath:"& nueConfig.genFilePath)
 switch("define", "pluginDir:"& nueConfig.pluginDir)
 #todo get from NueConfig?
-
 let withPCH = true
 let withDebug = false
 
@@ -37,6 +38,8 @@ case nueConfig.targetConfiguration:
         if withDebug:
             switch("debugger", "native")
             switch("stacktrace", "on")
+        
+        switch("opt", "none")
 
     of Shipping: 
         #TODO Maybe for shipping we need to get rid of the FFI dll and to use only NimForUE.dll
@@ -60,9 +63,7 @@ when defined macosx: #Doesn't compile with ORC. TODO Investigate why
     switch("passC", "-fno-delete-null-pointer-checks")   
     switch("passC", "-pipe")   
     switch("passC", "-fmessage-length=0")   
-    switch("passC", "-D__OPTIMIZE__=0")   
     
-    # switch("passC", "-O3")   
     if withPCH:
         switch("passC", "-include-pch " & pchPath)
     switch("cc", "clang")

@@ -1,6 +1,7 @@
 {.experimental: "caseStmtMacros".}
 
 import std/[options, strutils,sugar, sequtils, genasts, macros]
+import ../utils/sequtils as sequtils2
 
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
     # nnkTypeSection.newTree(
@@ -224,16 +225,15 @@ type
 #               Ident "TArray"
 #               Ident "FString"
 
-
 func getTypeNodeFromProp(prop : UEProperty) : NimNode = 
     #naive check on generic types:
-    let supportedGenericTypes = ["TArray"]
-    let genType = supportedGenericTypes[0]
-    let isGenericType = genType in prop.kind
-    if not isGenericType:
+    let supportedGenericTypes = ["TArray", "TSubclassOf"]
+    let genType = supportedGenericTypes.filter(genType=> genType in prop.kind).head()
+    if not genType.isSome():
         return ident prop.kind
-    let innerType = prop.kind.replace(genType, "").replace("[").replace("]", "")
-    return nnkBracketExpr.newTree(ident genType, ident innerType)
+    
+    let innerType = prop.kind.replace(genType.get(), "").replace("[").replace("]", "")
+    return nnkBracketExpr.newTree(ident genType.get(), ident innerType)
 
 proc genProp(typeDef : UEType, prop : UEProperty) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"

@@ -177,14 +177,13 @@ suite "NimForUE.UObject":
                             UEProperty(name: "ObjectProperty", kind: "UClassToUseAsVarPtr"),
                             UEProperty(name: "StructProperty", kind: "FStructToUseAsVar"),
                             UEProperty(name: "ClassProperty", kind: "UClassPtr"),
+                            UEProperty(name: "SubclassOfProperty", kind: "TSubclassOf[UObject]"), #Couldnt bind it
                         
                             ])
 
                             
     genType(ueVarType)
     genType(ueType) #Notice we wont be using genType directly
-
-
 
 
     ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForFString":
@@ -251,3 +250,15 @@ suite "NimForUE.UObject":
         obj.classProperty = cls
 
         assert obj.classProperty == cls
+    
+    # ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForTSubClass":
+    #     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        
+    #     let expectedCls = getClassByName("Actor") #Not sure if the compiler will be able to test that the classes are compatible or if it will be even neccesary to do so
+
+    #     obj.subclassOfProperty = toSubclass[UObject](obj[])
+
+    #     # assert obj.subclassOfProperty.toUClassPtr() == expectedCls
+
+    #     # assert obj.subclassOfProperty == obj
+
