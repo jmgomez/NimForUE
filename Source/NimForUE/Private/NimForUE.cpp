@@ -29,11 +29,16 @@ void FNimForUEModule::StartupModule()
 	UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib loaded %s"), *DllPath);
 
 #endif
+
 	auto onPreReload = [](NCSTRING msg) {
 		//subscribeToReloadWorkaround until we have a proper HotReload Load/Unload mechanism
 		FNimTestBase::UnregisterAll();
 	};
 	auto onPostReload = [](NCSTRING msg) {
+
+	//TODO Do it only for development target and maybe based on config (retrieved from nim)
+	subscribeToReload([](NCSTRING msg) {
+
 		AsyncTask(ENamedThreads::GameThread, [] {
 			
 			FNotificationInfo Info( LOCTEXT("HotReloadFinished", "Nim Hot Reload Complete!") );

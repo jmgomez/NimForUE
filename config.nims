@@ -32,7 +32,7 @@ let engineDir = nueConfig.engineDir
 let pluginDir = nueConfig.pluginDir
 #/Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/MacOs/Plugins/NimForUE/Intermediate/Build/Mac/x86_64/UnrealEditor/Development/NimForUE/PCH.NimForUE.h.gch
 #let pchPath = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir / "NimForUE" / "PCH.NimForUE.h.gch"
-let pchPath = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir / "NimForUE" / "PCH.NimForUE.h"
+let pchPath = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir / "NimForUEBindings" / "PCH.NimForUEBindings.h"
 # if not fileExists(pchPath):
 #     quit("PCH file not found: " & pchPath)
 
@@ -53,6 +53,10 @@ when defined windows:
     #switch("passC", "/MP") # build with multiple processes, enables /FS force synchronous writes
     switch("passC", "/FS") # build with multiple processes, enables /FS force synchronous writes
     switch("passC", "/std:c++17")
+    switch("passC", "/Zp8") 
+    switch("passC", "/source-charset:utf-8")
+    switch("passC", "/execution-charset:utf-8")
+    switch("passC", "/MD")
     if withPCH:
         switch("passC", "/Yu" & pchPath)
         switch("passC", "/Fp" & pchPath&".pch")
@@ -93,7 +97,7 @@ when defined withue:
 
     
     proc getHeadersIncludePaths() : seq[string] = 
-        let pluginDefinitionsPaths = "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
+        let pluginDefinitionsPaths = pluginDir / "/Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
         let nimForUEBindingsHeaders =  pluginDir/ "Source/NimForUEBindings/Public/"
         let nimForUEBindingsIntermidateHeaders = pluginDir/ "Intermediate"/ "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
 
@@ -161,7 +165,7 @@ when defined withue:
                 let libPath = addQuotes(pluginDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / "NimForUEBindings" / libName)
                 switch("passL", libPath)
 
-        setEngineWeakSymbolsForModules("UnrealEditor", @["Core", "CoreUObject", "Engine"]) 
+        setEngineWeakSymbolsForModules("UnrealEditor", @["Core", "CoreUObject", "Engine", "Projects"]) 
         addNewForUEBindings()   
 
 

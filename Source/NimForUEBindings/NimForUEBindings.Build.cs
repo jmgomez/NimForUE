@@ -6,12 +6,14 @@ public class NimForUEBindings : ModuleRules
 	{
 
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		PrivatePCHHeaderFile = "../../NimHeaders/UEDeps.h";
+		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core", 
 			"CoreUObject", 
 			"Engine",
-			"UnrealEd"
+			//"UnrealEd"
 			
 		});
 	}
