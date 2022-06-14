@@ -14,7 +14,6 @@ suite "NimForUE":
 
         assert expectedResult == v2
 
-
     suite "TArrays": 
       
         ueTest "ShouldbeAbleToInteropWithTArrays":
@@ -41,7 +40,6 @@ suite "NimForUE":
         
             assert not scriptStruct.isNil()
 
-
         ueTest "ShouldBeAbleToGetTheFPropOfAStruct":
             let scriptStruct = getScriptStructByName("StructToUseAsVar")
         
@@ -52,5 +50,17 @@ suite "NimForUE":
 
             assert prop.getName() == propName
             assert not scriptStruct.isNil()
+
+    suite "TMaps":
+        ueTest "ShouldBeAbleToCreateAndOperateWithTMaps":
+            let map : TMap[int, FString] = makeTMap[int, FString]()
+            map.add makeTPair(1, FString("Hello"))
+            map.add(2, FString("World"))
+            map[2] = FString("World2")
+
+            assert map.num() == 2
+            assert map[1] == FString("Hello")
+            assert map[2] != FString("World")
+            assert map.contains(1)
 
 #I think there is no need for adding getters and setters to ustructs, just mirroring the types should be enough. Not 100% sure though.
