@@ -183,8 +183,10 @@ suite "NimForUE.UObject":
                             UEProperty(name: "ClassProperty", kind: "UClassPtr"),
                             UEProperty(name: "SubclassOfProperty", kind: "TSubclassOf[UObject]"), #Couldnt bind it
                             UEProperty(name: "EnumProperty", kind: "EMyTestEnum"), #Couldnt bind it
+                            UEProperty(name: "SoftObjectProperty", kind: "TSoftObjectPtr[UObject]"), #Couldnt bind it
 
                             ])
+
 
                             
     genType(ueVarType)
@@ -280,3 +282,19 @@ suite "NimForUE.UObject":
     
 
 
+    ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForTSoftObjectPtr":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        
+        # let test : TSoftObjectPtr[UObject] = cast[TSoftObjectPtr[UObject]](makeTSoftObject(obj))
+        let expectedValue = newUObject[UMyClassToTest]()
+        
+        #For some reason this is genereting TSoftObjectPtr[TSoftObjectPtr[UObject]]
+        #obj.softObjectProperty = makeTSoftObject(expectedValue)
+
+        let soft = makeTSoftObject(expectedValue)
+        obj.softObjectProperty = soft 
+
+        assert obj.softObjectProperty.get() == expectedValue
+    
+
+    

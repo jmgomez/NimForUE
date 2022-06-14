@@ -64,6 +64,9 @@ public:
 
 	UPROPERTY()
 	TEnumAsByte<EMyTestEnum> EnumProperty;
+
+	UPROPERTY()
+	TSoftObjectPtr<UObject> SoftObjectProperty;
 	
 	UFUNCTION()
 	FString GetHelloWorld() {

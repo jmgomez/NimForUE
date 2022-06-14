@@ -227,7 +227,7 @@ type
 
 func getTypeNodeFromProp(prop : UEProperty) : NimNode = 
     #naive check on generic types:
-    let supportedGenericTypes = ["TArray", "TSubclassOf"]
+    let supportedGenericTypes = ["TArray", "TSubclassOf", "TSoftObjectPtr"]
     let genType = supportedGenericTypes.filter(genType=> genType in prop.kind).head()
     if not genType.isSome():
         return ident prop.kind
