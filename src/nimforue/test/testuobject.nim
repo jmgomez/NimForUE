@@ -258,17 +258,20 @@ suite "NimForUE.UObject":
 
         assert obj.classProperty == cls
     
-    # ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForTSubClass":
-    #     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+    ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForTSubClass":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         
-    #     let expectedCls = getClassByName("Actor") #Not sure if the compiler will be able to test that the classes are compatible or if it will be even neccesary to do so
+        let expectedCls = getClassByName("MyClassToTest") #Not sure if the compiler will be able to test that the classes are compatible or if it will be even neccesary to do so
+        
+        #should be able to assing a classPtr from a subclass by type
+        #Not sure if this can be improved with a converter. But this is ergonomic enough for now
+        let tSubClass  = makeTSubclassOf[UMyClassToTest](expectedCls) 
+        obj.subclassOfProperty = tSubClass 
+    
+        #For some reason this is genereting TSoftObjectPtr[TSoftObjectPtr[UObject]]
+        # obj.subclassOfProperty = makeTSubclassOf[UMyClassToTest](expectedCls)  
 
-    #     obj.subclassOfProperty = toSubclass[UObject](obj[])
-
-    #     # assert obj.subclassOfProperty.toUClassPtr() == expectedCls
-
-    #     # assert obj.subclassOfProperty == obj
-
+        assert obj.subclassOfProperty.get() == expectedCls
  
  
     ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForTEnums":
@@ -289,7 +292,7 @@ suite "NimForUE.UObject":
         let expectedValue = newUObject[UMyClassToTest]()
         
         #For some reason this is genereting TSoftObjectPtr[TSoftObjectPtr[UObject]]
-        #obj.softObjectProperty = makeTSoftObject(expectedValue)
+        # obj.softObjectProperty = makeTSoftObject(expectedValue)
 
         let soft = makeTSoftObject(expectedValue)
         obj.softObjectProperty = soft 

@@ -1,4 +1,4 @@
-import ../coreuobject/[uobject, unrealtype]
+import ../coreuobject/[uobject, unrealtype, templates/subclassof]
 import ../core/containers/unrealstring 
 import std/[typetraits, strutils]
 include ../definitions
@@ -55,6 +55,15 @@ proc newUObject*[T:UObject]() : ptr T =
     return cast[ptr T](newObjectFromClass(cls)) 
 
 
+proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =
+    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
+    let cls = getClassByName(className)
+    return cls
+
+# converter convToSubclass*[T : UObject ](cls : UClassPtr): TSubclassOf[T] = toSubclass[T](cls)
+    
+    
+   
 
 
 
