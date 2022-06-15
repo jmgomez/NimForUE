@@ -69,7 +69,10 @@ public:
 	TSoftObjectPtr<UObject> SoftObjectProperty;
 
 	UPROPERTY()
-	TMap<FString, UObject*> MapProperty;
+	TMap<FString, int32> MapProperty;
+
+	UPROPERTY()
+	FName NameProperty;
 
 	
 	

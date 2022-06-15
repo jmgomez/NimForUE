@@ -185,6 +185,7 @@ suite "NimForUE.UObject":
                             UEProperty(name: "EnumProperty", kind: "EMyTestEnum"), #Couldnt bind it
                             UEProperty(name: "SoftObjectProperty", kind: "TSoftObjectPtr[UObject]"), #Couldnt bind it
                             UEProperty(name: "MapProperty", kind: "TMap[FString, int32]"), #Couldnt bind it
+                            UEProperty(name: "NameProperty", kind: "FName"), #Couldnt bind it
 
                             ])
 
@@ -295,10 +296,21 @@ suite "NimForUE.UObject":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
     
         obj.mapProperty =  makeTMap[FString, int32]()
-        obj.mapProperty.add("Hello", 5)
+        obj.mapProperty.add("Hello", 5.int32)
        
         assert obj.mapProperty.num() == 1
         assert obj.mapProperty["Hello"] == 5
+    
+
+    
+    ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForFName":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+
+        obj.nameProperty = makeFName("Hello")
+        
+
+       
+        assert obj.nameProperty.toFString() == FString("Hello")
     
 
     
