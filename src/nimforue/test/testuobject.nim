@@ -184,6 +184,7 @@ suite "NimForUE.UObject":
                             UEProperty(name: "SubclassOfProperty", kind: "TSubclassOf[UObject]"), #Couldnt bind it
                             UEProperty(name: "EnumProperty", kind: "EMyTestEnum"), #Couldnt bind it
                             UEProperty(name: "SoftObjectProperty", kind: "TSoftObjectPtr[UObject]"), #Couldnt bind it
+                            UEProperty(name: "MapProperty", kind: "TMap[FString, int32]"), #Couldnt bind it
 
                             ])
 
@@ -260,9 +261,8 @@ suite "NimForUE.UObject":
     
     ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForTSubClass":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-        
         let expectedCls = getClassByName("MyClassToTest") #Not sure if the compiler will be able to test that the classes are compatible or if it will be even neccesary to do so
-        let sbcls = makeTSubclassOf[UObject]()
+
         obj.subclassOfProperty = makeTSubclassOf[UMyClassToTest](expectedCls)  
 
         assert obj.subclassOfProperty.get() == expectedCls
@@ -288,6 +288,17 @@ suite "NimForUE.UObject":
 
 
         assert obj.softObjectProperty.get() == expectedValue
+    
+
+    
+    ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForTMaps":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+    
+        obj.mapProperty =  makeTMap[FString, int32]()
+        obj.mapProperty.add("Hello", 5)
+       
+        assert obj.mapProperty.num() == 1
+        assert obj.mapProperty["Hello"] == 5
     
 
     

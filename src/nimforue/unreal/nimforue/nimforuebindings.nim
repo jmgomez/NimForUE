@@ -36,7 +36,7 @@ proc reloadTest*(test:FNimTestBase):void {.importcpp:"#.ReloadTest()".}
 proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.TestTrue(@)".}
 
 
-proc getFPropertyByName*(class:UStructPtr, propName:var FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
+proc getFPropertyByName*(class:UStructPtr, propName:FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
 
 proc getUTypeByName*[T :UStruct](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
 

@@ -67,6 +67,11 @@ public:
 
 	UPROPERTY()
 	TSoftObjectPtr<UObject> SoftObjectProperty;
+
+	UPROPERTY()
+	TMap<FString, UObject*> MapProperty;
+
+	
 	
 	UFUNCTION()
 	FString GetHelloWorld() {

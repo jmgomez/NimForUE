@@ -227,34 +227,43 @@ type
 
 func getTypeNodeFromProp(prop : UEProperty) : NimNode = 
     #naive check on generic types:
-    let supportedGenericTypes = ["TArray", "TSubclassOf", "TSoftObjectPtr"]
-    let genType = supportedGenericTypes.filter(genType=> genType in prop.kind).head()
+    let supportedGenericTypes = ["TArray", "TSubclassOf", "TSoftObjectPtr", "TMap"]
+    let genType = supportedGenericTypes.filter(genType => genType in prop.kind).head()
     if not genType.isSome():
         return ident prop.kind
-    
-    let innerType = prop.kind.replace(genType.get(), "").replace("[").replace("]", "")
-    return nnkBracketExpr.newTree(ident genType.get(), ident innerType)
+    let genericType = genType.get()
+
+    let innerTypesStr = prop.kind.replace(genericType, "").replace("[").replace("]", "")
+    let innerTypes = innerTypesStr.split(",").map(innerType => ident(innerType.strip()))
+    let bracketsNode = nnkBracketExpr.newTree((ident genericType) & innerTypes)
+    bracketsNode
+
+func getTypeNodeForReturn(prop: UEProperty, typeNode : NimNode) : NimNode = 
+    let shouldBeReturnedAsRef = ["TMap"]
+    let genType = shouldBeReturnedAsRef.filter(genType => genType in prop.kind).head()
+    if not genType.isSome():
+        return typeNode
+    nnkVarTy.newTree(typeNode)
+
+
 
 proc genProp(typeDef : UEType, prop : UEProperty) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
     let className = typeDef.name.substr(1)
     let typeNode = getTypeNodeFromProp(prop)
+    let typeNodeAsReturnValue = getTypeNodeForReturn(prop, typeNode)
     var propName = prop.name 
     propName[0] = propName[0].toLowerAscii()
     let propIdent = ident propName
     result = 
-        genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name):
-            proc propIdent (obj {.inject.} : ptrName ) : typeNode =
-                let cls = getClassByName(className) #need to remove the U
-                var propRefUEName : FString = propUEName #transform it to a reference so we dont copy
-                let prop = cls.getFPropertyByName propRefUEName
+        genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
+            proc propIdent (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
+                let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 getPropertyValuePtr[typeNode](prop, obj)[]
             
-            proc `propIdent=` (obj {.inject.} : ptrName, val :typeNode) = 
-                let cls = getClassByName(className) #need to remove the U
-                var propRefUEName : FString = propUEName #transform it to a reference so we dont copy
+            proc `propIdent=` (obj {.inject.} : ptrName, val {.inject.} :typeNode) = 
                 var value {.inject.} : typeNode = val
-                let prop {.inject.} = cls.getFPropertyByName propRefUEName
+                let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
 
 
@@ -275,5 +284,8 @@ proc genUETypeDef(typeDef : UEType) : NimNode =
 
 macro genType*(typeDef : static UEType) : untyped = 
     result = genUETypeDef(typeDef)
-    # echo result.repr
+    echo result.repr
 
+
+dumpTree:
+    proc whatever() : var int

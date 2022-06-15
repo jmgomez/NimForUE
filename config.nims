@@ -23,7 +23,7 @@ switch("define", "genFilePath:"& nueConfig.genFilePath)
 switch("define", "pluginDir:"& nueConfig.pluginDir)
 #todo get from NueConfig?
 let withPCH = true
-let withDebug = false
+let withDebug = true
 
 let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform
 #Im pretty sure theere will moref specific handles for the other platforms
@@ -93,7 +93,7 @@ when defined withue:
 
         proc getEngineRuntimeIncludePathFor(engineFolder, moduleName:string) : string = addQuotes(engineDir / "Source"/engineFolder/moduleName/"Public")
         proc getEngineIntermediateIncludePathFor(moduleName:string) : string = addQuotes(engineDir / "Intermediate"/"Build"/platformDir/"UnrealEditor"/"Inc"/moduleName)
-
+        
         let essentialHeaders = @[
             pluginDefinitionsPaths /  "NimForUE",
             pluginDefinitionsPaths /  "NimForUEBindings",
