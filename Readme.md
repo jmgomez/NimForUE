@@ -53,8 +53,8 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 - [x] Hot Reloading MacOS
 - [x] Debugging
 - [x] Test Integration via Unreal Frontend
-- [ ] Cover all Unreal Reflected Types
-- [ ] Getter/Setters macro for UProps
+- [ ] Cover most Unreal Reflected Types
+- [x] Getter/Setters macro for UProps
 - [ ] Generate Nim definitions from Unreal Reflection system 
 - [ ] Make builds work on Windows 
 - [ ] Make builds work on MacOS 
