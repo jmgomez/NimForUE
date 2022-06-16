@@ -3,7 +3,7 @@
 import ../coreuobject/uobject
 
 
-# type FWeakObjectPtr* {.importcpp.} = object
+type FWeakObjectPtr* {.importcpp.} = object
 
 
 # proc makeWeakObjectPtr*[T : UObjectPtr] (obj : T) : FWeakObjectPtr {.importcpp: "FWeakObjectPtr(#)", constructor.} 
