@@ -43,6 +43,7 @@ FString ATestActor::TestMultipleParams(FString Param1, int Test) {
 
 bool ATestActor::BoolTestFromNimAreEquals(FString NumberStr, int Number, bool TestParam) {
 	auto BoolToStr = [](bool Value){ return FString(Value?"True":"False");};
+	
 	//UE_LOG(LogTemp, Log, TEXT("The value of the bool is %s"), *BoolToStr(TestParam));
 	return TestParam;
 	
@@ -59,7 +60,7 @@ void ATestActor::SetColorByStringInMesh(FString ColorStr) {
 		UStaticMeshComponent* MeshComp = MeshActor->GetStaticMeshComponent();
 		MeshComp->SetVectorParameterValueOnMaterials(FName("Base Color"), UKismetMathLibrary::Conv_LinearColorToVector(Color));
 	} else if(!bIsValid) {
-		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Color Invalid %s"), *ColorStr), true, false, FLinearColor::Red, 2);
+		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Color Invalid blabla %s"), *ColorStr), true, false, FLinearColor::Red, 2);
 	} else {
 		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("You need to set a mesh ")));
 	}

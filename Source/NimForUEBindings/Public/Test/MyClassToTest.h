@@ -31,6 +31,9 @@ public:
 	FString TestProperty = "Im a valid var";
 };
 
+
+DECLARE_DYNAMIC_DELEGATE_OneParam(FDynamicDelegateOneParamTest, FString, TestParam1);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastDelegateOneParamTest, FString, TestParam1);
 UCLASS()
 class NIMFORUEBINDINGS_API UMyClassToTest : public UObject {
 	GENERATED_BODY()
@@ -74,11 +77,28 @@ public:
 	UPROPERTY()
 	FName NameProperty;
 
+	UPROPERTY()
+	FDynamicDelegateOneParamTest DynamicDelegateOneParamProperty;
+	UPROPERTY()
+	FDynamicMulticastDelegateOneParamTest MulticastDynamicDelegateOneParamProperty;
 	
+	UPROPERTY()
+	bool bWasCalled;
+	UFUNCTION()
+	void BindDelegateFuncToMultcasDynOneParam() {
+		MulticastDynamicDelegateOneParamProperty.AddDynamic(this, &UMyClassToTest::DelegateFunc);
+		// MulticastDynamicDelegateOneParamProperty.Broadcast()
+	}
+	UFUNCTION()
+	void DelegateFunc(FString Par) {
+		bWasCalled = true;
+		UE_LOG(LogTemp, Warning, TEXT("Delegate Func Called. The param is %s"), *Par);
+	}
 	
 	UFUNCTION()
 	FString GetHelloWorld() {
 		FStructToUseAsVar::StaticStruct();
+		
 		return "Hello World!";
 	}
 

@@ -36,6 +36,7 @@ proc reloadTest*(test:FNimTestBase):void {.importcpp:"#.ReloadTest()".}
 proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.TestTrue(@)".}
 
 
+#TODO This should throw if the property is not found!
 proc getFPropertyByName*(class:UStructPtr, propName:FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
 
 proc getUTypeByName*[T :UStruct](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
@@ -60,7 +61,6 @@ proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =
     let cls = getClassByName(className)
     return cls
 
-# converter convToSubclass*[T : UObject ](cls : UClassPtr): TSubclassOf[T] = toSubclass[T](cls)
     
     
    
