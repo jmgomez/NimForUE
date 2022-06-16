@@ -1,6 +1,7 @@
 import std/[os, strutils, options, strformat, json, jsonUtils]
 import sugar
 import nimforueconfig
+
 #TODO Move this
 func isEmpty*[T](s:seq[T]) : bool = s.len == 0
 

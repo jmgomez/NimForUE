@@ -1,5 +1,4 @@
-import std/[os, options,strutils, strformat, json, jsonUtils]
-import system
+import std/[os, strutils, json, jsonUtils]
 
 func getFullLibName(baseLibName:string) :string  = 
     when defined macosx:
