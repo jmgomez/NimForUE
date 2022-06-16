@@ -28,8 +28,7 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
 
     executor.saySomething(msg)
 
-
-    executor.setColorByStringInMesh("(R=1,G=0,B=0,A=1)")
+    executor.setColorByStringInMesh("(R=0,G=0.25,B=0.25,A=1)")
 
     if executor.boolTestFromNimAreEquals("5", 5, true) == true:
         executor.saySomething("true")

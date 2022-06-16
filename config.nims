@@ -22,8 +22,8 @@ let nueConfig = getNimForUEConfig()
 switch("define", "genFilePath:"& nueConfig.genFilePath)
 switch("define", "pluginDir:"& nueConfig.pluginDir)
 #todo get from NueConfig?
-let withPCH = true
-let withDebug = true
+const withPCH = true
+const withDebug = true
 
 let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform
 #Im pretty sure theere will moref specific handles for the other platforms
@@ -57,7 +57,7 @@ when defined windows:
     switch("passC", "/source-charset:utf-8")
     switch("passC", "/execution-charset:utf-8")
     switch("passC", "/MD")
-    if withPCH:
+    when defined(withue) and withPCH:
         switch("passC", "/Yu" & pchPath)
         switch("passC", "/Fp" & pchPath&".pch")
 

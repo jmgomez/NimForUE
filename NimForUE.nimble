@@ -13,8 +13,9 @@ requires "nim >= 1.6.4"
 backend = "cpp"
 #bin = @["nue"]
 
-task nue, "Build the NimForUE tool":
-    exec "nim cpp src/nue.nim" # output to the plugin folder instead of Binaries/nim
+task nue, "Build NimForUE tool":
+    # output to the plugin folder instead of Binaries/nim
+    exec("nim c --mm:arc --threads --tlsEmulation:off --outdir:./ src/nue.nim")
 
 template callTask(name: untyped) =
     ## Invokes the nimble task with the given name
@@ -22,13 +23,10 @@ template callTask(name: untyped) =
 
 task nimforue, "Builds the main lib. The one that makes sense to hot reload.":
     generateFFIGenFile()
-    exec("nim cpp --app:lib --nomain --d:genffi -d:withue --nimcache:.nimcache/nimforue --genscript src/nimforue.nim")
-    #exec("nim c -d:release --run src/buildscripts/copyLib.nim")
-
-task watch, "Watchs the main lib and rebuilds it when something changes.":
-    when defined macosx:
-        exec("""echo nimble nimforue > nueMac.sh""")
-    exec("./nue watch") # use nimble to call the watcher. Typically the user will call `nue watch` since nue will be installed in `.nimble/bin`.
+    exec("nim cpp --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/nimforue --genscript src/nimforue.nim")
+    exec("nim r src/buildscripts/nimcachebuild.nim")
+    #exec("nim cpp --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/nimforue src/nimforue.nim")
+    exec("nim c -d:release --run src/buildscripts/copyLib.nim")
 
 task host, "Builds the library that's hooked to unreal":
     if not fileExists(getNimForUEConfig().genFilePath):
@@ -36,7 +34,10 @@ task host, "Builds the library that's hooked to unreal":
     exec("nim cpp --app:lib --nomain --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim")
     
     #TODO using a custom cache dir would be better
-    copyFileFromNimCachetoLib("NimForUEFFI.h", "./NimHeaders/NimForUEFFI.h", "host") #temp hack to copy the header. 
+    #copyFileFromNimCachetoLib("NimForUEFFI.h", "./NimHeaders/NimForUEFFI.h", "host") #temp hack to copy the header. 
+    #let cacheFolderName = if getNimForUEConfig().targetConfiguration == Shipping: "hostnimforue_r" else: "hostnimforue_d" 
+    #copyFileFromNimCachetoLib("NimForUEFFI.h", "./NimHeaders/NimForUEFFI.h", "../"&cacheFolderName) #temp hack to copy the header. 
+    copyFileFromNimCachetoLib("NimForUEFFI.h", "./NimHeaders/NimForUEFFI.h") #temp hack to copy the header. 
     copyLibToUE4("hostnimforue")
     when defined macosx:
         #needed for dllimport in ubt mac only

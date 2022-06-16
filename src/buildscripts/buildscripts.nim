@@ -1,6 +1,7 @@
 import std/[os, strutils, options, strformat, json, jsonUtils]
 import sugar
 import nimforueconfig
+
 #TODO Move this
 func isEmpty*[T](s:seq[T]) : bool = s.len == 0
 
@@ -26,8 +27,9 @@ func getNextFileName*(currentFilename : string) : string =
 
 #Example ussage copyFileFromNimCachetoLib("whatever.h", "headers/whatever.h")
 proc copyFileFromNimCachetoLib*(filenameSrc:string, filenameDst:string, baserDir="") = 
-    let nimCacheDir = "./.nimcache" 
-    let fileFullSrc = nimcacheDir / baserDir / filenameSrc
+    #let fileFullSrc = nimcacheDir() / baserDir / filenameSrc
+    let fileFullSrc = getCurrentDir() / ".nimcache/host" / filenameSrc
+
     echo "NIM CACHE DIR IS " & fileFullSrc
     let libDir = "./"
     let fileFullDest = libDir / filenameDst
@@ -36,6 +38,7 @@ proc copyFileFromNimCachetoLib*(filenameSrc:string, filenameDst:string, baserDir
         return
     
     rmFile(fileFullDest)
+    echo "  copying ", fileFullSrc, " to ", fileFullDest
     cpFile(fileFullSrc, fileFullDest)
 
 func getFullLibName(baseLibName:string) :string  = 
