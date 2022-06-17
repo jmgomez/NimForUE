@@ -1,3 +1,4 @@
+include ../definitions
 
 import uobject
 import nametypes

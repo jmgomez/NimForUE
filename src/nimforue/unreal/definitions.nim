@@ -4,8 +4,8 @@ The file that mixes them is prelude which is not used inside the unreal director
 ]#
 {.emit: """/*INCLUDESECTION*/
 
-#include "Definitions.NimForUE.h"
-#include "Definitions.NimForUEBindings.h"
+//#include "Definitions.NimForUE.h"
+//#include "Definitions.NimForUEBindings.h"
 #include "UEDeps.h"
 
 """.}

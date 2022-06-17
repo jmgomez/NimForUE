@@ -7,7 +7,7 @@
 #include "Async/Async.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
-
+#include "Test/NimTestBase.h"
 DEFINE_LOG_CATEGORY(NimForUE);
 
 #include "Interfaces/IPluginManager.h"
@@ -31,7 +31,7 @@ void FNimForUEModule::StartupModule()
 #endif
 	auto onPreReload = [](NCSTRING msg) {
 		//subscribeToReloadWorkaround until we have a proper HotReload Load/Unload mechanism
-		// FNimTestBase::UnregisterAll();
+		FNimTestBase::UnregisterAll();
 	};
 	auto onPostReload = [](NCSTRING msg) {
 		AsyncTask(ENamedThreads::GameThread, [] {
