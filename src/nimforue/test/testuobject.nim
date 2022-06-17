@@ -167,7 +167,6 @@ suite "NimForUE.UObject":
 
 
 
-
     const ueVarType = UEType(name: "UClassToUseAsVar", parent: "UObject", kind: uClass, 
                         properties: @[
                             UEProperty(name: "TestProperty", kind: "FString"),
@@ -349,14 +348,9 @@ suite "NimForUE.UObject":
 
     ueTest "ShouldBeAbleToBindAnUFunctionInADelegateFDynamicDelegateOneParam_NoMacro":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-        
-        # proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void {.uebind.}
-        # obj.bindDelegateFuncToDelegateOneParam()
 
         let funcName = makeFName("DelegateFunc")
         obj.dynamicDelegateOneParamProperty.bindUFunction(obj, funcName)
-
-        
 
         type Params = object
             param : FString
@@ -369,6 +363,43 @@ suite "NimForUE.UObject":
         #Should it be bind via MulticastDynamicDelegate[Params]? 
 
         assert obj.bWasCalled
+
+
+    ueTest "ShouldBeAbleToBindAnUFunctionInADelegateFDynamicDelegateOneParamCallItViaBroadcast_NoMacro":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+
+         #Todo eventually do a wrapper to bind an uebind function
+         #so it will look into the signature and generate it
+        obj.dynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
+
+
+        type CustomScriptDelegate = object of FScriptDelegate
+        #The type is just for typesafety on the CustomScriptDelegate
+        proc broadcast(dynDel: ptr CustomScriptDelegate, str: FString) = 
+            type Params = object
+                param : FString
+
+            var param = Params(param:str)
+            let scriptDelegate : FScriptDelegate = dynDel[]
+            scriptDelegate.processDelegate(param.addr) 
+
+        var del = cast[ptr CustomScriptDelegate](obj.dynamicDelegateOneParamProperty.addr)
+
+
+        assert obj.dynamicDelegateOneParamProperty.isBound()
+
+        del.broadcast("Called from broadcast!")
+
+        #[Since this work, the syntax for binding it may be 
+        #[TScriptDelegate[FString] and it will emmit
+            #A new type with the name Like Name_ScriptDelegate_FString
+            
+        ]#
+        
+        assert obj.bWasCalled
+
+
+
     
     ueTest "ShouldBeAbleToCallprocessMulticastDelegateFDynamicMulticastDelegateOneParam_NoMacro":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()

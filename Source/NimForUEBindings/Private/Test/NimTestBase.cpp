@@ -2,11 +2,14 @@
 
 void FNimTestBase::UnregisterAll(bool bShouldUnregisterOnly) {
 	for(FString TestName : AllRegisteredNimTests) {
-		if(bShouldUnregisterOnly || TestName != OnlyExecute)
+		if(bShouldUnregisterOnly || TestName != OnlyExecute) {
 			FAutomationTestFramework::Get().UnregisterAutomationTest(TestName);
+			AllRegisteredNimTests.Remove(TestName);
+		}
 	}
-	if(bShouldUnregisterOnly)
+	if(bShouldUnregisterOnly) {
 		OnlyExecute = "";
+	}
 }
 
 void FNimTestBase::ReloadTest(bool bIsOnly) {

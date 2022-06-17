@@ -6,7 +6,7 @@ import nametypes
 
 type
     FMulticastScriptDelegate* {.importcpp.} = object 
-    FScriptDelegate* {.importcpp.} = object
+    FScriptDelegate* {.importcpp, inheritable, pure.} = object
 
 
 
