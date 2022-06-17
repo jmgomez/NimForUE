@@ -9,20 +9,23 @@ type
         Stop
     ReloadCallback* = proc(msg:cstring) {.cdecl, gcsafe.}
     LoggerSignature* = proc(msg:cstring) {.cdecl, gcsafe.}
-
+    
 
 const pluginDir* {.strdefine.} : string = ""
 
 var libPath:string
 var lastLoaded : string
 
-var onReload : ReloadCallback; #callback called to notify UE when NimForUE changed
+var onPreReload : ReloadCallback; #callback called to notify UE when NimForUE changed
+var onPostReload : ReloadCallback; #callback called to notify UE when NimForUE changed
+
 var logger : LoggerSignature
 
 {.pragma: ex, exportc, cdecl, dynlib.}
 
-proc subscribeToReload*(cb: ReloadCallback) {.ex.} =
-    onReload = cb
+proc subscribeToReload*(preReloadCb:ReloadCallback, postReloadCb: ReloadCallback) {.ex.} =
+    onPreReload = preReloadCb
+    onPostReload = postReloadCb
 
 proc registerLogger*(inLogger: LoggerSignature) {.ex.} =
     logger = inLogger
@@ -42,10 +45,15 @@ proc checkReload*() {.ex.} =
         lastLoaded = nextLibName
         if lib != nil:
             unloadLib(lib)
+
+        if not onPreReload.isnil():
+            onPreReload(nextLibName)
+
         lib = loadLib(nextLibName)
         doAssert(not lib.isNil())
         # call to initialize gc for guest dll, or Nim will crash on memory (re)alloc
         # must be called on the game thread which is calling guest dll functions
         (cast[proc(){.cdecl.}](lib.symAddr("NimMain")))()
-        if not onReload.isnil():
-            onReload(nextLibName)
+
+        if not onPostReload.isnil():
+            onPostReload(nextLibName)

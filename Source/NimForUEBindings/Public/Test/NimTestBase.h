@@ -5,6 +5,8 @@ class NIMFORUEBINDINGS_API FNimTestBase : public FAutomationTestBase {
 
 	FString TestName;
 public:
+	static void UnregisterAll();
+	inline static TArray<FString> AllRegisteredNimTests = {};
 	
 	FNimTestBase(FString InName) : FAutomationTestBase(InName, false) {
 		TestName = InName;

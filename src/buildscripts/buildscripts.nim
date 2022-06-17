@@ -26,8 +26,8 @@ func getNextFileName*(currentFilename : string) : string =
 
 #Example ussage copyFileFromNimCachetoLib("whatever.h", "headers/whatever.h")
 proc copyFileFromNimCachetoLib*(filenameSrc:string, filenameDst:string, baserDir="") = 
-    
-    let fileFullSrc = nimcacheDir() / baserDir / filenameSrc
+    let nimCacheDir = "./.nimcache" 
+    let fileFullSrc = nimcacheDir / baserDir / filenameSrc
     echo "NIM CACHE DIR IS " & fileFullSrc
     let libDir = "./"
     let fileFullDest = libDir / filenameDst

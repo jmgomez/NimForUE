@@ -29,9 +29,11 @@ void FNimForUEModule::StartupModule()
 	UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib loaded %s"), *DllPath);
 
 #endif
-	//TODO Do it only for development target and maybe based on config (retrieved from nim)
-	subscribeToReload([](NCSTRING msg) {
-		
+	auto onPreReload = [](NCSTRING msg) {
+		//subscribeToReloadWorkaround until we have a proper HotReload Load/Unload mechanism
+		FNimTestBase::UnregisterAll();
+	};
+	auto onPostReload = [](NCSTRING msg) {
 		AsyncTask(ENamedThreads::GameThread, [] {
 			
 			FNotificationInfo Info( LOCTEXT("HotReloadFinished", "Nim Hot Reload Complete!") );
@@ -52,9 +54,14 @@ void FNimForUEModule::StartupModule()
 			GEditor->PlayEditorSound(TEXT("/Engine/EditorSounds/Notifications/CompileSuccess_Cue.CompileSuccess_Cue"));
 			
 		});
-
 		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded! %s"), ANSI_TO_TCHAR(msg));
-	});
+	};
+
+	
+	//TODO Do it only for development target and maybe based on config (retrieved from nim)
+	subscribeToReload(onPreReload, onPostReload);
+		
+		
 }
 
 void FNimForUEModule::ShutdownModule()

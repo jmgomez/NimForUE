@@ -36,8 +36,7 @@ task host, "Builds the library that's hooked to unreal":
     exec("nim cpp --app:lib --nomain --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim")
     
     #TODO using a custom cache dir would be better
-    let cacheFolderName = if getNimForUEConfig().targetConfiguration == Shipping: "hostnimforue_r" else: "hostnimforue_d" 
-    copyFileFromNimCachetoLib("NimForUEFFI.h", "./NimHeaders/NimForUEFFI.h", "../"&cacheFolderName) #temp hack to copy the header. 
+    copyFileFromNimCachetoLib("NimForUEFFI.h", "./NimHeaders/NimForUEFFI.h", "host") #temp hack to copy the header. 
     copyLibToUE4("hostnimforue")
     when defined macosx:
         #needed for dllimport in ubt mac only
