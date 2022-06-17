@@ -1,6 +1,5 @@
 include ../../definitions
 
-
 type 
     TPair*[K, V] {.importcpp:"TPair", bycopy .} = object
         key: K

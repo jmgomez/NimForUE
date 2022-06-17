@@ -194,7 +194,9 @@ proc nimcacheBuild*(): BuildStatus =
 
   if withPCH and defined(windows) and not fileExists(pchFilepath):
     echo("PCH file " & pchFilepath & " not found. Building...")
-    winpch()
+    echo getCurrentDir()
+    if execCmd("nue.exe winpch") != 0:
+      quit("!Error building pch file")
 
   var compileCmds: seq[string]
 

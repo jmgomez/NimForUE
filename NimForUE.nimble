@@ -14,7 +14,7 @@ backend = "cpp"
 #bin = @["nue"]
 
 task nue, "Build the NimForUE tool":
-    exec "nim cpp src/nue.nim" # output to the plugin folder instead of Binaries/nim
+    exec "nim cpp --mm:arc --threads --tlsEmulation:off src/nue.nim" # output to the plugin folder instead of Binaries/nim
 
 template callTask(name: untyped) =
     ## Invokes the nimble task with the given name
