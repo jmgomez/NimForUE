@@ -7,6 +7,7 @@
 #include "Async/Async.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
+#include "Test/NimTestBase.h"
 
 DEFINE_LOG_CATEGORY(NimForUE);
 
@@ -29,16 +30,13 @@ void FNimForUEModule::StartupModule()
 	UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib loaded %s"), *DllPath);
 
 #endif
-
+	
 	auto onPreReload = [](NCSTRING msg) {
 		//subscribeToReloadWorkaround until we have a proper HotReload Load/Unload mechanism
 		FNimTestBase::UnregisterAll();
 	};
 	auto onPostReload = [](NCSTRING msg) {
-
-	//TODO Do it only for development target and maybe based on config (retrieved from nim)
-	subscribeToReload([](NCSTRING msg) {
-
+		//TODO Do it only for development target and maybe based on config (retrieved from nim)
 		AsyncTask(ENamedThreads::GameThread, [] {
 			
 			FNotificationInfo Info( LOCTEXT("HotReloadFinished", "Nim Hot Reload Complete!") );

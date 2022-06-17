@@ -1,7 +1,5 @@
 
 
-
-
 type TArray*[T] {.importcpp: "TArray<'0>", bycopy } = object
 
 proc num*[T](arr:TArray[T]): int32 {.importcpp: "#.Num()" noSideEffect}
