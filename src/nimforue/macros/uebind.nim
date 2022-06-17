@@ -239,7 +239,7 @@ func getTypeNodeFromProp(prop : UEProperty) : NimNode =
     bracketsNode
 
 func getTypeNodeForReturn(prop: UEProperty, typeNode : NimNode) : NimNode = 
-    let shouldBeReturnedAsRef = ["TMap"]
+    let shouldBeReturnedAsRef = ["TMap", "FScriptDelegate"]
     let genType = shouldBeReturnedAsRef.filter(genType => genType in prop.kind).head()
     if not genType.isSome():
         return typeNode

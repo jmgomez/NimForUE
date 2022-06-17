@@ -320,7 +320,7 @@ suite "NimForUE.UObject":
         assert obj.nameProperty.toFString() == FString("Hello")
     
 
-    ueTest "ShouldBeAbleToCallprocessMulticastDelegateFDynamicDelegateOneParam_NoMacro":
+    ueTest "ShouldBeAbleToCallprocessDelegateFDynamicDelegateOneParam_NoMacro":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void {.uebind.}
         obj.bindDelegateFuncToDelegateOneParam()
@@ -329,6 +329,40 @@ suite "NimForUE.UObject":
             param : FString
         
         var param = Params(param:"Hello")
+
+        let propName = FString("DynamicDelegateOneParamProperty")
+        let prop = obj.getClass().getFPropertyByName propName 
+
+        let result = getPropertyValuePtr[FScriptDelegate](prop, obj)[]
+        let funcName = makeFName("DelegateFunc")
+
+        # result.bindUFunction(obj, funcName)
+
+        assert obj.dynamicDelegateOneParamProperty.isBound()
+        
+        obj.dynamicDelegateOneParamProperty.processDelegate(param.addr) 
+        #This should generate a broadcast function with the following signature dynDelegate.broadcast(str:FString)
+        #Should it be bind via MulticastDynamicDelegate[Params]? 
+
+        assert obj.bWasCalled
+
+    ueTest "ShouldBeAbleToBindAnUFunctionInADelegateFDynamicDelegateOneParam_NoMacro":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        
+        # proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void {.uebind.}
+        # obj.bindDelegateFuncToDelegateOneParam()
+        
+        let funcName = makeFName("DelegateFunc")
+        obj.dynamicDelegateOneParamProperty.bindUFunction(obj, funcName)
+
+        
+
+        type Params = object
+            param : FString
+        
+        var param = Params(param:"Hello")
+        assert obj.dynamicDelegateOneParamProperty.isBound()
+
         obj.dynamicDelegateOneParamProperty.processDelegate(param.addr) 
         #This should generate a broadcast function with the following signature dynDelegate.broadcast(str:FString)
         #Should it be bind via MulticastDynamicDelegate[Params]? 
@@ -343,7 +377,8 @@ suite "NimForUE.UObject":
         type Params = object
             param : FString
         
-        var param = Params(param:"Hello")
+        var param = Params(param:"Hello from multicast")
+
         obj.multicastDynamicDelegateOneParamProperty.processMulticastDelegate(param.addr) 
         #This should generate a broadcast function with the following signature dynDelegate.broadcast(str:FString)
         #Should it be bind via MulticastDynamicDelegate[Params]? 

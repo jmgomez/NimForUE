@@ -90,8 +90,13 @@ public:
 	}
 	UFUNCTION()
 	void BindDelegateFuncToDelegateOneParam() {
-		TScriptDelegate<> ScriptDelegate;
-		DynamicDelegateOneParamProperty.BindDynamic(this, &UMyClassToTest::DelegateFunc);
+		// DynamicDelegateOneParamProperty.BindDynamic(this, &UMyClassToTest::DelegateFunc);
+		TScriptDelegate<>* ScriptDel = &DynamicDelegateOneParamProperty;
+		// DynamicDelegateOneParamProperty.
+		// TBaseDynamicDelegate<FWeakObjectPtr, void, FString> Del;
+		// DynamicDelegateOneParamProperty = Del;
+		ScriptDel->BindUFunction(this, FName("DelegateFunc"));
+		
 	}
 	
 	UFUNCTION()
