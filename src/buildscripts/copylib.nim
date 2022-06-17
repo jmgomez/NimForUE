@@ -1,5 +1,5 @@
 #This file exists due to the lack of support 
-import std/[times, os, dynlib, strutils, sequtils, algorithm]
+import std/[times, os, strutils, sequtils, algorithm]
 import sugar
 import options
 import nimforueconfig
@@ -35,7 +35,7 @@ proc copyNimForUELibToUEDir*() =
     var conf = getNimForUEConfig()
     let libDir = conf.pluginDir/"Binaries"/"nim"
     let libDirUE = libDir / "ue"   
-    if not existsDir(libDirUE):
+    if not dirExists(libDirUE):
       createDir(libDirUE)
     
     let baseLibName = getFullLibName("nimforue")

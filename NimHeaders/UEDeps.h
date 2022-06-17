@@ -1,9 +1,10 @@
 #pragma once
 #include "UObject/UnrealType.h"
+#include "Math/Vector.h"
+//#include "CoreMinimal.h"
+
 #include "Containers/UnrealString.h"
 #include "Containers/Array.h"
-#include "Math/Vector.h"
-#include "CoreMinimal.h"
 #include "Engine/EngineTypes.h"
 #include "Misc/AutomationTest.h"
 

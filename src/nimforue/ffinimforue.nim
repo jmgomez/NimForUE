@@ -8,8 +8,6 @@ import std/[times]
 import strformat
 import manualtests/manualtestsarray
 
-
-
 #define on config.nims
 const genFilePath* {.strdefine.} : string = ""
 

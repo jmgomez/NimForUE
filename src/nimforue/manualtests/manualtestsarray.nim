@@ -27,9 +27,8 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
     let msg = testMultipleParams(executor, "hola", 10)
 
     executor.saySomething(msg)
-
-
-    executor.setColorByStringInMesh("(R=1,G=0,B=0,A=1)")
+ 
+    executor.setColorByStringInMesh("(R=1,G=1,B=0.15,A=1)")
 
     if executor.boolTestFromNimAreEquals("5", 5, true) == true:
         executor.saySomething("true")
