@@ -128,7 +128,6 @@ task guestpch, "Builds the hot reloading lib. Takes -f to force rebuild.":
       copyNimForUELibToUEDir()
 
 task winpch, "For Windows, Builds the pch file for Unreal Engine via nim":
-  discard execCmd("nim cpp --genscript --app:lib --nomain --nimcache:.nimcache/winpch src/nimforue/unreal/winpch.nim")
   winpch()
 
 # --- End Tasks ---

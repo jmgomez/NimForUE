@@ -168,6 +168,9 @@ proc compileCmd(path: string): Option[string] =
 
 # generate the pch file for windows
 proc winpch*() =
+  if execCmd("nim cpp --genscript --app:lib --nomain --nimcache:.nimcache/winpch src/nimforue/unreal/winpch.nim") != 0:
+    quit("! Error: Could not compile winpch.")
+
   var createPCHCmd = r"vccexe.exe /c --platform:amd64 /nologo "& pchFlags(shouldCreate = true) & " " &
     CompileFlags.join(" ") & " " &
     foldl(getHeadersIncludePaths(), a & "-I" & b & " ", "")
@@ -194,9 +197,7 @@ proc nimcacheBuild*(): BuildStatus =
 
   if withPCH and defined(windows) and not fileExists(pchFilepath):
     echo("PCH file " & pchFilepath & " not found. Building...")
-    echo getCurrentDir()
-    if execCmd("nue.exe winpch") != 0:
-      quit("!Error building pch file")
+    winpch()
 
   var compileCmds: seq[string]
 
