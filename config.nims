@@ -22,8 +22,8 @@ let nueConfig = getNimForUEConfig()
 switch("define", "genFilePath:"& nueConfig.genFilePath)
 switch("define", "pluginDir:"& nueConfig.pluginDir)
 #todo get from NueConfig?
-const withPCH = true
-const withDebug = true
+const withPCH = false
+const withDebug = false
 
 let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform
 #Im pretty sure theere will moref specific handles for the other platforms
@@ -53,7 +53,7 @@ when defined windows:
     #switch("passC", "/MP") # build with multiple processes, enables /FS force synchronous writes
     switch("passC", "/FS") # build with multiple processes, enables /FS force synchronous writes
     switch("passC", "/std:c++17")
-    switch("passC", "/Zp8") 
+    switch("passC", "/Zp8")
     switch("passC", "/source-charset:utf-8")
     switch("passC", "/execution-charset:utf-8")
     switch("passC", "/MD")

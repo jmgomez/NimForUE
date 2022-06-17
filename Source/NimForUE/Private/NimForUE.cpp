@@ -59,6 +59,7 @@ void FNimForUEModule::StartupModule()
 			GEditor->PlayEditorSound(TEXT("/Engine/EditorSounds/Notifications/CompileSuccess_Cue.CompileSuccess_Cue"));
 			
 		});
+
 		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded! %s"), ANSI_TO_TCHAR(msg));
 	};
 

@@ -14,6 +14,10 @@ type BuildStatus* = enum
   FailedLink
 
 const withPCH = true
+const parallelBuild = true # for debugging purposes, normally we want to execute in parallel
+
+# Can we detect the lib path?
+const NimLibPath = r"C:\Nim\lib"
 
 
 let nueConfig = getNimForUEConfig()
@@ -22,15 +26,16 @@ let confDir = $nueConfig.targetConfiguration
 let engineDir = nueConfig.engineDir
 let pluginDir = nueConfig.pluginDir
 
-let cacheDir = pluginDir / ".nimcache/nimforuepch"
-let batFile = cacheDir / "compile_nimforue.bat"
-
-let libDir = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir / "NimForUEBindings"
+#let cacheDir = pluginDir / ".nimcache/nimforuepch"
+#let batFile = cacheDir / "compile_nimforue.bat"
+#let libDir = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir / "NimForUEBindings"
 
 template quotes(path: string): untyped =
   "\"" & path & "\""
 
 proc isNimFile(path: string): bool =
+  # hack to determine if a file is a Nim library file
+  # The nimforue files include definitions which has an INCLUDESECTION before #include "nimbase.h"
   for l in path.lines:
     if l.contains("INCLUDESECTION"):
       return false
@@ -38,6 +43,7 @@ proc isNimFile(path: string): bool =
       break
   true
 
+#[
 proc updateNimCmd(cmd: string): string =
   # removes pch flags
   # assumes cmd contains /Yu
@@ -91,9 +97,9 @@ proc compileBat*() =
   discard execCmd(cacheDir / "compile_nimforue.bat")
 
   echo "--- nimcachebuild.nim Time to compile: ", (now() - start)
+]#
 
-
-proc getHeadersIncludePaths() : seq[string] = 
+proc getHeadersIncludePaths*() : seq[string] = 
   let pluginDefinitionsPaths = pluginDir / "/Intermediate"/"Build" / platformDir / "UnrealEditor" / confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
   let nimForUEBindingsHeaders =  pluginDir / "Source/NimForUEBindings/Public/"
   let nimForUEBindingsIntermidateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
@@ -132,7 +138,7 @@ proc getLinkSymbols() : string =
   proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string) : string =  
     let libName = &"{prefix}-{moduleName}" 
     when defined windows:
-      return quotes(engineDir / "Intermediate/Build"/ platformDir / "UnrealEditor"/ confDir / moduleName / libName & ".lib")
+      return quotes(engineDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / moduleName / libName & ".lib")
     elif defined macosx:
       let platform = $nueConfig.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
       return  engineDir / "Binaries" / platform / libName & ".dylib"
@@ -151,6 +157,7 @@ proc getLinkSymbols() : string =
 
 # Find the definitions here:
 # https://docs.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-alphabetically?view=msvc-170
+#[
 const ResponseFlags = [
 "/Zc:inline", #Remove unreferenced functions or data if they're COMDAT or have internal linkage only (off by default).
 "/nologo", # Suppresses display of sign-on banner.
@@ -195,7 +202,9 @@ const ResponseFlags = [
 "/W4", # Set output warning level.
 "/std:c++17", # C++17 standard ISO/IEC 14882:2017.
 ]
+]#
 
+# These flags are from the .response in the Intermediate folder for the UE Modules
 const CompileFlags = [
 "/c",
 "--platform:amd64",
@@ -224,9 +233,9 @@ const CompileFlags = [
 "/execution-charset:utf-8",
 "/MD",
 "/Z7",
-"/Od",
+"/Od", # debug flag, should use O2 for release?
 "/fp:fast", # "fast" floating-point model; results are less predictable.
-"/W4", # Set output warning level.
+#"/W4", # Set output warning level.
 # /we<n>	Treat the specified warning as an error.
 "/we4456",
 "/we4458",
@@ -236,12 +245,18 @@ const CompileFlags = [
 "/wd4819", 
 "/wd4463",
 "/wd4244",
-"/wd4838",
-r"/IC:\Nim\lib", # TODO specify the Nim lib path or query based on location of nim.exe?
-r"/ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\src",
+"/wd4838"
 ]
 
-const pchFlags = r"/YuD:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings\PCH.NimForUEBindings.h /FpD:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings\PCH.NimForUEBindings.h.pch"
+proc pchFlags(shouldCreate: bool = false): string =
+  let Yflag = if shouldCreate: "/Yc" else: "/Yu"
+  # UE generated
+  #result = Yflag & r"D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings\PCH.NimForUEBindings.h /FpD:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings\PCH.NimForUEBindings.h.pch"
+
+  # nim generated
+  let pluginDir = nueConfig.pluginDir
+  let cacheDir = pluginDir / ".nimcache/winpch"
+  result = Yflag & "UEDeps.h /Fp" & quotes(cacheDir / "nue.win.pch")
 
 proc compileCmd(path: string): Option[string] =
   let objpath = path & ".obj"
@@ -251,7 +266,8 @@ proc compileCmd(path: string): Option[string] =
   # Continue here: add getHeadersIncludePaths to cmd below
   some("vccexe.exe" & " " &
     CompileFlags.join(" ") & " " &
-    (if not isNimFile(path): pchFlags else: "") & " " &
+    (if withPCH and not isNimFile(path): pchFlags() else: "") & " " &
+    "/I" & NimLibPath & " " &
     foldl(getHeadersIncludePaths(), a & "-I" & b & " ", "") & " " &
     "/Fo" & objpath & " " & path
     )
@@ -274,10 +290,11 @@ proc nimcacheBuild*(): BuildStatus =
     case kind:
     of pcFile:
       if path.endsWith(".cpp"):
+        objpaths.add(path & ".obj")
         let cmd = compileCmd(path)
         if cmd.isSome:
+          #echo cmd.get()
           compileCmds.add cmd.get()
-          objpaths.add(path & ".obj")
     else:
       continue
 
@@ -285,9 +302,7 @@ proc nimcacheBuild*(): BuildStatus =
     echo "-- No changes detected --"
     return NoChange
 
-  let useThreads = true # for debugging purposes, normally we want to execute in parallel
-
-  if useThreads:
+  if parallelBuild:
     var res = newSeq[FlowVar[int]]()
     for i, cmd in compileCmds:
       res.add(spawn compileThread(cmd))
@@ -305,22 +320,42 @@ proc nimcacheBuild*(): BuildStatus =
       if compileThread(cmd) != 0:
         return FailedCompile
   
-  echo "-!compile complete! now link"
+  #echo "-!compile complete! now link"
   # link if all the compiles succeed
 
-  var pchObjs = foldl(
-    @["Module.NimForUEBindings.cpp.obj", "Module.NimForUEBindings.gen.cpp.obj", "PCH.NimForUEBindings.h.obj"],
-    a & " " & quotes(libDir / b), "")
-  let linkcmd = r"vccexe.exe /LD --platform:amd64  /nologo /FeD:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Binaries\nim\nimforue.dll " &
-    getLinkSymbols() & " " & objpaths.join(" ") & " " & pchObjs
+  var pchObj = quotes(pluginDir / ".nimcache/winpch/@mdefinitions.nim.obj")
+  let dllpath = quotes(pluginDir / "Binaries/nim/nimforue.dll")
+  let linkcmd = "vccexe.exe /LD --platform:amd64  /nologo /Fe" & dllpath & " " &
+    getLinkSymbols() & " " & objpaths.join(" ") & " " & (if withPCH: pchObj else: "")
  
-  echo linkcmd
+  #echo linkcmd
 
   let linkRes = execCmd(linkCmd)
   if linkRes != 0:
     return FailedLink
 
   Success
+
+
+proc winpch*() =
+  var createPCHCmd = r"vccexe.exe /c --platform:amd64 /nologo "& pchFlags(shouldCreate = true) & " " &
+    CompileFlags.join(" ") & " " &
+    foldl(getHeadersIncludePaths(), a & "-I" & b & " ", "")
+
+  let cacheDir = pluginDir / ".nimcache/winpch"
+  for kind, path in walkDir(cacheDir):
+    case kind:
+    of pcFile:
+      if path.endsWith(".cpp") and path.contains("definitions.nim"):
+        createPCHCmd &= " " & path
+    else:
+      continue
+  let curDir = getCurrentDir()
+  echo createPCHCmd
+  setCurrentDir(".nimcache/winpch")
+  discard execCmd(createPCHCmd)
+  setCurrentDir(curDir)
+
 
 when isMainModule:
   #compileBat()

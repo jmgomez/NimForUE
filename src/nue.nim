@@ -10,7 +10,7 @@ type Task = object
   description: string
   routine: proc(options: Table[string, string]) {.nimcall.}
 
-var tasks: seq[Task] = @[]
+var tasks: Table[string, Task]
 
 template task(taskName: untyped, desc: string, body: untyped): untyped =
   proc `taskName`(options: Table[string, string]) {.nimcall.} =
@@ -18,7 +18,7 @@ template task(taskName: untyped, desc: string, body: untyped): untyped =
     echo ">>>> Task: ", astToStr(taskName), " <<<<"
     body
     echo "!!>> ", astToStr(taskName), " Time: ", $(now() - start), " <<<<"
-  tasks.add(Task(name: astToStr(taskName), description: desc, routine: `taskName`))
+  tasks[astToStr(taskName)] = Task(name: astToStr(taskName), description: desc, routine: `taskName`)
 
 
 proc generateFFIGenFile*() = 
@@ -37,42 +37,97 @@ import hostbase
     
   writeFile(genFilePath, content)
 
+
+proc echoTasks() =
+  echo "Here are the task available: "
+  for k, v in tasks:
+    echo "  ", k, if k.len < 6: "\t\t" else: "\t", v.description
+
+proc main() =
+  var params = commandLineParams().join(" ")
+  if params.len == 0:
+    echo "nue: NimForUE tool"
+    echoTasks()
+
+  var p = initOptParser()
+  for kind, key, val in p.getopt():
+    case kind
+    of cmdEnd: doAssert(false) # cannot happen with getopt
+    of cmdShortOption, cmdLongOption:
+      case key:
+      of "h", "help":
+        echo "Usage, Commands and Options for nue"
+        echoTasks()
+        quit()
+      else:
+        options[key] = val
+    of cmdArgument:
+      if tasks.hasKey(key):
+        tasks[key].routine(options)
+      else:
+        echo &"!! Unknown task {key}."
+        echoTasks()
+
+# --- Define Tasks ---
+
+let watchInterval = 500
+
+task watch, "Monitors the components folder for changes to recompile.":
+  proc ctrlc() {.noconv.} =
+    echo "Ending watcher"
+    quit()
+
+  setControlCHook(ctrlc)
+
+  let srcDir = getCurrentDir() / "src/nimforue/"
+  echo &"Monitoring components for changes in \"{srcDir}\".  Ctrl+C to stop"
+  var lastTimes = newTable[string, Time]()
+  for path in walkDirRec(srcDir ):
+    if not path.endsWith(".nim"):
+      continue
+    lastTimes[path] = getLastModificationTime(path)
+
+  while true:
+    for path in walkDirRec(srcDir ):
+      if not path.endsWith(".nim"):
+        continue
+      var lastTime = getLastModificationTime(path)
+      if lastTime > lastTimes[path]:
+        lastTimes[path] = lastTime
+        echo &"-- Recompiling {path} --"
+        when defined windows:
+          let p = startProcess("nue.exe", getCurrentDir(), ["guestpch"])
+        elif defined macosx:
+          let p = startProcess("/bin/zsh", getCurrentDir(), ["nueMac.sh"])
+
+        for line in p.lines:
+          echo line
+        p.close
+
+        echo &"-- Finished Recompiling {path} --"
+
+    sleep watchInterval
+
 task guest, "Builds the main lib. The one that makes sense to hot reload.":
     generateFFIGenFile()
     discard execCmd("nim cpp --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/nimforue src/nimforue.nim")
     copyNimForUELibToUEDir()
 
-task guestpch, "Builds the main lib. The one that makes sense to hot reload.":
+task guestpch, "Builds the main lib via nimcache custom build script.":
     generateFFIGenFile()
 
     var force = ""
     if options.contains("f"):
       force = "-f"
 
-    discard execCmd(&"nim cpp {force} --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/nimforuepch --genscript src/nimforue.nim")
+    discard execCmd(&"nim cpp {force} --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/nimforuepch src/nimforue.nim")
     if nimcacheBuild() == Success:
       copyNimForUELibToUEDir()
 
-var params = commandLineParams().join(" ")
-if params.len == 0:
-  echo "nue: NimForUE tool"
+task winpch, "For Windows, Builds the pch file for Unreal Engine via nim":
+  discard execCmd("nim cpp --genscript --app:lib --nomain --nimcache:.nimcache/winpch src/nimforue/unreal/winpch.nim")
+  winpch()
 
-var p = initOptParser()
-for kind, key, val in p.getopt():
-  case kind
-  of cmdEnd: doAssert(false) # cannot happen with getopt
-  of cmdShortOption, cmdLongOption:
-    case key:
-    of "h", "help":
-      echo "Usage, Commands and Options for nue"
-      quit()
-    else:
-      options[key] = val
-  of cmdArgument:
-    case key:
-    of "guest":
-      guest(options)
-    of "guestpch":
-      guestpch(options)
-    else:
-      echo &"Unknown argument for nue {key}"
+# --- End Tasks ---
+
+main()
