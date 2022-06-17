@@ -10,19 +10,19 @@ type
     FScriptDelegate* {.importcpp, inheritable, pure.} = object
 
 
-proc makeScriptDelegate() : FScriptDelegate {. importcpp:"TScriptDelegate<>()", constructor .}
+proc makeScriptDelegate() : FScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
 
 
 proc bindUFunction*(dynDel:FScriptDelegate, obj:UObjectPtr, name:FName) : void {.importcpp: "#.BindUFunction(@)".}
 
 #Should use add unique?
-proc add(dynDel:ptr FMulticastScriptDelegate, scriptDel : FScriptDelegate) : void {.importcpp: "#.Add(#)".}
+proc addUnique(dynDel: FMulticastScriptDelegate, scriptDel : FScriptDelegate) : void {.importcpp: "#.AddUnique(#)".}
 
 #Notice this function doesnt exists in cpp
-proc bindUFunction*(dynDel:ptr FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
+proc bindUFunction*(dynDel: FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
     let scriptDel = makeScriptDelegate()
     scriptDel.bindUFunction obj, name
-    dynDel.add(scriptDel)
+    dynDel.addUnique(scriptDel)
     
 
 

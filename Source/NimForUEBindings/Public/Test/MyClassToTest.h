@@ -86,12 +86,12 @@ public:
 	bool bWasCalled;
 	UFUNCTION()
 	void BindDelegateFuncToMultcasDynOneParam() {
-		MulticastDynamicDelegateOneParamProperty.AddDynamic(this, &UMyClassToTest::DelegateFunc);
-		// TMulticastScriptDelegate<>* MulScrip = &MulticastDynamicDelegateOneParamProperty;
-		// FScriptDelegate ScriptDel;
-		// ScriptDel.BindUFunction(this, FName("DelegateFunc"));
-		//
-		// MulScrip->Add(ScriptDel);
+		// MulticastDynamicDelegateOneParamProperty.AddDynamic(this, &UMyClassToTest::DelegateFunc);
+		TMulticastScriptDelegate<>* MulScrip = &MulticastDynamicDelegateOneParamProperty;
+		FScriptDelegate ScriptDel;
+		ScriptDel.BindUFunction(this, FName("DelegateFunc"));
+		
+		MulScrip->AddUnique(ScriptDel);
 	}
 	UFUNCTION()
 	void BindDelegateFuncToDelegateOneParam() {
