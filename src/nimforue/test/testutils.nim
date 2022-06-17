@@ -7,8 +7,9 @@ template suite* (name: static string , body:untyped) =
             suiteName = suiteName & "." & name
         body
 
+
 #TODO remove hooked tests
-template ueTest*(name:string, body:untyped) =
+template internalTest(name:string, isOnly:bool, body:untyped) =
     block:
         var test = makeFNimTestBase(
             when declared(suiteName):
@@ -22,4 +23,7 @@ template ueTest*(name:string, body:untyped) =
             except Exception as e:
                 let msg = e.msg
                 test.testTrue(msg, false)
-        test.reloadTest()
+        test.reloadTest(isOnly)
+
+template ueTest*(name:string, body:untyped) = internalTest(name, false, body)
+template ueTestOnly*(name:string, body:untyped) = internalTest(name, true, body)

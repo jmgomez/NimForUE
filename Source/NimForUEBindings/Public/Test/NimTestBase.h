@@ -5,8 +5,9 @@ class NIMFORUEBINDINGS_API FNimTestBase : public FAutomationTestBase {
 
 	FString TestName;
 public:
-	static void UnregisterAll();
+	static void UnregisterAll(bool bShouldUnregisterOnly=true);
 	inline static TArray<FString> AllRegisteredNimTests = {};
+	inline static FString OnlyExecute = "";
 	
 	FNimTestBase(FString InName) : FAutomationTestBase(InName, false) {
 		TestName = InName;
@@ -17,7 +18,9 @@ public:
 
 	void (*ActualTest) (FNimTestBase&);
 
-	void ReloadTest();
+	void ReloadTest(bool bIsOnly);
+
+	
 	
 	virtual uint32 GetTestFlags() const override {
 		//At some point expose these

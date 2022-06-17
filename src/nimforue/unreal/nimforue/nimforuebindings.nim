@@ -32,7 +32,7 @@ type
 
 
 proc makeFNimTestBase*(testName:FString): FNimTestBase {.importcpp:"FNimTestBase(#)", constructor.}
-proc reloadTest*(test:FNimTestBase):void {.importcpp:"#.ReloadTest()".}
+proc reloadTest*(test:FNimTestBase, isOnly:bool):void {.importcpp:"#.ReloadTest(@)".}
 proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.TestTrue(@)".}
 
 

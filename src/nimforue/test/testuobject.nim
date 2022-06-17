@@ -202,6 +202,7 @@ suite "NimForUE.UObject":
     genType(ueType) #Notice we wont be using genType directly
 
 
+
     ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForFString":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         let expectedResult = FString("Hello from Test")
@@ -351,7 +352,7 @@ suite "NimForUE.UObject":
         
         # proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void {.uebind.}
         # obj.bindDelegateFuncToDelegateOneParam()
-        
+
         let funcName = makeFName("DelegateFunc")
         obj.dynamicDelegateOneParamProperty.bindUFunction(obj, funcName)
 
