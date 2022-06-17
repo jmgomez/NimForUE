@@ -79,6 +79,12 @@ task watch, "Monitors the components folder for changes to recompile.":
 
   setControlCHook(ctrlc)
 
+  let updateCmd =
+    when defined windows:
+      ("nue.exe", ["guestpch"])
+    elif defined macosx:
+      ("/bin/zsh", ["nueMac.sh"])
+
   let srcDir = getCurrentDir() / "src/nimforue/"
   echo &"Monitoring components for changes in \"{srcDir}\".  Ctrl+C to stop"
   var lastTimes = newTable[string, Time]()
@@ -95,10 +101,7 @@ task watch, "Monitors the components folder for changes to recompile.":
       if lastTime > lastTimes[path]:
         lastTimes[path] = lastTime
         echo &"-- Recompiling {path} --"
-        when defined windows:
-          let p = startProcess("nue.exe", getCurrentDir(), ["guestpch"])
-        elif defined macosx:
-          let p = startProcess("/bin/zsh", getCurrentDir(), ["nueMac.sh"])
+        let p = startProcess(updateCmd[0], getCurrentDir(), updateCmd[1])
 
         for line in p.lines:
           echo line
@@ -110,17 +113,17 @@ task watch, "Monitors the components folder for changes to recompile.":
 
 task guest, "Builds the main lib. The one that makes sense to hot reload.":
     generateFFIGenFile()
-    discard execCmd("nim cpp --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/nimforue src/nimforue.nim")
+    discard execCmd("nim cpp --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim")
     copyNimForUELibToUEDir()
 
-task guestpch, "Builds the main lib via nimcache custom build script.":
+task guestpch, "Builds the hot reloading lib. Takes -f to force rebuild.":
     generateFFIGenFile()
 
     var force = ""
     if options.contains("f"):
       force = "-f"
 
-    discard execCmd(&"nim cpp {force} --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/nimforuepch src/nimforue.nim")
+    discard execCmd(&"nim cpp {force} --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim")
     if nimcacheBuild() == Success:
       copyNimForUELibToUEDir()
 
