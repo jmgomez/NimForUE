@@ -87,16 +87,17 @@ public:
 	UFUNCTION()
 	void BindDelegateFuncToMultcasDynOneParam() {
 		MulticastDynamicDelegateOneParamProperty.AddDynamic(this, &UMyClassToTest::DelegateFunc);
+		// TMulticastScriptDelegate<>* MulScrip = &MulticastDynamicDelegateOneParamProperty;
+		// FScriptDelegate ScriptDel;
+		// ScriptDel.BindUFunction(this, FName("DelegateFunc"));
+		//
+		// MulScrip->Add(ScriptDel);
 	}
 	UFUNCTION()
 	void BindDelegateFuncToDelegateOneParam() {
 		// DynamicDelegateOneParamProperty.BindDynamic(this, &UMyClassToTest::DelegateFunc);
 		TScriptDelegate<>* ScriptDel = &DynamicDelegateOneParamProperty;
-		// DynamicDelegateOneParamProperty.
-		// TBaseDynamicDelegate<FWeakObjectPtr, void, FString> Del;
-		// DynamicDelegateOneParamProperty = Del;
 		ScriptDel->BindUFunction(this, FName("DelegateFunc"));
-		
 	}
 	
 	UFUNCTION()

@@ -190,10 +190,10 @@ suite "NimForUE.UObject":
                             UEProperty(name: "NameProperty", kind: "FName"), #Couldnt bind it
                             UEProperty(name: "DynamicDelegateOneParamProperty", kind: "FScriptDelegate"), #Not sure if I should use the type directly?
                             UEProperty(name: "MulticastDynamicDelegateOneParamProperty", kind: "FMulticastScriptDelegate"), #Not sure if I should use the type directly?
-                            # UEProperty(name: "MulticastDynamicDelegateOneParamProperty", kind: "FMulticastScriptDelegate"), #Not sure if I should use the type directly?
                             UEProperty(name: "bWasCalled", kind: "bool"),
 
                             ])
+
 
 
                             
@@ -323,7 +323,7 @@ suite "NimForUE.UObject":
     ueTest "ShouldBeAbleToCallprocessDelegateFDynamicDelegateOneParam_NoMacro":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void {.uebind.}
-        obj.bindDelegateFuncToDelegateOneParam()
+        # obj.bindDelegateFuncToDelegateOneParam()
 
         type Params = object
             param : FString
@@ -336,7 +336,7 @@ suite "NimForUE.UObject":
         let result = getPropertyValuePtr[FScriptDelegate](prop, obj)[]
         let funcName = makeFName("DelegateFunc")
 
-        # result.bindUFunction(obj, funcName)
+        result.bindUFunction(obj, funcName)
 
         assert obj.dynamicDelegateOneParamProperty.isBound()
         
@@ -390,10 +390,13 @@ suite "NimForUE.UObject":
 
         del.broadcast("Called from broadcast!")
 
-        #[Since this work, the syntax for binding it may be 
-        #[TScriptDelegate[FString] and it will emmit
-            #A new type with the name Like Name_ScriptDelegate_FString
-            
+        #Since this work, the syntax for binding it may be 
+        #[
+            TScriptDelegate[FString] and it will emmit
+                - A new type with the name Like Name_ScriptDelegate_FString
+                - a broadcast function that will allow to call it like above (obj.myDelegate.broadcast("params"))
+                - a bindUFunction overload that will allow to bind a a delegate by proc (how to make sure the func is a ufunc?)
+       
         ]#
         
         assert obj.bWasCalled
@@ -409,29 +412,33 @@ suite "NimForUE.UObject":
         type Params = object
             param : FString
         
-        var param = Params(param:"Hello from multicast")
+        var param = Params(param:"Hello from multicast working fine")
 
         obj.multicastDynamicDelegateOneParamProperty.processMulticastDelegate(param.addr) 
-        #This should generate a broadcast function with the following signature dynDelegate.broadcast(str:FString)
-        #Should it be bind via MulticastDynamicDelegate[Params]? 
+   
+        assert obj.bWasCalled
+    
+    
+    ueTest "ShouldBeAbleToBindMulticastDelegateFDynamicMulticastDelegateOneParam_NoMacro":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        
+        # obj.multicastDynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
 
+        type Params = object
+            param : FString
+        
+        var param = Params(param:"Hello")
+
+        let propName = FString("MulticastDynamicDelegateOneParamProperty")
+        let prop = obj.getClass().getFPropertyByName propName 
+
+        let result : ptr FMulticastScriptDelegate = getPropertyValuePtr[FMulticastScriptDelegate](prop, obj)
+        let funcName = makeFName("DelegateFunc")
+
+        result.bindUFunction(obj, funcName)
+
+        # obj.multicastDynamicDelegateOneParamProperty.processMulticastDelegate(param.addr) 
+        
         assert obj.bWasCalled
     
 
-    
-    # ueTest "ShouldBeAbleToBindAnUFunctionAndBindItToADynamicDelegateneParam_NoMacro":
-    #     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-        
-    #     obj.multicastDynamicDelegateOneParamProperty.bindDynamic(obj, makeFName(""))
-
-    #     type Params = object
-    #         param : FString
-        
-    #     var param = Params(param:"Hello")
-    #     let paramPtr = cast[pointer](param.addr)
-    #     obj.multicastDynamicDelegateOneParamProperty.processMulticastDelegate(paramPtr) 
-        
-    #     assert obj.bWasCalled
-    
-
-    
