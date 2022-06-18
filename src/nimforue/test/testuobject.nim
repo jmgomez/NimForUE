@@ -189,7 +189,7 @@ suite "NimForUE.UObject":
                             UEProperty(name: "MapProperty", kind: "TMap[FString, int32]"), #Couldnt bind it
                             UEProperty(name: "NameProperty", kind: "FName"), #Couldnt bind it
                             UEProperty(name: "DynamicDelegateOneParamProperty", kind: "FScriptDelegate"), #Not sure if I should use the type directly?
-                            UEProperty(name: "MulticastDynamicDelegateOneParamProperty", kind: "FMulticastScriptDelegate"), #Not sure if I should use the type directly?
+                            UEProperty(name: "MulticastDynamicDelegateOneParamProperty", kind: "FMulticastScriptDelegate", delegateSignature:@["FString"] #Not sure if I should use the type directly?
                             UEProperty(name: "bWasCalled", kind: "bool"),
 
                             ])
@@ -315,8 +315,6 @@ suite "NimForUE.UObject":
 
         obj.nameProperty = makeFName("Hello")
         
-
-       
         assert obj.nameProperty.toFString() == FString("Hello")
     
 
@@ -465,3 +463,16 @@ suite "NimForUE.UObject":
         assert obj.bWasCalled
         obj.multicastDynamicDelegateOneParamProperty.removeAll(obj)
 
+
+
+    ueTest "ShouldBeAbleToUseMulticastDelegatesFromUProps":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+
+        #replace with addDynamic
+        obj.multicastDynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
+
+        obj.multicastDynamicDelegateOneParamProperty.broadcast("hey using broadcast ad hoc!")
+
+        assert obj.bWasCalled
+
+        obj.multicastDynamicDelegateOneParamProperty.removeAll(obj)

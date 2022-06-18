@@ -208,7 +208,7 @@ type
     UEProperty* = object
         name* : string
         kind* : string #Do a close set of types
-
+        delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
     UEType* = object 
         name* : string 
         parent* : string
@@ -252,27 +252,70 @@ func getTypeNodeForReturn(prop: UEProperty, typeNode : NimNode) : NimNode =
 
 #[
     Generates a new delegate type based on the Name and DelegateType
-    - [ ] Generates a broadcast function for that type based on the Signature of the Delegate
+    - [ ] Generates a broadcast/execute function for that type based on the Signature of the Delegate
+        - [ ] Almost there have to work on the signature.
     - [ ] The getter and setter should use that function 
-    - [ ] Generates and add dynamic function (bind if it's a ScriptDelegate) based on the signature
+    - [ ] Generates and add dynamic/bind functio based on the signature
 ]#
 
 proc genDelegateType(prop : UEProperty) : Option[NimNode] = 
     if not prop.isDelegate():
         return none[NimNode]()
 
+    let isMulticast = "Multicast" in prop.kind
+    if not isMulticast:
+        return none[NimNode]()
     let delTypeName = ident prop.name & "gen" & prop.kind
     let delType = ident prop.kind #this needs to be changed once I introduce the signature
-    let auxType = genAst(delTypeName, deltype):
-        type delTypeName {.inject.} = object of deltype 
+    let signatureAsNode = prop.delegateSignature.map(n=>ident n)
     
-    some auxType
+    let broadcastFn = genAst(delTypeName): 
+        proc broadcast(dynDel:delTypeName, str : FString) : void = 
+            type Params = object
+                param : FString
+            var param = Params(param:str)
+            dynDel.processMulticastDelegate(param.addr)
+
+    # let executeFn = genAst(delTypeName): 
+    #     proc execute(dynDel:delTypeName, str : FString) : void = 
+    #         type Params = object
+    #             param : FString
+    #         var pr = Params(param:str)
+    #         deltype.processDelegate(pr.addr)
+
+    var delegate = genAst(delTypeName, deltype):
+        type delTypeName {.inject.} = object of deltype
+        
+        proc broadcast(dynDel:delTypeName, str : FString) : void = 
+            type Params = object
+                param : FString
+            var param = Params(param:str)
+            dynDel.processMulticastDelegate(param.addr)
+        
+        
+
+
+    # if isMulticast:
+    #     delegate.add broadcastFn
+    # else:
+    #     delegate.add executeFn
+
+             #TODO change the name of the functio for the regulars
+
+
+    some delegate
 
 proc genProp(typeDef : UEType, prop : UEProperty) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
+    let delTypesNode = genDelegateType(prop)
+    let delTypeIdent = delTypesNode.map(n=>n[0][0][0][0])
+
     let className = typeDef.name.substr(1)
-    let typeNode = getTypeNodeFromProp(prop)
-    let typeNodeAsReturnValue = getTypeNodeForReturn(prop, typeNode)
+    let typeNode = delTypeIdent.get(getTypeNodeFromProp(prop))
+   
+    let typeNodeAsReturnValue = delTypeIdent.map(n=>nnkVarTy.newTree(n))
+                                            .get(prop.getTypeNodeForReturn(typeNode))
+    
     var propName = prop.name 
     propName[0] = propName[0].toLowerAscii()
     let propIdent = ident propName
@@ -287,9 +330,9 @@ proc genProp(typeDef : UEType, prop : UEProperty) : NimNode =
                 var value {.inject.} : typeNode = val
                 let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
-    let delType = genDelegateType(prop)
-    if delType.isSome():
-        result.insert(0, delType.get())
+    
+    if delTypesNode.isSome(): #TODO use do instead
+        result.insert(0, delTypesNode.get())
 
 
 
@@ -308,11 +351,11 @@ proc genUETypeDef(typeDef : UEType) : NimNode =
 
 macro genType*(typeDef : static UEType) : untyped = 
     result = genUETypeDef(typeDef)
-    echo result.repr
+    # echo result.repr
 
 
 
-dumpTree:
-    type Hello = object of string
+# dumpTree:
+#     type Hello = object of string
 
 
