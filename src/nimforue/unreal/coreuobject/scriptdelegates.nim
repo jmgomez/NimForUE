@@ -6,7 +6,7 @@ import nametypes
 
 
 type
-    FMulticastScriptDelegate* {.importcpp.} = object 
+    FMulticastScriptDelegate* {.importcpp, inheritable, pure.} = object 
     FScriptDelegate* {.importcpp, inheritable, pure.} = object
 
 
@@ -23,7 +23,8 @@ proc bindUFunction*(dynDel: FMulticastScriptDelegate, obj:UObjectPtr, name:FName
     let scriptDel = makeScriptDelegate()
     scriptDel.bindUFunction obj, name
     dynDel.addUnique(scriptDel)
-    
+
+proc removeAll*(dynDel: FMulticastScriptDelegate, obj:UObjectPtr) : void {. importcpp: "#.RemoveAll(#)" .}
 
 
 

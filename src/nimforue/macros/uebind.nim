@@ -238,14 +238,35 @@ func getTypeNodeFromProp(prop : UEProperty) : NimNode =
     let bracketsNode = nnkBracketExpr.newTree((ident genericType) & innerTypes)
     bracketsNode
 
+
+func isDelegate(prop : UEProperty) : bool = ["FScriptDelegate", "FMulticastScriptDelegate"].any(t => t in prop.kind)
+
+
 func getTypeNodeForReturn(prop: UEProperty, typeNode : NimNode) : NimNode = 
-    let shouldBeReturnedAsRef = ["TMap", "FScriptDelegate", "FMulticastScriptDelegate"]
-    let genType = shouldBeReturnedAsRef.filter(genType => genType in prop.kind).head()
+    let shouldBeReturnedAsRef = ["TMap"]
+    let genType = shouldBeReturnedAsRef.filter(genType => genType in prop.kind or prop.isDelegate()).head()
     if not genType.isSome():
         return typeNode
     nnkVarTy.newTree(typeNode)
 
 
+#[
+    Generates a new delegate type based on the Name and DelegateType
+    - [ ] Generates a broadcast function for that type based on the Signature of the Delegate
+    - [ ] The getter and setter should use that function 
+    - [ ] Generates and add dynamic function (bind if it's a ScriptDelegate) based on the signature
+]#
+
+proc genDelegateType(prop : UEProperty) : Option[NimNode] = 
+    if not prop.isDelegate():
+        return none[NimNode]()
+
+    let delTypeName = ident prop.name & "gen" & prop.kind
+    let delType = ident prop.kind #this needs to be changed once I introduce the signature
+    let auxType = genAst(delTypeName, deltype):
+        type delTypeName {.inject.} = object of deltype 
+    
+    some auxType
 
 proc genProp(typeDef : UEType, prop : UEProperty) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
@@ -255,6 +276,7 @@ proc genProp(typeDef : UEType, prop : UEProperty) : NimNode =
     var propName = prop.name 
     propName[0] = propName[0].toLowerAscii()
     let propIdent = ident propName
+
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
             proc propIdent (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
@@ -265,7 +287,9 @@ proc genProp(typeDef : UEType, prop : UEProperty) : NimNode =
                 var value {.inject.} : typeNode = val
                 let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
-
+    let delType = genDelegateType(prop)
+    if delType.isSome():
+        result.insert(0, delType.get())
 
 
 
@@ -284,7 +308,11 @@ proc genUETypeDef(typeDef : UEType) : NimNode =
 
 macro genType*(typeDef : static UEType) : untyped = 
     result = genUETypeDef(typeDef)
-    # echo result.repr
+    echo result.repr
 
+
+
+dumpTree:
+    type Hello = object of string
 
 
