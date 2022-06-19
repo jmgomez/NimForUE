@@ -189,7 +189,7 @@ suite "NimForUE.UObject":
                             UEProperty(name: "MapProperty", kind: "TMap[FString, int32]"), #Couldnt bind it
                             UEProperty(name: "NameProperty", kind: "FName"), #Couldnt bind it
                             UEProperty(name: "DynamicDelegateOneParamProperty", kind: "FScriptDelegate"), #Not sure if I should use the type directly?
-                            UEProperty(name: "MulticastDynamicDelegateOneParamProperty", kind: "FMulticastScriptDelegate", delegateSignature:@["FString"] #Not sure if I should use the type directly?
+                            UEProperty(name: "MulticastDynamicDelegateOneParamProperty", kind: "FMulticastScriptDelegate", delegateSignature: @["FString"]), #Not sure if I should use the type directly?
                             UEProperty(name: "bWasCalled", kind: "bool"),
 
                             ])
@@ -427,44 +427,6 @@ suite "NimForUE.UObject":
         obj.multicastDynamicDelegateOneParamProperty.removeAll(obj)
 
 
-    ueTest "ShouldBeAbleToBindAnUFunctionInADelegateMulticastDynamicDelegateOneParamCallItViaBroadcast_NoMacro":
-        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-
-        #Todo eventually do a wrapper to bind an uebind function
-        #so it will look into the signature and generate it
-        #AddDynamic?
-        obj.multicastDynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
-
-
-        type CustomScriptDelegate = object of FMulticastScriptDelegate
-        #The type is just for typesafety on the CustomScriptDelegate
-        proc broadcast(dynDel: ptr CustomScriptDelegate, str: FString) = 
-            type Params = object
-                param : FString
-
-            var param = Params(param:str)
-            let scriptDelegate : FMulticastScriptDelegate = dynDel[]
-            scriptDelegate.processMulticastDelegate(param.addr) 
-
-        var del = cast[ptr CustomScriptDelegate](obj.multicastDynamicDelegateOneParamProperty.addr)
-
-
-        del.broadcast("Called from multicast broadcast broadcast!")
-
-        #Since this work, the syntax for binding it may be 
-        #[
-            TScriptDelegate[FString] and it will emmit
-                - A new type with the name Like Name_ScriptDelegate_FString
-                - a broadcast function that will allow to call it like above (obj.myDelegate.broadcast("params"))
-                - an AddDynamic overload that will allow to bind a a delegate by proc (how to make sure the func is a ufunc?)
-       
-        ]#
-        
-        assert obj.bWasCalled
-        obj.multicastDynamicDelegateOneParamProperty.removeAll(obj)
-
-
-
     ueTest "ShouldBeAbleToUseMulticastDelegatesFromUProps":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
 
@@ -473,6 +435,6 @@ suite "NimForUE.UObject":
 
         obj.multicastDynamicDelegateOneParamProperty.broadcast("hey using broadcast ad hoc!")
 
-        assert obj.bWasCalled
+        assert obj.bWasCalled 
 
         obj.multicastDynamicDelegateOneParamProperty.removeAll(obj)

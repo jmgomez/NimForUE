@@ -207,8 +207,10 @@ type
     
     UEProperty* = object
         name* : string
-        kind* : string #Do a close set of types
+        kind* : string #Do a close set of types? No, just do a close set on the MetaType. i.e Struct, TArray, Delegates (they complicate things)
         delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
+        #This should be a variant
+
     UEType* = object 
         name* : string 
         parent* : string
@@ -258,42 +260,72 @@ func getTypeNodeForReturn(prop: UEProperty, typeNode : NimNode) : NimNode =
     - [ ] Generates and add dynamic/bind functio based on the signature
 ]#
 
+func identWithInject(name:string) : NimNode = nnkPragmaExpr.newTree([ident name,nnkPragma.newTree(ident "inject")])
+func identWrapper(name:string) : NimNode = ident(name) #cant use ident as argument
+
 proc genDelegateType(prop : UEProperty) : Option[NimNode] = 
     if not prop.isDelegate():
         return none[NimNode]()
+
 
     let isMulticast = "Multicast" in prop.kind
     if not isMulticast:
         return none[NimNode]()
     let delTypeName = ident prop.name & "gen" & prop.kind
-    let delType = ident prop.kind #this needs to be changed once I introduce the signature
-    let signatureAsNode = prop.delegateSignature.map(n=>ident n)
+    let delType = ident prop.kind #i.e. FScriptDelegate/FMulticastScriptDelegate #this needs to be changed once I introduce the signature
+
+    let signatureAsNode = (identFn : string->NimNode) => prop.delegateSignature
+                              .mapi((typeName, idx)=>[identFn("param" & $idx), ident typeName, newEmptyNode()])
+                              .map(n=>nnkIdentDefs.newTree(n))
+    #i.e. execute/broadcast
+    let fnParams = nnkFormalParams.newTree(
+                        @[ident "void",  #return type
+                        nnkIdentDefs.newTree(
+                            [identWithInject "dynDel", (delTypeName), newEmptyNode()]
+                            ) 
+                        ] & signatureAsNode(identWithInject))
+    #
+    let paramsInsideBroadcastDef = nnkTypeSection.newTree([nnkTypeDef.newTree([identWithInject "Params", newEmptyNode(), 
+                                nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(),  
+                                    nnkRecList.newTree(signatureAsNode(identWrapper))])
+                            ])])
+    let paramObjectConstr = nnkObjConstr.newTree(@[ident "Params"] &  #creates Params(param0:param0, param1:param1)
+                                prop.delegateSignature
+                                    .mapi((x, idx)=>ident("param" & $idx)) 
+                                    .map(param=>nnkExprColonExpr.newTree(param, param))
+                            )
+
+    let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstr]))
+    var broadcastFn = nnkProcDef.newTree([ident "broadcast", newEmptyNode(), newEmptyNode(), fnParams, newEmptyNode(), newEmptyNode()])
+    let processDelCall = nnkCall.newTree([
+                            nnkDotExpr.newTree([ident "dynDel", ident "processMulticastDelegate"]),
+                            nnkDotExpr.newTree([ident "param", ident "addr"])
+                        ])
+
+
+    let broadcastBody = genAst(paramsInsideBroadcastDef, paramDeclaration, processDelCall, delTypeName):
+        paramsInsideBroadcastDef
+        paramDeclaration
+        processDelCall
+
+    broadcastFn.add(broadcastBody)
+
+
     
-    let broadcastFn = genAst(delTypeName): 
-        proc broadcast(dynDel:delTypeName, str : FString) : void = 
-            type Params = object
-                param : FString
-            var param = Params(param:str)
-            dynDel.processMulticastDelegate(param.addr)
-
-    # let executeFn = genAst(delTypeName): 
-    #     proc execute(dynDel:delTypeName, str : FString) : void = 
-    #         type Params = object
-    #             param : FString
-    #         var pr = Params(param:str)
-    #         deltype.processDelegate(pr.addr)
-
-    var delegate = genAst(delTypeName, deltype):
+    var delegate = genAst(delTypeName, deltype, broadcastFn, paramDeclaration):
         type delTypeName {.inject.} = object of deltype
-        
-        proc broadcast(dynDel:delTypeName, str : FString) : void = 
-            type Params = object
-                param : FString
-            var param = Params(param:str)
-            dynDel.processMulticastDelegate(param.addr)
+        broadcastFn 
         
         
-
+        # proc broadcast fnParams = 
+        #     type Params = object
+        #         param : FString
+        #     var param = Params(param:param0)
+        #     dynDel.processMulticastDelegate(param.addr)
+        
+        
+    echo treeRepr delegate
+    echo repr delegate
 
     # if isMulticast:
     #     delegate.add broadcastFn
@@ -355,7 +387,23 @@ macro genType*(typeDef : static UEType) : untyped =
 
 
 
-# dumpTree:
-#     type Hello = object of string
 
 
+dumpTree:
+    type MyClass = object
+        param : string
+        param2 : int
+
+    proc whatever(param : pointer) : void = 
+        echo param
+
+    let param0 = ""
+    let param2 = 2
+    var cls = MyClass(param: param0, param2:param2)
+    whatever(param.addr)
+    proc whatever2(test : ptr whatevce) = 
+        discard
+    let scriptDelegate = dynDel[]
+    (dynDel[]).processMulticastDelegate(param.addr) 
+    let scriptDelegate = dynDel[]
+    scriptDelegate.processMulticastDelegate(param.addr) 
