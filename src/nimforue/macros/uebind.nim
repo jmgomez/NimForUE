@@ -204,18 +204,35 @@ proc genFun(funcDef : FuncTest) : NimNode =
 type
     UETypeKind* = enum
         uClass
-    
-    UEProperty* = object
+
+    UEFieldKind* = enum
+        uefProp, #this covers FString, int, TArray, etc. 
+        uefDelegate,
+        uefFunction
+
+    UEDelegateKind* = enum
+        uedelDynScriptDelegate,
+        uedelMulticastDynScriptDelegate
+
+    UEField* = object
         name* : string
-        kind* : string #Do a close set of types? No, just do a close set on the MetaType. i.e Struct, TArray, Delegates (they complicate things)
-        delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
-        #This should be a variant
+
+        case kind*: UEFieldKind
+            of uefProp:
+                uePropType* : string #Do a close set of types? No, just do a close set on the MetaType. i.e Struct, TArray, Delegates (they complicate things)
+                isGeneric* : bool
+                returnAsVar* : bool #if it should append var on the return type when generating the getter
+            of uefDelegate:
+                delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
+                delKind*: UEDelegateKind
+            of uefFunction:
+                discard
 
     UEType* = object 
         name* : string 
         parent* : string
         kind* : UETypeKind
-        properties* : seq[UEProperty]
+        fields* : seq[UEField]
 
 #  IdentDefs
 #             Ident "regularProperty"
@@ -227,52 +244,54 @@ type
 #               Ident "TArray"
 #               Ident "FString"
 
-func getTypeNodeFromProp(prop : UEProperty) : NimNode = 
+func getTypeNodeFromUProp(prop : UEField) : NimNode = 
     #naive check on generic types:
-    let supportedGenericTypes = ["TArray", "TSubclassOf", "TSoftObjectPtr", "TMap"]
-    let genType = supportedGenericTypes.filter(genType => genType in prop.kind).head()
-    if not genType.isSome():
-        return ident prop.kind
-    let genericType = genType.get()
+    case prop.kind:
+        of uefProp:
+            let supportedGenericTypes = ["TArray", "TSubclassOf", "TSoftObjectPtr", "TMap"]
+            if not prop.isGeneric:
+                return ident prop.uePropType
+            let genericType = prop.uePropType.split("[")[0]
 
-    let innerTypesStr = prop.kind.replace(genericType, "").replace("[").replace("]", "")
-    let innerTypes = innerTypesStr.split(",").map(innerType => ident(innerType.strip()))
-    let bracketsNode = nnkBracketExpr.newTree((ident genericType) & innerTypes)
-    bracketsNode
+            let innerTypesStr = prop.uePropType.replace(genericType, "").replace("[").replace("]", "")
+            let innerTypes = innerTypesStr.split(",").map(innerType => ident(innerType.strip()))
+            let bracketsNode = nnkBracketExpr.newTree((ident genericType) & innerTypes)
+            return bracketsNode
+        else:
+            newEmptyNode()
 
 
-func isDelegate(prop : UEProperty) : bool = ["FScriptDelegate", "FMulticastScriptDelegate"].any(t => t in prop.kind)
+func isDelegate(prop : UEField) : bool = prop.kind == uefDelegate
 
 
-func getTypeNodeForReturn(prop: UEProperty, typeNode : NimNode) : NimNode = 
+func getTypeNodeForReturn(prop: UEField, typeNode : NimNode) : NimNode = 
     let shouldBeReturnedAsRef = ["TMap"]
-    let genType = shouldBeReturnedAsRef.filter(genType => genType in prop.kind or prop.isDelegate()).head()
-    if not genType.isSome():
-        return typeNode
-    nnkVarTy.newTree(typeNode)
-
+    # let genType = shouldBeReturnedAsRef.filter(genType => genType in prop.kind or prop.isDelegate()).head()
+    if prop.kind == uefDelegate or prop.returnAsVar:
+        return nnkVarTy.newTree(typeNode)
+    return typeNode
 
 #[
     Generates a new delegate type based on the Name and DelegateType
     - [ ] Generates a broadcast/execute function for that type based on the Signature of the Delegate
-        - [ ] Almost there have to work on the signature.
-    - [ ] The getter and setter should use that function 
+        - [x] Almost there have to work on the signature.
+        - [ ] Generalize it enough so it can work FScriptDelegates (first refactor UEProperty so all the info is there)
+
+    - [ ] The getter and setter should use that function (this is already done?)
+
     - [ ] Generates and add dynamic/bind functio based on the signature
 ]#
 
 func identWithInject(name:string) : NimNode = nnkPragmaExpr.newTree([ident name,nnkPragma.newTree(ident "inject")])
 func identWrapper(name:string) : NimNode = ident(name) #cant use ident as argument
 
-proc genDelegateType(prop : UEProperty) : Option[NimNode] = 
-    if not prop.isDelegate():
+proc genDelegateType(prop : UEField) : Option[NimNode] = 
+    if not prop.isDelegate() or prop.delKind == uedelDynScriptDelegate:
         return none[NimNode]()
 
+    let delTypeName = ident "F" & prop.name #TODO DoANameGenerator
 
-    let isMulticast = "Multicast" in prop.kind
-    if not isMulticast:
-        return none[NimNode]()
-    let delTypeName = ident prop.name & "gen" & prop.kind
-    let delType = ident prop.kind #i.e. FScriptDelegate/FMulticastScriptDelegate #this needs to be changed once I introduce the signature
+    
 
     let signatureAsNode = (identFn : string->NimNode) => prop.delegateSignature
                               .mapi((typeName, idx)=>[identFn("param" & $idx), ident typeName, newEmptyNode()])
@@ -310,10 +329,12 @@ proc genDelegateType(prop : UEProperty) : Option[NimNode] =
 
     broadcastFn.add(broadcastBody)
 
-
+    let delBaseType = ident (case prop.delKind:
+                            of uedelDynScriptDelegate: "FScriptDelegate"
+                            of uedelMulticastDynScriptDelegate: "FMulticastScriptDelegate")
     
-    var delegate = genAst(delTypeName, deltype, broadcastFn, paramDeclaration):
-        type delTypeName {.inject.} = object of deltype
+    var delegate = genAst(delTypeName, delBaseType, broadcastFn, paramDeclaration):
+        type delTypeName {.inject.} = object of delBaseType
         broadcastFn 
         
         
@@ -324,8 +345,8 @@ proc genDelegateType(prop : UEProperty) : Option[NimNode] =
         #     dynDel.processMulticastDelegate(param.addr)
         
         
-    echo treeRepr delegate
-    echo repr delegate
+    # echo treeRepr delegate
+    # echo repr delegate
 
     # if isMulticast:
     #     delegate.add broadcastFn
@@ -337,21 +358,28 @@ proc genDelegateType(prop : UEProperty) : Option[NimNode] =
 
     some delegate
 
-proc genProp(typeDef : UEType, prop : UEProperty) : NimNode = 
+proc genProp(typeDef : UEType, prop : UEField) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
     let delTypesNode = genDelegateType(prop)
     let delTypeIdent = delTypesNode.map(n=>n[0][0][0][0])
 
     let className = typeDef.name.substr(1)
-    let typeNode = delTypeIdent.get(getTypeNodeFromProp(prop))
+    let typeNode = case prop.kind:
+                    of uefProp: getTypeNodeFromUProp(prop)
+                    of uefDelegate: delTypeIdent.get()
+                    of uefFunction: newEmptyNode() #No Support 
    
-    let typeNodeAsReturnValue = delTypeIdent.map(n=>nnkVarTy.newTree(n))
-                                            .get(prop.getTypeNodeForReturn(typeNode))
+    let typeNodeAsReturnValue = case prop.kind:
+                            of uefProp: prop.getTypeNodeForReturn(typeNode)
+                            of uefDelegate: nnkVarTy.newTree(typeNode)
+                            of uefFunction: newEmptyNode() #No Support as UProp getter/Seter
+    
     
     var propName = prop.name 
     propName[0] = propName[0].toLowerAscii()
     let propIdent = ident propName
 
+    
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
             proc propIdent (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
@@ -363,16 +391,18 @@ proc genProp(typeDef : UEType, prop : UEProperty) : NimNode =
                 let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
     
-    if delTypesNode.isSome(): #TODO use do instead
+    
+
+    if prop.kind == uefDelegate and prop.delKind == uedelMulticastDynScriptDelegate: 
         result.insert(0, delTypesNode.get())
 
-
+    echo repr result
 
 
 proc genUETypeDef(typeDef : UEType) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
     let parent = ident typedef.parent
-    let props = nnkStmtList.newTree(typeDef.properties.map(prop=>genProp(typeDef, prop)))
+    let props = nnkStmtList.newTree(typeDef.fields.map(prop=>genProp(typeDef, prop)))
     result = 
         genAst(name = ident typeDef.name, ptrName, parent, props):
                 type 
@@ -388,22 +418,3 @@ macro genType*(typeDef : static UEType) : untyped =
 
 
 
-
-dumpTree:
-    type MyClass = object
-        param : string
-        param2 : int
-
-    proc whatever(param : pointer) : void = 
-        echo param
-
-    let param0 = ""
-    let param2 = 2
-    var cls = MyClass(param: param0, param2:param2)
-    whatever(param.addr)
-    proc whatever2(test : ptr whatevce) = 
-        discard
-    let scriptDelegate = dynDel[]
-    (dynDel[]).processMulticastDelegate(param.addr) 
-    let scriptDelegate = dynDel[]
-    scriptDelegate.processMulticastDelegate(param.addr) 

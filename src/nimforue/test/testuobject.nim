@@ -168,37 +168,35 @@ suite "NimForUE.UObject":
 
 
     const ueVarType = UEType(name: "UClassToUseAsVar", parent: "UObject", kind: uClass, 
-                        properties: @[
-                            UEProperty(name: "TestProperty", kind: "FString"),
+                        fields: @[
+                            UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
                             ])
                             
-
-    const ueType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass, 
-                        properties: @[
-                            UEProperty(name: "TestProperty", kind: "FString"),
-                            UEProperty(name: "IntProperty", kind: "int32"),
-                            UEProperty(name: "FloatProperty", kind: "float32"),
-                            UEProperty(name: "BoolProperty", kind: "bool"),
-                            UEProperty(name: "ArrayProperty", kind: "TArray[FString]"),
-                            UEProperty(name: "ObjectProperty", kind: "UClassToUseAsVarPtr"),
-                            UEProperty(name: "StructProperty", kind: "FStructToUseAsVar"),
-                            UEProperty(name: "ClassProperty", kind: "UClassPtr"),
-                            UEProperty(name: "SubclassOfProperty", kind: "TSubclassOf[UObject]"), #Couldnt bind it
-                            UEProperty(name: "EnumProperty", kind: "EMyTestEnum"), #Couldnt bind it
-                            UEProperty(name: "SoftObjectProperty", kind: "TSoftObjectPtr[UObject]"), #Couldnt bind it
-                            UEProperty(name: "MapProperty", kind: "TMap[FString, int32]"), #Couldnt bind it
-                            UEProperty(name: "NameProperty", kind: "FName"), #Couldnt bind it
-                            UEProperty(name: "DynamicDelegateOneParamProperty", kind: "FScriptDelegate"), #Not sure if I should use the type directly?
-                            UEProperty(name: "MulticastDynamicDelegateOneParamProperty", kind: "FMulticastScriptDelegate", delegateSignature: @["FString"]), #Not sure if I should use the type directly?
-                            UEProperty(name: "bWasCalled", kind: "bool"),
+    const uePropType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass, 
+                        fields: @[
+                            UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
+                            UEField(kind:uefProp, name: "IntProperty", uePropType: "int32"),
+                            UEField(kind:uefProp, name: "FloatProperty", uePropType: "float32"),
+                            UEField(kind:uefProp, name: "BoolProperty", uePropType: "bool"),
+                            UEField(kind:uefProp, name: "ArrayProperty", uePropType: "TArray[FString]", isGeneric:true),
+                            UEField(kind:uefProp, name: "ObjectProperty", uePropType: "UClassToUseAsVarPtr"),
+                            UEField(kind:uefProp, name: "StructProperty", uePropType: "FStructToUseAsVar"),
+                            UEField(kind:uefProp, name: "ClassProperty", uePropType: "UClassPtr"),
+                            UEField(kind:uefProp, name: "SubclassOfProperty", uePropType: "TSubclassOf[UObject]", isGeneric:true), #Couldnt bind it
+                            UEField(kind:uefProp, name: "EnumProperty", uePropType: "EMyTestEnum"), #Couldnt bind it
+                            UEField(kind:uefProp, name: "SoftObjectProperty", uePropType: "TSoftObjectPtr[UObject]", isGeneric:true), #Couldnt bind it
+                            UEField(kind:uefProp, name: "MapProperty", uePropType: "TMap[FString, int32]", isGeneric:true, returnAsVar:true), #Couldnt bind it
+                            UEField(kind:uefProp, name: "NameProperty", uePropType: "FName"), #Couldnt bind it
+                            UEField(kind:uefDelegate, name: "DynamicDelegateOneParamProperty", delKind:uedelMulticastDynScriptDelegate), #Not sure if I should use the type directly?
+                            UEField(kind:uefDelegate, name: "MulticastDynamicDelegateOneParamProperty", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]), #Not sure if I should use the type directly?
+                            UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
 
                             ])
-
 
 
                             
     genType(ueVarType)
-    genType(ueType) #Notice we wont be using genType directly
+    genType(uePropType) #Notice we wont be using genType directly
 
 
 
@@ -318,71 +316,71 @@ suite "NimForUE.UObject":
         assert obj.nameProperty.toFString() == FString("Hello")
     
 
-    ueTest "ShouldBeAbleToCallprocessDelegateFDynamicDelegateOneParam_NoMacro":
-        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-        proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void {.uebind.}
-        # obj.bindDelegateFuncToDelegateOneParam()
+    # ueTest "ShouldBeAbleToCallprocessDelegateFDynamicDelegateOneParam_NoMacro":
+    #     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+    #     proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void {.uebind.}
+    #     # obj.bindDelegateFuncToDelegateOneParam()
 
-        type Params = object
-            param : FString
+    #     type Params = object
+    #         param : FString
         
-        var param = Params(param:"Hello")
+    #     var param = Params(param:"Hello")
 
-        let propName = FString("DynamicDelegateOneParamProperty")
-        let prop = obj.getClass().getFPropertyByName propName 
+    #     let propName = FString("DynamicDelegateOneParamProperty")
+    #     let prop = obj.getClass().getFPropertyByName propName 
 
-        let result = getPropertyValuePtr[FScriptDelegate](prop, obj)[]
-        let funcName = makeFName("DelegateFunc")
+    #     let result = getPropertyValuePtr[FScriptDelegate](prop, obj)[]
+    #     let funcName = makeFName("DelegateFunc")
 
-        result.bindUFunction(obj, funcName)
+    #     result.bindUFunction(obj, funcName)
 
-        assert true
-        # assert obj.dynamicDelegateOneParamProperty.isBound()
+    #     assert true
+    #     # assert obj.dynamicDelegateOneParamProperty.isBound()
         
-        # obj.dynamicDelegateOneParamProperty.processDelegate(param.addr) 
-        # #This should generate a broadcast function with the following signature dynDelegate.broadcast(str:FString)
-        # #Should it be bind via MulticastDynamicDelegate[Params]? 
+    #     # obj.dynamicDelegateOneParamProperty.processDelegate(param.addr) 
+    #     # #This should generate a broadcast function with the following signature dynDelegate.broadcast(str:FString)
+    #     # #Should it be bind via MulticastDynamicDelegate[Params]? 
 
-        # assert obj.bWasCalled
-
-
+    #     # assert obj.bWasCalled
 
 
-    ueTest "ShouldBeAbleToBindAnUFunctionInADelegateFDynamicDelegateOneParamCallItViaBroadcast_NoMacro":
-        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-
-         #Todo eventually do a wrapper to bind an uebind function
-         #so it will look into the signature and generate it
-        obj.dynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
 
 
-        type CustomScriptDelegate = object of FScriptDelegate
-        #The type is just for typesafety on the CustomScriptDelegate
-        proc broadcast(dynDel: ptr CustomScriptDelegate, str: FString) = 
-            type Params = object
-                param : FString
+    # ueTest "ShouldBeAbleToBindAnUFunctionInADelegateFDynamicDelegateOneParamCallItViaBroadcast_NoMacro":
+    #     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
 
-            var param = Params(param:str)
-            let scriptDelegate : FScriptDelegate = dynDel[]
-            scriptDelegate.processDelegate(param.addr) 
-
-        var del = cast[ptr CustomScriptDelegate](obj.dynamicDelegateOneParamProperty.addr)
+    #      #Todo eventually do a wrapper to bind an uebind function
+    #      #so it will look into the signature and generate it
+    #     obj.dynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
 
 
-        assert obj.dynamicDelegateOneParamProperty.isBound()
+    #     type CustomScriptDelegate = object of FScriptDelegate
+    #     #The type is just for typesafety on the CustomScriptDelegate
+    #     proc broadcast(dynDel: ptr CustomScriptDelegate, str: FString) = 
+    #         type Params = object
+    #             param : FString
 
-        del.broadcast("Called from broadcast!")
+    #         var param = Params(param:str)
+    #         let scriptDelegate : FScriptDelegate = dynDel[]
+    #         scriptDelegate.processDelegate(param.addr) 
 
-        #Since this work, the syntax for binding it may be 
-        #[
-            TScriptDelegate[FString] and it will emmit
-                - A new type with the name Like Name_ScriptDelegate_FString
-                - a broadcast function that will allow to call it like above (obj.myDelegate.broadcast("params"))
-                - a bindUFunction overload that will allow to bind a a delegate by proc (how to make sure the func is a ufunc?)
+    #     var del = cast[ptr CustomScriptDelegate](obj.dynamicDelegateOneParamProperty.addr)
+
+
+    #     assert obj.dynamicDelegateOneParamProperty.isBound()
+
+    #     del.broadcast("Called from broadcast!")
+
+    #     #Since this work, the syntax for binding it may be 
+    #     #[
+    #         TScriptDelegate[FString] and it will emmit
+    #             - A new type with the name Like Name_ScriptDelegate_FString
+    #             - a broadcast function that will allow to call it like above (obj.myDelegate.broadcast("params"))
+    #             - a bindUFunction overload that will allow to bind a a delegate by proc (how to make sure the func is a ufunc?)
        
-        ]#
+    #     ]#
         
-        assert obj.bWasCalled
+    #     assert obj.bWasCalled
 
 
 
@@ -433,8 +431,12 @@ suite "NimForUE.UObject":
         #replace with addDynamic
         obj.multicastDynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
 
-        obj.multicastDynamicDelegateOneParamProperty.broadcast("hey using broadcast ad hoc!")
+        obj.multicastDynamicDelegateOneParamProperty.broadcast("Hey!")
 
         assert obj.bWasCalled 
 
         obj.multicastDynamicDelegateOneParamProperty.removeAll(obj)
+
+
+
+
