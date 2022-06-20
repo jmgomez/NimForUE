@@ -27,7 +27,7 @@ public:
 		return Struct;
 	}
 
-	static UObject* NewObjectFromClass(UClass* Class);
+	static UObject* NewObjectFromClass(UObject* Owner, UClass* Class, FName Name);
 
 	//Need to do UStruct version or it can also be passed over here somehow? It maybe as easy as just change the type from UClass to UStruct (since UClass derives from UStruct)
 	static FProperty* GetFPropetyByName(UStruct* Struct, FString& Name);

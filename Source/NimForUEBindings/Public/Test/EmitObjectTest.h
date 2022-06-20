@@ -15,6 +15,6 @@ class NIMFORUEBINDINGS_API UEmitObjectTest : public UObject {
 
 	UFUNCTION()
 	void ExistingFunction() {
-		
+		// this->StaticClass()->AddFunctionToFunctionMap()
 	}
 };

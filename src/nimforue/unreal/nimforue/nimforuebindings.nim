@@ -1,4 +1,4 @@
-import ../coreuobject/[uobject, unrealtype, templates/subclassof]
+import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes]
 import ../core/containers/unrealstring 
 import std/[typetraits, strutils]
 include ../definitions
@@ -41,8 +41,10 @@ proc getFPropertyByName*(class:UStructPtr, propName:FString) : FPropertyPtr {.im
 
 proc getUTypeByName*[T :UStruct](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
 
-
-proc newObjectFromClass*(className:UClassPtr) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
+#nil here and in newUObject is equivalent to GetTransient() (like ue does). Once GetTrasientPackage is bind, use that instead since 
+#it's better design
+proc newObjectFromClass*(owner:UObjectPtr, cls:UClassPtr, name:FName) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
+proc newObjectFromClass*(cls:UClassPtr) : UObjectPtr = newObjectFromClass(nil, cls, ENone)
 
 
 
@@ -50,10 +52,13 @@ proc getClassByName*(className:FString) : UClassPtr = getUTypeByName[UClass](cla
 proc getScriptStructByName*(structName:FString) : UScriptStructPtr = getUTypeByName[UScriptStruct](structName)
 proc getUStructByName*(structName:FString) : UStructPtr = getUTypeByName[UStruct](structName)
 
-proc newUObject*[T:UObject]() : ptr T = 
+proc newUObject*[T:UObject](owner:UObjectPtr, name:FName) : ptr T = 
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     let cls = getClassByName(className)
-    return cast[ptr T](newObjectFromClass(cls)) 
+    return cast[ptr T](newObjectFromClass(owner, cls, name)) 
+
+proc newUObject*[T:UObject](owner:UObjectPtr) : ptr T = newUObject[T](owner, ENone)
+proc newUObject*[T:UObject]() : ptr T = newUObject[T](nil, ENone)
 
 
 proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =

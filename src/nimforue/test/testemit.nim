@@ -11,4 +11,22 @@ suite "NimForUE.Emit":
 
         assert not fn.isNil()
 
+    uetest "Should be able to create a ufunction to an existing object":
+        let cls = getClassByName("EmitObjectTest")
+        let fnName = n"NewFunction"
+
+        var fn = cls.findFunctionByName fnName
+        assert fn.isNil()
+
+        let newFn = newUObject[UFunction](cls, fnName)
+        cls.addFunctionToFunctionMap(newFn, fnName)
+
+        fn = cls.findFunctionByName fnName
+        
+        assert not fn.isNil()
+
+        cls.removeFunctionFromFunctionMap fn
+     
+    
+
         

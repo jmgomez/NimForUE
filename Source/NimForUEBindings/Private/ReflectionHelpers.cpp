@@ -21,11 +21,11 @@ UStruct* UReflectionHelpers::GetUStructByName(FString StructName) {
 	return Struct;
 }
 
-UObject* UReflectionHelpers::NewObjectFromClass(UClass* Class) {
+UObject* UReflectionHelpers::NewObjectFromClass(UObject* Owner, UClass* Class, FName Name) {
 	// UObject* Outer, FName Name, EObjectFlags Flags = RF_NoFlags, UObject* Template = nullptr,
 	FStaticConstructObjectParameters Params(Class);
-	Params.Outer = GetTransientPackage();
-	Params.Name = NAME_None;
+	Params.Outer = Owner == nullptr ? GetTransientPackage() : Owner;
+	Params.Name = Name;
 	Params.SetFlags = RF_NoFlags;
 	Params.Template = nullptr;
 	Params.bCopyTransientsFromClassDefaults = false;

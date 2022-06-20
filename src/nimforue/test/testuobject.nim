@@ -237,8 +237,6 @@ suite "NimForUE.UObject":
         expectedResult.testProperty = "Hello another prop!"
         
 
-        
-
         obj.objectProperty = expectedResult
 
         assert obj.objectProperty.testProperty == expectedResult.testProperty

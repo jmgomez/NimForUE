@@ -22,14 +22,17 @@ type
     UFunctionPtr* = ptr UFunction
 
 
-proc newObject*(cls : UClassPtr) : UObjectPtr {.importcpp: "NewObject<UObject>(GetTransientPackage(), #)".}
 
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
 
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
 
 proc findFunctionByName*(cls : UClassPtr, name:FName) : UFunctionPtr {. importcpp: "#.FindFunctionByName(#)"}
+proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) : void {. importcpp: "#.AddFunctionToFunctionMap(@)"}
+proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
 
+
+proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
 
 # proc staticClass*(_: typedesc[UObject]) : UClassPtr {. importcpp: "#::StaticClass()" .}
 
