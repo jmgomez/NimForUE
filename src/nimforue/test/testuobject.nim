@@ -448,3 +448,5 @@ suite "NimForUE.UObject":
 
         assert obj.bWasCalled 
 
+
+    

@@ -1,5 +1,7 @@
 
 import ../Core/Containers/unrealstring
+import nametypes
+
 include ../definitions
 
 type 
@@ -25,6 +27,8 @@ proc newObject*(cls : UClassPtr) : UObjectPtr {.importcpp: "NewObject<UObject>(G
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
 
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
+
+proc findFunctionByName*(cls : UClassPtr, name:FName) : UFunctionPtr {. importcpp: "#.FindFunctionByName(#)"}
 
 
 # proc staticClass*(_: typedesc[UObject]) : UClassPtr {. importcpp: "#::StaticClass()" .}
