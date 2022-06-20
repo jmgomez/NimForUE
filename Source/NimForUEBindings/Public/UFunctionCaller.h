@@ -203,7 +203,6 @@ public:
 	}
 
 	void Invoke(UObject* Executor) {
-	
 		
 		
 		Executor->ProcessEvent( Function, Params );

@@ -31,6 +31,7 @@ public:
 
 	//Need to do UStruct version or it can also be passed over here somehow? It maybe as easy as just change the type from UClass to UStruct (since UClass derives from UStruct)
 	static FProperty* GetFPropetyByName(UStruct* Struct, FString& Name);
+	
 
 
 	template<typename T>
@@ -46,5 +47,9 @@ public:
 	UClass* TestComp() {
 		return FromSubclass(ToSubclass<UObject>());
 	}
-	
+
+	static FNativeFuncPtr MakeFNativeFuncPtr(void FnPtr(UObject* Context, FFrame& TheStack, void* Result)) {
+		return FnPtr;
+	}
+	static void IncreaseStack(FFrame& Stack);
 };

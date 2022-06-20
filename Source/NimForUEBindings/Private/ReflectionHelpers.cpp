@@ -44,3 +44,7 @@ FProperty* UReflectionHelpers::GetFPropetyByName(UStruct* Struct, FString& Name)
 	return nullptr;
 
 }
+
+void UReflectionHelpers::IncreaseStack(FFrame& Stack) {
+	Stack.Code += !!Stack.Code; /* increment the code ptr unless it is null */
+}

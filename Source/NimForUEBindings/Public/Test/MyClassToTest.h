@@ -105,7 +105,8 @@ public:
 		bWasCalled = true;
 		UE_LOG(LogTemp, Warning, TEXT("Delegate Func Called. The param is %s"), *Par);
 	}
-	
+	UFUNCTION()
+	void FakeFunc() {}
 	UFUNCTION()
 	FString GetHelloWorld() {
 		FStructToUseAsVar::StaticStruct();
