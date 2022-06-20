@@ -286,12 +286,10 @@ func identWithInject(name:string) : NimNode = nnkPragmaExpr.newTree([ident name,
 func identWrapper(name:string) : NimNode = ident(name) #cant use ident as argument
 
 proc genDelegateType(prop : UEField) : Option[NimNode] = 
-    if not prop.isDelegate() or prop.delKind == uedelDynScriptDelegate:
+    if not prop.isDelegate():
         return none[NimNode]()
 
-    let delTypeName = ident "F" & prop.name #TODO DoANameGenerator
-
-    
+    let delTypeName = ident "F" & prop.name 
 
     let signatureAsNode = (identFn : string->NimNode) => prop.delegateSignature
                               .mapi((typeName, idx)=>[identFn("param" & $idx), ident typeName, newEmptyNode()])
@@ -315,12 +313,20 @@ proc genDelegateType(prop : UEField) : Option[NimNode] =
                             )
 
     let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstr]))
-    var broadcastFn = nnkProcDef.newTree([ident "broadcast", newEmptyNode(), newEmptyNode(), fnParams, newEmptyNode(), newEmptyNode()])
+
+    let broadcastFnName = ident (case prop.delKind:
+                            of uedelDynScriptDelegate: "execute"
+                            of uedelMulticastDynScriptDelegate: "broadcast")
+    
+    let processFnName = ident (case prop.delKind:
+                            of uedelDynScriptDelegate: "processDelegate"
+                            of uedelMulticastDynScriptDelegate: "processMulticastDelegate")
+
+    var broadcastFn = nnkProcDef.newTree([broadcastFnName, newEmptyNode(), newEmptyNode(), fnParams, newEmptyNode(), newEmptyNode()])
     let processDelCall = nnkCall.newTree([
-                            nnkDotExpr.newTree([ident "dynDel", ident "processMulticastDelegate"]),
+                            nnkDotExpr.newTree([ident "dynDel", processFnName]),
                             nnkDotExpr.newTree([ident "param", ident "addr"])
                         ])
-
 
     let broadcastBody = genAst(paramsInsideBroadcastDef, paramDeclaration, processDelCall, delTypeName):
         paramsInsideBroadcastDef
@@ -337,25 +343,6 @@ proc genDelegateType(prop : UEField) : Option[NimNode] =
         type delTypeName {.inject.} = object of delBaseType
         broadcastFn 
         
-        
-        # proc broadcast fnParams = 
-        #     type Params = object
-        #         param : FString
-        #     var param = Params(param:param0)
-        #     dynDel.processMulticastDelegate(param.addr)
-        
-        
-    # echo treeRepr delegate
-    # echo repr delegate
-
-    # if isMulticast:
-    #     delegate.add broadcastFn
-    # else:
-    #     delegate.add executeFn
-
-             #TODO change the name of the functio for the regulars
-
-
     some delegate
 
 proc genProp(typeDef : UEType, prop : UEField) : NimNode = 
@@ -364,6 +351,7 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
     let delTypeIdent = delTypesNode.map(n=>n[0][0][0][0])
 
     let className = typeDef.name.substr(1)
+
     let typeNode = case prop.kind:
                     of uefProp: getTypeNodeFromUProp(prop)
                     of uefDelegate: delTypeIdent.get()
@@ -375,11 +363,10 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
                             of uefFunction: newEmptyNode() #No Support as UProp getter/Seter
     
     
-    var propName = prop.name 
-    propName[0] = propName[0].toLowerAscii()
-    let propIdent = ident propName
+    let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)) 
 
-    
+   
+
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
             proc propIdent (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
@@ -390,18 +377,15 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
                 var value {.inject.} : typeNode = val
                 let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
-    
-    
-
-    if prop.kind == uefDelegate and prop.delKind == uedelMulticastDynScriptDelegate: 
+    if prop.kind == uefDelegate: 
         result.insert(0, delTypesNode.get())
-
+        
     echo repr result
 
 
 proc genUETypeDef(typeDef : UEType) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
-    let parent = ident typedef.parent
+    let parent = ident typeDef.parent
     let props = nnkStmtList.newTree(typeDef.fields.map(prop=>genProp(typeDef, prop)))
     result = 
         genAst(name = ident typeDef.name, ptrName, parent, props):

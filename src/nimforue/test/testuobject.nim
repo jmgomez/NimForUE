@@ -187,11 +187,11 @@ suite "NimForUE.UObject":
                             UEField(kind:uefProp, name: "SoftObjectProperty", uePropType: "TSoftObjectPtr[UObject]", isGeneric:true), #Couldnt bind it
                             UEField(kind:uefProp, name: "MapProperty", uePropType: "TMap[FString, int32]", isGeneric:true, returnAsVar:true), #Couldnt bind it
                             UEField(kind:uefProp, name: "NameProperty", uePropType: "FName"), #Couldnt bind it
-                            UEField(kind:uefDelegate, name: "DynamicDelegateOneParamProperty", delKind:uedelMulticastDynScriptDelegate), #Not sure if I should use the type directly?
+                            UEField(kind:uefDelegate, name: "DynamicDelegateOneParamProperty", delKind:uedelDynScriptDelegate, delegateSignature: @["FString"]), #Not sure if I should use the type directly?
                             UEField(kind:uefDelegate, name: "MulticastDynamicDelegateOneParamProperty", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]), #Not sure if I should use the type directly?
                             UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
-
                             ])
+
 
 
                             
@@ -438,5 +438,19 @@ suite "NimForUE.UObject":
         obj.multicastDynamicDelegateOneParamProperty.removeAll(obj)
 
 
+    ueTest "ShouldBeAbleToUseExecuteInDelegatesFromUProps":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+
+        #replace with addDynamic
+        obj.dynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
+
+
+        assert obj.dynamicDelegateOneParamProperty.isBound()
+
+        obj.dynamicDelegateOneParamProperty.execute("Hey!")
+
+
+
+        assert obj.bWasCalled 
 
 
