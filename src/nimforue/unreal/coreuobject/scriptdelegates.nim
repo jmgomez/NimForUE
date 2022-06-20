@@ -34,8 +34,10 @@ proc removeAll*(dynDel: FMulticastScriptDelegate, obj:UObjectPtr) : void {. impo
 
 proc processMulticastDelegate*(dynDel:FMulticastScriptDelegate, params:pointer) : void {.importcpp: "#.ProcessMulticastDelegate<UObject>(@)" .}
 proc isBound*(dynDel:FScriptDelegate) : bool {.importcpp: "#.IsBound()" .}
-proc processDelegate*(dynDel:FScriptDelegate, params:pointer) : void {.importcpp: "#.ProcessDelegate<UObject>(@)" .}
-
+proc processDelegateInternal(dynDel:FScriptDelegate, params:pointer) : void {.importcpp: "#.ProcessDelegate<UObject>(@)" .}
+proc processDelegate*(dynDel:FScriptDelegate, params:pointer) : void = 
+    if dynDel.isBound():
+        dynDel.processDelegateInternal(params)
 
 
 
