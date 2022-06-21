@@ -74,6 +74,7 @@ suite "NimForUE.Emit":
         cls.removeFunctionFromFunctionMap fn
         
 
+
     uetest "Should be able to create a new function in nim and map it to a new UFunction NoMacro":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         var cls = obj.getClass()
@@ -84,24 +85,13 @@ suite "NimForUE.Emit":
             obj.bWasCalled = true
             stack.increaseStack()
 
-
-    
-
+        let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl)
             
-        var fn = newUObject[UFunction](cls, fnName)
-        fn.functionFlags = FUNC_Native
-        fn.Next = cls.Children 
-        cls.Children = fn
-
-        let fnPtr : FNativeFuncPtr = makeFNativeFuncPtr(fnImpl)
-        fn.setNativeFunc(fnPtr)
-        fn.staticLink(true)
 
         obj.processEvent(fn, nil)
 
         assert obj.bWasCalled
         
-
         #restore things as they were
         cls.removeFunctionFromFunctionMap fn
         cls.Children = fn.Next 
