@@ -1,4 +1,7 @@
-import std/[strutils]
+import std/[strutils, sequtils, sugar]
+import ../utils/utils   
+
+export utils
 
 template suite* (name: static string , body:untyped) = 
     block:
@@ -7,6 +10,8 @@ template suite* (name: static string , body:untyped) =
         else: 
             suiteName = suiteName & "." & name
         body
+        
+
 
 
 #TODO remove hooked tests
@@ -15,7 +20,7 @@ template internalTest(name:string, isOnly:bool, body:untyped) =
 
         let testName =  when declared(suiteName): suiteName & "." & name
                         else: name
-        var test = makeFNimTestBase(testName.replace(" ", ""))
+        var test = makeFNimTestBase(testName.spacesToCamelCase())
         test.ActualTest = proc (test: var FNimTestBase) {.cdecl.} =
             try:
                 body
