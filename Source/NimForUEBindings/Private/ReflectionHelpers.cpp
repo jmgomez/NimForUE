@@ -45,6 +45,15 @@ FProperty* UReflectionHelpers::GetFPropetyByName(UStruct* Struct, FString& Name)
 
 }
 
+TArray<FProperty*> UReflectionHelpers::GetFPropertiesFrom(UStruct* Struct) {
+	TArray<FProperty*> Props = {};
+	for (TFieldIterator<FProperty> It(Struct); It; ++It) {
+		Props.Add(*It);	
+	}
+	return Props;
+	
+}
+
 void UReflectionHelpers::IncreaseStack(FFrame& Stack) {
 	Stack.Code += !!Stack.Code; /* increment the code ptr unless it is null */
 }

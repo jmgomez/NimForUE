@@ -1,12 +1,10 @@
 
-import ../Core/Containers/unrealstring
+# import ../Core/Containers/unrealstring
+# import uobject
 
-include ../definitions
+# include ../definitions
 
-type 
-    FProperty* {. importcpp .} = object
-    FPropertyPtr* = ptr FProperty
+# #FProperty inherit from FField (not UField)
 
-
-#Notice the method lives in FField. Not sure if we will need to export it when doing the autogen
-proc getName*(prop:FPropertyPtr) : FString {. importcpp:"#->GetName()" .}
+# type 
+ 

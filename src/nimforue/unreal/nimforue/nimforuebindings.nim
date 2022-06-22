@@ -1,5 +1,5 @@
 import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes]
-import ../core/containers/unrealstring 
+import ../core/containers/[unrealstring, array]
 import std/[typetraits, strutils]
 include ../definitions
 
@@ -24,7 +24,7 @@ proc UE_Log*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUELog(@)"
 
 proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
 proc setPropertyValuePtr*[T](property:FPropertyPtr, container : pointer, value : ptr T) : void {.importcpp: "SetPropertyValuePtr<'*3>(@)", header:"UPropertyCaller.h".}
-
+proc createProperty*(Outer : UObjectPtr, name : FName, flags : EObjectFlags) : FPropertyPtr {.importcpp: "CreateProperty(@)", header:"UPropertyCaller.h".}
 
 type 
     FNimTestBase* {.importcpp, inheritable, pure.} = object
@@ -37,7 +37,8 @@ proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.T
 
 
 #TODO This should throw if the property is not found!
-proc getFPropertyByName*(class:UStructPtr, propName:FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
+proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
+proc getFPropertiesFrom*(struct:UStructPtr) : TArray[FPropertyPtr] {.importcpp: "UReflectionHelpers::GetFPropertiesFrom(@)"}
 
 proc getUTypeByName*[T :UStruct](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
 

@@ -2,9 +2,15 @@
 include ../unreal/prelude
 import testutils
 
-
+#TODO make this public and use it from test utils
 const uePropType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass,
-            fields: @[UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool")]
+            fields: @[
+                UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
+                UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
+
+            
+            
+            ]
     )
 
 genType(uePropType)
@@ -84,13 +90,56 @@ suite "NimForUE.Emit":
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
             stack.increaseStack()
-
-        let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl)
-            
+        let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl, @[])
 
         obj.processEvent(fn, nil)
 
         assert obj.bWasCalled
+        
+        #restore things as they were
+        cls.removeFunctionFromFunctionMap fn
+        cls.Children = fn.Next 
+        
+
+
+    uetest "Should be able to create a new function that accepts a parameter in nim":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        var cls = obj.getClass()
+        let fnName =n"NewFunction"
+
+
+        #Params needs to be retrieved from the function so they have to be set
+        proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            let obj = cast[UMyClassToTestPtr](context) 
+            obj.bWasCalled = true
+            let fn = stack.node
+            let paramProp = cast[FPropertyPtr](fn.ChildProperties)
+            assert not paramProp.isnil()
+            let paramVal : ptr FString = getPropertyValuePtr[FString](paramProp, stack.locals)
+            assert not paramVal.isNil()
+            #actual func
+            obj.testProperty = paramVal[]
+
+            UE_Log("It enters in fnImpl the value of the param is " & $(paramVal[]))
+            #end actual func
+            stack.increaseStack()
+
+        let props = @[UEField(kind:uefProp, name: "TestProperty", uePropType: "FString")]
+
+
+        let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl, props)
+
+
+        type Param = object
+            param0 : FString
+        
+        var param = Param(param0: "FString Parameter")
+
+        obj.processEvent(fn, param.addr)
+
+        assert obj.bWasCalled
+        assert fn.numParms == 1
+        assert obj.testProperty.equals(param.param0)
         
         #restore things as they were
         cls.removeFunctionFromFunctionMap fn

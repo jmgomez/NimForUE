@@ -12,3 +12,13 @@ static void SetPropertyValuePtr(FProperty* Property, void* Container, T* ValuePt
 	Prop->SetPropertyValue_InContainer(Container, *ValuePtr);
 	
 }
+
+
+//TODO Need to bind the FFieldVariant 
+static FProperty* CreateProperty(UObject* Outer, FName Name, EObjectFlags ObjectFlags) {
+	FProperty* Prop = new FStrProperty(FFieldVariant(Outer), Name, ObjectFlags);
+	Prop->SetPropertyFlags(CPF_Parm);
+	
+	
+	return Prop;
+}
