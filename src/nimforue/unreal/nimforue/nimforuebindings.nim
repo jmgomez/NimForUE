@@ -24,7 +24,6 @@ proc UE_Log*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUELog(@)"
 
 proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
 proc setPropertyValuePtr*[T](property:FPropertyPtr, container : pointer, value : ptr T) : void {.importcpp: "SetPropertyValuePtr<'*3>(@)", header:"UPropertyCaller.h".}
-proc createProperty*(Outer : UObjectPtr, name : FName, flags : EObjectFlags) : FPropertyPtr {.importcpp: "CreateProperty(@)", header:"UPropertyCaller.h".}
 
 type 
     FNimTestBase* {.importcpp, inheritable, pure.} = object

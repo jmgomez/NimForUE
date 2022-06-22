@@ -119,8 +119,6 @@ suite "NimForUE.Emit":
             assert not paramVal.isNil()
             #actual func
             obj.testProperty = paramVal[]
-
-            UE_Log("It enters in fnImpl the value of the param is " & $(paramVal[]))
             #end actual func
             stack.increaseStack()
 

@@ -7,6 +7,15 @@ include ../definitions
 import std/[typetraits, strutils, sequtils, sugar]
 #This file contains logic on top of ue types that it isnt necessarily bind 
 
+
+proc createProperty*(outer : UObjectPtr, name : FName, flags : EObjectFlags) : FPropertyPtr = 
+    let fieldVariant = makeFieldVariant(outer)
+    let prop = makeFStringProperty(fieldVariant, name, flags)
+    prop.setPropertyFlags(CPF_Parm)
+    prop
+ 
+
+
 type UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
 
 proc createUFunctionInClass*(fnName : FName, cls:UClassPtr, flags: EFunctionFlags, fnImpl:UFunctionNativeSignature, props:seq[UEField]) : UFunctionPtr = 
