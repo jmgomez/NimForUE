@@ -9,12 +9,10 @@ import std/[typetraits, strutils, sequtils, sugar]
 
 
 proc createProperty*(outer : UObjectPtr, name : FName, flags : EObjectFlags) : FPropertyPtr = 
-    let fieldVariant = makeFieldVariant(outer)
-    let prop = makeFStringProperty(fieldVariant, name, flags)
+    let prop = makeFStrProperty(makeFieldVariant(outer), name, flags)
     prop.setPropertyFlags(CPF_Parm)
     prop
  
-
 
 type UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
 
@@ -32,6 +30,6 @@ proc createUFunctionInClass*(fnName : FName, cls:UClassPtr, flags: EFunctionFlag
     fn.staticLink(true)
 
     if uprops.len() > 0:
-            #			// Parameter size is the byte count after the last argument
+            #// Parameter size is the byte count after the last argument
         fn.parmsSize = ( uprops[^1].getOffsetForUFunction() +  uprops[^1].getSize()).uint16
     fn

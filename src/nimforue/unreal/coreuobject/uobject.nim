@@ -1,9 +1,12 @@
 
 import ../Core/Containers/unrealstring
 import nametypes
+import std/[genasts, macros, sequtils]
 
 import uobjectflags
 export uobjectflags
+
+
 
 include ../definitions
 
@@ -57,7 +60,7 @@ proc getName*(prop:FFieldPtr) : FString {. importcpp:"#->GetName()" .}
 proc getOffsetForUFunction*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffset_ForUFunction()".}
 
 proc getSize*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetSize()".}
-proc setPropertyFlags*(prop:FPropertyPtr, flags:EPropertyFlags) : void {. importcpp:"#->GetSize()".}
+proc setPropertyFlags*(prop:FPropertyPtr, flags:EPropertyFlags) : void {. importcpp:"#->SetPropertyFlags(#)".}
 
 
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
@@ -87,11 +90,27 @@ type FFieldVariant* {.importcpp.} = object
 proc makeFieldVariant*(field:FFieldPtr) : FFieldVariant {. importcpp: "'0(#)", constructor.}
 proc makeFieldVariant*(obj:UObjectPtr) : FFieldVariant {. importcpp: "'0(#)", constructor.}
 
-type 
-    FStrProperty* {.importcpp.} = object of FProperty
-    FStrPropertyPtr* = ptr FStrProperty
+# type 
+#     FStrProperty* {.importcpp.} = object of FProperty
+#     FStrPropertyPtr* = ptr FStrProperty
 
 
-proc makeFStringProperty*(fieldVariant:FFieldVariant, name:FName, flags:EObjectFlags) : FStrPropertyPtr {. importcpp: "new '*0(@)".}
+# proc makeFStringProperty*(fieldVariant:FFieldVariant, name:FName, flags:EObjectFlags) : FStrPropertyPtr {. importcpp: "new '*0(@)".}
 
 
+macro bindFProperty(propNames : static varargs[string] ) : untyped = 
+    proc bindProp(name:string) : NimNode = 
+        let constructorName = ident "make"&name
+        let ptrName = ident name&"Ptr"
+
+        genAst(name=ident name, ptrName, constructorName):
+            type 
+                name* {.inject, importcpp.} = object of FProperty
+                ptrName* {.inject.} = ptr name
+
+            proc constructorName*(fieldVariant:FFieldVariant, propName:FName, flags:EObjectFlags) : ptrName {. importcpp: "new '*0(@)", inject.}
+
+    
+    nnkStmtList.newTree(propNames.map(bindProp))
+
+bindFProperty(["FStrProperty", "FIntProperty"])
