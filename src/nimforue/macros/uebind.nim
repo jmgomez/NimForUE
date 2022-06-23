@@ -3,6 +3,8 @@
 import std/[options, strutils,sugar, sequtils, genasts, macros]
 import ../utils/sequtils as sequtils2
 
+import ../unreal/coreuobject/uobjectflags
+
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
     # nnkTypeSection.newTree(
     #         nnkTypeDef.newTree(
@@ -222,11 +224,19 @@ type
                 uePropType* : string #Do a close set of types? No, just do a close set on the MetaType. i.e Struct, TArray, Delegates (they complicate things)
                 isGeneric* : bool
                 returnAsVar* : bool #if it should append var on the return type when generating the getter
+                propFlags*:EPropertyFlags
+
             of uefDelegate:
                 delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
                 delKind*: UEDelegateKind
+                #delFlags? Specific propFlags
+
             of uefFunction:
-                discard
+                #note cant use option type. If it has a returnParm it will be the first param that has CPF_ReturnParm
+                signature* : seq[UEField]
+                fnFlags* : EFunctionFlags
+              
+               
 
     UEType* = object 
         name* : string 

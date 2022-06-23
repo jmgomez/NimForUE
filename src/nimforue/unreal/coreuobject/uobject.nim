@@ -62,6 +62,7 @@ proc getOffsetForUFunction*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffse
 
 proc getSize*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetSize()".}
 proc setPropertyFlags*(prop:FPropertyPtr, flags:EPropertyFlags) : void {. importcpp:"#->SetPropertyFlags(#)".}
+proc getPropertyFlags*(prop:FPropertyPtr) : EPropertyFlags {. importcpp:"#->GetPropertyFlags()".}
 
 
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
@@ -99,7 +100,7 @@ proc makeFieldVariant*(obj:UObjectPtr) : FFieldVariant {. importcpp: "'0(#)", co
 # proc makeFStringProperty*(fieldVariant:FFieldVariant, name:FName, flags:EObjectFlags) : FStrPropertyPtr {. importcpp: "new '*0(@)".}
 
 
-macro bindFProperty(propNames : static varargs[string] ) : untyped = 
+macro bindFProperty(propNames : static openarray[string] ) : untyped = 
     proc bindProp(name:string) : NimNode = 
         let constructorName = ident "make"&name
         let ptrName = ident name&"Ptr"

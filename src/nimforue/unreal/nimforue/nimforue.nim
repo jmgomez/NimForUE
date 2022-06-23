@@ -10,42 +10,41 @@ import std/[typetraits, strutils, sequtils, sugar]
 
 
 
-proc createProperty*(outer : UObjectPtr, field:UEField) : FPropertyPtr = 
-    let flags = RF_NoFlags
-    let name = field.name.makeFName()
-
-
+proc createProperty*(outer : UStructPtr, propField:UEField) : FPropertyPtr = 
+    let flags = RF_NoFlags #OBJECT FLAGS
+    let name = propField.name.makeFName()
     let prop : FPropertyPtr =   
-                if field.uePropType == "FString": 
+                if propField.uePropType == "FString": 
                     makeFStrProperty(makeFieldVariant(outer), name, flags)
-                elif field.uePropType == "int32":
+                elif propField.uePropType == "int32":
                     makeFIntProperty(makeFieldVariant(outer), name, flags)
                 else:
-                    raise newException(Exception, "FProperty not covered in the types for " & field.uePropType)
+                    raise newException(Exception, "FProperty not covered in the types for " & propField.uePropType)
     
-    prop.setPropertyFlags(CPF_Parm)
+    prop.setPropertyFlags(propField.propFlags)
+    outer.addCppProperty(prop)
     prop
  
 
 type UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
 
-proc createUFunctionInClass*(fnName : FName, cls:UClassPtr, flags: EFunctionFlags, fnImpl:UFunctionNativeSignature, props:seq[UEField]) : UFunctionPtr = 
+#note at some point class can be resolved from the UEField?
+proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
+    let fnName = fnField.name.makeFName()
     var fn = newUObject[UFunction](cls, fnName)
-    fn.functionFlags = flags
+    fn.functionFlags = fnField.fnFlags
+    #There should be a cpp method that does this for us (try with fn.addCppProperty here as well)
     fn.Next = cls.Children 
     cls.Children = fn
 
-    let uprops = props.map(p=>createProperty(fn, p))
-    for prop in uprops:
-        fn.addCppProperty(prop)
+    let uprops = fnField.signature.map(p=>createProperty(fn, p))
+   
+    cls.addFunctionToFunctionMap(fn, fnName)
+        
 
     fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
     fn.staticLink(true)
-
-    fn.parmsSize = uprops.foldl(a + b.getSize(), 0)
-    # if uprops.len() > 0:
-    #         #// Parameter size is the byte count after the last argument
-    #     fn.parmsSize = 32# ( uprops[^1].getOffsetForUFunction() +  uprops[^1].getSize()).uint16
-    let msg = fmt"Param size is {fn.parmsSize}"
-    UE_Log(msg)
+    let isPropParm = (p:FPropertyPtr) => (p.getPropertyFlags() and CPF_Parm) == CPF_Parm
+    fn.parmsSize = uprops.filter(isPropParm).foldl(a + b.getSize(), 0)
+   
     fn

@@ -1,8 +1,9 @@
 import bitops
+import std/[genasts, macros, sequtils]
 
 type 
 
-    EPropertyFlags* {.importcpp, size:sizeof(uint64).} = enum
+    EPropertyFlags* {. importcpp, size:sizeof(uint64).} = enum
         CPF_None = 0,
         CPF_Edit              = 0x0000000000000001,  #< Property is user-settable in the editor.
         CPF_ConstParm            = 0x0000000000000002,  #< This is a constant function parameter
@@ -153,8 +154,14 @@ type
         FUNC_AllFlags    = 0xFFFFFFFF
     
 
+macro genEnumOperators(enumName, enumType:static string) : untyped = 
+    genAst(name=ident enumName, typ=ident enumType):
+        proc `or`*(a, b : name) : name = 
+            cast[name](bitor(cast[typ](a),cast[typ](b)))
 
+        proc `and`*(a, b : name) : name = 
+            cast[name](bitand(cast[typ](a),cast[typ](b)))
 
-     #TODO MAKE THIS A MACRO
-proc `or`*(a, b : EFunctionFlags) : EFunctionFlags = 
-    cast[EFunctionFlags](bitor(cast[uint32](a),cast[uint32](b)))
+genEnumOperators("EPropertyFlags", "uint64")
+genEnumOperators("EObjectFlags", "int32")
+genEnumOperators("EFunctionFlags", "uint32")

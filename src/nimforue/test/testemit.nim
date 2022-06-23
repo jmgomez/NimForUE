@@ -56,7 +56,7 @@ suite "NimForUE.Emit":
 
 
 
-    uetest "Should be able to replace a function implementation to a new UFunction NoMacro":
+    ueTest "Should be able to replace a function implementation to a new UFunction NoMacro":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         var cls = obj.getClass()
         let fnName =n"FakeFunc"
@@ -82,16 +82,22 @@ suite "NimForUE.Emit":
         
 
 
-    uetest "Should be able to create a new function in nim and map it to a new UFunction NoMacro":
+    ueTest "Should be able to create a new function in nim and map it to a new UFunction NoMacro":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         var cls = obj.getClass()
-        let fnName =n"NewFunction"
 
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
             stack.increaseStack()
-        let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl, @[])
+
+        let fnField = UEField(kind:uefFunction, name:"NewFuncNoParams", fnFlags: FUNC_Native, 
+                            signature: @[
+                               
+                            ]
+                    )
+
+        let fn = createUFunctionInClass(cls, fnField, fnImpl)
 
         obj.processEvent(fn, nil)
 
@@ -103,7 +109,7 @@ suite "NimForUE.Emit":
         
 
 
-    uetest "Should be able to create a new function that accepts a parameter in nim":
+    ueTest "Should be able to create a new function that accepts a parameter in nim":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         var cls = obj.getClass()
         let fnName =n"NewFunction"
@@ -123,10 +129,13 @@ suite "NimForUE.Emit":
             #end actual func
             stack.increaseStack()
 
-        let props = @[UEField(kind:uefProp, name: "TestProperty", uePropType: "FString")]
+        let fnField = UEField(kind:uefFunction, name:"NewFunction", fnFlags: FUNC_Native, 
+                    signature: @[
+                        UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
+                    ]
+        )
 
-
-        let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl, props)
+        let fn = createUFunctionInClass(cls, fnField, fnImpl)
 
         type Param = object
             param0 : FString
@@ -147,14 +156,11 @@ suite "NimForUE.Emit":
     ueTest "Should be able to create a new function that accepts two parameters in nim":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         var cls = obj.getClass()
-        let fnName =n"NewFunction2Params"
-
 
         #Params needs to be retrieved from the function so they have to be set
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
-            let fn = stack.node
             type Param = object
                 param0 : int32
                 param1 : FString
@@ -167,23 +173,76 @@ suite "NimForUE.Emit":
             #end actual func
             stack.increaseStack()
 
-        let props = @[UEField(kind:uefProp, name: "IntProperty", uePropType: "int32"), 
-                    UEField(kind:uefProp, name: "TestProperty", uePropType: "FString")]
 
 
-        let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl, props)
+        let fnField = UEField(kind:uefFunction, name:"NewFunction2Params", fnFlags: FUNC_Native, 
+                            signature: @[
+                                UEField(kind:uefProp, name: "IntProperty", uePropType: "int32", propFlags:CPF_Parm), 
+                                UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
+                            ]
+                    )
+
+        let fn = createUFunctionInClass(cls, fnField, fnImpl)
+
 
         proc newFunction2Params(obj:UMyClassToTestPtr, param:int32, param2:FString) {.uebind .} 
 
         let expectedInt : int32 = 3
         let expectedStr = "Whatever"
         obj.newFunction2Params(expectedInt, expectedStr)
-        # obj.processEvent(fn, param.addr)
 
         assert obj.bWasCalled
         assert fn.numParms == 2
         assert obj.intProperty == expectedInt
         assert obj.testProperty.equals(expectedStr)
+        
+        #restore things as they were
+        cls.removeFunctionFromFunctionMap fn
+        cls.Children = fn.Next 
+        
+        
+    ueTest "Should be able to create a new function that accepts two parameters and returns":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        var cls = obj.getClass()
+        let fnName =n"NewFunction2ParamsAndReturns"
+
+        #Params needs to be retrieved from the function so they have to be set
+        proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            let obj = cast[UMyClassToTestPtr](context) 
+            obj.bWasCalled = true
+            type Param = object
+                param0 : int32
+                param1 : FString
+
+            let params = cast[ptr Param](stack.locals)[]
+
+            #actual func
+            var toReturn : FString = $ obj.intProperty & obj.testProperty
+            var result = result
+            result = toReturn.addr
+
+            #end actual func
+            stack.increaseStack()
+
+        
+        let fnField = UEField(kind:uefFunction, name:"NewFunction2ParamsAndReturns", fnFlags: FUNC_Native, 
+                            signature: @[
+                                UEField(kind:uefProp, name: "ReturnProp", uePropType: "FString", propFlags:CPF_ReturnParm),
+                                UEField(kind:uefProp, name: "IntProperty", uePropType: "int32", propFlags:CPF_Parm), 
+                                UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
+                            ]
+                )
+
+        let fn = createUFunctionInClass(cls, fnField, fnImpl)
+
+        proc newFunction2ParamsAndReturns(obj:UMyClassToTestPtr, param:int32, param2:FString) : FString {.uebind .} 
+
+        let expectedResult = $ obj.intProperty & obj.testProperty
+        let result = obj.newFunction2ParamsAndReturns(10, "Whatever")
+
+        assert obj.bWasCalled
+        assert fn.numParms == 2
+        assert result.equals(expectedResult)
         
         #restore things as they were
         cls.removeFunctionFromFunctionMap fn

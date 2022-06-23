@@ -65,6 +65,7 @@ public:
 	}
 	
 	UFunctionCaller(UFunction* InFunction, void* InParams) {
+		checkf(InFunction, TEXT("The function is NULL"));
 		Function = InFunction;
 		Params = (uint8*)InParams;
 	}
