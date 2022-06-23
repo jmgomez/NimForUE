@@ -144,7 +144,7 @@ suite "NimForUE.Emit":
         cls.Children = fn.Next 
 
     
-    uetest "Should be able to create a new function that accepts two parameters in nim":
+    ueTest "Should be able to create a new function that accepts two parameters in nim":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         var cls = obj.getClass()
         let fnName =n"NewFunction2Params"
@@ -173,18 +173,17 @@ suite "NimForUE.Emit":
 
         let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl, props)
 
-        type Param = object
-            param0 : int32
-            param1 : FString
-        
-        var param = Param(param0:5, param1: "FString Parameter")
+        proc newFunction2Params(obj:UMyClassToTestPtr, param:int32, param2:FString) {.uebind .} 
 
-        obj.processEvent(fn, param.addr)
+        let expectedInt : int32 = 3
+        let expectedStr = "Whatever"
+        obj.newFunction2Params(expectedInt, expectedStr)
+        # obj.processEvent(fn, param.addr)
 
         assert obj.bWasCalled
         assert fn.numParms == 2
-        assert obj.intProperty == param.param0
-        assert obj.testProperty.equals(param.param1)
+        assert obj.intProperty == expectedInt
+        assert obj.testProperty.equals(expectedStr)
         
         #restore things as they were
         cls.removeFunctionFromFunctionMap fn
