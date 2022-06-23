@@ -13,6 +13,7 @@ include ../definitions
 type 
     
     FField* {. importcpp, inheritable, pure .} = object 
+        Next* : ptr FField
     FFieldPtr* = ptr FField 
 
 

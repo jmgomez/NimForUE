@@ -1,5 +1,7 @@
 
 include ../unreal/prelude
+import strutils
+import strformat
 import testutils
 
 #TODO make this public and use it from test utils
@@ -7,8 +9,7 @@ const uePropType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClas
             fields: @[
                 UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
                 UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
-
-            
+                UEField(kind:uefProp, name: "IntProperty", uePropType: "int32"),
             
             ]
     )
@@ -127,7 +128,6 @@ suite "NimForUE.Emit":
 
         let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl, props)
 
-
         type Param = object
             param0 : FString
         
@@ -142,7 +142,57 @@ suite "NimForUE.Emit":
         #restore things as they were
         cls.removeFunctionFromFunctionMap fn
         cls.Children = fn.Next 
+
+    
+    uetest "Should be able to create a new function that accepts two parameters in nim":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        var cls = obj.getClass()
+        let fnName =n"NewFunction2Params"
+
+
+        #Params needs to be retrieved from the function so they have to be set
+        proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            let obj = cast[UMyClassToTestPtr](context) 
+            obj.bWasCalled = true
+            let fn = stack.node
+            type Param = object
+                param0 : int32
+                param1 : FString
+
+            let params = cast[ptr Param](stack.locals)[]
+
+            #actual func
+            obj.intProperty = params.param0 
+            obj.testProperty = params.param1
+            #end actual func
+            stack.increaseStack()
+
+        let props = @[UEField(kind:uefProp, name: "IntProperty", uePropType: "int32"), 
+                    UEField(kind:uefProp, name: "TestProperty", uePropType: "FString")]
+
+
+        let fn = createUFunctionInClass(fnName, cls, FUNC_Native, fnImpl, props)
+
+        type Param = object
+            param0 : int32
+            param1 : FString
+        
+        var param = Param(param0:5, param1: "FString Parameter")
+
+        obj.processEvent(fn, param.addr)
+
+        assert obj.bWasCalled
+        assert fn.numParms == 2
+        assert obj.intProperty == param.param0
+        assert obj.testProperty.equals(param.param1)
+        
+        #restore things as they were
+        cls.removeFunctionFromFunctionMap fn
+        cls.Children = fn.Next 
+        
         
 
 
         
+
+
