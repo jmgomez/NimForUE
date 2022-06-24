@@ -44,7 +44,7 @@ proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionN
 
     fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
     fn.staticLink(true)
-    let isPropParm = (p:FPropertyPtr) => (p.getPropertyFlags() and CPF_Parm) == CPF_Parm
-    fn.parmsSize = uprops.filter(isPropParm).foldl(a + b.getSize(), 0)
+    let isReturnProp = (p:FPropertyPtr) => (p.getPropertyFlags() and CPF_ReturnParm) == CPF_ReturnParm
+    fn.parmsSize = uprops.foldl(a + b.getSize(), 0)
    
     fn

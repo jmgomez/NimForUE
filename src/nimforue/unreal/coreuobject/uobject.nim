@@ -84,6 +84,7 @@ proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
 
 
 proc initializeDerivedMembers*(fn:UFunctionPtr) : void {.importcpp:"#->InitializeDerivedMembers()".}
+proc getReturnProperty*(fn:UFunctionPtr) : FPropertyPtr {.importcpp:"#->GetReturnProperty()".}
 
 
 
