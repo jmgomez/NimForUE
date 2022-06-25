@@ -5,9 +5,9 @@ import nimForUEConfig
 const withPCH = true
 const parallelBuild = true # for debugging purposes, normally we want to execute in parallel
 
-const NimLibPath = r"C:\Nim\lib" # Can we detect the lib path?
-if not dirExists(NimLibPath):
-  quit("nimcachebuild.nim: Please set the NimLibPath!")
+const NimLibPath = r"C:\Users\juama\.nimble\lib" # Can we detect the lib path?
+# if not dirExists(NimLibPath):
+#   quit("nimcachebuild.nim: Please set the NimLibPath!")
 
 let nueConfig = getNimForUEConfig()
 let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $nueConfig.targetPlatform
@@ -160,7 +160,7 @@ proc compileCmd(path: string): Option[string] =
   some("vccexe.exe" & " " &
     CompileFlags.join(" ") & " " &
     (if withPCH and not isNimFile(path): pchFlags() else: "") & " " &
-    "/I" & NimLibPath & " " &
+    # "/I" & NimLibPath & " " &
     foldl(getHeadersIncludePaths(), a & "-I" & b & " ", "") & " " &
     "/Fo" & objpath & " " & path
     )

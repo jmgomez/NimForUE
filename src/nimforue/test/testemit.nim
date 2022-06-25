@@ -218,12 +218,11 @@ suite "NimForUE.Emit":
             var params = cast[ptr Param](stack.locals)[]
             var toReturn : FString = $ params.param0 & params.param1
             
-            # cast[ptr FString](result)[] = toReturn
-
+            cast[ptr FString](result)[] = toReturn
 
             let returnProp = stack.node.getReturnProperty()
-            returnProp.initializeValueInContainer(result)
-            setPropertyValue[FString](returnProp, result, toReturn)
+            # returnProp.initializeValueInContainer(result)
+            # setPropertyValuePtr[FString](returnProp, result, toReturn.addr)
 
             UE_Log(fmt"FString lenght: {sizeof(FString)} FPropertySize: {returnProp.getSize()} ")
             assert not returnProp.isNil()
@@ -279,11 +278,9 @@ suite "NimForUE.Emit":
             var params = cast[ptr Param](stack.locals)[]
             var valuePtr = 4.int32
  
-            
-            
+
             # cast[ptr int32](result)[] = newInt32(4.int32)[]
             let returnProp = stack.node.getReturnProperty()
-            
             returnProp.initializeValueInContainer(result)
             setPropertyValuePtr[int32](returnProp, result, valuePtr.addr)
 

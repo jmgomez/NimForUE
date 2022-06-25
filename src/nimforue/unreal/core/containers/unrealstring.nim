@@ -5,7 +5,8 @@ include ../../definitions
 type
   FString* {. exportc, importcpp, bycopy.} = object
 
-proc makeFString*(cstr : cstring) : FString {.importcpp: "FString(ANSI_TO_TCHAR(#))" noSideEffect.}
+proc makeFString*(cstr : cstring) : FString {.importcpp: "'0(ANSI_TO_TCHAR(#))", constructor,  noSideEffect.}
+proc makeFString*(fstr : FString) : FString {.importcpp: "'0'(#)", constructor,  noSideEffect.}
 proc toCString*(fstr: FString): cstring {.importcpp: " TCHAR_TO_ANSI(*#)", nodecl, noSideEffect.}
 
 proc `$`*(fstr: FString): string = $ fstr.toCString
