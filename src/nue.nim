@@ -122,8 +122,12 @@ task guestpch, "Builds the hot reloading lib. Takes -f to force rebuild.":
     var force = ""
     if options.contains("f"):
       force = "-f"
+    
+    var noGen = options.contains"nogen"
 
-    discard execCmd(&"nim cpp {force} --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim")
+    if not noGen:
+      discard execCmd(&"nim cpp {force} --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim")
+
     if nimcacheBuild() == Success:
       copyNimForUELibToUEDir()
 

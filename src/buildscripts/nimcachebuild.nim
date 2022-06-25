@@ -4,10 +4,7 @@ import nimForUEConfig
 
 const withPCH = true
 const parallelBuild = true # for debugging purposes, normally we want to execute in parallel
-
-const NimLibPath = r"C:\Users\juama\.nimble\lib" # Can we detect the lib path?
-# if not dirExists(NimLibPath):
-#   quit("nimcachebuild.nim: Please set the NimLibPath!")
+const PCHFile = "UEDeps.h"
 
 let nueConfig = getNimForUEConfig()
 let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $nueConfig.targetPlatform
@@ -25,15 +22,13 @@ type BuildStatus* = enum
 template quotes(path: string): untyped =
   "\"" & path & "\""
 
-proc isNimFile(path: string): bool =
-  # hack to determine if a file is a Nim library file
-  # The nimforue files include definitions which has an INCLUDESECTION before #include "nimbase.h"
+proc usesPCHFile(path: string): bool =
   for l in path.lines:
-    if l.contains("INCLUDESECTION"):
-      return false
-    if l.contains("nimbase.h"):
+    if PCHFile in l:
+      return true
+    if "LANGUAGE_C" in l:
       break
-  true
+  false
 
 
 proc getHeadersIncludePaths*() : seq[string] = 
@@ -148,7 +143,34 @@ proc pchFlags(shouldCreate: bool = false): string =
   # /Fp https://docs.microsoft.com/en-us/cpp/build/reference/fp-name-dot-pch-file?view=msvc-170
   let Yflag = if shouldCreate: "/Yc" else: "/Yu"
   
-  result = Yflag & "UEDeps.h /Fp" & quotes(pchFilepath)
+  result = Yflag & PCHFile & " /Fp" & quotes(pchFilepath)
+
+# User defined types can appear in system.nim.cpp (maybe others, we don't know for sure)
+# When we import types from an external header when used with generic containers.
+# We need to move the inclusion of Unreal headers above nimbase.h to get them to compile.
+proc validateNimCPPHeaders(path: string) =
+  if usesPCHFile(path):
+    var dx = -1
+    var ndx = -1
+    var pdx = -1
+    for line in path.lines:
+      inc dx
+      if "nimbase.h" in line:
+        ndx = dx
+      elif PCHFile in line:
+        if ndx > -1:
+          pdx = dx
+        break
+      elif "LANGUAGE_C" in line:
+        break
+
+    if ndx < pdx:
+      var lines = path.lines.toSeq
+      var pchlines = lines[(pdx-1)..pdx]
+      lines.delete((pdx-1)..pdx)
+      lines.insert(pchlines, ndx)
+
+      writeFile(path, lines.join("\n"))
 
 # example compile command
 # vccexe.exe /c --platform:amd64  /nologo /EHsc -DWIN32_LEAN_AND_MEAN /FS /std:c++17 /Zp8 /source-charset:utf-8 /execution-charset:utf-8 /MD -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Source\NimForUEBindings\Public\ -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Inc\NimForUEBindings -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\NimHeaders -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Classes" -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Classes\Engine" -I"D:\UE_5.0\Engine\Source\Runtime\Net\Core\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Net\Core\Classes" -I"D:\UE_5.0\Engine\Source\Runtime\CoreUObject\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Core\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Public" -I"D:\UE_5.0\Engine\Source\Runtime\TraceLog\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Launch\Public" -I"D:\UE_5.0\Engine\Source\Runtime\ApplicationCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Projects\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Json\Public" -I"D:\UE_5.0\Engine\Source\Runtime\PakFile\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RSA\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RenderCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\NetCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\CoreOnline\Public" -I"D:\UE_5.0\Engine\Source\Runtime\PhysicsCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Experimental\Chaos\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Experimental\ChaosCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\InputCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RHI\Public" -I"D:\UE_5.0\Engine\Source\Runtime\AudioMixerCore\Public" -I"D:\UE_5.0\Engine\Source\Developer\DesktopPlatform\Public" -I"D:\UE_5.0\Engine\Source\Developer\ToolMenus\Public" -I"D:\UE_5.0\Engine\Source\Developer\TargetPlatform\Public" -I"D:\UE_5.0\Engine\Source\Developer\SourceControl\Public" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\NetCore" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\Engine" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\PhysicsCore" -IG:\Dropbox\GameDev\UnrealProjects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE\ /Z7 /FS /Od   /IC:\Nim\lib /ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\src /nologo /FoD:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@sdigitsutils.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@sdigitsutils.nim.cpp
@@ -159,8 +181,7 @@ proc compileCmd(path: string): Option[string] =
 
   some("vccexe.exe" & " " &
     CompileFlags.join(" ") & " " &
-    (if withPCH and not isNimFile(path): pchFlags() else: "") & " " &
-    # "/I" & NimLibPath & " " &
+    (if withPCH and usesPCHFile(path): pchFlags() else: "") & " " &
     foldl(getHeadersIncludePaths(), a & "-I" & b & " ", "") & " " &
     "/Fo" & objpath & " " & path
     )
@@ -209,6 +230,7 @@ proc nimcacheBuild*(): BuildStatus =
         objpaths.add(path & ".obj")
         let cmd = compileCmd(path)
         if cmd.isSome:
+          validateNimCPPHeaders(path)
           #echo cmd.get()
           compileCmds.add cmd.get()
     else:
