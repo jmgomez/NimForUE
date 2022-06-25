@@ -1,3 +1,4 @@
+include ../definitions
 import bitops
 import std/[genasts, macros, sequtils]
 
