@@ -3,7 +3,6 @@ include ../unreal/definitions
 import std/[options, strutils,sugar, sequtils, genasts, macros]
 import ../utils/utils
 import ../unreal/coreuobject/[uobject, uobjectflags]
-include ../unreal/definitions
 
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
     # nnkTypeSection.newTree(

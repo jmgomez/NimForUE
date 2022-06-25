@@ -1,8 +1,4 @@
 import std/[options, strutils, sequtils, sugar]
-
-
-
-
 import std/[sequtils, options]
 include ../unreal/definitions
 

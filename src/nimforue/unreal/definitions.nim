@@ -3,10 +3,11 @@ Cant include modules because it's used from the modules itself.
 The file that mixes them is prelude which is not used inside the unreal directory.
 ]#
 
-const ueIncludes* = """
+when not defined ueIncludes:
+    const ueIncludes* = """
 #include "Definitions.NimForUEBindings.h"
 #include "UEDeps.h"
-"""
+    """
 
 {.emit: "/*INCLUDESECTION*/" & ueIncludes.}
 
