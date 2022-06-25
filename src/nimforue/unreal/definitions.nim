@@ -2,13 +2,13 @@
 Cant include modules because it's used from the modules itself. 
 The file that mixes them is prelude which is not used inside the unreal directory.
 ]#
-{.emit: """/*INCLUDESECTION*/
 
-//#include "Definitions.NimForUE.h"
+const ueIncludes* = """
 #include "Definitions.NimForUEBindings.h"
 #include "UEDeps.h"
+"""
 
-""".}
+{.emit: "/*INCLUDESECTION*/" & ueIncludes.}
 
 
 

@@ -3,7 +3,7 @@ include ../unreal/prelude
 import strutils
 import strformat
 import testutils
-
+import unittest
 #TODO make this public and use it from test utils
 const uePropType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass,
             fields: @[
@@ -215,21 +215,19 @@ suite "NimForUE.Emit":
                 param1 : FString
 
 
-               
-
             var params = cast[ptr Param](stack.locals)[]
-
-            #actual func
-           
             var toReturn : FString = $ params.param0 & params.param1
+            
+            # cast[ptr FString](result)[] = toReturn
+
 
             let returnProp = stack.node.getReturnProperty()
+            returnProp.initializeValueInContainer(result)
+            setPropertyValue[FString](returnProp, result, toReturn)
+
+            UE_Log(fmt"FString lenght: {sizeof(FString)} FPropertySize: {returnProp.getSize()} ")
             assert not returnProp.isNil()
 
-            # copyMem(result, toReturn.addr, returnProp.getSize())
-
-            # discard memcpy(result, toReturn.addr, returnProp.getSize())
-            # setPropertyValuePtr[FString](returnProp, result, toReturn.addr)
 
             let value = cast[ptr FString](result)[]
             UE_Log("The result value in result is " & value)
@@ -239,7 +237,7 @@ suite "NimForUE.Emit":
             stack.increaseStack()
 
         
-        let fnField = UEField(kind:uefFunction, name:"NewFunction2ParamsAndReturns", fnFlags: FUNC_Native, 
+        let fnField = UEField(kind:uefFunction, name:"NewFunction2ParamsAndReturns2", fnFlags: FUNC_Native, 
                             signature: @[
                                 UEField(kind:uefProp, name: "ReturnProp", uePropType: "FString", propFlags:CPF_ReturnParm or CPF_Parm),
                                 UEField(kind:uefProp, name: "IntProperty", uePropType: "int32", propFlags:CPF_Parm), 
@@ -249,14 +247,68 @@ suite "NimForUE.Emit":
 
         let fn = createUFunctionInClass(cls, fnField, fnImpl)
 
-        proc newFunction2ParamsAndReturns(obj:UMyClassToTestPtr, param:int32, param2:FString) : FString {.uebind .} 
-        let expectedResult = $ obj.intProperty & obj.testProperty
+        proc newFunction2ParamsAndReturns2(obj:UMyClassToTestPtr, param:int32, param2:FString) : FString {.uebind .} 
+        let expectedResult = $ 10 & "Whatever"
 
-        let result = obj.newFunction2ParamsAndReturns(10, "Whatever")
-
+        let result = obj.newFunction2ParamsAndReturns2(10, "Whatever")
+       
         assert obj.bWasCalled
         assert fn.numParms == 3
         assert result.equals(expectedResult)
+        
+        # #restore things as they were
+        cls.removeFunctionFromFunctionMap fn
+        cls.Children = fn.Next 
+        
+        
+        
+    ueTest "Should be able to create a new function that accepts two parameters and returns and int":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        var cls = obj.getClass()
+
+        #Params needs to be retrieved from the function so they have to be set
+        proc fnImpl(context:UObjectPtr, stack:var FFrame,  result:pointer):void {. cdecl .} =
+            let obj = cast[UMyClassToTestPtr](context) 
+            obj.bWasCalled = true
+            type Param = object
+                param0 : int32
+                param1 : FString
+
+            proc newInt32(val:int32) : ptr int32 {.importcpp:"new int32(#)".}
+
+            var params = cast[ptr Param](stack.locals)[]
+            var valuePtr = 4.int32
+ 
+            
+            
+            # cast[ptr int32](result)[] = newInt32(4.int32)[]
+            let returnProp = stack.node.getReturnProperty()
+            
+            returnProp.initializeValueInContainer(result)
+            setPropertyValuePtr[int32](returnProp, result, valuePtr.addr)
+
+            let value = cast[ptr int32](result)[]
+            UE_Log("The result value in result is " & $value)
+            stack.increaseStack()
+
+        
+        let fnField = UEField(kind:uefFunction, name:"NewFunction2ParamsAndReturns", fnFlags: FUNC_Native, 
+                            signature: @[
+                                UEField(kind:uefProp, name: "ReturnProp", uePropType: "int32", propFlags:CPF_ReturnParm or CPF_Parm),
+                                UEField(kind:uefProp, name: "IntProperty", uePropType: "int32", propFlags:CPF_Parm), 
+                                UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
+                            ]
+                )
+
+        let fn = createUFunctionInClass(cls, fnField, fnImpl)
+
+        proc newFunction2ParamsAndReturns(obj:UMyClassToTestPtr, param:int32, param2:FString) : int32 {.uebind .} 
+
+        let result = obj.newFunction2ParamsAndReturns(10, "Whatever")
+        UE_Log("The res in the test is " & $result)
+        assert obj.bWasCalled
+        assert fn.numParms == 3
+        check result == 4
         
         # #restore things as they were
         cls.removeFunctionFromFunctionMap fn

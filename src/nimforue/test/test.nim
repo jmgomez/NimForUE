@@ -7,8 +7,6 @@ import testemit
 
 
 
-
-
 suite "NimForUE":
  
     ueTest "FVectors.ShouldBeBleToCreateAndOperateWithVectors":

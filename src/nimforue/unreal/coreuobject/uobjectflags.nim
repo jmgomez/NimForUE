@@ -1,6 +1,9 @@
 import bitops
 import std/[genasts, macros, sequtils]
 
+include ../definitions
+
+
 type 
 
     EPropertyFlags* {. importcpp, size:sizeof(uint64).} = enum

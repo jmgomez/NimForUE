@@ -26,8 +26,8 @@ when not defined copylib:
     switch("define", "genFilePath:"& nueConfig.genFilePath)
     switch("define", "pluginDir:"& nueConfig.pluginDir)
     #todo get from NueConfig?
-    let withPCH = true
-    let withDebug = true
+    let withPCH = false
+    let withDebug = false
 
     let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform
     #Im pretty sure theere will moref specific handles for the other platforms

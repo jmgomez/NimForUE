@@ -5,6 +5,8 @@ import ../../macros/uebind
 import std/strformat
 include ../definitions
 
+
+
 import std/[typetraits, strutils, sequtils, sugar]
 #This file contains logic on top of ue types that it isnt necessarily bind 
 
@@ -24,9 +26,9 @@ proc createProperty*(outer : UStructPtr, propField:UEField) : FPropertyPtr =
     prop.setPropertyFlags(propField.propFlags)
     outer.addCppProperty(prop)
     prop
- 
-
+    
 type UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
+
 
 #note at some point class can be resolved from the UEField?
 proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
@@ -36,15 +38,14 @@ proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionN
     #There should be a cpp method that does this for us (try with fn.addCppProperty here as well)
     fn.Next = cls.Children 
     cls.Children = fn
-
-    let uprops = fnField.signature.map(p=>createProperty(fn, p))
+    
+    let uprops = fnField.signature.map(p=>(createProperty(fn, p)))
    
     cls.addFunctionToFunctionMap(fn, fnName)
-        
 
     fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
+    
     fn.staticLink(true)
-    let isReturnProp = (p:FPropertyPtr) => (p.getPropertyFlags() and CPF_ReturnParm) == CPF_ReturnParm
     fn.parmsSize = uprops.foldl(a + b.getSize(), 0)
    
     fn

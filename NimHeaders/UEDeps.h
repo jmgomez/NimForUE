@@ -1,4 +1,7 @@
 #pragma once
+
+
+#include "UObject/Field.h"
 #include "UObject/UnrealType.h"
 #include "Math/Vector.h"
 #include "CoreMinimal.h"
@@ -12,3 +15,4 @@
 #include "UFunctionCaller.h"
 #include "Test/NimTestBase.h"
 #include "ReflectionHelpers.h"
+

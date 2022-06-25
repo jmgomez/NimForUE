@@ -7,7 +7,6 @@ import uobjectflags
 export uobjectflags
 
 
-
 include ../definitions
 
 type 
@@ -17,7 +16,7 @@ type
     FFieldPtr* = ptr FField 
 
 
-    FProperty* {. importcpp, inheritable, pure.} = object of FField 
+    FProperty* {. importcpp, inheritable,  header:ueIncludes, pure.} = object of FField 
     FPropertyPtr* = ptr FProperty
     
 
@@ -59,6 +58,7 @@ type
 proc getName*(prop:FFieldPtr) : FString {. importcpp:"#->GetName()" .}
 
 proc getOffsetForUFunction*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffset_ForUFunction()".}
+proc initializeValueInContainer*(prop:FPropertyPtr, container:pointer) : void {. importcpp:"#->InitializeValue_InContainer(#)".}
 
 proc getSize*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetSize()".}
 proc setPropertyFlags*(prop:FPropertyPtr, flags:EPropertyFlags) : void {. importcpp:"#->SetPropertyFlags(#)".}

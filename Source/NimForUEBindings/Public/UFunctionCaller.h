@@ -205,7 +205,11 @@ public:
 
 	void Invoke(UObject* Executor) {
 		
-		
+		// struct Params {
+		// 	int32 A;
+		// 	FString B;
+		// 	int32 ToReturn;
+		// };
 		Executor->ProcessEvent( Function, Params );
 		
 		// FProperty* ReturnProp = Function->GetReturnProperty();

@@ -12,6 +12,12 @@ static void SetPropertyValuePtr(FProperty* Property, void* Container, T* ValuePt
 	Prop->SetPropertyValue_InContainer(Container, *ValuePtr);
 	
 }
+template<typename T>
+static void SetPropertyValue(FProperty* Property, void* Container, T ValuePtr) {	
+	TProperty<T, FProperty>* Prop = reinterpret_cast<TProperty<T, FProperty>*>(Property);
+	Prop->SetPropertyValue_InContainer(Container, ValuePtr);
+	
+}
 
 
 //TODO Need to bind the FFieldVariant 

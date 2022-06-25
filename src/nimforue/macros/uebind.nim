@@ -1,9 +1,9 @@
 {.experimental: "caseStmtMacros".}
 
 import std/[options, strutils,sugar, sequtils, genasts, macros]
-import ../utils/sequtils as sequtils2
-
-import ../unreal/coreuobject/uobjectflags
+import ../utils/utils
+import ../unreal/coreuobject/[uobject, uobjectflags]
+include ../unreal/definitions
 
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
     # nnkTypeSection.newTree(
@@ -125,7 +125,7 @@ macro uebind* (fn : untyped) : untyped =
         )
         rootNode.add(paramsReturnNode)
     fn.body = rootNode
-    # echo fn.repr
+    echo fn.repr
     fn
 
 
@@ -178,7 +178,6 @@ macro uebindstatic* (className: string, fn : untyped) : untyped =
         )
         rootNode.add(paramsReturnNode)
     fn.body = rootNode
-    # echo fn.repr
     fn
 
 
@@ -390,7 +389,7 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
     if prop.kind == uefDelegate: 
         result.insert(0, delTypesNode.get())
         
-    echo repr result
+    # echo repr result
 
 
 proc genUETypeDef(typeDef : UEType) : NimNode =
