@@ -1,7 +1,6 @@
-
+include ../definitions
 import ../core/containers/unrealstring
 
-include ../definitions
 
 
 

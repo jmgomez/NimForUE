@@ -39,7 +39,7 @@ proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionN
     fn.Next = cls.Children 
     cls.Children = fn
     
-    let uprops = fnField.signature.map(p=>(createProperty(fn, p)))
+    let uprops : seq[FPropertyPtr] = fnField.signature.map(p=>(createProperty(fn, p)))
    
     cls.addFunctionToFunctionMap(fn, fnName)
 

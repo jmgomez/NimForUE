@@ -1,5 +1,5 @@
 {.experimental: "caseStmtMacros".}
-
+include ../unreal/definitions
 import std/[options, strutils,sugar, sequtils, genasts, macros]
 import ../utils/utils
 import ../unreal/coreuobject/[uobject, uobjectflags]

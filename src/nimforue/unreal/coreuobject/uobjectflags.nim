@@ -1,7 +1,7 @@
+include ../definitions
 import bitops
 import std/[genasts, macros, sequtils]
 
-include ../definitions
 
 
 type 
