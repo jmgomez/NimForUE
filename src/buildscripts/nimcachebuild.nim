@@ -145,10 +145,11 @@ proc pchFlags(shouldCreate: bool = false): string =
   
   result = Yflag & PCHFile & " /Fp" & quotes(pchFilepath)
 
-# User defined types can appear in system.nim.cpp (maybe others, we don't know for sure)
+# User defined types can appear in Nim std lib cpp files
 # When we import types from an external header when used with generic containers.
 # We need to move the inclusion of Unreal headers above nimbase.h to get them to compile.
-proc validateNimCPPHeaders(path: string) =
+proc validateNimCPPHeaders(path: string): string =
+  result = path
   if usesPCHFile(path):
     var dx = -1
     var ndx = -1
@@ -164,27 +165,28 @@ proc validateNimCPPHeaders(path: string) =
       elif "LANGUAGE_C" in line:
         break
 
-    if ndx < pdx:
+    if ndx < pdx: # the nimbase.h comes before the PCHFile
+      # make a copy of the file and return the new path for the compile cmd
       var lines = path.lines.toSeq
       var pchlines = lines[(pdx-1)..pdx]
       lines.delete((pdx-1)..pdx)
       lines.insert(pchlines, ndx)
 
-      writeFile(path, lines.join("\n"))
+      result &= ".nue.cpp"
+      writeFile(path & ".nue.cpp", lines.join("\n"))
+
+proc isCompiled(path: string): bool = 
+  let objpath = path & ".obj"
+  return fileExists(objpath) and getLastModificationTime(objpath) > getLastModificationTime(path)
 
 # example compile command
 # vccexe.exe /c --platform:amd64  /nologo /EHsc -DWIN32_LEAN_AND_MEAN /FS /std:c++17 /Zp8 /source-charset:utf-8 /execution-charset:utf-8 /MD -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Source\NimForUEBindings\Public\ -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Inc\NimForUEBindings -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\NimHeaders -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Classes" -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Classes\Engine" -I"D:\UE_5.0\Engine\Source\Runtime\Net\Core\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Net\Core\Classes" -I"D:\UE_5.0\Engine\Source\Runtime\CoreUObject\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Core\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Public" -I"D:\UE_5.0\Engine\Source\Runtime\TraceLog\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Launch\Public" -I"D:\UE_5.0\Engine\Source\Runtime\ApplicationCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Projects\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Json\Public" -I"D:\UE_5.0\Engine\Source\Runtime\PakFile\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RSA\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RenderCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\NetCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\CoreOnline\Public" -I"D:\UE_5.0\Engine\Source\Runtime\PhysicsCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Experimental\Chaos\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Experimental\ChaosCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\InputCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RHI\Public" -I"D:\UE_5.0\Engine\Source\Runtime\AudioMixerCore\Public" -I"D:\UE_5.0\Engine\Source\Developer\DesktopPlatform\Public" -I"D:\UE_5.0\Engine\Source\Developer\ToolMenus\Public" -I"D:\UE_5.0\Engine\Source\Developer\TargetPlatform\Public" -I"D:\UE_5.0\Engine\Source\Developer\SourceControl\Public" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\NetCore" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\Engine" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\PhysicsCore" -IG:\Dropbox\GameDev\UnrealProjects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE\ /Z7 /FS /Od   /IC:\Nim\lib /ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\src /nologo /FoD:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@sdigitsutils.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@sdigitsutils.nim.cpp
-proc compileCmd(path: string): Option[string] =
-  let objpath = path & ".obj"
-  if fileExists(objpath) and getLastModificationTime(objpath) > getLastModificationTime(path):
-    return none[string]()
-
-  some("vccexe.exe" & " " &
+proc compileCmd(cpppath: string, objpath: string): string =
+  "vccexe.exe" & " " &
     CompileFlags.join(" ") & " " &
-    (if withPCH and usesPCHFile(path): pchFlags() else: "") & " " &
+    (if withPCH and usesPCHFile(cppPath): pchFlags() else: "") & " " &
     foldl(getHeadersIncludePaths(), a & "-I" & b & " ", "") & " " &
-    "/Fo" & objpath & " " & path
-    )
+    "/Fo" & objpath & " " & cppPath
 
 
 # generate the pch file for windows
@@ -224,15 +226,15 @@ proc nimcacheBuild*(): BuildStatus =
 
   var objpaths: seq[string]
   for kind, path in walkDir(cacheDir):
+    var cpppath = path
+    var objpath = path & ".obj"
     case kind:
     of pcFile:
-      if path.endsWith(".cpp"):
-        objpaths.add(path & ".obj")
-        let cmd = compileCmd(path)
-        if cmd.isSome:
-          validateNimCPPHeaders(path)
-          #echo cmd.get()
-          compileCmds.add cmd.get()
+      if cpppath.endsWith("nim.cpp"): #ignore nue.cpp
+        if not isCompiled(cpppath):
+          cpppath = validateNimCPPHeaders(cpppath)
+          compileCmds.add compileCmd(cpppath, objpath)
+        objpaths.add(objpath)
     else:
       continue
 
