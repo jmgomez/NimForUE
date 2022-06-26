@@ -121,7 +121,7 @@ suite "NimForUE.Emit":
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
             let fn = stack.node
-            let paramProp = cast[FPropertyPtr](fn.ChildProperties)
+            let paramProp = cast[FPropertyPtr](fn.childProperties)
             assert not paramProp.isnil()
             let paramVal : ptr FString = getPropertyValuePtr[FString](paramProp, stack.locals)
             assert not paramVal.isNil()
@@ -214,10 +214,9 @@ suite "NimForUE.Emit":
                 param0 : int32
                 param1 : FString
 
-
             var params = cast[ptr Param](stack.locals)[]
-            let cstr = $ params.param0 & params.param1
-            var toReturn : FString = cstr
+            let str = $ params.param0 & params.param1
+            var toReturn : FString = str
 
             let returnProp = stack.node.getReturnProperty()
             returnProp.initializeValueInContainer(result)
@@ -295,6 +294,63 @@ suite "NimForUE.Emit":
         cls.removeFunctionFromFunctionMap fn
         cls.Children = fn.Next 
         
+    
+    ueTest "Should be able to create a new function that accepts parameters as out":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        var cls = obj.getClass()
+
+        #Params needs to be retrieved from the function so they have to be set
+        proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            let obj = cast[UMyClassToTestPtr](context) 
+            obj.bWasCalled = true
+            type Param = object
+                param0 : int32
+                param1 : int32
+
+            var params = cast[ptr Param](stack.locals)[]
+            let fn = stack.node
+            #actual func
+            params.param0 = 5
+            params.param1 = 5
+
+          
+
+            #end actual func
+            #we know here there is only one, but they can be matched by name if when generating the params we use the same name
+            #for the uprop. Since emited functions can only be emited by nim, we should be good by doing so.
+            let outParamProp = fn.getPropsWithFlags(CPF_OutParm)[0]
+            setPropertyValuePtr[int32](outParamProp, params.addr, params.param0.addr)
+
+
+            stack.increaseStack()
+
+
+
+        let fnField = UEField(kind:uefFunction, name:"NewFuncOutParams", fnFlags: FUNC_Native or FUNC_HasOutParms, 
+                            signature: @[
+                                UEField(kind:uefProp, name: "Param1", uePropType: "int32", propFlags:CPF_Parm or CPF_OutParm), 
+                                UEField(kind:uefProp, name: "Param2", uePropType: "int32", propFlags:CPF_Parm)
+                            ]
+                    )
+
+        let fn = createUFunctionInClass(cls, fnField, fnImpl)
+
+
+        proc newFuncOutParams(obj:UMyClassToTestPtr, param:var int32, param2: int32) {.uebind .} 
+
+        var param0 : int32 = 1
+        var param1 : int32  = 1
+        obj.newFuncOutParams(param0, param1)
+
+        assert obj.bWasCalled
+        assert fn.numParms == 2
+
+        assert param0 == 5 #only this one is changed
+        assert param1 == 1
+        
+        #restore things as they were
+        cls.removeFunctionFromFunctionMap fn
+        cls.Children = fn.Next 
         
 
 

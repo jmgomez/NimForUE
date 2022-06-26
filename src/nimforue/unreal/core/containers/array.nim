@@ -1,4 +1,5 @@
 include ../../definitions
+import std/[sugar]
 
 type TArray*[T] {.importcpp: "TArray<'0>", bycopy } = object
 
@@ -26,7 +27,18 @@ iterator items*[T](arr: TArray[T]): T =
   for i in 0..(arr.num()-1):
     yield arr[i.int32]
 
+proc map*[T, U](xs:TArray[T], fn : T -> U) : TArray[U] = 
+  var arr = makeTArray[U]() #TODO bind the capacity and set it here so it doesnt reallocate the size
+  for x in xs:
+    arr.add(fn(x))
+  arr
 
+proc filter*[T](xs:TArray[T], fn : T -> bool) : TArray[T] =
+  var arr = makeTArray[T]()
+  for x in xs:
+    if fn(x):
+      arr.add x
+  arr
 
 # iterator pairs*[T](arr: TArray[T]): tuple[key: int, val: T] =
 #   for i in 0 .. <arr.len:

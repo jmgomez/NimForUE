@@ -12,7 +12,7 @@ include ../definitions
 type 
     
     FField* {. importcpp, inheritable, pure .} = object 
-        Next* : ptr FField
+        next*  {.importcpp:"Next".} : ptr FField
     FFieldPtr* = ptr FField 
 
 
@@ -29,7 +29,7 @@ type
 
     UStruct* {.importcpp, inheritable, pure .} = object of UField
         Children* : UFieldPtr # Pointer to start of linked list of child fields */
-        ChildProperties* : FFieldPtr #  /** Pointer to start of linked list of child fields */
+        childProperties* {.importcpp:"ChildProperties".}: FFieldPtr #  /** Pointer to start of linked list of child fields */
 
 
     UStructPtr* = ptr UStruct 
@@ -117,3 +117,6 @@ macro bindFProperty(propNames : static openarray[string] ) : untyped =
     nnkStmtList.newTree(propNames.map(bindProp))
 
 bindFProperty(["FStrProperty", "FIntProperty"])
+
+
+
