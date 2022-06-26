@@ -216,22 +216,12 @@ suite "NimForUE.Emit":
 
 
             var params = cast[ptr Param](stack.locals)[]
-            var toReturn : FString = $ params.param0 & params.param1
-            
-            cast[ptr FString](result)[] = toReturn
+            let cstr = $ params.param0 & params.param1
+            var toReturn : FString = cstr
 
             let returnProp = stack.node.getReturnProperty()
-            # returnProp.initializeValueInContainer(result)
-            # setPropertyValuePtr[FString](returnProp, result, toReturn.addr)
-
-            UE_Log(fmt"FString lenght: {sizeof(FString)} FPropertySize: {returnProp.getSize()} ")
-            assert not returnProp.isNil()
-
-
-            let value = cast[ptr FString](result)[]
-            UE_Log("The result value in result is " & value)
-         
-            #end actual func
+            returnProp.initializeValueInContainer(result)
+            setPropertyValuePtr[FString](returnProp, result, toReturn.addr)         
 
             stack.increaseStack()
 
@@ -273,19 +263,14 @@ suite "NimForUE.Emit":
                 param0 : int32
                 param1 : FString
 
-            proc newInt32(val:int32) : ptr int32 {.importcpp:"new int32(#)".}
 
             var params = cast[ptr Param](stack.locals)[]
-            var valuePtr = 4.int32
- 
+            var value : int32 = 4
 
-            # cast[ptr int32](result)[] = newInt32(4.int32)[]
             let returnProp = stack.node.getReturnProperty()
             returnProp.initializeValueInContainer(result)
-            setPropertyValuePtr[int32](returnProp, result, valuePtr.addr)
+            setPropertyValuePtr[int32](returnProp, result, value.addr)
 
-            let value = cast[ptr int32](result)[]
-            UE_Log("The result value in result is " & $value)
             stack.increaseStack()
 
         
@@ -302,7 +287,6 @@ suite "NimForUE.Emit":
         proc newFunction2ParamsAndReturns(obj:UMyClassToTestPtr, param:int32, param2:FString) : int32 {.uebind .} 
 
         let result = obj.newFunction2ParamsAndReturns(10, "Whatever")
-        UE_Log("The res in the test is " & $result)
         assert obj.bWasCalled
         assert fn.numParms == 3
         check result == 4

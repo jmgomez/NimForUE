@@ -15,7 +15,9 @@ proc append*(a, b: FString): FString {.importcpp: "#.Append(#)", noSideEffect.}
 proc equals*(a, b: FString): bool {.importcpp: "#.Equals(#)", noSideEffect.}
 
 proc fStringToString*(fstr :FString) : string = $ fstr
-proc stringToFString*(str :string) : FString = makeFString(str.cstring)
+proc stringToFString*(str :string) : FString = 
+  let cstr : cstring = str
+  makeFString(cstr)
 
 
 
