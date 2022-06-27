@@ -341,67 +341,24 @@ suite "NimForUE.Emit":
 
         #Params needs to be retrieved from the function so they have to be set
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
-            var defaultPropValueCppTemp : int32 = 0
-            var outValue = stepCompiledInRef[int32, FIntProperty](stack.addr, (defaultPropValueCppTemp.addr), nil)
-            UE_Log("The out value is set before " & $outValue )
-
-            stack.increaseStack()
-            let obj = cast[UMyClassToTestPtr](context) 
-            obj.bWasCalled = true
-            type Param = object
-                param0 : int32
-                param1 : int32
-
-            var params = cast[ptr Param](stack.locals)
-            let fn = stack.node
-            #actual func
-            params.param0 = 5
-            params.param1 = 5
-
           
+            # stack.increaseStack()
+            # let obj = cast[UMyClassToTestPtr](context) 
+            # obj.bWasCalled = true
+            # type Param = object
+            #     param0 : int32
+            #     param1 : int32
+
+            # var params : ptr Param = cast[ptr Param](stack.locals)
+            # let fn = stack.node
+            # #actual func
+            # params.param0 = 5
+            # params.param1 = 5
+
             var paramVal : int32 = 5
 
-            #end actual func
-            #we know here there is only one, but they can be matched by name if when generating the params we use the same name
-            #for the uprop. Since emited functions can only be emited by nim, we should be good by doing so.
-            
-            var currentOut = stack.outParms
-            while not currentOut.isNil():
-                let propName = currentOut.property.getName()
-                let propValue = cast[ptr int32](currentOut.propAddr)[]
-                
-                # cast[pointer](currentOut.propAddr) = cast[pointer](paramVal.addr)
-                UE_Log(fmt("PropName: {$propName} PropValue:{$propValue} PropAddress:{ cast[uint64](currentOut.propAddr.addr) }"))
-                currentOut = currentOut.nextOutParm #<-
-
-            let param0Addr = cast[uint64](params.param0.addr)
-            let param1Addr = cast[uint64](params.param1.addr)
-
-            UE_Log(fmt("locals addr: {stack.locals.repr}"))
-            UE_Log(fmt("Param addr: {params.addr.repr}"))
-            UE_Log(fmt("Param0 addr: {param0Addr}"))
-            UE_Log(fmt("Param1 addr: {param1Addr}"))
-
-            # let outParamProp = stack.outParms.property
-            # let outParamResult = cast[pointer](stack.outParms.propAddr)
-
-            params.param0 = 5
-            params.param1 = 5
-
-
-
-            # let valBefore : int32 = cast[ptr int32](stack.outParms.propAddr)[]
-            # UE_Log("The out param value is set before " & $valBefore )
-            # discard memcpy(stack.outParms.propAddr, paramVal.addr, sizeof(int32).int32)
             cast[ptr int32](stack.outParms.propAddr)[] = paramVal
-            # let valAfter : int32 = cast[ptr int32](stack.outParms.propAddr)[]
-            # UE_Log("The out param value is set after" & $valAfter )
-
-            # # outValue = paramVal
-            # setPropertyValuePtr[int32](outParamProp, outValue.addr, paramVal.addr)
-            # let outAddr = cast[uint8](outValue.addr)
-            # UE_Log("The address is " & $ outAddr)
-            # UE_Log("The out value is set after " & $outValue )
+   
 
 
         let fnField = UEField(kind:uefFunction, name:"NewFuncOutParams", fnFlags: FUNC_Native or FUNC_HasOutParms, 
@@ -426,8 +383,6 @@ suite "NimForUE.Emit":
         
         # obj.newFuncOutParams(param0, param1)
 
-        assert obj.bWasCalled
-        assert fn.numParms == 2
         # assert fn.getPropsWithFlags(CPF_OutParm).num() == 1
         assert params.param == 5 #only this one is changed
         # assert params.param2 == 1
