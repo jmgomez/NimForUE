@@ -164,6 +164,9 @@ macro genEnumOperators(enumName, enumType:static string) : untyped =
 
         proc `and`*(a, b : name) : name = 
             cast[name](bitand(cast[typ](a),cast[typ](b)))
+        
+        proc `in`*(a,b:name) : bool = (a and b) == a #returns true if used like flag in flags 
+
 
 genEnumOperators("EPropertyFlags", "uint64")
 genEnumOperators("EObjectFlags", "int32")

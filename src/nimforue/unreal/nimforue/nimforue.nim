@@ -11,8 +11,8 @@ import std/[typetraits, strutils, sequtils, sugar]
 #This file contains logic on top of ue types that it isnt necessarily bind 
 
 proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FPropertyPtr] = 
-    #TODO move this to the macro
-    let isIn = (p:FPropertyPtr) => (p.getPropertyFlags() and flag) == flag
+    let isIn = (p:FPropertyPtr) => flag in p.getPropertyFlags()
+
     getFPropertiesFrom(fn).filter(isIn)
 
 proc createProperty*(outer : UStructPtr, propField:UEField) : FPropertyPtr = 

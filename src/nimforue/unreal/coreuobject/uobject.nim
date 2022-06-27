@@ -49,10 +49,19 @@ type
         
     UFunctionPtr* = ptr UFunction
 
+    FOutParmRec* {.importcpp.} = object
+        property* {.importcpp:"Property".} : FPropertyPtr
+        propAddr* {.importcpp:"PropAddr".}: pointer 
+        nextOutParm* {.importcpp:"NextOutParm".}: ptr FOutParmRec
+        mostRecentProperty* {.importcpp:"MostRecentProperty".}: FPropertyPtr
+        propertyChainForCompiledIn* {.importcpp:"PropertyChainForCompiledIn".}: FPropertyPtr#This is FField but should not matter
+        
+       
     FFrame* {.importcpp .} = object
         code* {.importcpp:"Code".} : ptr uint8
         node* {.importcpp:"Node".} : UFunctionPtr
         locals* {.importcpp:"Locals".} : ptr uint8
+        outParms* {.importcpp:"OutParms".} : ptr FOutParmRec
     
 
 proc getName*(prop:FFieldPtr) : FString {. importcpp:"#->GetName()" .}
@@ -120,3 +129,8 @@ bindFProperty(["FStrProperty", "FIntProperty"])
 
 
 
+
+
+
+#StepExplicitProperty
+proc stepExplicitProperty*(frame:var FFrame, result:pointer, prop:FPropertyPtr) {.importcpp:"#.StepExplicitProperty(@)".}

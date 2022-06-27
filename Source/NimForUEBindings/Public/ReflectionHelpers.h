@@ -34,7 +34,12 @@ public:
 
 
 	static TArray<FProperty*> GetFPropertiesFrom(UStruct* Struct);
-	
+
+	//FFrameUtils
+	template<class TProperty, typename TNativeType>
+	static TNativeType& StepCompiledInRef(FFrame* Frame, void*const TemporaryBuffer, TProperty* Ignore) {
+		return Frame->StepCompiledInRef<TProperty, TNativeType>(TemporaryBuffer);
+	}
 
 
 	template<typename T>

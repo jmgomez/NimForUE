@@ -17,6 +17,36 @@ const uePropType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClas
 genType(uePropType)
 
 
+#[
+    #define P_GET_PROPERTY(PropertyType, ParamName)													\
+	PropertyType::TCppType ParamName = PropertyType::GetDefaultPropertyValue();					\
+	Stack.StepCompiledIn<PropertyType>(&ParamName);
+
+#define P_GET_PROPERTY_REF(PropertyType, ParamName)												\
+	PropertyType::TCppType ParamName##Temp = PropertyType::GetDefaultPropertyValue();			\
+	PropertyType::TCppType& ParamName = Stack.StepCompiledInRef<PropertyType, PropertyType::TCppType>(&ParamName##Temp);
+
+    DEFINE_FUNCTION(UFunctionTestObject::execTestReturnStringWithParamsOut)
+	{
+		P_GET_PROPERTY(FStrProperty,Z_Param_A);
+		P_GET_PROPERTY(FIntProperty,Z_Param_B);
+		P_GET_PROPERTY_REF(FStrProperty,Z_Param_Out_Out);
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		P_THIS->TestReturnStringWithParamsOut(Z_Param_A,Z_Param_B,Z_Param_Out_Out);
+		P_NATIVE_END;
+	}
+	DEFINE_FUNCTION(UFunctionTestObject::execTestReturnStringWithParams)
+	{
+		P_GET_PROPERTY(FStrProperty,Z_Param_A);
+		P_GET_PROPERTY(FIntProperty,Z_Param_B);
+		P_FINISH; //increaseStack
+		P_NATIVE_BEGIN;
+		*(FString*)Z_Param__Result=P_THIS->TestReturnStringWithParams(Z_Param_A,Z_Param_B);
+		P_NATIVE_END;
+	}
+]#
+
 suite "NimForUE.Emit":
     uetest "Should be able to find a function to an existing object":
         let cls = getClassByName("EmitObjectTest")
@@ -63,9 +93,10 @@ suite "NimForUE.Emit":
         let fnName =n"FakeFunc"
 
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            stack.increaseStack()
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
-            stack.increaseStack()
+            
             
         var fn = obj.getClass().findFunctionByName fnName
        
@@ -88,9 +119,9 @@ suite "NimForUE.Emit":
         var cls = obj.getClass()
 
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            stack.increaseStack()
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
-            stack.increaseStack()
 
         let fnField = UEField(kind:uefFunction, name:"NewFuncNoParams", fnFlags: FUNC_Native, 
                             signature: @[
@@ -118,6 +149,7 @@ suite "NimForUE.Emit":
 
         #Params needs to be retrieved from the function so they have to be set
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            stack.increaseStack()
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
             let fn = stack.node
@@ -128,7 +160,6 @@ suite "NimForUE.Emit":
             #actual func
             obj.testProperty = paramVal[]
             #end actual func
-            stack.increaseStack()
 
         let fnField = UEField(kind:uefFunction, name:"NewFunction", fnFlags: FUNC_Native, 
                     signature: @[
@@ -160,6 +191,7 @@ suite "NimForUE.Emit":
 
         #Params needs to be retrieved from the function so they have to be set
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            stack.increaseStack()
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
             type Param = object
@@ -172,7 +204,6 @@ suite "NimForUE.Emit":
             obj.intProperty = params.param0 
             obj.testProperty = params.param1
             #end actual func
-            stack.increaseStack()
 
 
 
@@ -208,6 +239,7 @@ suite "NimForUE.Emit":
 
         #Params needs to be retrieved from the function so they have to be set
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            stack.increaseStack()
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
             type Param = object
@@ -216,13 +248,18 @@ suite "NimForUE.Emit":
 
             var params = cast[ptr Param](stack.locals)[]
             let str = $ params.param0 & params.param1
-            var toReturn : FString = str
+            let cstr : cstring = str.cstring
+            var toReturn : FString = makeFString(cstr) #Needs to call the constructor so it allocates
 
-            let returnProp = stack.node.getReturnProperty()
-            returnProp.initializeValueInContainer(result)
-            setPropertyValuePtr[FString](returnProp, result, toReturn.addr)         
+            cast[ptr FString](result)[] = toReturn
 
-            stack.increaseStack()
+            # let returnProp = stack.node.getReturnProperty()
+            # returnProp.initializeValueInContainer(result)
+            # setPropertyValuePtr[FString](returnProp, result, toReturn.addr)         
+
+
+            let val : FString = cast[ptr FString](result)[]
+            UE_Log("The value of result is " & val)
 
         
         let fnField = UEField(kind:uefFunction, name:"NewFunction2ParamsAndReturns2", fnFlags: FUNC_Native, 
@@ -256,6 +293,7 @@ suite "NimForUE.Emit":
 
         #Params needs to be retrieved from the function so they have to be set
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result:pointer):void {. cdecl .} =
+            stack.increaseStack()
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
             type Param = object
@@ -266,11 +304,13 @@ suite "NimForUE.Emit":
             var params = cast[ptr Param](stack.locals)[]
             var value : int32 = 4
 
-            let returnProp = stack.node.getReturnProperty()
-            returnProp.initializeValueInContainer(result)
-            setPropertyValuePtr[int32](returnProp, result, value.addr)
 
-            stack.increaseStack()
+            cast[ptr int32](result)[] = value
+
+            # let returnProp = stack.node.getReturnProperty()
+            # returnProp.initializeValueInContainer(result)
+            # setPropertyValuePtr[int32](returnProp, result, value.addr)
+
 
         
         let fnField = UEField(kind:uefFunction, name:"NewFunction2ParamsAndReturns", fnFlags: FUNC_Native, 
@@ -301,35 +341,73 @@ suite "NimForUE.Emit":
 
         #Params needs to be retrieved from the function so they have to be set
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            var defaultPropValueCppTemp : int32 = 0
+            var outValue = stepCompiledInRef[int32, FIntProperty](stack.addr, (defaultPropValueCppTemp.addr), nil)
+            UE_Log("The out value is set before " & $outValue )
+
+            stack.increaseStack()
             let obj = cast[UMyClassToTestPtr](context) 
             obj.bWasCalled = true
             type Param = object
                 param0 : int32
                 param1 : int32
 
-            var params = cast[ptr Param](stack.locals)[]
+            var params = cast[ptr Param](stack.locals)
             let fn = stack.node
             #actual func
             params.param0 = 5
             params.param1 = 5
 
           
+            var paramVal : int32 = 5
 
             #end actual func
             #we know here there is only one, but they can be matched by name if when generating the params we use the same name
             #for the uprop. Since emited functions can only be emited by nim, we should be good by doing so.
-            let outParamProp = fn.getPropsWithFlags(CPF_OutParm)[0]
-            setPropertyValuePtr[int32](outParamProp, params.addr, params.param0.addr)
+            
+            var currentOut = stack.outParms
+            while not currentOut.isNil():
+                let propName = currentOut.property.getName()
+                let propValue = cast[ptr int32](currentOut.propAddr)[]
+                
+                # cast[pointer](currentOut.propAddr) = cast[pointer](paramVal.addr)
+                UE_Log(fmt("PropName: {$propName} PropValue:{$propValue} PropAddress:{ cast[uint64](currentOut.propAddr.addr) }"))
+                currentOut = currentOut.nextOutParm #<-
+
+            let param0Addr = cast[uint64](params.param0.addr)
+            let param1Addr = cast[uint64](params.param1.addr)
+
+            UE_Log(fmt("locals addr: {stack.locals.repr}"))
+            UE_Log(fmt("Param addr: {params.addr.repr}"))
+            UE_Log(fmt("Param0 addr: {param0Addr}"))
+            UE_Log(fmt("Param1 addr: {param1Addr}"))
+
+            # let outParamProp = stack.outParms.property
+            # let outParamResult = cast[pointer](stack.outParms.propAddr)
+
+            params.param0 = 5
+            params.param1 = 5
 
 
-            stack.increaseStack()
 
+            # let valBefore : int32 = cast[ptr int32](stack.outParms.propAddr)[]
+            # UE_Log("The out param value is set before " & $valBefore )
+            # discard memcpy(stack.outParms.propAddr, paramVal.addr, sizeof(int32).int32)
+            cast[ptr int32](stack.outParms.propAddr)[] = paramVal
+            # let valAfter : int32 = cast[ptr int32](stack.outParms.propAddr)[]
+            # UE_Log("The out param value is set after" & $valAfter )
+
+            # # outValue = paramVal
+            # setPropertyValuePtr[int32](outParamProp, outValue.addr, paramVal.addr)
+            # let outAddr = cast[uint8](outValue.addr)
+            # UE_Log("The address is " & $ outAddr)
+            # UE_Log("The out value is set after " & $outValue )
 
 
         let fnField = UEField(kind:uefFunction, name:"NewFuncOutParams", fnFlags: FUNC_Native or FUNC_HasOutParms, 
                             signature: @[
                                 UEField(kind:uefProp, name: "Param1", uePropType: "int32", propFlags:CPF_Parm or CPF_OutParm), 
-                                UEField(kind:uefProp, name: "Param2", uePropType: "int32", propFlags:CPF_Parm)
+                                UEField(kind:uefProp, name: "Param2", uePropType: "int32", propFlags:CPF_Parm or CPF_OutParm)
                             ]
                     )
 
@@ -337,16 +415,22 @@ suite "NimForUE.Emit":
 
 
         proc newFuncOutParams(obj:UMyClassToTestPtr, param:var int32, param2: int32) {.uebind .} 
+        type
+            Params = object
+                param: int32
+                param2: int32
 
-        var param0 : int32 = 1
-        var param1 : int32  = 1
-        obj.newFuncOutParams(param0, param1)
+        var params = Params(param: 3, param2: 2)
+        var fnName: FString = "NewFuncOutParams"
+        callUFuncOn(obj, fnName, params.addr)
+        
+        # obj.newFuncOutParams(param0, param1)
 
         assert obj.bWasCalled
         assert fn.numParms == 2
-
-        assert param0 == 5 #only this one is changed
-        assert param1 == 1
+        # assert fn.getPropsWithFlags(CPF_OutParm).num() == 1
+        assert params.param == 5 #only this one is changed
+        # assert params.param2 == 1
         
         #restore things as they were
         cls.removeFunctionFromFunctionMap fn
