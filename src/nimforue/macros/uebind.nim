@@ -124,7 +124,7 @@ macro uebind* (fn : untyped) : untyped =
         )
         rootNode.add(paramsReturnNode)
     fn.body = rootNode
-    echo fn.repr
+    # echo fn.repr
     fn
 
 
@@ -204,6 +204,7 @@ proc genFun(funcDef : FuncTest) : NimNode =
 type
     UETypeKind* = enum
         uClass
+        uStruct
 
     UEFieldKind* = enum
         uefProp, #this covers FString, int, TArray, etc. 
@@ -391,7 +392,7 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
     # echo repr result
 
 
-proc genUETypeDef(typeDef : UEType) : NimNode =
+proc genUClassTypeDef(typeDef : UEType) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
     let parent = ident typeDef.parent
     let props = nnkStmtList.newTree(typeDef.fields.map(prop=>genProp(typeDef, prop)))
@@ -402,11 +403,32 @@ proc genUETypeDef(typeDef : UEType) : NimNode =
                     ptrName {.inject.} = ptr name
                 props
 
+proc genUStructTypeDef(typeDef: UEType) : NimNode =   
+    let typeName = ident typeDef.name
+    #TODO Needs to handle TArray/Etc. like it does above with classes
+    let fields = typeDef.fields
+                        .map(prop => nnkIdentDefs.newTree(
+                            [ident toLower($prop.name[0])&prop.name.substr(1), 
+                             ident prop.uePropType, newEmptyNode()]))
+                        .foldl(a.add b, nnkRecList.newTree)
+
+    result = genAst(typeName, fields):
+                type typeName = object
+    result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])
+    echo result.treeRepr
+        
 
 macro genType*(typeDef : static UEType) : untyped = 
-    result = genUETypeDef(typeDef)
+    case typeDef.kind:
+        of uClass:
+            genUClassTypeDef(typeDef)
+        of uStruct:
+            genUStructTypeDef(typeDef)
+        
     # echo result.repr
 
 
-
-
+dumpTree:
+    type Whatever = object
+        hola : string
+        adios : int

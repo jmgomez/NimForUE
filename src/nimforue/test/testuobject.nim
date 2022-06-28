@@ -157,13 +157,19 @@ suite "NimForUE.UObject":
         assert obj.testProperty == expectedResult
 
     #This struct is defined in Cpp. TODO: Integrate it into the macro
-    type FStructToUseAsVar = object 
-        testProperty : FString  
+    # type FStructToUseAsVar = object 
+    #     testProperty : FString  
 
     #This enum is defined in Cpp. TODO: Integrate it into the macro
     type EMyTestEnum = enum uint8 
         TestValue,
         TestValue2
+
+    const ueStructType = UEType(name: "FStructToUseAsVar", kind: uStruct, 
+                            fields: @[
+                                UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
+                            ])
+    genType(ueStructType)                
 
 
 
@@ -194,10 +200,8 @@ suite "NimForUE.UObject":
 
 
 
-                            
     genType(ueVarType)
     genType(uePropType) #Notice we wont be using genType directly
-
 
 
     ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForFString":
