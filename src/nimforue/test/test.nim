@@ -3,8 +3,7 @@ include ../unreal/prelude
 import testutils
 
 import testuobject
-import testemit
-
+import emit/testemit
 
 
 suite "NimForUE":

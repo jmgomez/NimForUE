@@ -1,8 +1,8 @@
 
-include ../unreal/prelude
+include ../../unreal/prelude
 import strutils
 import strformat
-import testutils
+import ../testutils
 import unittest
 #TODO make this public and use it from test utils
 const uePropType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass,
@@ -47,7 +47,7 @@ genType(uePropType)
 	}
 ]#
 
-suite "NimForUE.Emit":
+suite "NimForUE.FunctionEmit":
     uetest "Should be able to find a function to an existing object":
         let cls = getClassByName("EmitObjectTest")
         let fn = cls.findFunctionByName(n"ExistingFunction")
@@ -343,21 +343,13 @@ suite "NimForUE.Emit":
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
           
             # stack.increaseStack()
-            # let obj = cast[UMyClassToTestPtr](context) 
-            # obj.bWasCalled = true
-            # type Param = object
-            #     param0 : int32
-            #     param1 : int32
-
-            # var params : ptr Param = cast[ptr Param](stack.locals)
-            # let fn = stack.node
-            # #actual func
-            # params.param0 = 5
-            # params.param1 = 5
+            
 
             var paramVal : int32 = 5
 
-            cast[ptr int32](stack.outParms.propAddr)[] = paramVal
+
+
+            cast[ptr int32](stack.outParms.propAddr)[] = 5
    
 
 
@@ -394,5 +386,100 @@ suite "NimForUE.Emit":
 
 
         
+
+    ueTest "Should be able to create a new function that accepts parameters as out [FString]":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        var cls = obj.getClass()
+
+        #Params needs to be retrieved from the function so they have to be set
+        proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+          
+            var paramVal : FString = "whatever"
+
+            cast[ptr FString](stack.outParms.propAddr)[] = paramVal
+   
+        let fnField = UEField(kind:uefFunction, name:"NewFuncOutParams", fnFlags: FUNC_Native or FUNC_HasOutParms, 
+                            signature: @[
+                                UEField(kind:uefProp, name: "Param1", uePropType: "FString", propFlags:CPF_Parm or CPF_OutParm), 
+                                UEField(kind:uefProp, name: "Param2", uePropType: "FString", propFlags:CPF_Parm or CPF_OutParm)
+                            ]
+                    )
+
+        let fn = createUFunctionInClass(cls, fnField, fnImpl)
+
+
+        proc newFuncOutParams(obj:UMyClassToTestPtr, param:var FString, param2: FString) {.uebind .} 
+        type
+            Params = object
+                param: FString
+                param2: FString
+
+        var params = Params(param: "3", param2: "2")
+        var fnName: FString = "NewFuncOutParams"
+        callUFuncOn(obj, fnName, params.addr)
+        
+        # obj.newFuncOutParams(param0, param1)
+
+        # assert fn.getPropsWithFlags(CPF_OutParm).num() == 1
+        assert params.param.equals("whatever") #only this one is changed
+        # assert params.param2 == 1
+    
+        #restore things as they were
+        cls.removeFunctionFromFunctionMap fn
+        cls.Children = fn.Next 
+        
+
+    ueTest "Should be able to create a new function that accepts parameters as out [two params]":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        var cls = obj.getClass()
+
+        #Params needs to be retrieved from the function so they have to be set
+        proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+          
+            stack.increaseStack() 
+            type Param = object
+                param0 : int32
+                param1 : FString
+
+            
+
+            var paramVal : int32 = 5
+
+            cast[ptr int32](stack.outParms.propAddr)[] = 5
+            cast[ptr int32](stack.outParms.nextOutParm.propAddr)[] = 10
+   
+
+
+        let fnField = UEField(kind:uefFunction, name:"NewFuncOutParams", fnFlags: FUNC_Native or FUNC_HasOutParms, 
+                            signature: @[
+                                UEField(kind:uefProp, name: "Param1", uePropType: "int32", propFlags:CPF_Parm or CPF_OutParm), 
+                                UEField(kind:uefProp, name: "Param2", uePropType: "int32", propFlags:CPF_Parm or CPF_OutParm)
+                            ]
+                    )
+
+        let fn = createUFunctionInClass(cls, fnField, fnImpl)
+
+
+        proc newFuncOutParams(obj:UMyClassToTestPtr, param:var int32, param2: int32) {.uebind .} 
+        type
+            Params = object
+                param: int32
+                param2: int32
+
+        var params = Params(param: 3, param2: 2)
+        var fnName: FString = "NewFuncOutParams"
+        callUFuncOn(obj, fnName, params.addr)
+        
+        # obj.newFuncOutParams(param0, param1)
+
+        # assert fn.getPropsWithFlags(CPF_OutParm).num() == 1
+        assert params.param == 5 #only this one is changed
+        assert params.param2 == 10 #only this one is changed
+        # assert params.param2 == 1
+        
+        #restore things as they were
+        cls.removeFunctionFromFunctionMap fn
+        cls.Children = fn.Next 
+         
 
 
