@@ -103,7 +103,7 @@ public:
 	UFUNCTION()
 	void DelegateFunc(FString Par) {
 		bWasCalled = true;
-		UE_LOG(LogTemp, Warning, TEXT("Delegate Func Called. The param is %s"), *Par);
+		UE_LOG(LogTemp, Log, TEXT("Delegate Func Called. The param is %s"), *Par);
 	}
 	UFUNCTION()
 	void FakeFunc() {}

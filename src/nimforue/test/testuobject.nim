@@ -161,9 +161,17 @@ suite "NimForUE.UObject":
     #     testProperty : FString  
 
     #This enum is defined in Cpp. TODO: Integrate it into the macro
-    type EMyTestEnum = enum uint8 
-        TestValue,
-        TestValue2
+    # type EMyTestEnum = enum uint8 
+    #     TestValue,
+    #     TestValue2
+
+    const ueEnumType = UEType(name: "EMyTestEnum", kind: uEnum, 
+                                fields: @[
+                                    UEField(kind:uefEnumVal, name:"TestValue"),
+                                    UEField(kind:uefEnumVal, name:"TestValue2")
+                                ]
+                            )
+    genType(ueEnumType)
 
     const ueStructType = UEType(name: "FStructToUseAsVar", kind: uStruct, 
                             fields: @[

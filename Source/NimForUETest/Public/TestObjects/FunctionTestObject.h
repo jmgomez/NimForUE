@@ -100,7 +100,7 @@ public:
 	}
 	UFUNCTION()
 	FString TestMultipleParams(FString Param1, int Test) {
-		UE_LOG(LogTemp, Warning, TEXT("Call from Nim in Cpp"))
+		UE_LOG(LogTemp, Log, TEXT("Call from Nim in Cpp"))
 		return Param1.Append(FString::FromInt(Test));
 	}
 	UFUNCTION()

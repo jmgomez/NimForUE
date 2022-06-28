@@ -205,11 +205,13 @@ type
     UETypeKind* = enum
         uClass
         uStruct
+        uEnum
 
     UEFieldKind* = enum
         uefProp, #this covers FString, int, TArray, etc. 
         uefDelegate,
         uefFunction
+        uefEnumVal
 
     UEDelegateKind* = enum
         uedelDynScriptDelegate,
@@ -234,14 +236,26 @@ type
                 #note cant use option type. If it has a returnParm it will be the first param that has CPF_ReturnParm
                 signature* : seq[UEField]
                 fnFlags* : EFunctionFlags
+            
+            of uefEnumVal:
+                discard
               
                
 
     UEType* = object 
-        name* : string 
-        parent* : string
-        kind* : UETypeKind
+        name* : string
         fields* : seq[UEField]
+
+        case kind*: UETypeKind
+            of uClass:
+                parent* : string
+            of uStruct:
+                discard
+            of uEnum:
+                discard
+
+
+        
 
 #  IdentDefs
 #             Ident "regularProperty"
@@ -291,6 +305,13 @@ func getTypeNodeForReturn(prop: UEField, typeNode : NimNode) : NimNode =
     - [ ] Generates and add dynamic/bind functio based on the signature
 ]#
 
+func identWithInjectAnd(name:string, pragmas:seq[string]) : NimNode = 
+    nnkPragmaExpr.newTree(
+        [
+            ident name, 
+            nnkPragma.newTree((@["inject"] & pragmas).map( x => ident x))
+        ]
+        )
 func identWithInject(name:string) : NimNode = nnkPragmaExpr.newTree([ident name,nnkPragma.newTree(ident "inject")])
 func identWrapper(name:string) : NimNode = ident(name) #cant use ident as argument
 
@@ -364,12 +385,12 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
     let typeNode = case prop.kind:
                     of uefProp: getTypeNodeFromUProp(prop)
                     of uefDelegate: delTypeIdent.get()
-                    of uefFunction: newEmptyNode() #No Support 
+                    else: newEmptyNode() #No Support 
    
     let typeNodeAsReturnValue = case prop.kind:
                             of uefProp: prop.getTypeNodeForReturn(typeNode)
                             of uefDelegate: nnkVarTy.newTree(typeNode)
-                            of uefFunction: newEmptyNode() #No Support as UProp getter/Seter
+                            else: newEmptyNode()#No Support as UProp getter/Seter
     
     
     let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)) 
@@ -403,8 +424,8 @@ proc genUClassTypeDef(typeDef : UEType) : NimNode =
                     ptrName {.inject.} = ptr name
                 props
 
-proc genUStructTypeDef(typeDef: UEType) : NimNode =   
-    let typeName = ident typeDef.name
+func genUStructTypeDef(typeDef: UEType) : NimNode =   
+    let typeName = identWithInject typeDef.name
     #TODO Needs to handle TArray/Etc. like it does above with classes
     let fields = typeDef.fields
                         .map(prop => nnkIdentDefs.newTree(
@@ -415,7 +436,19 @@ proc genUStructTypeDef(typeDef: UEType) : NimNode =
     result = genAst(typeName, fields):
                 type typeName = object
     result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])
-    echo result.treeRepr
+
+func genUEnumTypeDef(typeDef:UEType) : NimNode = 
+    let typeName = ident(typeDef.name)
+    let fields = typeDef.fields
+                        .map(f => ident f.name)
+                        .foldl(a.add b, nnkEnumTy.newTree)
+    fields.insert(0, newEmptyNode()) #required empty node in enums
+
+    result = genAst(typeName, fields):
+                type typeName {.inject, size:sizeof(uint8).} = enum         
+                    fields
+    
+    result[0][^1] = fields #replaces enum 
         
 
 macro genType*(typeDef : static UEType) : untyped = 
@@ -424,11 +457,12 @@ macro genType*(typeDef : static UEType) : untyped =
             genUClassTypeDef(typeDef)
         of uStruct:
             genUStructTypeDef(typeDef)
+        of uEnum:
+            genUEnumTypeDef(typeDef)
         
     # echo result.repr
 
-
 dumpTree:
-    type Whatever = object
-        hola : string
-        adios : int
+    type Whatever {. size:sizeof(uint8) .} = enum 
+        hola 
+        adios
