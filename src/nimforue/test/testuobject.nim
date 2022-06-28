@@ -446,5 +446,38 @@ suite "NimForUE.UObject":
 
         assert obj.bWasCalled 
 
+    ueTest "Should be able to implement a fn in nim and bind in to an existing delegate in ue":
+            let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+
+
+            #Params needs to be retrieved from the function so they have to be set
+            proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+                stack.increaseStack()
+                let obj = cast[UMyClassToTestPtr](context) 
+                type Param = object
+                    param0 : FString
+
+                let params = cast[ptr Param](stack.locals)[]
+
+                #actual func
+                UE_Log("the param from the delegate is " & params.param0)
+
+                obj.bWasCalled = true
+
+                #end actual func
+            let fnField = UEField(kind:uefFunction, name: "NewFnForDelegate", fnFlags: FUNC_Native, 
+                            signature: @[
+                                UEField(kind:uefProp, name: "Param", uePropType: "FString", propFlags:CPF_Parm)
+                            ]
+                    )
+
+            let fn = createUFunctionInClass(obj.getClass(), fnField, fnImpl)
+            #replace with addDynamic
+            obj.dynamicDelegateOneParamProperty.bindUFunction(obj, makeFName(fnField.name))
+
+            obj.dynamicDelegateOneParamProperty.execute("Hey!")
+
+            assert obj.bWasCalled 
+
 
     

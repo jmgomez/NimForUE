@@ -441,7 +441,7 @@ suite "NimForUE.FunctionEmit":
                 param0 : int32
                 param1 : FString
 
-            
+        
 
             var paramVal : int32 = 5
 
