@@ -15,3 +15,4 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     let executor = cast[UObjectPtr](obj)
     testArrayEntryPoint(executor)
     testVectorEntryPoint(executor)
+    scratchpad(executor)

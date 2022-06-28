@@ -2,13 +2,13 @@
 
 void FNimTestBase::UnregisterAll(bool bShouldUnregisterOnly) {
 	for(FString TestName : AllRegisteredNimTests) {
-		if(bShouldUnregisterOnly || TestName != OnlyExecute) {
+		// if(bShouldUnregisterOnly || TestName != OnlyExecute) {
 			FAutomationTestFramework::Get().UnregisterAutomationTest(TestName);
-		}
+		// }
 	}
-	if(bShouldUnregisterOnly) {
-		OnlyExecute = "";
-	}
+	// if(bShouldUnregisterOnly) {
+	// 	OnlyExecute = "";
+	// }
 }
 
 void FNimTestBase::ReloadTest(bool bIsOnly) {
@@ -23,6 +23,6 @@ void FNimTestBase::ReloadTest(bool bIsOnly) {
 	
 	FAutomationTestFramework::Get().UnregisterAutomationTest(TestName);
 	FAutomationTestFramework::Get().RegisterAutomationTest(TestName, this );
-	// AllRegisteredNimTests.AddUnique(TestName);
+	AllRegisteredNimTests.AddUnique(TestName);
 	
 }

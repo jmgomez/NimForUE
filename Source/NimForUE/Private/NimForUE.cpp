@@ -32,7 +32,7 @@ void FNimForUEModule::StartupModule()
 #endif
 	
 	auto onPreReload = [](NCSTRING msg) {
-		//subscribeToReloadWorkaround until we have a proper HotReload Load/Unload mechanism
+		// subscribeToReloadWorkaround until we have a proper HotReload Load/Unload mechanism
 		// FNimTestBase::UnregisterAll();
 	};
 	auto onPostReload = [](NCSTRING msg) {

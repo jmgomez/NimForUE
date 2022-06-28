@@ -5,7 +5,6 @@ import strformat
 
 
 
-
 proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
 
 
@@ -28,7 +27,7 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
 
     executor.saySomething(msg)
  
-    executor.setColorByStringInMesh("(R=1,G=0.5,B=0.15,A=1)")
+    executor.setColorByStringInMesh("(R=1,G=0.5,B=0,A=1)")
 
     if executor.boolTestFromNimAreEquals("5", 5, true) == true:
         executor.saySomething("true")
@@ -67,13 +66,23 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
 proc K2_SetActorLocation(obj:UObjectPtr, newLocation: FVector, bSweep:bool, SweepHitResult: var FHitResult, bTeleport: bool) {.uebind.}
 
 proc testVectorEntryPoint*(executor:UObjectPtr) = 
-    let v : FVector = makeFVector(10, 80, 30)
+    let v : FVector = makeFVector(10, 80, 0)
     let v2 = v+v 
     let position = makeFVector(1100, 1000, 150)
     var hitResult = makeFHitResult()
     K2_SetActorLocation(executor, position, false, hitResult, true)
     executor.saySomething(v2.toString())
     # executor.saySomething(upVector.toString())
+
+
+proc scratchpad*(executor:UObjectPtr) = 
+    # UE_Log("here we test back")
+    let moduleName = FString("Core")
+    let classes = getAllClassesFromModule(moduleName)
+
+    UE_Log("Classes in " & moduleName & ": " & $classes.num()  )
+
+
 
 
 

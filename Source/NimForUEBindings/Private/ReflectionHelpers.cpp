@@ -57,3 +57,17 @@ TArray<FProperty*> UReflectionHelpers::GetFPropertiesFrom(UStruct* Struct) {
 void UReflectionHelpers::IncreaseStack(FFrame& Stack) {
 	Stack.Code += !!Stack.Code; /* increment the code ptr unless it is null */
 }
+
+TArray<UClass*> UReflectionHelpers::GetAllClassesFromModule(FString ModuleName) {
+	//Should I grab only native classes?
+	FString ModulePackageName = FPackageName::ConvertToLongScriptPackageName(*ModuleName);
+	UPackage* Package = FindObjectFast<UPackage>(NULL, *ModulePackageName, false, false);
+	// TObjectIterator<UClass> It (Package)
+	TArray<UClass*> Classes = {};
+	ForEachObjectWithPackage(Package, [&](UObject* Object) {
+		if(UClass* Class = Cast<UClass>(Object))
+			Classes.Add(Class);
+			return true;
+		});
+	return Classes;
+}

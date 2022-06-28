@@ -57,7 +57,12 @@ public:
 	}
 
 	static FNativeFuncPtr MakeFNativeFuncPtr(void FnPtr(UObject* Context, FFrame& TheStack, void* Result)) {
+		
 		return FnPtr;
 	}
 	static void IncreaseStack(FFrame& Stack);
+
+
+	static TArray<UClass*> GetAllClassesFromModule(FString ModuleName);
+	
 };

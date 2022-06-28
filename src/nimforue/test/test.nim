@@ -6,6 +6,7 @@ import testuobject
 import emit/testemit
 
 
+
 suite "NimForUE":
  
     ueTest "FVectors.ShouldBeBleToCreateAndOperateWithVectors":
@@ -23,7 +24,7 @@ suite "NimForUE":
             arr.add FString("Hello")
             arr.add FString("World")
                 
-            assert arr.num() == 2   
+            assert arr.num() == 2
 
         ueTest "ShouldBeAbleToIterateArrays":
             let arr : TArray[int32] = makeTArray[int32]()
