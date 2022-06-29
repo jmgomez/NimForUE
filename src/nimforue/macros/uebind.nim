@@ -249,7 +249,7 @@ proc makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string]
 type
     UEType* = object 
         name* : string
-        fields* : seq[UEField]
+        fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
 
         case kind*: UETypeKind
             of uClass:

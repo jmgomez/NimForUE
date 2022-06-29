@@ -10,6 +10,16 @@ include ../definitions
 import std/[typetraits, strutils, sequtils, sugar]
 #This file contains logic on top of ue types that it isnt necessarily bind 
 
+
+
+proc getFPropsFromUStruct*(ustr:UStructPtr, flags=EFieldIterationFlags.None) : seq[FPropertyPtr] = 
+    var xs : seq[FPropertyPtr] = @[]
+    var fieldIterator = makeTFieldIterator[FProperty](ustr, EFieldIterationFlags.None)
+    for it in fieldIterator:
+        xs.add it.get()
+    xs
+
+
 proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FPropertyPtr] = 
     let isIn = (p:FPropertyPtr) => flag in p.getPropertyFlags()
 
