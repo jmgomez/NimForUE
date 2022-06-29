@@ -317,8 +317,18 @@ func identWithInjectAnd(name:string, pragmas:seq[string]) : NimNode =
             nnkPragma.newTree((@["inject"] & pragmas).map( x => ident x))
         ]
         )
-func identWithInject(name:string) : NimNode = nnkPragmaExpr.newTree([ident name,nnkPragma.newTree(ident "inject")])
+func identWithInjectPublic(name:string) : NimNode = 
+    nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident name]),
+        nnkPragma.newTree(ident "inject")])
+
+func identWithInject(name:string) : NimNode = 
+    nnkPragmaExpr.newTree([
+        ident name,
+        nnkPragma.newTree(ident "inject")])
+
 func identWrapper(name:string) : NimNode = ident(name) #cant use ident as argument
+func identPublic(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
 
 proc genDelegateType(prop : UEField) : Option[NimNode] = 
     if not prop.isDelegate():
@@ -349,7 +359,7 @@ proc genDelegateType(prop : UEField) : Option[NimNode] =
 
     let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstr]))
 
-    let broadcastFnName = ident (case prop.delKind:
+    let broadcastFnName = identPublic (case prop.delKind:
                             of uedelDynScriptDelegate: "execute"
                             of uedelMulticastDynScriptDelegate: "broadcast")
     
@@ -400,15 +410,14 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
     
     let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)) 
 
-   
 
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
-            proc propIdent (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
+            proc propIdent* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
                 let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 getPropertyValuePtr[typeNode](prop, obj)[]
             
-            proc `propIdent=` (obj {.inject.} : ptrName, val {.inject.} :typeNode) = 
+            proc `propIdent=`* (obj {.inject.} : ptrName, val {.inject.} :typeNode) = 
                 var value {.inject.} : typeNode = val
                 let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
@@ -417,7 +426,6 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
         
     # echo repr result
 
-
 proc genUClassTypeDef(typeDef : UEType) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
     let parent = ident typeDef.parent
@@ -425,22 +433,26 @@ proc genUClassTypeDef(typeDef : UEType) : NimNode =
     result = 
         genAst(name = ident typeDef.name, ptrName, parent, props):
                 type 
-                    name {.inject.} = object of parent #TODO OF BASE CLASS 
-                    ptrName {.inject.} = ptr name
+                    name* {.inject.} = object of parent #TODO OF BASE CLASS 
+                    ptrName* {.inject.} = ptr name
                 props
+    # debugEcho result.repr
+
 
 func genUStructTypeDef(typeDef: UEType) : NimNode =   
-    let typeName = identWithInject typeDef.name
+    let typeName = identWithInjectPublic typeDef.name
     #TODO Needs to handle TArray/Etc. like it does above with classes
     let fields = typeDef.fields
                         .map(prop => nnkIdentDefs.newTree(
-                            [ident toLower($prop.name[0])&prop.name.substr(1), 
+                            [identPublic toLower($prop.name[0])&prop.name.substr(1), 
                              ident prop.uePropType, newEmptyNode()]))
                         .foldl(a.add b, nnkRecList.newTree)
 
     result = genAst(typeName, fields):
                 type typeName = object
     result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])
+    # debugEcho result.repr
+    # debugEcho result.treeRepr
 
 func genUEnumTypeDef(typeDef:UEType) : NimNode = 
     let typeName = ident(typeDef.name)
@@ -450,12 +462,12 @@ func genUEnumTypeDef(typeDef:UEType) : NimNode =
     fields.insert(0, newEmptyNode()) #required empty node in enums
 
     result = genAst(typeName, fields):
-                type typeName {.inject, size:sizeof(uint8).} = enum         
+                type typeName* {.inject, size:sizeof(uint8).} = enum         
                     fields
     
     result[0][^1] = fields #replaces enum 
+    
         
-
 macro genType*(typeDef : static UEType) : untyped = 
     case typeDef.kind:
         of uClass:
@@ -464,10 +476,5 @@ macro genType*(typeDef : static UEType) : untyped =
             genUStructTypeDef(typeDef)
         of uEnum:
             genUEnumTypeDef(typeDef)
-        
-    # echo result.repr
+    
 
-dumpTree:
-    type Whatever {. size:sizeof(uint8) .} = enum 
-        hola 
-        adios
