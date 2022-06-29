@@ -1,5 +1,5 @@
 #This file exists due to the lack of support 
-import std/[times, os, strutils, sequtils, algorithm]
+import std/[times, os, strutils, sequtils, random, algorithm]
 import sugar
 import options
 import nimforueconfig
@@ -41,7 +41,6 @@ proc copyNimForUELibToUEDir*() =
     let baseLibName = getFullLibName("nimforue")
     let nextFileName = getFullLibName("nimforue-1")
 
-    
     let fileFullSrc = libDir/baseLibName
     #if there is no lib, we just keep the same name
     let libsCandidates = getAllLibsFromPath(libDirUE)
@@ -58,7 +57,36 @@ proc copyNimForUELibToUEDir*() =
     copyFile(fileFullSrc, fileFullDst)
     echo "Copied " & fileFullSrc & " to " & fileFullDst
 
+proc copyNimForUELibToUEDirMacOs*() = 
+    var conf = getNimForUEConfig()
+    let libDir = conf.pluginDir/"Binaries"/"nim"
+    let libDirUE = libDir / "ue"   
+    if not dirExists(libDirUE):
+      createDir(libDirUE)
+    
+    let libsCandidates = getAllLibsFromPath(libDirUE)
+
+    let baseLibName = getFullLibName("nimforue")
+    let nextFileName = getFullLibName("nimforue-" & $(libsCandidates.len()+1))
+
+    let fileFullSrc = libDir/baseLibName
+   
+    
+    let nLibs = len (libsCandidates)
+    var fileFullDst  : string #This would be much better with pattern matching
+    if nLibs == 0: #no libs, we just keep the same name
+        fileFullDst = libDirUE/baseLibName
+    else: #more than one lib, we create a new name
+        fileFullDst = libDirUE/nextFileName
+    
+        echo ""
+    copyFile(fileFullSrc, fileFullDst)
+    echo "Copied " & fileFullSrc & " to " & fileFullDst
+
 
 when isMainModule:
     echo "CopyLib script:"
-    copyNimForUELibToUEDir()
+    when defined macosx:
+        copyNimForUELibToUEDirMacOs()
+    elif defined windows:
+        copyNimForUELibToUEDir()
