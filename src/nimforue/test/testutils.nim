@@ -3,16 +3,14 @@ import ../utils/utils
 
 export utils
 
-template suite* (name: static string , body:untyped) = 
+template suite* (name: string , body:untyped) = 
     block:
         when not declared(suiteName):
             var suiteName {.inject.} = name
         else: 
             suiteName = suiteName & "." & name
         body
-        
-
-
+    
 
 #TODO remove hooked tests
 template internalTest(name:string, isOnly:bool, body:untyped) =

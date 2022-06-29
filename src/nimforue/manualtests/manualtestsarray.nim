@@ -1,6 +1,6 @@
 #this is temp until we have tests working (have to bind dyn delegates first)
 include ../unreal/prelude
-import std/[times]
+import std/[times, strutils, options, sugar, sequtils]
 import strformat
 
 
@@ -26,8 +26,7 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
     let msg = testMultipleParams(executor, "hola", 10)
 
     executor.saySomething(msg)
- 
-    executor.setColorByStringInMesh("(R=1,G=0.5,B=0,A=1)")
+    executor.setColorByStringInMesh("(R=1,G=1,B=1,A=1)")
 
     if executor.boolTestFromNimAreEquals("5", 5, true) == true:
         executor.saySomething("true")
@@ -37,7 +36,9 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
     let arr = testArrays(executor)
     let number = arr.num()
 
+
     # let str = $arr.num()
+
 
     arr.add("hola")
     arr.add("hola2")
@@ -66,7 +67,7 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
 proc K2_SetActorLocation(obj:UObjectPtr, newLocation: FVector, bSweep:bool, SweepHitResult: var FHitResult, bTeleport: bool) {.uebind.}
 
 proc testVectorEntryPoint*(executor:UObjectPtr) = 
-    let v : FVector = makeFVector(10, 80, 0)
+    let v : FVector = makeFVector(10, 80, 100)
     let v2 = v+v 
     let position = makeFVector(1100, 1000, 150)
     var hitResult = makeFHitResult()
@@ -75,14 +76,122 @@ proc testVectorEntryPoint*(executor:UObjectPtr) =
     # executor.saySomething(upVector.toString())
 
 
+#Figure out: Array [X]
+#Delegates
+#Multicast Delegates
+#Map
+
+
+proc getFPropsFromUStruct*(ustr:UStructPtr, flags=EFieldIterationFlags.None) : seq[FPropertyPtr] = 
+    var xs : seq[FPropertyPtr] = @[]
+    var fieldIterator = makeTFieldIterator[FProperty](ustr, EFieldIterationFlags.None)
+    for it in fieldIterator:
+        xs.add it.get()
+    xs
+
+func isTArray(prop:FPropertyPtr) : bool = not castField[FArrayProperty](prop).isNil()
+func isTMap(prop:FPropertyPtr) : bool = not castField[FMapProperty](prop).isNil()
+func isTEnum(prop:FPropertyPtr) : bool = "TEnumAsByte" in prop.getName()
+func isDynDel(prop:FPropertyPtr) : bool = not castField[FDelegateProperty](prop).isNil()
+func isMulticastDel(prop:FPropertyPtr) : bool = not castField[FMulticastDelegateProperty](prop).isNil()
+#TODO Dels
+
+func getNimTypeAsStr(prop:FPropertyPtr) : string = #The expected type is something that UEField can understand
+    if prop.isTArray(): 
+        let innerType = castField[FArrayProperty](prop).getInnerProp().getCPPType()
+        return fmt"TArray[{innerType}]"
+
+    if prop.isTMap(): #better pattern here, i.e. option chain
+        let mapProp = castField[FMapProperty](prop)
+        let keyType = mapProp.getKeyProp().getCPPType()
+        let valueType = mapProp.getValueProp().getCPPType()
+        return fmt"TMap[{keyType}, {valueType}]"
+
+    let cppType = prop.getCPPType() 
+
+    if prop.isTEnum(): #Not sure if it would be better to just support it on the macro
+        return cppType.replace("TEnumAsByte<","")
+                      .replace(">", "")
+
+
+    let nimType = cppType.replace("<", "[")
+                         .replace(">", "]")
+                         .replace("*", "Ptr")
+    
+    return nimType
+
+
+#Function that receives a FProperty and returns a Type as string
+func toUEField(prop:FPropertyPtr) : UEField = #The expected type is something that UEField can understand
+    let name = prop.getName()
+    let nimType = prop.getNimTypeAsStr()
+     
+    if prop.isTMap():
+        return makeFieldAsUProp(name, nimType, true, true, prop.getPropertyFlags())
+
+    if prop.isDynDel() or prop.isMulticastDel():
+        let delType = if prop.isDynDel(): uedelDynScriptDelegate else: uedelMulticastDynScriptDelegate
+        let signature = if prop.isDynDel(): 
+                            castField[FDelegateProperty](prop).getSignatureFunction() 
+                        else: 
+                            castField[FMulticastDelegateProperty](prop).getSignatureFunction()
+        
+        var signatureAsStrs = getFPropsFromUStruct(signature)
+                                .map(prop=>getNimTypeAsStr(prop))
+        return makeFieldAsDel(name, uedelDynScriptDelegate, signatureAsStrs)
+
+
+    let isGeneric = nimType.contains("[")
+    return makeFieldAsUProp(prop.getName(), nimType, isGeneric, false, prop.getPropertyFlags())
+
+    
+    
+
+    
+
+    # if "TEnumAsByte" in cppType: #Not sure if it would be better to just support it on the macro
+    #     return cppType.replace("TEnumAsByte<","")
+    #                   .replace(">", "")
+
+
+    # let nimType = cppType.replace("<", "[")
+    #                      .replace(">", "]")
+    #                      .replace("*", "Ptr")
+
+
+    # let delProp = castField[FDelegateProperty](prop)
+    # if not delProp.isNil():
+    #     let signature = delProp.getSignatureFunction()
+    #     var signatureAsStr = "ScriptDelegate["
+    #     for prop in getFPropsFromUStruct(signature):
+    #         let nimType = prop.getNimTypeAsStr()
+    #         signatureAsStr = signatureAsStr & nimType & ","
+    #     signatureAsStr[^1] = ']'
+    #     return signatureAsStr
+    
+
+
+
 proc scratchpad*(executor:UObjectPtr) = 
     # UE_Log("here we test back")
-    let moduleName = FString("Core")
-    let classes = getAllClassesFromModule(moduleName)
+    let moduleName = FString("NimForUEBindings")
+    # let classes = getAllClassesFromModule(moduleName)
+    let ef = EFieldIterationFlags.None
 
-    UE_Log("Classes in " & moduleName & ": " & $classes.num()  )
+    let cls = getClassByName("MyClassToTest")
+    let props = getFPropsFromUStruct(cls)
+    for prop in props:
+        let name = prop.getName()
+        let typeCpp = prop.getCPPType()
 
 
+
+        #     # let prop = cast[FPropertyPtr](field)
+        #     # if prop.isNil(): continue
+        #     # let nameCpp = prop.getNameCPP()
+    
+        let msg = fmt"Prop Name: {prop.getNameCPP()} Prop CppType : {prop.toUEField() }"
+        UE_Log(msg)
 
 
 

@@ -7,6 +7,7 @@ func head*[T](xs: seq[T]) : Option[T] =
       return none[T]()
   return some(xs[0])
 
+
 func tail*[T](xs: seq[T]) : seq[T] =
     if (xs.len == 0):
         return @[]
@@ -21,6 +22,9 @@ proc mapi*[T, U](xs : seq[T], fn : (t : T, idx:int)->U) : seq[U] =
         toReturn.add(fn(x, i))
     toReturn
 
+
+# func bind*[T, U](opt:T, fn : (t : T)->U) : Option[U] = 
+#     if 
 
 
 proc spacesToCamelCase*(str:string) :string = 

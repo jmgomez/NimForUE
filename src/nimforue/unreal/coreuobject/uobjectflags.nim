@@ -157,6 +157,12 @@ type
         FUNC_AllFlags    = 0xFFFFFFFF
     
 
+    EFieldIterationFlags* {.importcpp, size:sizeof(uint8).} = enum 
+        None = 0
+        IncludeSuper = rotateLeftBits(1.uint8, 0)#1<<0     	# Include super class
+        IncludeDeprecated = rotateLeftBits(1.uint8, 1.int32)#1<<1	# Include deprecated properties
+        IncludeInterfaces = rotateLeftBits(1.uint8, 2.int32)#1<<2	# Include interfaces
+
 macro genEnumOperators(enumName, enumType:static string) : untyped = 
     genAst(name=ident enumName, typ=ident enumType):
         proc `or`*(a, b : name) : name = 
@@ -171,3 +177,4 @@ macro genEnumOperators(enumName, enumType:static string) : untyped =
 genEnumOperators("EPropertyFlags", "uint64")
 genEnumOperators("EObjectFlags", "int32")
 genEnumOperators("EFunctionFlags", "uint32")
+genEnumOperators("EFieldIterationFlags", "uint8")

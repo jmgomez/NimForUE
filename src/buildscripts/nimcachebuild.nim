@@ -166,6 +166,7 @@ proc validateNimCPPHeaders(path: string): string =
         break
 
     if ndx < pdx: # the nimbase.h comes before the PCHFile
+      echo " Validating the headers for PCH. File: " & path
       # make a copy of the file and return the new path for the compile cmd
       var lines = path.lines.toSeq
       var pchlines = lines[(pdx-1)..pdx]

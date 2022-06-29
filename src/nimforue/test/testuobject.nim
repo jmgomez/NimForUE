@@ -196,13 +196,13 @@ suite "NimForUE.UObject":
                             UEField(kind:uefProp, name: "ObjectProperty", uePropType: "UClassToUseAsVarPtr"),
                             UEField(kind:uefProp, name: "StructProperty", uePropType: "FStructToUseAsVar"),
                             UEField(kind:uefProp, name: "ClassProperty", uePropType: "UClassPtr"),
-                            UEField(kind:uefProp, name: "SubclassOfProperty", uePropType: "TSubclassOf[UObject]", isGeneric:true), #Couldnt bind it
-                            UEField(kind:uefProp, name: "EnumProperty", uePropType: "EMyTestEnum"), #Couldnt bind it
-                            UEField(kind:uefProp, name: "SoftObjectProperty", uePropType: "TSoftObjectPtr[UObject]", isGeneric:true), #Couldnt bind it
-                            UEField(kind:uefProp, name: "MapProperty", uePropType: "TMap[FString, int32]", isGeneric:true, returnAsVar:true), #Couldnt bind it
-                            UEField(kind:uefProp, name: "NameProperty", uePropType: "FName"), #Couldnt bind it
-                            UEField(kind:uefDelegate, name: "DynamicDelegateOneParamProperty", delKind:uedelDynScriptDelegate, delegateSignature: @["FString"]), #Not sure if I should use the type directly?
-                            UEField(kind:uefDelegate, name: "MulticastDynamicDelegateOneParamProperty", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]), #Not sure if I should use the type directly?
+                            UEField(kind:uefProp, name: "SubclassOfProperty", uePropType: "TSubclassOf[UObject]", isGeneric:true), 
+                            UEField(kind:uefProp, name: "EnumProperty", uePropType: "EMyTestEnum"), 
+                            UEField(kind:uefProp, name: "SoftObjectProperty", uePropType: "TSoftObjectPtr[UObject]", isGeneric:true), 
+                            UEField(kind:uefProp, name: "MapProperty", uePropType: "TMap[FString, int32]", isGeneric:true, returnAsVar:true), 
+                            UEField(kind:uefProp, name: "NameProperty", uePropType: "FName"), 
+                            UEField(kind:uefDelegate, name: "DynamicDelegateOneParamProperty", delKind:uedelDynScriptDelegate, delegateSignature: @["FString"]), 
+                            UEField(kind:uefDelegate, name: "MulticastDynamicDelegateOneParamProperty", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]), 
                             UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
                             ])
 

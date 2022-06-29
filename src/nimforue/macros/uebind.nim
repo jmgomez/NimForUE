@@ -230,7 +230,7 @@ type
             of uefDelegate:
                 delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
                 delKind*: UEDelegateKind
-                #delFlags? Specific propFlags
+                delFlags*: EPropertyFlags
 
             of uefFunction:
                 #note cant use option type. If it has a returnParm it will be the first param that has CPF_ReturnParm
@@ -240,8 +240,13 @@ type
             of uefEnumVal:
                 discard
               
-               
+proc makeFieldAsUProp*(name, uPropType: string, isGeneric=false, returnAsVar=false, flags=CPF_None) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, isGeneric:isGeneric, returnAsVar:returnAsVar, propFlags:flags)       
 
+proc makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string], flags=CPF_None) : UEField = 
+    UEField(kind:uefDelegate, name: name, delKind: delKind, delegateSignature:signature, delFlags:flags)
+
+type
     UEType* = object 
         name* : string
         fields* : seq[UEField]

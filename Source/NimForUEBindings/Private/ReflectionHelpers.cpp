@@ -63,6 +63,7 @@ TArray<UClass*> UReflectionHelpers::GetAllClassesFromModule(FString ModuleName) 
 	FString ModulePackageName = FPackageName::ConvertToLongScriptPackageName(*ModuleName);
 	UPackage* Package = FindObjectFast<UPackage>(NULL, *ModulePackageName, false, false);
 	// TObjectIterator<UClass> It (Package)
+	if(!Package) return {};
 	TArray<UClass*> Classes = {};
 	ForEachObjectWithPackage(Package, [&](UObject* Object) {
 		if(UClass* Class = Cast<UClass>(Object))

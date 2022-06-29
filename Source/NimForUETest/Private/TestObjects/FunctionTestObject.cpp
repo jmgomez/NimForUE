@@ -18,6 +18,7 @@ FString UFunctionTestObject::AddStrings(FString A, FString B) {
 
 FString UFunctionTestObject::AddThreeStrings(FString A, FString B, FString C) {
 	return A+B+C;
+	
 }
 
 FString UFunctionTestObject::ConvertIntToString(int N) {

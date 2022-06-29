@@ -24,6 +24,7 @@ task nimforue, "Builds the main lib. The one that makes sense to hot reload.":
     generateFFIGenFile()
     exec("nim cpp --app:lib --nomain -d:withue -d:genffi --nimcache:.nimcache/nimforue src/nimforue.nim")
     exec("nim c -d:release --run --d:copylib src/buildscripts/copyLib.nim")
+    
 
 task watch, "Watchs the main lib and rebuilds it when something changes.":
     when defined macosx:

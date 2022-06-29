@@ -40,6 +40,12 @@ proc filter*[T](xs:TArray[T], fn : T -> bool) : TArray[T] =
       arr.add x
   arr
 
+proc toSeq*[T](arr:TArray[T]) : seq[T] = 
+  var xs : seq[T] = @[]
+  for x in arr:
+    xs.add x
+  xs
+
 # iterator pairs*[T](arr: TArray[T]): tuple[key: int, val: T] =
 #   for i in 0 .. <arr.len:
 #     yield (i.int, arr[i])

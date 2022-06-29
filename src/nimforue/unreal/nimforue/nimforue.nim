@@ -15,6 +15,7 @@ proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FProperty
 
     getFPropertiesFrom(fn).filter(isIn)
 
+
 proc createProperty*(outer : UStructPtr, propField:UEField) : FPropertyPtr = 
     let flags = RF_NoFlags #OBJECT FLAGS
     let name = propField.name.makeFName()
