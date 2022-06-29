@@ -1,9 +1,7 @@
 #This file exists due to the lack of support 
-import std/[times, os, strutils, sequtils, random, algorithm]
-import sugar
-import options
+import std/[times, os, options, sugar, strutils, strscans, sequtils, random, algorithm]
 import nimforueconfig
-
+import ../nimforue/utils/utils
 
 func getFullLibName(baseLibName:string) :string  = 
     when defined macosx:
@@ -65,12 +63,29 @@ proc copyNimForUELibToUEDirMacOs*() =
       createDir(libDirUE)
     
     let libsCandidates = getAllLibsFromPath(libDirUE)
+    proc extractNumber(filename:string): int = 
+        var number : int = 0
+        var ignore : string
+        discard scanf(filename, "$*-$i.$*", ignore, number, ignore)
+        number
+
+    let nextLibNumber = if libsCandidates.any():
+                            libsCandidates
+                                .map(path=>path.split("/")[^1])
+                                .map(extractNumber)
+                                .max() + 1
+                        else:
+                            0
+    
 
     let baseLibName = getFullLibName("nimforue")
-    let nextFileName = getFullLibName("nimforue-" & $(libsCandidates.len()+1))
+    let nextFileName = getFullLibName("nimforue-" & $(nextLibNumber))
 
     let fileFullSrc = libDir/baseLibName
-   
+    
+    for libPath in libsCandidates:
+        #deletes previus used ones
+        removeFile(libPath)
     
     let nLibs = len (libsCandidates)
     var fileFullDst  : string #This would be much better with pattern matching
@@ -82,6 +97,9 @@ proc copyNimForUELibToUEDirMacOs*() =
         echo ""
     copyFile(fileFullSrc, fileFullDst)
     echo "Copied " & fileFullSrc & " to " & fileFullDst
+
+    
+       
 
 
 when isMainModule:
