@@ -19,7 +19,11 @@ suite "NimForUE.TypesGen":
 
 #Add functions bindings to the generation (should be able to use them from the other tests)
     #add the field
-    #add the macro that generates it in the form signature { ue.bind
+    #add the macro that generates it in the form signature (replace uebind)
+        # Needs support for static
+        # Needs support for var params
+        # What else was in uebind that needs to be here?
+
     #scratchpad the importing function
     #generate the whole class (another test)
 

@@ -40,6 +40,7 @@ const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uCla
                         UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
                         #functions TODO Create in cpp, functions that has out params. and also a mix of all. Also make one with TArray, TMap etc
                         makeFieldAsUFun("BindDelegateFuncToDelegateOneParam", @[]),
+                        makeFieldAsUFun("BindDelegateFuncToMultcasDynOneParam", @[]),
                         makeFieldAsUFun("DelegateFunc", @[makeFieldAsUPropParam("Par", "FString", false, CPF_Parm)]),
                         makeFieldAsUFun("FakeFunc", @[]),
                         makeFieldAsUFun("GetHelloWorld", @[makeFieldAsUPropParam("ReturnValue", "FString", false, CPF_ReturnParm or CPF_Parm)]),

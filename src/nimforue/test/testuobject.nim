@@ -275,9 +275,7 @@ suite "NimForUE.UObject":
 
     ueTest "ShouldBeAbleToCallprocessDelegateFDynamicDelegateOneParam_NoMacro":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-        proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void {.uebind.}
-        # obj.bindDelegateFuncToDelegateOneParam()
-
+ 
         type Params = object
             param : FString
         
@@ -292,13 +290,7 @@ suite "NimForUE.UObject":
         result.bindUFunction(obj, funcName)
 
         assert true
-        # assert obj.dynamicDelegateOneParamProperty.isBound()
-        
-        # obj.dynamicDelegateOneParamProperty.processDelegate(param.addr) 
-        # #This should generate a broadcast function with the following signature dynDelegate.broadcast(str:FString)
-        # #Should it be bind via MulticastDynamicDelegate[Params]? 
-
-        # assert obj.bWasCalled
+       
 
 
 
@@ -344,7 +336,7 @@ suite "NimForUE.UObject":
     
     ueTest "ShouldBeAbleToCallprocessMulticastDelegateFDynamicMulticastDelegateOneParam_NoMacro":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-        proc bindDelegateFuncToMultcasDynOneParam(obj:UMyClassToTestPtr) : void {.uebind.}
+        
         obj.bindDelegateFuncToMultcasDynOneParam()
 
         type Params = object
