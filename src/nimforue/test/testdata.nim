@@ -38,6 +38,12 @@ const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uCla
                         UEField(kind:uefDelegate, name: "DynamicDelegateOneParamProperty", delKind:uedelDynScriptDelegate, delegateSignature: @["FString"]), 
                         UEField(kind:uefDelegate, name: "MulticastDynamicDelegateOneParamProperty", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]), 
                         UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
+                        #functions TODO Create in cpp, functions that has out params. and also a mix of all. Also make one with TArray, TMap etc
+                        makeFieldAsUFun("BindDelegateFuncToDelegateOneParam", @[]),
+                        makeFieldAsUFun("DelegateFunc", @[makeFieldAsUPropParam("Par", "FString")]),
+                        makeFieldAsUFun("FakeFunc", @[]),
+                        makeFieldAsUFun("GetHelloWorld", @[makeFieldAsUPropParam("Par", "FString", false, CPF_Parm or CPF_ReturnParm)]),
+                        makeFieldAsUFun("GetHelloWorldStatic", @[makeFieldAsUPropParam("Par", "FString", false, CPF_Parm or CPF_ReturnParm)], FUNC_Static),
                         ])
 
 

@@ -223,7 +223,7 @@ type
         case kind*: UEFieldKind
             of uefProp:
                 uePropType* : string #Do a close set of types? No, just do a close set on the MetaType. i.e Struct, TArray, Delegates (they complicate things)
-                isGeneric* : bool
+                isGeneric* : bool #TODO Unify this two into a new flag
                 returnAsVar* : bool #if it should append var on the return type when generating the getter
                 propFlags*:EPropertyFlags
 
@@ -240,11 +240,18 @@ type
             of uefEnumVal:
                 discard
               
-proc makeFieldAsUProp*(name, uPropType: string, isGeneric=false, returnAsVar=false, flags=CPF_None) : UEField = 
+func makeFieldAsUProp*(name, uPropType: string, isGeneric=false, returnAsVar=false, flags=CPF_None) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, isGeneric:isGeneric, returnAsVar:returnAsVar, propFlags:flags)       
 
-proc makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string], flags=CPF_None) : UEField = 
+func makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string], flags=CPF_None) : UEField = 
     UEField(kind:uefDelegate, name: name, delKind: delKind, delegateSignature:signature, delFlags:flags)
+
+func makeFieldAsUFun*(name:string, signature:seq[UEField], flags=FUNC_None) : UEField = 
+    UEField(kind:uefFunction, name:name, signature:signature, fnFlags:flags)
+
+func makeFieldAsUPropParam*(name, uPropType: string, isGeneric=false, flags=CPF_Parm) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, isGeneric:isGeneric, returnAsVar:false, propFlags:flags)       
+
 
 type
     UEType* = object 
@@ -429,7 +436,10 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
 proc genUClassTypeDef(typeDef : UEType) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
     let parent = ident typeDef.parent
-    let props = nnkStmtList.newTree(typeDef.fields.map(prop=>genProp(typeDef, prop)))
+    let props = nnkStmtList.newTree(
+                typeDef.fields
+                    .filter(prop=>prop.kind==uefProp or prop.kind==uefDelegate)
+                    .map(prop=>genProp(typeDef, prop)))
     result = 
         genAst(name = ident typeDef.name, ptrName, parent, props):
                 type 
