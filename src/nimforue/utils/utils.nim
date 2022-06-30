@@ -25,10 +25,20 @@ func mapi*[T, U](xs : seq[T], fn : (t : T, idx:int)->U) : seq[U] =
     toReturn
 
 
+func tap*[T](xs : seq[T], fn : (x : T)->void) : seq[T] = 
+    for x in xs:
+        fn(x)
+    xs
+
+
 # func bind*[T, U](opt:T, fn : (t : T)->U) : Option[U] = 
 #     if 
-
+#STRING 
 func spacesToCamelCase*(str:string) :string = 
     str.split(" ")
        .map(str => ($str[0]).toUpper() & str.substr(1))
        .foldl(a & b, "")
+
+func firstToLow*(str:string) : string = 
+    if str.len()>0: toLower($str[0]) & str.substr(1) 
+    else: str

@@ -1,6 +1,6 @@
 {.experimental: "caseStmtMacros".}
 include ../unreal/definitions
-import std/[options, strutils,sugar, sequtils, genasts, macros]
+import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros]
 import ../utils/utils
 import ../unreal/coreuobject/[uobject, uobjectflags]
 
@@ -397,7 +397,7 @@ proc genDelegateType(prop : UEField) : Option[NimNode] =
         
     some delegate
 
-proc genProp(typeDef : UEType, prop : UEField) : NimNode = 
+func genProp(typeDef : UEType, prop : UEField) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
     let delTypesNode = genDelegateType(prop)
     let delTypeIdent = delTypesNode.map(n=>n[0][0][0][0])
@@ -432,6 +432,108 @@ proc genProp(typeDef : UEType, prop : UEField) : NimNode =
         result.insert(0, delTypesNode.get())
         
     # echo repr result
+dumpTree:
+    proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void  =
+        discard
+#     StmtList
+#   ProcDef
+#     Ident "bindDelegateFuncToDelegateOneParam"
+#     Empty
+#     Empty
+#     FormalParams
+#       Ident "void"
+#       IdentDefs
+#         Ident "obj"
+#         Ident "UMyClassToTestPtr"
+#         Empty
+#     Pragma
+#       Ident "uebind"
+#     Empty
+#     Empty
+func isReturnParam(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
+#this generates uebind like funcs
+func genFunc(typeDef : UEType, funField : UEField) : NimNode = 
+    let ptrName = ident typeDef.name & "Ptr"
+    let funReturns = funField.signature
+                                .filter(isReturnParam)
+                                .head()
+                                .isSome()
+    
+    let signatureAsNode = (identFn : string->NimNode) => 
+                                funField.signature
+                                        .tap((param:UEField) => (debugEcho fmt"Name: {param.name} flag Value: {$uint64(param.propFlags)} is return: {isReturnParam(param)}"))
+                                        .filter(prop=>not isReturnParam(prop))
+                                        .map(param=>[identFn(param.name.firstToLow()), ident param.uePropType, newEmptyNode()])
+                                        .map(n=>nnkIdentDefs.newTree(n))
+
+    let returnProp = funField.signature.filter(isReturnParam).head()
+
+
+    let returnType =    if funReturns:
+                            #edges cases here
+                            ident returnProp.get().uePropType
+                        else:
+                            ident "void"
+    
+
+    let fnParams = nnkFormalParams.newTree(
+                        @[returnType,
+                        nnkIdentDefs.newTree([identWithInject "obj", ptrName, newEmptyNode()]) #obj/When using the class it would be better to just fill it in the body automatically
+                            
+                        ] & signatureAsNode(identWithInject))
+    # let pragmas = nnkPragma.newTree([ident "inject"])
+
+    let paramsInsideFuncDef = nnkTypeSection.newTree([nnkTypeDef.newTree([identWithInject "Params", newEmptyNode(), 
+                                nnkObjectTy.newTree([
+                                    newEmptyNode(), newEmptyNode(),  
+                                    nnkRecList.newTree(
+                                        signatureAsNode(identWrapper) &
+                                        
+                                        returnProp.map(prop=>
+                                            @[nnkIdentDefs.newTree([ident("toReturn"), 
+                                                                ident prop.uePropType, 
+                                                                newEmptyNode()])]).get(@[])
+                                    )])
+                            ])])
+
+    let paramObjectConstrCall = nnkObjConstr.newTree(@[ident "Params"] &  #creates Params(param0:param0, param1:param1)
+                                funField.signature
+                                    .filter(prop=>not isReturnParam(prop))
+                                    .map(param=>ident(param.name.firstToLow()))
+                                    .map(param=>nnkExprColonExpr.newTree(param, param))
+                            )
+
+    let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
+    
+    let returnCall = if funReturns: 
+                        genAst(): 
+                            return param.toReturn 
+                     else: newEmptyNode()
+
+    var fnBody = genAst(uFnName=newStrLitNode(funField.name), paramsInsideFuncDef, paramDeclaration, returnCall):
+        paramsInsideFuncDef
+        paramDeclaration
+        var fnName : FString = uFnName
+        callUFuncOn(obj, fnName, param.addr)
+        returnCall
+        
+
+    
+    # return newEmptyNode()
+
+    result = nnkProcDef.newTree([
+                            identPublic funField.name.firstToLow(), 
+                            newEmptyNode(), newEmptyNode(), 
+                            fnParams, 
+                            newEmptyNode(), newEmptyNode(),
+                            fnBody
+                        ])
+
+    
+
+    debugEcho repr result
+    # debugEcho treeRepr result
+
 
 proc genUClassTypeDef(typeDef : UEType) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
@@ -440,12 +542,19 @@ proc genUClassTypeDef(typeDef : UEType) : NimNode =
                 typeDef.fields
                     .filter(prop=>prop.kind==uefProp or prop.kind==uefDelegate)
                     .map(prop=>genProp(typeDef, prop)))
+
+    let funcs = nnkStmtList.newTree(
+                    typeDef.fields
+                       .filter(prop=>prop.kind==uefFunction)
+                       .map(fun=>genFunc(typeDef, fun)))
+    
     result = 
-        genAst(name = ident typeDef.name, ptrName, parent, props):
+        genAst(name = ident typeDef.name, ptrName, parent, props, funcs):
                 type 
                     name* {.inject.} = object of parent #TODO OF BASE CLASS 
                     ptrName* {.inject.} = ptr name
                 props
+                funcs
     # debugEcho result.repr
 
 
@@ -487,4 +596,5 @@ macro genType*(typeDef : static UEType) : untyped =
         of uEnum:
             genUEnumTypeDef(typeDef)
     
+
 
