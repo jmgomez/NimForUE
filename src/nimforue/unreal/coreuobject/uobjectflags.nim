@@ -166,10 +166,12 @@ type
 macro genEnumOperators(enumName, enumType:static string) : untyped = 
     genAst(name=ident enumName, typ=ident enumType):
         proc `or`*(a, b : name) : name = 
-            cast[name](bitor(cast[typ](a),cast[typ](b)))
+            name(typ(ord(a)) or typ(ord(a)))
+            # cast[name](bitor(cast[typ](a),cast[typ](b)))
 
         proc `and`*(a, b : name) : name = 
-            cast[name](bitand(cast[typ](a),cast[typ](b)))
+            name(typ(ord(a)) and typ(ord(a)))
+            # cast[name](bitand(cast[typ](a),cast[typ](b)))
         
         proc `in`*(a,b:name) : bool = (a and b) == a #returns true if used like flag in flags 
 
