@@ -241,7 +241,7 @@ type
     UEType* = object 
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
-
+        #class flags?
         case kind*: UETypeKind
             of uClass:
                 parent* : string
@@ -502,9 +502,10 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
                             fnBody
                         ])
 
+
     
 
-    debugEcho repr result
+    # debugEcho repr result
     # debugEcho treeRepr result
 
 

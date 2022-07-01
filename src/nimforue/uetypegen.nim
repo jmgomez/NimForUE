@@ -58,3 +58,15 @@ func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something t
 func toUEField*(ufun:UFunctionPtr) : UEField = 
     let params = getFPropsFromUStruct(ufun).map(toUEField)
     makeFieldAsUFun(ufun.getName(), params, ufun.functionFlags)
+
+
+func toUEType*(cls:UClassPtr) : UEType =
+    let fields = getFuncsFromClass(cls)
+                    .map(toUEField) & 
+                 getFPropsFromUStruct(cls)
+                    .map(toUEField)
+
+    let name = cls.getPrefixCpp() & cls.getName()
+    let parent = cls.getSuperClass()
+    let parentName = parent.getPrefixCpp() & parent.getName()
+    UEType(name:name, kind:uClass, parent:parentName, fields:fields)

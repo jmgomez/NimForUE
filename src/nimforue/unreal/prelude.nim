@@ -6,6 +6,8 @@ import ../unreal/core/math/[vector]
 import ../unreal/core/[enginetypes, delegates, unrealmemory]
 
 
+import ../utils/utils
+
 include definitions
 
 

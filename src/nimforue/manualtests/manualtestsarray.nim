@@ -102,7 +102,6 @@ proc testVectorEntryPoint*(executor:UObjectPtr) =
     #         signatureAsStr = signatureAsStr & nimType & ","
     #     signatureAsStr[^1] = ']'
     #     return signatureAsStr
-    
 
 
 
@@ -113,11 +112,7 @@ proc scratchpad*(executor:UObjectPtr) =
     let ef = EFieldIterationFlags.None
 
     let cls = getClassByName("MyClassToTest")
-    let props = getFPropsFromUStruct(cls)
-    let funcs = getFuncsFromClass(cls)
-    for fn in funcs:
-        let msg = fmt"Fun Name: {fn.getName()} Fun CppType : {fn.toUEField() }"
-        UE_Log(msg)
-
+    let ueType = cls.toUEType()
+    UE_Log("UEType" & $ueType)
 
 

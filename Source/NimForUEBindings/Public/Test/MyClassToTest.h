@@ -34,6 +34,7 @@ public:
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FDynamicDelegateOneParamTest, FString, TestParam1);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastDelegateOneParamTest, FString, TestParam1);
+
 UCLASS()
 class NIMFORUEBINDINGS_API UMyClassToTest : public UObject {
 	GENERATED_BODY()
