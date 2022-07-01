@@ -87,6 +87,9 @@ proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->Valu
 proc getSignatureFunction*(delProp:FDelegatePropertyPtr | FMulticastDelegatePropertyPtr) : UFunctionPtr {.importcpp:"(#->SignatureFunction)".}
 
 
+
+
+
 type
 
 
@@ -108,35 +111,33 @@ type
 
     
 
-
+#USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
 #This belongs to this file due to nim not being able to forward declate types. We may end up merging this file into uobject
 proc addCppProperty*(str:UStructPtr, prop:FPropertyPtr) : void {.importcpp:"#->AddCppProperty(@)".}
 
-
-
+#UCLASS
+proc findFunctionByName*(cls : UClassPtr, name:FName) : UFunctionPtr {. importcpp: "#.FindFunctionByName(#)"}
+proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) : void {. importcpp: "#.AddFunctionToFunctionMap(@)"}
+proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
+proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()" .}
+#UOBJECT
+proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
 proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
 
-proc findFunctionByName*(cls : UClassPtr, name:FName) : UFunctionPtr {. importcpp: "#.FindFunctionByName(#)"}
-proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) : void {. importcpp: "#.AddFunctionToFunctionMap(@)"}
-proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
-
-proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
 
 
-
-
+#FUNC
 proc initializeDerivedMembers*(fn:UFunctionPtr) : void {.importcpp:"#->InitializeDerivedMembers()".}
 proc getReturnProperty*(fn:UFunctionPtr) : FPropertyPtr {.importcpp:"#->GetReturnProperty()".}
 
 
 
 
+
 type TFieldIterator* [T:UStruct] {.importcpp.} = object
-
-
 proc makeTFieldIterator*[T](inStruct : UStructPtr, flag:EFieldIterationFlags) : TFieldIterator[T] {. importcpp:"'0(@)" constructor .}
 
 proc next*[T](it:var TFieldIterator[T]) : void {. importcpp:"(++#)" .} 

@@ -64,9 +64,8 @@ suite "NimForUE.UObject":
 
         let expectedResult = FString("Hello World!")
 
-        proc getHelloWorld() : FString {.uebindstatic:"MyClassToTest"}
 
-        let result = getHelloWorld()
+        let result = getHelloWorldStatic()
         assert result == expectedResult
 
 

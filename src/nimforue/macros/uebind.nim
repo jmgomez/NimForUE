@@ -181,25 +181,6 @@ macro uebindstatic* (className: string, fn : untyped) : untyped =
 
 
 
-# macro bindprop(body:untyped) : untyped =
-#     echo treeRepr body
-#     result = body
-
-
-macro bindprop(body:untyped) : untyped = 
-    # body
-    echo treeRepr(body)
-    result = body
-    
-type FuncTest = object 
-    name : string 
-
-
-proc genFun(funcDef : FuncTest) : NimNode = 
-    result = 
-        genAst(name = ident funcDef.name):
-            proc name (param: int, param2: int) : void  = discard 2
-    
 
 type
     UETypeKind* = enum
@@ -270,7 +251,7 @@ type
                 discard
 
 
-        
+    
 
 #  IdentDefs
 #             Ident "regularProperty"
@@ -432,29 +413,14 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
     if prop.kind == uefDelegate: 
         result.insert(0, delTypesNode.get())
         
-    # echo repr result
-dumpTree:
-    proc bindDelegateFuncToDelegateOneParam(obj:UMyClassToTestPtr) : void  =
-        discard
-#     StmtList
-#   ProcDef
-#     Ident "bindDelegateFuncToDelegateOneParam"
-#     Empty
-#     Empty
-#     FormalParams
-#       Ident "void"
-#       IdentDefs
-#         Ident "obj"
-#         Ident "UMyClassToTestPtr"
-#         Empty
-#     Pragma
-#       Ident "uebind"
-#     Empty
-#     Empty
+
 func isReturnParam(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
-#this generates uebind like funcs
+
 func genFunc(typeDef : UEType, funField : UEField) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
+    let isStatic = FUNC_Static in funField.fnFlags
+    let clsName = typeDef.name.substr(1)
+
     let funReturns = funField.signature
                                 .filter(isReturnParam)
                                 .head()
@@ -462,7 +428,7 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
     
     let signatureAsNode = (identFn : string->NimNode) => 
                                 funField.signature
-                                        .tap((param:UEField) => (debugEcho fmt"Name: {param.name} flag Value: {$uint64(param.propFlags)} is return: {isReturnParam(param)}"))
+                                        # .tap((param:UEField) => (debugEcho fmt"Name: {param.name} flag Value: {$uint64(param.propFlags)} is return: {isReturnParam(param)}"))
                                         .filter(prop=>not isReturnParam(prop))
                                         .map(param=>[identFn(param.name.firstToLow()), ident param.uePropType, newEmptyNode()])
                                         .map(n=>nnkIdentDefs.newTree(n))
@@ -478,11 +444,16 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
     
 
     let fnParams = nnkFormalParams.newTree(
-                        @[returnType,
-                        nnkIdentDefs.newTree([identWithInject "obj", ptrName, newEmptyNode()]) #obj/When using the class it would be better to just fill it in the body automatically
-                            
-                        ] & signatureAsNode(identWithInject))
+                        @[returnType] &
+                        (if isStatic: @[] 
+                        else: @[nnkIdentDefs.newTree([identWithInject "obj", ptrName, newEmptyNode()])]) &  
+                        signatureAsNode(identWithInject))
     # let pragmas = nnkPragma.newTree([ident "inject"])
+    let generateObjForStaticFunCalls = 
+        if isStatic: 
+            genAst(clsName=newStrLitNode(clsName)): 
+                let obj {.inject.} = getDefaultObjectFromClassName(clsName)
+        else: newEmptyNode()
 
     let paramsInsideFuncDef = nnkTypeSection.newTree([nnkTypeDef.newTree([identWithInject "Params", newEmptyNode(), 
                                 nnkObjectTy.newTree([
@@ -511,10 +482,11 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
                             return param.toReturn 
                      else: newEmptyNode()
 
-    var fnBody = genAst(uFnName=newStrLitNode(funField.name), paramsInsideFuncDef, paramDeclaration, returnCall):
+    var fnBody = genAst(uFnName=newStrLitNode(funField.name), paramsInsideFuncDef, paramDeclaration, generateObjForStaticFunCalls, returnCall):
         paramsInsideFuncDef
         paramDeclaration
         var fnName : FString = uFnName
+        generateObjForStaticFunCalls
         callUFuncOn(obj, fnName, param.addr)
         returnCall
         

@@ -10,6 +10,8 @@ include ../definitions
 import std/[typetraits, strutils, sequtils, sugar]
 #This file contains logic on top of ue types that it isnt necessarily bind 
 
+#not sure if I should make a specific file for object extensions that are outside of the bindings
+proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr = getClassByName(clsName).getDefaultObject()
 
 
 proc getFPropsFromUStruct*(ustr:UStructPtr, flags=EFieldIterationFlags.None) : seq[FPropertyPtr] = 

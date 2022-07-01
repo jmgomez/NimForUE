@@ -44,7 +44,7 @@ const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uCla
                         makeFieldAsUFun("DelegateFunc", @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)]),
                         makeFieldAsUFun("FakeFunc", @[]),
                         makeFieldAsUFun("GetHelloWorld", @[makeFieldAsUPropParam("ReturnValue", "FString", CPF_ReturnParm or CPF_Parm)]),
-                        # makeFieldAsUFun("GetHelloWorldStatic", @[makeFieldAsUPropParam("Par", "FString", false, CPF_ReturnParm or CPF_Parm)], FUNC_Static),
+                        makeFieldAsUFun("GetHelloWorldStatic", @[makeFieldAsUPropParam("Par", "FString", CPF_ReturnParm or CPF_Parm)], FUNC_Static),
                         ])
 
 
