@@ -223,8 +223,6 @@ type
         case kind*: UEFieldKind
             of uefProp:
                 uePropType* : string #Do a close set of types? No, just do a close set on the MetaType. i.e Struct, TArray, Delegates (they complicate things)
-                isGeneric* : bool #TODO Unify this two into a new flag
-                returnAsVar* : bool #if it should append var on the return type when generating the getter
                 propFlags*:EPropertyFlags
 
             of uefDelegate:
@@ -240,8 +238,8 @@ type
             of uefEnumVal:
                 discard
               
-func makeFieldAsUProp*(name, uPropType: string, isGeneric=false, returnAsVar=false, flags=CPF_None) : UEField = 
-    UEField(kind:uefProp, name: name, uePropType: uPropType, isGeneric:isGeneric, returnAsVar:returnAsVar, propFlags:flags)       
+func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:flags)       
 
 func makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string], flags=CPF_None) : UEField = 
     UEField(kind:uefDelegate, name: name, delKind: delKind, delegateSignature:signature, delFlags:flags)
@@ -249,9 +247,14 @@ func makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string]
 func makeFieldAsUFun*(name:string, signature:seq[UEField], flags=FUNC_None) : UEField = 
     UEField(kind:uefFunction, name:name, signature:signature, fnFlags:flags)
 
-func makeFieldAsUPropParam*(name, uPropType: string, isGeneric=false, flags=CPF_Parm) : UEField = 
-    UEField(kind:uefProp, name: name, uePropType: uPropType, isGeneric:isGeneric, returnAsVar:false, propFlags:flags)       
+func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:flags)       
 
+
+func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")
+func shouldBeReturnedAsVar*(field:UEField) : bool = 
+    let typesReturnedAsVar = ["TMap"]
+    field.kind == uefProp and typesReturnedAsVar.filter(tp => tp in field.uePropType ).head().isSome()
 
 type
     UEType* = object 
@@ -300,11 +303,9 @@ func isDelegate(prop : UEField) : bool = prop.kind == uefDelegate
 
 
 func getTypeNodeForReturn(prop: UEField, typeNode : NimNode) : NimNode = 
-    let shouldBeReturnedAsRef = ["TMap"]
-    # let genType = shouldBeReturnedAsRef.filter(genType => genType in prop.kind or prop.isDelegate()).head()
-    if prop.kind == uefDelegate or prop.returnAsVar:
+    if prop.kind == uefDelegate or prop.shouldBeReturnedAsVar():
         return nnkVarTy.newTree(typeNode)
-    return typeNode
+    typeNode
 
 #[
     Generates a new delegate type based on the Name and DelegateType

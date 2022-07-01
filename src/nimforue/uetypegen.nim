@@ -40,11 +40,8 @@ func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something t
     let name = prop.getName()
     let nimType = prop.getNimTypeAsStr()
      
-    if prop.isTMap():
-        return makeFieldAsUProp(name, nimType, true, true, prop.getPropertyFlags())
 
     if prop.isDynDel() or prop.isMulticastDel():
-        let delType = if prop.isDynDel(): uedelDynScriptDelegate else: uedelMulticastDynScriptDelegate
         let signature = if prop.isDynDel(): 
                             castField[FDelegateProperty](prop).getSignatureFunction() 
                         else: 
@@ -55,8 +52,7 @@ func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something t
         return makeFieldAsDel(name, uedelDynScriptDelegate, signatureAsStrs)
 
 
-    let isGeneric = nimType.contains("[")
-    return makeFieldAsUProp(prop.getName(), nimType, isGeneric, false, prop.getPropertyFlags())
+    return makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
 
 
     

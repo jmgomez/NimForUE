@@ -20,6 +20,8 @@ suite "NimForUE.TypesGen":
 #Add functions bindings to the generation (should be able to use them from the other tests)
     #add the field
     #add the macro that generates it in the form signature (replace uebind)
+        # Remove generic check ifeld and get it from the type str.
+        # Remove var and get it frmo  a list of types that lives in the function itself 
         # Needs support for static
         # Needs support for var params
         # What else was in uebind that needs to be here?

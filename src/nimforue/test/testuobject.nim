@@ -27,7 +27,7 @@ suite "NimForUE.UObject":
         let expectedResult = FString("Hello World!")
 
 
-        proc getHelloWorld(obj:UObjectPtr) : FString {.uebind.}
+        proc getHelloWorld(obj:UObjectPtr) : FString {.uebind.} #since it isnt' type safe to call (Uobject) can be let here
         
         let result = obj.getHelloWorld()
 
