@@ -53,16 +53,10 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 - [x] Hot Reloading MacOS
 - [x] Debugging
 - [x] Test Integration via Unreal Frontend
-- [ ] Cover most Unreal Reflected Types
+- [x] Cover most Unreal Reflected Types
 - [x] Getter/Setters macro for UProps
 - [ ] Generate Nim definitions from Unreal Reflection system 
-- [ ] Make builds work on Windows 
-- [ ] Make builds work on MacOS 
-- [ ] Make builds work ok iOS
-- [ ] Make builds work on Android 
-
 - [ ] Being able to produce new UE types from Nim
-
 - [ ] Macro (pragma) for implmenting UFuncs in nim
 
     ```nim
@@ -81,6 +75,13 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
                 More props
 
     ```
+- Shipping Builds
+    - [ ] Make builds work on Windows 
+    - [ ] Make builds work on MacOS 
+    - [ ] Make builds work ok iOS
+    - [ ] Make builds work on Android 
+
+
 - [ ] Nimscripter support? (allows nim in runtime)
 - [ ] Improve Debugger
 - [ ] Test Nim code that consumes Unreal Code without starting the editor. 
