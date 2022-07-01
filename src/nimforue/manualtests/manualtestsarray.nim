@@ -114,17 +114,9 @@ proc scratchpad*(executor:UObjectPtr) =
 
     let cls = getClassByName("MyClassToTest")
     let props = getFPropsFromUStruct(cls)
-    for prop in props:
-        let name = prop.getName()
-        let typeCpp = prop.getCPPType()
-
-
-
-        #     # let prop = cast[FPropertyPtr](field)
-        #     # if prop.isNil(): continue
-        #     # let nameCpp = prop.getNameCPP()
-    
-        let msg = fmt"Prop Name: {prop.getNameCPP()} Prop CppType : {prop.toUEField() }"
+    let funcs = getFuncsFromClass(cls)
+    for fn in funcs:
+        let msg = fmt"Fun Name: {fn.getName()} Fun CppType : {fn.toUEField() }"
         UE_Log(msg)
 
 

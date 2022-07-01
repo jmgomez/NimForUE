@@ -16,7 +16,13 @@ proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr = getClassByNa
 
 proc getFPropsFromUStruct*(ustr:UStructPtr, flags=EFieldIterationFlags.None) : seq[FPropertyPtr] = 
     var xs : seq[FPropertyPtr] = @[]
-    var fieldIterator = makeTFieldIterator[FProperty](ustr, EFieldIterationFlags.None)
+    var fieldIterator = makeTFieldIterator[FProperty](ustr, flags)
+    for it in fieldIterator:
+        xs.add it.get()
+    xs
+proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UFunctionPtr] = 
+    var xs : seq[UFunctionPtr] = @[]
+    var fieldIterator = makeTFieldIterator[UFunction](cls, flags)
     for it in fieldIterator:
         xs.add it.get()
     xs

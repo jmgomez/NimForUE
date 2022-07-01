@@ -64,7 +64,6 @@ suite "NimForUE.UObject":
 
         let expectedResult = FString("Hello World!")
 
-
         let result = getHelloWorldStatic()
         assert result == expectedResult
 
