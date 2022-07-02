@@ -2,7 +2,7 @@ include ../unreal/prelude
 import testutils
 import testdata
 import ../typegen/[models,uetypegen]
-import std/[sequtils, sugar]
+import std/[sequtils, sugar, json, jsonutils]
 
 suite "NimForUE.TypesGen":
     const MyClassToTestNProps = 16
@@ -33,6 +33,29 @@ suite "NimForUE.TypesGen":
         assert ueClass.parent == "UObject"
 
         assert ueClass.fields.len() == MyClassToTestNProps + MyClassToTestNFuncs
+        
+
+
+    ueTest "Should be able to convert back and forth the UETypes to Json":
+        let cls = getClassByName("MyClassToTest")
+
+        let ueClass = cls.toUEType()
+
+        let ueClassAsJson : string = $ueClass.toJson()
+
+        # let json = makeFieldAsUFun("GetHelloWorldStatic", @[makeFieldAsUPropParam("Par", "FString", CPF_ReturnParm or CPF_Parm)])
+        #             .toJson()
+        # UE_Warn("json: " & $json)
+        # let propFieldFromJson = json.jsonTo(UEField)
+        # UE_Warn("propFieldFromJson: " & $propFieldFromJson)
+        let ueClassFromJson = parseJson(ueClassAsJson).jsonTo(UEType)
+
+        assert ueClass.name == "UMyClassToTest"
+        assert ueClass.parent == "UObject"
+
+        assert ueClass.fields.len() == ueClassFromJson.fields.len()
+        assert ueclass.name == ueClassFromJson.name
+        assert ueclass.parent == ueClassFromJson.parent
         
 
 

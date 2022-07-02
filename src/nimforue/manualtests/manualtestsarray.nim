@@ -1,7 +1,7 @@
 #this is temp until we have tests working (have to bind dyn delegates first)
 include ../unreal/prelude
-import std/[times,strformat, strutils, options, sugar, sequtils]
-import ../typegen/uetypegen
+import std/[times,strformat, strutils, options, sugar, sequtils, json, jsonutils]
+import ../typegen/[uetypegen, models]
 
 proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
 
@@ -104,8 +104,11 @@ proc testVectorEntryPoint*(executor:UObjectPtr) =
     #     return signatureAsStr
 
 
-
+var isExecuted = false
 proc scratchpad*(executor:UObjectPtr) = 
+    if isExecuted: return
+    isExecuted = true
+
     # UE_Log("here we test back")
     let moduleName = FString("NimForUEBindings")
     # let classes = getAllClassesFromModule(moduleName)
@@ -113,6 +116,14 @@ proc scratchpad*(executor:UObjectPtr) =
 
     let cls = getClassByName("MyClassToTest")
     let ueType = cls.toUEType()
-    UE_Log("UEType" & $ueType)
+
+    let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEBindings"))
+    if not package.isNil():
+        UE_Log("package is " & package.getName())
+    else:
+        UE_Log("package is nil")
+
+
+
 
 

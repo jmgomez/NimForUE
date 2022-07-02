@@ -1,7 +1,7 @@
 
 import ../unreal/coreuobject/[uobject,  unrealtype, templates/subclassof, tsoftobjectptr, nametypes, scriptdelegates]
 import ../utils/utils
-import std/[times,strformat, strutils, options, sugar, sequtils]
+import std/[times,strformat,json, strutils, options, sugar, sequtils]
 
 
 type
@@ -40,7 +40,10 @@ type
             
             of uefEnumVal:
                 discard
-              
+
+
+# #JSON
+
               
 func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:flags)       

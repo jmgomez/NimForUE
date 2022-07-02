@@ -1,6 +1,6 @@
 include ../definitions
 import bitops
-import std/[genasts, macros, sequtils]
+import std/[genasts, macros, json, sequtils]
 
 
 
@@ -256,6 +256,12 @@ macro genEnumOperators(enumName, enumType:static string) : untyped =
             # cast[name](bitand(cast[typ](a),cast[typ](b)))
         
         proc `in`*(a,b:name) : bool = (a and b) == a #returns true if used like flag in flags 
+
+        proc fromJsonHook*(self: var name, jsonNode: JsonNode) =
+            self = name(jsonNode.getInt()) #we need to this via the int cast otherwise combinations wont work. int should be big enough
+
+        proc toJsonHook*(self:name) : JsonNode = newJInt(int(self))
+        
 
 
 genEnumOperators("EPropertyFlags", "uint64")

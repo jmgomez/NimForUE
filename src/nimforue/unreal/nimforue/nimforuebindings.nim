@@ -19,7 +19,7 @@ proc callUFuncOn*(class:UClassPtr, funcName : var FString, InParams : pointer) :
 
 
 proc UE_Log*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUELog(@)".}
-# proc UE_Warn*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUEWarn(@)".}
+proc UE_Warn*(msg: FString) : void {.importcpp: "UFunctionCaller::NimForUEWarn(@)".}
 
 
 proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
