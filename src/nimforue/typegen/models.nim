@@ -68,6 +68,7 @@ type
         case kind*: UETypeKind
             of uClass:
                 parent* : string
+                clsFlags*: EClassFlags
             of uStruct:
                 discard
             of uEnum:
