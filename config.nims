@@ -19,7 +19,7 @@ switch("define", "useMalloc")
 
 
 
-when not defined copylib:
+when defined withue :
     # switch("listcmd")
     # switch("f")
     let nueConfig = getNimForUEConfig()

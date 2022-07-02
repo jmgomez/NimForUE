@@ -98,6 +98,9 @@ task watch, "Monitors the components folder for changes to recompile.":
       if not path.endsWith(".nim"):
         continue
       var lastTime = getLastModificationTime(path)
+      if path notin lastTimes:
+        lastTimes[path] = Time() 
+        
       if lastTime > lastTimes[path]:
         lastTimes[path] = lastTime
         echo &"-- Recompiling {path} --"
