@@ -1,6 +1,6 @@
-include unreal/prelude
+include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, sequtils]
-
+import models
 
 
 func isTArray(prop:FPropertyPtr) : bool = not castField[FArrayProperty](prop).isNil()

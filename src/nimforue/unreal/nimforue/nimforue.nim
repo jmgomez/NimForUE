@@ -4,7 +4,7 @@ import nimforuebindings
 import ../../macros/uebind
 import std/strformat
 include ../definitions
-
+import ../../typegen/models
 
 
 import std/[typetraits, strutils, sequtils, sugar]

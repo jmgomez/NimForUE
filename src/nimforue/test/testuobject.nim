@@ -1,6 +1,7 @@
 include ../unreal/prelude
 import testutils
 import testdata
+import ../typegen/models
 
 suite "NimForUE.UObject":
 

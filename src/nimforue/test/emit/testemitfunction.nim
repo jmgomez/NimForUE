@@ -4,17 +4,8 @@ import strutils
 import strformat
 import ../testutils
 import unittest
-#TODO make this public and use it from test utils
-const uePropType = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass,
-            fields: @[
-                UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
-                UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
-                UEField(kind:uefProp, name: "IntProperty", uePropType: "int32"),
-            
-            ]
-    )
-
-genType(uePropType)
+import ../testdata
+import ../../typegen/models
 
 
 #[

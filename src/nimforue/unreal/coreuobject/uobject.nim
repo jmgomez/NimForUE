@@ -1,4 +1,5 @@
 
+include ../definitions
 import ../Core/Containers/unrealstring
 import nametypes
 import std/[genasts, macros, sequtils]
@@ -7,7 +8,6 @@ import uobjectflags
 export uobjectflags
 
 
-include ../definitions
 
 type 
     

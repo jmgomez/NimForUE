@@ -1,4 +1,7 @@
 include ../unreal/prelude
+import ../typegen/models
+
+# export typegen/models
 
 const ueEnumType = UEType(name: "EMyTestEnum", kind: uEnum, 
                             fields: @[
