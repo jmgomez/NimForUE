@@ -13,6 +13,9 @@ import std/[typetraits, strutils, sequtils, sugar]
 #not sure if I should make a specific file for object extensions that are outside of the bindings
 proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr = getClassByName(clsName).getDefaultObject()
 
+proc removeFunctionFromClass*(cls:UClassPtr, fn:UFunctionPtr) =
+    cls.removeFunctionFromFunctionMap(fn)
+    cls.Children = fn.Next 
 
 proc getFPropsFromUStruct*(ustr:UStructPtr, flags=EFieldIterationFlags.None) : seq[FPropertyPtr] = 
     var xs : seq[FPropertyPtr] = @[]
@@ -57,17 +60,20 @@ proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionN
     let fnName = fnField.name.makeFName()
     var fn = newUObject[UFunction](cls, fnName)
     fn.functionFlags = fnField.fnFlags
-    #There should be a cpp method that does this for us (try with fn.addCppProperty here as well)
+
     fn.Next = cls.Children 
     cls.Children = fn
+
     
-    let uprops : seq[FPropertyPtr] = fnField.signature.map(p=>(createProperty(fn, p)))
-   
+    for field in fnField.signature:
+        let fprop = fn.createProperty(field)
+        # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
+
     cls.addFunctionToFunctionMap(fn, fnName)
 
     fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
     
     fn.staticLink(true)
-    fn.parmsSize = uprops.foldl(a + b.getSize(), 0)
+    # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
    
     fn

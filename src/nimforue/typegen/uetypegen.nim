@@ -57,8 +57,9 @@ func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something t
 
 func toUEField*(ufun:UFunctionPtr) : UEField = 
     let params = getFPropsFromUStruct(ufun).map(toUEField)
+    # UE_Warn(fmt"{ufun.getName()}")
     makeFieldAsUFun(ufun.getName(), params, ufun.functionFlags)
-
+    
 
 func toUEType*(cls:UClassPtr) : UEType =
     let fields = getFuncsFromClass(cls)

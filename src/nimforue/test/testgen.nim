@@ -20,8 +20,8 @@ suite "NimForUE.TypesGen":
             let cls = getClassByName("MyClassToTest")
             
             let funcs = getFuncsFromClass(cls).map(toUEField)
-            
-            
+        
+            UE_Warn("funcs: " & $funcs.len())
             assert funcs.len() == MyClassToTestNFuncs#think about something better to test against (the number is fragile, it's the number of uproperties defined in that cpp)
 
     ueTest "Should generate a class that matches the manual binding":
@@ -43,11 +43,6 @@ suite "NimForUE.TypesGen":
 
         let ueClassAsJson : string = $ueClass.toJson()
 
-        # let json = makeFieldAsUFun("GetHelloWorldStatic", @[makeFieldAsUPropParam("Par", "FString", CPF_ReturnParm or CPF_Parm)])
-        #             .toJson()
-        # UE_Warn("json: " & $json)
-        # let propFieldFromJson = json.jsonTo(UEField)
-        # UE_Warn("propFieldFromJson: " & $propFieldFromJson)
         let ueClassFromJson = parseJson(ueClassAsJson).jsonTo(UEType)
 
         assert ueClass.name == "UMyClassToTest"

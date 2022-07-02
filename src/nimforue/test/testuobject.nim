@@ -429,5 +429,7 @@ suite "NimForUE.UObject":
 
             assert obj.bWasCalled 
 
+            obj.getClass().removeFunctionFromClass(fn)
+
 
     
