@@ -19,14 +19,14 @@ switch("define", "useMalloc")
 
 
 
-when defined withue :
+when not defined copylib:
     # switch("listcmd")
     # switch("f")
     let nueConfig = getNimForUEConfig()
     switch("define", "genFilePath:"& nueConfig.genFilePath)
     switch("define", "pluginDir:"& nueConfig.pluginDir)
     #todo get from NueConfig?
-    let withPCH = true
+    let withPCH = true and not defined host
     let withDebug = true
 
     let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform

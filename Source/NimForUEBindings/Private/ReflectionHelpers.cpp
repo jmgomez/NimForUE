@@ -34,6 +34,10 @@ UObject* UReflectionHelpers::NewObjectFromClass(UObject* Owner, UClass* Class, F
 	return (StaticConstructObject_Internal(Params));
 }
 
+UObject* UReflectionHelpers::NewObjectFromClass(FStaticConstructObjectParameters Params) {
+	return (StaticConstructObject_Internal(Params));
+}
+
 FProperty* UReflectionHelpers::GetFPropetyByName(UStruct* Struct, FString& Name) {
 	for (TFieldIterator<FProperty> It(Struct); It; ++It) {
 		FProperty* Prop = *It;

@@ -6,20 +6,20 @@
 #include "NimForUEFFI.h"
 #include "NimForUETest/Public/TestObjects/FunctionTestObject.h"
 
-// IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNimForUETestSpec, "NimForUETest.NaiveTest", TestFlags)
-// bool FNimForUETestSpec::RunTest(const FString& Parameters) {
-// 	
-// 	TestTrue("SPECS ARE EQUAL", true);
-//     UE_LOG(LogTemp, Warning, TEXT("Size of int %i"), sizeof(int));
-//     UE_LOG(LogTemp, Warning, TEXT("Size of char %i"), sizeof(char));
-//     UE_LOG(LogTemp, Warning, TEXT("Size of FString %i"), sizeof(FString));
-//     UE_LOG(LogTemp, Warning, TEXT("Size of Pointer %i"), sizeof(UObject*));
-//     UE_LOG(LogTemp, Warning, TEXT("Size of TTuple<int, char> %i"), sizeof(TTuple<int, char>));
-//     UE_LOG(LogTemp, Warning, TEXT("Size of TTuple<int, char, UObject*> %i"), sizeof(TTuple<int, char, UObject*>));
-//     UE_LOG(LogTemp, Warning, TEXT("Size of TTuple<int, char, UObject*, FString> %i"), sizeof(TTuple<int, char, UObject*, FString>));
-//
-// 	return true;
-// };
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNimForUETestSpec, "NimForUETest.NaiveTest", TestFlags)
+bool FNimForUETestSpec::RunTest(const FString& Parameters) {
+	
+	TestTrue("SPECS ARE EQUAL", true);
+    UE_LOG(LogTemp, Warning, TEXT("Size of int %i"), sizeof(int));
+    UE_LOG(LogTemp, Warning, TEXT("Size of char %i"), sizeof(char));
+    UE_LOG(LogTemp, Warning, TEXT("Size of FString %i"), sizeof(FString));
+    UE_LOG(LogTemp, Warning, TEXT("Size of Pointer %i"), sizeof(UObject*));
+    UE_LOG(LogTemp, Warning, TEXT("Size of TTuple<int, char> %i"), sizeof(TTuple<int, char>));
+    UE_LOG(LogTemp, Warning, TEXT("Size of TTuple<int, char, UObject*> %i"), sizeof(TTuple<int, char, UObject*>));
+    UE_LOG(LogTemp, Warning, TEXT("Size of TTuple<int, char, UObject*, FString> %i"), sizeof(TTuple<int, char, UObject*, FString>));
+    // UE_LOG(LogTemp, Warning, TEXT("Size of EObject %i"), sizeof(TTuple<int, char, UObject*, FString>));
+	return true;
+};
 
 // // //FIND SHORTER TESTS DECLARATION
 

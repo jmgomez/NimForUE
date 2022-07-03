@@ -10,7 +10,7 @@
 #include "Containers/Array.h"
 #include "Engine/EngineTypes.h"
 #include "Misc/AutomationTest.h"
-
+#include "AssetRegistry/AssetRegistryModule.h"
 
 #include "UFunctionCaller.h"
 #include "Test/NimTestBase.h"

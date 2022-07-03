@@ -67,7 +67,7 @@ type
 
 
 
-    EObjectFlags* {.importcpp, size:sizeof(int32).} = enum
+    EObjectFlags* {.importcpp, size:sizeof(uint32).} = enum
         # if you change any the bit of any of the RF_Load flags, then you will need legacy serialization
         RF_NoFlags = 0x00000000, #< No flags, used to avoid a cast=
         # This first group of flags mostly has to do with what kind of object it is. Other than transient, these are the persistent object flags.
@@ -237,7 +237,8 @@ type
         #* Class has been consigned to oblivion as part of a blueprint recompile, and a newer version currently exists. */
         CLASS_NewerVersionExists  = 0x80000000
         
-
+    EClassCastFlags* {.importcpp, size:sizeof(uint64).} = enum #Dont think we will ever need the values imported
+        CASTCLASS_None = 0x0000000000000000
 
     EFieldIterationFlags* {.importcpp, size:sizeof(uint8).} = enum 
         None = 0
@@ -245,14 +246,16 @@ type
         IncludeDeprecated = rotateLeftBits(1.uint8, 1.int32)#1<<1	# Include deprecated properties
         IncludeInterfaces = rotateLeftBits(1.uint8, 2.int32)#1<<2	# Include interfaces
 
+
+
 macro genEnumOperators(enumName, enumType:static string) : untyped = 
     genAst(name=ident enumName, typ=ident enumType):
-        proc `or`*(a, b : name) : name = 
-            name(typ(ord(a)) or typ(ord(b)))
+        proc `or`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
+        proc `|`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
             # cast[name](bitor(cast[typ](a),cast[typ](b)))
 
-        proc `and`*(a, b : name) : name = 
-            name(typ(ord(a)) and typ(ord(b)))
+        proc `and`*(a, b : name) : name = name(typ(ord(a)) and typ(ord(b)))
+        proc `&`*(a, b : name) : name = name(typ(ord(a)) and typ(ord(b)))
             # cast[name](bitand(cast[typ](a),cast[typ](b)))
         
         proc `in`*(a,b:name) : bool = (a and b) == a #returns true if used like flag in flags 
@@ -265,7 +268,11 @@ macro genEnumOperators(enumName, enumType:static string) : untyped =
 
 
 genEnumOperators("EPropertyFlags", "uint64")
-genEnumOperators("EObjectFlags", "int32")
+genEnumOperators("EObjectFlags", "uint32")
 genEnumOperators("EFunctionFlags", "uint32")
 genEnumOperators("EClassFlags", "uint32")
 genEnumOperators("EFieldIterationFlags", "uint8")
+
+
+const CLASS_Inherit* = (CLASS_Transient | CLASS_Optional | CLASS_DefaultConfig | CLASS_Config | CLASS_PerObjectConfig | CLASS_ConfigDoNotCheckDefaults | CLASS_NotPlaceable | CLASS_Const | CLASS_HasInstancedReference | CLASS_Deprecated | CLASS_DefaultToInstanced | CLASS_GlobalUserConfig | CLASS_ProjectUserConfig | CLASS_NeedsDeferredDependencyLoading)
+const CLASS_ScriptInherit* = CLASS_Inherit | CLASS_EditInlineNew | CLASS_CollapseCategories 

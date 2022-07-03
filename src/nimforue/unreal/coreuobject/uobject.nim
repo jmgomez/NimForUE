@@ -26,11 +26,21 @@ type
     UStruct* {.importcpp, inheritable, pure .} = object of UField
         Children* : UFieldPtr # Pointer to start of linked list of child fields */
         childProperties* {.importcpp:"ChildProperties".}: FFieldPtr #  /** Pointer to start of linked list of child fields */
+        propertyLink* {.importcpp:"PropertyLink".}: FPropertyPtr #  /** 	/** In memory only: Linked list of properties from most-derived to base */
+
+        
     UStructPtr* = ptr UStruct 
 
 
 
     UClass* {.importcpp, inheritable, pure .} = object of UStruct
+        classWithin* {.importcpp:"ClassWithin".}: UClassPtr #  The required type for the outer of instances of this class */
+        classConfigName* {.importcpp:"ClassConfigName".}: FName 
+        classFlags* {.importcpp:"ClassFlags".}: EClassFlags
+        classCastFlags* {.importcpp:"ClassCastFlags".}: EClassCastFlags
+        classConstructor* {.importcpp:"ClassConstructor".}: pointer
+
+
     UClassPtr* = ptr UClass
 
     UScriptStruct* {.importcpp, inheritable, pure .} = object of UStruct
@@ -88,8 +98,6 @@ proc getSignatureFunction*(delProp:FDelegatePropertyPtr | FMulticastDelegateProp
 
 
 
-
-
 type
 
 
@@ -109,7 +117,7 @@ type
 
 
 
-    
+
 
 #USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
@@ -117,6 +125,7 @@ proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.import
 proc addCppProperty*(str:UStructPtr, prop:FPropertyPtr) : void {.importcpp:"#->AddCppProperty(@)".}
 #     virtual const TCHAR* GetPrefixCPP() const { return TEXT("F"); }
 proc getPrefixCpp*(str:UStructPtr) : FString {.importcpp:"FString(#->GetPrefixCPP())".}
+proc setSuperStruct*(str, suprStruct :UStructPtr) : void {.importcpp:"#->SetSuperStruct(#)".}
 
 #UCLASS
 proc findFunctionByName*(cls : UClassPtr, name:FName) : UFunctionPtr {. importcpp: "#.FindFunctionByName(#)"}
@@ -124,6 +133,9 @@ proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) :
 proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
 proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()" .}
 proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()" .}
+proc bindCls*(cls:UClassPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
+
+
 #UOBJECT
 proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}

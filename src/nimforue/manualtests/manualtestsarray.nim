@@ -117,13 +117,36 @@ proc scratchpad*(executor:UObjectPtr) =
     let cls = getClassByName("MyClassToTest")
     let ueType = cls.toUEType()
 
-    let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEBindings"))
-    if not package.isNil():
-        UE_Log("package is " & package.getName())
-    else:
-        UE_Log("package is nil")
+   
 
 
 
 
+proc scratchpadEditor*() = 
+    try:
+        let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
+        if not package.isNil():
+            UE_Log("package is " & package.getName())
+        else:
+            UE_Log("package is nil")
 
+        let parent = getClassByName("Object")
+
+        #	UClass* GeneratedClass = NewObject<UClass>(Package,  *(NewClassName),  RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted );
+        let objClsFlags : EObjectFlags =  RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted
+        let clsAsCls = getClassByName("Class")
+        let newCls = newUObject[UClass](package, n"NewClassFromNimTest", objClsFlags)
+        assetCreated(newCls)
+        newCls.classConstructor = nil
+        newCls.propertyLink = parent.propertyLink
+        newCls.classWithin = parent.classWithin
+        newCls.classConfigName = parent.classConfigName
+        newcls.setSuperStruct(parent)
+        newcls.classFlags = (parent.classFlags & (CLASS_Inherit | CLASS_ScriptInherit | CLASS_CompiledFromBlueprint | CLASS_HideDropDown))
+        newCls.classCastFlags = parent.classCastFlags
+        
+        newCls.bindCls()
+        newCls.staticLink(true)
+    except Exception as e:
+        UE_Warn e.msg
+        UE_Warn e.getStackTrace()

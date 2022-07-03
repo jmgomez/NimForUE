@@ -1,4 +1,4 @@
-import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes]
+import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes, uobjectglobals]
 import ../core/containers/[unrealstring, array]
 import std/[typetraits, strutils]
 include ../definitions
@@ -53,6 +53,7 @@ proc getAllClassesFromModule*(moduleName:FString) : TArray[UClassPtr] {.importcp
 #it's better design
 proc newObjectFromClass*(owner:UObjectPtr, cls:UClassPtr, name:FName) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
 proc newObjectFromClass*(cls:UClassPtr) : UObjectPtr = newObjectFromClass(nil, cls, ENone)
+proc newObjectFromClass(params:FStaticConstructObjectParameters) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
 
 
 
@@ -67,6 +68,17 @@ proc newUObject*[T:UObject](owner:UObjectPtr, name:FName) : ptr T =
 
 proc newUObject*[T:UObject](owner:UObjectPtr) : ptr T = newUObject[T](owner, ENone)
 proc newUObject*[T:UObject]() : ptr T = newUObject[T](nil, ENone)
+proc newUObject*[T:UObject](outer:UObjectPtr, name:FName, flags: EObjectFlags) : ptr T = 
+    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
+    let cls = getClassByName(className)
+
+    var params = makeFStaticConstructObjectParameters(cls)
+    params.Outer = outer
+    params.Name = name
+    params.SetFlags = flags
+    cast[ptr T](newObjectFromClass(params))
+
+
 
 
 proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =

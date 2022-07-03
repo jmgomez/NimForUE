@@ -11,6 +11,9 @@ import manualtests/manualtestsarray
 #define on config.nims
 const genFilePath* {.strdefine.} : string = ""
 
+proc fromTheEditor() : void  {.ffi:genFilePath}  = 
+    scratchpadEditor()
+
 proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
     let executor = cast[UObjectPtr](obj)
     testArrayEntryPoint(executor)

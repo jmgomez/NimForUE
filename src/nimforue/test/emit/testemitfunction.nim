@@ -404,10 +404,10 @@ suite "NimForUE.FunctionEmit":
         # assert fn.getPropsWithFlags(CPF_OutParm).num() == 1
         assert params.param.equals("whatever") #only this one is changed
         # assert params.param2 == 1
-    
+
         cls.removeFunctionFromClass fn
 
-        
+    
 
     ueTest "Should be able to create a new function that accepts parameters as out [two params]":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()

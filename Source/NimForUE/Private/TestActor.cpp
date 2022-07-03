@@ -32,6 +32,10 @@ void ATestActor::CallUFuncFFI(UObject* Object) {
 	testCallUFuncOn(Object);
 }
 
+void ATestActor::CallInEditor() {
+	fromTheEditor();
+}
+
 void ATestActor::ReproduceStringIssue() { //Doesnt happen
 }
 
