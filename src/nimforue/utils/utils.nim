@@ -42,3 +42,7 @@ func spacesToCamelCase*(str:string) :string =
 func firstToLow*(str:string) : string = 
     if str.len()>0: toLower($str[0]) & str.substr(1) 
     else: str
+
+func removeFirstLetter*(str:string) : string = 
+    if str.len()>0: str.substr(1)
+    else: str

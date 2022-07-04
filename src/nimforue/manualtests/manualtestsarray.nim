@@ -117,36 +117,56 @@ proc scratchpad*(executor:UObjectPtr) =
     let cls = getClassByName("MyClassToTest")
     let ueType = cls.toUEType()
 
-   
 
 
+proc createClass*(package:UPackagePtr, ueType : UEType) : UClassPtr =
+    let 
+        objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
+        newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+        parent = getClassByName(ueType.parent.removeFirstLetter())
+    
+    assetCreated(newCls)
+
+    newCls.classConstructor = nil
+    newCls.propertyLink = parent.propertyLink
+    newCls.classWithin = parent.classWithin
+    newCls.classConfigName = parent.classConfigName
+    newcls.setSuperStruct(parent)
+    newcls.classFlags =  ueType.clsFlags & parent.classFlags
+    newCls.classCastFlags = parent.classCastFlags
+    
+    copyMetadata(parent, newCls)
+    newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
+
+    newCls.bindCls()
+    newCls.staticLink(true)
+    newCls
 
 
 proc scratchpadEditor*() = 
     try:
+     
         let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
         if not package.isNil():
             UE_Log("package is " & package.getName())
         else:
             UE_Log("package is nil")
+    
+        let clsFlags =  (CLASS_Inherit | CLASS_ScriptInherit )
+        let className = "UNimClassWhatever"
+    
 
-        let parent = getClassByName("Object")
-
-        #	UClass* GeneratedClass = NewObject<UClass>(Package,  *(NewClassName),  RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted );
-        let objClsFlags : EObjectFlags =  RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted
-        let clsAsCls = getClassByName("Class")
-        let newCls = newUObject[UClass](package, n"NewClassFromNimTest", objClsFlags)
-        assetCreated(newCls)
-        newCls.classConstructor = nil
-        newCls.propertyLink = parent.propertyLink
-        newCls.classWithin = parent.classWithin
-        newCls.classConfigName = parent.classConfigName
-        newcls.setSuperStruct(parent)
-        newcls.classFlags = (parent.classFlags & (CLASS_Inherit | CLASS_ScriptInherit | CLASS_CompiledFromBlueprint | CLASS_HideDropDown))
-        newCls.classCastFlags = parent.classCastFlags
         
-        newCls.bindCls()
-        newCls.staticLink(true)
+        # if CLASS_Intrinsic in uobjCls.classFlags:
+        #     UE_Warn("Class Object is intrinsic")
+        #     return
+        
+        let ueVarType = UEType(name: className, parent: "UObject", kind: uClass, clsFlags: clsFlags)
+                    # fields: @[
+                    #     UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
+                    #     ])
+        let newCls = package.createClass(ueVarType)
+        UE_Log "Class created! " & newCls.getName()
     except Exception as e:
         UE_Warn e.msg
         UE_Warn e.getStackTrace()

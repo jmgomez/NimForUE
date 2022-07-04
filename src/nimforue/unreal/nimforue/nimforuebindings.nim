@@ -8,6 +8,9 @@ type
     UFunctionCaller* {.importc, inheritable, pure .} = object
     FNativeFuncPtr* {.importcpp.} = object
     
+    UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
+    UNimClassBasePtr* = ptr UNimClassBase
+
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:openarray[pointer]) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
