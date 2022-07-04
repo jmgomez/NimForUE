@@ -500,6 +500,5 @@ macro genType*(typeDef : static UEType) : untyped =
             genUStructTypeDef(typeDef)
         of uEnum:
             genUEnumTypeDef(typeDef)
-    
 
 

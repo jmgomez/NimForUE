@@ -3,6 +3,7 @@
 
 #include "ReflectionHelpers.h"
 
+
 UClass* UReflectionHelpers::GetClassByName(FString ClassName) {
 	UObject* ClassPackage = ANY_PACKAGE;
 	UClass* Class = FindObject<UClass>(ClassPackage, *ClassName);
@@ -76,3 +77,5 @@ TArray<UClass*> UReflectionHelpers::GetAllClassesFromModule(FString ModuleName) 
 		});
 	return Classes;
 }
+
+

@@ -1,4 +1,4 @@
-import std/[os, strutils, json, jsonUtils]
+import std/[strutils,sequtils, sugar, strformat, os, json, jsonutils]
 
 func getFullLibName(baseLibName:string) :string  = 
     when defined macosx:
@@ -7,8 +7,6 @@ func getFullLibName(baseLibName:string) :string  =
         return  baseLibName & ".dll"
     elif defined linux:
         return ""
-
-
 
 
 
@@ -24,12 +22,10 @@ type TargetConfiguration* = enum
     #TODO Fill the rest
 
 proc fromJsonHook*(self: var TargetPlatform, jsonNode:JsonNode) =
-    let str = jsonNode.getStr()
-    self = parseEnum[TargetPlatform](str)
+    self = parseEnum[TargetPlatform](jsonNode.getStr())
 
 proc fromJsonHook*(self: var TargetConfiguration, jsonNode:JsonNode) =
-    let str = jsonNode.getStr()
-    self = parseEnum[TargetConfiguration](str)
+    self = parseEnum[TargetConfiguration](jsonNode.getStr())
 
 
 proc toJsonHook*(self:TargetPlatform) : JsonNode = newJString($self)
@@ -87,3 +83,49 @@ proc getNimForUEConfig*(pluginDirPath="") : NimForUEConfig =
     #Rest of the fields are sets by UBT
     config.saveConfig()
     config
+
+
+
+        
+#Epics adds a space in the installation directory (Epic Games) on Windows so it has to be quoted. Maybe we should do this for all user paths?
+proc addQuotes*(fullPath: string) : string = "\"" & fullPath & "\""
+
+
+proc getUESymbols*(conf:NimForUEConfig) : seq[string] =
+    let platformDir = if conf.targetPlatform == Mac: "Mac/x86_64" else: $ conf.targetPlatform
+    let confDir = $ conf.targetConfiguration
+    let engineDir = conf.engineDir
+    let pluginDir = conf.pluginDir
+    
+    proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string) : string =  
+        when defined windows:
+            let libName = fmt "{prefix}-{moduleName}.lib" 
+            return addQuotes(engineDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / moduleName / libName)
+        elif defined macosx:
+            let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
+
+            let libName = fmt "{prefix}-{moduleName}.dylib"
+            return  engineDir / "Binaries" / platform / libName
+
+    
+    
+
+    proc getNimForUESymbols() : seq[string] = 
+        when defined macosx:
+            let libpath  = pluginDir / "Binaries"/ $conf.targetPlatform/"UnrealEditor-NimForUEBindings.dylib"
+            #notice this shouldnt be included when target <> Editor
+            let libPathEditor  = pluginDir / "Binaries"/ $conf.targetPlatform/"UnrealEditor-NimForUEEditor.dylib"
+          
+        elif defined windows:
+            let libName = fmt "UnrealEditor-NimForUEBindings.lib" 
+            let libPath = addQuotes(pluginDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / "NimForUEBindings" / libName)
+            let libPathEditor = addQuotes(pluginDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / "NimForUEEditor" / libName)
+           
+        @[libPath, libPathEditor]
+
+    
+    let modules = @["Core", "CoreUObject", "Engine"]
+    let engineSymbolsPaths = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName))
+    
+    return engineSymbolsPaths & getNimForUESymbols()
+    

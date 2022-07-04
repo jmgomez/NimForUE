@@ -8,8 +8,8 @@ type
     UFunctionCaller* {.importc, inheritable, pure .} = object
     FNativeFuncPtr* {.importcpp.} = object
     
-    UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
-    UNimClassBasePtr* = ptr UNimClassBase
+    # UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
+    # UNimClassBasePtr* = ptr UNimClassBase
 
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:openarray[pointer]) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
@@ -97,3 +97,7 @@ proc setNativeFunc*(ufunc: ptr UFunction, funcPtr: FNativeFuncPtr) : void {.impo
 
 proc increaseStack*(stack: var FFrame) : void {.importcpp: "UReflectionHelpers::IncreaseStack(#)" .}
 
+
+
+##EDITOR
+proc broadcastAsset*(asset:UObjectPtr) : void {.importcpp: "UFakeFactory::BroadcastAsset(#)" .}

@@ -43,7 +43,6 @@ type
 
 
 # #JSON
-
               
 func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:flags)       

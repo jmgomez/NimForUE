@@ -269,6 +269,7 @@ suite "NimForUE.UObject":
 
         obj.nameProperty = makeFName("Hello")
         
+        
         assert obj.nameProperty.toFString() == FString("Hello")
     
 
@@ -428,6 +429,7 @@ suite "NimForUE.UObject":
             obj.dynamicDelegateOneParamProperty.execute("Hey!")
 
             assert obj.bWasCalled 
+            
 
             obj.getClass().removeFunctionFromClass(fn)
 

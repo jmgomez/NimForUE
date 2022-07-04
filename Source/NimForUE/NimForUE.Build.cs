@@ -37,8 +37,14 @@ public class NimForUE : ModuleRules
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
-			
-		
+
+		if (Target.bBuildEditor) {
+			PrivateDependencyModuleNames.AddRange(new string[]{
+				"UnrealEd",
+				"NimForUEEditor"
+			});
+		}
+
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -46,11 +52,11 @@ public class NimForUE : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"UnrealEd",
+				
 				"NimForUEBindings",
 				"EditorStyle",
 				"Projects",
-				// ... add private dependencies that you statically link with here ...	
+			
 			}
 			);
 		

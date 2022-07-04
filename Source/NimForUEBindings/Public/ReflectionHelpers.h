@@ -6,6 +6,8 @@
 #include "UObject/Object.h"
 #include "ReflectionHelpers.generated.h"
 
+
+
 /**
  * 
  */
@@ -65,5 +67,5 @@ public:
 
 
 	static TArray<UClass*> GetAllClassesFromModule(FString ModuleName);
-	
+
 };

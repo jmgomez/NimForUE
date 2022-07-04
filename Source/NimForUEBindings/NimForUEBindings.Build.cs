@@ -8,6 +8,7 @@ public class NimForUEBindings : ModuleRules
 			"Core", 
 			"CoreUObject", 
 			"Engine",
+			
 			//"UnrealEd"
 			
 		});

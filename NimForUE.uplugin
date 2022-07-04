@@ -29,6 +29,11 @@
 			"Name": "NimForUETest",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "NimForUEEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
 		}
 	]
 }

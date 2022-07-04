@@ -119,10 +119,12 @@ proc scratchpad*(executor:UObjectPtr) =
 
 
 
+
+
 proc createClass*(package:UPackagePtr, ueType : UEType) : UClassPtr =
     let 
         objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
-        newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+        newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
         parent = getClassByName(ueType.parent.removeFirstLetter())
     
     assetCreated(newCls)
@@ -137,9 +139,10 @@ proc createClass*(package:UPackagePtr, ueType : UEType) : UClassPtr =
     
     copyMetadata(parent, newCls)
     newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
-
+    
     newCls.bindCls()
     newCls.staticLink(true)
+    broadcastAsset(newCls)
     newCls
 
 
@@ -154,8 +157,6 @@ proc scratchpadEditor*() =
     
         let clsFlags =  (CLASS_Inherit | CLASS_ScriptInherit )
         let className = "UNimClassWhatever"
-    
-
         
         # if CLASS_Intrinsic in uobjCls.classFlags:
         #     UE_Warn("Class Object is intrinsic")

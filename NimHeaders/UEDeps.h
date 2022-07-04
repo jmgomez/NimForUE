@@ -16,3 +16,5 @@
 #include "Test/NimTestBase.h"
 #include "ReflectionHelpers.h"
 
+//Editor only
+#include "FakeFactory.h"
