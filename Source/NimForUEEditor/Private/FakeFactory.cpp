@@ -8,5 +8,7 @@
 
 void UFakeFactory::BroadcastAsset(UObject* AssetToBroadcast) {
 	UE_LOG(NimForUEEditor, Warning, TEXT("Nim Broadcast asset called!"))
-	GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPostImport(nullptr, AssetToBroadcast);
+	FCoreUObjectDelegates::ReloadCompleteDelegate.Broadcast(EReloadCompleteReason::HotReloadManual);
+
+	// GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetPostImport(nullptr, AssetToBroadcast);
 }

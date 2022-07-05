@@ -1,6 +1,6 @@
 include ../definitions
 import bitops
-import std/[genasts, macros, json, sequtils]
+import std/[genasts, macros, sugar, json, sequtils]
 
 
 
@@ -244,7 +244,6 @@ type
         CASTCLASS_None = 0x0000000000000000
     
     
-    EFieldIterationFlagsVal* = distinct(uint8)
     EFieldIterationFlags* {.importcpp, size:sizeof(uint8).} = enum 
         None = 0
         IncludeSuper = rotateLeftBits(1.uint8, 0)#1<<0     	# Include super class
@@ -253,8 +252,8 @@ type
 
 
 
-macro genEnumOperators(enumName, enumType:static string) : untyped = 
-    genAst(name=ident enumName, typ=ident enumType, valName=ident enumName&"Val"):
+macro genEnumOperators(enumName, enumType:static string, genValConverters : static bool = true) : untyped = 
+    result = genAst(name=ident enumName, typ=ident enumType):
         proc `or`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
         proc `|`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
             # cast[name](bitor(cast[typ](a),cast[typ](b)))
@@ -269,16 +268,21 @@ macro genEnumOperators(enumName, enumType:static string) : untyped =
             self = name(jsonNode.getInt()) #we need to this via the int cast otherwise combinations wont work. int should be big enough
 
         proc toJsonHook*(self:name) : JsonNode = newJInt(int(self))
-        
+
+    let converters = genAst(name=ident enumName, valName=ident enumName&"Val", typ=ident enumType):
         converter toValName*(a:name) : valName = valName(typ(ord(a)))
         converter toName*(a:valName) : name = name(typ((a)))
+    
+    if genValConverters:
+        result.add converters
 
 
 genEnumOperators("EPropertyFlags", "uint64")
 genEnumOperators("EObjectFlags", "uint32")
 genEnumOperators("EFunctionFlags", "uint32")
 genEnumOperators("EClassFlags", "uint32")
-genEnumOperators("EFieldIterationFlags", "uint8")
+genEnumOperators("EFieldIterationFlags", "uint8", false)
+
 
 
 const CLASS_Inherit* = (CLASS_Transient | CLASS_Optional | CLASS_DefaultConfig | CLASS_Config | CLASS_PerObjectConfig | CLASS_ConfigDoNotCheckDefaults | CLASS_NotPlaceable | CLASS_Const | CLASS_HasInstancedReference | CLASS_Deprecated | CLASS_DefaultToInstanced | CLASS_GlobalUserConfig | CLASS_ProjectUserConfig | CLASS_NeedsDeferredDependencyLoading)

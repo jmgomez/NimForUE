@@ -1,7 +1,7 @@
 
 import ../unreal/coreuobject/[uobject,  unrealtype, templates/subclassof, tsoftobjectptr, nametypes, scriptdelegates]
 import ../utils/utils
-import std/[times,strformat,json, strutils, options, sugar, sequtils]
+import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
 
 
 type
@@ -22,6 +22,7 @@ type
 
     UEField* = object
         name* : string
+        metatadata* : Table[string, bool]
 
         case kind*: UEFieldKind
             of uefProp:
@@ -66,14 +67,16 @@ type
     UEType* = object 
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
+        metatadata* : Table[string, bool]
         #class flags?
         case kind*: UETypeKind
             of uClass:
                 parent* : string
-                clsFlags*: EClassFlags
+                clsFlags*: EClassFlagsVal
             of uStruct:
                 discard
             of uEnum:
                 discard
 
-
+func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField]) : UEType = 
+    UEType(kind:uClass, name:name, parent:parent, clsFlags:clsFlags, fields:fields)

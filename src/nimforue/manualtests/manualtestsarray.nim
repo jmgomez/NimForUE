@@ -145,10 +145,9 @@ proc createClass*(package:UPackagePtr, ueType : UEType) : UClassPtr =
     broadcastAsset(newCls)
     newCls
 
-
+#Review the how 
 proc scratchpadEditor*() = 
     try:
-     
         let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
         if not package.isNil():
             UE_Log("package is " & package.getName())
@@ -162,10 +161,10 @@ proc scratchpadEditor*() =
         #     UE_Warn("Class Object is intrinsic")
         #     return
         
-        let ueVarType = UEType(name: className, parent: "UObject", kind: uClass, clsFlags: clsFlags)
-                    # fields: @[
-                    #     UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
-                    #     ])
+        let ueVarType = UEType(name: className, parent: "UObject", kind: uClass, clsFlags: clsFlags,
+                    fields: @[
+                        UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
+                        ])
         let newCls = package.createClass(ueVarType)
         UE_Log "Class created! " & newCls.getName()
     except Exception as e:
