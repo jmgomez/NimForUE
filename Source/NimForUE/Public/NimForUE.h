@@ -11,8 +11,9 @@ DECLARE_LOG_CATEGORY_EXTERN(NimForUE, Log, All);
 class FNimForUEModule : public IModuleInterface
 {
 	void* NimForUEHandle = nullptr;
+	inline static int ReloadTimes = 0;
 public:
-
+	
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;

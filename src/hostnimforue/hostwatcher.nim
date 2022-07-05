@@ -1,6 +1,7 @@
 import std/[times, os, dynlib, strutils, sequtils, algorithm, locks, sugar, options]
 import pure/asyncdispatch
 import ../buildscripts/[nimforueconfig, copyLib]
+import ffigen
 
 import hostbase
 
@@ -44,6 +45,7 @@ proc checkReload*() {.ex.} =
         let nextLibName = mbNext.get()
         lastLoaded = nextLibName
         if lib != nil:
+            onNimForUEUnloaded()
             unloadLib(lib)
 
         if not onPreReload.isnil():
