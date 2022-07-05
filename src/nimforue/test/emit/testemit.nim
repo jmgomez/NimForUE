@@ -2,12 +2,12 @@ include ../../unreal/prelude
 import std/[strutils, sugar]
 import ../testutils
 import ../testdata
-import ../../typegen/[models, uetypegen]
+import ../../typegen/[models, uemeta]
 import testemitfunction
 
 
 suite "NimForUE.ClassEmit":
-    ueTest "Should emit an UClass":
+    ueTest "Should emit an UClass and be able to create props on it based on the type definition":
         
         let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUETest"))
         assert not package.isNil()
@@ -32,4 +32,3 @@ suite "NimForUE.ClassEmit":
 
         assert searchCls().isNil()
 
-        # TODO remove it and check that's removed

@@ -1,7 +1,7 @@
 #this is temp until we have tests working (have to bind dyn delegates first)
 include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, sequtils, json, jsonutils]
-import ../typegen/[uetypegen, models]
+import ../typegen/[uemeta, models]
 
 proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
 
@@ -131,7 +131,7 @@ proc scratchpadEditor*() =
         else:
             UE_Log("package is nil")
     
-     
+        
        
     except Exception as e:
         UE_Warn e.msg

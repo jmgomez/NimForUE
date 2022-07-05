@@ -4,7 +4,7 @@ import std/[strutils]
 import ../testutils
 import unittest
 import ../testdata
-import ../../typegen/models
+import ../../typegen/uemeta
 
 
 #[

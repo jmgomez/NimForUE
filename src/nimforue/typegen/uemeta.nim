@@ -1,7 +1,7 @@
 include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, sequtils]
 import models
-
+export models
 
 func isTArray(prop:FPropertyPtr) : bool = not castField[FArrayProperty](prop).isNil()
 func isTMap(prop:FPropertyPtr) : bool = not castField[FMapProperty](prop).isNil()
@@ -73,6 +73,25 @@ func toUEType*(cls:UClassPtr) : UEType =
     UEType(name:name, kind:uClass, parent:parentName, fields:fields)
 
 
+
+
+proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
+    let flags = RF_NoFlags #OBJECT FLAGS
+    let name = propField.name.makeFName()
+    let prop : FPropertyPtr =   
+                if propField.uePropType == "FString": 
+                    makeFStrProperty(makeFieldVariant(outer), name, flags)
+                elif propField.uePropType == "int32":
+                    makeFIntProperty(makeFieldVariant(outer), name, flags)
+                else:
+                    raise newException(Exception, "FProperty not covered in the types for " & propField.uePropType)
+    
+    prop.setPropertyFlags(propField.propFlags)
+    outer.addCppProperty(prop)
+    prop
+
+proc createProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = propField.toFProperty(outer)
+
 proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
     let 
         objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
@@ -93,10 +112,38 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
     newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
     
     for field in ueType.fields:
-        let fProp = newCls.createProperty(field) #refactor this and move it to this file
+        let fProp = field.toFProperty(newCls) #refactor this and move it to this file
 
 
     newCls.bindCls()
     newCls.staticLink(true)
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
     newCls
+
+
+
+#note at some point class can be resolved from the UEField?
+proc toUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
+    let fnName = fnField.name.makeFName()
+    var fn = newUObject[UFunction](cls, fnName)
+    fn.functionFlags = fnField.fnFlags
+
+    fn.Next = cls.Children 
+    cls.Children = fn
+
+    
+    for field in fnField.signature:
+        let fprop =  field.toFProperty(fn)
+        # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
+
+    cls.addFunctionToFunctionMap(fn, fnName)
+
+    fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
+    
+    fn.staticLink(true)
+    # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
+   
+    fn
+
+proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
+    fnField.toUFunction(cls, fnImpl)

@@ -1,7 +1,7 @@
 include ../unreal/prelude
 import testutils
 import testdata
-import ../typegen/[models,uetypegen]
+import ../typegen/[uemeta]
 import std/[sequtils, sugar, json, jsonutils]
 
 suite "NimForUE.TypesGen":
