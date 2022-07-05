@@ -7,7 +7,7 @@ import std/[genasts, macros, sugar, json, sequtils]
 type 
     EPropertyFlagsVal* = distinct(uint64)
 
-    EPropertyFlags* {. importcpp, size:sizeof(uint64).} = enum
+    EPropertyFlags* {. importcpp, header: ueIncludes, size:sizeof(uint64).} = enum
         CPF_None = 0,
         CPF_Edit              = 0x0000000000000001,  #< Property is user-settable in the editor.
         CPF_ConstParm            = 0x0000000000000002,  #< This is a constant function parameter

@@ -1,5 +1,5 @@
-
-import ../unreal/coreuobject/[uobject,  unrealtype, templates/subclassof, tsoftobjectptr, nametypes, scriptdelegates]
+include ../unreal/definitions
+import ../unreal/coreuobject/[uobject, uobjectflags, unrealtype, templates/subclassof, tsoftobjectptr, nametypes, scriptdelegates]
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
 

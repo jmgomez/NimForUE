@@ -133,7 +133,7 @@ proc compileCmd(cpppath: string, objpath: string): string =
   "vccexe.exe" & " " &
     CompileFlags.join(" ") & " " &
     (if withPCH and usesPCHFile(cppPath): pchFlags() else: "") & " " &
-    getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b & " ") & " " &
+    getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b, " ") & " " &
     "/Fo" & objpath & " " & cppPath
 
 

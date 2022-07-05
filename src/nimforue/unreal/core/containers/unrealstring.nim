@@ -3,7 +3,7 @@ include ../../definitions
 
 
 type
-  FString* {. exportc, importcpp, bycopy.} = object
+  FString* {. exportc, importcpp, header: ueIncludes, bycopy.} = object
 
 proc makeFString*(cstr : cstring) : FString {.importcpp: "'0(ANSI_TO_TCHAR(#))", constructor,  noSideEffect.}
 proc makeFString*(fstr : FString) : FString {.importcpp: "'0'(#)", constructor,  noSideEffect.}
