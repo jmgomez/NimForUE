@@ -42,11 +42,11 @@ proc createUEReflectedTypes() =
 #called from C++ NimForUE Module
 proc onNimForUELoaded(n:int32) : void {.ffi:genFilePath} = 
     UE_Log(fmt "Nim loaded for {n} times")
-    #TODO take a look at FFieldCompiledInInfo for precomps
-    if n == 0:
-        createUEReflectedTypes()
+    # #TODO take a look at FFieldCompiledInInfo for precomps
+    # if n == 0:
+    #     createUEReflectedTypes()
    
-    scratchpadEditor()
+    # scratchpadEditor()
 
 
 

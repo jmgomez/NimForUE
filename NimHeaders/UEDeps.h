@@ -11,10 +11,11 @@
 #include "Misc/AutomationTest.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
+//NimForUEBindingsHeaders.h
 #include "UFunctionCaller.h"
 #include "NimClassBase.h"
 #include "Test/NimTestBase.h"
 #include "ReflectionHelpers.h"
 
 //Editor only
-#include "FakeFactory.h"
+//#include "FakeFactory.h"

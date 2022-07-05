@@ -288,9 +288,9 @@ suite "NimForUE.FunctionEmit":
 
             cast[ptr int32](result)[] = value
             # UE_Warn $(cast[ptr int32](result)[])
-            let returnProp = stack.node.getReturnProperty()
-            returnProp.initializeValueInContainer(result)
-            setPropertyValuePtr[int32](returnProp, result, value.addr)
+            # let returnProp = stack.node.getReturnProperty()
+            # returnProp.initializeValueInContainer(result)
+            # setPropertyValuePtr[int32](returnProp, result, value.addr)
             # UE_Warn $(cast[ptr int32](result)[])
 
 

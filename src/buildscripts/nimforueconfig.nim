@@ -96,7 +96,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     let engineDir = conf.engineDir
     let pluginDir = conf.pluginDir
 
-    let pluginDefinitionsPaths = "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
+    let pluginDefinitionsPaths = pluginDir / "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
     let nimForUEBindingsHeaders =  pluginDir/ "Source/NimForUEBindings/Public/"
     let nimForUEBindingsIntermidateHeaders = pluginDir/ "Intermediate"/ "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
     let nimForUEEditorHeaders =  pluginDir/ "Source/NimForUEEditor/Public/"
