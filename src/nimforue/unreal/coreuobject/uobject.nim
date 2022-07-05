@@ -119,6 +119,7 @@ type
 
 #UFIELD
 proc setMetadata*(field:UFieldPtr, key, inValue:FString) : void {.importcpp:"#->SetMetaData(*#, *#)".}
+proc bindType*(field:UFieldPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
 
 #USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
@@ -135,7 +136,6 @@ proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) :
 proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
 proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()" .}
 proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()" .}
-proc bindCls*(cls:UClassPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
 
 
 #UOBJECT

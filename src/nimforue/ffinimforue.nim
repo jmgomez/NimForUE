@@ -30,6 +30,7 @@ proc createUEReflectedTypes() =
                     @[
                         makeFieldAsUProp("TestField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                         makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+                        makeFieldAsUProp("TestInt", "int32", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                     ])
     let newCls = ueVarType.toUClass(package)
     UE_Log "Class created! " & newCls.getName()

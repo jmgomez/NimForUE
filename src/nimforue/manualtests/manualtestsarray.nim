@@ -119,20 +119,29 @@ proc scratchpad*(executor:UObjectPtr) =
 
 
 
-
-
-
 #Review the how 
 proc scratchpadEditor*() = 
     try:
-        let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
-        if not package.isNil():
-            UE_Log("package is " & package.getName())
-        else:
-            UE_Log("package is nil")
-    
-        
-       
+        # let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
+        # if not package.isNil():
+        #     UE_Log("package is " & package.getName())
+        # else:
+        #     UE_Log("package is nil")
+
+        # let ueType = UEType(name: "FMyNimStruct", kind: uStruct, fields: 
+        #                     @[
+        #                         makeFieldAsUProp("TestField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+        #                         makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+        #                     ])
+
+        # let objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet)
+        # let scriptStruct = newUObject[UScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+        # scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
+        # scriptStruct.propertyLink = nil
+        # scriptStruct.bindType()
+      
+
+       discard
     except Exception as e:
         UE_Warn e.msg
         UE_Warn e.getStackTrace()

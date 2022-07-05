@@ -66,10 +66,10 @@ func toUEType*(cls:UClassPtr) : UEType =
                     .map(toUEField) & 
                  getFPropsFromUStruct(cls)
                     .map(toUEField)
-
     let name = cls.getPrefixCpp() & cls.getName()
     let parent = cls.getSuperClass()
     let parentName = parent.getPrefixCpp() & parent.getName()
+
     UEType(name:name, kind:uClass, parent:parentName, fields:fields)
 
 
@@ -90,7 +90,6 @@ proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
     outer.addCppProperty(prop)
     prop
 
-proc createProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = propField.toFProperty(outer)
 
 proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
     let 
@@ -115,7 +114,7 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
         let fProp = field.toFProperty(newCls) #refactor this and move it to this file
 
 
-    newCls.bindCls()
+    newCls.bindType()
     newCls.staticLink(true)
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
     newCls
@@ -131,19 +130,15 @@ proc toUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignat
     fn.Next = cls.Children 
     cls.Children = fn
 
-    
     for field in fnField.signature:
         let fprop =  field.toFProperty(fn)
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
 
     cls.addFunctionToFunctionMap(fn, fnName)
-
     fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
-    
     fn.staticLink(true)
     # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
-   
     fn
 
-proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
+proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr {.deprecated: "use toUFunction instead".}= 
     fnField.toUFunction(cls, fnImpl)
