@@ -26,17 +26,17 @@ type
         case kind*: UEFieldKind
             of uefProp:
                 uePropType* : string #Do a close set of types? No, just do a close set on the MetaType. i.e Struct, TArray, Delegates (they complicate things)
-                propFlags*:EPropertyFlags
+                propFlags*:EPropertyFlagsVal
 
             of uefDelegate:
                 delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
                 delKind*: UEDelegateKind
-                delFlags*: EPropertyFlags
+                delFlags*: EPropertyFlagsVal
 
             of uefFunction:
                 #note cant use option type. If it has a returnParm it will be the first param that has CPF_ReturnParm
                 signature* : seq[UEField]
-                fnFlags* : EFunctionFlags
+                fnFlags* : EFunctionFlagsVal
             
             of uefEnumVal:
                 discard
@@ -45,16 +45,16 @@ type
 # #JSON
               
 func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None) : UEField = 
-    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:flags)       
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
 
 func makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string], flags=CPF_None) : UEField = 
-    UEField(kind:uefDelegate, name: name, delKind: delKind, delegateSignature:signature, delFlags:flags)
+    UEField(kind:uefDelegate, name: name, delKind: delKind, delegateSignature:signature, delFlags:EPropertyFlagsVal(flags))
 
 func makeFieldAsUFun*(name:string, signature:seq[UEField], flags=FUNC_None) : UEField = 
-    UEField(kind:uefFunction, name:name, signature:signature, fnFlags:flags)
+    UEField(kind:uefFunction, name:name, signature:signature, fnFlags:EFunctionFlagsVal(flags))
 
 func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField = 
-    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:flags)       
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
 
 
 func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")

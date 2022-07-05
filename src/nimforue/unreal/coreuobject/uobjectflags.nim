@@ -5,6 +5,7 @@ import std/[genasts, macros, json, sequtils]
 
 
 type 
+    EPropertyFlagsVal* = distinct(uint64)
 
     EPropertyFlags* {. importcpp, size:sizeof(uint64).} = enum
         CPF_None = 0,
@@ -65,7 +66,7 @@ type
         CPF_NativeAccessSpecifierPrivate  = 0x0040000000000000,  #< Private native access specifier
         CPF_SkipSerialization        = 0x0080000000000000,  
 
-
+    EObjectFlagsVal* = distinct(uint32)
 
     EObjectFlags* {.importcpp, size:sizeof(uint32).} = enum
         # if you change any the bit of any of the RF_Load flags, then you will need legacy serialization
@@ -118,6 +119,7 @@ type
         RF_Garbage  = 0x40000000, #UE_DEPRECATED(5.0, "RF_Garbage should not be used directly. Use MarkAsGarbage and ClearGarbage instead.") =0x40000000,  #< Garbage from logical point of view and should not be referenced. This flag is mirrored in EInternalObjectFlags as Garbage for performance
         RF_AllocatedInSharedPage  =0x80000000,  #< Allocated from a ref-counted page shared with other UObjects
 
+    EFunctionFlagsVal* = distinct(uint32)
 
     EFunctionFlags* {.importcpp, size:sizeof(uint32).} = enum 
         # Function flags.
@@ -159,7 +161,7 @@ type
 
 
 
-
+    EClassFlagsVal* = distinct(uint32)
 
     EClassFlags* {.importcpp, size:sizeof(uint32).} = enum #TODO Test sizeof in cpp to see if they are uint32
         #* No Flags */
@@ -236,10 +238,13 @@ type
         CLASS_ConfigDoNotCheckDefaults = 0x40000000,
         #* Class has been consigned to oblivion as part of a blueprint recompile, and a newer version currently exists. */
         CLASS_NewerVersionExists  = 0x80000000
-        
+
+    EClassCastFlagsVal* = distinct(uint64)
     EClassCastFlags* {.importcpp, size:sizeof(uint64).} = enum #Dont think we will ever need the values imported
         CASTCLASS_None = 0x0000000000000000
-
+    
+    
+    EFieldIterationFlagsVal* = distinct(uint8)
     EFieldIterationFlags* {.importcpp, size:sizeof(uint8).} = enum 
         None = 0
         IncludeSuper = rotateLeftBits(1.uint8, 0)#1<<0     	# Include super class
@@ -249,7 +254,7 @@ type
 
 
 macro genEnumOperators(enumName, enumType:static string) : untyped = 
-    genAst(name=ident enumName, typ=ident enumType):
+    genAst(name=ident enumName, typ=ident enumType, valName=ident enumName&"Val"):
         proc `or`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
         proc `|`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
             # cast[name](bitor(cast[typ](a),cast[typ](b)))
@@ -265,6 +270,8 @@ macro genEnumOperators(enumName, enumType:static string) : untyped =
 
         proc toJsonHook*(self:name) : JsonNode = newJInt(int(self))
         
+        converter toValName*(a:name) : valName = valName(typ(ord(a)))
+        converter toName*(a:valName) : name = name(typ((a)))
 
 
 genEnumOperators("EPropertyFlags", "uint64")

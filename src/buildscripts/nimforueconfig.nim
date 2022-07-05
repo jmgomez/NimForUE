@@ -90,6 +90,52 @@ proc getNimForUEConfig*(pluginDirPath="") : NimForUEConfig =
 #Epics adds a space in the installation directory (Epic Games) on Windows so it has to be quoted. Maybe we should do this for all user paths?
 proc addQuotes*(fullPath: string) : string = "\"" & fullPath & "\""
 
+proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
+    let platformDir = if conf.targetPlatform == Mac: "Mac/x86_64" else: $ conf.targetPlatform
+    let confDir = $ conf.targetConfiguration
+    let engineDir = conf.engineDir
+    let pluginDir = conf.pluginDir
+
+    let pluginDefinitionsPaths = "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
+    let nimForUEBindingsHeaders =  pluginDir/ "Source/NimForUEBindings/Public/"
+    let nimForUEBindingsIntermidateHeaders = pluginDir/ "Intermediate"/ "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
+    let nimForUEEditorHeaders =  pluginDir/ "Source/NimForUEEditor/Public/"
+    let nimForUEEditorIntermidateHeaders = pluginDir/ "Intermediate"/ "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEEditor"
+
+    proc getEngineRuntimeIncludePathFor(engineFolder, moduleName:string) : string = addQuotes(engineDir / "Source"/engineFolder/moduleName/"Public")
+    proc getEngineIntermediateIncludePathFor(moduleName:string) : string = addQuotes(engineDir / "Intermediate"/"Build"/platformDir/"UnrealEditor"/"Inc"/moduleName)
+    
+    let essentialHeaders = @[
+        pluginDefinitionsPaths /  "NimForUE",
+        pluginDefinitionsPaths /  "NimForUEBindings",
+        nimForUEBindingsHeaders,
+        nimForUEBindingsIntermidateHeaders,
+    #notice this shouldnt be included when target <> Editor
+        nimForUEEditorHeaders,
+        nimForUEEditorIntermidateHeaders,
+
+        pluginDir/"NimHeaders",
+        #engine
+        addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"),
+        addQuotes(engineDir/"Source"/"Runtime"/"Engine"/"Classes"/"Engine"),
+        addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Public"),
+        addQuotes(engineDir/"Source"/"Runtime"/"Net"/"Core"/"Classes")
+    ]
+    let runtimeModules = @["CoreUObject", "Core", "Engine", "TraceLog", "Launch", "ApplicationCore", 
+        "Projects", "Json", "PakFile", "RSA", "Engine", "RenderCore",
+        "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
+        "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore", "AssetRegistry"]
+
+    let developerModules = @["DesktopPlatform", "ToolMenus", "TargetPlatform", "SourceControl"]
+    let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry"]
+
+    let moduleHeaders = 
+        runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
+        developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
+        intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module))
+
+    return essentialHeaders & moduleHeaders
+        
 
 proc getUESymbols*(conf:NimForUEConfig) : seq[string] =
     let platformDir = if conf.targetPlatform == Mac: "Mac/x86_64" else: $ conf.targetPlatform
@@ -125,7 +171,7 @@ proc getUESymbols*(conf:NimForUEConfig) : seq[string] =
 
     
     let modules = @["Core", "CoreUObject", "Engine"]
-    let engineSymbolsPaths = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName))
+    let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName))
     
     return engineSymbolsPaths & getNimForUESymbols()
-    
+

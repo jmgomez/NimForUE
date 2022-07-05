@@ -1,6 +1,6 @@
 # script to build the from .nimcache
 import std / [os, osproc, strutils, sequtils, times, options, strformat, sugar, threadpool]
-import nimForUEConfig
+import nimforueconfig
 
 const withPCH = true
 const parallelBuild = true # for debugging purposes, normally we want to execute in parallel
@@ -31,59 +31,6 @@ proc usesPCHFile(path: string): bool =
   false
 
 
-proc getHeadersIncludePaths*() : seq[string] = 
-  let pluginDefinitionsPaths = pluginDir / "/Intermediate"/"Build" / platformDir / "UnrealEditor" / confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
-  let nimForUEBindingsHeaders =  pluginDir / "Source/NimForUEBindings/Public/"
-  let nimForUEBindingsIntermidateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
-
-  proc getEngineRuntimeIncludePathFor(engineFolder, moduleName:string) : string = quotes(engineDir / "Source" / engineFolder / moduleName / "Public")
-  proc getEngineIntermediateIncludePathFor(moduleName:string) : string = quotes(engineDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / moduleName)
-
-  let essentialHeaders = @[
-      pluginDefinitionsPaths / "NimForUE",
-      pluginDefinitionsPaths / "NimForUEBindings",
-      nimForUEBindingsHeaders,
-      nimForUEBindingsIntermidateHeaders,
-      pluginDir / "NimHeaders",
-      #engine
-      quotes(engineDir / "Source/Runtime/Engine/Classes"),
-      quotes(engineDir / "Source/Runtime/Engine/Classes/Engine"),
-      quotes(engineDir / "Source/Runtime/Net/Core/Public"),
-      quotes(engineDir / "Source/Runtime/Net/Core/Classes")
-  ]
-  let runtimeModules = @["CoreUObject", "Core", "Engine", "TraceLog", "Launch", "ApplicationCore", 
-      "Projects", "Json", "PakFile", "RSA", "Engine", "RenderCore",
-      "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
-      "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore"]
-
-  let developerModules = @["DesktopPlatform", "ToolMenus", "TargetPlatform", "SourceControl"]
-  let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore"]
-
-  let moduleHeaders = 
-      runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
-      developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
-      intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module))
-
-  essentialHeaders & moduleHeaders
-
-proc getLinkSymbols() : string =
-  proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string) : string =  
-    let libName = &"{prefix}-{moduleName}" 
-    when defined windows:
-      return quotes(engineDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / moduleName / libName & ".lib")
-    elif defined macosx:
-      let platform = $nueConfig.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
-      return  engineDir / "Binaries" / platform / libName & ".dylib"
-
-  # get engine weak symbols for modules
-  for module in @["Core", "CoreUObject", "Engine", "Projects"]:
-    result &= getEngineRuntimeSymbolPathFor("UnrealEditor", module) & " "
-
-  # addNewForUEBindings()
-  when defined macosx:
-    result &= pluginDir / "Binaries" / $nueConfig.targetPlatform / "UnrealEditor-NimForUEBindings.dylib"
-  elif defined windows:
-    result &= quotes(pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / "NimForUEBindings/UnrealEditor-NimForUEBindings.lib")
 
 
 # Find the definitions here:
@@ -186,7 +133,7 @@ proc compileCmd(cpppath: string, objpath: string): string =
   "vccexe.exe" & " " &
     CompileFlags.join(" ") & " " &
     (if withPCH and usesPCHFile(cppPath): pchFlags() else: "") & " " &
-    foldl(getHeadersIncludePaths(), a & "-I" & b & " ", "") & " " &
+    getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b & " ") & " " &
     "/Fo" & objpath & " " & cppPath
 
 
@@ -196,8 +143,7 @@ proc winpch*() =
     quit("! Error: Could not compile winpch.")
 
   var createPCHCmd = r"vccexe.exe /c --platform:amd64 /nologo "& pchFlags(shouldCreate = true) & " " &
-    CompileFlags.join(" ") & " " &
-    foldl(getHeadersIncludePaths(), a & "-I" & b & " ", "")
+    CompileFlags.join(" ") & " " & getUEHeadersIncludePaths(nueConfig).foldl( a & " -I" & b, " ")
 
   let definitionsCppPath = pluginDir / ".nimcache/winpch/@mdefinitions.nim.cpp"
   if fileExists(definitionsCppPath):
@@ -268,7 +214,7 @@ proc nimcacheBuild*(): BuildStatus =
   var pchObj = quotes(pluginDir / ".nimcache/winpch/@mdefinitions.nim.obj")
   let dllpath = quotes(pluginDir / "Binaries/nim/nimforue.dll")
   let linkcmd = "vccexe.exe /LD --platform:amd64  /nologo /Fe" & dllpath & " " &
-    getLinkSymbols() & " " & objpaths.join(" ") & " " & (if withPCH: pchObj else: "")
+    getUESymbols(nueConfig).foldl(a & " " & b, " ") & " " & objpaths.join(" ") & " " & (if withPCH: pchObj else: "")
  
   let linkRes = execCmd(linkCmd)
   if linkRes != 0:
