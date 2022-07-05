@@ -1,7 +1,6 @@
 
 include ../../unreal/prelude
-import strutils
-import strformat
+import std/[strutils]
 import ../testutils
 import unittest
 import ../testdata
@@ -63,7 +62,7 @@ suite "NimForUE.FunctionEmit":
         cls.removeFunctionFromClass fn
      
 
-    ueTest "should be able to invoke a function":
+    ueTest "Should be able to invoke a function":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
 
         #replace with addDynamic

@@ -1,6 +1,7 @@
 
 
 include unreal/prelude
+import typegen/[uetypegen, models]
 
 
 import macros/[ffi, uebind]
@@ -25,10 +26,23 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
 #called from C++ NimForUE Module
 proc onNimForUELoaded(n:int32) : void {.ffi:genFilePath} = 
     UE_Log(fmt "Nim loaded for {n} times")
-    discard
+    #TODO take a look at FFieldCompiledInInfo for precomps
+    
+    # let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
+    # let clsFlags =  (CLASS_Inherit | CLASS_ScriptInherit )
+    # let className = "UNimClassWhateverProp"
+    # let ueVarType = makeUEClass(className, "UObject", clsFlags,
+    #                 @[
+    #                     makeFieldAsUProp("TestField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+    #                     makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+    #                 ])
+    # let newCls = ueVarType.toUClass(package)
+    # UE_Log "Class created! " & newCls.getName()
+
 
 #called right before it is unloaded
 #called from the host library
 proc onNimForUEUnloaded() : void {.ffi:genFilePath}  = 
     UE_Log("Nim for UE unloaded")
+
     discard

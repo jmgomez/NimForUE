@@ -142,6 +142,7 @@ proc bindCls*(cls:UClassPtr) : void {. importcpp:"#->Bind()" .} #notice bind is 
 proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
+proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
 proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
 
 

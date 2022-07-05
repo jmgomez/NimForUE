@@ -18,12 +18,12 @@
 		{
 			"Name": "NimForUE",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PreDefault"
 		},
 		{
 			"Name": "NimForUEBindings",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "EarliestPossible"
 		},
 		{
 			"Name": "NimForUETest",

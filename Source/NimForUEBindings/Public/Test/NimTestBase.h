@@ -22,10 +22,7 @@ public:
 
 	
 	
-	virtual uint32 GetTestFlags() const override {
-		//At some point expose these
-		return  EAutomationTestFlags::EditorContext | EAutomationTestFlags::SmokeFilter;;
-	}
+	virtual uint32 GetTestFlags() const override;
 	virtual FString GetBeautifiedTestName() const override {
 		return TestName;
 	}

@@ -59,8 +59,12 @@ proc newObjectFromClass*(cls:UClassPtr) : UObjectPtr = newObjectFromClass(nil, c
 proc newObjectFromClass(params:FStaticConstructObjectParameters) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
 
 
-
+#TODO This can be (and should be optmized in multiple ways. 
+#1. Define package when possible, 
+#2. Do not pass copy of FStrings around.
+#3. Cache
 proc getClassByName*(className:FString) : UClassPtr = getUTypeByName[UClass](className)
+
 proc getScriptStructByName*(structName:FString) : UScriptStructPtr = getUTypeByName[UScriptStruct](structName)
 proc getUStructByName*(structName:FString) : UStructPtr = getUTypeByName[UStruct](structName)
 

@@ -26,3 +26,8 @@ void FNimTestBase::ReloadTest(bool bIsOnly) {
 	AllRegisteredNimTests.AddUnique(TestName);
 	
 }
+
+uint32 FNimTestBase::GetTestFlags() const {
+	//At some point expose these
+	return   EAutomationTestFlags::ProductFilter;
+}

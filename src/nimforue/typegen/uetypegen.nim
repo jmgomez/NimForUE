@@ -71,3 +71,32 @@ func toUEType*(cls:UClassPtr) : UEType =
     let parent = cls.getSuperClass()
     let parentName = parent.getPrefixCpp() & parent.getName()
     UEType(name:name, kind:uClass, parent:parentName, fields:fields)
+
+
+proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
+    let 
+        objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
+        newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+        parent = getClassByName(ueType.parent.removeFirstLetter())
+    
+    assetCreated(newCls)
+
+    newCls.classConstructor = nil
+    newCls.propertyLink = parent.propertyLink
+    newCls.classWithin = parent.classWithin
+    newCls.classConfigName = parent.classConfigName
+    newcls.setSuperStruct(parent)
+    newcls.classFlags =  ueType.clsFlags & parent.classFlags
+    newCls.classCastFlags = parent.classCastFlags
+    
+    copyMetadata(parent, newCls)
+    newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
+    
+    for field in ueType.fields:
+        let fProp = newCls.createProperty(field) #refactor this and move it to this file
+
+
+    newCls.bindCls()
+    newCls.staticLink(true)
+    # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
+    newCls

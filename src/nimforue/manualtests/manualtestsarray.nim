@@ -121,29 +121,6 @@ proc scratchpad*(executor:UObjectPtr) =
 
 
 
-proc createClass*(package:UPackagePtr, ueType : UEType) : UClassPtr =
-    let 
-        objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
-        newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
-        parent = getClassByName(ueType.parent.removeFirstLetter())
-    
-    assetCreated(newCls)
-
-    newCls.classConstructor = nil
-    newCls.propertyLink = parent.propertyLink
-    newCls.classWithin = parent.classWithin
-    newCls.classConfigName = parent.classConfigName
-    newcls.setSuperStruct(parent)
-    newcls.classFlags =  ueType.clsFlags & parent.classFlags
-    newCls.classCastFlags = parent.classCastFlags
-    
-    copyMetadata(parent, newCls)
-    newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
-    
-    newCls.bindCls()
-    newCls.staticLink(true)
-    broadcastAsset(newCls)
-    newCls
 
 #Review the how 
 proc scratchpadEditor*() = 
@@ -154,19 +131,8 @@ proc scratchpadEditor*() =
         else:
             UE_Log("package is nil")
     
-        let clsFlags =  (CLASS_Inherit | CLASS_ScriptInherit )
-        let className = "UNimClassWhatever"
-        
-        # if CLASS_Intrinsic in uobjCls.classFlags:
-        #     UE_Warn("Class Object is intrinsic")
-        #     return
-        
-        let ueVarType = UEType(name: className, parent: "UObject", kind: uClass, clsFlags: clsFlags,
-                    fields: @[
-                        UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
-                        ])
-        let newCls = package.createClass(ueVarType)
-        UE_Log "Class created! " & newCls.getName()
+     
+       
     except Exception as e:
         UE_Warn e.msg
         UE_Warn e.getStackTrace()

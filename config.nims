@@ -3,6 +3,8 @@ import std/[strutils,sequtils, sugar, os, strformat]
 # let compiledFileName = projectPath().split("/")[^1].split(".")[0]
 # switch("nimcache", "./Binaries/nim/nimcache/" & compiledFileName)
 
+
+
 when defined host:
     switch("header", "NimForUEFFI.h")
     switch("threads") #needed to watch
@@ -81,4 +83,4 @@ when defined withue:
     for symbolPath in getUESymbols(nueConfig):
         switch("passL", symbolPath)
 
-switch("mm", "orc") 
+switch("mm", "orc") #this needs to be at the end
