@@ -373,13 +373,11 @@ suite "NimForUE.UObject":
         assert obj.bWasCalled
         obj.multicastDynamicDelegateOneParamProperty.removeAll(obj)
 
-
     ueTest "ShouldBeAbleToUseMulticastDelegatesFromUProps":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
-
         #replace with addDynamic
         obj.multicastDynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
-
+        
         obj.multicastDynamicDelegateOneParamProperty.broadcast("Hey!")
 
         assert obj.bWasCalled 

@@ -12,10 +12,6 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 
 //NimForUEBindingsHeaders.h
-#include "UFunctionCaller.h"
-#include "NimClassBase.h"
-#include "Test/NimTestBase.h"
-#include "ReflectionHelpers.h"
-
+#include "NimForUEBindingsHeaders.h"
 //Editor only
 //#include "FakeFactory.h"

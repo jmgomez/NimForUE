@@ -15,7 +15,7 @@ class NIMFORUEBINDINGS_API UNimScriptStruct : public UScriptStruct {
 
 public:
 	template<typename T>
-	void SetCppStructOpFor(T FakeType) {
+	void SetCppStructOpFor(T* FakeType) {
 		this->CppStructOps = new UScriptStruct::TCppStructOps<T>();
 	}
 };

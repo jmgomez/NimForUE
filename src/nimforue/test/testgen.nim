@@ -28,7 +28,7 @@ suite "NimForUE.TypesGen":
         let cls = getClassByName("MyClassToTest")
 
         let ueClass = cls.toUEType()
-
+        
         assert ueClass.name == "UMyClassToTest"
         assert ueClass.parent == "UObject"
 

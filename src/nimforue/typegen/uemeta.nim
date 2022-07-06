@@ -133,7 +133,7 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
     newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
     
     for field in ueType.fields:
-        let fProp = field.toFProperty(newCls) #refactor this and move it to this file
+        let fProp = field.toFProperty(newCls) 
 
 
     newCls.bindType()
