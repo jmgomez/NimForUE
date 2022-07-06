@@ -126,13 +126,12 @@ proc scratchpad*(executor:UObjectPtr) =
 #Review the how 
 proc scratchpadEditor*() = 
     try:
-        let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
-        # if not package.isNil():
-        #     UE_Log("package is " & package.getName())
-        # else:
-        #     UE_Log("package is nil")
+        let package = getPackageByName("NimForUEBindings")
+        if not package.isNil():
+            UE_Log("package is " & package.getName())
+        else:
+            UE_Log("package is nill")
 
- 
     except Exception as e:
         
         UE_Warn e.msg

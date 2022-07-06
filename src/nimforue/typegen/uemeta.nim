@@ -157,6 +157,13 @@ proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
     scriptStruct.staticLink(true)
 
     scriptStruct
+
+
+proc toUStruct*[T](ueType : UEType, package:string) : UStructPtr =
+    let package = getPackageByName(package)
+    if package.isnil():
+        raise newException(Exception, "Package not found!")
+    toUStruct[T](ueType, package)
     
 
 

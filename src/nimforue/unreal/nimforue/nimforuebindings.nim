@@ -1,4 +1,4 @@
-import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes, uobjectglobals]
+import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, templates/subclassof, nametypes, uobjectglobals]
 import ../core/containers/[unrealstring, array]
 import std/[typetraits, strutils]
 include ../definitions
@@ -109,6 +109,12 @@ proc setNativeFunc*(ufunc: ptr UFunction, funcPtr: FNativeFuncPtr) : void {.impo
 
 proc increaseStack*(stack: var FFrame) : void {.importcpp: "UReflectionHelpers::IncreaseStack(#)" .}
 
+
+
+
+#UPACKAGE
+proc getPackageByName*(packageName:FString) : UPackagePtr = 
+        findObject[UPackage](nil, convertToLongScriptPackageName(packageName))
 
 
 ##EDITOR

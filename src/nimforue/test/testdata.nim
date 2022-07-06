@@ -1,6 +1,6 @@
 include ../unreal/prelude
 import ../typegen/uemeta
-
+import std/tables
 # export typegen/models
 
 const ueEnumType = UEType(name: "EMyTestEnum", kind: uEnum, 
@@ -10,13 +10,16 @@ const ueEnumType = UEType(name: "EMyTestEnum", kind: uEnum,
                             ]
                         )
 genType(ueEnumType)
+const mytable : Table[string, bool] = {"key1": true, "key2": false}.toTable()
 
-const ueStructType = UEType(name: "FStructToUseAsVar", kind: uStruct, 
+const ueStructType = UEType(name: "FStructToUseAsVar", kind: uStruct,
                         fields: @[
                             UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
                         ])
-genType(ueStructType)                
+  
+genType(ueStructType)
 
+# emitType(ueStructType, ueStructType)
 
 const ueVarType = UEType(name: "UClassToUseAsVar", parent: "UObject", kind: uClass, 
                     fields: @[

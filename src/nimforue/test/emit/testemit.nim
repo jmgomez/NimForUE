@@ -56,12 +56,12 @@ suite "NimForUE.ClassEmit":
 
         let fields = getFPropsFromUStruct(scriptStruct)
 
-        assert not searchCls().isNil()        
+        assert not searchCls().isNil()
         assert fields.len() == 3
 
         scriptStruct.conditionalBeginDestroy()
 
         assert searchCls().isNil()
-        
+
 
 

@@ -22,6 +22,17 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     scratchpad(executor)
 
 
+
+
+const ueStructType = UEType(name: "FMyNimStruct", kind: uStruct, fields: 
+                            @[
+                                makeFieldAsUProp("TestField2321", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+                                makeFieldAsUProp("TestField2", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+                                makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+                            ])
+
+emitType(ueStructType, ueStructType) #should I add it as a function? 
+
 proc createUEReflectedTypes() = 
     let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
     let clsFlags =  (CLASS_Inherit | CLASS_ScriptInherit )
@@ -34,6 +45,13 @@ proc createUEReflectedTypes() =
                     ])
     let newCls = ueVarType.toUClass(package)
     UE_Log "Class created! " & newCls.getName()
+
+    
+
+    # let scriptStruct = genTest()
+    # let scriptStruct = toUStruct[FMyNimStruct](ueStructType, "NimForUEDemo")
+
+    # UE_Log "Struct created with emit type " & scriptStruct.getName()
 
 
 

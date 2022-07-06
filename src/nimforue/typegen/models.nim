@@ -29,7 +29,7 @@ type
 
     UEField* = object
         name* : string
-        metatadata* : Table[string, bool]
+        # metatadata* : Table[string, bool]
 
         case kind*: UEFieldKind
             of uefProp:
@@ -55,12 +55,12 @@ func shouldBeReturnedAsVar*(field:UEField) : bool =
     let typesReturnedAsVar = ["TMap"]
     field.kind == uefProp and typesReturnedAsVar.filter(tp => tp in field.uePropType ).head().isSome()
 
-
 type
     UEType* = object 
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
-        metatadata* : Table[string, bool]
+        metadata* : Table[string, bool]
+        # metadata* : seq[Metadata]
         #class flags?
         case kind*: UETypeKind
             of uClass:
