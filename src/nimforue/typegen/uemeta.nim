@@ -3,6 +3,28 @@ import std/[times,strformat, strutils, options, sugar, sequtils]
 import models
 export models
 
+
+#UE META CONSTRUCTORS. Notice they are here because they pull type definitions from Cpp which cant be loaded in the ScriptVM
+func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
+
+func makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string], flags=CPF_None) : UEField = 
+    UEField(kind:uefDelegate, name: name, delKind: delKind, delegateSignature:signature, delFlags:EPropertyFlagsVal(flags))
+
+func makeFieldAsUFun*(name:string, signature:seq[UEField], flags=FUNC_None) : UEField = 
+    UEField(kind:uefFunction, name:name, signature:signature, fnFlags:EFunctionFlagsVal(flags))
+
+func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
+
+
+
+func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField]) : UEType = 
+    UEType(kind:uClass, name:name, parent:parent, clsFlags:EClassFlagsVal(clsFlags), fields:fields)
+
+
+
+
 func isTArray(prop:FPropertyPtr) : bool = not castField[FArrayProperty](prop).isNil()
 func isTMap(prop:FPropertyPtr) : bool = not castField[FMapProperty](prop).isNil()
 func isTEnum(prop:FPropertyPtr) : bool = "TEnumAsByte" in prop.getName()

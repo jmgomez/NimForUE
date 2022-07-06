@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import ../typegen/models
+import ../typegen/uemeta
 
 # export typegen/models
 

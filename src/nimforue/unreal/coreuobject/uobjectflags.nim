@@ -1,11 +1,11 @@
 include ../definitions
 import bitops
+import ../../typegen/models
 import std/[genasts, macros, sugar, json, sequtils]
 
 
 
 type 
-    EPropertyFlagsVal* = distinct(uint64)
 
     EPropertyFlags* {. importcpp, header: ueIncludes, size:sizeof(uint64).} = enum
         CPF_None = 0,
@@ -119,7 +119,6 @@ type
         RF_Garbage  = 0x40000000, #UE_DEPRECATED(5.0, "RF_Garbage should not be used directly. Use MarkAsGarbage and ClearGarbage instead.") =0x40000000,  #< Garbage from logical point of view and should not be referenced. This flag is mirrored in EInternalObjectFlags as Garbage for performance
         RF_AllocatedInSharedPage  =0x80000000,  #< Allocated from a ref-counted page shared with other UObjects
 
-    EFunctionFlagsVal* = distinct(uint32)
 
     EFunctionFlags* {.importcpp, size:sizeof(uint32).} = enum 
         # Function flags.
@@ -161,7 +160,6 @@ type
 
 
 
-    EClassFlagsVal* = distinct(uint32)
 
     EClassFlags* {.importcpp, size:sizeof(uint32).} = enum #TODO Test sizeof in cpp to see if they are uint32
         #* No Flags */
@@ -239,7 +237,6 @@ type
         #* Class has been consigned to oblivion as part of a blueprint recompile, and a newer version currently exists. */
         CLASS_NewerVersionExists  = 0x80000000
 
-    EClassCastFlagsVal* = distinct(uint64)
     EClassCastFlags* {.importcpp, size:sizeof(uint64).} = enum #Dont think we will ever need the values imported
         CASTCLASS_None = 0x0000000000000000
     
