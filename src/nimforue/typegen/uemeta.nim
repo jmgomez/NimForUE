@@ -141,6 +141,24 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
     newCls
 
+proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
+    let  
+        objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet)
+        scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+        
+    scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
+    scriptStruct.assetCreated()
+
+    for field in ueType.fields:
+        let fProp = field.toFProperty(scriptStruct) 
+
+    setCppStructOpFor[T](scriptStruct, nil)
+    scriptStruct.bindType()
+    scriptStruct.staticLink(true)
+
+    scriptStruct
+    
+
 
 
 #note at some point class can be resolved from the UEField?

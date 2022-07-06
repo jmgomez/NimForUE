@@ -11,6 +11,14 @@ type
     # UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
     # UNimClassBasePtr* = ptr UNimClassBase
 
+    UNimScriptStruct* {.importcpp.} = object of UScriptStruct
+    UNimScriptStructPtr* = ptr UNimScriptStruct
+
+
+proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
+
+
+
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:openarray[pointer]) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}

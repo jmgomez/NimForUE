@@ -118,16 +118,10 @@ proc scratchpad*(executor:UObjectPtr) =
     let ueType = cls.toUEType()
 
 
-type FMyNimStruct* = object
-    testField* : FString
-    testFieldOtra* : FString
 
-type
-    UNimScriptStruct* {.importcpp.} = object of UScriptStruct
-    UNimScriptStructPtr* = ptr UNimScriptStruct
 
-proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
 
+       
 
 #Review the how 
 proc scratchpadEditor*() = 
@@ -138,29 +132,7 @@ proc scratchpadEditor*() =
         # else:
         #     UE_Log("package is nil")
 
-        let ueType = UEType(name: "FMyNimStruct", kind: uStruct, fields: 
-                            @[
-                                makeFieldAsUProp("TestField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                                makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                            ])
-
-        let objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet)
-        let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
-        scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
-        scriptStruct.assetCreated()
-
-        for field in ueType.fields:
-            let fProp = field.toFProperty(scriptStruct) 
-
-        setCppStructOpFor[FMyNimStruct](scriptStruct, nil)
-        scriptStruct.bindType()
-        scriptStruct.staticLink(true)
-        # scriptStruct.propertyLink = nil
-        # scriptStruct.bindType()
-
-        
-
-       
+ 
     except Exception as e:
         
         UE_Warn e.msg
