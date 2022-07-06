@@ -71,3 +71,7 @@ type
             of uEnum:
                 discard
 
+    UEModule* = object
+        name* : string
+        types* : seq[UEType]
+        dependencies* : seq[UEModule]        
