@@ -10,7 +10,8 @@ public class NimForUEEditor : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"UnrealEd",
-
+			"Slate",
+			"SlateCore",
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 

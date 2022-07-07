@@ -3,6 +3,7 @@
 #include "NimForUE.h"
 #include "Modules/ModuleManager.h"
 #include "Editor.h"
+#include "EditorUtils.h"
 #include "NimForUEFFI.h"
 #include "Async/Async.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -62,6 +63,7 @@ void FNimForUEModule::StartupModule()
 		onNimForUELoaded(ReloadTimes++);
 		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded! %s"), ANSI_TO_TCHAR(msg));
 		FCoreUObjectDelegates::ReloadCompleteDelegate.Broadcast(EReloadCompleteReason::HotReloadManual);
+		UEditorUtils::RefreshNodes();
 
 	};
 

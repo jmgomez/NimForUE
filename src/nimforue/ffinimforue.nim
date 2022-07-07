@@ -30,8 +30,7 @@ UStruct FMyNimStruct:
         testField : int32
         testField2 : FString
     uprop(EditAnywhere, BlueprintReadOnly):
-        param35 : int32
-        
+        amazing : int32
 
 UStruct FMyNimStructMacro2:
     (BlueprintType)
@@ -40,7 +39,6 @@ UStruct FMyNimStructMacro2:
         testField2 : FString
     uprop(OtherValues):
         param35 : int32
-        don : FString
 
 
 
