@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[times,strformat, strutils, options, sugar, sequtils]
+import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
 import models
 export models
 
@@ -151,8 +151,8 @@ proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
         
     scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
     scriptStruct.assetCreated()
-
-    for field in ueType.fields:
+    
+    for field in ueType.fields.toSeq().reversed():
         let fProp = field.toFProperty(scriptStruct) 
 
     setCppStructOpFor[T](scriptStruct, nil)

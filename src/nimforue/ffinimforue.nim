@@ -23,36 +23,25 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
 
 
 
-const ueStructType = UEType(name: "FMyNimStruct", kind: uStruct, fields: 
-                            @[
-                                makeFieldAsUProp("TestField2321", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                                makeFieldAsUProp("TestField2", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                                makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                            ])
 
-const ueStructType2 = UEType(name: "FMyNimStruct2", kind: uStruct, fields: 
-                            @[
-                                makeFieldAsUProp("TestField2321", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                                makeFieldAsUProp("TestField2", "int32", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                            ])
+UStruct FMyNimStruct:
+    (BlueprintType)
+    uprop(EditAnywhere, BlueprintReadWrite):
+        testField : int32
+        testField2 : FString
+    uprop(EditAnywhere, BlueprintReadOnly):
+        param35 : int32
+        
 
-
-
-emitType(ueStructType, ueStructType)
-emitType(ueStructType2, ueStructType2)  
-
-
-
-UStruct FMyNimStructMacro:
+UStruct FMyNimStructMacro2:
     (BlueprintType)
     uprop(EditAnywhere):
         testField : int32
         testField2 : FString
     uprop(OtherValues):
-        param3 : int32
-        param4 : FString
-        param5 : int32
-        param7 : FString
+        param35 : int32
+        don : FString
+
 
 
 

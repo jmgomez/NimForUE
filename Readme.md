@@ -2,7 +2,8 @@
 ![This is an image](./logo.png)
 
 
-
+### DISCLAIMER ###
+This is not ment to be used yet. There is no instructions available, there will be instructions once it's in a better state.  
 ### Why NimForUE?
 
 The core idea is to have a short feedback loop while having native performance and a modern language that can access to all features Unreal provides. 
@@ -56,25 +57,40 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 - [x] Cover most Unreal Reflected Types
 - [x] Getter/Setters macro for UProps
 - [ ] Generate Nim definitions from Unreal Reflection system 
-- [ ] Being able to produce new UE types from Nim
+- [x] Being able to produce new UE types from Nim
 - [ ] Macro (pragma) for implmenting UFuncs in nim
 
     ```nim
         proc myFunc(strg: FString) : {. ufunc: params .}
             nimCodeHere
 
+- [x] DSL for defining UStructs
+
+    ```nim
+        UStruct FMyNimStruct:
+        (BlueprintType)
+        uprop(EditAnywhere, BlueprintReadWrite):
+            testField : int32
+            testField2 : FString
+        uprop(EditAnywhere, BlueprintReadOnly):
+            param35 : int32    
+    ```
+- [ ] DSL for defining UEnums
+
 - [ ] DSL for defining UClasses
 
     ```nim
-        uclass MyClass of UObject = 
-            uprops(EditAnywhere, BlueprintReadOnly...)
-                MyProp : FString
-                MyProp2 : int
+        UClass MyClass of UObject = 
+            (Blueprintable, BlueprintType)
+            uprops(EditAnywhere, BlueprintReadOnly)
+                myProp : FString
+                myProp2 : int32
             uprops(MoreParams..)
                 ...
                 More props
-
     ```
+- [ ] Being able to emit any FProperty
+
 - Shipping Builds
     - [ ] Make builds work on Windows 
     - [ ] Make builds work on MacOS 

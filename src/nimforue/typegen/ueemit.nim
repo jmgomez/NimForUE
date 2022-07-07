@@ -29,19 +29,22 @@ proc destroyAllUStructs*() : void =
     ueEmitter.uStructsEmitters = @[]
     ueEmitter.uStructsPtrs = @[]
 
-func emitUStruct(typeDef:UEType, typeDefAsNode : NimNode) : NimNode =
+func emitUStruct(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
-    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode): #defers the execution
+    
+    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
                 addUStructEmitter((package:UPackagePtr) => toUStruct[name](typeDefAsNode, package))
 
-    nnkStmtList.newTree [typeDecl, typeEmitter]
+    result = nnkStmtList.newTree [typeDecl, typeEmitter]
+    debugEcho repr result
 
-macro emitType*(typeDef : static UEType, typeDefAsNode : UEType) : untyped = 
+macro emitType*(typeDef : static UEType) : untyped = 
     case typeDef.kind:
         of uClass: discard
         of uStruct: 
-            result = emitUStruct(typeDef, typeDefAsNode)
+            result = emitUStruct(typeDef)
         of uEnum: discard
+
 
 
 
@@ -51,8 +54,6 @@ func childrenAsSeq*(node:NimNode) : seq[NimNode] =
     for n in node:
         nodes.add n
     nodes
-
-
 
 
 func fromUPropNodeToField(node : NimNode) : seq[UEField] = 
@@ -67,13 +68,10 @@ func fromUPropNodeToField(node : NimNode) : seq[UEField] =
                    .map(childrenAsSeq)
                    .get(@[])
                    .map(n => makeFieldAsUProp(n[0].repr, n[1].repr.strip(), flags))
-    debugEcho $ueFields
     ueFields
-# macro uStruct(props: varargs[EUEMetadata], body : untyped) : untyped = 
+
 macro UStruct*(name:untyped, body : untyped) : untyped = 
-    # echo repr body
-    # echo treeRepr name
-    # echo treeRepr body
+
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
 
     let ueFields = body.childrenAsSeq()
@@ -82,6 +80,6 @@ macro UStruct*(name:untyped, body : untyped) : untyped =
                        .foldl(a & b)
 
     let ueType = makeUEStruct(structTypeName, ueFields)
-    emitUStruct(ueType, newLit ueType)
+    
+    emitUStruct(ueType)
 
-# let ueType = makeUEStruct("hola", @[])
