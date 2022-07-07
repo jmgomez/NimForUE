@@ -59,7 +59,7 @@ type
     UEType* = object 
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
-        metadata* : Table[string, bool]
+        # metadata* : Table[string, bool]
         # metadata* : seq[Metadata]
         #class flags?
         case kind*: UETypeKind

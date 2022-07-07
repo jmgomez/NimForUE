@@ -22,6 +22,9 @@ func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField =
 func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField]) : UEType = 
     UEType(kind:uClass, name:name, parent:parent, clsFlags:EClassFlagsVal(clsFlags), fields:fields)
 
+func makeUEStruct*(name:string, fields:seq[UEField]) : UEType = 
+    UEType(kind:uStruct, name:name, fields:fields)
+
 
 
 

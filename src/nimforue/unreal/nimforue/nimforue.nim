@@ -40,3 +40,4 @@ proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FProperty
 
     
 type UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
+

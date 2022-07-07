@@ -36,10 +36,25 @@ const ueStructType2 = UEType(name: "FMyNimStruct2", kind: uStruct, fields:
                                 makeFieldAsUProp("TestField2", "int32", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                             ])
 
-var ueEmitter = UEEmitter()
 
-emitType(ueStructType, ueStructType, ueEmitter)
-emitType(ueStructType2, ueStructType2, ueEmitter)  
+
+emitType(ueStructType, ueStructType)
+emitType(ueStructType2, ueStructType2)  
+
+
+
+UStruct FMyNimStructMacro:
+    (BlueprintType)
+    uprop(EditAnywhere):
+        testField : int32
+        testField2 : FString
+    uprop(OtherValues):
+        param3 : int32
+        param4 : FString
+        param5 : int32
+        param7 : FString
+
+
 
 proc createUEReflectedTypes() = 
     let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
@@ -55,9 +70,7 @@ proc createUEReflectedTypes() =
     UE_Log "Class created! " & newCls.getName()
 
     
-    for structEmmitter in ueEmitter.uStructsEmitters:
-        let scriptStruct = structEmmitter(package)
-        UE_Log "Struct created with emit type " & scriptStruct.getName()
+    
 
 
 
@@ -69,7 +82,10 @@ proc onNimForUELoaded(n:int32) : void {.ffi:genFilePath} =
     # #TODO take a look at FFieldCompiledInInfo for precomps
     if n == 0:
         createUEReflectedTypes()
-   
+
+    let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
+    genUStructsForPackage(pkg)
+
     scratchpadEditor()
 
 
@@ -77,6 +93,10 @@ proc onNimForUELoaded(n:int32) : void {.ffi:genFilePath} =
 #called right before it is unloaded
 #called from the host library
 proc onNimForUEUnloaded() : void {.ffi:genFilePath}  = 
+    # destroyAllUStructs()
     UE_Log("Nim for UE unloaded")
+
+    # for structEmmitter in ueEmitter.uStructsEmitters:
+    # let scriptStruct = structEmmitter(package)
 
     discard
