@@ -1,14 +1,13 @@
 
 
 include unreal/prelude
-import typegen/[uemeta, models]
+import typegen/[uemeta, ueemit]
 
 
 import macros/[ffi, uebind]
 import std/[times]
 import strformat
 import manualtests/manualtestsarray
-
 #define on config.nims
 const genFilePath* {.strdefine.} : string = ""
 
@@ -31,7 +30,16 @@ const ueStructType = UEType(name: "FMyNimStruct", kind: uStruct, fields:
                                 makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                             ])
 
-emitType(ueStructType, ueStructType) #should I add it as a function? 
+const ueStructType2 = UEType(name: "FMyNimStruct2", kind: uStruct, fields: 
+                            @[
+                                makeFieldAsUProp("TestField2321", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+                                makeFieldAsUProp("TestField2", "int32", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+                            ])
+
+var ueEmitter = UEEmitter()
+
+emitType(ueStructType, ueStructType, ueEmitter)
+emitType(ueStructType2, ueStructType2, ueEmitter)  
 
 proc createUEReflectedTypes() = 
     let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
@@ -47,11 +55,9 @@ proc createUEReflectedTypes() =
     UE_Log "Class created! " & newCls.getName()
 
     
-
-    # let scriptStruct = genTest()
-    # let scriptStruct = toUStruct[FMyNimStruct](ueStructType, "NimForUEDemo")
-
-    # UE_Log "Struct created with emit type " & scriptStruct.getName()
+    for structEmmitter in ueEmitter.uStructsEmitters:
+        let scriptStruct = structEmmitter(package)
+        UE_Log "Struct created with emit type " & scriptStruct.getName()
 
 
 

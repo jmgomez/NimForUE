@@ -1,6 +1,6 @@
 {.experimental: "caseStmtMacros".}
 include ../unreal/definitions
-import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros]
+import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
 import ../utils/utils
 import ../unreal/coreuobject/[uobject, uobjectflags]
 import ../typegen/models
@@ -491,7 +491,7 @@ func genUEnumTypeDef(typeDef:UEType) : NimNode =
     
     result[0][^1] = fields #replaces enum 
 
-func genTypeDecl(typeDef : UEType) : NimNode = 
+func genTypeDecl*(typeDef : UEType) : NimNode = 
     case typeDef.kind:
         of uClass:
             genUClassTypeDef(typeDef)
@@ -502,22 +502,6 @@ func genTypeDecl(typeDef : UEType) : NimNode =
         
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
     
-
-
-
-macro emitType*(typeDef : static UEType, typeDefAsNode : UEType) : untyped = 
-    let package = "NimForUEDemo"
-    let typeDecl = genTypeDecl(typeDef)
-    case typeDef.kind:
-        of uClass: discard
-        of uStruct:
-            let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode = typeDefAsNode, package): 
-                # proc genTest() : UStructPtr = #this function can be store in a seq of functions
-                discard toUStruct[name](typeDefAsNode, package)
-
-            result = nnkStmtList.newTree [typeDecl, typeEmitter]
-
-        of uEnum: discard
 
 
 

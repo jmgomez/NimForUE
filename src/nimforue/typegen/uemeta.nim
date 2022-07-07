@@ -189,3 +189,6 @@ proc toUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignat
 
 proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr {.deprecated: "use toUFunction instead".}= 
     fnField.toUFunction(cls, fnImpl)
+
+
+
