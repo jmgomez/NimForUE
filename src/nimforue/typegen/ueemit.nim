@@ -16,7 +16,7 @@ var ueEmitter = UEEmitter()
 
 proc addUStructEmitter*(fn : UPackagePtr->UStructPtr) : void =  ueEmitter.uStructsEmitters.add(fn)
 
-proc genUStructsForPackage*(pkg: UPackagePtr) : void = 
+proc emitUStructsForPackage*(pkg: UPackagePtr) : void = 
     for structEmmitter in ueEmitter.uStructsEmitters:
         let scriptStruct = structEmmitter(pkg)
         ueEmitter.uStructsPtrs.add(scriptStruct)
@@ -55,31 +55,57 @@ func childrenAsSeq*(node:NimNode) : seq[NimNode] =
         nodes.add n
     nodes
 
+func fromStringAsMetaToFlag(meta:seq[string]) : EPropertyFlags = 
+    var flags : EPropertyFlags = CPF_None
+    #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
+    for m in meta:
+        if m == "BlueprintReadOnly":
+            flags = flags | CPF_BlueprintVisible | CPF_BlueprintReadOnly
+        if m == "BlueprintReadWrite":
+            flags = flags | CPF_BlueprintVisible
+        if m == "EditAnywhere":
+            flags = flags | CPF_Edit
+        if m == "ExposeOnSpawn":
+                flags = flags | CPF_ExposeOnSpawn
+        
+    flags
+        
+
 
 func fromUPropNodeToField(node : NimNode) : seq[UEField] = 
     let metas = node.childrenAsSeq()
                     .filter(n=>n.kind==nnkIdent and n.strVal().toLower() != "uprop")
+                    .map(n=>n.strVal())
+                    .fromStringAsMetaToFlag()
 
-    let flags = CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn
     #TODO Metas to flags
     let ueFields = node.childrenAsSeq()
                    .filter(n=>n.kind==nnkStmtList)
                    .head()
                    .map(childrenAsSeq)
                    .get(@[])
-                   .map(n => makeFieldAsUProp(n[0].repr, n[1].repr.strip(), flags))
+                   .map(n => makeFieldAsUProp(n[0].repr, n[1].repr.strip(), metas))
     ueFields
 
 macro UStruct*(name:untyped, body : untyped) : untyped = 
-
+    debugEcho treeRepr body
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
+
+
+    let structMetas = body.childrenAsSeq()
+                   .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
+                   .map(n => n.childrenAsSeq())
+                   .foldl( a & b, newSeq[NimNode]())
+                   .map(n=>n.strVal().strip())
+                   .map(makeUEMetadata)
+
 
     let ueFields = body.childrenAsSeq()
                        .filter(n=>n.kind == nnkCall and n[0].strVal() == "uprop")
                        .map(fromUPropNodeToField)
                        .foldl(a & b)
 
-    let ueType = makeUEStruct(structTypeName, ueFields)
+    let ueType = makeUEStruct(structTypeName, ueFields, structMetas)
     
     emitUStruct(ueType)
 

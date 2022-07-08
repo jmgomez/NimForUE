@@ -94,7 +94,7 @@ void UEditorUtils::RefreshNodes() {
 
 		// Compile blueprint
 		UE_LOG(NimForUEEditor, Display, TEXT("Compiling Blueprint: %s"), *AssetPathString);
-		FKismetEditorUtilities::CompileBlueprint(Blueprint.Get(), EBlueprintCompileOptions::BatchCompile | EBlueprintCompileOptions::SkipSave);
+		// FKismetEditorUtilities::CompileBlueprint(Blueprint.Get(), EBlueprintCompileOptions::BatchCompile | EBlueprintCompileOptions::SkipSave);
 
 		// Check if the blueprint failed to compile
 		if (!Blueprint->IsUpToDate() && Blueprint->Status != BS_Unknown) {
@@ -107,7 +107,8 @@ void UEditorUtils::RefreshNodes() {
 	}
 
 	// Save the refreshed blueprints
-	bool bSuccess = UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true);
+	// bool bSuccess = UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true);
+	bool bSuccess = true;// = UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true);
 
 	// If the saving fails, log and error and raise a notification
 	if (!bSuccess) {

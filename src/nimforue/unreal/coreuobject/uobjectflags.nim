@@ -252,11 +252,11 @@ type
 macro genEnumOperators(enumName, enumType:static string, genValConverters : static bool = true) : untyped = 
     result = genAst(name=ident enumName, typ=ident enumType):
         proc `or`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
-        proc `|`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
+        proc `|`*(a, b : name) : name =  a or b
             # cast[name](bitor(cast[typ](a),cast[typ](b)))
 
         proc `and`*(a, b : name) : name = name(typ(ord(a)) and typ(ord(b)))
-        proc `&`*(a, b : name) : name = name(typ(ord(a)) and typ(ord(b)))
+        proc `&`*(a, b : name) : name = a and b
             # cast[name](bitand(cast[typ](a),cast[typ](b)))
         
         proc `in`*(a,b:name) : bool = (a and b) == a #returns true if used like flag in flags 

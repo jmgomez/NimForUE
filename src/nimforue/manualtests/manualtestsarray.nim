@@ -120,7 +120,6 @@ proc scratchpad*(executor:UObjectPtr) =
 
 
 
-
        
 
 #Review the how 
@@ -131,6 +130,7 @@ proc scratchpadEditor*() =
             UE_Log("package is " & package.getName())
         else:
             UE_Log("package is nill")
+
 
     except Exception as e:
         

@@ -22,8 +22,8 @@ func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField =
 func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField]) : UEType = 
     UEType(kind:uClass, name:name, parent:parent, clsFlags:EClassFlagsVal(clsFlags), fields:fields)
 
-func makeUEStruct*(name:string, fields:seq[UEField]) : UEType = 
-    UEType(kind:uStruct, name:name, fields:fields)
+func makeUEStruct*(name:string, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
+    UEType(kind:uStruct, name:name, fields:fields, metadata: metadata)
 
 
 
@@ -106,8 +106,20 @@ proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
     let prop : FPropertyPtr =   
                 if propField.uePropType == "FString": 
                     makeFStrProperty(makeFieldVariant(outer), name, flags)
-                elif propField.uePropType == "int32":
+                elif propField.uePropType == "int32": #there is also 64, and 8 version?
                     makeFIntProperty(makeFieldVariant(outer), name, flags)
+                elif propField.uePropType == "float32": #theere is also 64 version, is it double?
+                    makeFFloatProperty(makeFieldVariant(outer), name, flags)
+
+                elif propField.uePropType.startsWith("F"): #find a more robust test?
+                    makeFStructProperty(makeFieldVariant(outer), name, flags)
+                
+                elif propField.uePropType.contains("Ptr"):
+                    makeFObjectProperty(makeFieldVariant(outer), name, flags)
+                
+                elif propField.uePropType.contains("TArray"):
+                    makeFArrayProperty(makeFieldVariant(outer), name, flags)
+                    
                 else:
                     raise newException(Exception, "FProperty not covered in the types for " & propField.uePropType)
     
@@ -144,12 +156,23 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
     newCls
 
+
+template toEnum[T](x: uint32): T =
+  if x in T.low.uint32..T.high.uint32:
+    T(x)
+  else:
+    raise newException(ValueError, "Value not convertible to enum")
+
+
 proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
-    let  
-        objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet)
-        scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+      
+    const objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet)
+    let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
         
-    scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
+    # scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
+    for metadata in ueType.metadata:
+        scriptStruct.setMetadata(metadata.name, $metadata.value)
+
     scriptStruct.assetCreated()
     
     for field in ueType.fields.toSeq().reversed():
@@ -160,6 +183,8 @@ proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
     scriptStruct.staticLink(true)
 
     scriptStruct
+
+
 
 
 proc toUStruct*[T](ueType : UEType, package:string) : UStructPtr =

@@ -58,8 +58,8 @@ func shouldBeReturnedAsVar*(field:UEField) : bool =
 
 type
     UEMetadata* = object 
-        Key* : string
-        Value* : bool
+        name* : string
+        value* : bool
 
     UEType* = object 
         name* : string
@@ -79,3 +79,5 @@ type
         types* : seq[UEType]
         dependencies* : seq[UEModule]        
     
+func makeUEMetadata*(name:string) : UEMetadata = 
+    UEMetadata(name:name, value:true ) #todo check if the name is valid. Also they can be more than simple names

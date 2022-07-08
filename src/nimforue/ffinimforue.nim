@@ -23,24 +23,26 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
 
 
 
-
 UStruct FMyNimStruct:
     (BlueprintType)
     uprop(EditAnywhere, BlueprintReadWrite):
         testField : int32
         testField2 : FString
-    uprop(EditAnywhere, BlueprintReadOnly):
-        amazing : int32
+        objProperty : UObjectPtr
 
-UStruct FMyNimStructMacro2:
+    uprop(EditAnywhere, BlueprintReadOnly):
+        amazing : float32
+        vectorTest : FVector
+        # arrayProp : TArray[int32]
+
+UStruct FMyNimStruct2:
     (BlueprintType)
     uprop(EditAnywhere):
         testField : int32
         testField2 : FString
     uprop(OtherValues):
-        param35 : int32
-
-
+        param : FMyNimStruct
+        param2 : FString
 
 
 proc createUEReflectedTypes() = 
@@ -56,24 +58,25 @@ proc createUEReflectedTypes() =
     let newCls = ueVarType.toUClass(package)
     UE_Log "Class created! " & newCls.getName()
 
-    
-    
-
-
 
 #function called right after the dyn lib is load
 #when n == 0 means it's the first time. So first editor load
 #called from C++ NimForUE Module
 proc onNimForUELoaded(n:int32) : void {.ffi:genFilePath} = 
+    # return
     UE_Log(fmt "Nim loaded for {n} times")
     # #TODO take a look at FFieldCompiledInInfo for precomps
-    if n == 0:
-        createUEReflectedTypes()
+    # if n == 0:
+    #     createUEReflectedTypes()
+    try:
+        let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
 
-    let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
-    genUStructsForPackage(pkg)
-
-    scratchpadEditor()
+        emitUStructsForPackage(pkg)
+    except Exception as e:
+        UE_Warn "Nim CRASHED "
+        UE_Warn e.msg
+        UE_Warn e.getStackTrace()
+    # scratchpadEditor()
 
 
 
