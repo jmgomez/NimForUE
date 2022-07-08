@@ -70,7 +70,7 @@ type
                 parent* : string
                 clsFlags*: EClassFlagsVal
             of uStruct:
-                discard
+                superStruct* : string
             of uEnum:
                 discard
 

@@ -1,7 +1,7 @@
 #this is temp until we have tests working (have to bind dyn delegates first)
 include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, sequtils, json, jsonutils]
-import ../typegen/[uemeta, models]
+import ../typegen/[uemeta, models, ueemit]
 
 proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
 
@@ -120,6 +120,12 @@ proc scratchpad*(executor:UObjectPtr) =
 
 
 
+
+
+
+
+
+
        
 
 #Review the how 
@@ -136,3 +142,39 @@ proc scratchpadEditor*() =
         
         UE_Warn e.msg
         UE_Warn e.getStackTrace()
+
+
+
+
+UStruct FIntPropTests:
+    (BlueprintType)
+    uprop(BlueprintReadWrite):
+        propInt8 : int8
+        propInt16 : int16
+        propInt32 : int32
+        propInt64 : int64
+        propByte : byte
+        propUint16 : uint16
+        propUint32 : uint32
+        propUint64 : uint64
+
+
+
+
+UStruct FMyUStructDemo:
+    (BlueprintType)
+    uprop(EditAnywhere, BlueprintReadWrite):
+        propString : FString
+        propInt : int32
+        propInt64 : int
+        propInt642 : int64
+        propFloat : float32
+        propObject : UObjectPtr
+    uprop(EditAnywhere, BlueprintReadOnly):
+        propReadOnly : FString
+
+
+
+
+
+

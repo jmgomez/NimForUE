@@ -105,7 +105,7 @@ macro UStruct*(name:untyped, body : untyped) : untyped =
                        .map(fromUPropNodeToField)
                        .foldl(a & b)
 
-    let ueType = makeUEStruct(structTypeName, ueFields, structMetas)
+    let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas)
     
     emitUStruct(ueType)
 

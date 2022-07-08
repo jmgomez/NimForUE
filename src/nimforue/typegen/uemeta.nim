@@ -22,8 +22,8 @@ func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField =
 func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField]) : UEType = 
     UEType(kind:uClass, name:name, parent:parent, clsFlags:EClassFlagsVal(clsFlags), fields:fields)
 
-func makeUEStruct*(name:string, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
-    UEType(kind:uStruct, name:name, fields:fields, metadata: metadata)
+func makeUEStruct*(name:string, fields:seq[UEField], superStruct="", metadata : seq[UEMetadata] = @[]) : UEType = 
+    UEType(kind:uStruct, name:name, fields:fields, superStruct:superStruct, metadata: metadata)
 
 
 
@@ -98,7 +98,15 @@ func toUEType*(cls:UClassPtr) : UEType =
     UEType(name:name, kind:uClass, parent:parentName, fields:fields)
 
 
-
+#  propInt8 : int8
+#         propInt16 : int16
+#         propInt32 : int32
+#         propInt64 : int64
+#         propUint8 : uint8
+#         propByte : byte
+#         propUint16 : uint16
+#         propUint32 : uint32
+#         propUint64 : uint64
 
 proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
     let flags = RF_NoFlags #OBJECT FLAGS
@@ -106,8 +114,24 @@ proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
     let prop : FPropertyPtr =   
                 if propField.uePropType == "FString": 
                     makeFStrProperty(makeFieldVariant(outer), name, flags)
-                elif propField.uePropType == "int32": #there is also 64, and 8 version?
+
+                elif propField.uePropType == "int8": 
+                    makeFInt8Property(makeFieldVariant(outer), name, flags)
+                elif propField.uePropType == "int16": 
+                    makeFInt16Property(makeFieldVariant(outer), name, flags)
+                elif propField.uePropType == "int32": 
                     makeFIntProperty(makeFieldVariant(outer), name, flags)
+                elif propField.uePropType in ["int64", "int"]: 
+                    makeFInt64Property(makeFieldVariant(outer), name, flags)
+                elif propField.uePropType == "byte": 
+                    makeFByteProperty(makeFieldVariant(outer), name, flags)
+                elif propField.uePropType == "uint16": 
+                    makeFUInt16Property(makeFieldVariant(outer), name, flags)
+                elif propField.uePropType == "uint32": 
+                    makeFUInt32Property(makeFieldVariant(outer), name, flags)
+                elif propField.uePropType == "uint64": 
+                    makeFUint64Property(makeFieldVariant(outer), name, flags)
+
                 elif propField.uePropType == "float32": #theere is also 64 version, is it double?
                     makeFFloatProperty(makeFieldVariant(outer), name, flags)
 
@@ -204,6 +228,8 @@ proc toUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignat
 
     fn.Next = cls.Children 
     cls.Children = fn
+    
+
 
     for field in fnField.signature:
         let fprop =  field.toFProperty(fn)

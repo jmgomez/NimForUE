@@ -89,9 +89,12 @@ macro bindFProperty(propNames : static openarray[string] ) : untyped =
     
     nnkStmtList.newTree(propNames.map(bindProp))
 
-bindFProperty(["FStrProperty", "FIntProperty", "FArrayProperty", "FFloatProperty",
-                "FStructProperty", "FObjectProperty",
-                "FMapProperty", "FDelegateProperty", "FMulticastDelegateProperty"])
+bindFProperty([ 
+        "FInt8Property", "FInt16Property","FIntProperty", "FInt64Property",
+        "FByteProperty", "FUInt16Property","FUInt32Property", "FUInt64Property",
+        "FStrProperty", "FArrayProperty", "FFloatProperty",
+        "FStructProperty", "FObjectProperty",
+        "FMapProperty", "FDelegateProperty", "FMulticastDelegateProperty"])
 
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
