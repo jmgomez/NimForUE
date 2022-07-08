@@ -1,5 +1,6 @@
 include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
+
 import models
 export models
 
@@ -97,56 +98,54 @@ func toUEType*(cls:UClassPtr) : UEType =
 
     UEType(name:name, kind:uClass, parent:parentName, fields:fields)
 
+func newFProperty(outer : UStructPtr, propType:string, name:FName) : FPropertyPtr = 
+    let flags = RF_NoFlags #OBJECT FLAGS
 
-#  propInt8 : int8
-#         propInt16 : int16
-#         propInt32 : int32
-#         propInt64 : int64
-#         propUint8 : uint8
-#         propByte : byte
-#         propUint16 : uint16
-#         propUint32 : uint32
-#         propUint64 : uint64
+    if propType == "FString": 
+        newFStrProperty(makeFieldVariant(outer), name, flags)
+    elif propType == "bool": 
+        newFBoolProperty(makeFieldVariant(outer), name, flags)
+    elif propType == "int8": 
+        newFInt8Property(makeFieldVariant(outer), name, flags)
+    elif propType == "int16": 
+        newFInt16Property(makeFieldVariant(outer), name, flags)
+    elif propType == "int32": 
+        newFIntProperty(makeFieldVariant(outer), name, flags)
+    elif propType in ["int64", "int"]: 
+        newFInt64Property(makeFieldVariant(outer), name, flags)
+    elif propType == "byte": 
+        newFByteProperty(makeFieldVariant(outer), name, flags)
+    elif propType == "uint16": 
+        newFUInt16Property(makeFieldVariant(outer), name, flags)
+    elif propType == "uint32": 
+        newFUInt32Property(makeFieldVariant(outer), name, flags)
+    elif propType == "uint64": 
+        newFUint64Property(makeFieldVariant(outer), name, flags)
+    elif propType == "float32": 
+        newFFloatProperty(makeFieldVariant(outer), name, flags)
+    elif propType in ["float", "float64"]: 
+        newFDoubleProperty(makeFieldVariant(outer), name, flags)
+    elif propType == "FName": 
+        newFNameProperty(makeFieldVariant(outer), name, flags)
+
+    elif propType.startsWith("F"): #find a more robust test?
+        newFStructProperty(makeFieldVariant(outer), name, flags)
+    
+    elif propType.contains("Ptr"):
+        newFObjectProperty(makeFieldVariant(outer), name, flags)
+    
+    elif propType.contains("TArray"):
+        let arrayProp =newFArrayProperty(makeFieldVariant(outer), name, flags)
+        let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
+        let inner = newFProperty(outer, innerType, n"Inner")
+        arrayProp.addCppProperty(inner)
+        arrayProp
+    else:
+        raise newException(Exception, "FProperty not covered in the types for " & propType)
 
 proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
-    let flags = RF_NoFlags #OBJECT FLAGS
-    let name = propField.name.makeFName()
-    let prop : FPropertyPtr =   
-                if propField.uePropType == "FString": 
-                    makeFStrProperty(makeFieldVariant(outer), name, flags)
-
-                elif propField.uePropType == "int8": 
-                    makeFInt8Property(makeFieldVariant(outer), name, flags)
-                elif propField.uePropType == "int16": 
-                    makeFInt16Property(makeFieldVariant(outer), name, flags)
-                elif propField.uePropType == "int32": 
-                    makeFIntProperty(makeFieldVariant(outer), name, flags)
-                elif propField.uePropType in ["int64", "int"]: 
-                    makeFInt64Property(makeFieldVariant(outer), name, flags)
-                elif propField.uePropType == "byte": 
-                    makeFByteProperty(makeFieldVariant(outer), name, flags)
-                elif propField.uePropType == "uint16": 
-                    makeFUInt16Property(makeFieldVariant(outer), name, flags)
-                elif propField.uePropType == "uint32": 
-                    makeFUInt32Property(makeFieldVariant(outer), name, flags)
-                elif propField.uePropType == "uint64": 
-                    makeFUint64Property(makeFieldVariant(outer), name, flags)
-
-                elif propField.uePropType == "float32": #theere is also 64 version, is it double?
-                    makeFFloatProperty(makeFieldVariant(outer), name, flags)
-
-                elif propField.uePropType.startsWith("F"): #find a more robust test?
-                    makeFStructProperty(makeFieldVariant(outer), name, flags)
-                
-                elif propField.uePropType.contains("Ptr"):
-                    makeFObjectProperty(makeFieldVariant(outer), name, flags)
-                
-                elif propField.uePropType.contains("TArray"):
-                    makeFArrayProperty(makeFieldVariant(outer), name, flags)
-                    
-                else:
-                    raise newException(Exception, "FProperty not covered in the types for " & propField.uePropType)
     
+    let prop : FPropertyPtr = newFProperty(outer, propField.uePropType, propField.name.makeFName())
     prop.setPropertyFlags(propField.propFlags)
     outer.addCppProperty(prop)
     prop
@@ -179,13 +178,6 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
     newCls.staticLink(true)
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
     newCls
-
-
-template toEnum[T](x: uint32): T =
-  if x in T.low.uint32..T.high.uint32:
-    T(x)
-  else:
-    raise newException(ValueError, "Value not convertible to enum")
 
 
 proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =

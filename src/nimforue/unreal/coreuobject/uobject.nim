@@ -76,7 +76,7 @@ proc makeFieldVariant*(obj:UObjectPtr) : FFieldVariant {. importcpp: "'0(#)", co
 
 macro bindFProperty(propNames : static openarray[string] ) : untyped = 
     proc bindProp(name:string) : NimNode = 
-        let constructorName = ident "make"&name
+        let constructorName = ident "new"&name
         let ptrName = ident name&"Ptr"
 
         genAst(name=ident name, ptrName, constructorName):
@@ -84,22 +84,26 @@ macro bindFProperty(propNames : static openarray[string] ) : untyped =
                 name* {.inject, importcpp.} = object of FProperty
                 ptrName* {.inject.} = ptr name
 
-            proc constructorName*(fieldVariant:FFieldVariant, propName:FName, flags:EObjectFlags) : ptrName {. importcpp: "new '*0(@)", constructor, inject.}
+            proc constructorName*(fieldVariant:FFieldVariant, propName:FName, flags:EObjectFlags) : ptrName {. importcpp: "new '*0(@)", inject.}
 
     
     nnkStmtList.newTree(propNames.map(bindProp))
 
 bindFProperty([ 
+        "FBoolProperty",
         "FInt8Property", "FInt16Property","FIntProperty", "FInt64Property",
         "FByteProperty", "FUInt16Property","FUInt32Property", "FUInt64Property",
-        "FStrProperty", "FArrayProperty", "FFloatProperty",
-        "FStructProperty", "FObjectProperty",
+        "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
+        "FArrayProperty", "FStructProperty", "FObjectProperty",
         "FMapProperty", "FDelegateProperty", "FMulticastDelegateProperty"])
 
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
+proc addCppProperty*(arrProp:FArrayPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
+
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
 proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->ValueProp)".}
 proc getSignatureFunction*(delProp:FDelegatePropertyPtr | FMulticastDelegatePropertyPtr) : UFunctionPtr {.importcpp:"(#->SignatureFunction)".}
+
 
 
 

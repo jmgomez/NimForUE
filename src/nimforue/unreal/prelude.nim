@@ -8,7 +8,7 @@ import ../unreal/core/[enginetypes, delegates, unrealmemory]
 import ../unreal/runtime/[assetregistry]
 
 
-import ../utils/utils
+import ../utils/[utils, ueutils]
 
 include definitions
 

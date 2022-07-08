@@ -1,8 +1,9 @@
 {.experimental: "caseStmtMacros".}
 include ../unreal/definitions
 import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
-import ../utils/utils
+import ../utils/[ueutils, utils]
 import ../unreal/coreuobject/[uobject, uobjectflags]
+import ../unreal/core/containers/[array]
 import ../typegen/models
 
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
@@ -202,8 +203,7 @@ func getTypeNodeFromUProp(prop : UEField) : NimNode =
             if not prop.isGeneric:
                 return ident prop.uePropType
             let genericType = prop.uePropType.split("[")[0]
-
-            let innerTypesStr = prop.uePropType.replace(genericType, "").replace("[").replace("]", "")
+            let innerTypesStr =  prop.uePropType.extractTypeFromGenericInNimFormat(genericType)
             let innerTypes = innerTypesStr.split(",").map(innerType => ident(innerType.strip()))
             let bracketsNode = nnkBracketExpr.newTree((ident genericType) & innerTypes)
             return bracketsNode
@@ -469,8 +469,13 @@ func genUStructTypeDef(typeDef: UEType) : NimNode =
     let fields = typeDef.fields
                         .map(prop => nnkIdentDefs.newTree(
                             [identPublic toLower($prop.name[0])&prop.name.substr(1), 
-                             ident prop.uePropType, newEmptyNode()]))
+                             prop.getTypeNodeFromUProp(), newEmptyNode()]))
                         .foldl(a.add b, nnkRecList.newTree)
+#   let fields = typeDef.fields
+#                         .map(prop => nnkIdentDefs.newTree(
+#                             [identPublic toLower($prop.name[0])&prop.name.substr(1), 
+#                              ident prop.uePropType, newEmptyNode()]))
+#                         .foldl(a.add b, nnkRecList.newTree)
 
     result = genAst(typeName, fields):
                 type typeName = object

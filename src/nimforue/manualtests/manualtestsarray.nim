@@ -160,7 +160,6 @@ UStruct FIntPropTests:
 
 
 
-
 UStruct FMyUStructDemo:
     (BlueprintType)
     uprop(EditAnywhere, BlueprintReadWrite):
@@ -168,13 +167,64 @@ UStruct FMyUStructDemo:
         propInt : int32
         propInt64 : int
         propInt642 : int64
-        propFloat : float32
+        propFloat32 : float32
+        structInt : FIntPropTests
+        propBool : bool
         propObject : UObjectPtr
+        propArray : TArray[FString]
+        propArrayFloat : TArray[float]
+        propArrayBool : TArray[bool]
     uprop(EditAnywhere, BlueprintReadOnly):
         propReadOnly : FString
+        propFloat : float
+        propFloat64 : float64
+        propFName : FName
 
+# type
+#   FMyUStructDemo* {.inject.} = object
+#     propString*: FString
+#     propInt*: int32
+#     propInt64*: int
+#     propInt642*: int64
+#     propFloat32*: float32
+#     structInt*: FIntPropTests
+#     propBool*: bool
+#     propObject*: UObjectPtr
+#     propArray*: TArray[FString]
+#     propArray2*: TArray[int32]
+#     propReadOnly*: FString
+#     propFloat*: float
+#     propFloat64*: float64
+#     propFName*: FName
 
+# addUStructEmitter((package: UPackagePtr) =>
+#     toUStruct[FMyUStructDemo](UEType(name: "FMyUStructDemo", fields: @[UEField(
+#     name: "propString", kind: UEFieldKind(0), uePropType: "FString",
+#     propFlags: EPropertyFlags(5)), UEField(name: "propInt",
+#     kind: UEFieldKind(0), uePropType: "int32", propFlags: EPropertyFlags(5)), UEField(
+#     name: "propInt64", kind: UEFieldKind(0), uePropType: "int",
+#     propFlags: EPropertyFlags(5)), UEField(name: "propInt642",
+#     kind: UEFieldKind(0), uePropType: "int64", propFlags: EPropertyFlags(5)), UEField(
+#     name: "propFloat32", kind: UEFieldKind(0), uePropType: "float32",
+#     propFlags: EPropertyFlags(5)), UEField(name: "structInt",
+#     kind: UEFieldKind(0), uePropType: "FIntPropTests",
+#     propFlags: EPropertyFlags(5)), UEField(name: "propBool",
+#     kind: UEFieldKind(0), uePropType: "bool", propFlags: EPropertyFlags(5)), UEField(
+#     name: "propObject", kind: UEFieldKind(0), uePropType: "UObjectPtr",
+#     propFlags: EPropertyFlags(5)), 
 
+#     UEField(name: "propArray", kind: UEFieldKind(0), uePropType: "TArray[FString]", propFlags: EPropertyFlags(5)),
+#     UEField(name: "propArray2", kind: UEFieldKind(0), uePropType: "TArray[int32]", propFlags: EPropertyFlags(5)),
+    
+#     UEField(name: "propReadOnly",
+#     kind: UEFieldKind(0), uePropType: "FString", propFlags: EPropertyFlags(21)), UEField(
+#     name: "propFloat", kind: UEFieldKind(0), uePropType: "float",
+#     propFlags: EPropertyFlags(21)), UEField(name: "propFloat64",
+#     kind: UEFieldKind(0), uePropType: "float64", propFlags: EPropertyFlags(21)), UEField(
+#     name: "propFName", kind: UEFieldKind(0), uePropType: "FName",
+#     propFlags: EPropertyFlags(21))], metadata: @[
+#     UEMetadata(name: "BlueprintType", value: true)], kind: UETypeKind(1),
+#                                      superStruct: ""), package))
 
 
 

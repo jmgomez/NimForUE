@@ -88,13 +88,12 @@ func fromUPropNodeToField(node : NimNode) : seq[UEField] =
     ueFields
 
 macro UStruct*(name:untyped, body : untyped) : untyped = 
-    debugEcho treeRepr body
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
 
 
     let structMetas = body.childrenAsSeq()
                    .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
-                   .map(n => n.childrenAsSeq())
+                   .map(n => n.children.toSeq())
                    .foldl( a & b, newSeq[NimNode]())
                    .map(n=>n.strVal().strip())
                    .map(makeUEMetadata)
