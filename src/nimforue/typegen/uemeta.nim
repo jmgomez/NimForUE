@@ -148,7 +148,7 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
             mapProp.addCppProperty(key)
             mapProp.addCppProperty(value)
             mapProp
-
+        
         elif propType.startsWith("F"): #Once objects are figure out I will look for a UStructPtr containing the name of the type and then match ScriptSctruct vs UObject
             let scriptStruct = getScriptStructByName propType.removeFirstLetter()
             let structProp = newFStructProperty(makeFieldVariant(outer), name, flags)
@@ -159,22 +159,26 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
                 raise newException(Exception, "FProperty not covered in the types for " & propType)
             
             structProp
-
-        elif propType.contains("Ptr"):
-            let cls = getClassByName propType.removeFirstLetter().replace("Ptr", "")
-            let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
-            if not cls.isnil():
-                UE_Log "Found Class " & propType & " creating FObjectProperty"
-                objProp.setPropertyClass(cls)
-            else:
-                raise newException(Exception, "FProperty not covered in the types for " & propType)
-            
-            objProp
-            
-        
         else:
-            raise newException(Exception, "FProperty not covered in the types for " & propType)
+            #I think TSubclass/TSoftClass is the only way to get into a exposed class or passing directly a UClas
+            let className = propType.removeFirstLetter().removeLastLettersIfPtr()
+            UE_Log "Looking for class " & className 
 
+            let cls = getClassByName className
+            if not cls.isnil():
+                UE_Log "Found Class " & propType & " creating Prop"
+                if className == "Class":
+                    let clsProp = newFClassProperty(makeFieldVariant(outer), name, flags)
+                    clsProp.setPropertyMetaClass(cls)
+                    clsProp
+                else:
+                    let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
+                    objProp.setPropertyClass(cls)
+                    objProp
+            else:
+                raise newException(Exception, "FProperty not covered in the types for " & propType )
+            
+       
     prop.setPropertyFlags(prop.getPropertyFlags() or propFlags)
     prop
 

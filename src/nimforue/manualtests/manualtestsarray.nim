@@ -119,13 +119,6 @@ proc scratchpad*(executor:UObjectPtr) =
 
 
 
-
-
-
-
-
-
-
        
 
 #Review the how 
@@ -144,8 +137,6 @@ proc scratchpadEditor*() =
         UE_Warn e.getStackTrace()
 
 
-
-
 UStruct FIntPropTests:
     (BlueprintType)
     uprop(BlueprintReadWrite):
@@ -162,7 +153,6 @@ UStruct FIntPropTests:
         propMapFloat3 : TMap[bool, FName]
         propVector : FVector
         propHitResult : FHitResult
-        classTest : UClassPtr
 
 
 
@@ -178,11 +168,11 @@ UStruct FMyUStructDemo:
         structInt : FIntPropTests
         propBool : bool
         propObject : UObjectPtr
+        propClass : UClassPtr
         propArray : TArray[FString]
         propArrayFloat : TArray[float]
         propArrayBool : TArray[bool]
-        # propMapFloat : TMap[FString, float]
-        # propMapAnother : TMap[FString, float] why this doesnt work?
+      
     uprop(EditAnywhere, BlueprintReadOnly):
         propReadOnly : FString
         propFloat : float
