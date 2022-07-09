@@ -156,11 +156,13 @@ UStruct FIntPropTests:
         propByte : byte
         propUint16 : uint16
         propUint32 : uint32
-        propUint64 : uint64make 
+        propUint64 : uint64
         propMapFloat : TMap[FString, float]
         propMapFloat2 : TMap[FString, float]
         propMapFloat3 : TMap[bool, FName]
         propVector : FVector
+        propHitResult : FHitResult
+        classTest : UClassPtr
 
 
 

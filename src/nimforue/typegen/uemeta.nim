@@ -161,7 +161,16 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
             structProp
 
         elif propType.contains("Ptr"):
-            newFObjectProperty(makeFieldVariant(outer), name, flags)
+            let cls = getClassByName propType.removeFirstLetter().replace("Ptr", "")
+            let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
+            if not cls.isnil():
+                UE_Log "Found Class " & propType & " creating FObjectProperty"
+                objProp.setPropertyClass(cls)
+            else:
+                raise newException(Exception, "FProperty not covered in the types for " & propType)
+            
+            objProp
+            
         
         else:
             raise newException(Exception, "FProperty not covered in the types for " & propType)
