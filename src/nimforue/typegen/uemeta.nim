@@ -160,9 +160,10 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
 # But it will be better to do it after binding SoftClass/SoftObj and TSubclassOf 
 #(which I assume is just a way to discriminate on the base class for the MetaClass)
             type EObjectMetaProp = enum
-                emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr#, TSoftClassPtr = "TSoftClassPtr"
+                emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, emTSoftClassPtr#, TSoftClassPtr = "TSoftClassPtr"
             let eMeta = if propType.contains("TSubclassOf"): emTSubclassOf
                         elif propType.contains("TSoftObjectPtr"): emTSoftObjectPtr
+                        elif propType.contains("TSoftClassPtr"): emTSoftClassPtr
                         elif propType == ("UClass"): emClass
                         else: emObjPtr 
                         # elif propType.endsWith("Ptr"): 
@@ -172,6 +173,7 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
             let className = case eMeta 
                 of emTSubclassOf: propType.extractTypeFromGenericInNimFormat("TSubclassOf").removeFirstLetter() 
                 of emTSoftObjectPtr: propType.extractTypeFromGenericInNimFormat("TSoftObjectPtr").removeFirstLetter() 
+                of emTSoftClassPtr: propType.extractTypeFromGenericInNimFormat("TSoftClassPtr").removeFirstLetter() 
                 of emObjPtr, emClass: propType.removeFirstLetter().removeLastLettersIfPtr()
             let shouldSetClassProperty = eMeta == emClass or eMeta == emTSubclassOf
           
@@ -182,6 +184,10 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
                 case eMeta:
                 of emClass, emTSubclassOf:
                     let clsProp = newFClassProperty(makeFieldVariant(outer), name, flags)
+                    clsProp.setPropertyMetaClass(cls)
+                    clsProp
+                of emTSoftClassPtr:
+                    let clsProp = newFSoftClassProperty(makeFieldVariant(outer), name, flags)
                     clsProp.setPropertyMetaClass(cls)
                     clsProp
                 of emObjPtr:

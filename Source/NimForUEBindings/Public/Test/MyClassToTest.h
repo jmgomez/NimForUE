@@ -81,6 +81,8 @@ public:
 
 	UPROPERTY()
 	TSoftObjectPtr<UObject> SoftObjectProperty;
+	UPROPERTY()
+	TSoftClassPtr<UObject> SoftClassProperty;
 
 	UPROPERTY()
 	TMap<FString, int32> MapProperty;

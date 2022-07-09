@@ -162,6 +162,7 @@ UStruct FIntPropTests:
         propActor : AActorPtr
         propActorSubclass : TSubclassOf[UObject]
         propSoftObject : TSoftObjectPtr[UObject]
+        propSoftClass : TSoftClassPtr[UObject]
 
 
 

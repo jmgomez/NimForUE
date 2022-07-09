@@ -97,14 +97,14 @@ bindFProperty([
         "FByteProperty", "FUInt16Property","FUInt32Property", "FUInt64Property",
         "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
         "FArrayProperty", "FStructProperty", "FObjectProperty", "FClassProperty",
-        "FSoftObjectProperty",
+        "FSoftObjectProperty", "FSoftClassProperty",
         "FMapProperty", "FDelegateProperty", "FMulticastDelegateProperty"])
 
 
 #Concrete methods
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
 proc setPropertyClass*(prop:FObjectPropertyPtr | FSoftObjectPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
-proc setPropertyMetaClass*(prop:FClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
+proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
 
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
 proc addCppProperty*(arrProp:FArrayPropertyPtr | FMapPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
