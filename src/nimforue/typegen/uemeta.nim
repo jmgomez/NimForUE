@@ -149,8 +149,17 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
             mapProp.addCppProperty(value)
             mapProp
 
-        elif propType.startsWith("F"): #find a more robust test?
-            newFStructProperty(makeFieldVariant(outer), name, flags)
+        elif propType.startsWith("F"): #Once objects are figure out I will look for a UStructPtr containing the name of the type and then match ScriptSctruct vs UObject
+            let scriptStruct = getScriptStructByName propType.removeFirstLetter()
+            let structProp = newFStructProperty(makeFieldVariant(outer), name, flags)
+            if not scriptStruct.isnil():
+                UE_Log "Found script struct " & propType & " creating FStructProperty"
+                structProp.setScriptStruct(scriptStruct)
+            else:
+                raise newException(Exception, "FProperty not covered in the types for " & propType)
+            
+            structProp
+
         elif propType.contains("Ptr"):
             newFObjectProperty(makeFieldVariant(outer), name, flags)
         

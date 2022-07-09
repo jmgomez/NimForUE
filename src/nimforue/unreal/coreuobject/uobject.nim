@@ -98,6 +98,13 @@ bindFProperty([
         "FArrayProperty", "FStructProperty", "FObjectProperty",
         "FMapProperty", "FDelegateProperty", "FMulticastDelegateProperty"])
 
+#concrete "constructors"
+proc newFStructProperty*(fieldVariant:FFieldVariant, propName:FName, objFlags:EObjectFlags, offset:int32, propFlags:EPropertyFlags, scriptStruct:UScriptStructPtr) : FStructPropertyPtr {. importcpp: "new '*0(@)", inject.}
+
+
+#Concrete methods
+proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
+
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
 proc addCppProperty*(arrProp:FArrayPropertyPtr | FMapPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
 
