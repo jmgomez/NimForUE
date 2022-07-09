@@ -3,6 +3,8 @@
 
 #include "ReflectionHelpers.h"
 
+#include "NimForUEBindings.h"
+
 
 UClass* UReflectionHelpers::GetClassByName(FString ClassName) {
 	UObject* ClassPackage = ANY_PACKAGE;
@@ -76,6 +78,20 @@ TArray<UClass*> UReflectionHelpers::GetAllClassesFromModule(FString ModuleName) 
 			return true;
 		});
 	return Classes;
+}
+
+void UReflectionHelpers::NimForUELog(FString Msg) {
+	UE_LOG(NimForUEBindings, Log, TEXT("%s"), *Msg);
+}
+
+void UReflectionHelpers::NimForUEWarn(FString Msg) {
+	UE_LOG(NimForUEBindings, Warning, TEXT("%s"), *Msg);
+
+}
+
+void UReflectionHelpers::NimForUEError(FString Msg) {
+	UE_LOG(NimForUEBindings, Error, TEXT("%s"), *Msg);
+
 }
 
 

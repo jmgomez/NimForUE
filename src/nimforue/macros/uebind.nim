@@ -3,7 +3,6 @@ include ../unreal/definitions
 import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
 import ../utils/[ueutils, utils]
 import ../unreal/coreuobject/[uobject, uobjectflags]
-import ../unreal/core/containers/[array]
 import ../typegen/models
 
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 

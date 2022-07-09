@@ -174,6 +174,8 @@ UStruct FMyUStructDemo:
         propArray : TArray[FString]
         propArrayFloat : TArray[float]
         propArrayBool : TArray[bool]
+        propMapFloat : TMap[FString, float]
+        # propMapAnother : TMap[FString, float] why this doesnt work?
     uprop(EditAnywhere, BlueprintReadOnly):
         propReadOnly : FString
         propFloat : float

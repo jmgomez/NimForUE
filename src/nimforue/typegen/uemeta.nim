@@ -98,55 +98,72 @@ func toUEType*(cls:UClassPtr) : UEType =
 
     UEType(name:name, kind:uClass, parent:parentName, fields:fields)
 
-func newFProperty(outer : UStructPtr, propType:string, name:FName) : FPropertyPtr = 
+func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : FPropertyPtr = 
     let flags = RF_NoFlags #OBJECT FLAGS
 
-    if propType == "FString": 
-        newFStrProperty(makeFieldVariant(outer), name, flags)
-    elif propType == "bool": 
-        newFBoolProperty(makeFieldVariant(outer), name, flags)
-    elif propType == "int8": 
-        newFInt8Property(makeFieldVariant(outer), name, flags)
-    elif propType == "int16": 
-        newFInt16Property(makeFieldVariant(outer), name, flags)
-    elif propType == "int32": 
-        newFIntProperty(makeFieldVariant(outer), name, flags)
-    elif propType in ["int64", "int"]: 
-        newFInt64Property(makeFieldVariant(outer), name, flags)
-    elif propType == "byte": 
-        newFByteProperty(makeFieldVariant(outer), name, flags)
-    elif propType == "uint16": 
-        newFUInt16Property(makeFieldVariant(outer), name, flags)
-    elif propType == "uint32": 
-        newFUInt32Property(makeFieldVariant(outer), name, flags)
-    elif propType == "uint64": 
-        newFUint64Property(makeFieldVariant(outer), name, flags)
-    elif propType == "float32": 
-        newFFloatProperty(makeFieldVariant(outer), name, flags)
-    elif propType in ["float", "float64"]: 
-        newFDoubleProperty(makeFieldVariant(outer), name, flags)
-    elif propType == "FName": 
-        newFNameProperty(makeFieldVariant(outer), name, flags)
+    let prop : FPropertyPtr = 
+        if propType == "FString": 
+            newFStrProperty(makeFieldVariant(outer), name, flags)
+        elif propType == "bool": 
+            newFBoolProperty(makeFieldVariant(outer), name, flags)
+        elif propType == "int8": 
+            newFInt8Property(makeFieldVariant(outer), name, flags)
+        elif propType == "int16": 
+            newFInt16Property(makeFieldVariant(outer), name, flags)
+        elif propType == "int32": 
+            newFIntProperty(makeFieldVariant(outer), name, flags)
+        elif propType in ["int64", "int"]: 
+            newFInt64Property(makeFieldVariant(outer), name, flags)
+        elif propType == "byte": 
+            newFByteProperty(makeFieldVariant(outer), name, flags)
+        elif propType == "uint16": 
+            newFUInt16Property(makeFieldVariant(outer), name, flags)
+        elif propType == "uint32": 
+            newFUInt32Property(makeFieldVariant(outer), name, flags)
+        elif propType == "uint64": 
+            newFUint64Property(makeFieldVariant(outer), name, flags)
+        elif propType == "float32": 
+            newFFloatProperty(makeFieldVariant(outer), name, flags)
+        elif propType in ["float", "float64"]: 
+            newFDoubleProperty(makeFieldVariant(outer), name, flags)
+        elif propType == "FName": 
+            newFNameProperty(makeFieldVariant(outer), name, flags)
+        elif propType.contains("TArray"):
+            let arrayProp = newFArrayProperty(makeFieldVariant(outer), name, flags)
+            let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
+            let inner = newFProperty(outer, innerType, n"Inner")
+            arrayProp.addCppProperty(inner)
+            arrayProp
 
-    elif propType.startsWith("F"): #find a more robust test?
-        newFStructProperty(makeFieldVariant(outer), name, flags)
-    
-    elif propType.contains("Ptr"):
-        newFObjectProperty(makeFieldVariant(outer), name, flags)
-    
-    elif propType.contains("TArray"):
-        let arrayProp =newFArrayProperty(makeFieldVariant(outer), name, flags)
-        let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-        let inner = newFProperty(outer, innerType, n"Inner")
-        arrayProp.addCppProperty(inner)
-        arrayProp
-    else:
-        raise newException(Exception, "FProperty not covered in the types for " & propType)
+        elif propType.contains("TMap"):
+
+            UE_Warn "Entering in TMAP"
+            let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
+            let innerTypes = propType.extractKeyValueFromMapProp()
+            UE_Warn $innerTypes
+            let key = newFProperty(outer, innerTypes[0], n"Key", CPF_HasGetValueTypeHash) 
+            UE_Warn "Key type " & innerTypes[0]
+            let value = newFProperty(outer, innerTypes[1], n"Value")
+
+            mapProp.addCppProperty(key)
+            mapProp.addCppProperty(value)
+            mapProp
+
+        elif propType.startsWith("F"): #find a more robust test?
+            newFStructProperty(makeFieldVariant(outer), name, flags)
+        elif propType.contains("Ptr"):
+            newFObjectProperty(makeFieldVariant(outer), name, flags)
+        
+        else:
+            raise newException(Exception, "FProperty not covered in the types for " & propType)
+
+    prop.setPropertyFlags(prop.getPropertyFlags() or propFlags)
+    prop
 
 proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
     
     let prop : FPropertyPtr = newFProperty(outer, propField.uePropType, propField.name.makeFName())
-    prop.setPropertyFlags(propField.propFlags)
+    prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
     outer.addCppProperty(prop)
     prop
 

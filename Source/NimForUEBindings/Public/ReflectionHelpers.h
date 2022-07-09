@@ -68,4 +68,10 @@ public:
 
 	static TArray<UClass*> GetAllClassesFromModule(FString ModuleName);
 
+
+	static void NimForUELog(FString Msg);
+	static void NimForUEWarn(FString Msg);
+	static void NimForUEError(FString Msg);
+	
+	
 };

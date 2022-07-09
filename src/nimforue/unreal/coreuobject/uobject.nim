@@ -84,7 +84,8 @@ macro bindFProperty(propNames : static openarray[string] ) : untyped =
                 name* {.inject, importcpp.} = object of FProperty
                 ptrName* {.inject.} = ptr name
 
-            proc constructorName*(fieldVariant:FFieldVariant, propName:FName, flags:EObjectFlags) : ptrName {. importcpp: "new '*0(@)", inject.}
+            proc constructorName*(fieldVariant:FFieldVariant, propName:FName, objFlags:EObjectFlags) : ptrName {. importcpp: "new '*0(@)", inject.}
+            proc constructorName*(fieldVariant:FFieldVariant, propName:FName, objFlags:EObjectFlags, offset:int32, propFlags:EPropertyFlags) : ptrName {. importcpp: "new '*0(@)", inject.}
 
     
     nnkStmtList.newTree(propNames.map(bindProp))
@@ -98,7 +99,7 @@ bindFProperty([
         "FMapProperty", "FDelegateProperty", "FMulticastDelegateProperty"])
 
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
-proc addCppProperty*(arrProp:FArrayPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
+proc addCppProperty*(arrProp:FArrayPropertyPtr | FMapPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
 
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
 proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->ValueProp)".}

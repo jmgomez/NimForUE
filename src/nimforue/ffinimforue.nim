@@ -73,9 +73,9 @@ proc onNimForUELoaded(n:int32) : void {.ffi:genFilePath} =
 
         emitUStructsForPackage(pkg)
     except Exception as e:
-        UE_Warn "Nim CRASHED "
-        UE_Warn e.msg
-        UE_Warn e.getStackTrace()
+        UE_Error "Nim CRASHED "
+        UE_Error e.msg
+        UE_Error e.getStackTrace()
     # scratchpadEditor()
 
 
