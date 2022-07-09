@@ -136,13 +136,9 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
             arrayProp
 
         elif propType.contains("TMap"):
-
-            UE_Warn "Entering in TMAP"
             let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
             let innerTypes = propType.extractKeyValueFromMapProp()
-            UE_Warn $innerTypes
-            let key = newFProperty(outer, innerTypes[0], n"Key", CPF_HasGetValueTypeHash) 
-            UE_Warn "Key type " & innerTypes[0]
+            let key = newFProperty(outer, innerTypes[0], n"Key") 
             let value = newFProperty(outer, innerTypes[1], n"Value")
 
             mapProp.addCppProperty(key)
@@ -160,14 +156,20 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
             
             structProp
         else:
-            #I think TSubclass/TSoftClass is the only way to get into a exposed class or passing directly a UClas
-            let className = propType.removeFirstLetter().removeLastLettersIfPtr()
+#Needs a clean up to converge the code between ScriptStruct, ObjProps and ClsProps.
+# But it will be better to do it after binding SoftClass/SoftObj and TSubclassOf 
+#(which I assume is just a way to discriminate on the base class for the MetaClass)  
+            let isSubclass = propType.startsWith("TSubclassOf")
+            let className = if isSubclass: propType.extractTypeFromGenericInNimFormat("TSubclassOf")
+                                                   .removeFirstLetter() 
+                            else: propType.removeFirstLetter().removeLastLettersIfPtr()
+            let shouldSetClassProperty = isSubclass or className == "Class"
+          
             UE_Log "Looking for class " & className 
-
             let cls = getClassByName className
             if not cls.isnil():
                 UE_Log "Found Class " & propType & " creating Prop"
-                if className == "Class":
+                if shouldSetClassProperty:
                     let clsProp = newFClassProperty(makeFieldVariant(outer), name, flags)
                     clsProp.setPropertyMetaClass(cls)
                     clsProp

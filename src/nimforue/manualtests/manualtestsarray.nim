@@ -137,6 +137,12 @@ proc scratchpadEditor*() =
         UE_Warn e.getStackTrace()
 
 
+
+#temp
+type
+    AActor* = object of UObject
+    AActorPtr* = ptr AActor
+
 UStruct FIntPropTests:
     (BlueprintType)
     uprop(BlueprintReadWrite):
@@ -153,7 +159,8 @@ UStruct FIntPropTests:
         propMapFloat3 : TMap[bool, FName]
         propVector : FVector
         propHitResult : FHitResult
-
+        propActor : AActorPtr
+        propActorSubclass : TSubclassOf[UObject]
 
 
 

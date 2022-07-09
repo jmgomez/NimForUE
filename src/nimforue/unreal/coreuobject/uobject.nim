@@ -54,6 +54,7 @@ type
     UFunctionPtr* = ptr UFunction
 
 
+
 proc castField*[T : FField ](src:FFieldPtr) : ptr T {. importcpp:"CastField<'*0>(#)" .}
 
 proc getName*(prop:FFieldPtr) : FString {. importcpp:"#->GetName()" .}

@@ -10,14 +10,28 @@
  * 
  */
 
+DECLARE_DYNAMIC_DELEGATE_OneParam(FDynamicDelegateOneParamTest, FString, TestParam1);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastDelegateOneParamTest, FString, TestParam1);
+
 UENUM()
 enum EMyTestEnum {
 	TestValue,
 	TestValue2
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FStructToUseAsVar {
+	GENERATED_BODY()
+	UPROPERTY()
+	FString TestProperty = "Hello World!";
+	UPROPERTY(BlueprintReadWrite)
+	TSubclassOf<AActor> ActorSubclass;
+	UPROPERTY(BlueprintAssignable, BlueprintReadWrite)
+	FDynamicMulticastDelegateOneParamTest Del;
+};
+
+USTRUCT(BlueprintType)
+struct FStructToUseAsVarDelTest {
 	GENERATED_BODY()
 	UPROPERTY()
 	FString TestProperty = "Hello World!";
@@ -30,10 +44,6 @@ public:
 	UPROPERTY()
 	FString TestProperty = "Im a valid var";
 };
-
-
-DECLARE_DYNAMIC_DELEGATE_OneParam(FDynamicDelegateOneParamTest, FString, TestParam1);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastDelegateOneParamTest, FString, TestParam1);
 
 UCLASS()
 class NIMFORUEBINDINGS_API UMyClassToTest : public UObject {
