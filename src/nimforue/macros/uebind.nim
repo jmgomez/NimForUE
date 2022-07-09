@@ -2,7 +2,7 @@
 include ../unreal/definitions
 import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
 import ../utils/[ueutils, utils]
-import ../unreal/coreuobject/[uobject, uobjectflags]
+import ../unreal/coreuobject/[uobjectflags]
 import ../typegen/models
 
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
@@ -329,7 +329,7 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
     
     let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)) 
 
-
+    # debugEcho treeRepr typeNodeAsReturnValue
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
             proc propIdent* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =

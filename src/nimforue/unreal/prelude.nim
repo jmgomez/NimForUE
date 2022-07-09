@@ -4,7 +4,6 @@ import ../unreal/coreuobject/[uobject, package, unrealtype, templates/subclassof
     nametypes, scriptdelegates, uobjectglobals, metadata]
 import ../unreal/core/containers/[unrealstring, array, map]
 import ../unreal/core/math/[vector]
-import ../unreal/coreuobject/templates/[subclassof]
 import ../unreal/core/[enginetypes, delegates, unrealmemory]
 import ../unreal/runtime/[assetregistry]
 

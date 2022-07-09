@@ -166,6 +166,7 @@ UStruct FIntPropTests:
 
 
 
+
 UStruct FMyUStructDemo:
     (BlueprintType)
     uprop(EditAnywhere, BlueprintReadWrite):
