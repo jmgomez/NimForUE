@@ -56,6 +56,7 @@ type
 
 
 proc castField*[T : FField ](src:FFieldPtr) : ptr T {. importcpp:"CastField<'*0>(#)" .}
+proc ueCast*[T : UObject ](src:UObjectPtr) : ptr T {. importcpp:"Cast<'*0>(#)" .}
 
 proc getName*(prop:FFieldPtr) : FString {. importcpp:"#->GetName()" .}
 

@@ -1,6 +1,6 @@
 include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
-
+import fproperty
 import models
 export models
 
@@ -98,113 +98,6 @@ func toUEType*(cls:UClassPtr) : UEType =
 
     UEType(name:name, kind:uClass, parent:parentName, fields:fields)
 
-func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : FPropertyPtr = 
-    let flags = RF_NoFlags #OBJECT FLAGS
-
-    let prop : FPropertyPtr = 
-        if propType == "FString": 
-            newFStrProperty(makeFieldVariant(outer), name, flags)
-        elif propType == "bool": 
-            newFBoolProperty(makeFieldVariant(outer), name, flags)
-        elif propType == "int8": 
-            newFInt8Property(makeFieldVariant(outer), name, flags)
-        elif propType == "int16": 
-            newFInt16Property(makeFieldVariant(outer), name, flags)
-        elif propType == "int32": 
-            newFIntProperty(makeFieldVariant(outer), name, flags)
-        elif propType in ["int64", "int"]: 
-            newFInt64Property(makeFieldVariant(outer), name, flags)
-        elif propType == "byte": 
-            newFByteProperty(makeFieldVariant(outer), name, flags)
-        elif propType == "uint16": 
-            newFUInt16Property(makeFieldVariant(outer), name, flags)
-        elif propType == "uint32": 
-            newFUInt32Property(makeFieldVariant(outer), name, flags)
-        elif propType == "uint64": 
-            newFUint64Property(makeFieldVariant(outer), name, flags)
-        elif propType == "float32": 
-            newFFloatProperty(makeFieldVariant(outer), name, flags)
-        elif propType in ["float", "float64"]: 
-            newFDoubleProperty(makeFieldVariant(outer), name, flags)
-        elif propType == "FName": 
-            newFNameProperty(makeFieldVariant(outer), name, flags)
-        elif propType.contains("TArray"):
-            let arrayProp = newFArrayProperty(makeFieldVariant(outer), name, flags)
-            let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-            let inner = newFProperty(outer, innerType, n"Inner")
-            arrayProp.addCppProperty(inner)
-            arrayProp
-
-        elif propType.contains("TMap"):
-            let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
-            let innerTypes = propType.extractKeyValueFromMapProp()
-            let key = newFProperty(outer, innerTypes[0], n"Key", CPF_HasGetValueTypeHash) 
-            let value = newFProperty(outer, innerTypes[1], n"Value")
-
-            mapProp.addCppProperty(key)
-            mapProp.addCppProperty(value)
-            mapProp
-        
-        elif propType.startsWith("F"): #Once objects are figure out I will look for a UStructPtr containing the name of the type and then match ScriptSctruct vs UObject
-            let scriptStruct = getScriptStructByName propType.removeFirstLetter()
-            let structProp = newFStructProperty(makeFieldVariant(outer), name, flags)
-            if not scriptStruct.isnil():
-                UE_Log "Found script struct " & propType & " creating FStructProperty"
-                structProp.setScriptStruct(scriptStruct)
-            else:
-                raise newException(Exception, "FProperty not covered in the types for " & propType)
-            
-            structProp
-        else:
-#Needs a clean up to converge the code between ScriptStruct, ObjProps and ClsProps.
-# But it will be better to do it after binding SoftClass/SoftObj and TSubclassOf 
-#(which I assume is just a way to discriminate on the base class for the MetaClass)
-            type EObjectMetaProp = enum
-                emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, emTSoftClassPtr#, TSoftClassPtr = "TSoftClassPtr"
-            let eMeta = if propType.contains("TSubclassOf"): emTSubclassOf
-                        elif propType.contains("TSoftObjectPtr"): emTSoftObjectPtr
-                        elif propType.contains("TSoftClassPtr"): emTSoftClassPtr
-                        elif propType == ("UClass"): emClass
-                        else: emObjPtr 
-                        # elif propType.endsWith("Ptr"): 
-                        # else if propType.contains("TSoftClassPtr"): emTSoftClassPtr
-                        # else: raise newException(Exception, "FProperty not covered in the types for " & propType)
-
-            let className = case eMeta 
-                of emTSubclassOf: propType.extractTypeFromGenericInNimFormat("TSubclassOf").removeFirstLetter() 
-                of emTSoftObjectPtr: propType.extractTypeFromGenericInNimFormat("TSoftObjectPtr").removeFirstLetter() 
-                of emTSoftClassPtr: propType.extractTypeFromGenericInNimFormat("TSoftClassPtr").removeFirstLetter() 
-                of emObjPtr, emClass: propType.removeFirstLetter().removeLastLettersIfPtr()
-            let shouldSetClassProperty = eMeta == emClass or eMeta == emTSubclassOf
-          
-            UE_Log "Looking for class " & className 
-            let cls = getClassByName className
-            if not cls.isnil():
-                UE_Log "Found Class " & propType & " creating Prop"
-                case eMeta:
-                of emClass, emTSubclassOf:
-                    let clsProp = newFClassProperty(makeFieldVariant(outer), name, flags)
-                    clsProp.setPropertyMetaClass(cls)
-                    clsProp
-                of emTSoftClassPtr:
-                    let clsProp = newFSoftClassProperty(makeFieldVariant(outer), name, flags)
-                    clsProp.setPropertyMetaClass(cls)
-                    clsProp
-                of emObjPtr:
-                    let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
-                    objProp.setPropertyClass(cls)
-                    objProp
-                of emTSoftObjectPtr:
-                    let softObjProp = newFSoftObjectProperty(makeFieldVariant(outer), name, flags)
-                    softObjProp.setPropertyClass(cls)
-                    softObjProp
-            
-            else:
-                raise newException(Exception, "FProperty not covered in the types for " & propType )
-            
-       
-    prop.setPropertyFlags(prop.getPropertyFlags() or propFlags)
-    prop
 
 proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
     
