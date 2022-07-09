@@ -138,7 +138,7 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
         elif propType.contains("TMap"):
             let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
             let innerTypes = propType.extractKeyValueFromMapProp()
-            let key = newFProperty(outer, innerTypes[0], n"Key") 
+            let key = newFProperty(outer, innerTypes[0], n"Key", CPF_HasGetValueTypeHash) 
             let value = newFProperty(outer, innerTypes[1], n"Value")
 
             mapProp.addCppProperty(key)
@@ -158,25 +158,41 @@ func newFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF
         else:
 #Needs a clean up to converge the code between ScriptStruct, ObjProps and ClsProps.
 # But it will be better to do it after binding SoftClass/SoftObj and TSubclassOf 
-#(which I assume is just a way to discriminate on the base class for the MetaClass)  
-            let isSubclass = propType.startsWith("TSubclassOf")
-            let className = if isSubclass: propType.extractTypeFromGenericInNimFormat("TSubclassOf")
-                                                   .removeFirstLetter() 
-                            else: propType.removeFirstLetter().removeLastLettersIfPtr()
-            let shouldSetClassProperty = isSubclass or className == "Class"
+#(which I assume is just a way to discriminate on the base class for the MetaClass)
+            type EObjectMetaProp = enum
+                emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr#, TSoftClassPtr = "TSoftClassPtr"
+            let eMeta = if propType.contains("TSubclassOf"): emTSubclassOf
+                        elif propType.contains("TSoftObjectPtr"): emTSoftObjectPtr
+                        elif propType == ("UClass"): emClass
+                        else: emObjPtr 
+                        # elif propType.endsWith("Ptr"): 
+                        # else if propType.contains("TSoftClassPtr"): emTSoftClassPtr
+                        # else: raise newException(Exception, "FProperty not covered in the types for " & propType)
+
+            let className = case eMeta 
+                of emTSubclassOf: propType.extractTypeFromGenericInNimFormat("TSubclassOf").removeFirstLetter() 
+                of emTSoftObjectPtr: propType.extractTypeFromGenericInNimFormat("TSoftObjectPtr").removeFirstLetter() 
+                of emObjPtr, emClass: propType.removeFirstLetter().removeLastLettersIfPtr()
+            let shouldSetClassProperty = eMeta == emClass or eMeta == emTSubclassOf
           
             UE_Log "Looking for class " & className 
             let cls = getClassByName className
             if not cls.isnil():
                 UE_Log "Found Class " & propType & " creating Prop"
-                if shouldSetClassProperty:
+                case eMeta:
+                of emClass, emTSubclassOf:
                     let clsProp = newFClassProperty(makeFieldVariant(outer), name, flags)
                     clsProp.setPropertyMetaClass(cls)
                     clsProp
-                else:
+                of emObjPtr:
                     let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
                     objProp.setPropertyClass(cls)
                     objProp
+                of emTSoftObjectPtr:
+                    let softObjProp = newFSoftObjectProperty(makeFieldVariant(outer), name, flags)
+                    softObjProp.setPropertyClass(cls)
+                    softObjProp
+            
             else:
                 raise newException(Exception, "FProperty not covered in the types for " & propType )
             
