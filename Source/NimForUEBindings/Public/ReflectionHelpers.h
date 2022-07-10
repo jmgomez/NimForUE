@@ -69,6 +69,18 @@ public:
 	static TArray<UClass*> GetAllClassesFromModule(FString ModuleName);
 
 
+	template<typename T>
+	static TArray<T*> GetAllObjectsFromPackage(UPackage* Package) {
+			TArray<T*> Objects = {};
+			ForEachObjectWithPackage(Package, [&](UObject* Object) {
+				if(T* Obj = Cast<T>(Object))
+					Objects.Add(Obj);
+					return true;
+				});
+			return Objects;
+	}
+
+
 	static void NimForUELog(FString Msg);
 	static void NimForUEWarn(FString Msg);
 	static void NimForUEError(FString Msg);

@@ -23,12 +23,14 @@ type
         Next* : ptr UField #Next Field in the linked list 
     UFieldPtr* = ptr UField 
 
+    UEnum* {.importcpp, inheritable, pure .} = object of UField
+    UEnumPtr* = ptr UEnum
+
     UStruct* {.importcpp, inheritable, pure .} = object of UField
         Children* : UFieldPtr # Pointer to start of linked list of child fields */
         childProperties* {.importcpp:"ChildProperties".}: FFieldPtr #  /** Pointer to start of linked list of child fields */
         propertyLink* {.importcpp:"PropertyLink".}: FPropertyPtr #  /** 	/** In memory only: Linked list of properties from most-derived to base */
 
-        
     UStructPtr* = ptr UStruct 
 
 
@@ -98,7 +100,7 @@ bindFProperty([
         "FByteProperty", "FUInt16Property","FUInt32Property", "FUInt64Property",
         "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
         "FArrayProperty", "FStructProperty", "FObjectProperty", "FClassProperty",
-        "FSoftObjectProperty", "FSoftClassProperty",
+        "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty",
         "FMapProperty", "FDelegateProperty", "FMulticastDelegateProperty"])
 
 
@@ -106,9 +108,10 @@ bindFProperty([
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
 proc setPropertyClass*(prop:FObjectPropertyPtr | FSoftObjectPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
 proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
+proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->SetEnum(#))".}
 
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
-proc addCppProperty*(arrProp:FArrayPropertyPtr | FMapPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
+proc addCppProperty*(arrProp:FArrayPropertyPtr | FMapPropertyPtr | FEnumPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
 
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
 proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->ValueProp)".}

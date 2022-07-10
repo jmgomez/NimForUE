@@ -124,11 +124,15 @@ proc scratchpad*(executor:UObjectPtr) =
 #Review the how 
 proc scratchpadEditor*() = 
     try:
-        let package = getPackageByName("NimForUEBindings")
+        let package = getPackageByName("Engine")
         if not package.isNil():
             UE_Log("package is " & package.getName())
         else:
             UE_Log("package is nill")
+
+        for c in getAllObjectsFromPackage[UEnum](package):
+            UE_Warn "Class " & c.getName()
+
 
 
     except Exception as e:
@@ -142,6 +146,14 @@ proc scratchpadEditor*() =
 type
     AActor* = object of UObject
     AActorPtr* = ptr AActor
+
+const ueEnumType = UEType(name: "EMyTestEnum", kind: uEnum, 
+                            fields: @[
+                                UEField(kind:uefEnumVal, name:"TestValue"),
+                                UEField(kind:uefEnumVal, name:"TestValue2")
+                            ]
+                        )
+genType(ueEnumType)
 
 UStruct FIntPropTests:
     (BlueprintType)
@@ -163,6 +175,7 @@ UStruct FIntPropTests:
         propActorSubclass : TSubclassOf[UObject]
         propSoftObject : TSoftObjectPtr[UObject]
         propSoftClass : TSoftClassPtr[AActor]
+        propEnum : EMyTestEnum
 
 
 

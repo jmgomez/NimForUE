@@ -46,3 +46,12 @@ func firstToLow*(str:string) : string =
 func removeFirstLetter*(str:string) : string = 
     if str.len()>0: str.substr(1)
     else: str
+
+
+
+#OPTION
+func getOrCompute*[T](opt:Option[T], fn : ()->T) : T = 
+    if opt.isSome():
+        return opt.get()
+    else:
+        return fn()

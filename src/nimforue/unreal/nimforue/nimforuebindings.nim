@@ -57,10 +57,11 @@ proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.T
 proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
 proc getFPropertiesFrom*(struct:UStructPtr) : TArray[FPropertyPtr] {.importcpp: "UReflectionHelpers::GetFPropertiesFrom(@)"}
 
-proc getUTypeByName*[T :UStruct](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
+proc getUTypeByName*[T :UField](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
 
 proc getAllClassesFromModule*(moduleName:FString) : TArray[UClassPtr] {.importcpp:"UReflectionHelpers::GetAllClassesFromModule(@)" .}
 
+proc getAllObjectsFromPackage*[T](package:UPackagePtr) : TArray[ptr T] {.importcpp:"UReflectionHelpers::GetAllObjectsFromPackage<'**0>(@)".}
 #nil here and in newUObject is equivalent to GetTransient() (like ue does). Once GetTrasientPackage is bind, use that instead since 
 #it's better design
 proc newObjectFromClass*(owner:UObjectPtr, cls:UClassPtr, name:FName) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}

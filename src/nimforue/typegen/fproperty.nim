@@ -4,6 +4,62 @@ import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
 import models
 
 
+func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
+    let flags = RF_NoFlags #OBJECT FLAGS
+ #It holds a complex type, like a struct or a class
+    type EObjectMetaProp = enum
+        emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, emTSoftClassPtr, emScriptStruct#, TSoftClassPtr = "TSoftClassPtr"
+    
+    var eMeta = if propType.contains("TSubclassOf"): emTSubclassOf
+                elif propType.contains("TSoftObjectPtr"): emTSoftObjectPtr
+                elif propType.contains("TSoftClassPtr"): emTSoftClassPtr
+                elif propType == ("UClass"): emClass
+                else: emObjPtr #defaults to emObjPtr but it can be scriptStruct since the name it's the same(will worth to do an or?)
+                
+
+    let className = case eMeta 
+        of emTSubclassOf: propType.extractTypeFromGenericInNimFormat("TSubclassOf").removeFirstLetter() 
+        of emTSoftObjectPtr: propType.extractTypeFromGenericInNimFormat("TSoftObjectPtr").removeFirstLetter() 
+        of emTSoftClassPtr: propType.extractTypeFromGenericInNimFormat("TSoftClassPtr").removeFirstLetter() 
+        of emObjPtr, emClass, emScriptStruct: propType.removeFirstLetter().removeLastLettersIfPtr()
+
+    UE_Log "Looking for ustruct.." & className 
+    let ustruct = getUStructByName className
+    if ustruct.isnil(): return none[FPropertyPtr]()
+    #we still dont know if it's a script struct
+    let cls = ueCast[UClass](ustruct)
+    let scriptStruct = ueCast[UScriptStruct](ustruct)
+    if not scriptStruct.isNil():
+        eMeta = emScriptStruct   
+        UE_Log "Found ScriptStruct " & propType & " creating Prop"
+    else:
+        UE_Log "Found Class " & propType & " creating Prop"
+
+    some case eMeta:
+    of emClass, emTSubclassOf:
+        let clsProp = newFClassProperty(makeFieldVariant(outer), name, flags)
+        clsProp.setPropertyMetaClass(cls)
+        clsProp
+    of emTSoftClassPtr:
+        let clsProp = newFSoftClassProperty(makeFieldVariant(outer), name, flags)
+        clsProp.setPropertyMetaClass(cls)
+        clsProp
+    of emObjPtr:
+        let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
+        objProp.setPropertyClass(cls)
+        objProp
+    of emTSoftObjectPtr:
+        let softObjProp = newFSoftObjectProperty(makeFieldVariant(outer), name, flags)
+        softObjProp.setPropertyClass(cls)
+        softObjProp
+    of emScriptStruct:
+        let structProp = newFStructProperty(makeFieldVariant(outer), name, flags)
+        structProp.setScriptStruct(scriptStruct)
+        structProp
+
+    
+    
+
 func newFProperty*(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : FPropertyPtr = 
     let flags = RF_NoFlags #OBJECT FLAGS
 
@@ -50,61 +106,27 @@ func newFProperty*(outer : UStructPtr, propType:string, name:FName, propFlags=CP
             mapProp.addCppProperty(key)
             mapProp.addCppProperty(value)
             mapProp
-        else:
-            #It holds a complex type, like a struct or a class
-            type EObjectMetaProp = enum
-                emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, emTSoftClassPtr, emScriptStruct#, TSoftClassPtr = "TSoftClassPtr"
-            
-            var eMeta = if propType.contains("TSubclassOf"): emTSubclassOf
-                        elif propType.contains("TSoftObjectPtr"): emTSoftObjectPtr
-                        elif propType.contains("TSoftClassPtr"): emTSoftClassPtr
-                        elif propType == ("UClass"): emClass
-                        else: emObjPtr #defaults to emObjPtr but it can be scriptStruct since the name it's the same(will worth to do an or?)
-                        
-
-            let className = case eMeta 
-                of emTSubclassOf: propType.extractTypeFromGenericInNimFormat("TSubclassOf").removeFirstLetter() 
-                of emTSoftObjectPtr: propType.extractTypeFromGenericInNimFormat("TSoftObjectPtr").removeFirstLetter() 
-                of emTSoftClassPtr: propType.extractTypeFromGenericInNimFormat("TSoftClassPtr").removeFirstLetter() 
-                of emObjPtr, emClass, emScriptStruct: propType.removeFirstLetter().removeLastLettersIfPtr()
-        
-            UE_Log "Looking for ustruct.." & className 
-            let ustruct = getUStructByName className
-            if not ustruct.isnil():
-                #we still dont know if it's a script struct
-                let cls = ueCast[UClass](ustruct)
-                let scriptStruct = ueCast[UScriptStruct](ustruct)
-                if not scriptStruct.isNil():
-                    eMeta = emScriptStruct   
-                    UE_Log "Found ScriptStruct " & propType & " creating Prop"
-                else:
-                    UE_Log "Found Class " & propType & " creating Prop"
-
-                case eMeta:
-                of emClass, emTSubclassOf:
-                    let clsProp = newFClassProperty(makeFieldVariant(outer), name, flags)
-                    clsProp.setPropertyMetaClass(cls)
-                    clsProp
-                of emTSoftClassPtr:
-                    let clsProp = newFSoftClassProperty(makeFieldVariant(outer), name, flags)
-                    clsProp.setPropertyMetaClass(cls)
-                    clsProp
-                of emObjPtr:
-                    let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
-                    objProp.setPropertyClass(cls)
-                    objProp
-                of emTSoftObjectPtr:
-                    let softObjProp = newFSoftObjectProperty(makeFieldVariant(outer), name, flags)
-                    softObjProp.setPropertyClass(cls)
-                    softObjProp
-                of emScriptStruct:
-                    let structProp = newFStructProperty(makeFieldVariant(outer), name, flags)
-                    structProp.setScriptStruct(scriptStruct)
-                    structProp
-        
+        else: #ustruct based?
+            let structBased = newUStructBasedFProperty(outer, propType, name, propFlags)
+            if structBased.isSome():
+                structBased.get()
             else:
-                raise newException(Exception, "FProperty not covered in the types for " & propType )
+                UE_Log "Not a struct based property. Trying as enum .." & propType
+                let ueEnum = getUTypeByName[UEnum](propType) #names arent consistent, for enums it may or not start with the Prefix E
+                if not ueEnum.isNil():
+                    UE_Log "Found " & propType & " as Enum. Creating prop"
+                    let enumProp = newFEnumProperty(makeFieldVariant(outer), name, flags)
+                    enumProp.setEnum(ueEnum)
+                    #Assuming that Enums are exposed via TEnumAsByte
+                    #it may be int32 too?
+                    let underlayingProp : FPropertyPtr = newFByteProperty(makeFieldVariant(enumProp), n"UnderlayingEnumProp", flags)
+                    enumProp.addCppProperty(underlayingProp)
+                    enumProp
+                else:
+                    raise newException(Exception, "FProperty not covered in the types for " & propType )
             
+
+           
        
     prop.setPropertyFlags(prop.getPropertyFlags() or propFlags)
     prop
