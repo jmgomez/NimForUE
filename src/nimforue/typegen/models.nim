@@ -13,9 +13,9 @@ type
 
 
     UETypeKind* = enum
-        uClass
-        uStruct
-        uEnum
+        uetClass
+        uetStruct
+        uetEnum
 
     UEFieldKind* = enum
         uefProp, #this covers FString, int, TArray, etc. 
@@ -66,12 +66,12 @@ type
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
         metadata* : seq[UEMetadata]
         case kind*: UETypeKind
-            of uClass:
+            of uetClass:
                 parent* : string
                 clsFlags*: EClassFlagsVal
-            of uStruct:
+            of uetStruct:
                 superStruct* : string
-            of uEnum:
+            of uetEnum:
                 discard
 
     UEModule* = object

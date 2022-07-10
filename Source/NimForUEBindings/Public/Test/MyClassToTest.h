@@ -13,10 +13,16 @@
 DECLARE_DYNAMIC_DELEGATE_OneParam(FDynamicDelegateOneParamTest, FString, TestParam1);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDynamicMulticastDelegateOneParamTest, FString, TestParam1);
 
-UENUM()
+UENUM(BlueprintType)
 enum EMyTestEnum {
 	TestValue,
 	TestValue2
+};
+
+UENUM()
+enum class EMyTestEnum2 : uint16 {
+	E2TestValue,
+	E2TestValue2
 };
 
 USTRUCT(BlueprintType)

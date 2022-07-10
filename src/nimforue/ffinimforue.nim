@@ -22,8 +22,7 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
 
 
 
-
-UStruct FMyNimStruct:
+uStruct FMyNimStruct:
     (BlueprintType)
     uprop(EditAnywhere, BlueprintReadWrite):
         testField : int32
@@ -35,7 +34,7 @@ UStruct FMyNimStruct:
         vectorTest : FVector
         # arrayProp : TArray[int32]
 
-UStruct FMyNimStruct2:
+uStruct FMyNimStruct2:
     (BlueprintType)
     uprop(EditAnywhere):
         testField : int32
@@ -43,6 +42,11 @@ UStruct FMyNimStruct2:
     uprop(OtherValues):
         param : FMyNimStruct
         param2 : FString
+
+uClass UObjectDsl:
+    (BlueprintType, Blueprintable)
+    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+        testField : FString
 
 
 proc createUEReflectedTypes() = 
@@ -54,7 +58,15 @@ proc createUEReflectedTypes() =
                         makeFieldAsUProp("TestField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                         makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                         makeFieldAsUProp("TestInt", "int32", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+                        makeFieldAsUProp("TestInt2", "float", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
+                        makeFieldAsUProp("AnotherField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                     ])
+
+#    for cls in getAllObjectsFromPackage[UClass](package):
+#     if cls.getName().equals(className):
+#         cls.BeginDestroy()
+
+
     let newCls = ueVarType.toUClass(package)
     UE_Log "Class created! " & newCls.getName()
 
@@ -67,11 +79,11 @@ proc onNimForUELoaded(n:int32) : void {.ffi:genFilePath} =
     UE_Log(fmt "Nim loaded for {n} times")
     # #TODO take a look at FFieldCompiledInInfo for precomps
     # if n == 0:
-    #     createUEReflectedTypes()
+    createUEReflectedTypes()
     try:
         let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
-
         emitUStructsForPackage(pkg)
+
     except Exception as e:
         UE_Error "Nim CRASHED "
         UE_Error e.msg

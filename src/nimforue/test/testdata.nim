@@ -3,7 +3,7 @@ import ../typegen/uemeta
 import std/tables
 # export typegen/models
 
-const ueEnumType = UEType(name: "EMyTestEnum", kind: uEnum, 
+const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum, 
                             fields: @[
                                 UEField(kind:uefEnumVal, name:"TestValue"),
                                 UEField(kind:uefEnumVal, name:"TestValue2")
@@ -12,7 +12,7 @@ const ueEnumType = UEType(name: "EMyTestEnum", kind: uEnum,
 genType(ueEnumType)
 const mytable : Table[string, bool] = {"key1": true, "key2": false}.toTable()
 
-const ueStructType = UEType(name: "FStructToUseAsVar", kind: uStruct,
+const ueStructType = UEType(name: "FStructToUseAsVar", kind: uetStruct,
                         fields: @[
                             UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
                         ])
@@ -25,12 +25,12 @@ genType(ueStructType)
 type
     AActor* = object of UObject
     AActorPtr* = ptr AActor
-const ueVarType = UEType(name: "UClassToUseAsVar", parent: "UObject", kind: uClass, 
+const ueVarType = UEType(name: "UClassToUseAsVar", parent: "UObject", kind: uetClass, 
                     fields: @[
                         UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
                         ])
                     
-const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uClass, 
+const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uetClass, 
                     fields: @[
                         UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
                         UEField(kind:uefProp, name: "IntProperty", uePropType: "int32"),

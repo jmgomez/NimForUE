@@ -57,7 +57,7 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
         structProp.setScriptStruct(scriptStruct)
         structProp
 
-    
+
     
 
 func newFProperty*(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : FPropertyPtr = 
@@ -117,16 +117,12 @@ func newFProperty*(outer : UStructPtr, propType:string, name:FName, propFlags=CP
                     UE_Log "Found " & propType & " as Enum. Creating prop"
                     let enumProp = newFEnumProperty(makeFieldVariant(outer), name, flags)
                     enumProp.setEnum(ueEnum)
-                    #Assuming that Enums are exposed via TEnumAsByte
-                    #it may be int32 too?
+                    #Assuming that Enums are exposed via TEnumAsByte or they are uint8. Revisit in the future (only bp exposed enums meets that)
                     let underlayingProp : FPropertyPtr = newFByteProperty(makeFieldVariant(enumProp), n"UnderlayingEnumProp", flags)
                     enumProp.addCppProperty(underlayingProp)
                     enumProp
                 else:
                     raise newException(Exception, "FProperty not covered in the types for " & propType )
-            
-
-           
-       
+        
     prop.setPropertyFlags(prop.getPropertyFlags() or propFlags)
     prop

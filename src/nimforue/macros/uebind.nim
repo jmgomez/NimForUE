@@ -497,11 +497,11 @@ func genUEnumTypeDef(typeDef:UEType) : NimNode =
 
 func genTypeDecl*(typeDef : UEType) : NimNode = 
     case typeDef.kind:
-        of uClass:
+        of uetClass:
             genUClassTypeDef(typeDef)
-        of uStruct:
+        of uetStruct:
             genUStructTypeDef(typeDef)
-        of uEnum:
+        of uetEnum:
             genUEnumTypeDef(typeDef)
         
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)

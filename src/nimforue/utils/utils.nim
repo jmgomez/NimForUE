@@ -51,7 +51,7 @@ func removeFirstLetter*(str:string) : string =
 
 #OPTION
 func getOrCompute*[T](opt:Option[T], fn : ()->T) : T = 
-    if opt.isSome():
-        return opt.get()
-    else:
-        return fn()
+    if opt.isSome(): opt.get() else: fn()
+
+func flatMap*[T, U](opt:Option[T], fn : (t : T)->Option[U]) : Option[U] = 
+    if opt.isSome(): fn(opt.get()) else: none[U]()

@@ -43,7 +43,7 @@ suite "NimForUE.ClassEmit":
             testField2 : FString
             testFieldOtra : FString
 
-        let ueType = UEType(name: "FMyNimStruct", kind: uStruct, fields: 
+        let ueType = UEType(name: "FMyNimStruct", kind: uetStruct, fields: 
                             @[
                                 makeFieldAsUProp("TestField2321", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                                 makeFieldAsUProp("TestField2", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),

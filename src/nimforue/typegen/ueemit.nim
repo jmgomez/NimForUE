@@ -22,6 +22,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : void =
         ueEmitter.uStructsPtrs.add(scriptStruct)
         UE_Log "Struct created with emit type " & scriptStruct.getName()
 
+
 proc destroyAllUStructs*() : void = 
     for structPtr in ueEmitter.uStructsPtrs:
         UE_Log "Destroying struct " & structPtr.getName()
@@ -36,14 +37,23 @@ func emitUStruct(typeDef:UEType) : NimNode =
                 addUStructEmitter((package:UPackagePtr) => toUStruct[name](typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
-    debugEcho repr result
+    # debugEcho repr result
+
+
+func emitUClass(typeDef:UEType) : NimNode =
+    let typeDecl = genTypeDecl(typeDef)
+    
+    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
+                addUStructEmitter((package:UPackagePtr) => toUClass(typeDefAsNode, package))
+
+    result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
 macro emitType*(typeDef : static UEType) : untyped = 
     case typeDef.kind:
-        of uClass: discard
-        of uStruct: 
+        of uetClass: discard
+        of uetStruct: 
             result = emitUStruct(typeDef)
-        of uEnum: discard
+        of uetEnum: discard
 
 
 
@@ -87,7 +97,7 @@ func fromUPropNodeToField(node : NimNode) : seq[UEField] =
                    .map(n => makeFieldAsUProp(n[0].repr, n[1].repr.strip(), metas))
     ueFields
 
-macro UStruct*(name:untyped, body : untyped) : untyped = 
+macro uStruct*(name:untyped, body : untyped) : untyped = 
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
 
 
@@ -107,4 +117,27 @@ macro UStruct*(name:untyped, body : untyped) : untyped =
     let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas)
     
     emitUStruct(ueType)
+
+macro uClass*(name:untyped, body : untyped) : untyped = 
+    let className = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
+
+
+    let classMetas = body.childrenAsSeq()
+                   .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
+                   .map(n => n.children.toSeq())
+                   .foldl( a & b, newSeq[NimNode]())
+                   .map(n=>n.strVal().strip())
+                   .map(makeUEMetadata)
+
+
+    let ueFields = body.childrenAsSeq()
+                       .filter(n=>n.kind == nnkCall and n[0].strVal() == "uprop")
+                       .map(fromUPropNodeToField)
+                       .foldl(a & b)
+
+    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit )
+
+    let ueType = makeUEClass(className, "UObject", classFlags, ueFields, classMetas)
+    
+    emitUClass(ueType)
 

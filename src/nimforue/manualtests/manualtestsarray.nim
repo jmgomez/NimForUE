@@ -124,13 +124,13 @@ proc scratchpad*(executor:UObjectPtr) =
 #Review the how 
 proc scratchpadEditor*() = 
     try:
-        let package = getPackageByName("Engine")
+        let package = getPackageByName("NimForUEDemo")
         if not package.isNil():
             UE_Log("package is " & package.getName())
         else:
             UE_Log("package is nill")
 
-        for c in getAllObjectsFromPackage[UEnum](package):
+        for c in getAllObjectsFromPackage[UClass](package):
             UE_Warn "Class " & c.getName()
 
 
@@ -147,7 +147,7 @@ type
     AActor* = object of UObject
     AActorPtr* = ptr AActor
 
-const ueEnumType = UEType(name: "EMyTestEnum", kind: uEnum, 
+const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum, 
                             fields: @[
                                 UEField(kind:uefEnumVal, name:"TestValue"),
                                 UEField(kind:uefEnumVal, name:"TestValue2")
@@ -155,7 +155,7 @@ const ueEnumType = UEType(name: "EMyTestEnum", kind: uEnum,
                         )
 genType(ueEnumType)
 
-UStruct FIntPropTests:
+uStruct FIntPropTests:
     (BlueprintType)
     uprop(BlueprintReadWrite):
         propInt8 : int8
@@ -180,7 +180,7 @@ UStruct FIntPropTests:
 
 
 
-UStruct FMyUStructDemo:
+uStruct FMyUStructDemo:
     (BlueprintType)
     uprop(EditAnywhere, BlueprintReadWrite):
         propString : FString

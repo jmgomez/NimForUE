@@ -20,11 +20,11 @@ func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField =
 
 
 
-func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField]) : UEType = 
-    UEType(kind:uClass, name:name, parent:parent, clsFlags:EClassFlagsVal(clsFlags), fields:fields)
+func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
+    UEType(kind:uetClass, name:name, parent:parent, clsFlags:EClassFlagsVal(clsFlags), fields:fields)
 
 func makeUEStruct*(name:string, fields:seq[UEField], superStruct="", metadata : seq[UEMetadata] = @[]) : UEType = 
-    UEType(kind:uStruct, name:name, fields:fields, superStruct:superStruct, metadata: metadata)
+    UEType(kind:uetStruct, name:name, fields:fields, superStruct:superStruct, metadata: metadata)
 
 
 
@@ -96,7 +96,7 @@ func toUEType*(cls:UClassPtr) : UEType =
     let parent = cls.getSuperClass()
     let parentName = parent.getPrefixCpp() & parent.getName()
 
-    UEType(name:name, kind:uClass, parent:parentName, fields:fields)
+    UEType(name:name, kind:uetClass, parent:parentName, fields:fields)
 
 
 proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
@@ -106,7 +106,7 @@ proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
     prop
 
 
-proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
+proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
     let 
         objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
         newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
@@ -124,6 +124,7 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UClassPtr =
     
     copyMetadata(parent, newCls)
     newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
+    newCls.setMetadata("BlueprintType", "true") #todo move to ueType
     
     for field in ueType.fields:
         let fProp = field.toFProperty(newCls) 
