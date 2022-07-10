@@ -148,7 +148,7 @@ proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
     scriptStruct.assetCreated()
     
     for field in ueType.fields.toSeq().reversed():
-        let fProp = field.toFProperty(scriptStruct) 
+        discard field.toFProperty(scriptStruct) 
 
     setCppStructOpFor[T](scriptStruct, nil)
     scriptStruct.bindType()

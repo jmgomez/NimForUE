@@ -96,18 +96,18 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     let engineDir = conf.engineDir
     let pluginDir = conf.pluginDir
 
-    let pluginDefinitionsPaths = pluginDir / "./Intermediate"/"Build"/ platformDir / "UnrealEditor"/confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
-    let nimForUEBindingsHeaders =  pluginDir/ "Source/NimForUEBindings/Public/"
-    let nimForUEBindingsIntermidateHeaders = pluginDir/ "Intermediate"/ "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
-    let nimForUEEditorHeaders =  pluginDir/ "Source/NimForUEEditor/Public/"
+    let pluginDefinitionsPaths = pluginDir / "./Intermediate"/"Build"/ platformDir / "UnrealEditor" / confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
+    let nimForUEBindingsHeaders =  pluginDir / "Source/NimForUEBindings/Public/"
+    let nimForUEBindingsIntermidateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
+    let nimForUEEditorHeaders =  pluginDir / "Source/NimForUEEditor/Public/"
     let nimForUEEditorIntermidateHeaders = pluginDir/ "Intermediate"/ "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEEditor"
 
     proc getEngineRuntimeIncludePathFor(engineFolder, moduleName:string) : string = addQuotes(engineDir / "Source"/engineFolder/moduleName/"Public")
     proc getEngineIntermediateIncludePathFor(moduleName:string) : string = addQuotes(engineDir / "Intermediate"/"Build"/platformDir/"UnrealEditor"/"Inc"/moduleName)
     
     let essentialHeaders = @[
-        pluginDefinitionsPaths /  "NimForUE",
-        pluginDefinitionsPaths /  "NimForUEBindings",
+        pluginDefinitionsPaths / "NimForUE",
+        pluginDefinitionsPaths / "NimForUEBindings",
         nimForUEBindingsHeaders,
         nimForUEBindingsIntermidateHeaders,
     #notice this shouldnt be included when target <> Editor

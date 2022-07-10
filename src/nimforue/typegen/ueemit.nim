@@ -97,47 +97,47 @@ func fromUPropNodeToField(node : NimNode) : seq[UEField] =
                    .map(n => makeFieldAsUProp(n[0].repr, n[1].repr.strip(), metas))
     ueFields
 
+
+func getMetasForType(body:NimNode) : seq[UEMetadata] = 
+    body.toSeq()
+        .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
+        .map(n => n.children.toSeq())
+        .foldl( a & b, newSeq[NimNode]())
+        .map(n=>n.strVal().strip())
+        .map(makeUEMetadata)
+
+func getUPropsAsFieldsForType(body:NimNode) : seq[UEField] = 
+    body.toSeq()
+        .filter(n=>n.kind == nnkCall and n[0].strVal() == "uprop")
+        .map(fromUPropNodeToField)
+        .foldl(a & b)
+    
 macro uStruct*(name:untyped, body : untyped) : untyped = 
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
 
+    let structMetas = getMetasForType(body)
 
-    let structMetas = body.childrenAsSeq()
-                   .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
-                   .map(n => n.children.toSeq())
-                   .foldl( a & b, newSeq[NimNode]())
-                   .map(n=>n.strVal().strip())
-                   .map(makeUEMetadata)
-
-
-    let ueFields = body.childrenAsSeq()
-                       .filter(n=>n.kind == nnkCall and n[0].strVal() == "uprop")
-                       .map(fromUPropNodeToField)
-                       .foldl(a & b)
+    let ueFields = getUPropsAsFieldsForType(body)
 
     let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas)
     
-    emitUStruct(ueType)
+    emitUStruct(ueType) 
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
-    let className = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
+    if name.toSeq().len() < 3:
+        error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
+
+    let parent = name[^1].strVal()
+    let className = name[1].strVal()
 
 
-    let classMetas = body.childrenAsSeq()
-                   .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
-                   .map(n => n.children.toSeq())
-                   .foldl( a & b, newSeq[NimNode]())
-                   .map(n=>n.strVal().strip())
-                   .map(makeUEMetadata)
+    let classMetas = getMetasForType(body)
 
-
-    let ueFields = body.childrenAsSeq()
-                       .filter(n=>n.kind == nnkCall and n[0].strVal() == "uprop")
-                       .map(fromUPropNodeToField)
-                       .foldl(a & b)
+    let ueFields = getUPropsAsFieldsForType(body)
 
     let classFlags = (CLASS_Inherit | CLASS_ScriptInherit )
 
-    let ueType = makeUEClass(className, "UObject", classFlags, ueFields, classMetas)
+    let ueType = makeUEClass(className, parent, classFlags, ueFields, classMetas)
     
     emitUClass(ueType)
 

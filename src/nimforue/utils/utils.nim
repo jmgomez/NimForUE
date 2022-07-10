@@ -1,5 +1,4 @@
 import std/[options, strutils, sequtils, sugar]
-import std/[sequtils, options]
 #NOTE Do not include UE Types here
 
 func head*[T](xs: seq[T]) : Option[T] =

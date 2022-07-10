@@ -119,7 +119,6 @@ proc scratchpad*(executor:UObjectPtr) =
 
 
 
-       
 
 #Review the how 
 proc scratchpadEditor*() = 
@@ -201,3 +200,18 @@ uStruct FMyUStructDemo:
         propFloat : float
         propFloat64 : float64
         propFName : FName
+
+
+
+uClass UObjectDsl of UObject:
+    (BlueprintType, Blueprintable)
+    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+        testField : FString
+
+uClass AActorDsl of AActor:
+    (BlueprintType, Blueprintable)
+    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+        testField : FString
+        testField2 : FString
+        testField3 : FString
+        anotherField : FMyUStructDemo

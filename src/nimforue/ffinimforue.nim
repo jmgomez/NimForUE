@@ -43,11 +43,6 @@ uStruct FMyNimStruct2:
         param : FMyNimStruct
         param2 : FString
 
-uClass UObjectDsl:
-    (BlueprintType, Blueprintable)
-    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-        testField : FString
-
 
 proc createUEReflectedTypes() = 
     let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
