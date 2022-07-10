@@ -100,7 +100,6 @@ func toUEType*(cls:UClassPtr) : UEType =
 
 
 proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
-    
     let prop : FPropertyPtr = newFProperty(outer, propField.uePropType, propField.name.makeFName())
     prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
     outer.addCppProperty(prop)

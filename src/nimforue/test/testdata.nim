@@ -43,6 +43,7 @@ const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uCla
                         UEField(kind:uefProp, name: "SubclassOfProperty", uePropType: "TSubclassOf[UObject]"), 
                         UEField(kind:uefProp, name: "EnumProperty", uePropType: "EMyTestEnum"), 
                         UEField(kind:uefProp, name: "SoftObjectProperty", uePropType: "TSoftObjectPtr[UObject]"), 
+                        UEField(kind:uefProp, name: "SoftClassProperty", uePropType: "TSoftClassPtr[UObject]"), 
                         UEField(kind:uefProp, name: "MapProperty", uePropType: "TMap[FString, int32]"), 
                         UEField(kind:uefProp, name: "NameProperty", uePropType: "FName"), 
                         UEField(kind:uefDelegate, name: "DynamicDelegateOneParamProperty", delKind:uedelDynScriptDelegate, delegateSignature: @["FString"]), 

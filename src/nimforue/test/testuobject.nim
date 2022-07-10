@@ -246,10 +246,21 @@ suite "NimForUE.UObject":
         
         let expectedValue = newUObject[UMyClassToTest]()
         
-        obj.softObjectProperty = makeTSoftObject(expectedValue)
+        obj.softObjectProperty = makeTSoftObjectPtr(expectedValue)
 
 
         assert obj.softObjectProperty.get() == expectedValue
+    
+
+    ueTest "ShouldBeAbleToUseAutoGenGettersAndSettersForTSoftClassPtr":
+        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+        
+        let expectedValue = newUObject[UMyClassToTest]().getClass()
+        
+        obj.softClassProperty = makeTSoftClassPtr[UMyClassToTest](expectedValue)
+
+
+        assert obj.softClassProperty.get().getName().equals(expectedValue.getName())
     
 
     
