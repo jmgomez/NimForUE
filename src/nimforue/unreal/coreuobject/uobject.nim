@@ -140,7 +140,7 @@ type
 
 
 #UFIELD
-proc setMetadata*(field:UFieldPtr, key, inValue:FString) : void {.importcpp:"#->SetMetaData(*#, *#)".}
+proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) : void {.importcpp:"#->SetMetaData(*#, *#)".}
 proc bindType*(field:UFieldPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
 
 #USTRUCT
@@ -158,16 +158,26 @@ proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) :
 proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
 proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()" .}
 proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()" .}
-
+proc assembleReferenceTokenStream*(cls:UClassPtr, bForce = false) : void {. importcpp:"#->AssembleReferenceTokenStream(@)" .}
 
 #UOBJECT
 proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
+proc getFlags*(obj:UObjectPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
+proc setFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->SetFlags(#)" .}
+proc clearFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->ClearFlags(#)" .}
+
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
+proc getOuter*(obj : UObjectPtr) : UObjectPtr {. importcpp: "#->GetOuter()" .}
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
 proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
 proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
 
-
+#bool UClass::Rename( const TCHAR* InName, UObject* NewOuter, ERenameFlags Flags )
+#notice rename flags is not an enum in cpp we define it here adhoc
+type ERenameFlag* = distinct uint32
+const REN_None* = ERenameFlag(0x0000)
+const REN_DontCreateRedirectors* = ERenameFlag(0x0010)
+proc rename*(obj:UObjectPtr, InName:FString, newOuter:UObjectPtr, flags:ERenameFlag) : bool {. importcpp:"#->Rename(*#, #, #)" .}
 
 #FUNC
 proc initializeDerivedMembers*(fn:UFunctionPtr) : void {.importcpp:"#->InitializeDerivedMembers()".}

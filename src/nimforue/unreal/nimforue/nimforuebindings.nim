@@ -1,5 +1,5 @@
 import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, templates/subclassof, nametypes, uobjectglobals]
-import ../core/containers/[unrealstring, array]
+import ../core/containers/[unrealstring, array, map]
 import std/[typetraits, strutils]
 include ../definitions
 
@@ -8,8 +8,8 @@ type
     UFunctionCaller* {.importc, inheritable, pure .} = object
     FNativeFuncPtr* {.importcpp.} = object
     
-    # UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
-    # UNimClassBasePtr* = ptr UNimClassBase
+    UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
+    UNimClassBasePtr* = ptr UNimClassBase
 
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
     UNimScriptStructPtr* = ptr UNimScriptStruct
@@ -103,14 +103,13 @@ proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =
     let cls = getClassByName(className)
     return cls
 
-    
+proc addClassFlag*(cls:UClassPtr, flag:EClassFlags) : void {.importcpp:"UReflectionHelpers::AddClassFlag(@)".}    
     
 proc makeFNativeFuncPtr*(fun:proc (context:ptr UObject, stack:var FFrame,  result: pointer):void {. cdecl .}) : FNativeFuncPtr {.importcpp: "UReflectionHelpers::MakeFNativeFuncPtr(@)" .}
 
 proc setNativeFunc*(ufunc: ptr UFunction, funcPtr: FNativeFuncPtr) : void {.importcpp: "#->SetNativeFunc(#)" .}
 
 proc increaseStack*(stack: var FFrame) : void {.importcpp: "UReflectionHelpers::IncreaseStack(#)" .}
-
 
 
 
@@ -121,3 +120,11 @@ proc getPackageByName*(packageName:FString) : UPackagePtr =
 
 ##EDITOR
 proc broadcastAsset*(asset:UObjectPtr) : void {.importcpp: "UFakeFactory::BroadcastAsset(#)" .}
+
+type
+    FNimHotReload* {.importcpp.} = object
+        structsToReinstance* {.importcpp: "StructsToReinstance" .} : TMap[UScriptStructPtr, UScriptStructPtr]
+        classesToReinstance* {.importcpp: "ClassesToReinstance" .} : TMap[UClassPtr, UClassPtr]
+    FNimHotReloadPtr* = ptr FNimHotReload
+
+proc newNimHotReload*() : FNimHotReloadPtr {.importcpp: "new '*0()".}

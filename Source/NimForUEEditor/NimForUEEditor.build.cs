@@ -12,8 +12,12 @@ public class NimForUEEditor : ModuleRules
 			"UnrealEd",
 			"Slate",
 			"SlateCore",
+			
 		});
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"Kismet",
+			"BlueprintGraph",
+		});
 
 	}
 

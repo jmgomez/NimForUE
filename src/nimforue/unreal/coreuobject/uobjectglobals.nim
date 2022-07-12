@@ -29,3 +29,5 @@ proc makeFStaticConstructObjectParameters*(class : UClassPtr) : FStaticConstruct
 #     params.SetFlags = flags
 #     params
 
+
+proc makeUniqueObjectName*(outer : UObjectPtr, class : UClassPtr, inbaseName : FName = EName.ENone) : FName {.importcpp:"MakeUniqueObjectName(@)".}

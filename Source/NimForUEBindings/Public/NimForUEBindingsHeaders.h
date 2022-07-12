@@ -6,3 +6,4 @@
 #include "ReflectionHelpers.h"
 #include "NimClassBase.h"
 #include "NimScriptStruct.h"
+#include "FNimHotReload.h"

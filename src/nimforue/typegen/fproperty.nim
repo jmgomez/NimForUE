@@ -62,7 +62,6 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
 
 func newFProperty*(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : FPropertyPtr = 
     let flags = RF_NoFlags #OBJECT FLAGS
-
     let prop : FPropertyPtr = 
         if propType == "FString": 
             newFStrProperty(makeFieldVariant(outer), name, flags)
@@ -124,5 +123,5 @@ func newFProperty*(outer : UStructPtr, propType:string, name:FName, propFlags=CP
                 else:
                     raise newException(Exception, "FProperty not covered in the types for " & propType )
         
-    prop.setPropertyFlags(prop.getPropertyFlags() or propFlags)
+    prop.setPropertyFlags(prop.getPropertyFlags() or propFlags) #in case custom fprop require custom flags (see TMAP)
     prop

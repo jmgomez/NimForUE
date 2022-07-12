@@ -123,14 +123,20 @@ proc scratchpad*(executor:UObjectPtr) =
 #Review the how 
 proc scratchpadEditor*() = 
     try:
-        let package = getPackageByName("NimForUEDemo")
+        let package = getPackageByName("NimForUEBindings")
         if not package.isNil():
             UE_Log("package is " & package.getName())
         else:
             UE_Log("package is nill")
 
-        for c in getAllObjectsFromPackage[UClass](package):
-            UE_Warn "Class " & c.getName()
+        for c in getAllObjectsFromPackage[UNimClassBase](package):
+            UE_Warn "PRE Class " & c.getName()
+            for p in getFPropsFromUStruct(c):
+                UE_Log "Prop " & p.getName()
+            
+            # if c.getName().contains("REINST"):
+            #     c.conditionalBeginDestroy()
+            #     UE_Log "Destroying prev" & c.getName()
 
 
 
@@ -138,7 +144,6 @@ proc scratchpadEditor*() =
         
         UE_Warn e.msg
         UE_Warn e.getStackTrace()
-
 
 
 #temp
@@ -154,29 +159,27 @@ const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
                         )
 genType(ueEnumType)
 
-uStruct FIntPropTests:
-    (BlueprintType)
-    uprop(BlueprintReadWrite):
-        propInt8 : int8
-        propInt16 : int16
-        propInt32 : int32
-        propInt64 : int64
-        propByte : byte
-        propUint16 : uint16
-        propUint32 : uint32
-        propUint64 : uint64
-        propMapFloat : TMap[FString, float]
-        propMapFloat2 : TMap[FString, float]
-        propMapFloat3 : TMap[bool, FName]
-        propVector : FVector
-        propHitResult : FHitResult
-        propActor : AActorPtr
-        propActorSubclass : TSubclassOf[UObject]
-        propSoftObject : TSoftObjectPtr[UObject]
-        propSoftClass : TSoftClassPtr[AActor]
-        propEnum : EMyTestEnum
-
-
+# uStruct FIntPropTests:
+#     (BlueprintType)
+#     uprop(BlueprintReadWrite):
+#         propInt8 : int8
+#         propInt16 : int16
+#         propInt32 : int32
+#         propInt64 : int64
+#         propByte : byte
+#         propUint16 : uint16
+#         propUint32 : uint32
+#         propUint64 : uint64
+#         propMapFloat : TMap[FString, float]
+#         propMapFloat2 : TMap[FString, float]
+#         propMapFloat3 : TMap[bool, FName]
+#         propVector : FVector
+#         propHitResult : FHitResult
+#         propActor : AActorPtr
+#         propActorSubclass : TSubclassOf[UObject]
+#         propSoftObject : TSoftObjectPtr[UObject]
+#         propSoftClass : TSoftClassPtr[AActor]
+#         propEnum : EMyTestEnum
 
 
 uStruct FMyUStructDemo:
@@ -185,15 +188,22 @@ uStruct FMyUStructDemo:
         propString : FString
         propInt : int32
         propInt64 : int
-        propInt642 : int64
-        propFloat32 : float32
-        structInt : FIntPropTests
-        propBool : bool
+        # propInt642 : int64
+        # propFloat32 : float32
+        # structInt : FIntPropTests
+        propEnum : EMyTestEnum
+        # propBool : bool
         propObject : UObjectPtr
         propClass : UClassPtr
+        propSubClass : TSubclassOf[AActor]
         propArray : TArray[FString]
         propArrayFloat : TArray[float]
         propArrayBool : TArray[bool]
+        propAnother : int
+        propAnother2 : int
+        propAnother3 : int
+        # propMapFloat : TMap[FString, float]
+
       
     uprop(EditAnywhere, BlueprintReadOnly):
         propReadOnly : FString
@@ -206,12 +216,42 @@ uStruct FMyUStructDemo:
 uClass UObjectDsl of UObject:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-        testField : FString
+        # testField : FString
+       
+        testFieldInt : int
+        testFieldAnother : int
+        testFieldAnother2 : int
+        
+        testFieldAnother3 : bool
+        # testFieldAnother321 : FString
+        # # testFieldAnother32 : FString
+        # testFieldAnother4 : int32
+        testFieldAnother5 : int32
+        # testFieldAnother6 : int32
+        # testFieldAnother7 : int32
+        # # testFieldAnother8 : int32
+        # testFieldAnother9 : int32
+        # # testFieldAnother91 : int32
+        # testFieldAnother10 : int32
+        # # testFieldAnother120 : int32
+        # testFieldAnother121 : int32
+        # testFieldAnother123: int32
 
-uClass AActorDsl of AActor:
-    (BlueprintType, Blueprintable)
-    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-        testField : FString
-        testField2 : FString
-        testField3 : FString
-        anotherField : FMyUStructDemo
+
+
+
+# uClass AActorDsl of AActor:
+#     (BlueprintType, Blueprintable)
+#     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+#         testField : FString
+#         # test2 : int
+#         test3 : FString
+#         test4 : FString
+#         # anotherField : FMyUStructDemo
+#         # anotherField2 : FString
+#         anotherField3 : int32
+#         anotherField4 : int32
+#         anotherField5 : FString
+
+
+

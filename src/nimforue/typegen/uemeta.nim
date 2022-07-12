@@ -6,8 +6,8 @@ export models
 
 
 #UE META CONSTRUCTORS. Notice they are here because they pull type definitions from Cpp which cant be loaded in the ScriptVM
-func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None) : UEField = 
-    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
+func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[]) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata:metas)       
 
 func makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string], flags=CPF_None) : UEField = 
     UEField(kind:uefDelegate, name: name, delKind: delKind, delegateSignature:signature, delFlags:EPropertyFlagsVal(flags))
@@ -102,17 +102,21 @@ func toUEType*(cls:UClassPtr) : UEType =
 proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
     let prop : FPropertyPtr = newFProperty(outer, propField.uePropType, propField.name.makeFName())
     prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
+    for metadata in propField.metadata:
+        prop.setMetadata(metadata.name, $metadata.value)
     outer.addCppProperty(prop)
     prop
+
 
 
 proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
     let 
         objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
-        newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+        newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
         parent = getClassByName(ueType.parent.removeFirstLetter())
     
     assetCreated(newCls)
+
 
     newCls.classConstructor = nil
     newCls.propertyLink = parent.propertyLink
@@ -132,6 +136,8 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
 
     newCls.bindType()
     newCls.staticLink(true)
+    newCls.assembleReferenceTokenStream()
+    # discard newCls.getDefaultObject() #forces the creation of the cdo
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
     newCls
 

@@ -26,10 +26,13 @@ type
     UEDelegateKind* = enum
         uedelDynScriptDelegate,
         uedelMulticastDynScriptDelegate
+    UEMetadata* = object 
+        name* : string
+        value* : bool
 
     UEField* = object
         name* : string
-        # metatadata* : Table[string, bool]
+        metadata* : seq[UEMetadata]
 
         case kind*: UEFieldKind
             of uefProp:
@@ -57,9 +60,6 @@ func shouldBeReturnedAsVar*(field:UEField) : bool =
 
 
 type
-    UEMetadata* = object 
-        name* : string
-        value* : bool
 
     UEType* = object 
         name* : string

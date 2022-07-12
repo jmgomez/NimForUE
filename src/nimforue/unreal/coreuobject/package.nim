@@ -1,8 +1,9 @@
+include ../definitions
 import uobject
 import ../core/containers/[unrealstring]
 type 
 
-    UPackage* {.importcpp.} = object of UObject
+    UPackage* {.importcpp, header: ueIncludes  } = object of UObject
     UPackagePtr* = ptr UPackage
 
 

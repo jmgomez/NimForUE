@@ -1,50 +1,89 @@
 include ../unreal/prelude
 include ../utils/utils
-import std/[sugar, macros, strutils, genasts, sequtils, options]
+import std/[sugar, macros, strutils, strformat, genasts, sequtils, options]
 
 import uemeta
 
 #Maybe it should hold the old type, the ptr to the struct and the func gen. So we can check for changes?
 
+
 #Global var that contains all the emitters. Only modififed via the funcs below
+
+#[ FRom pywrapper object 1800
+    const FString OldClassName = MakeUniqueObjectName(OldClass->GetOuter(), OldClass->GetClass(), *FString::Printf(TEXT("%s_REINST"), *OldClass->GetName())).ToString();
+		OldClass->ClassFlags |= CLASS_NewerVersionExists;
+		OldClass->SetFlags(RF_NewerVersionExists);
+		OldClass->ClearFlags(RF_Public | RF_Standalone);
+		OldClass->Rename(*OldClassName, nullptr, REN_DontCreateRedirectors);
+]#
+
+
 type 
+    EmitterInfo = object
+        generator : UPackagePtr->UStructPtr
+        ueType : UEType
+        uStructPointer : UStructPtr
+
     UEEmitter* = ref object 
-        uStructsEmitters : seq[UPackagePtr->UStructPtr]
-        uStructsPtrs : seq[UStructPtr]
+        emitters : seq[EmitterInfo]
+
 
 var ueEmitter = UEEmitter() 
 
-proc addUStructEmitter*(fn : UPackagePtr->UStructPtr) : void =  ueEmitter.uStructsEmitters.add(fn)
+proc prepareClassForReinst(prevClass : UClassPtr) = 
+    # prevClass.classFlags = prevClass.classFlags | CLASS_NewerVersionExists
+    prevClass.addClassFlag CLASS_NewerVersionExists
+    prevClass.setFlags(RF_NewerVersionExists)
+    prevClass.clearFlags(RF_Public | RF_Standalone)
+    let prevNameStr : FString =  fmt("{prevClass.getName()}_REINST")
+    let oldClassName = makeUniqueObjectName(prevClass.getOuter(), prevClass.getClass(), makeFName(prevNameStr))
+    discard prevClass.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
+    # prevClass.rename()
 
-proc emitUStructsForPackage*(pkg: UPackagePtr) : void = 
-    for structEmmitter in ueEmitter.uStructsEmitters:
-        let scriptStruct = structEmmitter(pkg)
-        ueEmitter.uStructsPtrs.add(scriptStruct)
-        UE_Log "Struct created with emit type " & scriptStruct.getName()
 
+proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UStructPtr) : void =  
+    ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
 
-proc destroyAllUStructs*() : void = 
-    for structPtr in ueEmitter.uStructsPtrs:
-        UE_Log "Destroying struct " & structPtr.getName()
-        structPtr.conditionalBeginDestroy()
-    ueEmitter.uStructsEmitters = @[]
-    ueEmitter.uStructsPtrs = @[]
+proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr = 
+    var hotReloadInfo = newNimHotReload()
+
+    for emitter in ueEmitter.emitters:
+        case emitter.ueType.kind:
+        of uetStruct:
+            let prevStructPtr = getScriptStructByName emitter.ueType.name.removeFirstLetter()
+            let newStructPtr = ueCast[UScriptStruct](emitter.generator(pkg))
+            if not prevStructPtr.isNil():
+                hotReloadInfo.structsToReinstance.add(prevStructPtr, newStructPtr)
+                UE_Log "ScriptStruct already exists: " & emitter.ueType.name & " will be replaced"
+            else:
+                UE_Log "ScriptStruct added: " & emitter.ueType.name
+        of uetClass:
+            let prevClassPtr = getClassByName emitter.ueType.name.removeFirstLetter()
+            let newClassPtr = ueCast[UNimClassBase](emitter.generator(pkg))
+            if not prevClassPtr.isNil():
+                prevClassPtr.prepareClassForReinst()
+                hotReloadInfo.classesToReinstance.add(prevClassPtr, newClassPtr)
+                UE_Log "Class already exists: " & emitter.ueType.name & " will be replaced"
+            else:
+                UE_Log "Class added: " & emitter.ueType.name
+        of uetEnum:
+            discard
+    hotReloadInfo
 
 func emitUStruct(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
-                addUStructEmitter((package:UPackagePtr) => toUStruct[name](typeDefAsNode, package))
+                addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => toUStruct[name](typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr result
-
 
 func emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
-                addUStructEmitter((package:UPackagePtr) => toUClass(typeDefAsNode, package))
+                addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => toUClass(typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
@@ -57,7 +96,6 @@ macro emitType*(typeDef : static UEType) : untyped =
 
 
 
-
 #iterate childrens and returns a sequence fo them
 func childrenAsSeq*(node:NimNode) : seq[NimNode] =
     var nodes : seq[NimNode] = @[]
@@ -65,8 +103,11 @@ func childrenAsSeq*(node:NimNode) : seq[NimNode] =
         nodes.add n
     nodes
 
-func fromStringAsMetaToFlag(meta:seq[string]) : EPropertyFlags = 
-    var flags : EPropertyFlags = CPF_None
+func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]) = 
+    # var flags : EPropertyFlags = CPF_SkipSerialization
+    var flags : EPropertyFlags = CPF_NoDestructor
+    var metadata : seq[UEMetadata] = @[]
+    # var flags : EPropertyFlags = CPF_None
     #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
     for m in meta:
         if m == "BlueprintReadOnly":
@@ -77,8 +118,13 @@ func fromStringAsMetaToFlag(meta:seq[string]) : EPropertyFlags =
             flags = flags | CPF_Edit
         if m == "ExposeOnSpawn":
                 flags = flags | CPF_ExposeOnSpawn
+                metadata.add(UEMetadata(name:"ExposeOnSpawn", value:true))
+        if m == "VisibleAnywhere":
+                flags = flags | CPF_SimpleDisplay
+        if m == "Transient":
+                flags = flags | CPF_Transient
         
-    flags
+    (flags, metadata)
         
 
 
@@ -94,7 +140,7 @@ func fromUPropNodeToField(node : NimNode) : seq[UEField] =
                    .head()
                    .map(childrenAsSeq)
                    .get(@[])
-                   .map(n => makeFieldAsUProp(n[0].repr, n[1].repr.strip(), metas))
+                   .map(n => makeFieldAsUProp(n[0].repr, n[1].repr.strip(), metas[0], metas[1]))
     ueFields
 
 
@@ -114,13 +160,10 @@ func getUPropsAsFieldsForType(body:NimNode) : seq[UEField] =
     
 macro uStruct*(name:untyped, body : untyped) : untyped = 
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
-
     let structMetas = getMetasForType(body)
-
     let ueFields = getUPropsAsFieldsForType(body)
-
     let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas)
-    
+
     emitUStruct(ueType) 
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
@@ -129,15 +172,11 @@ macro uClass*(name:untyped, body : untyped) : untyped =
 
     let parent = name[^1].strVal()
     let className = name[1].strVal()
-
-
     let classMetas = getMetasForType(body)
-
     let ueFields = getUPropsAsFieldsForType(body)
-
     let classFlags = (CLASS_Inherit | CLASS_ScriptInherit )
-
     let ueType = makeUEClass(className, parent, classFlags, ueFields, classMetas)
     
     emitUClass(ueType)
+  
 

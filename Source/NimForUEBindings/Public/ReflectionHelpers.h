@@ -43,7 +43,7 @@ public:
 	static TNativeType& StepCompiledInRef(FFrame* Frame, void*const TemporaryBuffer, TProperty* Ignore) {
 		return Frame->StepCompiledInRef<TProperty, TNativeType>(TemporaryBuffer);
 	}
-
+	
 
 	template<typename T>
 	static UClass* FromSubclass(TSubclassOf<T> SubclassOf) {
@@ -79,7 +79,10 @@ public:
 				});
 			return Objects;
 	}
-
+	//temp fix
+	static void AddClassFlag(UClass* Cls, EClassFlags FlagToAdd) {
+		Cls->ClassFlags |= FlagToAdd;
+	}
 
 	static void NimForUELog(FString Msg);
 	static void NimForUEWarn(FString Msg);

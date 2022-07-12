@@ -22,28 +22,6 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
 
 
 
-uStruct FMyNimStruct:
-    (BlueprintType)
-    uprop(EditAnywhere, BlueprintReadWrite):
-        testField : int32
-        testField2 : FString
-        objProperty : UObjectPtr
-
-    uprop(EditAnywhere, BlueprintReadOnly):
-        amazing : float32
-        vectorTest : FVector
-        # arrayProp : TArray[int32]
-
-uStruct FMyNimStruct2:
-    (BlueprintType)
-    uprop(EditAnywhere):
-        testField : int32
-        testField2 : FString
-    uprop(OtherValues):
-        param : FMyNimStruct
-        param2 : FString
-
-
 proc createUEReflectedTypes() = 
     let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
     let clsFlags =  (CLASS_Inherit | CLASS_ScriptInherit )
@@ -69,16 +47,26 @@ proc createUEReflectedTypes() =
 #function called right after the dyn lib is load
 #when n == 0 means it's the first time. So first editor load
 #called from C++ NimForUE Module
-proc onNimForUELoaded(n:int32) : void {.ffi:genFilePath} = 
-    # return
-    UE_Log(fmt "Nim loaded for {n} times")
-    # #TODO take a look at FFieldCompiledInInfo for precomps
-    # if n == 0:
-    createUEReflectedTypes()
-    try:
-        let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
-        emitUStructsForPackage(pkg)
+#returns a pointer to a nimHotreload. The type is not passed because it's a type that exists in UE
+#and host doesnt know anything about ue symbols
 
+proc printAllClassAndProps*(prefix:string, package:UPackagePtr) =
+    UE_Error prefix 
+    for c in getAllObjectsFromPackage[UNimClassBase](package):
+        UE_Warn " Class " & c.getName()
+        for p in getFPropsFromUStruct(c):
+            UE_Log "Prop " & p.getName()
+
+proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} = 
+    UE_Log(fmt "Nim loaded for {n} times")
+  
+    try:
+        let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUE"))
+        printAllClassAndProps("PRE", pkg)
+        let nimHotReload = emitUStructsForPackage(pkg)
+        printAllClassAndProps("POST", pkg)
+        # scratchpadEditor()
+        return nimHotReload
     except Exception as e:
         UE_Error "Nim CRASHED "
         UE_Error e.msg
@@ -86,14 +74,12 @@ proc onNimForUELoaded(n:int32) : void {.ffi:genFilePath} =
     # scratchpadEditor()
 
 
-
 #called right before it is unloaded
 #called from the host library
-proc onNimForUEUnloaded() : void {.ffi:genFilePath}  = 
-    # destroyAllUStructs()
-    UE_Log("Nim for UE unloaded")
 
-    # for structEmmitter in ueEmitter.uStructsEmitters:
-    # let scriptStruct = structEmmitter(package)
+#returns a TMap<UClassPtr, UClassPtr> with the classes that needs to be hotreloaded
+proc onNimForUEUnloaded() : void {.ffi:genFilePath}  = 
+    UE_Log("Nim for UE unloaded")
+   
 
     discard
