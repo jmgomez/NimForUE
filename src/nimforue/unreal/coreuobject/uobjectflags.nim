@@ -250,13 +250,31 @@ type
 
 
 macro genEnumOperators(enumName, enumType:static string, genValConverters : static bool = true) : untyped = 
-    result = genAst(name=ident enumName, typ=ident enumType):
+    let name = ident enumName
+    let typ = ident enumType
+    # let fnName = ident "or2"
+    # result = quote do:
+    #     when nimvm:
+    #         proc `fnName`*(a, b :int):int = 1
+    #         # proc `or`*(a, b : `name`) : `name` =  `name`(`typ`(ord(a)) or `typ`(ord(b)))
+    #     else:
+    #         proc `fnName`*(a, b : `name`) : `name` {.importcpp:"#|#".}
+        
+    
+    result = genAst(name, typ):
+        
         proc `or`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
+
+        proc `||`*(a, b : name) : name {.importcpp:"#|#".}
+        proc `&&`*(a, b : name) : name {.importcpp:"#&#".}
+        
+        # proc `or`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
         proc `|`*(a, b : name) : name =  a or b
             # cast[name](bitor(cast[typ](a),cast[typ](b)))
 
         proc `and`*(a, b : name) : name = name(typ(ord(a)) and typ(ord(b)))
-        proc `&`*(a, b : name) : name = a and b
+        
+        proc `&`*(a, b : name) : name {.importcpp:"#&#".}
             # cast[name](bitand(cast[typ](a),cast[typ](b)))
         
         proc `in`*(a,b:name) : bool = (a and b) == a #returns true if used like flag in flags 
@@ -266,7 +284,7 @@ macro genEnumOperators(enumName, enumType:static string, genValConverters : stat
 
         proc toJsonHook*(self:name) : JsonNode = newJInt(int(self))
 
-    let converters = genAst(name=ident enumName, valName=ident enumName&"Val", typ=ident enumType):
+    let converters = genAst(name, valName=ident enumName&"Val", typ):
         converter toValName*(a:name) : valName = valName(typ(ord(a)))
         converter toName*(a:valName) : name = name(typ((a)))
     

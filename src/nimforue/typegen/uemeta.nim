@@ -110,20 +110,21 @@ proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
 
 
 proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
-    let 
-        objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
+    # let objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
+    let objClsFlags  =  (RF_Public || RF_Standalone || RF_Transactional || RF_LoadCompleted)
+    # let objClsFlags  =  RF_Standalone || RF_Public
+    let
         newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
         parent = getClassByName(ueType.parent.removeFirstLetter())
     
     assetCreated(newCls)
-
 
     newCls.classConstructor = nil
     newCls.propertyLink = parent.propertyLink
     newCls.classWithin = parent.classWithin
     newCls.classConfigName = parent.classConfigName
     newcls.setSuperStruct(parent)
-    newcls.classFlags =  ueType.clsFlags & parent.classFlags
+    newcls.classFlags =  EClassFlags(ueType.clsFlags) && parent.classFlags
     newCls.classCastFlags = parent.classCastFlags
     
     copyMetadata(parent, newCls)

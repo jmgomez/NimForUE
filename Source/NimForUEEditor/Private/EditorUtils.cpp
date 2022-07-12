@@ -171,7 +171,7 @@ void UEditorUtils::RefreshNodes(TUniquePtr<FNimHotReload> NimHotReload) {
 	//}
 }
 
-void UEditorUtils::PerformReinstance(TUniquePtr<FNimHotReload> NimHotReload) {
+void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
 	TUniquePtr<FReload> Reload(new FReload(EActiveReloadType::Reinstancing, TEXT(""), *GLog)); //activates hot reload so we pass a check (even though we dont use it)
 	// Reload->
 	TArray<UBlueprint*> DependencyBPs;
@@ -419,6 +419,7 @@ void UEditorUtils::PerformReinstance(TUniquePtr<FNimHotReload> NimHotReload) {
 	if (PropertyModule)
 		PropertyModule->NotifyCustomizationModuleChanged();
 
+	delete NimHotReload;
 }
 
 void UEditorUtils::HotReload(TUniquePtr<FNimHotReload> NimHotReload) {

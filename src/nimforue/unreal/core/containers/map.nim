@@ -1,11 +1,11 @@
 include ../../definitions
 
 type 
-    TPair*[K, V] {.importcpp:"TPair", bycopy .} = object
+    TPair*[K, V] {.importcpp:"TPair",  bycopy .} = object
         key: K
         value: V
 
-    TMap*[K, V] {.importcpp: "TMap", bycopy} = object
+    TMap*[K, V] {.importcpp: "TMap", header:ueIncludes, bycopy} = object
 
 
 proc makeTPair*[K, V](k:K, v:V) : TPair[K, V] {.importcpp: "TPair<'1, '2>(@)", constructor .}

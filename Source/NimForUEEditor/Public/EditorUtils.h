@@ -15,7 +15,7 @@ class NIMFORUEEDITOR_API UEditorUtils : public UObject {
 	GENERATED_BODY()
 public:
 	static void RefreshNodes(TUniquePtr<FNimHotReload> NimHotReload);
-	static void PerformReinstance(TUniquePtr<FNimHotReload> NimHotReload);
+	static void PerformReinstance(FNimHotReload* NimHotReload);
 
 	static void HotReload(TUniquePtr<FNimHotReload> NimHotReload);
 };

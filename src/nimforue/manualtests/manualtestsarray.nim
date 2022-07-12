@@ -159,6 +159,7 @@ const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
                         )
 genType(ueEnumType)
 
+
 # uStruct FIntPropTests:
 #     (BlueprintType)
 #     uprop(BlueprintReadWrite):

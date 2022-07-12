@@ -62,14 +62,15 @@ void FNimForUEModule::StartupModule()
 
 			// onNimForUELoaded(ReloadTimes++);
 			// return;//Windows crashes in the line below
-			TUniquePtr<FNimHotReload> NimHotReload = MakeUnique<FNimHotReload>(*static_cast<FNimHotReload*>(onNimForUELoaded(ReloadTimes++)));
+			// TUniquePtr<FNimHotReload> NimHotReload = MakeUnique<FNimHotReload>(*static_cast<FNimHotReload*>(onNimForUELoaded(ReloadTimes++)));
+			FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(ReloadTimes++));
 			// return;
 			// UEditorUtils::HotReload(MoveTemp(NimHotReload));
 			// if(ReloadTimes==1) return; //First time there is no need to do any of this
 			// for (const auto& ClassToReinstancePair : NimHotReload->ClassesToReinstance) {
 			// 	FCoreUObjectDelegates::RegisterClassForHotReloadReinstancingDelegate.Broadcast(ClassToReinstancePair.Key, ClassToReinstancePair.Value, EHotReloadedClassFlags::Changed);
 			// // }
-			UEditorUtils::PerformReinstance(MoveTemp(NimHotReload));
+			UEditorUtils::PerformReinstance(NimHotReload);
 
 			FCoreUObjectDelegates::ReloadCompleteDelegate.Broadcast(EReloadCompleteReason::HotReloadManual);
 			// UEditorUtils::RefreshNodes(MoveTemp(NimHotReload));
