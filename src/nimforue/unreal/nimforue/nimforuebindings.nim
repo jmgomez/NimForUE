@@ -125,6 +125,7 @@ type
     FNimHotReload* {.importcpp.} = object
         structsToReinstance* {.importcpp: "StructsToReinstance" .} : TMap[UScriptStructPtr, UScriptStructPtr]
         classesToReinstance* {.importcpp: "ClassesToReinstance" .} : TMap[UClassPtr, UClassPtr]
+        bShouldHotReload* {.importcpp: "bShouldHotReload" .} : bool
     FNimHotReloadPtr* = ptr FNimHotReload
 
 proc newNimHotReload*() : FNimHotReloadPtr {.importcpp: "new '*0()".}

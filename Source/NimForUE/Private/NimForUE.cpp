@@ -59,21 +59,10 @@ void FNimForUEModule::StartupModule()
 			
 			GEditor->PlayEditorSound(TEXT("/Engine/EditorSounds/Notifications/CompileSuccess_Cue.CompileSuccess_Cue"));
 
-
-			// onNimForUELoaded(ReloadTimes++);
-			// return;//Windows crashes in the line below
-			// TUniquePtr<FNimHotReload> NimHotReload = MakeUnique<FNimHotReload>(*static_cast<FNimHotReload*>(onNimForUELoaded(ReloadTimes++)));
 			FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(ReloadTimes++));
-			// return;
-			// UEditorUtils::HotReload(MoveTemp(NimHotReload));
-			// if(ReloadTimes==1) return; //First time there is no need to do any of this
-			// for (const auto& ClassToReinstancePair : NimHotReload->ClassesToReinstance) {
-			// 	FCoreUObjectDelegates::RegisterClassForHotReloadReinstancingDelegate.Broadcast(ClassToReinstancePair.Key, ClassToReinstancePair.Value, EHotReloadedClassFlags::Changed);
-			// // }
-			UEditorUtils::PerformReinstance(NimHotReload);
-
-			FCoreUObjectDelegates::ReloadCompleteDelegate.Broadcast(EReloadCompleteReason::HotReloadManual);
-			// UEditorUtils::RefreshNodes(MoveTemp(NimHotReload));
+			checkf(NimHotReload, TEXT("NimHotReload is null. Probably nim crashed on startup. See the log for a stacktrace."));
+			UEditorUtils::HotReload((NimHotReload));
+			
 		});
 		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded!! %s"), ANSI_TO_TCHAR(msg))
 

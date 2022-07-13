@@ -6,6 +6,7 @@
 #include "BlueprintCompilationManager.h"
 #include "BlueprintEditor.h"
 #include "FileHelpers.h"
+#include "FNimReload.h"
 #include "K2Node_MacroInstance.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -172,8 +173,17 @@ void UEditorUtils::RefreshNodes(TUniquePtr<FNimHotReload> NimHotReload) {
 }
 
 void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
-	TUniquePtr<FReload> Reload(new FReload(EActiveReloadType::Reinstancing, TEXT(""), *GLog)); //activates hot reload so we pass a check (even though we dont use it)
+	TUniquePtr<FReload> Reload(new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog)); //activates hot reload so we pass a check (even though we dont use it)
 	// Reload->
+
+	for (const auto& ClassToReinstancePair : NimHotReload->ClassesToReinstance) {
+		Reload->NotifyChange(ClassToReinstancePair.Key, ClassToReinstancePair.Value);
+	}
+	Reload->SetSendReloadCompleteNotification(true);
+
+	Reload->Reinstance();
+
+	
 	TArray<UBlueprint*> DependencyBPs;
 	TArray<UK2Node*> AllNodes;
 
@@ -422,33 +432,22 @@ void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
 	delete NimHotReload;
 }
 
-void UEditorUtils::HotReload(TUniquePtr<FNimHotReload> NimHotReload) {
-	if (NimHotReload->ClassesToReinstance.Num() > 0){
-		TUniquePtr<FReload> Reload(new FReload(EActiveReloadType::Reinstancing, TEXT(""), *GLog));
+void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
+	if (NimHotReload->bShouldHotReload){
+		FNimReload* Reload(new FNimReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
 
 		for (const auto& ClassToReinstancePair : NimHotReload->ClassesToReinstance)
-		{
 			Reload->NotifyChange(ClassToReinstancePair.Value, ClassToReinstancePair.Key);
-		}
 		
-		//
-		// // This doesn't do anything ATM
 		for (const auto& StructToReinstancePair : NimHotReload->StructsToReinstance)
-		{
-			// if (StructToReinstancePair.Key && StructToReinstancePair.Value)
-			// {
-				// Assume the structures have changed
-				// Reload->NotifyChange(StructToReinstancePair.Value, StructToReinstancePair.Key);
-			// }
-		}
-		//
+			Reload->NotifyChange(StructToReinstancePair.Value, StructToReinstancePair.Key);
+		
+		
 		Reload->Reinstance();
 		Reload->Finalize(true);
 		Reload->SetSendReloadCompleteNotification(true);
-		//
-		// ClassesToReinstance.Reset();
-		// StructsToReinstance.Reset();
 
-		// CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS);
+		delete Reload;
 	}
+	delete NimHotReload;
 }

@@ -12,6 +12,7 @@ public class NimForUEEditor : ModuleRules
 			"UnrealEd",
 			"Slate",
 			"SlateCore",
+			"NimForUEBindings"
 			
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {

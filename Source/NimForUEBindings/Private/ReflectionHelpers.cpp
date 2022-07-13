@@ -20,6 +20,8 @@ UScriptStruct* UReflectionHelpers::GetScriptStructByName(FString StructName) {
 
 UStruct* UReflectionHelpers::GetUStructByName(FString StructName) {
 	UObject* StructPackage = ANY_PACKAGE;
+	// TMap<int, int> M;
+	// M.GenerateValueArray()
 	UStruct* Struct = FindObject<UStruct>(StructPackage, *StructName);
 	return Struct;
 }

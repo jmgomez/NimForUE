@@ -53,15 +53,20 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
             let prevStructPtr = getScriptStructByName emitter.ueType.name.removeFirstLetter()
             let newStructPtr = ueCast[UScriptStruct](emitter.generator(pkg))
             if not prevStructPtr.isNil():
+                hotReloadInfo.bShouldHotReload = true
                 hotReloadInfo.structsToReinstance.add(prevStructPtr, newStructPtr)
                 UE_Log "ScriptStruct already exists: " & emitter.ueType.name & " will be replaced"
             else:
                 UE_Log "ScriptStruct added: " & emitter.ueType.name
         of uetClass:
             let prevClassPtr = getClassByName emitter.ueType.name.removeFirstLetter()
-            let newClassPtr = ueCast[UNimClassBase](emitter.generator(pkg))
-            if not prevClassPtr.isNil():
+            let thereIsPrevCls = not prevClassPtr.isNil()
+            if thereIsPrevCls:
                 prevClassPtr.prepareClassForReinst()
+
+            let newClassPtr = ueCast[UNimClassBase](emitter.generator(pkg))
+            if thereIsPrevCls:
+                hotReloadInfo.bShouldHotReload = true
                 hotReloadInfo.classesToReinstance.add(prevClassPtr, newClassPtr)
                 UE_Log "Class already exists: " & emitter.ueType.name & " will be replaced"
             else:
@@ -174,7 +179,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let className = name[1].strVal()
     let classMetas = getMetasForType(body)
     let ueFields = getUPropsAsFieldsForType(body)
-    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit )
+    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit ) #| CLASS_CompiledFromBlueprint
     let ueType = makeUEClass(className, parent, classFlags, ueFields, classMetas)
     
     emitUClass(ueType)

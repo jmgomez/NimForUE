@@ -1,5 +1,5 @@
 include ../../definitions
-
+import array
 type 
     TPair*[K, V] {.importcpp:"TPair",  bycopy .} = object
         key: K
@@ -28,3 +28,9 @@ proc `[]=`*[K, V](map:TMap[K, V], key: K, val : V)  {. importcpp: "#[#]=#",  }
 
 #TODO Keys(), Values() and Iterators (no need to bind the Cpp ones)
 
+proc getKeys*[K, V](map:TMap[K, V], outKeys:var TArray[K]) : void {.importcpp: "#.GetKeys(#)", .}
+
+proc keys*[K, V](map:TMap[K, V]): TArray[K] = 
+    var arr = makeTArray[K]()
+    getKeys(map, arr)
+    arr

@@ -13,5 +13,6 @@ UCLASS()
 class NIMFORUEBINDINGS_API UNimClassBase : public UClass {
 GENERATED_BODY()
 
-virtual void Link(FArchive& Ar, bool bRelinkExistingProperties) override;
+ 
+
 };

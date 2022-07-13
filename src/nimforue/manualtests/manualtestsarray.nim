@@ -183,14 +183,15 @@ genType(ueEnumType)
 #         propEnum : EMyTestEnum
 
 
+
 uStruct FMyUStructDemo:
     (BlueprintType)
     uprop(EditAnywhere, BlueprintReadWrite):
         propString : FString
         propInt : int32
         propInt64 : int
-        # propInt642 : int64
-        # propFloat32 : float32
+        propInt642 : int64
+        propFloat32 : float32
         # structInt : FIntPropTests
         propEnum : EMyTestEnum
         # propBool : bool
@@ -223,20 +224,23 @@ uClass UObjectDsl of UObject:
         testFieldAnother : int
         testFieldAnother2 : int
         
-        testFieldAnother3 : bool
+        # testFieldAnother3 : bool
         # testFieldAnother321 : FString
-        # # testFieldAnother32 : FString
+        # testFieldAnother32 : FString
+        # testFieldAnotherFSTRING : FString
         # testFieldAnother4 : int32
-        testFieldAnother5 : int32
+        # testFieldAnother5 : int32
         # testFieldAnother6 : int32
         # testFieldAnother7 : int32
-        # # testFieldAnother8 : int32
+        # testFieldAnother8 : int32
         # testFieldAnother9 : int32
-        # # testFieldAnother91 : int32
-        # testFieldAnother10 : int32
-        # # testFieldAnother120 : int32
+        # testFieldAnother91 : int32
+        testFieldAnother10 : int32
+        # testFieldAnother120 : int32
         # testFieldAnother121 : int32
-        # testFieldAnother123: int32
+        testFieldAnother123: int32
+        testFieldAnother124: int32
+        # testFieldAnother128: int32
 
 
 

@@ -51,8 +51,10 @@ proc createUEReflectedTypes() =
 #and host doesnt know anything about ue symbols
 
 proc printAllClassAndProps*(prefix:string, package:UPackagePtr) =
-    UE_Error prefix 
-    for c in getAllObjectsFromPackage[UNimClassBase](package):
+    let classes = getAllObjectsFromPackage[UNimClassBase](package)
+
+    UE_Error prefix & " len classes: " & $classes.len()
+    for c in classes:
         UE_Warn " Class " & c.getName()
         for p in getFPropsFromUStruct(c):
             UE_Log "Prop " & p.getName()
@@ -62,9 +64,16 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
   
     try:
         let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUE"))
+    
+
         printAllClassAndProps("PRE", pkg)
         let nimHotReload = emitUStructsForPackage(pkg)
+        
+        
+
+
         printAllClassAndProps("POST", pkg)
+
         # scratchpadEditor()
         return nimHotReload
     except Exception as e:
@@ -72,6 +81,7 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
         UE_Error e.msg
         UE_Error e.getStackTrace()
     # scratchpadEditor()
+
 
 
 #called right before it is unloaded
