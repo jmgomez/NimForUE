@@ -23,8 +23,8 @@ func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField =
 func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
     UEType(kind:uetClass, name:name, parent:parent, clsFlags:EClassFlagsVal(clsFlags), fields:fields)
 
-func makeUEStruct*(name:string, fields:seq[UEField], superStruct="", metadata : seq[UEMetadata] = @[]) : UEType = 
-    UEType(kind:uetStruct, name:name, fields:fields, superStruct:superStruct, metadata: metadata)
+func makeUEStruct*(name:string, fields:seq[UEField], superStruct="", metadata : seq[UEMetadata] = @[], flags = STRUCT_NoFlags) : UEType = 
+    UEType(kind:uetStruct, name:name, fields:fields, superStruct:superStruct, metadata: metadata, structFlags: flags)
 
 
 

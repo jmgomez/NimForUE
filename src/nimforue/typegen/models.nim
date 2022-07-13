@@ -72,6 +72,7 @@ type
                 clsFlags*: EClassFlagsVal
             of uetStruct:
                 superStruct* : string
+                structFlags*: EStructFlagsVal
             of uetEnum:
                 discard
 

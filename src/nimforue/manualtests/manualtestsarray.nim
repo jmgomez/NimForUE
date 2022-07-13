@@ -199,7 +199,7 @@ uStruct FMyUStructDemo:
         propArray : TArray[FString]
         propArrayFloat : TArray[float]
         propArrayBool : TArray[bool]
-        # propAnother : int
+        propAnother : int
         propAnother2 : int 
         propAnother3 : int
         # propMapFloat : TMap[FString, float]

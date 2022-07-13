@@ -38,7 +38,14 @@ proc prepareClassForReinst(prevClass : UClassPtr) =
     let prevNameStr : FString =  fmt("{prevClass.getName()}_REINST")
     let oldClassName = makeUniqueObjectName(prevClass.getOuter(), prevClass.getClass(), makeFName(prevNameStr))
     discard prevClass.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
-    # prevClass.rename()
+
+proc prepareScriptStructForReinst(prevScriptStruct : UScriptStructPtr) = 
+    prevScriptStruct.addScriptStructFlag(STRUCT_NewerVersionExists)
+    prevScriptStruct.setFlags(RF_NewerVersionExists)
+    prevScriptStruct.clearFlags(RF_Public | RF_Standalone)
+    let prevNameStr : FString =  fmt("{prevScriptStruct.getName()}_REINST")
+    let oldClassName = makeUniqueObjectName(prevScriptStruct.getOuter(), prevScriptStruct.getClass(), makeFName(prevNameStr))
+    discard prevScriptStruct.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
 
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UStructPtr) : void =  
@@ -51,8 +58,12 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
         case emitter.ueType.kind:
         of uetStruct:
             let prevStructPtr = getScriptStructByName emitter.ueType.name.removeFirstLetter()
+            let thereIsPrevStruct = not prevStructPtr.isNil()
+            if thereIsPrevStruct:
+                prevStructPtr.prepareScriptStructForReinst()
+            
             let newStructPtr = ueCast[UScriptStruct](emitter.generator(pkg))
-            if not prevStructPtr.isNil():
+            if thereIsPrevStruct:
                 hotReloadInfo.bShouldHotReload = true
                 hotReloadInfo.structsToReinstance.add(prevStructPtr, newStructPtr)
                 UE_Log "ScriptStruct already exists: " & emitter.ueType.name & " will be replaced"
@@ -167,7 +178,8 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
     let structMetas = getMetasForType(body)
     let ueFields = getUPropsAsFieldsForType(body)
-    let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas)
+    let structFlags = (STRUCT_NoFlags)
+    let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas, structFlags)
 
     emitUStruct(ueType) 
 
