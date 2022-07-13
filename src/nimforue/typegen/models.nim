@@ -7,6 +7,7 @@ type
     EPropertyFlagsVal* = distinct(uint64)
     EFunctionFlagsVal* = distinct(uint32)
     EClassFlagsVal* = distinct(uint32)
+    EStructFlagsVal* = distinct(uint32)
     EClassCastFlagsVal* = distinct(uint64)
 
 
