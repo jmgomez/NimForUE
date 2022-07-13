@@ -124,7 +124,7 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
     newCls.classWithin = parent.classWithin
     newCls.classConfigName = parent.classConfigName
     newcls.setSuperStruct(parent)
-    newcls.classFlags =  EClassFlags(ueType.clsFlags) && parent.classFlags
+    newcls.classFlags =  (ueType.clsFlags) && parent.classFlags
     newCls.classCastFlags = parent.classCastFlags
     
     copyMetadata(parent, newCls)

@@ -192,16 +192,16 @@ uStruct FMyUStructDemo:
         propInt64 : int
         propInt642 : int64
         propFloat32 : float32
-        # structInt : FIntPropTests
+        # # structInt : FIntPropTests
         propEnum : EMyTestEnum
-        # propBool : bool
-        propObject : UObjectPtr
-        propClass : UClassPtr
-        propSubClass : TSubclassOf[AActor]
-        propArray : TArray[FString]
-        propArrayFloat : TArray[float]
-        propArrayBool : TArray[bool]
-        propAnother : int
+        # # propBool : bool
+        # propObject : UObjectPtr
+        # propClass : UClassPtr
+        # propSubClass : TSubclassOf[AActor]
+        # propArray : TArray[FString]
+        # propArrayFloat : TArray[float]
+        # propArrayBool : TArray[bool]
+        # propAnother : int
         propAnother2 : int
         propAnother3 : int
         # propMapFloat : TMap[FString, float]
@@ -224,39 +224,40 @@ uClass UObjectDsl of UObject:
         testFieldAnother : int
         testFieldAnother2 : int
         
-        # testFieldAnother3 : bool
-        # testFieldAnother321 : FString
-        # testFieldAnother32 : FString
-        # testFieldAnotherFSTRING : FString
-        # testFieldAnother4 : int32
-        # testFieldAnother5 : int32
-        # testFieldAnother6 : int32
+        testFieldAnother3 : bool
+        testFieldAnother321 : FString
+        testFieldAnother32 : FString
+        testFieldAnotherFSTRING : FString
+        testFieldAnother4 : int32
+        testFieldAnother5 : int32
+        testFieldAnother6 : int32
         # testFieldAnother7 : int32
         # testFieldAnother8 : int32
         # testFieldAnother9 : int32
         # testFieldAnother91 : int32
-        testFieldAnother10 : int32
+        # testFieldAnother10 : int32
         # testFieldAnother120 : int32
         # testFieldAnother121 : int32
-        testFieldAnother123: int32
-        testFieldAnother124: int32
+        # testFieldAnother123: int32
+        # testFieldAnother124: int32
         # testFieldAnother128: int32
 
 
 
 
-# uClass AActorDsl of AActor:
-#     (BlueprintType, Blueprintable)
-#     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-#         testField : FString
-#         # test2 : int
-#         test3 : FString
-#         test4 : FString
-#         # anotherField : FMyUStructDemo
-#         # anotherField2 : FString
-#         anotherField3 : int32
-#         anotherField4 : int32
-#         anotherField5 : FString
+uClass AActorDsl of AActor:
+    (BlueprintType, Blueprintable)
+    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+        testField : FString
+        # test2 : int
+        test3 : bool
+        test4 : FString
+        # anotherField : FMyUStructDemo
+        # anotherField2 : FString
+        # anotherField3 : int32
+        # anotherField4 : int32
+        # anotherField5 : FString
+
 
 
 

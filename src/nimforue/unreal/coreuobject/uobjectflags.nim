@@ -163,7 +163,7 @@ type
 
     EClassFlags* {.importcpp, size:sizeof(uint32).} = enum #TODO Test sizeof in cpp to see if they are uint32
         #* No Flags */
-        CLASS_None      = 0x00000000,
+        CLASS_None      =  0x00000000,
         #* Class is abstract and can't be instantiated directly. */
         CLASS_Abstract            = 0x00000001,
         #* Save object configuration only to Default INIs, never to local INIs. Must be combined with CLASS_Config */
