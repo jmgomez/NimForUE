@@ -59,6 +59,10 @@ func removeFirstLetter*(str:string) : string =
 func run*[T](opt:Option[T], fn : (x : T)->void) : void = 
     if opt.isSome: fn(opt.get())
 
+func tap*[T](opt:Option[T], fn : (x : T)->void) : Option[T] = 
+    if opt.isSome: some fn(opt.get())
+    else: none[T]()
+
 func fromNil*[T](val: sink T): Option[T] {.inline.} =
     if val == nil: none[T]()
     else: some val
