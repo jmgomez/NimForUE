@@ -60,8 +60,12 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
 
     
 
-func newFProperty*(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : FPropertyPtr = 
-    let flags = RF_NoFlags #OBJECT FLAGS
+func newFProperty*(outer : UStructPtr, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr = 
+    let 
+        propType = optPropType.nonEmptyOr(propField.uePropType)
+        name = optName.nonEmptyOr(propField.name).makeFName()
+        flags = RF_NoFlags #OBJECT FLAGS
+
     let prop : FPropertyPtr = 
         if propType == "FString": 
             newFStrProperty(makeFieldVariant(outer), name, flags)
@@ -92,15 +96,15 @@ func newFProperty*(outer : UStructPtr, propType:string, name:FName, propFlags=CP
         elif propType.contains("TArray"):
             let arrayProp = newFArrayProperty(makeFieldVariant(outer), name, flags)
             let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-            let inner = newFProperty(outer, innerType, n"Inner")
+            let inner = newFProperty(outer, propField, optPropType=innerType, optName="Inner")
             arrayProp.addCppProperty(inner)
             arrayProp
 
         elif propType.contains("TMap"):
             let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
             let innerTypes = propType.extractKeyValueFromMapProp()
-            let key = newFProperty(outer, innerTypes[0], n"Key", CPF_HasGetValueTypeHash) 
-            let value = newFProperty(outer, innerTypes[1], n"Value")
+            let key = newFProperty(outer, propField, optPropType=innerTypes[0], optName="Key", propFlags=CPF_HasGetValueTypeHash) 
+            let value = newFProperty(outer, propField, optPropType=innerTypes[1], optName="Value")
 
             mapProp.addCppProperty(key)
             mapProp.addCppProperty(value)
@@ -110,6 +114,9 @@ func newFProperty*(outer : UStructPtr, propType:string, name:FName, propFlags=CP
             if structBased.isSome():
                 structBased.get()
             else:
+                
+
+
                 UE_Log "Not a struct based property. Trying as enum .." & propType
                 let ueEnum = getUTypeByName[UEnum](propType) #names arent consistent, for enums it may or not start with the Prefix E
                 if not ueEnum.isNil():

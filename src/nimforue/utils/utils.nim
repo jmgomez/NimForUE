@@ -1,6 +1,9 @@
 import std/[options, strutils, sequtils, sugar]
 #NOTE Do not include UE Types here
 
+
+
+#seq
 func head*[T](xs: seq[T]) : Option[T] =
   if len(xs) == 0:
       return none[T]()
@@ -30,6 +33,14 @@ func tap*[T](xs : seq[T], fn : (x : T)->void) : seq[T] =
     xs
 
 
+
+##GENERAL
+func nonDefaultOr*[T](value, orValue:T) : T = 
+    # let default = T()
+    if value != default(T): value
+    else: orValue
+
+
 # func bind*[T, U](opt:T, fn : (t : T)->U) : Option[U] = 
 #     if 
 #STRING 
@@ -46,6 +57,7 @@ func removeFirstLetter*(str:string) : string =
     if str.len()>0: str.substr(1)
     else: str
 
+func nonEmptyOr*(value, orValue:string) : string = nonDefaultOr(value, orValue)
 
 
 #OPTION
@@ -54,3 +66,6 @@ func getOrCompute*[T](opt:Option[T], fn : ()->T) : T =
 
 func flatMap*[T, U](opt:Option[T], fn : (t : T)->Option[U]) : Option[U] = 
     if opt.isSome(): fn(opt.get()) else: none[U]()
+
+
+
