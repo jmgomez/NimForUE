@@ -55,35 +55,32 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
     var hotReloadInfo = newNimHotReload()
 
     for emitter in ueEmitter.emitters:
-        case emitter.ueType.kind:
-        of uetStruct:
-            let prevStructPtr = getScriptStructByName emitter.ueType.name.removeFirstLetter()
-            let thereIsPrevStruct = not prevStructPtr.isNil()
-            if thereIsPrevStruct:
-                prevStructPtr.prepareScriptStructForReinst()
-            
-            let newStructPtr = ueCast[UScriptStruct](emitter.generator(pkg))
-            if thereIsPrevStruct:
-                hotReloadInfo.bShouldHotReload = true
-                hotReloadInfo.structsToReinstance.add(prevStructPtr, newStructPtr)
-                UE_Log "ScriptStruct already exists: " & emitter.ueType.name & " will be replaced"
-            else:
-                UE_Log "ScriptStruct added: " & emitter.ueType.name
-        of uetClass:
-            let prevClassPtr = getClassByName emitter.ueType.name.removeFirstLetter()
-            let thereIsPrevCls = not prevClassPtr.isNil()
-            if thereIsPrevCls:
-                prevClassPtr.prepareClassForReinst()
-
-            let newClassPtr = ueCast[UNimClassBase](emitter.generator(pkg))
-            if thereIsPrevCls:
-                hotReloadInfo.bShouldHotReload = true
-                hotReloadInfo.classesToReinstance.add(prevClassPtr, newClassPtr)
-                UE_Log "Class already exists: " & emitter.ueType.name & " will be replaced"
-            else:
-                UE_Log "Class added: " & emitter.ueType.name
-        of uetEnum:
-            discard
+        let msg =
+            case emitter.ueType.kind:
+            of uetStruct:
+                let prevStructPtr = fromNil getScriptStructByName emitter.ueType.name.removeFirstLetter()
+                prevStructPtr.run prepareScriptStructForReinst
+                let newStructPtr = ueCast[UScriptStruct](emitter.generator(pkg))
+                prevStructPtr
+                    .map(proc(prev:UScriptStructPtr) : string = 
+                            hotReloadInfo.bShouldHotReload = true
+                            hotReloadInfo.structsToReinstance.add(prev, newStructPtr)
+                            "ScriptStruct already exists: " & newStructPtr.getName() & " will be replaced")
+                    .get("ScriptStruct added: " & emitter.ueType.name)
+            of uetClass:
+                let prevClassPtr = fromNil getClassByName emitter.ueType.name.removeFirstLetter()
+                prevClassPtr.run prepareClassForReinst
+                let newClassPtr = ueCast[UNimClassBase](emitter.generator(pkg))
+                prevClassPtr
+                    .map(proc(prev:UClassPtr) : string = 
+                            hotReloadInfo.bShouldHotReload = true
+                            hotReloadInfo.classesToReinstance.add(prev, newClassPtr)
+                            "Class already exists: " & newClassPtr.getName() & " will be replaced")
+                    .get("Class added: " & emitter.ueType.name)
+            of uetEnum:
+                ""
+                
+        UE_Log msg
     hotReloadInfo
 
 func emitUStruct(typeDef:UEType) : NimNode =
