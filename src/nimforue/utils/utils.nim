@@ -33,7 +33,6 @@ func tap*[T](xs : seq[T], fn : (x : T)->void) : seq[T] =
     xs
 
 
-
 ##GENERAL
 func nonDefaultOr*[T](value, orValue:T) : T = 
     # let default = T()
@@ -56,6 +55,13 @@ func firstToLow*(str:string) : string =
 func removeFirstLetter*(str:string) : string = 
     if str.len()>0: str.substr(1)
     else: str
+
+func run*[T](opt:Option[T], fn : (x : T)->void) : void = 
+    if opt.isSome: fn(opt.get())
+
+func fromNil*[T](val: sink T): Option[T] {.inline.} =
+    if val == nil: none[T]()
+    else: some val
 
 func nonEmptyOr*(value, orValue:string) : string = nonDefaultOr(value, orValue)
 
