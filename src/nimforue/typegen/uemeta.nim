@@ -100,7 +100,7 @@ func toUEType*(cls:UClassPtr) : UEType =
 
 
 proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
-    let prop : FPropertyPtr = newFProperty(outer, propField.uePropType, propField.name.makeFName())
+    let prop : FPropertyPtr = newFProperty(outer, propField)
     prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
     for metadata in propField.metadata:
         prop.setMetadata(metadata.name, $metadata.value)

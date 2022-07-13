@@ -100,7 +100,7 @@ bindFProperty([
         "FByteProperty", "FUInt16Property","FUInt32Property", "FUInt64Property",
         "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
         "FArrayProperty", "FStructProperty", "FObjectProperty", "FClassProperty",
-        "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty",
+        "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty", 
         "FMapProperty", "FDelegateProperty", "FMulticastDelegateProperty"])
 
 
@@ -116,6 +116,7 @@ proc addCppProperty*(arrProp:FArrayPropertyPtr | FMapPropertyPtr | FEnumProperty
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
 proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->ValueProp)".}
 proc getSignatureFunction*(delProp:FDelegatePropertyPtr | FMulticastDelegatePropertyPtr) : UFunctionPtr {.importcpp:"(#->SignatureFunction)".}
+proc setSignatureFunction*(delProp:FDelegatePropertyPtr | FMulticastDelegatePropertyPtr, signature : UFunctionPtr) : void {.importcpp:"(#->SignatureFunction=#)".}
 
 
 
