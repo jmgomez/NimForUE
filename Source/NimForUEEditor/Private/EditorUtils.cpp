@@ -8,6 +8,7 @@
 #include "FileHelpers.h"
 #include "FNimReload.h"
 #include "K2Node_MacroInstance.h"
+#include "UPropertyCaller.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -213,6 +214,16 @@ void UEditorUtils::RefreshNodes(FNimHotReload* NimHotReload) {
 			FBlueprintEditorUtils::GetAllNodesOfClass(BP, AllNodes);
 
 			bool bHasDependency = false;
+
+			//NIM
+			// for (TFieldIterator<FProperty> FPropIt = TFieldIterator<FProperty>(BP->GeneratedClass); FPropIt; ++FPropIt) {
+			// 	 if(auto FObj = CastField<FObjectProperty>(*FPropIt)) { //TODO Check for Classes and TSubclass?
+			// 		 if(UObject* Obj = GetPropertyValuePtr<UObject>(FObj, BP)) {
+			// 			 bHasDependency |= (Obj->GetClass()->GetName().Contains("Dsl"));
+			// 		 }
+			// 	 }
+			// }
+			
 			for (UK2Node* Node : AllNodes)
 			{
 				TArray<UStruct*> Dependencies;
@@ -260,7 +271,6 @@ void UEditorUtils::RefreshNodes(FNimHotReload* NimHotReload) {
 				}
 
 				//
-				FBlueprintEditorUtils::RefreshAllNodes(BP);
 
 			}
 
@@ -380,12 +390,16 @@ void UEditorUtils::RefreshNodes(FNimHotReload* NimHotReload) {
 				}
 			}
 		};
-
+		UE_LOG(NimForUEEditor, Log, TEXT("Number of dependcies blueprits %d"), DependencyBPs.Num());
 		// Trigger a compile of all blueprints that we detected dependencies to our class in
 		for (UBlueprint* BP : DependencyBPs)
 		{
+			// FBlueprintEditorUtils::RefreshAllNodes(BP);
+			UE_LOG(NimForUEEditor, Log, TEXT("Dep Blueprint %s"), *BP->GetName());
+
 			RefreshRelevantNodesInBP(BP);
 			FBlueprintCompilationManager::QueueForCompilation(BP);
+
 		}
 
 		FBlueprintCompilationManager::FlushCompilationQueueAndReinstance();

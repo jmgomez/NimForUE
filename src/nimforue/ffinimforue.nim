@@ -66,13 +66,12 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
         let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUE"))
     
 
-        printAllClassAndProps("PRE", pkg)
+        # printAllClassAndProps("PRE", pkg)
         let nimHotReload = emitUStructsForPackage(pkg)
         
         
 
-
-        printAllClassAndProps("POST", pkg)
+        # printAllClassAndProps("POST", pkg)
 
         # scratchpadEditor()
         return nimHotReload
