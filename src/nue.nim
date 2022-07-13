@@ -1,6 +1,6 @@
 # tooling for NimForUE
 
-import std / [os, osproc, parseopt, tables, strformat, strutils, times]
+import std / [os, osproc, parseopt, tables, strformat, strutils, times, sequtils]
 import buildscripts / [nimforueconfig, copylib, nimcachebuild]
 
 var options: Table[string, string]
@@ -10,7 +10,7 @@ type Task = object
   description: string
   routine: proc(options: Table[string, string]) {.nimcall.}
 
-var tasks: Table[string, Task]
+var tasks: seq[tuple[name:string, t:Task]]
 
 template task(taskName: untyped, desc: string, body: untyped): untyped =
   proc `taskName`(options: Table[string, string]) {.nimcall.} =
@@ -18,7 +18,7 @@ template task(taskName: untyped, desc: string, body: untyped): untyped =
     echo ">>>> Task: ", astToStr(taskName), " <<<<"
     body
     echo "!!>> ", astToStr(taskName), " Time: ", $(now() - start), " <<<<"
-  tasks[astToStr(taskName)] = Task(name: astToStr(taskName), description: desc, routine: `taskName`)
+  tasks.add (name:astToStr(taskName), t:Task(name: astToStr(taskName), description: desc, routine: `taskName`))
 
 
 proc generateFFIGenFile*() = 
@@ -40,8 +40,8 @@ import hostbase
 
 proc echoTasks() =
   echo "Here are the task available: "
-  for k, v in tasks:
-    echo "  ", k, if k.len < 6: "\t\t" else: "\t", v.description
+  for t in tasks:
+    echo "  ", t.name, if t.name.len < 6: "\t\t" else: "\t", t.t.description
 
 proc main() =
   var params = commandLineParams().join(" ")
@@ -62,8 +62,9 @@ proc main() =
       else:
         options[key] = val
     of cmdArgument:
-      if tasks.hasKey(key):
-        tasks[key].routine(options)
+      var ts = tasks.filterIt(it.name == key)
+      if ts.len == 1:
+        ts[0].t.routine(options)
       else:
         echo &"!! Unknown task {key}."
         echoTasks()
@@ -114,25 +115,31 @@ task watch, "Monitors the components folder for changes to recompile.":
 
     sleep watchInterval
 
+task w, "Alias for watch":
+  watch(options)
+
 task guest, "Builds the main lib. The one that makes sense to hot reload.":
     generateFFIGenFile()
     discard execCmd("nim cpp --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim")
     copyNimForUELibToUEDir()
 
-task guestpch, "Builds the hot reloading lib. Takes -f to force rebuild.":
+task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nogen to compile from nimcache cpp sources without generating.":
     generateFFIGenFile()
 
     var force = ""
-    if options.contains("f"):
+    if "f" in options:
       force = "-f"
     
-    var noGen = options.contains"nogen"
+    var noGen = "nogen" in options
 
     if not noGen:
-      discard execCmd(&"nim cpp {force} --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim")
+      discard execCmd(&"nim cpp {force} -g --stacktrace:on --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim")
 
     if nimcacheBuild() == Success:
       copyNimForUELibToUEDir()
+
+task g, "Alias to guestpch":
+  guestpch(options)
 
 task winpch, "For Windows, Builds the pch file for Unreal Engine via nim":
   winpch()

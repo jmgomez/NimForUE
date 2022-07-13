@@ -182,8 +182,6 @@ genType(ueEnumType)
 #         propSoftClass : TSoftClassPtr[AActor]
 #         propEnum : EMyTestEnum
 
-
-
 uStruct FMyUStructDemo:
     (BlueprintType)
     uprop(EditAnywhere, BlueprintReadWrite):
@@ -206,7 +204,6 @@ uStruct FMyUStructDemo:
         propAnother3 : int
         # propMapFloat : TMap[FString, float]
 
-      
     uprop(EditAnywhere, BlueprintReadOnly):
         propReadOnly : FString
         propFloat : float
@@ -214,16 +211,16 @@ uStruct FMyUStructDemo:
         propFName : FName
 
 
-
 uClass UObjectDsl of UObject:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         # testField : FString
-       
+
         testFieldInt : int
-        testFieldAnother : int
-        testFieldAnother2 : int
+        #testFieldAnother : int
+        #testFieldAnother2 : int
         
+
         # testFieldAnother3 : bool
         # testFieldAnother321 : FString
         # testFieldAnother32 : FString
