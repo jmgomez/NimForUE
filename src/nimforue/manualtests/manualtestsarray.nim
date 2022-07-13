@@ -192,15 +192,15 @@ uStruct FMyUStructDemo:
         propFloat32 : float32
         # # structInt : FIntPropTests
         propEnum : EMyTestEnum
-        # # propBool : bool
-        # propObject : UObjectPtr
-        # propClass : UClassPtr
-        # propSubClass : TSubclassOf[AActor]
-        # propArray : TArray[FString]
-        # propArrayFloat : TArray[float]
-        # propArrayBool : TArray[bool]
+        propBool : bool
+        propObject : UObjectPtr
+        propClass : UClassPtr
+        propSubClass : TSubclassOf[AActor]
+        propArray : TArray[FString]
+        propArrayFloat : TArray[float]
+        propArrayBool : TArray[bool]
         # propAnother : int
-        propAnother2 : int
+        propAnother2 : int 
         propAnother3 : int
         # propMapFloat : TMap[FString, float]
 
@@ -219,7 +219,6 @@ uClass UObjectDsl of UObject:
         testFieldInt : int
         #testFieldAnother : int
         #testFieldAnother2 : int
-        
 
         # testFieldAnother3 : bool
         # testFieldAnother321 : FString
@@ -238,7 +237,6 @@ uClass UObjectDsl of UObject:
         # testFieldAnother123: int32
         # testFieldAnother124: int32
         # testFieldAnother128: int32
-
 
 
 

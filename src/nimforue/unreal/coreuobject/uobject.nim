@@ -200,7 +200,6 @@ iterator items*[T](it:var TFieldIterator[T]) : var TFieldIterator[T] =
         it.next()
        
 
-
 #StepExplicitProperty
 proc stepExplicitProperty*(frame:var FFrame, result:pointer, prop:FPropertyPtr) {.importcpp:"#.StepExplicitProperty(@)".}
 
