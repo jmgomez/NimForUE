@@ -61,8 +61,9 @@ void FNimForUEModule::StartupModule()
 
 			FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(ReloadTimes++));
 			checkf(NimHotReload, TEXT("NimHotReload is null. Probably nim crashed on startup. See the log for a stacktrace."));
-			UEditorUtils::HotReload((NimHotReload));
-			
+			UEditorUtils::HotReload(NimHotReload);
+			UEditorUtils::RefreshNodes(NimHotReload);
+			delete NimHotReload;
 		});
 		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded!! %s"), ANSI_TO_TCHAR(msg))
 

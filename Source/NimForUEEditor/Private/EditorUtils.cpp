@@ -21,7 +21,7 @@
 #include "Widgets/Notifications/SNotificationList.h"
 
 
-void UEditorUtils::RefreshNodes(TUniquePtr<FNimHotReload> NimHotReload) {
+void UEditorUtils::RefreshNodes() {
 	// This function is called when the main "Refresh All Blueprint Nodes" button in pressed
 	// FBlueprintCompilationManager::ReparentHierarchies(NimHotReload->ClassesToReinstance);
 	FARFilter Filter;
@@ -93,7 +93,7 @@ void UEditorUtils::RefreshNodes(TUniquePtr<FNimHotReload> NimHotReload) {
 			continue;
 		}
 
-		UE_LOG(NimForUEEditor, Display, TEXT("Refreshing Blueprint: %s"), *AssetPathString);
+		// UE_LOG(NimForUEEditor, Display, TEXT("Refreshing Blueprint: %s"), *AssetPathString);
 		
 		//
 		// for (const auto& ClassToReinstancePair : NimHotReload->ClassesToReinstance) {
@@ -171,6 +171,240 @@ void UEditorUtils::RefreshNodes(TUniquePtr<FNimHotReload> NimHotReload) {
 	// 	ProblemNotification->SetHyperlink(FSimpleDelegate::CreateLambda(ShowBlueprints), FText::FromString("Show blueprints"));
 	//}
 }
+
+void UEditorUtils::RefreshNodes(FNimHotReload* NimHotReload) {
+	TArray<UBlueprint*> DependencyBPs;
+	TArray<UK2Node*> AllNodes;
+
+	// Go through all blueprints and find any that are using a struct
+	// or delegate that we have replaced, and change their pins
+	// to point to the new ones instead.
+	TMap<UClass*, UClass*> ReloadClasses = NimHotReload->ClassesToReinstance;
+	TMap<UScriptStruct*, UScriptStruct*> ReloadStructs = NimHotReload->StructsToReinstance;
+
+		TMap<UObject*, UObject*> ClassReplaceList;
+		for (auto& Elem : ReloadClasses)
+			ClassReplaceList.Add(Elem.Key, Elem.Value);
+		for (auto& Elem : ReloadStructs)
+			ClassReplaceList.Add(Elem.Key, Elem.Value);
+
+		auto ReplacePinType = [&](FEdGraphPinType& PinType) -> bool
+		{
+			if (PinType.PinCategory != UEdGraphSchema_K2::PC_Struct)
+				return false;
+
+			UScriptStruct* Struct = Cast<UScriptStruct>(PinType.PinSubCategoryObject.Get());
+			if (Struct == nullptr)
+				return false;
+
+			UScriptStruct** NewStruct = ReloadStructs.Find(Struct);
+			if (NewStruct == nullptr)
+				return false;
+
+			PinType.PinSubCategoryObject = *NewStruct;
+			return true;
+		};
+
+		for (TObjectIterator<UBlueprint> BlueprintIt; BlueprintIt; ++BlueprintIt)
+		{
+			UBlueprint* BP = *BlueprintIt;
+
+			AllNodes.Reset();
+			FBlueprintEditorUtils::GetAllNodesOfClass(BP, AllNodes);
+
+			bool bHasDependency = false;
+			for (UK2Node* Node : AllNodes)
+			{
+				TArray<UStruct*> Dependencies;
+				if (Node->HasExternalDependencies(&Dependencies))
+				{
+					for (UStruct* Struct : Dependencies)
+					{
+						if (ReloadClasses.Contains((UClass*)Struct))
+							bHasDependency = true;
+						if (ReloadStructs.Contains((UScriptStruct*)Struct))
+							bHasDependency = true;
+
+						if (bHasDependency)
+							break;
+					}
+				}
+
+				for (auto* Pin : Node->Pins)
+				{
+					bHasDependency |= ReplacePinType(Pin->PinType);
+				}
+
+				if (auto* EditableBase = Cast<UK2Node_EditablePinBase>(Node))
+				{
+					for (auto Desc : EditableBase->UserDefinedPins)
+					{
+						bHasDependency |= ReplacePinType(Desc->PinType);
+					}
+				}
+
+				// if (auto* Event = Cast<UK2Node_Event>(Node))
+				// {
+				// 	if (auto* Function = Cast<UDelegateFunction>(Event->GetTiedSignatureFunction()))
+				// 	{
+				// 		if (NewDelegates.Contains(Function) || ReloadDelegates.Contains(Function))
+				// 		{
+				// 			bHasDependency = true;
+				// 		}
+				// 	}
+				// }
+
+				if (auto* MacroInst = Cast<UK2Node_MacroInstance>(Node))
+				{
+					bHasDependency |= ReplacePinType(MacroInst->ResolvedWildcardType);
+				}
+
+				//
+				FBlueprintEditorUtils::RefreshAllNodes(BP);
+
+			}
+
+			for (auto& Variable : BP->NewVariables)
+			{
+				bHasDependency |= ReplacePinType(Variable.VarType);
+			}
+
+			// Check if the blueprint references any of our replacing classes at all
+			FArchiveReplaceObjectRef<UObject> ReplaceObjectArch(BP, ClassReplaceList, false, true, true);
+			if (ReplaceObjectArch.GetCount())
+				bHasDependency = true;
+
+			if (bHasDependency)
+				DependencyBPs.Add(BP);
+		}
+
+		for (auto& Struct : ReloadStructs)
+		{
+			// FStructureEditorUtils::BroadcastPreChange(Struct.Key);
+
+			// // Update struct pointers in DataTable with newly generated replacements.
+			// TArray<UDataTable*> Tables = GetTablesDependentOnStruct(Struct.Key);
+			// for (UDataTable* Table : Tables)
+			// {
+			// 	Table->RowStruct = Struct.Value;
+			// }
+		}
+
+	
+
+	// Make sure all blueprints that had dependencies to structs or delegates
+	// are now properly recompiled.
+	if (DependencyBPs.Num() != 0)
+	{
+		TSet<UClass*> NewlyCreatedClasses;
+		for (auto& Elem : ReloadClasses)
+			NewlyCreatedClasses.Add(Elem.Value);
+		TSet<UScriptStruct*> NewlyCreatedStructs;
+		for (auto& Elem : ReloadStructs)
+			NewlyCreatedStructs.Add(Elem.Value);
+
+		// Refresh nodes in blueprint graphs that depend on stuff we've reloaded.
+		// If we don't do this then we will get errors until the nodes are manually refreshed!
+		auto RefreshRelevantNodesInBP = [&](UBlueprint* BP)
+		{
+			AllNodes.Reset();
+			FBlueprintEditorUtils::GetAllNodesOfClass(BP, AllNodes);
+
+			auto CheckRefresh = [&](FEdGraphPinType& PinType) -> bool
+			{
+				if (PinType.PinCategory != UEdGraphSchema_K2::PC_Struct)
+					return false;
+
+				UScriptStruct* Struct = Cast<UScriptStruct>(PinType.PinSubCategoryObject.Get());
+				return NewlyCreatedStructs.Contains(Struct);
+			};
+
+			for (UK2Node* Node : AllNodes)
+			{
+				TArray<UStruct*> Dependencies;
+				bool bShouldRefresh = false;
+
+				if (Node->HasExternalDependencies(&Dependencies))
+				{
+					for (UStruct* Struct : Dependencies)
+					{
+						if (NewlyCreatedClasses.Contains((UClass*)Struct))
+						{
+							bShouldRefresh = true;
+							break;
+						}
+						if (NewlyCreatedStructs.Contains((UScriptStruct*)Struct))
+						{
+							bShouldRefresh = true;
+							break;
+						}
+					}
+				}
+
+				if (NewlyCreatedStructs.Num() != 0 && !bShouldRefresh)
+				{
+					for (auto* Pin : Node->Pins)
+					{
+						bShouldRefresh |= CheckRefresh(Pin->PinType);
+					}
+				}
+
+				if (auto* EditableBase = Cast<UK2Node_EditablePinBase>(Node))
+				{
+					for (auto Desc : EditableBase->UserDefinedPins)
+					{
+						bShouldRefresh |= CheckRefresh(Desc->PinType);
+					}
+				}
+				//
+				// if (auto* Event = Cast<UK2Node_Event>(Node))
+				// {
+				// 	if (auto* Function = Cast<UDelegateFunction>(Event->GetTiedSignatureFunction()))
+				// 	{
+				// 		if (NewDelegates.Contains(Function) || ReloadDelegates.Contains(Function))
+				// 		{
+				// 			bShouldRefresh = true;
+				// 		}
+				// 	}
+				// }
+
+				if (auto* MacroInst = Cast<UK2Node_MacroInstance>(Node))
+				{
+					bShouldRefresh |= CheckRefresh(MacroInst->ResolvedWildcardType);
+				}
+
+				if (bShouldRefresh)
+				{
+					const UEdGraphSchema* Schema = Node->GetGraph()->GetSchema();
+					Schema->ReconstructNode(*Node, true);
+				}
+			}
+		};
+
+		// Trigger a compile of all blueprints that we detected dependencies to our class in
+		for (UBlueprint* BP : DependencyBPs)
+		{
+			RefreshRelevantNodesInBP(BP);
+			FBlueprintCompilationManager::QueueForCompilation(BP);
+		}
+
+		FBlueprintCompilationManager::FlushCompilationQueueAndReinstance();
+	}
+	//
+	// for (auto& Struct : ReloadStructs)
+	// {
+	// 	FStructureEditorUtils::BroadcastPostChange(Struct.Value);
+	// }
+
+	// We want to force-update all the property editing UI now that we've done this reload.
+	//  The easiest way to do that is to send this NotifyCustomizationModuleChanged, since
+	//  all this does is a refresh on the UI, but there's no separate 'force refresh'.
+	FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor");
+	if (PropertyModule)
+		PropertyModule->NotifyCustomizationModuleChanged();
+
+}
+
 
 void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
 	TUniquePtr<FReload> Reload(new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog)); //activates hot reload so we pass a check (even though we dont use it)
@@ -429,7 +663,6 @@ void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
 	if (PropertyModule)
 		PropertyModule->NotifyCustomizationModuleChanged();
 
-	delete NimHotReload;
 }
 
 void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
@@ -449,5 +682,4 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
 
 		delete Reload;
 	}
-	delete NimHotReload;
 }
