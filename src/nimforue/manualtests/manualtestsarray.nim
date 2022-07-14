@@ -24,7 +24,7 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
     let msg = testMultipleParams(executor, "hola", 10)
 
     executor.saySomething(msg)
-    executor.setColorByStringInMesh("(R=1,G=1,B=1,A=1)")
+    executor.setColorByStringInMesh("(R=0,G=1,B=1,A=1)")
 
     if executor.boolTestFromNimAreEquals("5", 5, true) == true:
         executor.saySomething("true")
@@ -184,6 +184,7 @@ genType(ueEnumType)
 #         propSoftClass : TSoftClassPtr[AActor]
 #         propEnum : EMyTestEnum
 
+#[
 uStruct FMyUStructDemo:
     (BlueprintType)
     uprop(EditAnywhere, BlueprintReadWrite):
@@ -214,6 +215,8 @@ uStruct FMyUStructDemo:
         propFloat64 : float64
         propFName : FName
 
+]#
+
 
 uClass UObjectDsl of UObject:
     (BlueprintType, Blueprintable)
@@ -235,15 +238,24 @@ uClass UObjectDsl of UObject:
         testFieldAnother8 : int32
         # testFieldAnother9 : int32
         # testFieldAnother91 : int32
+<<<<<<< HEAD
         testFieldAnother10 : int32
         testFieldAnother120 : int32
         testFieldAnother121 : int32
         testFieldAnother123: int32
         # testFieldAnother124: int32
+=======
+        #testFieldAnother10 : int32
+        # testFieldAnother120 : int32
+        # testFieldAnother121 : int32
+        #testFieldAnother123: int32
+        #testFieldAnother124: int32
+>>>>>>> d12697e (fixed another enum crash)
         # testFieldAnother128: int32
 
 
 
+<<<<<<< HEAD
 uClass AActorDsl of AActor:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
@@ -256,6 +268,22 @@ uClass AActorDsl of AActor:
         # anotherField3 : int32
         # anotherField4 : int32
         # anotherField5 : FString
+=======
+
+
+# uClass AActorDsl of AActor:
+#     (BlueprintType, Blueprintable)
+#     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+#         testField : FString
+#         # test2 : int
+#         test3 : FString
+#         test4 : FString
+#         # anotherField : FMyUStructDemo
+#         # anotherField2 : FString
+#         anotherField3 : int32
+#         anotherField4 : int32
+#         anotherField5 : FString
+>>>>>>> d12697e (fixed another enum crash)
 
 
 

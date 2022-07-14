@@ -34,7 +34,10 @@ proc prepareForReinst(prevClass : UClassPtr) =
     # prevClass.classFlags = prevClass.classFlags | CLASS_NewerVersionExists
     prevClass.addClassFlag CLASS_NewerVersionExists
     prevClass.setFlags(RF_NewerVersionExists)
-    prevClass.clearFlags(RF_Public | RF_Standalone)
+
+    # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
+    prevClass.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32))
+
     let prevNameStr : FString =  fmt("{prevClass.getName()}_REINST")
     let oldClassName = makeUniqueObjectName(prevClass.getOuter(), prevClass.getClass(), makeFName(prevNameStr))
     discard prevClass.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
