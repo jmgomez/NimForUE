@@ -132,8 +132,12 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
     newCls.propertyLink = parent.propertyLink
     newCls.classWithin = parent.classWithin
     newCls.classConfigName = parent.classConfigName
-    newcls.setSuperStruct(parent)
-    newcls.classFlags =  (ueType.clsFlags) && parent.classFlags
+
+    newCls.setSuperStruct(parent)
+
+    # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
+    newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32)
+
     newCls.classCastFlags = parent.classCastFlags
     
     copyMetadata(parent, newCls)

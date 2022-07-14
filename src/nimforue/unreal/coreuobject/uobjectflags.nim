@@ -1,13 +1,11 @@
-include ../definitions
 import bitops
 import ../../typegen/models
 import std/[genasts, macros, sugar, json, sequtils]
 
 
+type
 
-type 
-
-    EPropertyFlags* {. importcpp, header: ueIncludes, size:sizeof(uint64).} = enum
+    EPropertyFlags* {.importcpp, header: ueincludes, size:sizeof(uint64).} = enum
         CPF_None = 0,
         CPF_Edit              = 0x0000000000000001,  #< Property is user-settable in the editor.
         CPF_ConstParm            = 0x0000000000000002,  #< This is a constant function parameter
@@ -360,7 +358,7 @@ macro genEnumOperators(enumName, enumType:static string, genValConverters : stat
 
     let converters = genAst(name, valName=ident enumName&"Val", typ):
         converter toValName*(a:name) : valName = valName(typ(ord(a)))
-        converter toName*(a:valName) : name = name(typ((a)))
+        converter toName*(a:valName) : name = name(typ(a))
     
     if genValConverters:
         result.add converters

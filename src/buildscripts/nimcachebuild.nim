@@ -2,6 +2,9 @@
 import std / [os, osproc, strutils, sequtils, times, options, strformat, sugar, threadpool]
 import nimforueconfig
 
+template quotes(path: string): untyped =
+  "\"" & path & "\""
+
 const withPCH = true
 const parallelBuild = true # for debugging purposes, normally we want to execute in parallel
 const PCHFile = "UEDeps.h"
@@ -13,14 +16,20 @@ let engineDir = nueConfig.engineDir
 let pluginDir = nueConfig.pluginDir
 let cacheDir = pluginDir / ".nimcache/guestpch"
 
+let isDebug = nueConfig.targetConfiguration in [Debug, Development]
+let debugFlags =
+  if isDebug:
+    let pdbFile = quotes(pluginDir / ".nimcache/guestpch/nimforue.pdb")
+    &"/Fd{pdbFile} /link /ASSEMBLYDEBUG /DEBUG /PDB:{pdbFile}"
+  else:
+    ""
+
 type BuildStatus* = enum
   Success
   NoChange
   FailedCompile
   FailedLink
 
-template quotes(path: string): untyped =
-  "\"" & path & "\""
 
 proc usesPCHFile(path: string): bool =
   for l in path.lines:
@@ -39,9 +48,7 @@ proc usesPCHFile(path: string): bool =
 # TODO?: get the flags from the PCH response file in Intermediate instead of hardcoding
 let CompileFlags = [
 "/c",
-(case nueConfig.targetConfiguration:
-    of Debug, Development: "/Od"
-    of Shipping: "/O2"),
+(if isDebug: "/Od /Z7" else: "/O2"),
 "--platform:amd64",
 "/nologo",
 "/EHsc",
@@ -67,7 +74,6 @@ let CompileFlags = [
 "/source-charset:utf-8" ,
 "/execution-charset:utf-8",
 "/MD",
-"/Z7",
 "/fp:fast", # "fast" floating-point model; results are less predictable.
 #"/W4", # Set output warning level.
 # /we<n>	Treat the specified warning as an error.
@@ -134,7 +140,9 @@ proc compileCmd(cpppath: string, objpath: string): string =
     CompileFlags.join(" ") & " " &
     (if withPCH and usesPCHFile(cppPath): pchFlags() else: "") & " " &
     getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b, " ") & " " &
-    "/Fo" & objpath & " " & cppPath
+    "/Fo" & objpath & " " & cppPath &
+    " " & debugFlags
+
 
 
 # generate the pch file for windows
@@ -142,19 +150,20 @@ proc winpch*() =
   if execCmd("nim cpp --genscript --app:lib --nomain --nimcache:.nimcache/winpch src/nimforue/unreal/winpch.nim") != 0:
     quit("! Error: Could not compile winpch.")
 
-  var createPCHCmd = r"vccexe.exe /c --platform:amd64 /nologo "& pchFlags(shouldCreate = true) & " " &
+  var pchCmd = r"vccexe.exe /c --platform:amd64 /nologo "& pchFlags(shouldCreate = true) & " " &
     CompileFlags.join(" ") & " " & getUEHeadersIncludePaths(nueConfig).foldl( a & " -I" & b, " ")
 
   let definitionsCppPath = pluginDir / ".nimcache/winpch/@mdefinitions.nim.cpp"
   if fileExists(definitionsCppPath):
-    createPCHCmd &= " " & definitionsCppPath
+    pchCmd &= " " & definitionsCppPath
   else:
     quit("!Error: " & definitionsCppPath & " not found!")
 
   let curDir = getCurrentDir()
-  #echo createPCHCmd
+  pchCmd &= " " & debugFlags
+  #echo pchCmd
   setCurrentDir(".nimcache/winpch")
-  discard execCmd(createPCHCmd)
+  discard execCmd(pchCmd)
   setCurrentDir(curDir)
 
 
@@ -213,8 +222,13 @@ proc nimcacheBuild*(): BuildStatus =
 
   var pchObj = quotes(pluginDir / ".nimcache/winpch/@mdefinitions.nim.obj")
   let dllpath = quotes(pluginDir / "Binaries/nim/nimforue.dll")
-  let linkcmd = "vccexe.exe /LD --platform:amd64  /nologo /Fe" & dllpath & " " &
-    getUESymbols(nueConfig).foldl(a & " " & b, " ") & " " & objpaths.join(" ") & " " & (if withPCH: pchObj else: "")
+
+  var dllFlag = if isDebug: "/LDd" else: "/LD"
+
+  let linkcmd = &"vccexe.exe {dllFlag} --platform:amd64  /nologo /Fe" & dllpath & " " &
+    getUESymbols(nueConfig).foldl(a & " " & b, " ") & " " & objpaths.join(" ") & " " & (if withPCH: pchObj else: "") &
+    " " & debugFlags
+
  
   let linkRes = execCmd(linkCmd)
   if linkRes != 0:
