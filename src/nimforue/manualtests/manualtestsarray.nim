@@ -149,7 +149,9 @@ proc scratchpadEditor*() =
 #temp
 type
     AActor* = object of UObject
-    AActorPtr* = ptr AActor
+    AActorPtr* = ptr AActor    
+    ACharacter* = object of UObject
+    ACharacterPtr* = ptr ACharacter
 
 const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum, 
                             fields: @[
@@ -190,8 +192,8 @@ uStruct FMyUStructDemo:
         propInt64 : int
         propInt642 : int64
         propFloat32 : float32
-        # # structInt : FIntPropTests
-        propEnum : EMyTestEnum
+        # structInt : FIntPropTests
+        # propEnum : EMyTestEnum
         propBool : bool
         propObject : UObjectPtr
         propClass : UClassPtr
@@ -202,6 +204,8 @@ uStruct FMyUStructDemo:
         propAnother : int
         propAnother2 : int 
         propAnother3 : int
+        propAnother22 : int 
+        propAnother31 : int
         # propMapFloat : TMap[FString, float]
 
     uprop(EditAnywhere, BlueprintReadOnly):
@@ -228,13 +232,13 @@ uClass UObjectDsl of UObject:
         # testFieldAnother5 : int32
         # testFieldAnother6 : int32
         # testFieldAnother7 : int32
-        # testFieldAnother8 : int32
+        testFieldAnother8 : int32
         # testFieldAnother9 : int32
         # testFieldAnother91 : int32
-        # testFieldAnother10 : int32
-        # testFieldAnother120 : int32
-        # testFieldAnother121 : int32
-        # testFieldAnother123: int32
+        testFieldAnother10 : int32
+        testFieldAnother120 : int32
+        testFieldAnother121 : int32
+        testFieldAnother123: int32
         # testFieldAnother124: int32
         # testFieldAnother128: int32
 
@@ -244,15 +248,14 @@ uClass AActorDsl of AActor:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         testField : FString
-        # test2 : int
-        test3 : bool
+        test2 : bool
+        test3 : int
         test4 : FString
         # anotherField : FMyUStructDemo
         # anotherField2 : FString
         # anotherField3 : int32
         # anotherField4 : int32
         # anotherField5 : FString
-
 
 
 

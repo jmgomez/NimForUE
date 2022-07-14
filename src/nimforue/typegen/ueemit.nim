@@ -1,6 +1,6 @@
 include ../unreal/prelude
 include ../utils/utils
-import std/[sugar, macros, strutils, strformat, genasts, sequtils, options]
+import std/[sugar, macros, algorithm, strutils, strformat, genasts, sequtils, options]
 
 import uemeta
 
@@ -30,7 +30,7 @@ type
 
 var ueEmitter = UEEmitter() 
 
-proc prepareClassForReinst(prevClass : UClassPtr) = 
+proc prepareForReinst(prevClass : UClassPtr) = 
     # prevClass.classFlags = prevClass.classFlags | CLASS_NewerVersionExists
     prevClass.addClassFlag CLASS_NewerVersionExists
     prevClass.setFlags(RF_NewerVersionExists)
@@ -39,7 +39,7 @@ proc prepareClassForReinst(prevClass : UClassPtr) =
     let oldClassName = makeUniqueObjectName(prevClass.getOuter(), prevClass.getClass(), makeFName(prevNameStr))
     discard prevClass.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
-proc prepareScriptStructForReinst(prevScriptStruct : UScriptStructPtr) = 
+proc prepareForReinst(prevScriptStruct : UScriptStructPtr) = 
     prevScriptStruct.addScriptStructFlag(STRUCT_NewerVersionExists)
     prevScriptStruct.setFlags(RF_NewerVersionExists)
     prevScriptStruct.clearFlags(RF_Public | RF_Standalone)
@@ -51,36 +51,40 @@ proc prepareScriptStructForReinst(prevScriptStruct : UScriptStructPtr) =
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UStructPtr) : void =  
     ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
 
+#emit the type only if one doesn't exist already and if it's different
+proc emitUStructInPackage[T](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
+    let areEquals = prev.isSome() and prev.get().toUEType() == emitter.ueType
+    if areEquals: none[ptr T]()
+    else: 
+        prev.run prepareForReinst
+        some ueCast[T](emitter.generator(pkg))
+
 proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr = 
     var hotReloadInfo = newNimHotReload()
-
     for emitter in ueEmitter.emitters:
-        let msg =
-            case emitter.ueType.kind:
-            of uetStruct:
-                let prevStructPtr = fromNil getScriptStructByName emitter.ueType.name.removeFirstLetter()
-                prevStructPtr.run prepareScriptStructForReinst
-                let newStructPtr = ueCast[UScriptStruct](emitter.generator(pkg))
-                prevStructPtr
-                    .map(proc(prev:UScriptStructPtr) : string = 
-                            hotReloadInfo.bShouldHotReload = true
-                            hotReloadInfo.structsToReinstance.add(prev, newStructPtr)
-                            "ScriptStruct already exists: " & newStructPtr.getName() & " will be replaced")
-                    .get("ScriptStruct added: " & emitter.ueType.name)
-            of uetClass:
-                let prevClassPtr = fromNil getClassByName emitter.ueType.name.removeFirstLetter()
-                prevClassPtr.run prepareClassForReinst
-                let newClassPtr = ueCast[UNimClassBase](emitter.generator(pkg))
-                prevClassPtr
-                    .map(proc(prev:UClassPtr) : string = 
-                            hotReloadInfo.bShouldHotReload = true
-                            hotReloadInfo.classesToReinstance.add(prev, newClassPtr)
-                            "Class already exists: " & newClassPtr.getName() & " will be replaced")
-                    .get("Class added: " & emitter.ueType.name)
-            of uetEnum:
-                ""
-                
-        UE_Log msg
+        case emitter.ueType.kind:
+        of uetStruct:
+            let prevStructPtr = someNil getScriptStructByName emitter.ueType.name.removeFirstLetter()
+            let newStructPtr = emitUStructInPackage[UScriptStruct](pkg, emitter, prevStructPtr)
+            prevStructPtr
+                .run(proc(prev:UScriptStructPtr) = 
+                    if newStructPtr.isSome():
+                        hotReloadInfo.structsToReinstance.add(prev, newStructPtr.get()))
+                        
+        of uetClass:
+            let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
+            let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
+            prevClassPtr.run(proc(prev:UClassPtr) = 
+                        if newClassPtr.isSome():
+                            hotReloadInfo.classesToReinstance.add(prev, newClassPtr.get()))
+                    
+        of uetEnum:
+            discard
+        
+    hotReloadInfo.bShouldHotReload = 
+        hotReloadInfo.classesToReinstance.keys().len() + hotReloadInfo.structsToReinstance.keys().len() > 0
+
+        # UE_Log msg
     hotReloadInfo
 
 func emitUStruct(typeDef:UEType) : NimNode =
@@ -107,15 +111,13 @@ macro emitType*(typeDef : static UEType) : untyped =
             result = emitUStruct(typeDef)
         of uetEnum: discard
 
-
-
 #iterate childrens and returns a sequence fo them
 func childrenAsSeq*(node:NimNode) : seq[NimNode] =
     var nodes : seq[NimNode] = @[]
     for n in node:
         nodes.add n
     nodes
-
+    
 func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]) = 
     # var flags : EPropertyFlags = CPF_SkipSerialization
     var flags : EPropertyFlags = CPF_NoDestructor
@@ -170,6 +172,7 @@ func getUPropsAsFieldsForType(body:NimNode) : seq[UEField] =
         .filter(n=>n.kind == nnkCall and n[0].strVal() == "uprop")
         .map(fromUPropNodeToField)
         .foldl(a & b)
+        .reversed()
     
 macro uStruct*(name:untyped, body : untyped) : untyped = 
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct

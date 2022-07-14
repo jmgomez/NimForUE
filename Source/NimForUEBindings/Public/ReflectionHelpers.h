@@ -86,6 +86,7 @@ public:
 	static void AddScriptStructFlag(UScriptStruct* Struct, EStructFlags FlagsToAdd) {
 		//Odd issue, it doesnt compile without the static_cast
 		Struct->StructFlags = static_cast<EStructFlags>(Struct->StructFlags | FlagsToAdd);
+		
 	}
 
 	static void NimForUELog(FString Msg);
