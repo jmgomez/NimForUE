@@ -62,7 +62,7 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
     UE_Log(fmt "Nim loaded for {n} times")
   
     try:
-        let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUE"))
+        let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEBindings"))
     
 
         # printAllClassAndProps("PRE", pkg)
