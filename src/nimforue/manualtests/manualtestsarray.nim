@@ -256,7 +256,7 @@ uClass AActorDsl of AActor:
         test3 : int
         test4 : FString
         # anotherField : FMyUStructDemo
-        # anotherField2 : FString
+        anotherField2 : FString
         # anotherField3 : int32
         # anotherField4 : int32
         # anotherField5 : FString

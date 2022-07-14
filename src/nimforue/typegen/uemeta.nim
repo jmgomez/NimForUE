@@ -47,7 +47,7 @@ func getNimTypeAsStr(prop:FPropertyPtr) : string = #The expected type is somethi
         let valueType = mapProp.getValueProp().getCPPType()
         return fmt"TMap[{keyType}, {valueType}]"
 
-    let cppType = prop.getCPPType() 
+    let cppType = prop.getCPPType() #TODO review this
 
     if prop.isTEnum(): #Not sure if it would be better to just support it on the macro
         return cppType.replace("TEnumAsByte<","")

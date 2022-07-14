@@ -21,9 +21,8 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     scratchpad(executor)
 
 
-
 proc createUEReflectedTypes() = 
-    let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEDemo"))
+    let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEBindings"))
     let clsFlags =  (CLASS_Inherit | CLASS_ScriptInherit )
     let className = "UNimClassWhateverProp"
     let ueVarType = makeUEClass(className, "UObject", clsFlags,

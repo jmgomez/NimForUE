@@ -18,7 +18,7 @@
 		{
 			"Name": "NimForUE",
 			"Type": "Runtime",
-			"LoadingPhase": "PreDefault"
+			"LoadingPhase": "EarliestPossible"
 		},
 		{
 			"Name": "NimForUEBindings",

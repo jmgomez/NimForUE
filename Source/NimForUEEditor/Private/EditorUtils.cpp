@@ -695,7 +695,6 @@ void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
 }
 
 void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
-	if (NimHotReload->bShouldHotReload){
 		FNimReload* Reload(new FNimReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
 
 		for (const auto& ClassToReinstancePair : NimHotReload->ClassesToReinstance)
@@ -710,5 +709,5 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
 		Reload->SetSendReloadCompleteNotification(true);
 
 		delete Reload;
-	}
+	
 }

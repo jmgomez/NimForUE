@@ -56,19 +56,6 @@ func removeFirstLetter*(str:string) : string =
     if str.len()>0: str.substr(1)
     else: str
 
-func run*[T](opt:Option[T], fn : (x : T)->void) : void = 
-    if opt.isSome: fn(opt.get())
-
-func disc*[T](opt:Option[T]) : void = discard
-
-func tap*[T](opt:Option[T], fn : (x : T)->void) : Option[T] = 
-    if opt.isSome: some fn(opt.get())
-    else: none[T]()
-
-func someNil*[T](val: sink T): Option[T] {.inline.} =
-    if val == nil: none[T]()
-    else: some val
-
 func nonEmptyOr*(value, orValue:string) : string = nonDefaultOr(value, orValue)
 
 
@@ -76,8 +63,19 @@ func nonEmptyOr*(value, orValue:string) : string = nonDefaultOr(value, orValue)
 func getOrCompute*[T](opt:Option[T], fn : ()->T) : T = 
     if opt.isSome(): opt.get() else: fn()
 
-func flatMap*[T, U](opt:Option[T], fn : (t : T)->Option[U]) : Option[U] = 
-    if opt.isSome(): fn(opt.get()) else: none[U]()
+
+func run*[T](opt:Option[T], fn : (x : T)->void) : void = 
+    if opt.isSome: fn(opt.get())
+
+func disc*[T](opt:Option[T]) : void = discard
 
 
 
+func tap*[T](opt:Option[T], fn : (x : T)->void) : Option[T] = 
+    if opt.isSome: some fn(opt.get())
+    else: none[T]()
+
+
+func someNil*[T](val: sink T): Option[T] {.inline.} =
+    if val == nil: none[T]()
+    else: some val

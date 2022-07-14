@@ -52,7 +52,7 @@ proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UStructPtr) : void =
     ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
 
 #emit the type only if one doesn't exist already and if it's different
-proc emitUStructInPackage[T](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
+proc emitUStructInPackage[T : UScriptStruct | UClass](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
     let areEquals = prev.isSome() and prev.get().toUEType() == emitter.ueType
     if areEquals: none[ptr T]()
     else: 
@@ -65,21 +65,19 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
         case emitter.ueType.kind:
         of uetStruct:
             let prevStructPtr = someNil getScriptStructByName emitter.ueType.name.removeFirstLetter()
-            let newStructPtr = emitUStructInPackage[UScriptStruct](pkg, emitter, prevStructPtr)
-            prevStructPtr
-                .run(proc(prev:UScriptStructPtr) = 
-                    if newStructPtr.isSome():
-                        hotReloadInfo.structsToReinstance.add(prev, newStructPtr.get()))
-                        
+            let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr)
+            prevStructPtr.flatmap((prev : UScriptStructPtr) => newStructPtr.map(newStr=>(prev, newStr)))
+                .run((pair:(UScriptStructPtr, UScriptStructPtr)) => hotReloadInfo.structsToReinstance.add(pair[0], pair[1]))
+        
         of uetClass:
             let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
             let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
-            prevClassPtr.run(proc(prev:UClassPtr) = 
-                        if newClassPtr.isSome():
-                            hotReloadInfo.classesToReinstance.add(prev, newClassPtr.get()))
-                    
+            prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
+                .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
+                
         of uetEnum:
             discard
+
         
     hotReloadInfo.bShouldHotReload = 
         hotReloadInfo.classesToReinstance.keys().len() + hotReloadInfo.structsToReinstance.keys().len() > 0
