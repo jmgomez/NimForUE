@@ -96,7 +96,16 @@ func toUEType*(cls:UClassPtr) : UEType =
     let parent = cls.getSuperClass()
     let parentName = parent.getPrefixCpp() & parent.getName()
 
-    UEType(name:name, kind:uetClass, parent:parentName, fields:fields)
+    UEType(name:name, kind:uetClass, parent:parentName, fields:fields.reversed())
+
+func toUEType*(str:UStructPtr) : UEType =
+    let fields = getFPropsFromUStruct(str)
+                    .map(toUEField)
+    let name = str.getPrefixCpp() & str.getName()
+    # let parent = str.getSuperClass()
+    # let parentName = parent.getPrefixCpp() & parent.getName()
+
+    UEType(name:name, kind:uetStruct, fields:fields.reversed())
 
 
 proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
@@ -154,7 +163,7 @@ proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
 
     scriptStruct.assetCreated()
     
-    for field in ueType.fields.toSeq().reversed():
+    for field in ueType.fields:
         discard field.toFProperty(scriptStruct) 
 
     setCppStructOpFor[T](scriptStruct, nil)

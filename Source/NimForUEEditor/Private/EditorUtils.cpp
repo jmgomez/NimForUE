@@ -300,7 +300,22 @@ void UEditorUtils::RefreshNodes(FNimHotReload* NimHotReload) {
 			// }
 		}
 
-	
+	// Do a full-on garbage collection step to make sure old stuff is gone
+	// before we start reinstancing things we no longer need.
+	CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+
+	// Call into unreal's standard reinstancing system to
+	// actually recreate objects using the old classes.
+	FBlueprintCompilationManager::ReparentHierarchies(ReloadClasses);
+
+	//
+	// for (auto& Elem : ReloadClasses) {
+	// 	Elem.Key->ConditionalBeginDestroy();
+	// }
+	// Do a full-on garbage collection step to make sure old stuff is gone
+	// by the time we recompile blueprints below.
+	CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+
 
 	// Make sure all blueprints that had dependencies to structs or delegates
 	// are now properly recompiled.
