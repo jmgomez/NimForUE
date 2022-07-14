@@ -235,40 +235,17 @@ uClass UObjectDsl of UObject:
         # testFieldAnother5 : int32
         # testFieldAnother6 : int32
         # testFieldAnother7 : int32
-        testFieldAnother8 : int32
+        #testFieldAnother8 : int32
         # testFieldAnother9 : int32
         # testFieldAnother91 : int32
-<<<<<<< HEAD
-        testFieldAnother10 : int32
-        testFieldAnother120 : int32
-        testFieldAnother121 : int32
-        testFieldAnother123: int32
-        # testFieldAnother124: int32
-=======
         #testFieldAnother10 : int32
         # testFieldAnother120 : int32
         # testFieldAnother121 : int32
         #testFieldAnother123: int32
         #testFieldAnother124: int32
->>>>>>> d12697e (fixed another enum crash)
         # testFieldAnother128: int32
 
 
-
-<<<<<<< HEAD
-uClass AActorDsl of AActor:
-    (BlueprintType, Blueprintable)
-    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-        testField : FString
-        test2 : bool
-        test3 : int
-        test4 : FString
-        # anotherField : FMyUStructDemo
-        # anotherField2 : FString
-        # anotherField3 : int32
-        # anotherField4 : int32
-        # anotherField5 : FString
-=======
 
 
 # uClass AActorDsl of AActor:
@@ -283,7 +260,3 @@ uClass AActorDsl of AActor:
 #         anotherField3 : int32
 #         anotherField4 : int32
 #         anotherField5 : FString
->>>>>>> d12697e (fixed another enum crash)
-
-
-
