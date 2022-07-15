@@ -21,7 +21,7 @@ func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField =
 
 
 func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
-    UEType(kind:uetClass, name:name, parent:parent, clsFlags:EClassFlagsVal(clsFlags), fields:fields)
+    UEType(kind:uetClass, name:name, parent:parent, clsFlags: EClassFlagsVal(clsFlags), fields:fields)
 
 func makeUEStruct*(name:string, fields:seq[UEField], superStruct="", metadata : seq[UEMetadata] = @[], flags = STRUCT_NoFlags) : UEType = 
     UEType(kind:uetStruct, name:name, fields:fields, superStruct:superStruct, metadata: metadata, structFlags: flags)
@@ -58,8 +58,9 @@ func getNimTypeAsStr(prop:FPropertyPtr) : string = #The expected type is somethi
                          .replace(">", "]")
                          .replace("*", "Ptr")
     
-    return nimType
 
+    # UE_Warn prop.getTypeName() #private?
+    return nimType
 
 #Function that receives a FProperty and returns a Type as string
 func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something that UEField can understand
@@ -119,11 +120,11 @@ proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
 
 
 proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
-    # let objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
-    let objClsFlags  =  (RF_Public || RF_Standalone || RF_Transactional || RF_LoadCompleted)
+    const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
+    # const objClsFlags  =  (RF_Public || RF_Standalone || RF_Transactional || RF_LoadCompleted)
     # let objClsFlags  =  RF_Standalone || RF_Public
     let
-        newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+        newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
         parent = getClassByName(ueType.parent.removeFirstLetter())
     
     assetCreated(newCls)

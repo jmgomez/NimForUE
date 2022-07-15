@@ -70,6 +70,7 @@ proc setPropertyFlags*(prop:FPropertyPtr, flags:EPropertyFlags) : void {. import
 proc getPropertyFlags*(prop:FPropertyPtr) : EPropertyFlags {. importcpp:"#->GetPropertyFlags()".}
 proc getNameCPP*(prop:FPropertyPtr) : FString {.importcpp: "#->GetNameCPP()".}
 proc getCPPType*(prop:FPropertyPtr) : FString {.importcpp: "#->GetCPPType()".}
+proc getTypeName*(prop:FPropertyPtr) : FString {.importcpp: "#->GetTypeName()".}
 proc getOwnerStruct*(str:FPropertyPtr) : UStructPtr {.importcpp:"#->GetOwnerStruct()".}
 
 

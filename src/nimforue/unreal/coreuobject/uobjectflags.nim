@@ -365,9 +365,9 @@ macro genEnumOperators(enumName, enumType:static string, genValConverters : stat
 
 
 genEnumOperators("EPropertyFlags", "uint64")
-genEnumOperators("EObjectFlags", "uint32")
+genEnumOperators("EObjectFlags", "uint32", false)
 genEnumOperators("EFunctionFlags", "uint32")
-genEnumOperators("EClassFlags", "uint32")
+genEnumOperators("EClassFlags", "uint32", false)
 genEnumOperators("EStructFlags", "uint32")
 genEnumOperators("EFieldIterationFlags", "uint8", false)
 

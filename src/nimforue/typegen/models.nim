@@ -5,7 +5,7 @@ import ../unreal/core/containers/unrealstring
 type
     EPropertyFlagsVal* = distinct(uint64)
     EFunctionFlagsVal* = distinct(uint32)
-    EClassFlagsVal* = distinct(uint32)
+    EClassFlagsVal* = (uint32)
     EStructFlagsVal* = distinct(uint32)
     EClassCastFlagsVal* = distinct(uint64)
 
@@ -86,7 +86,7 @@ func makeUEMetadata*(name:string) : UEMetadata =
 
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
-func `==`*(a, b : EClassFlagsVal) : bool {.borrow.}
+# func `==`*(a, b : EClassFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EStructFlagsVal) : bool {.borrow.}
 
 
