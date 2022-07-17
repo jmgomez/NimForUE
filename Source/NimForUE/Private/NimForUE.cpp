@@ -32,47 +32,6 @@ void FNimForUEModule::StartupModule()
 
 #endif
 	
-	auto onPreReload = [](NCSTRING msg) {
-		// subscribeToReloadWorkaround until we have a proper HotReload Load/Unload mechanism
-		// FNimTestBase::UnregisterAll();
-	};
-	auto onPostReload = [](NCSTRING msg) {
-
-		//TODO Do it only for development target and maybe based on config (retrieved from nim)
-
-		AsyncTask(ENamedThreads::GameThread, [] {
-			bool bIsFirstLoad = ReloadTimes == 0;
-			FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(ReloadTimes++));
-			checkf(NimHotReload, TEXT("NimHotReload is null. Probably nim crashed on startup. See the log for a stacktrace."));
-			UEditorUtils::HotReload(NimHotReload);
-			UEditorUtils::RefreshNodes(NimHotReload);
-			delete NimHotReload;
-
-			FString NimUserMsg = (bIsFirstLoad ? "Nim Initialized!" : "Nim Hot Reload Complete!");
-			FNotificationInfo Info( FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(TEXT("NimForUE.HotReload"), *NimUserMsg, TEXT("NimForUE.HotReload")));
-			Info.Image = FEditorStyle::GetBrush(TEXT("LevelEditor.RecompileGameCode"));
-			Info.FadeInDuration = 0.1f;
-			Info.FadeOutDuration = 0.5f;
-			Info.ExpireDuration = 1.5f;
-			Info.bUseThrobber = false;
-			Info.bUseSuccessFailIcons = true;
-			Info.bUseLargeFont = true;
-			Info.bFireAndForget = false;
-			Info.bAllowThrottleWhenFrameRateIsLow = false;
-			// //Fails because it's on another thread?
-			auto NotificationItem = FSlateNotificationManager::Get().AddNotification( Info );
-			NotificationItem->SetCompletionState(SNotificationItem::CS_Success);
-			NotificationItem->ExpireAndFadeout();
-			
-			GEditor->PlayEditorSound(TEXT("/Engine/EditorSounds/Notifications/CompileSuccess_Cue.CompileSuccess_Cue"));
-		});
-		UE_LOG(NimForUE, Log, TEXT("NimForUE just hot reloaded!! %s"), ANSI_TO_TCHAR(msg))
-
-	};
-
-	
-	//TODO Do it only for development target and maybe based on config (retrieved from nim)
-	subscribeToReload(onPreReload, onPostReload);
 		
 		
 }

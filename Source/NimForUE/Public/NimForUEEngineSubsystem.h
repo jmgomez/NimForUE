@@ -13,16 +13,18 @@ DECLARE_LOG_CATEGORY_EXTERN(NimForUEEngineSubsystem, Log, All);
  * 
  */
 UCLASS()
-class NIMFORUE_API UNimForUEEngineSubsystem : public UEngineSubsystem
-{
+class NIMFORUE_API UNimForUEEngineSubsystem : public UEngineSubsystem {
 	GENERATED_BODY()
+	//Package where all nim classes will live.
+	UPackage* NimForUEPackage;
+	bool Tick(float DeltaTime);
+	FTSTicker::FDelegateHandle TickDelegateHandle;
+	static void LoadNimGuest(FString Msg);
+	void CreateNimPackage();
 public:
+	int ReloadTimes;
 	// USubsystem methods //
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
-private:
-
-	bool Tick(float DeltaTime);
-	FTSTicker::FDelegateHandle TickDelegateHandle;
 };

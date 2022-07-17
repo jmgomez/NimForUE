@@ -49,6 +49,7 @@ proc createUEReflectedTypes() =
 #returns a pointer to a nimHotreload. The type is not passed because it's a type that exists in UE
 #and host doesnt know anything about ue symbols
 
+
 proc printAllClassAndProps*(prefix:string, package:UPackagePtr) =
     let classes = getAllObjectsFromPackage[UNimClassBase](package)
 
@@ -60,13 +61,13 @@ proc printAllClassAndProps*(prefix:string, package:UPackagePtr) =
 
 proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} = 
     UE_Log(fmt "Nim loaded for {n} times")
+
   
     try:
-        let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEBindings"))
     
 
         # printAllClassAndProps("PRE", pkg)
-        let nimHotReload = emitUStructsForPackage(pkg)
+        let nimHotReload = emitUStructsForPackage()
         
         
 

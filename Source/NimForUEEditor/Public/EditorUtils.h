@@ -18,4 +18,5 @@ public:
 	static void RefreshNodes(FNimHotReload* NimHotReload);
 	static void PerformReinstance(FNimHotReload* NimHotReload);
 	static void HotReload(FNimHotReload* NimHotReload);
+	static void ShowLoadNotification(bool bIsFirstLoad);
 };

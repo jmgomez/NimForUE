@@ -253,13 +253,14 @@ uClass AActorDsl of AActor:
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         testField : FString
         test2 : bool
-        test3 : int
+        test3 : int 
         test4 : FString
         # anotherField : FMyUStructDemo
         anotherField2 : FString
-        # anotherField3 : int32
-        # anotherField4 : int32
+        anotherField3 : int32
+        anotherField4 : int32
         # anotherField5 : FString
+
 
 
 

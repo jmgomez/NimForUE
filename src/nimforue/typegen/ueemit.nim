@@ -87,6 +87,11 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
 
         # UE_Log msg
     hotReloadInfo
+#By default ue types are emitted in the /Script/Nim package. But we can use another for the test. 
+proc emitUStructsForPackage*(pkgName:FString = "Nim") : FNimHotReloadPtr = 
+    let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("Nim"))
+    emitUStructsForPackage(pkg)
+
 
 func emitUStruct(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
