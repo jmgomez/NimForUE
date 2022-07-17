@@ -114,21 +114,36 @@ func newFProperty*(outer : UStructPtr, propField:UEField, optPropType="", optNam
             if structBased.isSome():
                 structBased.get()
             else:
-                
-
-
-                UE_Log "Not a struct based property. Trying as enum .." & propType
-                let ueEnum = getUTypeByName[UEnum](propType) #names arent consistent, for enums it may or not start with the Prefix E
-                if not ueEnum.isNil():
-                    UE_Log "Found " & propType & " as Enum. Creating prop"
-                    let enumProp = newFEnumProperty(makeFieldVariant(outer), name, flags)
-                    enumProp.setEnum(ueEnum)
-                    #Assuming that Enums are exposed via TEnumAsByte or they are uint8. Revisit in the future (only bp exposed enums meets that)
-                    let underlayingProp : FPropertyPtr = newFByteProperty(makeFieldVariant(enumProp), n"UnderlayingEnumProp", flags)
-                    enumProp.addCppProperty(underlayingProp)
-                    enumProp
+                #Try to find it as Delegate
+                UE_Log "Not a struct based prorperty. Trying as delegate.." & propType
+                let delegateName = propType.removeFirstLetter() & "__DelegateSignature"
+                let delegate = getUTypeByName[UDelegateFunction] delegateName
+                if not delegate.isNil():
+                    let isMulticast = FUNC_MulticastDelegate in delegate.functionFlags
+                    if isMulticast:
+                        UE_Log fmt("Found {propType}  as  MulticastDelegate. Creating prop")
+                        let delegateProp = newFMulticastInlineDelegateProperty(makeFieldVariant(outer), name, flags)
+                        delegateProp.setSignatureFunction(delegate)
+                        delegateProp
+                    else:
+                        UE_Log fmt("Found {propType}  as  MulticastDelegate. Creating prop")
+                        let delegateProp = newFDelegateProperty(makeFieldVariant(outer), name, flags)
+                        delegateProp.setSignatureFunction(delegate)
+                        delegateProp
+               
                 else:
-                    raise newException(Exception, "FProperty not covered in the types for " & propType )
+                    UE_Log "Not a struct based property. Trying as enum .." & propType
+                    let ueEnum = getUTypeByName[UEnum](propType) #names arent consistent, for enums it may or not start with the Prefix E
+                    if not ueEnum.isNil():
+                        UE_Log "Found " & propType & " as Enum. Creating prop"
+                        let enumProp = newFEnumProperty(makeFieldVariant(outer), name, flags)
+                        enumProp.setEnum(ueEnum)
+                        #Assuming that Enums are exposed via TEnumAsByte or they are uint8. Revisit in the future (only bp exposed enums meets that)
+                        let underlayingProp : FPropertyPtr = newFByteProperty(makeFieldVariant(enumProp), n"UnderlayingEnumProp", flags)
+                        enumProp.addCppProperty(underlayingProp)
+                        enumProp
+                    else:
+                        raise newException(Exception, "FProperty not covered in the types for " & propType )
         
     prop.setPropertyFlags(prop.getPropertyFlags() or propFlags) #in case custom fprop require custom flags (see TMAP)
     prop

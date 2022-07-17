@@ -11,6 +11,7 @@ type
 
 
 proc makeScriptDelegate() : FScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
+proc makeMulticastScriptDelegate() : FMulticastScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
 
 
 proc bindUFunction*(dynDel:FScriptDelegate, obj:UObjectPtr, name:FName) : void {.importcpp: "#.BindUFunction(@)".}

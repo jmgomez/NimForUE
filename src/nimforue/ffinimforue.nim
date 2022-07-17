@@ -7,7 +7,7 @@ import typegen/[uemeta, ueemit]
 import macros/[ffi, uebind]
 import std/[times]
 import strformat
-import manualtests/manualtestsarray
+import manualtests/scratchpad
 #define on config.nims
 const genFilePath* {.strdefine.} : string = ""
 
@@ -73,7 +73,7 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
 
         # printAllClassAndProps("POST", pkg)
 
-        # scratchpadEditor()
+        scratchpadEditor()
         return nimHotReload
     except Exception as e:
         UE_Error "Nim CRASHED "

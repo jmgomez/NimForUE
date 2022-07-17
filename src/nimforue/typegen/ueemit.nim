@@ -144,7 +144,10 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
                 flags = flags | CPF_SimpleDisplay
         if m == "Transient":
                 flags = flags | CPF_Transient
-        
+        if m == "BlueprintAssignable":
+                flags = flags | CPF_BlueprintAssignable 
+        if m == "BlueprintCallable":
+                flags = flags | CPF_BlueprintCallable
     (flags, metadata)
         
 

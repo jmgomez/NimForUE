@@ -34,6 +34,8 @@ struct FStructToUseAsVar {
 	TSubclassOf<AActor> ActorSubclass;
 	UPROPERTY(BlueprintAssignable, BlueprintReadWrite)
 	FDynamicMulticastDelegateOneParamTest Del;
+	UPROPERTY(BlueprintAssignable)
+	FDynamicMulticastDelegateOneParamTest Del2;
 };
 
 USTRUCT(BlueprintType)
@@ -43,16 +45,20 @@ struct FStructToUseAsVarDelTest {
 	FString TestProperty = "Hello World!";
 };
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class UClassToUseAsVar : public UObject {
 	GENERATED_BODY()
 public:
 	UPROPERTY()
 	FString TestProperty = "Im a valid var";
+	UPROPERTY(BlueprintReadWrite)
+	FDynamicMulticastDelegateOneParamTest Del;
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FDynamicMulticastDelegateOneParamTest Del2;
 };
 
-UCLASS()
-class NIMFORUEBINDINGS_API UMyClassToTest : public UObject {
+UCLASS(Blueprintable, BlueprintType)
+class NIMFORUEBINDINGS_API AMyClassToTest : public AActor {
 	GENERATED_BODY()
 public:
 	UPROPERTY()
@@ -96,9 +102,10 @@ public:
 	UPROPERTY()
 	FName NameProperty;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FDynamicDelegateOneParamTest DynamicDelegateOneParamProperty;
-	UPROPERTY()
+	
+	UPROPERTY(EditAnywhere, BlueprintAssignable, BlueprintReadWrite)
 	FDynamicMulticastDelegateOneParamTest MulticastDynamicDelegateOneParamProperty;
 	
 	UPROPERTY()

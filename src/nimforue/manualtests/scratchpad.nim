@@ -120,31 +120,6 @@ proc scratchpad*(executor:UObjectPtr) =
 
 
 
-#Review the how 
-proc scratchpadEditor*() = 
-    try:
-        let package = getPackageByName("NimForUEBindings")
-        if not package.isNil():
-            UE_Log("package is " & package.getName())
-        else:
-            UE_Log("package is nill")
-
-        for c in getAllObjectsFromPackage[UNimClassBase](package):
-            UE_Warn "PRE Class " & c.getName()
-            for p in getFPropsFromUStruct(c):
-                UE_Log "Prop " & p.getName()
-            
-            # if c.getName().contains("REINST"):
-            #     c.conditionalBeginDestroy()
-            #     UE_Log "Destroying prev" & c.getName()
-
-
-
-    except Exception as e:
-        
-        UE_Warn e.msg
-        UE_Warn e.getStackTrace()
-
 
 #temp
 type
@@ -160,7 +135,6 @@ const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
                             ]
                         )
 genType(ueEnumType)
-
 
 # uStruct FIntPropTests:
 #     (BlueprintType)
@@ -247,6 +221,10 @@ uClass UObjectDsl of UObject:
         # testFieldAnother128: int32
 
 
+# type FDynamicMulticastDelegateOneParamTest = object of UDelegateFunction
+# type FDynamicDelegateOneParamTest = object of UDelegateFunction
+genDelegate(UEField(kind:uefDelegate, name: "DynamicMulticastDelegateOneParamTest", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]))
+# delegate void FDynamicMulticastDelegateOneParamTest(param:FString);
 
 uClass AActorDsl of AActor:
     (BlueprintType, Blueprintable)
@@ -258,9 +236,37 @@ uClass AActorDsl of AActor:
         # anotherField : FMyUStructDemo
         anotherField2 : FString
         anotherField3 : int32
-        anotherField4 : int32
+        # anotherField1 : int32
+
+    # uprop(EditAnywhere, BlueprintReadWrite):
+    #     delegateProperty: FDynamicDelegateOneParamTest
+    uprop(EditAnywhere, BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
+        multicastDynOneParamNim: FDynamicMulticastDelegateOneParamTest
         # anotherField5 : FString
 
 
 
+
+
+
+#Review the how 
+proc scratchpadEditor*() = 
+    try:
+        let package = getPackageByName("NimForUEBindings")
+        
+        # let field = getUTypeByName[UStruct]("DynamicDelegateOneParamTest__DelegateSignature")
+        # if not field.isNil():
+        #     UE_Log "Found the delegate"
+        # else:
+        #     UE_Error "Did not found the delegate"
+        let test = newUObject[AActorDsl]()
+        test.multicastDynOneParamNim.broadcast("Hello")
+        
+        # for obj in getAllObjectsFromPackage[UStruct](package):
+        #     UE_Log "Found delegate function " & obj.getName()
+
+    except Exception as e:
+        
+        UE_Warn e.msg
+        UE_Warn e.getStackTrace()
 

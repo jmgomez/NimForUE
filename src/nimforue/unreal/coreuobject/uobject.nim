@@ -54,6 +54,10 @@ type
         numParms* {.importcpp:"NumParms".}: uint8
         parmsSize* {.importcpp:"ParmsSize".}: uint16
     UFunctionPtr* = ptr UFunction
+    UDelegateFunction* {.importcpp, inheritable, pure .} = object of UFunction
+    UDelegateFunctionPtr* = ptr UDelegateFunction
+
+
 
 
 
@@ -102,8 +106,14 @@ bindFProperty([
         "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
         "FArrayProperty", "FStructProperty", "FObjectProperty", "FClassProperty",
         "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty", 
-        "FMapProperty", "FDelegateProperty", "FMulticastDelegateProperty"])
+        "FMapProperty", "FDelegateProperty", 
+        "FMulticastDelegateProperty", #It seems to be abstract. Review Sparse vs Inline
+        "FMulticastInlineDelegateProperty",
+        
+        ])
 
+#TypeClass
+type DelegateProp* = FDelegatePropertyPtr | FMulticastInlineDelegatePropertyPtr | FMulticastDelegatePropertyPtr
 
 #Concrete methods
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
@@ -116,8 +126,8 @@ proc addCppProperty*(arrProp:FArrayPropertyPtr | FMapPropertyPtr | FEnumProperty
 
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
 proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->ValueProp)".}
-proc getSignatureFunction*(delProp:FDelegatePropertyPtr | FMulticastDelegatePropertyPtr) : UFunctionPtr {.importcpp:"(#->SignatureFunction)".}
-proc setSignatureFunction*(delProp:FDelegatePropertyPtr | FMulticastDelegatePropertyPtr, signature : UFunctionPtr) : void {.importcpp:"(#->SignatureFunction=#)".}
+proc getSignatureFunction*(delProp:DelegateProp) : UFunctionPtr {.importcpp:"(#->SignatureFunction)".}
+proc setSignatureFunction*(delProp:DelegateProp, signature : UFunctionPtr) : void {.importcpp:"(#->SignatureFunction=#)".}
 
 
 

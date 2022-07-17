@@ -10,6 +10,7 @@
 #include "K2Node_MacroInstance.h"
 #include "UPropertyCaller.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Async/Async.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetStringLibrary.h"
@@ -21,6 +22,7 @@
 #include "Serialization/ArchiveReplaceObjectRef.h"
 #include "Widgets/Notifications/SNotificationList.h"
 
+#define LOCTEXT_NAMESPACE "FNimForUEEditorModule"
 
 void UEditorUtils::RefreshNodes() {
 	// This function is called when the main "Refresh All Blueprint Nodes" button in pressed
@@ -713,8 +715,11 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
 }
 
 void UEditorUtils::ShowLoadNotification(bool bIsFirstLoad) {
+	AsyncTask(ENamedThreads::GameThread, [bIsFirstLoad] {
+
 	FString NimUserMsg = (bIsFirstLoad ? "Nim Initialized!" : "Nim Hot Reload Complete!");
-	FNotificationInfo Info( FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(TEXT("NimForUE.HotReload"), *NimUserMsg, TEXT("NimForUE.HotReload")));
+	// FNotificationInfo Info( FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(TEXT("NimForUE.HotReload"), *NimUserMsg, TEXT("NimForUE.HotReload")));
+	FNotificationInfo Info( LOCTEXT("HotReloadFinished", "Nim Hot Reload Complete!") );
 	Info.Image = FEditorStyle::GetBrush(TEXT("LevelEditor.RecompileGameCode"));
 	Info.FadeInDuration = 0.1f;
 	Info.FadeOutDuration = 0.5f;
@@ -730,4 +735,8 @@ void UEditorUtils::ShowLoadNotification(bool bIsFirstLoad) {
 	NotificationItem->ExpireAndFadeout();
 			
 	GEditor->PlayEditorSound(TEXT("/Engine/EditorSounds/Notifications/CompileSuccess_Cue.CompileSuccess_Cue"));
+	});
+
 }
+
+#undef LOCTEXT_NAMESPACE

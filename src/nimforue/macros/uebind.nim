@@ -459,7 +459,8 @@ proc genUClassTypeDef(typeDef : UEType) : NimNode =
                     ptrName* {.inject.} = ptr name
                 props
                 funcs
-    # debugEcho result.repr
+    # if result.repr.contains("AActorDsl"):
+    #     debugEcho result.repr
 
 
 func genUStructTypeDef(typeDef: UEType) : NimNode =   
@@ -509,6 +510,7 @@ macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
 
 
 
-
-
+macro genDelegate*(field:static UEField) : untyped = 
+    result = genDelegateType(field).get()
+    echo result.repr
 
