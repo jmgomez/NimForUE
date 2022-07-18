@@ -70,15 +70,18 @@ type
         types* : seq[UEType]
         dependencies* : seq[UEModule]   
 
-    
+
+
+const MulticastDelegateMetadataKey* = "MulticastDelegate"
+const DelegateMetadataKey* = "Delegate"
     
 func makeUEMetadata*(name:string) : UEMetadata = 
     UEMetadata(name:name, value:true ) #todo check if the name is valid. Also they can be more than simple names
 
 func hasUEMetadata*[T:UEField|UEType](val:T, name:string) : bool = val.metadata.any(m => m.name == name)
 
-func isMulticastDelegate*(field:UEField) : bool = hasUEMetadata(field, "MulticastDelegate")
-func isDelegate*(field:UEField) : bool = hasUEMetadata(field, "Delegate")
+func isMulticastDelegate*(field:UEField) : bool = hasUEMetadata(field, MulticastDelegateMetadataKey)
+func isDelegate*(field:UEField) : bool = hasUEMetadata(field, DelegateMetadataKey)
 
 func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")
 

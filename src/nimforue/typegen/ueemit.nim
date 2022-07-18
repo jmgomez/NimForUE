@@ -132,6 +132,7 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
     # var flags : EPropertyFlags = CPF_SkipSerialization
     var flags : EPropertyFlags = CPF_NoDestructor
     var metadata : seq[UEMetadata] = @[]
+    var isMulticastDelegate = false
     # var flags : EPropertyFlags = CPF_None
     #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
     for m in meta:
@@ -150,8 +151,14 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
                 flags = flags | CPF_Transient
         if m == "BlueprintAssignable":
                 flags = flags | CPF_BlueprintAssignable 
+                isMulticastDelegate = true
         if m == "BlueprintCallable":
                 flags = flags | CPF_BlueprintCallable
+                isMulticastDelegate = true #TODO CPF_BlueprintAuthorityOnly is only for MC
+        
+        if isMulticastDelegate:
+            metadata.add makeUEMetadata MulticastDelegateMetadataKey
+
     (flags, metadata)
    
 type FDynamicMulticastDelegateOneParamTest = string
@@ -166,6 +173,7 @@ func fromUPropNodeToField(node : NimNode) : seq[UEField] =
         let typ = n[1].repr.strip()
         # if typ.contains("FDynamicMulticastDelegateOneParamTest"):
         # debugEcho bindSym(typ, brOpen).getImpl().treeRepr
+
         makeFieldAsUProp(n[0].repr, n[1].repr.strip(), metas[0], metas[1])
 
     #TODO Metas to flags
