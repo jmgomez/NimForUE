@@ -14,18 +14,19 @@ proc makeScriptDelegate() : FScriptDelegate {. importcpp:"FScriptDelegate()", co
 proc makeMulticastScriptDelegate() : FMulticastScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
 
 
-proc bindUFunction*(dynDel:FScriptDelegate, obj:UObjectPtr, name:FName) : void {.importcpp: "#.BindUFunction(@)".}
+proc bindUFunction*(dynDel: var FScriptDelegate, obj:UObjectPtr, name:FName) : void {.importcpp: "#.BindUFunction(@)".}
+# proc bindUFunction*(dynDel: var FScriptDelegate, obj:UObjectPtr, name:FName) : void = bindUFunction(dynDel[], obj, name)
 
 #Should use add unique?
-proc addUnique(dynDel: FMulticastScriptDelegate, scriptDel : FScriptDelegate) : void {.importcpp: "#.AddUnique(#)".}
+proc addUnique(dynDel: var FMulticastScriptDelegate, scriptDel : FScriptDelegate) : void {.importcpp: "#.AddUnique(#)".}
 
 #Notice this function doesnt exists in cpp
-proc bindUFunction*(dynDel: FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
-    let scriptDel = makeScriptDelegate()
+proc bindUFunction*(dynDel: var FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
+    var scriptDel = makeScriptDelegate()
     scriptDel.bindUFunction obj, name
     dynDel.addUnique(scriptDel)
 
-proc removeAll*(dynDel: FMulticastScriptDelegate, obj:UObjectPtr) : void {. importcpp: "#.RemoveAll(#)" .}
+proc removeAll*(dynDel:var FMulticastScriptDelegate, obj:UObjectPtr) : void {. importcpp: "#.RemoveAll(#)" .}
 
 
 
@@ -33,10 +34,10 @@ proc removeAll*(dynDel: FMulticastScriptDelegate, obj:UObjectPtr) : void {. impo
 #this is the same thing as processEvent (onFunctionCall)
 #params should be a struct
 
-proc processMulticastDelegate*(dynDel:FMulticastScriptDelegate, params:pointer) : void {.importcpp: "#.ProcessMulticastDelegate<UObject>(@)" .}
-proc isBound*(dynDel:FScriptDelegate) : bool {.importcpp: "#.IsBound()" .}
-proc processDelegateInternal(dynDel:FScriptDelegate, params:pointer) : void {.importcpp: "#.ProcessDelegate<UObject>(@)" .}
-proc processDelegate*(dynDel:FScriptDelegate, params:pointer) : void = 
+proc processMulticastDelegate*(dynDel:var FMulticastScriptDelegate, params:pointer) : void {.importcpp: "#.ProcessMulticastDelegate<UObject>(@)" .}
+proc isBound*(dynDel:var FScriptDelegate) : bool {.importcpp: "#.IsBound()" .}
+proc processDelegateInternal(dynDel:var FScriptDelegate, params:pointer) : void {.importcpp: "#.ProcessDelegate<UObject>(@)" .}
+proc processDelegate*(dynDel:var FScriptDelegate, params:pointer) : void = 
     if dynDel.isBound():
         dynDel.processDelegateInternal(params)
 

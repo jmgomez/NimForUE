@@ -58,7 +58,7 @@ public:
 };
 
 UCLASS(Blueprintable, BlueprintType)
-class NIMFORUEBINDINGS_API AMyClassToTest : public AActor {
+class NIMFORUEBINDINGS_API UMyClassToTest : public UObject {
 	GENERATED_BODY()
 public:
 	UPROPERTY()

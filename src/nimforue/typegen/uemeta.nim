@@ -9,6 +9,12 @@ export models
 func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[]) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata:metas)       
 
+func makeFieldAsUPropMulDel*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[]) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata: @[makeUEMetadata("MulticastDelegate",)]&metas)       
+
+func makeFieldAsUPropDel*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[]) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata: @[makeUEMetadata("Delegate")]&metas)       
+
 
 func makeFieldAsUFun*(name:string, signature:seq[UEField], flags=FUNC_None) : UEField = 
     UEField(kind:uefFunction, name:name, signature:signature, fnFlags:EFunctionFlagsVal(flags))

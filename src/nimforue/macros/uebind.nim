@@ -1,4 +1,6 @@
 {.experimental: "caseStmtMacros".}
+{.experimental: "dynamicBindSym".}
+
 include ../unreal/definitions
 import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
 import ../utils/[ueutils, utils]
@@ -211,22 +213,12 @@ func getTypeNodeFromUProp(prop : UEField) : NimNode =
 
 
 
-
 func getTypeNodeForReturn(prop: UEField, typeNode : NimNode) : NimNode = 
     if prop.shouldBeReturnedAsVar():
+        debugEcho "returned as var" & prop.name
         return nnkVarTy.newTree(typeNode)
     typeNode
 
-#[
-    Generates a new delegate type based on the Name and DelegateType
-    - [ ] Generates a broadcast/execute function for that type based on the Signature of the Delegate
-        - [x] Almost there have to work on the signature.
-        - [ ] Generalize it enough so it can work FScriptDelegates (first refactor UEProperty so all the info is there)
-
-    - [ ] The getter and setter should use that function (this is already done?)
-
-    - [ ] Generates and add dynamic/bind functio based on the signature
-]#
 
 func identWithInjectAnd(name:string, pragmas:seq[string]) : NimNode = 
     nnkPragmaExpr.newTree(
@@ -256,7 +248,6 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
     let typeNode = case prop.kind:
                     of uefProp: getTypeNodeFromUProp(prop)
                     else: newEmptyNode() #No Support 
-   
     let typeNodeAsReturnValue = case prop.kind:
                             of uefProp: prop.getTypeNodeForReturn(typeNode)
                             else: newEmptyNode()#No Support as UProp getter/Seter
@@ -308,11 +299,15 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
                         else:
                             ident "void"
     
-
+    #produces either obj : UObjPtr or obj : var DelegateType
+    let objType = if typeDef.kind == uetDelegate:
+                        nnkVarTy.newTree(ptrName)
+                    else:
+                        ptrName
     let fnParams = nnkFormalParams.newTree(
                         @[returnType] &
                         (if isStatic: @[] 
-                        else: @[nnkIdentDefs.newTree([identWithInject "obj", ptrName, newEmptyNode()])]) &  
+                        else: @[nnkIdentDefs.newTree([identWithInject "obj", objType, newEmptyNode()])]) &  
                         signatureAsNode(identWithInject))
     # let pragmas = nnkPragma.newTree([ident "inject"])
     let generateObjForStaticFunCalls = 
@@ -448,7 +443,10 @@ func genUEnumTypeDef(typeDef:UEType) : NimNode =
 
 
 func genDelType(delType:UEType) : NimNode = 
+    #delegates are always passed around as reference
+
     let typeName = identWithInjectPublic delType.name
+   
     let delBaseType = 
         case delType.delKind 
         of uedelDynScriptDelegate: ident "FScriptDelegate"
@@ -459,11 +457,13 @@ func genDelType(delType:UEType) : NimNode =
         of uedelMulticastDynScriptDelegate: "broadcast"
 
     let typ = genAst(typeName, delBaseType):
-                type typeName = object of delBaseType
+            type
+                typeName = object of delBaseType
     let broadcastFunType = UEField(name:broadcastFnName, kind:uefFunction, signature: delType.fields)
     let funcNode = genFunc(delType, broadcastFunType) 
     result = nnkStmtList.newTree(typ, funcNode)
     debugEcho repr result
+    # debugEcho treeRepr result
     
 
 func genTypeDecl*(typeDef : UEType) : NimNode = 

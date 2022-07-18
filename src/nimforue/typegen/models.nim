@@ -32,7 +32,7 @@ type
 
     UEField* = object
         name* : string
-        metadata* : seq[UEMetadata]
+        metadata* : seq[UEMetadata] #Notice we are using a custom metadata field to indicate if the field is delegate or not. It has to be anotated from the dsl somewhoe to (infer it from the flags or do something else? )
 
         case kind*: UEFieldKind
             of uefProp:
@@ -46,16 +46,6 @@ type
             
             of uefEnumVal:
                 discard
-
-func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")
-
-func shouldBeReturnedAsVar*(field:UEField) : bool = 
-    let typesReturnedAsVar = ["TMap"]
-    field.kind == uefProp and typesReturnedAsVar.filter(tp => tp in field.uePropType ).head().isSome()
-
-
-
-type
 
     UEType* = object 
         name* : string
@@ -78,10 +68,27 @@ type
     UEModule* = object
         name* : string
         types* : seq[UEType]
-        dependencies* : seq[UEModule]        
+        dependencies* : seq[UEModule]   
+
+    
     
 func makeUEMetadata*(name:string) : UEMetadata = 
     UEMetadata(name:name, value:true ) #todo check if the name is valid. Also they can be more than simple names
+
+func hasUEMetadata*[T:UEField|UEType](val:T, name:string) : bool = val.metadata.any(m => m.name == name)
+
+func isMulticastDelegate*(field:UEField) : bool = hasUEMetadata(field, "MulticastDelegate")
+func isDelegate*(field:UEField) : bool = hasUEMetadata(field, "Delegate")
+
+func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")
+
+func shouldBeReturnedAsVar*(field:UEField) : bool = 
+    let typesReturnedAsVar = ["TMap"]
+    field.kind == uefProp and 
+    typesReturnedAsVar.any(tp => tp in field.uePropType) or
+    field.isMulticastDelegate() or 
+    field.isDelegate()
+ 
 
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
