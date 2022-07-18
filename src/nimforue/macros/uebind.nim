@@ -1,11 +1,11 @@
-{.experimental: "caseStmtMacros".}
-{.experimental: "dynamicBindSym".}
 
 include ../unreal/definitions
 import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
 import ../utils/[ueutils, utils]
 import ../unreal/coreuobject/[uobjectflags]
 import ../typegen/models
+
+import ../typegen/nuemacrocache
 
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
     # nnkTypeSection.newTree(
@@ -384,7 +384,7 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
 
 
 
-proc genUClassTypeDef(typeDef : UEType) : NimNode =
+func genUClassTypeDef(typeDef : UEType) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
     let parent = ident typeDef.parent
     let props = nnkStmtList.newTree(
@@ -406,7 +406,6 @@ proc genUClassTypeDef(typeDef : UEType) : NimNode =
                 funcs
     # if result.repr.contains("AActorDsl"):
     #     debugEcho result.repr
-
 
 func genUStructTypeDef(typeDef: UEType) : NimNode =   
     let typeName = identWithInjectPublic typeDef.name
@@ -442,9 +441,10 @@ func genUEnumTypeDef(typeDef:UEType) : NimNode =
     result[0][^1] = fields #replaces enum 
 
 
-func genDelType(delType:UEType) : NimNode = 
-    #delegates are always passed around as reference
-
+proc genDelType(delType:UEType) : NimNode = 
+    #NOTE delegates are always passed around as reference
+    #adds the delegate to the global list of available delegates so we can lookup it when emitting the UCLass
+    addDelegateToAvailableList(delType)
     let typeName = identWithInjectPublic delType.name
    
     let delBaseType = 
@@ -462,11 +462,13 @@ func genDelType(delType:UEType) : NimNode =
     let broadcastFunType = UEField(name:broadcastFnName, kind:uefFunction, signature: delType.fields)
     let funcNode = genFunc(delType, broadcastFunType) 
     result = nnkStmtList.newTree(typ, funcNode)
-    debugEcho repr result
+   
+    
+    # debugEcho repr result
     # debugEcho treeRepr result
     
 
-func genTypeDecl*(typeDef : UEType) : NimNode = 
+proc genTypeDecl*(typeDef : UEType) : NimNode = 
     case typeDef.kind:
         of uetClass:
             genUClassTypeDef(typeDef)
@@ -476,13 +478,8 @@ func genTypeDecl*(typeDef : UEType) : NimNode =
             genUEnumTypeDef(typeDef)
         of uetDelegate:
             genDelType(typeDef)
+            
+
         
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
     
-
-
-
-# macro genDelegate*(field:static UEField) : untyped = 
-#     result = genDelegateType(field).get()
-#     echo result.repr
-

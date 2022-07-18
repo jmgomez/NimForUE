@@ -1,34 +1,25 @@
 include ../unreal/prelude
 include ../utils/utils
 import std/[sugar, macros, algorithm, strutils, strformat, genasts, sequtils, options]
-
+import nuemacrocache
 import uemeta
-{.experimental: "dynamicBindSym".}
-#Maybe it should hold the old type, the ptr to the struct and the func gen. So we can check for changes?
-
-
-#Global var that contains all the emitters. Only modififed via the funcs below
-
-#[ FRom pywrapper object 1800
-    const FString OldClassName = MakeUniqueObjectName(OldClass->GetOuter(), OldClass->GetClass(), *FString::Printf(TEXT("%s_REINST"), *OldClass->GetName())).ToString();
-		OldClass->ClassFlags |= CLASS_NewerVersionExists;
-		OldClass->SetFlags(RF_NewerVersionExists);
-		OldClass->ClearFlags(RF_Public | RF_Standalone);
-		OldClass->Rename(*OldClassName, nullptr, REN_DontCreateRedirectors);
-]#
 
 
 type 
-    EmitterInfo = object
-        generator : UPackagePtr->UStructPtr
-        ueType : UEType
-        uStructPointer : UStructPtr
+    EmitterInfo* = object
+        generator* : UPackagePtr->UStructPtr
+        ueType* : UEType
+        uStructPointer* : UStructPtr
 
     UEEmitter* = ref object 
-        emitters : seq[EmitterInfo]
+        emitters* : seq[EmitterInfo]
 
 
-var ueEmitter = UEEmitter() 
+var ueEmitter* = UEEmitter() 
+
+proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UStructPtr) : void =  
+    ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
+
 
 proc prepareForReinst(prevClass : UClassPtr) = 
     # prevClass.classFlags = prevClass.classFlags | CLASS_NewerVersionExists
@@ -51,9 +42,6 @@ proc prepareForReinst(prevScriptStruct : UScriptStructPtr) =
     discard prevScriptStruct.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
 
-proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UStructPtr) : void =  
-    ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
-
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UScriptStruct | UClass](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
     let areEquals = prev.isSome() and prev.get().toUEType() == emitter.ueType
@@ -63,6 +51,7 @@ proc emitUStructInPackage[T : UScriptStruct | UClass](pkg: UPackagePtr, emitter:
         some ueCast[T](emitter.generator(pkg))
 
 proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr = 
+   
     var hotReloadInfo = newNimHotReload()
     for emitter in ueEmitter.emitters:
         case emitter.ueType.kind:
@@ -83,7 +72,6 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
 
         of uetDelegate:
             discard
-
         
     hotReloadInfo.bShouldHotReload = 
         hotReloadInfo.classesToReinstance.keys().len() + hotReloadInfo.structsToReinstance.keys().len() > 0
@@ -96,7 +84,7 @@ proc emitUStructsForPackage*(pkgName:FString = "Nim") : FNimHotReloadPtr =
     emitUStructsForPackage(pkg)
 
 
-func emitUStruct(typeDef:UEType) : NimNode =
+proc emitUStruct(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
@@ -105,7 +93,7 @@ func emitUStruct(typeDef:UEType) : NimNode =
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr result
 
-func emitUClass(typeDef:UEType) : NimNode =
+proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
@@ -132,7 +120,7 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
     # var flags : EPropertyFlags = CPF_SkipSerialization
     var flags : EPropertyFlags = CPF_NoDestructor
     var metadata : seq[UEMetadata] = @[]
-    var isMulticastDelegate = false
+    #TODO THROW ERROR WHEN NON MULTICAST AND USE MC ONLY
     # var flags : EPropertyFlags = CPF_None
     #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
     for m in meta:
@@ -144,24 +132,22 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
             flags = flags | CPF_Edit
         if m == "ExposeOnSpawn":
                 flags = flags | CPF_ExposeOnSpawn
-                metadata.add(UEMetadata(name:"ExposeOnSpawn", value:true))
+                metadata.add makeUEMetadata "ExposeOnSpawn"
         if m == "VisibleAnywhere":
                 flags = flags | CPF_SimpleDisplay
         if m == "Transient":
                 flags = flags | CPF_Transient
         if m == "BlueprintAssignable":
                 flags = flags | CPF_BlueprintAssignable 
-                isMulticastDelegate = true
         if m == "BlueprintCallable":
                 flags = flags | CPF_BlueprintCallable
-                isMulticastDelegate = true #TODO CPF_BlueprintAuthorityOnly is only for MC
+            #Notice this is only required in the unlikely case that the user wants to use a delegate that is not exposed to Blueprint in any way
+        #TODO CPF_BlueprintAuthorityOnly is only for MC
         
-        if isMulticastDelegate:
-            metadata.add makeUEMetadata MulticastDelegateMetadataKey
 
     (flags, metadata)
    
-type FDynamicMulticastDelegateOneParamTest = string
+
 
 func fromUPropNodeToField(node : NimNode) : seq[UEField] = 
     let metas = node.childrenAsSeq()
@@ -171,10 +157,14 @@ func fromUPropNodeToField(node : NimNode) : seq[UEField] =
 
     func nodeToUEField (n: NimNode)  : UEField = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
         let typ = n[1].repr.strip()
-        # if typ.contains("FDynamicMulticastDelegateOneParamTest"):
-        # debugEcho bindSym(typ, brOpen).getImpl().treeRepr
-
-        makeFieldAsUProp(n[0].repr, n[1].repr.strip(), metas[0], metas[1])
+        let name = n[0].repr
+        
+        if isMulticastDelegate typ:
+            makeFieldAsUPropMulDel(name, typ, metas[0], metas[1])
+        elif isDelegate typ:
+            makeFieldAsUPropDel(name, typ, metas[0], metas[1])
+        else:
+            makeFieldAsUProp(name, typ, metas[0], metas[1])
 
     #TODO Metas to flags
     let ueFields = node.childrenAsSeq()
@@ -184,6 +174,7 @@ func fromUPropNodeToField(node : NimNode) : seq[UEField] =
                    .get(@[])
                    .map(nodeToUEField)
     ueFields
+
 
 
 func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} = 
@@ -223,5 +214,3 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     
     emitUClass(ueType)
   
-
-

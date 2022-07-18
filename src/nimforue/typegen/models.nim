@@ -2,14 +2,14 @@ include ../unreal/definitions
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
 import ../unreal/core/containers/unrealstring
+
+
 type
     EPropertyFlagsVal* = distinct(uint64)
     EFunctionFlagsVal* = distinct(uint32)
     EClassFlagsVal* = (uint32)
     EStructFlagsVal* = distinct(uint32)
     EClassCastFlagsVal* = distinct(uint64)
-
-
 
 
     UETypeKind* = enum
@@ -158,3 +158,5 @@ func `==`*(a, b:UEType) : bool =
     of uetEnum: true
     of uetDelegate: true)
         
+
+
