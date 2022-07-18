@@ -1,7 +1,7 @@
 import std/[options, strutils, sequtils, sugar]
 
 
-
+const DelegateFuncSuffix* = "__DelegateSignature"
 #utils specifics to unreal used accross the project
 
 proc extractTypeFromGenericInNimFormat*(str, genericType :string) : string = 

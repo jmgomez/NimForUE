@@ -9,17 +9,17 @@ import ../typegen/models
 const mcMulDelegates = CacheSeq"multicastDelegates"
 const mcDelegates = CacheSeq"delegates"
 
-proc contains(t: CacheSeq, node:NimNode) : bool = 
+func contains(t: CacheSeq, node:NimNode) : bool = 
     for n in t:
         if n == node: return true
     return false
 
-proc addDelegateToAvailableList*(del : UEType) =
+func addDelegateToAvailableList*(del : UEType) =
     case del.delKind:
         of uedelDynScriptDelegate: mcMulDelegates.add(newLit del.name)
         of uedelMulticastDynScriptDelegate: mcDelegates.add(newLit del.name)
 
-proc isMulticastDelegate*(typeName:string) : bool = newLit(typeName) in mcMulDelegates
+func isMulticastDelegate*(typeName:string) : bool = newLit(typeName) in mcMulDelegates
 
-proc isDelegate*(typeName:string) : bool = newLit(typeName) in mcDelegates
+func isDelegate*(typeName:string) : bool = newLit(typeName) in mcDelegates
 

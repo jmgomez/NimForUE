@@ -115,9 +115,9 @@ proc increaseStack*(stack: var FFrame) : void {.importcpp: "UReflectionHelpers::
 
 
 #UPACKAGE
-proc getPackageByName*(packageName:FString) : UPackagePtr = 
+func getPackageByName*(packageName:FString) : UPackagePtr = 
         findObject[UPackage](nil, convertToLongScriptPackageName(packageName))
-
+let nimPackage* = getPackageByName("Nim")
 
 ##EDITOR
 proc broadcastAsset*(asset:UObjectPtr) : void {.importcpp: "UFakeFactory::BroadcastAsset(#)" .}

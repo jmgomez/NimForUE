@@ -2,7 +2,7 @@
 include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
 import models
-
+import ../utils/ueutils
 
 func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
     let flags = RF_NoFlags #OBJECT FLAGS
@@ -116,7 +116,7 @@ func newFProperty*(outer : UStructPtr, propField:UEField, optPropType="", optNam
             else:
                 #Try to find it as Delegate
                 UE_Log "Not a struct based prorperty. Trying as delegate.." & propType
-                let delegateName = propType.removeFirstLetter() & "__DelegateSignature"
+                let delegateName = propType.removeFirstLetter() & DelegateFuncSuffix
                 let delegate = getUTypeByName[UDelegateFunction] delegateName
                 if not delegate.isNil():
                     let isMulticast = FUNC_MulticastDelegate in delegate.functionFlags

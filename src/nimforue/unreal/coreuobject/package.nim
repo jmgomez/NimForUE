@@ -7,7 +7,7 @@ type
     UPackagePtr* = ptr UPackage
 
 
-proc anyPackage*() : UPackagePtr {.importcpp:"(ANY_PACKAGE)".}
+func anyPackage*() : UPackagePtr {.importcpp:"(ANY_PACKAGE)".}
 
 #ConvertToLongScriptPackageName
 # * Helper function for converting short to long script package name (InputCore -> /Script/InputCore)

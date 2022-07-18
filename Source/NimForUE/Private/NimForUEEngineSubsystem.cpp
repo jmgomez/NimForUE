@@ -13,14 +13,21 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 	//Notice this function is static because it needs to be used in a FFI function.
 	UNimForUEEngineSubsystem* NimForUESubsystem = GEngine->GetEngineSubsystem<UNimForUEEngineSubsystem>();
 	bool bIsFirstLoad = NimForUESubsystem->ReloadTimes == 0;
-	FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(NimForUESubsystem->ReloadTimes++));
-	checkf(NimHotReload, TEXT("NimHotReload is null. Probably nim crashed on startup. See the log for a stacktrace."));
+	FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(NimForUESubsystem->ReloadTimes));
+	if(bIsFirstLoad) {//Only crash on first load
+		checkf(NimHotReload, TEXT("NimHotReload is null. Probably nim crashed on startup. See the log for a stacktrace."));
+	}
+	if(NimHotReload == nullptr){
+		UE_LOG(LogTemp, Error, TEXT("NimForUE just crashed. Review the log"), *Msg);
+		return;
+	}
 	UEditorUtils::HotReload(NimHotReload);
 	UEditorUtils::RefreshNodes(NimHotReload);
 	delete NimHotReload;
 	
 	UEditorUtils::ShowLoadNotification(bIsFirstLoad);
 	UE_LOG(LogTemp, Log, TEXT("NimForUE just hot reloaded!! %s"), *Msg);
+	NimForUESubsystem->ReloadTimes++;
 }
 
 void UNimForUEEngineSubsystem::CreateNimPackage() {

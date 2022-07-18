@@ -120,7 +120,6 @@ proc scratchpad*(executor:UObjectPtr) =
 
 
 
-
 #temp
 type
     AActor* = object of UObject
@@ -231,8 +230,12 @@ uClass UObjectDsl of UObject:
 # delegate FDynamicMulticastDelegateOneParamTest2(param:FString)
 
 const dynMulDel = UEType(name: "FDynamicMulticastDelegateOneParamTest", kind: uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)])
+
 genType(dynMulDel)
 
+const dynMulDelAnother = UEType(name: "FDynamicMulticastDelegateOneParamTestAnother", kind: uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm), makeFieldAsUPropParam("Par2", "int32", CPF_Parm)])
+genType(dynMulDelAnother)
+discard dynMulDelAnother.toUDelegateFunction(nimPackage)
 
 
 uClass AActorDsl of AActor:
@@ -246,14 +249,14 @@ uClass AActorDsl of AActor:
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
         multicastDynOneParamNim: FDynamicMulticastDelegateOneParamTest
+        multicastDynOneParamNimAnother: FDynamicMulticastDelegateOneParamTestAnother
         # anotherField5 : FString
+
 
 
 #Review the how 
 proc scratchpadEditor*() = 
     try:
-        let package = getPackageByName("NimForUEBindings")
-        
         # let field = getUTypeByName[UStruct]("DynamicDelegateOneParamTest__DelegateSignature")
         # if not field.isNil():
         #     UE_Log "Found the delegate"
@@ -261,9 +264,15 @@ proc scratchpadEditor*() =
         #     UE_Error "Did not found the delegate"
         # let test = newUObject[AActorDsl]()
         # test.multicastDynOneParamNim.bindUFunction()
-        
-        # for obj in getAllObjectsFromPackage[UStruct](package):
-        #     UE_Log "Found delegate function " & obj.getName()
+        # let dynMulDel = UEType(name: "FDynamicMulticastDelegateOneParamTestAnother", kind: uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)])
+        # discard dynMulDel.toUDelegateFunction(nimPackage)
+        # let nueBingingsPkg = getPackageByName("NimForUEBindings")
+        let nueBingingsPkg = getPackageByName("NimForUEBindings")
+
+        for obj in getAllObjectsFromPackage[UDelegateFunction](nueBingingsPkg):
+            UE_Log "Found delegate function at NimForUEBindings" & obj.getName()
+        for obj in getAllObjectsFromPackage[UDelegateFunction](nimPackage):
+            UE_Log "Found delegate function at Nim" & obj.getName()
 
     except Exception as e:
         

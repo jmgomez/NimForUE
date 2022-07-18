@@ -68,7 +68,7 @@ func getNimTypeAsStr(prop:FPropertyPtr) : string = #The expected type is somethi
 func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something that UEField can understand
     let name = prop.getName()
     let nimType = prop.getNimTypeAsStr()
-    #MOVE THIS TO 
+    #MOVE THIS 
     # if prop.isDynDel() or prop.isMulticastDel():
     #     let signature = if prop.isDynDel(): 
     #                         castField[FDelegateProperty](prop).getSignatureFunction() 
@@ -197,6 +197,17 @@ proc toUStruct*[T](ueType : UEType, package:string) : UStructPtr =
     
 
 
+proc toUDelegateFunction*(delType : UEType, package:UPackagePtr) : UDelegateFunctionPtr = 
+    let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
+    let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    var fn = newUObject[UDelegateFunction](package, fnName, objFlags)
+    fn.functionFlags = FUNC_MulticastDelegate
+    for field in delType.fields:
+        let fprop =  field.toFProperty(fn)
+        # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
+    fn.staticLink(true)
+    fn
+
 
 #note at some point class can be resolved from the UEField?
 proc toUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
@@ -207,8 +218,6 @@ proc toUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignat
     fn.Next = cls.Children 
     cls.Children = fn
     
-
-
     for field in fnField.signature:
         let fprop =  field.toFProperty(fn)
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
