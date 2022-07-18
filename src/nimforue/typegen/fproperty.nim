@@ -126,7 +126,7 @@ func newFProperty*(outer : UStructPtr, propField:UEField, optPropType="", optNam
                         delegateProp.setSignatureFunction(delegate)
                         delegateProp
                     else:
-                        UE_Log fmt("Found {propType}  as  MulticastDelegate. Creating prop")
+                        UE_Log fmt("Found {propType}  as  Delegate. Creating prop")
                         let delegateProp = newFDelegateProperty(makeFieldVariant(outer), name, flags)
                         delegateProp.setSignatureFunction(delegate)
                         delegateProp

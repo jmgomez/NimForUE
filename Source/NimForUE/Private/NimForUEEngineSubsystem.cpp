@@ -42,7 +42,6 @@ void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		LoadNimGuest(FString(msg));
 	};
 	
-	//TODO Do it only for development target and maybe based on config (retrieved from nim)
 	subscribeToReload(onPreReload, onPostReload);
 	
 	checkReload();

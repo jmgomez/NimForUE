@@ -116,23 +116,29 @@ func compareUEPropTypes(a, b:string) : bool =
 
 
 func `==`*(a, b : UEField) : bool = 
-    a.name == b.name and
-    # a.metadata == b.metadata and
-    a.kind == b.kind and
-    (case a.kind:
-    of uefProp: 
-        compareUEPropTypes(a.uePropType, b.uePropType) #and
-        # a.propFlags == b.propFlags
-    of uefDelegate:
-        a.delegateSignature == b.delegateSignature and
-        a.delKind == b.delKind and
-        a.delFlags == b.delFlags 
-    of uefFunction:
-        a.signature == b.signature and
-        a.fnFlags == b.fnFlags
-    of uefEnumVal: true)
+    result = a.name == b.name and
+        # a.metadata == b.metadata and
+        a.kind == b.kind and
+        (case a.kind:
+        of uefProp: 
+            compareUEPropTypes(a.uePropType, b.uePropType) #and
+            # a.propFlags == b.propFlags
+        of uefDelegate: #Delegates should be outside the field. They are actually a type that can be used as field. 
+            a.delegateSignature == b.delegateSignature and
+            a.delKind == b.delKind and
+            a.delFlags == b.delFlags 
+        of uefFunction:
+            a.signature == b.signature and
+            a.fnFlags == b.fnFlags
+        of uefEnumVal: true)
+    if not result: #This is just for debugging types. This functions has to be moved from here so there is no unreal symbols in this file
+        UE_Error2 $a 
+        UE_Error2 $b
 
 func `==`*(a, b:UEType) : bool = 
+    # UE_Error2 $a
+    # UE_Error2 $b
+    # 
     a.name == b.name and
     a.fields == b.fields and
     # a.metadata == b.metadata and

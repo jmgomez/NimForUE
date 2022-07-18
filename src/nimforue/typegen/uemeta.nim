@@ -12,13 +12,16 @@ func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None, metas:seq[UEMeta
 func makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string], flags=CPF_None) : UEField = 
     UEField(kind:uefDelegate, name: name, delKind: delKind, delegateSignature:signature, delFlags:EPropertyFlagsVal(flags))
 
+func makeFieldAsMulDel*(name:string, signature:seq[string], flags=CPF_None) : UEField = 
+    UEField(kind:uefDelegate, name: name, delKind: uedelMulticastDynScriptDelegate, delegateSignature:signature, delFlags:EPropertyFlagsVal(flags))
+
+
+
 func makeFieldAsUFun*(name:string, signature:seq[UEField], flags=FUNC_None) : UEField = 
     UEField(kind:uefFunction, name:name, signature:signature, fnFlags:EFunctionFlagsVal(flags))
 
 func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
-
-
 
 func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
     UEType(kind:uetClass, name:name, parent:parent, clsFlags: EClassFlagsVal(clsFlags), fields:fields)
@@ -66,23 +69,30 @@ func getNimTypeAsStr(prop:FPropertyPtr) : string = #The expected type is somethi
 func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something that UEField can understand
     let name = prop.getName()
     let nimType = prop.getNimTypeAsStr()
-     
-
-    if prop.isDynDel() or prop.isMulticastDel():
-        let signature = if prop.isDynDel(): 
-                            castField[FDelegateProperty](prop).getSignatureFunction() 
-                        else: 
-                            castField[FMulticastDelegateProperty](prop).getSignatureFunction()
+    #MOVE THIS TO 
+    # if prop.isDynDel() or prop.isMulticastDel():
+    #     let signature = if prop.isDynDel(): 
+    #                         castField[FDelegateProperty](prop).getSignatureFunction() 
+    #                     else: 
+    #                         castField[FMulticastDelegateProperty](prop).getSignatureFunction()
         
-        var signatureAsStrs = getFPropsFromUStruct(signature)
-                                .map(prop=>getNimTypeAsStr(prop))
-        return makeFieldAsDel(name, uedelDynScriptDelegate, signatureAsStrs)
+    #     var signatureAsStrs = getFPropsFromUStruct(signature)
+    #                             .map(prop=>getNimTypeAsStr(prop))
+    #     return makeFieldAsDel(name, uedelDynScriptDelegate, signatureAsStrs)
 
 
     return makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
 
+    
+# func toUEField(udel:UDelegateFunctionPtr) : UEField = 
+#     let params = getFPropsFromUStruct(udel).map(toUEField).map(x=>x.uePropType)
+#     makeFieldAsMulDel(udel.getName(), params)
+
 
 func toUEField*(ufun:UFunctionPtr) : UEField = 
+    # let asDel = ueCast[UDelegateFunction](ufun)
+    # if not asDel.isNil(): return toUEField asDel
+
     let params = getFPropsFromUStruct(ufun).map(toUEField)
     # UE_Warn(fmt"{ufun.getName()}")
     makeFieldAsUFun(ufun.getName(), params, ufun.functionFlags)

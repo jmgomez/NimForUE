@@ -3,7 +3,7 @@ include ../utils/utils
 import std/[sugar, macros, algorithm, strutils, strformat, genasts, sequtils, options]
 
 import uemeta
-
+{.experimental: "dynamicBindSym".}
 #Maybe it should hold the old type, the ptr to the struct and the func gen. So we can check for changes?
 
 
@@ -87,7 +87,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
 
         # UE_Log msg
     hotReloadInfo
-#By default ue types are emitted in the /Script/Nim package. But we can use another for the test. 
+#By default ue types are emitted in the /Script/Nim package. But we can use another for the tests. 
 proc emitUStructsForPackage*(pkgName:FString = "Nim") : FNimHotReloadPtr = 
     let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("Nim"))
     emitUStructsForPackage(pkg)
@@ -149,8 +149,8 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
         if m == "BlueprintCallable":
                 flags = flags | CPF_BlueprintCallable
     (flags, metadata)
-        
-
+   
+type FDynamicMulticastDelegateOneParamTest = string
 
 func fromUPropNodeToField(node : NimNode) : seq[UEField] = 
     let metas = node.childrenAsSeq()
@@ -158,17 +158,23 @@ func fromUPropNodeToField(node : NimNode) : seq[UEField] =
                     .map(n=>n.strVal())
                     .fromStringAsMetaToFlag()
 
+    func nodeToUEField (n: NimNode)  : UEField = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
+        let typ = n[1].repr.strip()
+        # if typ.contains("FDynamicMulticastDelegateOneParamTest"):
+        # debugEcho bindSym(typ, brOpen).getImpl().treeRepr
+        makeFieldAsUProp(n[0].repr, n[1].repr.strip(), metas[0], metas[1])
+
     #TODO Metas to flags
     let ueFields = node.childrenAsSeq()
                    .filter(n=>n.kind==nnkStmtList)
                    .head()
                    .map(childrenAsSeq)
                    .get(@[])
-                   .map(n => makeFieldAsUProp(n[0].repr, n[1].repr.strip(), metas[0], metas[1]))
+                   .map(nodeToUEField)
     ueFields
 
 
-func getMetasForType(body:NimNode) : seq[UEMetadata] = 
+func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} = 
     body.toSeq()
         .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
         .map(n => n.children.toSeq())
@@ -176,7 +182,7 @@ func getMetasForType(body:NimNode) : seq[UEMetadata] =
         .map(n=>n.strVal().strip())
         .map(makeUEMetadata)
 
-func getUPropsAsFieldsForType(body:NimNode) : seq[UEField] = 
+func getUPropsAsFieldsForType(body:NimNode) : seq[UEField]  = 
     body.toSeq()
         .filter(n=>n.kind == nnkCall and n[0].strVal() == "uprop")
         .map(fromUPropNodeToField)
@@ -205,4 +211,5 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     
     emitUClass(ueType)
   
+
 

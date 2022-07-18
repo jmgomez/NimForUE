@@ -220,11 +220,15 @@ uClass UObjectDsl of UObject:
         # testFieldAnother124: int32
         # testFieldAnother128: int32
 
-
 # type FDynamicMulticastDelegateOneParamTest = object of UDelegateFunction
 # type FDynamicDelegateOneParamTest = object of UDelegateFunction
-genDelegate(UEField(kind:uefDelegate, name: "DynamicMulticastDelegateOneParamTest", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]))
-# delegate void FDynamicMulticastDelegateOneParamTest(param:FString);
+# genDelegate(UEField(kind:uefDelegate, name: "DynamicMulticastDelegateOneParamTest", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]))
+genDelegate(makeFieldAsMulDel("DynamicMulticastDelegateOneParamTest", @["FString"]))
+
+type Whatever* = FDynamicMulticastDelegateOneParamTest
+
+# delegate FDynamicMulticastDelegateOneParamTest(param:FString)
+# delegate FDynamicMulticastDelegateOneParamTest2(param:FString)
 
 uClass AActorDsl of AActor:
     (BlueprintType, Blueprintable)
@@ -232,21 +236,12 @@ uClass AActorDsl of AActor:
         testField : FString
         test2 : bool
         test3 : int 
-        test4 : FString
-        # anotherField : FMyUStructDemo
-        anotherField2 : FString
         anotherField3 : int32
-        # anotherField1 : int32
+        anotherField1 : int32
 
-    # uprop(EditAnywhere, BlueprintReadWrite):
-    #     delegateProperty: FDynamicDelegateOneParamTest
-    uprop(EditAnywhere, BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
+    uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
         multicastDynOneParamNim: FDynamicMulticastDelegateOneParamTest
         # anotherField5 : FString
-
-
-
-
 
 
 #Review the how 
@@ -259,8 +254,8 @@ proc scratchpadEditor*() =
         #     UE_Log "Found the delegate"
         # else:
         #     UE_Error "Did not found the delegate"
-        let test = newUObject[AActorDsl]()
-        test.multicastDynOneParamNim.broadcast("Hello")
+        # let test = newUObject[AActorDsl]()
+        # test.multicastDynOneParamNim.bindUFunction()
         
         # for obj in getAllObjectsFromPackage[UStruct](package):
         #     UE_Log "Found delegate function " & obj.getName()
