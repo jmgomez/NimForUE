@@ -81,6 +81,9 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
         of uetEnum:
             discard
 
+        of uetDelegate:
+            discard
+
         
     hotReloadInfo.bShouldHotReload = 
         hotReloadInfo.classesToReinstance.keys().len() + hotReloadInfo.structsToReinstance.keys().len() > 0
@@ -116,6 +119,7 @@ macro emitType*(typeDef : static UEType) : untyped =
         of uetStruct: 
             result = emitUStruct(typeDef)
         of uetEnum: discard
+        of uetDelegate: discard
 
 #iterate childrens and returns a sequence fo them
 func childrenAsSeq*(node:NimNode) : seq[NimNode] =

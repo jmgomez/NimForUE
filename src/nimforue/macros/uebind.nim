@@ -210,11 +210,10 @@ func getTypeNodeFromUProp(prop : UEField) : NimNode =
             newEmptyNode()
 
 
-func isDelegate(prop : UEField) : bool = prop.kind == uefDelegate
 
 
 func getTypeNodeForReturn(prop: UEField, typeNode : NimNode) : NimNode = 
-    if prop.kind == uefDelegate or prop.shouldBeReturnedAsVar():
+    if prop.shouldBeReturnedAsVar():
         return nnkVarTy.newTree(typeNode)
     typeNode
 
@@ -249,81 +248,17 @@ func identWithInject(name:string) : NimNode =
 func identWrapper(name:string) : NimNode = ident(name) #cant use ident as argument
 func identPublic(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
 
-proc genDelegateType(prop : UEField) : Option[NimNode] = 
-    if not prop.isDelegate():
-        return none[NimNode]()
-
-    let delTypeName = ident "F" & prop.name 
-
-    let signatureAsNode = (identFn : string->NimNode) => prop.delegateSignature
-                              .mapi((typeName, idx)=>[identFn("param" & $idx), ident typeName, newEmptyNode()])
-                              .map(n=>nnkIdentDefs.newTree(n))
-    #i.e. execute/broadcast
-    let fnParams = nnkFormalParams.newTree(
-                        @[ident "void",  #return type
-                        nnkIdentDefs.newTree(
-                            [identWithInject "dynDel", (delTypeName), newEmptyNode()]
-                            ) 
-                        ] & signatureAsNode(identWithInject))
-    #
-    let paramsInsideBroadcastDef = nnkTypeSection.newTree([nnkTypeDef.newTree([identWithInject "Params", newEmptyNode(), 
-                                nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(),  
-                                    nnkRecList.newTree(signatureAsNode(identWrapper))])
-                            ])])
-    let paramObjectConstr = nnkObjConstr.newTree(@[ident "Params"] &  #creates Params(param0:param0, param1:param1)
-                                prop.delegateSignature
-                                    .mapi((x, idx)=>ident("param" & $idx)) 
-                                    .map(param=>nnkExprColonExpr.newTree(param, param))
-                            )
-
-    let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstr]))
-
-    let broadcastFnName = identPublic (case prop.delKind:
-                            of uedelDynScriptDelegate: "execute"
-                            of uedelMulticastDynScriptDelegate: "broadcast")
-    
-    let processFnName = ident (case prop.delKind:
-                            of uedelDynScriptDelegate: "processDelegate"
-                            of uedelMulticastDynScriptDelegate: "processMulticastDelegate")
-
-    var broadcastFn = nnkProcDef.newTree([broadcastFnName, newEmptyNode(), newEmptyNode(), fnParams, newEmptyNode(), newEmptyNode()])
-    let processDelCall = nnkCall.newTree([
-                            nnkDotExpr.newTree([ident "dynDel", processFnName]),
-                            nnkDotExpr.newTree([ident "param", ident "addr"])
-                        ])
-
-    let broadcastBody = genAst(paramsInsideBroadcastDef, paramDeclaration, processDelCall, delTypeName):
-        paramsInsideBroadcastDef
-        paramDeclaration
-        processDelCall
-
-    broadcastFn.add(broadcastBody)
-
-    let delBaseType = ident (case prop.delKind:
-                            of uedelDynScriptDelegate: "FScriptDelegate"
-                            of uedelMulticastDynScriptDelegate: "FMulticastScriptDelegate")
-    
-    var delegate = genAst(delTypeName, delBaseType, broadcastFn, paramDeclaration):
-        type delTypeName {.inject.} = object of delBaseType
-        broadcastFn 
-        
-    some delegate
-
 func genProp(typeDef : UEType, prop : UEField) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
-    let delTypesNode = genDelegateType(prop)
-    let delTypeIdent = delTypesNode.map(n=>n[0][0][0][0])
-
+  
     let className = typeDef.name.substr(1)
 
     let typeNode = case prop.kind:
                     of uefProp: getTypeNodeFromUProp(prop)
-                    of uefDelegate: delTypeIdent.get()
                     else: newEmptyNode() #No Support 
    
     let typeNodeAsReturnValue = case prop.kind:
                             of uefProp: prop.getTypeNodeForReturn(typeNode)
-                            of uefDelegate: nnkVarTy.newTree(typeNode)
                             else: newEmptyNode()#No Support as UProp getter/Seter
     
     
@@ -340,14 +275,15 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
                 var value {.inject.} : typeNode = val
                 let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
-    if prop.kind == uefDelegate: 
-        result.insert(0, delTypesNode.get())
+   
         
 
 func isReturnParam(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
 
+#this is used for both, to generate regular function binds and delegate broadcast/execute functions
+#for the most part the same code is used for both
 func genFunc(typeDef : UEType, funField : UEField) : NimNode = 
-    let ptrName = ident typeDef.name & "Ptr"
+    let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
     let isStatic = FUNC_Static in funField.fnFlags
     let clsName = typeDef.name.substr(1)
 
@@ -407,17 +343,29 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
 
     let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
     
+    let callUFuncOn = 
+        case typeDef.kind:
+        of uetDelegate:
+            case typeDef.delKind:
+                of uedelDynScriptDelegate:
+                    genAst(): obj.processDelegate(param.addr)
+                of uedelMulticastDynScriptDelegate:
+                    genAst(): obj.processMulticastDelegate(param.addr)
+        else: genAst(): callUFuncOn(obj, fnName, param.addr)
+
+
+
     let returnCall = if funReturns: 
                         genAst(): 
                             return param.toReturn 
                      else: newEmptyNode()
 
-    var fnBody = genAst(uFnName=newStrLitNode(funField.name), paramsInsideFuncDef, paramDeclaration, generateObjForStaticFunCalls, returnCall):
+    var fnBody = genAst(uFnName=newStrLitNode(funField.name), paramsInsideFuncDef, paramDeclaration, generateObjForStaticFunCalls, callUFuncOn, returnCall):
         paramsInsideFuncDef
         paramDeclaration
-        var fnName : FString = uFnName
+        var fnName {.inject, used .} : FString = uFnName
         generateObjForStaticFunCalls
-        callUFuncOn(obj, fnName, param.addr)
+        callUFuncOn
         returnCall
         
 
@@ -439,12 +387,14 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
     # debugEcho treeRepr result
 
 
+
+
 proc genUClassTypeDef(typeDef : UEType) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
     let parent = ident typeDef.parent
     let props = nnkStmtList.newTree(
                 typeDef.fields
-                    .filter(prop=>prop.kind==uefProp or prop.kind==uefDelegate)
+                    .filter(prop=>prop.kind==uefProp)
                     .map(prop=>genProp(typeDef, prop)))
 
     let funcs = nnkStmtList.newTree(
@@ -496,6 +446,26 @@ func genUEnumTypeDef(typeDef:UEType) : NimNode =
     
     result[0][^1] = fields #replaces enum 
 
+
+func genDelType(delType:UEType) : NimNode = 
+    let typeName = identWithInjectPublic delType.name
+    let delBaseType = 
+        case delType.delKind 
+        of uedelDynScriptDelegate: ident "FScriptDelegate"
+        of uedelMulticastDynScriptDelegate: ident "FMulticastScriptDelegate"
+    let broadcastFnName = 
+        case delType.delKind 
+        of uedelDynScriptDelegate: "execute"
+        of uedelMulticastDynScriptDelegate: "broadcast"
+
+    let typ = genAst(typeName, delBaseType):
+                type typeName = object of delBaseType
+    let broadcastFunType = UEField(name:broadcastFnName, kind:uefFunction, signature: delType.fields)
+    let funcNode = genFunc(delType, broadcastFunType) 
+    result = nnkStmtList.newTree(typ, funcNode)
+    debugEcho repr result
+    
+
 func genTypeDecl*(typeDef : UEType) : NimNode = 
     case typeDef.kind:
         of uetClass:
@@ -504,13 +474,15 @@ func genTypeDecl*(typeDef : UEType) : NimNode =
             genUStructTypeDef(typeDef)
         of uetEnum:
             genUEnumTypeDef(typeDef)
+        of uetDelegate:
+            genDelType(typeDef)
         
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
     
 
 
 
-macro genDelegate*(field:static UEField) : untyped = 
-    result = genDelegateType(field).get()
-    echo result.repr
+# macro genDelegate*(field:static UEField) : untyped = 
+#     result = genDelegateType(field).get()
+#     echo result.repr
 

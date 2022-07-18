@@ -29,7 +29,13 @@ const ueVarType = UEType(name: "UClassToUseAsVar", parent: "UObject", kind: uetC
                     fields: @[
                         UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
                         ])
-                    
+
+
+const dynMulDel = UEType(name: "FDynamicMulticastDelegateOneParamTest", kind: uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)])
+genType(dynMulDel)
+
+const dynDel = UEType(name: "FDynamicDelegateOneParamTest", kind: uetDelegate, delKind:uedelDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)])
+genType(dynDel)
 const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uetClass, 
                     fields: @[
                         UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
@@ -46,8 +52,8 @@ const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uetC
                         UEField(kind:uefProp, name: "SoftClassProperty", uePropType: "TSoftClassPtr[UObject]"), 
                         UEField(kind:uefProp, name: "MapProperty", uePropType: "TMap[FString, int32]"), 
                         UEField(kind:uefProp, name: "NameProperty", uePropType: "FName"), 
-                        UEField(kind:uefDelegate, name: "DynamicDelegateOneParamProperty", delKind:uedelDynScriptDelegate, delegateSignature: @["FString"]), 
-                        UEField(kind:uefDelegate, name: "MulticastDynamicDelegateOneParamProperty", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]), 
+                        UEField(kind:uefProp, name: "DynamicDelegateOneParamProperty", uePropType: "FDynamicDelegateOneParamTest"), 
+                        UEField(kind:uefProp, name: "MulticastDynamicDelegateOneParamProperty", uePropType: "FDynamicMulticastDelegateOneParamTest"), 
                         UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
                         #functions TODO Create in cpp, functions that has out params. and also a mix of all. Also make one with TArray, TMap etc
                         makeFieldAsUFun("BindDelegateFuncToDelegateOneParam", @[]),

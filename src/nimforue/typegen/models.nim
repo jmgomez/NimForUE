@@ -15,11 +15,11 @@ type
     UETypeKind* = enum
         uetClass
         uetStruct
+        uetDelegate
         uetEnum
 
     UEFieldKind* = enum
         uefProp, #this covers FString, int, TArray, etc. 
-        uefDelegate,
         uefFunction
         uefEnumVal
 
@@ -38,11 +38,6 @@ type
             of uefProp:
                 uePropType* : string #Do a close set of types? No, just do a close set on the MetaType. i.e Struct, TArray, Delegates (they complicate things)
                 propFlags*:EPropertyFlagsVal
-
-            of uefDelegate:
-                delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
-                delKind*: UEDelegateKind
-                delFlags*: EPropertyFlagsVal
 
             of uefFunction:
                 #note cant use option type. If it has a returnParm it will be the first param that has CPF_ReturnParm
@@ -75,6 +70,10 @@ type
                 structFlags*: EStructFlagsVal
             of uetEnum:
                 discard
+            of uetDelegate:
+                #the signature is just the fields
+                # delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
+                delKind*: UEDelegateKind
 
     UEModule* = object
         name* : string
@@ -123,10 +122,6 @@ func `==`*(a, b : UEField) : bool =
         of uefProp: 
             compareUEPropTypes(a.uePropType, b.uePropType) #and
             # a.propFlags == b.propFlags
-        of uefDelegate: #Delegates should be outside the field. They are actually a type that can be used as field. 
-            a.delegateSignature == b.delegateSignature and
-            a.delKind == b.delKind and
-            a.delFlags == b.delFlags 
         of uefFunction:
             a.signature == b.signature and
             a.fnFlags == b.fnFlags
@@ -150,5 +145,6 @@ func `==`*(a, b:UEType) : bool =
     of uetStruct:
         a.superStruct == b.superStruct #and
         # a.structFlags == b.structFlags
-    of uetEnum: true)
+    of uetEnum: true
+    of uetDelegate: true)
         

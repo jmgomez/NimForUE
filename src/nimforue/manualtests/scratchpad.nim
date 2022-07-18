@@ -223,12 +223,17 @@ uClass UObjectDsl of UObject:
 # type FDynamicMulticastDelegateOneParamTest = object of UDelegateFunction
 # type FDynamicDelegateOneParamTest = object of UDelegateFunction
 # genDelegate(UEField(kind:uefDelegate, name: "DynamicMulticastDelegateOneParamTest", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]))
-genDelegate(makeFieldAsMulDel("DynamicMulticastDelegateOneParamTest", @["FString"]))
+# genDelegate(makeFieldAsMulDel("DynamicMulticastDelegateOneParamTest", @["FString"]))
 
-type Whatever* = FDynamicMulticastDelegateOneParamTest
+# type Whatever* = FDynamicMulticastDelegateOneParamTest
 
 # delegate FDynamicMulticastDelegateOneParamTest(param:FString)
 # delegate FDynamicMulticastDelegateOneParamTest2(param:FString)
+
+const dynMulDel = UEType(name: "FDynamicMulticastDelegateOneParamTest", kind: uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)])
+genType(dynMulDel)
+
+
 
 uClass AActorDsl of AActor:
     (BlueprintType, Blueprintable)

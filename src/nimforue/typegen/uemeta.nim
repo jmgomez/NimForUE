@@ -9,13 +9,6 @@ export models
 func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[]) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata:metas)       
 
-func makeFieldAsDel*(name:string, delKind: UEDelegateKind, signature:seq[string], flags=CPF_None) : UEField = 
-    UEField(kind:uefDelegate, name: name, delKind: delKind, delegateSignature:signature, delFlags:EPropertyFlagsVal(flags))
-
-func makeFieldAsMulDel*(name:string, signature:seq[string], flags=CPF_None) : UEField = 
-    UEField(kind:uefDelegate, name: name, delKind: uedelMulticastDynScriptDelegate, delegateSignature:signature, delFlags:EPropertyFlagsVal(flags))
-
-
 
 func makeFieldAsUFun*(name:string, signature:seq[UEField], flags=FUNC_None) : UEField = 
     UEField(kind:uefFunction, name:name, signature:signature, fnFlags:EFunctionFlagsVal(flags))

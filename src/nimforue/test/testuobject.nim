@@ -306,30 +306,30 @@ suite "NimForUE.UObject":
 
 
 
-    ueTest "ShouldBeAbleToBindAnUFunctionInADelegateFDynamicDelegateOneParamCallItViaBroadcast_NoMacro":
-        let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
+    # ueTest "ShouldBeAbleToBindAnUFunctionInADelegateFDynamicDelegateOneParamCallItViaBroadcast_NoMacro":
+    #     let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
 
-         #Todo eventually do a wrapper to bind an uebind function
-         #so it will look into the signature and generate it
-        obj.dynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
-
-
-        type CustomScriptDelegate = object of FScriptDelegate
-        #The type is just for typesafety on the CustomScriptDelegate
-        proc broadcast(dynDel: ptr CustomScriptDelegate, str: FString) = 
-            type Params = object
-                param : FString
-
-            var param = Params(param:str)
-            let scriptDelegate : FScriptDelegate = dynDel[]
-            scriptDelegate.processDelegate(param.addr) 
-
-        var del = cast[ptr CustomScriptDelegate](obj.dynamicDelegateOneParamProperty.addr)
+    #      #Todo eventually do a wrapper to bind an uebind function
+    #      #so it will look into the signature and generate it
+    #     obj.dynamicDelegateOneParamProperty.bindUFunction(obj, makeFName("DelegateFunc"))
 
 
-        assert obj.dynamicDelegateOneParamProperty.isBound()
+    #     type CustomScriptDelegate = object of FScriptDelegate
+    #     #The type is just for typesafety on the CustomScriptDelegate
+    #     proc broadcast(dynDel: ptr CustomScriptDelegate, str: FString) = 
+    #         type Params = object
+    #             param : FString
 
-        del.broadcast("Called from broadcast!")
+    #         var param = Params(param:str)
+    #         let scriptDelegate : FScriptDelegate = dynDel[]
+    #         scriptDelegate.processDelegate(param.addr) 
+
+    #     var del = cast[ptr CustomScriptDelegate](obj.dynamicDelegateOneParamProperty.addr)
+
+
+    #     assert obj.dynamicDelegateOneParamProperty.isBound()
+
+    #     del.broadcast("Called from broadcast!")
 
         #Since this work, the syntax for binding it may be 
         #[
@@ -340,7 +340,7 @@ suite "NimForUE.UObject":
        
         ]#
         
-        assert obj.bWasCalled
+        # assert obj.bWasCalled
 
 
 
