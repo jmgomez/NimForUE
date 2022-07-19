@@ -10,7 +10,7 @@
 #include "Engine/EngineTypes.h"
 #include "Misc/AutomationTest.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-
+#include "Engine/UserDefinedEnum.h"
 //NimForUEBindingsHeaders.h
 #include "NimForUEBindingsHeaders.h"
 //Editor only

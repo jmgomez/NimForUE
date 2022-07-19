@@ -16,3 +16,10 @@ GENERATED_BODY()
  
 
 };
+
+UCLASS()
+class NIMFORUEBINDINGS_API UNimEnum : public UEnum {
+GENERATED_BODY()
+
+};
+

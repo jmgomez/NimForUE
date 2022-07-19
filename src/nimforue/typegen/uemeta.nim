@@ -190,14 +190,24 @@ proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
 
 
 
-
 proc emitUStruct*[T](ueType : UEType, package:string) : UStructPtr =
     let package = getPackageByName(package)
     if package.isnil():
         raise newException(Exception, "Package not found!")
     emitUStruct[T](ueType, package)
     
-
+proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr = 
+    let name = enumType.name.makeFName()
+    let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    let uenum = newUObject[UNimEnum](package, name, objFlags)
+    let enumFields = makeTArray[TPair[FName, int64]]()
+    for field in enumType.fields.pairs:
+        let fieldName = field.val.name.makeFName()
+        enumFields.add(makeTPair(fieldName,  field.key.int64))
+        # uenum.displayNameMap.add(fieldName, fromFName(fieldName))
+        UE_Warn "ENUM " & fieldName.fromFName().toFString()
+    discard uenum.setEnums(enumFields)
+    uenum
 
 proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UStructPtr = 
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
@@ -209,7 +219,6 @@ proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UStructPtr =
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
     fn.staticLink(true)
     fn
-
 
 #note at some point class can be resolved from the UEField?
 proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 

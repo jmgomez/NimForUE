@@ -3,7 +3,3 @@
 
 #include "NimClassBase.h"
 
-// void UNimClassBase::Link(FArchive& Ar, bool bRelinkExistingProperties) {
-// 	//Jumps the check
-// 	UStruct::Link(Ar, bRelinkExistingProperties);
-// }

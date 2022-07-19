@@ -14,6 +14,8 @@ type
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
     UNimScriptStructPtr* = ptr UNimScriptStruct
 
+    UNimEnum* {.importcpp.} = object of UEnum
+    UNimEnumPtr* = ptr UNimEnum
 
 proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
 
@@ -111,7 +113,6 @@ proc makeFNativeFuncPtr*(fun:proc (context:ptr UObject, stack:var FFrame,  resul
 proc setNativeFunc*(ufunc: ptr UFunction, funcPtr: FNativeFuncPtr) : void {.importcpp: "#->SetNativeFunc(#)" .}
 
 proc increaseStack*(stack: var FFrame) : void {.importcpp: "UReflectionHelpers::IncreaseStack(#)" .}
-
 
 
 #UPACKAGE

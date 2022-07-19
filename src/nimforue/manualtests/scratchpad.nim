@@ -226,8 +226,16 @@ uClass UObjectDsl of UObject:
 
 # type Whatever* = FDynamicMulticastDelegateOneParamTest
 
+const ueType = UEType(name: "EMyEnumCreatedInNim2", kind:uetEnum, 
+                            fields: @[
+                                UEField(kind:uefEnumVal, name:"eTestValue"),
+                                UEField(kind:uefEnumVal, name:"eTestValue2")
+                            ]
+                        )
+discard ueType.emitUEnum(nimPackage)
+genType(ueType)
 
-uDelegate FMyDelegate(str:FString, number:int)
+uDelegate FMyDelegate(str:FString, number:FString)
 uDelegate FMyDelegate2Params(str:FString, param:TArray[FString])
 uDelegate FMyDelegateNoParams()
 
@@ -236,12 +244,14 @@ uClass AActorDsl of AActor:
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         testField : FString
         test2 : bool
-        test3 : int 
+        test3 : float
         anotherField3 : int32
         anotherField2 : int32
         anotherField1 : int32
         anotherFieldArr : TArray[int32]
         anotherFieldEnum : EMyTestEnum
+        nimCreatedEnum2 : EMyEnumCreatedInNim2
+        
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
         multicastDynOneParamNimAnother: FMyDelegate
@@ -254,22 +264,12 @@ uClass AActorDsl of AActor:
 #Review the how 
 proc scratchpadEditor*() = 
     try:
-        # let field = getUTypeByName[UStruct]("DynamicDelegateOneParamTest__DelegateSignature")
-        # if not field.isNil():
-        #     UE_Log "Found the delegate"
-        # else:
-        #     UE_Error "Did not found the delegate"
-        # let test = newUObject[AActorDsl]()
-        # test.multicastDynOneParamNim.bindUFunction()
-        # let dynMulDel = UEType(name: "FDynamicMulticastDelegateOneParamTestAnother", kind: uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)])
-        # discard dynMulDel.toUDelegateFunction(nimPackage)
-        # let nueBingingsPkg = getPackageByName("NimForUEBindings")
         let nueBingingsPkg = getPackageByName("NimForUEBindings")
-
-        for obj in getAllObjectsFromPackage[UDelegateFunction](nueBingingsPkg):
-            UE_Log "Found delegate function at NimForUEBindings" & obj.getName()
-        for obj in getAllObjectsFromPackage[UDelegateFunction](nimPackage):
-            UE_Log "Found delegate function at Nim" & obj.getName()
+        
+        for obj in getAllObjectsFromPackage[UEnum](nueBingingsPkg):
+            UE_Warn "Found enum  at NimForUEBindings " & obj.getName()
+        for obj in getAllObjectsFromPackage[UEnum](nimPackage):
+            UE_Warn "Found enum at Nim " & obj.getName()
 
     except Exception as e:
         

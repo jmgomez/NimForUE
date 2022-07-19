@@ -1,6 +1,7 @@
 
 include ../definitions
-import ../Core/Containers/unrealstring
+import ../Core/Containers/[unrealstring, array, map]
+import ../Core/ftext
 import nametypes
 import std/[genasts, macros, sequtils]
 
@@ -24,7 +25,10 @@ type
     UFieldPtr* = ptr UField 
 
     UEnum* {.importcpp, inheritable, pure .} = object of UField
+        displayNameMap* {.importcpp: "DisplayNameMap".}: TMap[FName, FText]
     UEnumPtr* = ptr UEnum
+    UUserDefinedEnum* {.importcpp, inheritable, pure .} = object of UEnum
+    UUserDefinedEnumPtr* = ptr UUserDefinedEnum
 
     UStruct* {.importcpp, inheritable, pure .} = object of UField
         Children* : UFieldPtr # Pointer to start of linked list of child fields */
@@ -196,9 +200,14 @@ proc initializeDerivedMembers*(fn:UFunctionPtr) : void {.importcpp:"#->Initializ
 proc getReturnProperty*(fn:UFunctionPtr) : FPropertyPtr {.importcpp:"#->GetReturnProperty()".}
 
 
+#UENUM
+#virtual bool SetEnums(TArray<TPair<FName, int64>>& InNames, ECppForm InCppForm, EEnumFlags InFlags = EEnumFlags::None, bool bAddMaxKeyIfMissing = true) override;
+
+proc setEnums*(uenum:UENumPtr, inName:TArray[TPair[FName, int64]]) : bool {. importcpp:"#->SetEnums(#, UEnum::ECppForm::Regular)" .}
 
 
 
+#ITERATOR
 type TFieldIterator* [T:UStruct] {.importcpp.} = object
 proc makeTFieldIterator*[T](inStruct : UStructPtr, flag:EFieldIterationFlags) : TFieldIterator[T] {. importcpp:"'0(@)" constructor .}
 
