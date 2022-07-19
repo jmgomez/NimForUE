@@ -1,7 +1,7 @@
+include ../definitions
 import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, templates/subclassof, nametypes, uobjectglobals]
 import ../core/containers/[unrealstring, array, map]
 import std/[typetraits, strutils]
-include ../definitions
 
 
 type 
@@ -126,7 +126,15 @@ type
     FNimHotReload* {.importcpp.} = object
         structsToReinstance* {.importcpp: "StructsToReinstance" .} : TMap[UScriptStructPtr, UScriptStructPtr]
         classesToReinstance* {.importcpp: "ClassesToReinstance" .} : TMap[UClassPtr, UClassPtr]
+        delegatesToReinstance* {.importcpp: "DelegatesToReinstance" .} : TMap[UDelegateFunctionPtr, UDelegateFunctionPtr]
         bShouldHotReload* {.importcpp: "bShouldHotReload" .} : bool
     FNimHotReloadPtr* = ptr FNimHotReload
 
 proc newNimHotReload*() : FNimHotReloadPtr {.importcpp: "new '*0()".}
+proc setShouldHotReload*(hotReloadInfo: ptr FNimHotReload) = 
+    hotReloadInfo.bShouldHotReload = 
+        hotReloadInfo.classesToReinstance.keys().len() +
+        hotReloadInfo.structsToReinstance.keys().len() +
+        hotReloadInfo.delegatesToReinstance.keys().len() > 0
+
+

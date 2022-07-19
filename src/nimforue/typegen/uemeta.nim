@@ -28,6 +28,8 @@ func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField]
 func makeUEStruct*(name:string, fields:seq[UEField], superStruct="", metadata : seq[UEMetadata] = @[], flags = STRUCT_NoFlags) : UEType = 
     UEType(kind:uetStruct, name:name, fields:fields, superStruct:superStruct, metadata: metadata, structFlags: flags)
 
+func makeUEMulDelegate*(name:string, fields:seq[UEField]) : UEType = 
+    UEType(kind:uetDelegate, name:name, fields:fields)
 
 
 
@@ -197,7 +199,7 @@ proc emitUStruct*[T](ueType : UEType, package:string) : UStructPtr =
     
 
 
-proc emitUDelegateFunction*(delType : UEType, package:UPackagePtr) : UDelegateFunctionPtr = 
+proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UStructPtr = 
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UDelegateFunction](package, fnName, objFlags)

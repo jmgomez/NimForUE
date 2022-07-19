@@ -7,6 +7,7 @@
 #include "BlueprintEditor.h"
 #include "FileHelpers.h"
 #include "FNimReload.h"
+#include "K2Node_Event.h"
 #include "K2Node_MacroInstance.h"
 #include "UPropertyCaller.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -184,6 +185,7 @@ void UEditorUtils::RefreshNodes(FNimHotReload* NimHotReload) {
 	// to point to the new ones instead.
 	TMap<UClass*, UClass*> ReloadClasses = NimHotReload->ClassesToReinstance;
 	TMap<UScriptStruct*, UScriptStruct*> ReloadStructs = NimHotReload->StructsToReinstance;
+	TMap<UDelegateFunction*, UDelegateFunction*> ReloadDelegates = NimHotReload->DelegatesToReinstance;
 
 		TMap<UObject*, UObject*> ClassReplaceList;
 		for (auto& Elem : ReloadClasses)
@@ -256,16 +258,16 @@ void UEditorUtils::RefreshNodes(FNimHotReload* NimHotReload) {
 					}
 				}
 
-				// if (auto* Event = Cast<UK2Node_Event>(Node))
-				// {
-				// 	if (auto* Function = Cast<UDelegateFunction>(Event->GetTiedSignatureFunction()))
-				// 	{
-				// 		if (NewDelegates.Contains(Function) || ReloadDelegates.Contains(Function))
-				// 		{
-				// 			bHasDependency = true;
-				// 		}
-				// 	}
-				// }
+				if (auto* Event = Cast<UK2Node_Event>(Node))
+				{
+					if (auto* Function = Cast<UDelegateFunction>(Event->FindEventSignatureFunction()))
+					{
+						if (/*NewDelegates.Contains(Function) ||*/ ReloadDelegates.Contains(Function))
+						{
+							bHasDependency = true;
+						}
+					}
+				}
 
 				if (auto* MacroInst = Cast<UK2Node_MacroInstance>(Node))
 				{
@@ -383,17 +385,17 @@ void UEditorUtils::RefreshNodes(FNimHotReload* NimHotReload) {
 						bShouldRefresh |= CheckRefresh(Desc->PinType);
 					}
 				}
-				//
-				// if (auto* Event = Cast<UK2Node_Event>(Node))
-				// {
-				// 	if (auto* Function = Cast<UDelegateFunction>(Event->GetTiedSignatureFunction()))
-				// 	{
-				// 		if (NewDelegates.Contains(Function) || ReloadDelegates.Contains(Function))
-				// 		{
-				// 			bShouldRefresh = true;
-				// 		}
-				// 	}
-				// }
+				
+				if (auto* Event = Cast<UK2Node_Event>(Node))
+				{
+					if (auto* Function = Cast<UDelegateFunction>(Event->FindEventSignatureFunction()))
+					{
+						if (/*NewDelegates.Contains(Function) ||*/ ReloadDelegates.Contains(Function))
+						{
+							bShouldRefresh = true;
+						}
+					}
+				}
 
 				if (auto* MacroInst = Cast<UK2Node_MacroInstance>(Node))
 				{

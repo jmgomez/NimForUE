@@ -47,8 +47,7 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
         # printAllClassAndProps("PRE", pkg)
         let nimHotReload = emitUStructsForPackage()
         
-        
-
+    
         # printAllClassAndProps("POST", pkg)
 
         scratchpadEditor()

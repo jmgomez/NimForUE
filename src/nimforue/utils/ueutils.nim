@@ -1,5 +1,6 @@
+import ../unreal/coreuobject/[uobject]
 import std/[options, strutils, sequtils, sugar]
-
+import utils
 
 const DelegateFuncSuffix* = "__DelegateSignature"
 #utils specifics to unreal used accross the project
@@ -13,3 +14,6 @@ proc extractKeyValueFromMapProp*(str:string) : seq[string] =
 
 proc removeLastLettersIfPtr*(str:string) : string = 
     if str.endsWith("Ptr"): str.substr(0, str.len()-4) else: str
+
+func tryUECast*[T : UObject](obj:UObjectPtr) : Option[ptr T] = someNil ueCast[T](obj)
+    

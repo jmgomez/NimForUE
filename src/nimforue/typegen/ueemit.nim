@@ -41,9 +41,13 @@ proc prepareForReinst(prevScriptStruct : UScriptStructPtr) =
     let oldClassName = makeUniqueObjectName(prevScriptStruct.getOuter(), prevScriptStruct.getClass(), makeFName(prevNameStr))
     discard prevScriptStruct.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
+proc prepareForReinst(prevScriptStruct : UDelegateFunctionPtr) = discard
 
+
+type UEmitable = UScriptStruct | UClass | UDelegateFunction
+        
 #emit the type only if one doesn't exist already and if it's different
-proc emitUStructInPackage[T : UScriptStruct | UClass](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
+proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
     let areEquals = prev.isSome() and prev.get().toUEType() == emitter.ueType
     if areEquals: none[ptr T]()
     else: 
@@ -51,7 +55,6 @@ proc emitUStructInPackage[T : UScriptStruct | UClass](pkg: UPackagePtr, emitter:
         some ueCast[T](emitter.generator(pkg))
 
 proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr = 
-   
     var hotReloadInfo = newNimHotReload()
     for emitter in ueEmitter.emitters:
         case emitter.ueType.kind:
@@ -60,24 +63,22 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
             let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr)
             prevStructPtr.flatmap((prev : UScriptStructPtr) => newStructPtr.map(newStr=>(prev, newStr)))
                 .run((pair:(UScriptStructPtr, UScriptStructPtr)) => hotReloadInfo.structsToReinstance.add(pair[0], pair[1]))
-        
         of uetClass:
             let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
             let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
             prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
                 .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
-                
         of uetEnum:
             discard
-
         of uetDelegate:
-            discard
-        
-    hotReloadInfo.bShouldHotReload = 
-        hotReloadInfo.classesToReinstance.keys().len() + hotReloadInfo.structsToReinstance.keys().len() > 0
-
-        # UE_Log msg
+            let prevDelPtr = someNil getUTypeByName[UDelegateFunction](emitter.ueType.name.removeFirstLetter())
+            let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr)
+            prevDelptr.flatmap((prev : UDelegateFunctionPtr) => newDelPtr.map(newDel=>(prev, newDel)))
+                .run((pair:(UDelegateFunctionPtr, UDelegateFunctionPtr)) => hotReloadInfo.delegatesToReinstance.add(pair[0], pair[1]))
+   
+    hotReloadInfo.setShouldHotReload()
     hotReloadInfo
+
 #By default ue types are emitted in the /Script/Nim package. But we can use another for the tests. 
 proc emitUStructsForPackage*(pkgName:FString = "Nim") : FNimHotReloadPtr = 
     let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("Nim"))
@@ -101,14 +102,13 @@ proc emitUClass(typeDef:UEType) : NimNode =
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
-macro emitType*(typeDef : static UEType) : untyped = 
-    case typeDef.kind:
-        of uetClass: discard
-        of uetStruct: 
-            result = emitUStruct(typeDef)
-        of uetEnum: discard
-        of uetDelegate: discard
+proc emitUDelegate(typedef:UEType) : NimNode = 
+    let typeDecl = genTypeDecl(typedef)
+    
+    let typeEmitter = genAst(name=ident typedef.name, typeDefAsNode=newLit typedef): #defers the execution
+                addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUDelegate(typeDefAsNode, package))
 
+    result = nnkStmtList.newTree [typeDecl, typeEmitter]
 #iterate childrens and returns a sequence fo them
 func childrenAsSeq*(node:NimNode) : seq[NimNode] =
     var nodes : seq[NimNode] = @[]
@@ -214,3 +214,12 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     
     emitUClass(ueType)
   
+
+macro uDelegate*(body:untyped) : untyped = 
+    let name = body[0].strVal()
+    let paramsAsFields = body.toSeq()
+                             .filter(n=>n.kind==nnkExprColonExpr)
+                             .map(n=> makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip()))
+    let ueType = makeUEMulDelegate(name, paramsAsFields)
+    emitUDelegate(ueType)
+

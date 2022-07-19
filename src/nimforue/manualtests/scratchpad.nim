@@ -226,17 +226,10 @@ uClass UObjectDsl of UObject:
 
 # type Whatever* = FDynamicMulticastDelegateOneParamTest
 
-# delegate FDynamicMulticastDelegateOneParamTest(param:FString)
-# delegate FDynamicMulticastDelegateOneParamTest2(param:FString)
 
-const dynMulDel = UEType(name: "FDynamicMulticastDelegateOneParamTest", kind: uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)])
-
-genType(dynMulDel)
-
-const dynMulDelAnother = UEType(name: "FDynamicMulticastDelegateOneParamTestAnother", kind: uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm), makeFieldAsUPropParam("Par2", "int32", CPF_Parm)])
-genType(dynMulDelAnother)
-discard dynMulDelAnother.emitUDelegateFunction(nimPackage)
-
+uDelegate FMyDelegate(str:FString, number:int)
+uDelegate FMyDelegate2Params(str:FString, param:TArray[FString])
+uDelegate FMyDelegateNoParams()
 
 uClass AActorDsl of AActor:
     (BlueprintType, Blueprintable)
@@ -247,11 +240,13 @@ uClass AActorDsl of AActor:
         anotherField3 : int32
         anotherField2 : int32
         anotherField1 : int32
+        anotherFieldArr : TArray[int32]
         anotherFieldEnum : EMyTestEnum
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
-        multicastDynOneParamNim: FDynamicMulticastDelegateOneParamTest
-        multicastDynOneParamNimAnother: FDynamicMulticastDelegateOneParamTestAnother
+        multicastDynOneParamNimAnother: FMyDelegate
+        multicastDynOneParamNimAnother2Params: FMyDelegate2Params
+        multicastDel: FMyDelegateNoParams
         # anotherField5 : FString
 
 

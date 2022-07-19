@@ -287,7 +287,7 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
                                 funField.signature
                                         # .tap((param:UEField) => (debugEcho fmt"Name: {param.name} flag Value: {$uint64(param.propFlags)} is return: {isReturnParam(param)}"))
                                         .filter(prop=>not isReturnParam(prop))
-                                        .map(param=>[identFn(param.name.firstToLow()), ident param.uePropType, newEmptyNode()])
+                                        .map(param=>[identFn(param.name.firstToLow()), getTypeNodeFromUProp param, newEmptyNode()])
                                         .map(n=>nnkIdentDefs.newTree(n))
 
     let returnProp = funField.signature.filter(isReturnParam).head()
