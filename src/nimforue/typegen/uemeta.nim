@@ -118,7 +118,7 @@ func toUEType*(str:UStructPtr) : UEType =
     UEType(name:name, kind:uetStruct, fields:fields.reversed())
 
 
-proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
+proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
     let prop : FPropertyPtr = newFProperty(outer, propField)
     prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
     for metadata in propField.metadata:
@@ -128,7 +128,7 @@ proc toFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
 
 
 
-proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
+proc emitUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
     # const objClsFlags  =  (RF_Public || RF_Standalone || RF_Transactional || RF_LoadCompleted)
     # let objClsFlags  =  RF_Standalone || RF_Public
@@ -155,7 +155,7 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
     newCls.setMetadata("BlueprintType", "true") #todo move to ueType
     
     for field in ueType.fields:
-        let fProp = field.toFProperty(newCls) 
+        let fProp = field.emitFProperty(newCls) 
 
 
     newCls.bindType()
@@ -166,7 +166,7 @@ proc toUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
     newCls
 
 
-proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
+proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
       
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet)
     let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
@@ -178,7 +178,7 @@ proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
     scriptStruct.assetCreated()
     
     for field in ueType.fields:
-        discard field.toFProperty(scriptStruct) 
+        discard field.emitFProperty(scriptStruct) 
 
     setCppStructOpFor[T](scriptStruct, nil)
     scriptStruct.bindType()
@@ -189,28 +189,28 @@ proc toUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
 
 
 
-proc toUStruct*[T](ueType : UEType, package:string) : UStructPtr =
+proc emitUStruct*[T](ueType : UEType, package:string) : UStructPtr =
     let package = getPackageByName(package)
     if package.isnil():
         raise newException(Exception, "Package not found!")
-    toUStruct[T](ueType, package)
+    emitUStruct[T](ueType, package)
     
 
 
-proc toUDelegateFunction*(delType : UEType, package:UPackagePtr) : UDelegateFunctionPtr = 
+proc emitUDelegateFunction*(delType : UEType, package:UPackagePtr) : UDelegateFunctionPtr = 
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UDelegateFunction](package, fnName, objFlags)
     fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
     for field in delType.fields:
-        let fprop =  field.toFProperty(fn)
+        let fprop =  field.emitFProperty(fn)
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
     fn.staticLink(true)
     fn
 
 
 #note at some point class can be resolved from the UEField?
-proc toUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
+proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
     let fnName = fnField.name.makeFName()
     var fn = newUObject[UFunction](cls, fnName)
     fn.functionFlags = fnField.fnFlags
@@ -219,7 +219,7 @@ proc toUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignat
     cls.Children = fn
     
     for field in fnField.signature:
-        let fprop =  field.toFProperty(fn)
+        let fprop =  field.emitFProperty(fn)
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
 
     cls.addFunctionToFunctionMap(fn, fnName)
@@ -228,8 +228,8 @@ proc toUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignat
     # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
     fn
 
-proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr {.deprecated: "use toUFunction instead".}= 
-    fnField.toUFunction(cls, fnImpl)
+proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr {.deprecated: "use emitUFunction instead".}= 
+    fnField.emitUFunction(cls, fnImpl)
 
 
 

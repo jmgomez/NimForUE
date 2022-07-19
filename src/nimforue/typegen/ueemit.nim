@@ -88,7 +88,7 @@ proc emitUStruct(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
-                addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => toUStruct[name](typeDefAsNode, package))
+                addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUStruct[name](typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr result
@@ -97,7 +97,7 @@ proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
-                addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => toUClass(typeDefAsNode, package))
+                addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUClass(typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 

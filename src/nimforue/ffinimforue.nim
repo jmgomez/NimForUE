@@ -21,28 +21,6 @@ proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  =
     scratchpad(executor)
 
 
-proc createUEReflectedTypes() = 
-    let package = findObject[UPackage](nil, convertToLongScriptPackageName("NimForUEBindings"))
-    let clsFlags =  (CLASS_Inherit | CLASS_ScriptInherit )
-    let className = "UNimClassWhateverProp"
-    let ueVarType = makeUEClass(className, "UObject", clsFlags,
-                    @[
-                        makeFieldAsUProp("TestField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                        makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                        makeFieldAsUProp("TestInt", "int32", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                        makeFieldAsUProp("TestInt2", "float", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                        makeFieldAsUProp("AnotherField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
-                    ])
-
-#    for cls in getAllObjectsFromPackage[UClass](package):
-#     if cls.getName().equals(className):
-#         cls.BeginDestroy()
-
-
-    let newCls = ueVarType.toUClass(package)
-    UE_Log "Class created! " & newCls.getName()
-
-
 #function called right after the dyn lib is load
 #when n == 0 means it's the first time. So first editor load
 #called from C++ NimForUE Module

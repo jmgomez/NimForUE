@@ -235,7 +235,7 @@ genType(dynMulDel)
 
 const dynMulDelAnother = UEType(name: "FDynamicMulticastDelegateOneParamTestAnother", kind: uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields: @[makeFieldAsUPropParam("Par", "FString", CPF_Parm), makeFieldAsUPropParam("Par2", "int32", CPF_Parm)])
 genType(dynMulDelAnother)
-discard dynMulDelAnother.toUDelegateFunction(nimPackage)
+discard dynMulDelAnother.emitUDelegateFunction(nimPackage)
 
 
 uClass AActorDsl of AActor:
