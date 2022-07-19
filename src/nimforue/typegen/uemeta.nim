@@ -201,7 +201,7 @@ proc toUDelegateFunction*(delType : UEType, package:UPackagePtr) : UDelegateFunc
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UDelegateFunction](package, fnName, objFlags)
-    fn.functionFlags = FUNC_MulticastDelegate
+    fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
     for field in delType.fields:
         let fprop =  field.toFProperty(fn)
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())

@@ -60,15 +60,22 @@ func nonEmptyOr*(value, orValue:string) : string = nonDefaultOr(value, orValue)
 
 
 #OPTION
-func getOrCompute*[T](opt:Option[T], fn : ()->T) : T = 
+func getOrCompute*[T, U](opt:Option[T], fn : ()->T) : lent T = 
     if opt.isSome(): opt.get() else: fn()
 
+proc getOrRaise*[T](self: Option[T], msg:string, exceptn:typedesc=Exception): T {.inline.} =
+  if self.isSome(): self.get()
+  else:raise newException(exceptn, msg)
+    
+
+func chainNone*[T](opt:Option[T], fn : ()->Option[T]) : Option[T] = 
+    if opt.isSome(): opt
+    else: fn()
 
 func run*[T](opt:Option[T], fn : (x : T)->void) : void = 
     if opt.isSome: fn(opt.get())
 
 func disc*[T](opt:Option[T]) : void = discard
-
 
 
 func tap*[T](opt:Option[T], fn : (x : T)->void) : Option[T] = 

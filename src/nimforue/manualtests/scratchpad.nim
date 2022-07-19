@@ -245,7 +245,9 @@ uClass AActorDsl of AActor:
         test2 : bool
         test3 : int 
         anotherField3 : int32
+        anotherField2 : int32
         anotherField1 : int32
+        anotherFieldEnum : EMyTestEnum
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
         multicastDynOneParamNim: FDynamicMulticastDelegateOneParamTest
