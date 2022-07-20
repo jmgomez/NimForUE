@@ -75,9 +75,22 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
         uprop(EditAnywhere, BlueprintReadOnly):
             param35 : int32    
     ```
-- [ ] DSL for defining UEnums
 
-- [ ] DSL for defining UClasses
+- [x] DSL for defining UEnums
+
+    ```uEnum EMyEnumCreatedInNim:
+        (BlueprintType)
+        ValueOne
+        SomethingElse
+        AnotherThing
+    ```
+
+- [x] DSL for defining delegates
+    ```uDelegate FMyDelegate2Params(str:FString, param:TArray[FString])
+       uDelegate FMyDelegateNoParams()
+```
+
+- [x] DSL for defining UClasses
 
     ```nim
         UClass MyClass of UObject = 
@@ -89,7 +102,11 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
                 ...
                 More props
     ```
-- [ ] Being able to emit any FProperty
+- [x] Being able to emit most used FProperties
+
+- [x] Being able to emit any type into UE with hotreload
+
+- [ ] Allow to define constructors on UObjects
 
 - Shipping Builds
     - [ ] Make builds work on Windows 
