@@ -4,7 +4,7 @@ import std/[strutils]
 import ../testutils
 import unittest
 import ../testdata
-import ../../typegen/uemeta
+import ../../typegen/[uemeta, ueemit]
 
 
 #[
@@ -36,6 +36,22 @@ import ../../typegen/uemeta
 		P_NATIVE_END;
 	}
 ]#
+uClass UMyClassToTestNim of UObject: #TODO specify the package 
+    uprop():
+        bWasCalled:bool
+        testProperty:FString
+
+
+
+# genUFun("UMyClassToTestNim", fnField)
+ 
+proc newFunction(self:UMyClassToTestNimPtr, testProperty:FString) {.ufunc.}=
+    self.bWasCalled = true
+    self.testProperty = testProperty
+     
+    
+
+ 
 
 suite "NimForUE.FunctionEmit":
     uetest "Should be able to find a function to an existing object":
@@ -128,8 +144,7 @@ suite "NimForUE.FunctionEmit":
         cls.removeFunctionFromClass fn 
         
 
-
-    ueTest "Should be able to create a new function that accepts a parameter in nim":
+    ueTest "Should be able to create a new function that accepts a parameter in nim NO_MACRO":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         var cls = obj.getClass()
         let fnName =n"NewFunction"
@@ -148,7 +163,8 @@ suite "NimForUE.FunctionEmit":
             #actual func
             obj.testProperty = paramVal[]
             #end actual func
-
+            
+       
         let fnField = UEField(kind:uefFunction, name:"NewFunction", fnFlags: FUNC_Native, 
                     signature: @[
                         UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
@@ -170,11 +186,56 @@ suite "NimForUE.FunctionEmit":
         
         cls.removeFunctionFromClass fn 
 
+
+    ueTest "Should be able to create a new function that accepts a parameter in nim":
+        let obj = newUObject[UMyClassToTestNim]()
+        var cls = obj.getClass()
+
+        # #Params needs to be retrieved from the function so they have to be set
+        # proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+        #     stack.increaseStack()
+        #     let obj = cast[UMyClassToTestNimPtr](context) 
+        #     type Param = object
+        #         param0 : FString
+        #     let params = cast[ptr Param](stack.locals)
+        #     let testProperty = params.param0
+
+        
+
+        #     #actual func
+        #     # RAW BODY HERE?
+        #     obj.bWasCalled = true
+        #     obj.testProperty = testProperty
+        #     #end actual func
+        #     #TODO return and stuff
+
+
+
+        # genNativeFunction "UMyClassToTestNim", fnField:
+        #     self.testProperty = testProperty
+        #     self.bWasCalled = true 
+            
+        let fnField = UEField(kind:uefFunction, name:"NewFunction", fnFlags: FUNC_Native, 
+                signature: @[
+                    UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
+                ])
+        
+        let fn = emitUFunction(fnField, cls, fnImplMacro)
+        let expectedStr = "ParameterValue"
+        
+        obj.newFunction(expectedStr)
+        assert obj.bWasCalled
+        assert fn.numParms == 1
+        assert obj.testProperty.equals(expectedStr) 
+        
+        cls.removeFunctionFromClass fn 
+
+
+
     
     ueTest "Should be able to create a new function that accepts two parameters in nim":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         var cls = obj.getClass()
-
         #Params needs to be retrieved from the function so they have to be set
         proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
             stack.increaseStack()
@@ -215,8 +276,10 @@ suite "NimForUE.FunctionEmit":
         assert obj.testProperty.equals(expectedStr)
         
         cls.removeFunctionFromClass fn 
+
+    
         
-        
+    
     ueTest "Should be able to create a new function that accepts two parameters and returns":
         let obj : UMyClassToTestPtr = newUObject[UMyClassToTest]()
         var cls = obj.getClass()
@@ -282,6 +345,7 @@ suite "NimForUE.FunctionEmit":
                 param0 : int32
                 param1 : FString
 
+  
 
             var value : int32 = 4
 
@@ -293,7 +357,7 @@ suite "NimForUE.FunctionEmit":
             # setPropertyValuePtr[int32](returnProp, result, value.addr)
             # UE_Warn $(cast[ptr int32](result)[])
 
-
+ 
         
         let fnField = UEField(kind:uefFunction, name:"NewFunction2ParamsAndReturns", fnFlags: FUNC_Native, 
                             signature: @[

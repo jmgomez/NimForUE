@@ -59,12 +59,14 @@ when not defined copylib:
         switch("passC", "-fno-unsigned-char")
         switch("passC", "-std=c++17")
         switch("passC", "-fno-rtti")   
-        switch("passC", "-fasm-blocks")   
+        switch("passC", "-fasm-blocks")     
         switch("passC", "-fvisibility-ms-compat")   
         switch("passC", "-fvisibility-inlines-hidden")   
         switch("passC", "-fno-delete-null-pointer-checks")   
         switch("passC", "-pipe")   
         switch("passC", "-fmessage-length=0")   
+        switch("passC", "-Wno-macro-redefined")   
+        switch("passC", "-Wno-duplicate-decl-specifier")   
         
         if withPCH:
             switch("passC", "-include-pch " & pchPath)

@@ -21,10 +21,10 @@ UCLASS()
 class NIMFORUEBINDINGS_API UNimEnum : public UEnum {
 GENERATED_BODY()
 public:
+	
 	UNimEnum(const FObjectInitializer& Initializer);
 
-	TArray<TPair<FName, int64>> GetEnums(){return this->Names;}
-	void MarkNewVersionExists(){ this->SetEnumFlags(EEnumFlags::NewerVersionExists);}
- 
+	TArray<TPair<FName, int64>> GetEnums();
+	void MarkNewVersionExists(); 
 };
 

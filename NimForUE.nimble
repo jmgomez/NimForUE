@@ -22,7 +22,7 @@ template callTask(name: untyped) =
 
 task nimforue, "Builds the main lib. The one that makes sense to hot reload.":
     generateFFIGenFile()
-    exec("nim cpp --app:lib --warning:UnusedImport:off --warning:HoleEnumConv:off --nomain -d:withue -d:genffi --nimcache:.nimcache/nimforue src/nimforue.nim")
+    exec("nim cpp --app:lib --warning:UnusedImport:off --warning:HoleEnumConv:off --warning:Spacing:off --hint:XDeclaredButNotUsed:off --nomain -d:withue -d:genffi --nimcache:.nimcache/nimforue src/nimforue.nim")
     exec("nim c -d:release --warning:UnusedImport:off --run --d:copylib src/buildscripts/copyLib.nim")
     
 

@@ -18,7 +18,7 @@ template internalTest(name:string, isOnly:bool, body:untyped) =
 
         let testName =  when declared(suiteName): suiteName & "." & name
                         else: name
-        var test = makeFNimTestBase(testName.spacesToCamelCase())
+        var test = makeFNimTestBase(utils.spacesToCamelCase(testName))
         test.ActualTest = proc (test: var FNimTestBase) {.cdecl.} =
             try:
                 body

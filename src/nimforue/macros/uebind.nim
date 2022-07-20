@@ -273,6 +273,7 @@ func isReturnParam(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
 
 #this is used for both, to generate regular function binds and delegate broadcast/execute functions
 #for the most part the same code is used for both
+#this is also used for native function implementation but the ast is changed afterwards
 func genFunc(typeDef : UEType, funField : UEField) : NimNode = 
     let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
     let isStatic = FUNC_Static in funField.fnFlags
@@ -285,7 +286,6 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
     
     let signatureAsNode = (identFn : string->NimNode) => 
                                 funField.signature
-                                        # .tap((param:UEField) => (debugEcho fmt"Name: {param.name} flag Value: {$uint64(param.propFlags)} is return: {isReturnParam(param)}"))
                                         .filter(prop=>not isReturnParam(prop))
                                         .map(param=>[identFn(param.name.firstToLow()), getTypeNodeFromUProp param, newEmptyNode()])
                                         .map(n=>nnkIdentDefs.newTree(n))
@@ -478,8 +478,68 @@ proc genTypeDecl*(typeDef : UEType) : NimNode =
             genUEnumTypeDef(typeDef)
         of uetDelegate:
             genDelType(typeDef)
-            
 
+#notice this is only for testing ATM the final shape probably wont be like this
+macro genUFun*(className : static string, funField : static UEField) : untyped =
+    let ueType = UEType(name:className, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
+    genFunc(ueType, funField)
         
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
     
+import ../unreal/coreuobject/uobject
+import ../unreal/nimforue/nimforuebindings
+
+
+func genNativeFunction*(className : string, funField : UEField, body:NimNode) : NimNode =
+    let ueType = UEType(name:className, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
+    # let fnNode = genFunc(ueType, funField)
+
+    #[
+    proc newFunction*(obj {.inject.}: UMyClassToTestNimPtr;
+                  testProperty {.inject.}: FString): void =
+        
+        proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+            stack.increaseStack()
+            let obj = cast[UMyClassToTestNimPtr](context) 
+            type Param = object
+                testProperty : FString
+            let params = cast[ptr Param](stack.locals)
+            
+            let testProperty = params.testProperty
+
+            ??????
+    ]#
+    let className = ident ueType.name
+    result = genAst(className, body):        
+        proc fnImplMacro(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. inject,  cdecl .} =
+            stack.increaseStack()
+            let self {.inject.} = ueCast[className](context) 
+            type Param = object
+                testProperty : FString
+            let params = cast[ptr Param](stack.locals)
+            let testProperty{.inject.} = params.testProperty
+
+            body
+    # debugEcho result.repr
+
+
+macro ufunc*(fn:untyped) : untyped =
+    #this will generate a UEField for the function 
+    #and then call genNativeFunction passing the body
+    let body = fn.children.toSeq()
+                 .filter(n => n.kind == nnkStmtList)
+                 .head()
+                 .get()
+
+    
+    const fnField = UEField(kind:uefFunction, name:"NewFunction", fnFlags: FUNC_Native, 
+                signature: @[
+                    UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
+                    # UEField(kind:uefProp, name: "TestProperty2", uePropType: "FString", propFlags:CPF_Parm)
+                ]
+    )             
+    let ueType = UEType(name:"UMyClassToTestNim", kind:uetClass) #Notice it only looks for the name and the kind (delegates)
+    let fnReprNode = genFunc(ueType, fnField)
+    let fnImplNode = genNativeFunction("UMyClassToTestNim", fnField, body)
+    result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
+    debugEcho result.repr

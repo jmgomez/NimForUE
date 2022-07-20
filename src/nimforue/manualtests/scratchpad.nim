@@ -240,10 +240,7 @@ uEnum EMyEnumCreatedInDsl:
     (BlueprintType)
     Whatever
     SomethingElse
-    AnotherThing
-    What
-    WhatAnother
-    WhatAnotherMas
+
 
 
 
@@ -272,6 +269,8 @@ uClass AActorDsl of AActor:
         multicastDel: FMyDelegateNoParams
         # anotherField5 : FString
 
+        
+
 
 
 #Review the how 
@@ -279,10 +278,10 @@ proc scratchpadEditor*() =
     try:
         let nueBingingsPkg = getPackageByName("NimForUEBindings")
         
-        for obj in getAllObjectsFromPackage[UEnum](nueBingingsPkg):
-            UE_Warn "Found enum  at NimForUEBindings " & obj.getName()
-        for obj in getAllObjectsFromPackage[UEnum](nimPackage):
-            UE_Warn "Found enum at Nim " & obj.getName()
+        # for obj in getAllObjectsFromPackage[UEnum](nueBingingsPkg):
+        #     UE_Warn "Found enum  at NimForUEBindings " & obj.getName()
+        # for obj in getAllObjectsFromPackage[UEnum](nimPackage):
+        #     UE_Warn "Found enum at Nim " & obj.getName()
 
     except Exception as e:
         

@@ -6,3 +6,11 @@
 UNimEnum::UNimEnum(const FObjectInitializer& Initializer) : UEnum(Initializer) {
 	SetEnumFlags(EEnumFlags::Flags);
 }
+
+TArray<TPair<FName, int64>> UNimEnum::GetEnums() {
+	return this->Names;
+}
+
+void UNimEnum::MarkNewVersionExists() {
+	SetEnumFlags(EEnumFlags::NewerVersionExists);
+}
