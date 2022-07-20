@@ -78,7 +78,8 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 
 - [x] DSL for defining UEnums
 
-    ```uEnum EMyEnumCreatedInNim:
+    ```nim
+    uEnum EMyEnumCreatedInNim:
         (BlueprintType)
         ValueOne
         SomethingElse
@@ -86,8 +87,10 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
     ```
 
 - [x] DSL for defining delegates
-    ```uDelegate FMyDelegate2Params(str:FString, param:TArray[FString])
-       uDelegate FMyDelegateNoParams()
+
+    ```nim
+        uDelegate FMyDelegate2Params(str:FString, param:TArray[FString])
+        uDelegate FMyDelegateNoParams()
 ```
 
 - [x] DSL for defining UClasses
