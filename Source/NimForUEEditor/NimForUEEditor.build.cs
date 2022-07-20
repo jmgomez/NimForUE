@@ -10,6 +10,7 @@ public class NimForUEEditor : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"UnrealEd",
+			"EditorStyle",
 			"Slate",
 			"SlateCore",
 			"NimForUEBindings"
