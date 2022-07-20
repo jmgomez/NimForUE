@@ -25,10 +25,8 @@ type
     UFieldPtr* = ptr UField 
 
     UEnum* {.importcpp, inheritable, pure .} = object of UField
-        displayNameMap* {.importcpp: "DisplayNameMap".}: TMap[FName, FText]
     UEnumPtr* = ptr UEnum
-    UUserDefinedEnum* {.importcpp, inheritable, pure .} = object of UEnum
-    UUserDefinedEnumPtr* = ptr UUserDefinedEnum
+   
 
     UStruct* {.importcpp, inheritable, pure .} = object of UField
         Children* : UFieldPtr # Pointer to start of linked list of child fields */

@@ -3,3 +3,6 @@
 
 #include "NimClassBase.h"
 
+UNimEnum::UNimEnum(const FObjectInitializer& Initializer) : UEnum(Initializer) {
+	SetEnumFlags(EEnumFlags::Flags);
+}

@@ -186,6 +186,7 @@ void UEditorUtils::RefreshNodes(FNimHotReload* NimHotReload) {
 	TMap<UClass*, UClass*> ReloadClasses = NimHotReload->ClassesToReinstance;
 	TMap<UScriptStruct*, UScriptStruct*> ReloadStructs = NimHotReload->StructsToReinstance;
 	TMap<UDelegateFunction*, UDelegateFunction*> ReloadDelegates = NimHotReload->DelegatesToReinstance;
+	TMap<UEnum*, UEnum*> ReloadEnums = NimHotReload->EnumsToReinstance;
 
 		TMap<UObject*, UObject*> ClassReplaceList;
 		for (auto& Elem : ReloadClasses)
@@ -706,6 +707,9 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
 		
 		for (const auto& StructToReinstancePair : NimHotReload->StructsToReinstance)
 			Reload->NotifyChange(StructToReinstancePair.Value, StructToReinstancePair.Key);
+
+		for (const auto& EnumToReinstancePair: NimHotReload->EnumsToReinstance)
+			Reload->NotifyChange(EnumToReinstancePair.Value, EnumToReinstancePair.Key);
 		
 		
 		Reload->Reinstance();

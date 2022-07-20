@@ -2,8 +2,8 @@ include ../../definitions
 import array
 type 
     TPair*[K, V] {.importcpp:"TPair",  bycopy .} = object
-        key: K
-        value: V
+        key* {.importcpp:"Key".}: K
+        value* {.importcpp:"Value".}: V
 
     TMap*[K, V] {.importcpp: "TMap", header:ueIncludes, bycopy} = object
 

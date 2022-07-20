@@ -21,6 +21,11 @@ proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : v
 
 
 
+
+#UNimEnum
+func getEnums*(uenum:UNimEnumPtr) : TArray[TPair[FName, int64]] {.importcpp:"#->GetEnums()".}
+proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVersionExists()".}
+
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:openarray[pointer]) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
@@ -128,6 +133,7 @@ type
         structsToReinstance* {.importcpp: "StructsToReinstance" .} : TMap[UScriptStructPtr, UScriptStructPtr]
         classesToReinstance* {.importcpp: "ClassesToReinstance" .} : TMap[UClassPtr, UClassPtr]
         delegatesToReinstance* {.importcpp: "DelegatesToReinstance" .} : TMap[UDelegateFunctionPtr, UDelegateFunctionPtr]
+        enumsToReinstance* {.importcpp: "EnumsToReinstance" .} : TMap[UEnumPtr, UEnumPtr]
         bShouldHotReload* {.importcpp: "bShouldHotReload" .} : bool
     FNimHotReloadPtr* = ptr FNimHotReload
 
@@ -136,6 +142,7 @@ proc setShouldHotReload*(hotReloadInfo: ptr FNimHotReload) =
     hotReloadInfo.bShouldHotReload = 
         hotReloadInfo.classesToReinstance.keys().len() +
         hotReloadInfo.structsToReinstance.keys().len() +
+        hotReloadInfo.enumsToReinstance.keys().len() +
         hotReloadInfo.delegatesToReinstance.keys().len() > 0
 
 

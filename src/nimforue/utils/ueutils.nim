@@ -17,3 +17,6 @@ proc removeLastLettersIfPtr*(str:string) : string =
 
 func tryUECast*[T : UObject](obj:UObjectPtr) : Option[ptr T] = someNil ueCast[T](obj)
     
+
+
+# func As*[T : UStruct](field:UFieldPtr) : ptr T =  tryUECast[T](field).getOrRaise("Field is not a struct")

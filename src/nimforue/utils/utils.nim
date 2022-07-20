@@ -86,3 +86,5 @@ func tap*[T](opt:Option[T], fn : (x : T)->void) : Option[T] =
 func someNil*[T](val: sink T): Option[T] {.inline.} =
     if val == nil: none[T]()
     else: some val
+
+

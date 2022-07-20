@@ -7,9 +7,9 @@ import uemeta
 
 type 
     EmitterInfo* = object
-        generator* : UPackagePtr->UStructPtr
+        generator* : UPackagePtr->UFieldPtr
         ueType* : UEType
-        uStructPointer* : UStructPtr
+        uStructPointer* : UFieldPtr
 
     UEEmitter* = ref object 
         emitters* : seq[EmitterInfo]
@@ -17,34 +17,36 @@ type
 
 var ueEmitter* = UEEmitter() 
 
-proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UStructPtr) : void =  
+proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
     ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
 
+proc prepReinst(prev:UObjectPtr) = 
+    prev.setFlags(RF_NewerVersionExists)
+
+    # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
+    prev.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32))
+
+    let prevNameStr : FString =  fmt("{prev.getName()}_REINST")
+    let oldClassName = makeUniqueObjectName(prev.getOuter(), prev.getClass(), makeFName(prevNameStr))
+    discard prev.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
 proc prepareForReinst(prevClass : UClassPtr) = 
     # prevClass.classFlags = prevClass.classFlags | CLASS_NewerVersionExists
     prevClass.addClassFlag CLASS_NewerVersionExists
-    prevClass.setFlags(RF_NewerVersionExists)
-
-    # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
-    prevClass.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32))
-
-    let prevNameStr : FString =  fmt("{prevClass.getName()}_REINST")
-    let oldClassName = makeUniqueObjectName(prevClass.getOuter(), prevClass.getClass(), makeFName(prevNameStr))
-    discard prevClass.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
+    prepReinst(prevClass)
 
 proc prepareForReinst(prevScriptStruct : UScriptStructPtr) = 
     prevScriptStruct.addScriptStructFlag(STRUCT_NewerVersionExists)
-    prevScriptStruct.setFlags(RF_NewerVersionExists)
-    prevScriptStruct.clearFlags(RF_Public | RF_Standalone)
-    let prevNameStr : FString =  fmt("{prevScriptStruct.getName()}_REINST")
-    let oldClassName = makeUniqueObjectName(prevScriptStruct.getOuter(), prevScriptStruct.getClass(), makeFName(prevNameStr))
-    discard prevScriptStruct.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
+    prepReinst(prevScriptStruct)
 
-proc prepareForReinst(prevScriptStruct : UDelegateFunctionPtr) = discard
+proc prepareForReinst(prevDel : UDelegateFunctionPtr) = 
+    prepReinst(prevDel)
+proc prepareForReinst(prevUEnum : UNimEnumPtr) = discard 
+    # prevUEnum.markNewVersionExists()
+    # prepReinst(prevUEnum)
 
 
-type UEmitable = UScriptStruct | UClass | UDelegateFunction
+type UEmitable = UScriptStruct | UClass | UDelegateFunction | UEnum
         
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
@@ -69,7 +71,10 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
             prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
                 .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
         of uetEnum:
-            discard
+            let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
+            let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr)
+            prevEnumPtr.flatmap((prev:UNimEnumPtr) => newEnumPtr.map(newEnum=>(prev, newEnum)))
+                .run((pair:(UNimEnumPtr, UNimEnumPtr)) => hotReloadInfo.enumsToReinstance.add(pair[0], pair[1]))
         of uetDelegate:
             let prevDelPtr = someNil getUTypeByName[UDelegateFunction](emitter.ueType.name.removeFirstLetter())
             let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr)
@@ -78,6 +83,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
    
     hotReloadInfo.setShouldHotReload()
     hotReloadInfo
+
 
 #By default ue types are emitted in the /Script/Nim package. But we can use another for the tests. 
 proc emitUStructsForPackage*(pkgName:FString = "Nim") : FNimHotReloadPtr = 
@@ -107,6 +113,14 @@ proc emitUDelegate(typedef:UEType) : NimNode =
     
     let typeEmitter = genAst(name=ident typedef.name, typeDefAsNode=newLit typedef): #defers the execution
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUDelegate(typeDefAsNode, package))
+
+    result = nnkStmtList.newTree [typeDecl, typeEmitter]
+
+proc emitUEnum(typedef:UEType) : NimNode = 
+    let typeDecl = genTypeDecl(typedef)
+    
+    let typeEmitter = genAst(name=ident typedef.name, typeDefAsNode=newLit typedef): #defers the execution
+                addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUEnum(typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 #iterate childrens and returns a sequence fo them
@@ -219,7 +233,20 @@ macro uDelegate*(body:untyped) : untyped =
     let name = body[0].strVal()
     let paramsAsFields = body.toSeq()
                              .filter(n=>n.kind==nnkExprColonExpr)
-                             .map(n=> makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip()))
+                             .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip()))
     let ueType = makeUEMulDelegate(name, paramsAsFields)
     emitUDelegate(ueType)
+
+
+macro uEnum*(name:untyped, body : untyped) : untyped = 
+    # echo body.treeRepr
+    let name = name.strVal()
+    let metas = getMetasForType(body)
+    let fields = body.toSeq().filter(n=>n.kind==nnkIdent)
+                    .map(n=>n.repr.strip())
+                    .map(str=>makeFieldASUEnum(str))
+    let ueType = makeUEEnum(name, fields, metas)
+    emitUEnum(ueType)
+
+
 

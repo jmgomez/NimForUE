@@ -22,6 +22,8 @@ func makeFieldAsUFun*(name:string, signature:seq[UEField], flags=FUNC_None) : UE
 func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
 
+func makeFieldASUEnum*(name:string) :UEField = UEField(name:name, kind:uefEnumVal)
+
 func makeUEClass*(name, parent:string, clsFlags:EClassFlags, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
     UEType(kind:uetClass, name:name, parent:parent, clsFlags: EClassFlagsVal(clsFlags), fields:fields)
 
@@ -30,6 +32,9 @@ func makeUEStruct*(name:string, fields:seq[UEField], superStruct="", metadata : 
 
 func makeUEMulDelegate*(name:string, fields:seq[UEField]) : UEType = 
     UEType(kind:uetDelegate, name:name, fields:fields)
+
+func makeUEEnum*(name:string, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
+    UEType(kind:uetEnum, name:name, fields:fields, metadata: metadata)
 
 
 
@@ -119,6 +124,13 @@ func toUEType*(str:UStructPtr) : UEType =
 
     UEType(name:name, kind:uetStruct, fields:fields.reversed())
 
+func toUEType*(uenum:UNimEnumPtr) : UEType = #notice we have to specify the type because we use specific functions here. All types are Nim base types
+    # let fields = getFPropsFromUStruct(enum).map(toUEField)
+    let name = uenum.getName()
+    let fields = uenum.getEnums()
+                      .map((x)=>makeFieldASUEnum(x.key.toFString()))
+                      .toSeq()
+    UEType(name:name, kind:uetEnum, fields: fields) #TODO
 
 proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
     let prop : FPropertyPtr = newFProperty(outer, propField)
@@ -130,7 +142,7 @@ proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
 
 
 
-proc emitUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
+proc emitUClass*(ueType : UEType, package:UPackagePtr) : UFieldPtr =
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
     # const objClsFlags  =  (RF_Public || RF_Standalone || RF_Transactional || RF_LoadCompleted)
     # let objClsFlags  =  RF_Standalone || RF_Public
@@ -168,7 +180,7 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr) : UStructPtr =
     newCls
 
 
-proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
+proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UFieldPtr =
       
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet)
     let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
@@ -190,7 +202,7 @@ proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UStructPtr =
 
 
 
-proc emitUStruct*[T](ueType : UEType, package:string) : UStructPtr =
+proc emitUStruct*[T](ueType : UEType, package:string) : UFieldPtr =
     let package = getPackageByName(package)
     if package.isnil():
         raise newException(Exception, "Package not found!")
@@ -200,16 +212,17 @@ proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr =
     let name = enumType.name.makeFName()
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     let uenum = newUObject[UNimEnum](package, name, objFlags)
+    for metadata in enumType.metadata:
+        uenum.setMetadata(metadata.name, $metadata.value)
     let enumFields = makeTArray[TPair[FName, int64]]()
     for field in enumType.fields.pairs:
         let fieldName = field.val.name.makeFName()
         enumFields.add(makeTPair(fieldName,  field.key.int64))
-        # uenum.displayNameMap.add(fieldName, fromFName(fieldName))
-        UE_Warn "ENUM " & fieldName.fromFName().toFString()
+        # uenum.setMetadata("DisplayName", "Whatever"&field.val.name)) TODO the display name seems to be stored into a metadata prop that isnt the one we usually use
     discard uenum.setEnums(enumFields)
     uenum
 
-proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UStructPtr = 
+proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr = 
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UDelegateFunction](package, fnName, objFlags)

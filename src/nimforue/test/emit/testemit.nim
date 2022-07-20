@@ -19,7 +19,7 @@ suite "NimForUE.ClassEmit":
                             makeFieldAsUProp("TestField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                             makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                         ])
-        let newCls = ueVarType.emitUClass(package)
+        let newCls = ueCast[UClass]ueVarType.emitUClass(package)
         
         let fields = getFPropsFromUStruct(newCls)
         
@@ -50,7 +50,7 @@ suite "NimForUE.ClassEmit":
                                 makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                             ])
 
-        let scriptStruct = emitUStruct[FMyNimStruct](ueType, package)
+        let scriptStruct = ueCast[UScriptStruct]emitUStruct[FMyNimStruct](ueType, package)
 
         let searchCls = () => findObject[UNimScriptStruct](package, structName.removeFirstLetter())
 

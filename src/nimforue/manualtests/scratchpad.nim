@@ -235,6 +235,18 @@ const ueType = UEType(name: "EMyEnumCreatedInNim2", kind:uetEnum,
 discard ueType.emitUEnum(nimPackage)
 genType(ueType)
 
+
+uEnum EMyEnumCreatedInDsl:
+    (BlueprintType)
+    Whatever
+    SomethingElse
+    AnotherThing
+    What
+    WhatAnother
+    WhatAnotherMas
+
+
+
 uDelegate FMyDelegate(str:FString, number:FString)
 uDelegate FMyDelegate2Params(str:FString, param:TArray[FString])
 uDelegate FMyDelegateNoParams()
@@ -251,6 +263,7 @@ uClass AActorDsl of AActor:
         anotherFieldArr : TArray[int32]
         anotherFieldEnum : EMyTestEnum
         nimCreatedEnum2 : EMyEnumCreatedInNim2
+        nimCreatedDsl : EMyEnumCreatedInDsl
         
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
