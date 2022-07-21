@@ -269,7 +269,9 @@ uClass AActorDsl of AActor:
         multicastDel: FMyDelegateNoParams
         # anotherField5 : FString
 
-        
+proc helloActorDsl(self:AActorDsl) : void {.ufunc.} = 
+    UE_Warn "Hello from Aactor"
+
 
 
 

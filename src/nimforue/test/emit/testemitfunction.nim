@@ -45,10 +45,12 @@ uClass UMyClassToTestNim of UObject: #TODO specify the package
 
 # genUFun("UMyClassToTestNim", fnField)
  
-proc newFunction(self:UMyClassToTestNimPtr, testProperty:FString) {.ufunc.}=
+proc newFunctionDsl(self:UMyClassToTestNimPtr, another:FString) {.ufunc.}=
     self.bWasCalled = true
-    self.testProperty = testProperty
-     
+    self.testProperty = another
+    UE_Warn "Got updated?" & "shit this is so crazy that I dont fully get what's going on!!!"
+    
+    
     
 
  
@@ -215,20 +217,20 @@ suite "NimForUE.FunctionEmit":
         #     self.testProperty = testProperty
         #     self.bWasCalled = true 
             
-        let fnField = UEField(kind:uefFunction, name:"NewFunction", fnFlags: FUNC_Native, 
-                signature: @[
-                    UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
-                ])
+        # let fnField = UEField(kind:uefFunction, name:"NewFunction", fnFlags: FUNC_Native, 
+        #         signature: @[
+        #             UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
+        #         ])
         
-        let fn = emitUFunction(fnField, cls, fnImplMacro)
+        # let fn = emitUFunction(fnField, cls, nil)
         let expectedStr = "ParameterValue"
         
-        obj.newFunction(expectedStr)
+        obj.newFunctionDsl(expectedStr)
         assert obj.bWasCalled
-        assert fn.numParms == 1
+        # assert fn.numParms == 1
         assert obj.testProperty.equals(expectedStr) 
         
-        cls.removeFunctionFromClass fn 
+        # cls.removeFunctionFromClass fn 
 
 
 

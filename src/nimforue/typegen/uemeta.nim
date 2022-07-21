@@ -16,8 +16,8 @@ func makeFieldAsUPropDel*(name, uPropType: string, flags=CPF_None, metas:seq[UEM
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata: @[makeUEMetadata(DelegateMetadataKey)]&metas)       
 
 
-func makeFieldAsUFun*(name:string, signature:seq[UEField], flags=FUNC_None) : UEField = 
-    UEField(kind:uefFunction, name:name, signature:signature, fnFlags:EFunctionFlagsVal(flags))
+func makeFieldAsUFun*(name:string, signature:seq[UEField], className:string, flags=FUNC_None) : UEField = 
+    UEField(kind:uefFunction, name:name, signature:signature, className:className, fnFlags:EFunctionFlagsVal(flags))
 
 func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
@@ -101,7 +101,10 @@ func toUEField*(ufun:UFunctionPtr) : UEField =
 
     let params = getFPropsFromUStruct(ufun).map(toUEField)
     # UE_Warn(fmt"{ufun.getName()}")
-    makeFieldAsUFun(ufun.getName(), params, ufun.functionFlags)
+    let class = ueCast[UClass](ufun.getOuter())
+    let className = class.getPrefixCpp() & class.getName()
+
+    makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
     
 
 func toUEType*(cls:UClassPtr) : UEType =
@@ -236,7 +239,8 @@ proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr =
 #note at some point class can be resolved from the UEField?
 proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
     let fnName = fnField.name.makeFName()
-    var fn = newUObject[UFunction](cls, fnName)
+    let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    var fn = newUObject[UFunction](cls, fnName, objFlags)
     fn.functionFlags = fnField.fnFlags
 
     fn.Next = cls.Children 

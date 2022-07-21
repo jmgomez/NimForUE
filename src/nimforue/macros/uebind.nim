@@ -183,20 +183,8 @@ macro uebindstatic* (className: string, fn : untyped) : untyped =
     fn
 
 
-
-    
-
-#  IdentDefs
-#             Ident "regularProperty"
-#             Ident "int32"
-#             Empty
-#           IdentDefs
-#             Ident "genericProp"
-#             BracketExpr
-#               Ident "TArray"
-#               Ident "FString"
-
-func getTypeNodeFromUProp(prop : UEField) : NimNode = 
+#Converts a UEField type into a NimNode
+func getTypeNodeFromUProp*(prop : UEField) : NimNode = 
     #naive check on generic types:
     case prop.kind:
         of uefProp:
@@ -227,18 +215,18 @@ func identWithInjectAnd(name:string, pragmas:seq[string]) : NimNode =
             nnkPragma.newTree((@["inject"] & pragmas).map( x => ident x))
         ]
         )
-func identWithInjectPublic(name:string) : NimNode = 
+func identWithInjectPublic*(name:string) : NimNode = 
     nnkPragmaExpr.newTree([
         nnkPostfix.newTree([ident "*", ident name]),
         nnkPragma.newTree(ident "inject")])
 
-func identWithInject(name:string) : NimNode = 
+func identWithInject*(name:string) : NimNode = 
     nnkPragmaExpr.newTree([
         ident name,
         nnkPragma.newTree(ident "inject")])
 
-func identWrapper(name:string) : NimNode = ident(name) #cant use ident as argument
-func identPublic(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
+func identWrapper*(name:string) : NimNode = ident(name) #cant use ident as argument
+func identPublic*(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
 
 func genProp(typeDef : UEType, prop : UEField) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
@@ -269,12 +257,46 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
    
         
 
-func isReturnParam(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
+func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
+
+
+#helper func used in geneFunc and genParamsInsideFunc
+#returns for each param a type definition node
+#the functions that it receives as param is used with ident/identWithInject/ etc. to make fields public or injected
+func signatureAsNode(funField:UEField, identFn : string->NimNode) : seq[NimNode] =  
+    case funField.kind:
+    of uefFunction: 
+       return funField.signature
+            .filter(prop=>not isReturnParam(prop))
+            .map(param=>[identFn(param.name.firstToLow()), getTypeNodeFromUProp param, newEmptyNode()])
+            .map(n=>nnkIdentDefs.newTree(n))
+    else:
+        error("funField: not a func")
+
+func genParamInFnBodyAsType*(funField:UEField) : NimNode = 
+    let returnProp = funField.signature.filter(isReturnParam).head()
+
+    let paramsInsideFuncDef = nnkTypeSection.newTree([nnkTypeDef.newTree([identWithInject "Params", newEmptyNode(), 
+                            nnkObjectTy.newTree([
+                                newEmptyNode(), newEmptyNode(),  
+                                nnkRecList.newTree(
+                                    funField.signatureAsNode(identWrapper) &
+                                    returnProp.map(prop=>
+                                        @[nnkIdentDefs.newTree([ident("toReturn"), 
+                                                            ident prop.uePropType, 
+                                                            newEmptyNode()])]).get(@[])
+                                )])
+                        ])])
+
+    
+    paramsInsideFuncDef
+
+
 
 #this is used for both, to generate regular function binds and delegate broadcast/execute functions
 #for the most part the same code is used for both
 #this is also used for native function implementation but the ast is changed afterwards
-func genFunc(typeDef : UEType, funField : UEField) : NimNode = 
+func genFunc*(typeDef : UEType, funField : UEField) : NimNode = 
     let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
     let isStatic = FUNC_Static in funField.fnFlags
     let clsName = typeDef.name.substr(1)
@@ -284,11 +306,7 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
                                 .head()
                                 .isSome()
     
-    let signatureAsNode = (identFn : string->NimNode) => 
-                                funField.signature
-                                        .filter(prop=>not isReturnParam(prop))
-                                        .map(param=>[identFn(param.name.firstToLow()), getTypeNodeFromUProp param, newEmptyNode()])
-                                        .map(n=>nnkIdentDefs.newTree(n))
+
 
     let returnProp = funField.signature.filter(isReturnParam).head()
 
@@ -308,7 +326,7 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
                         @[returnType] &
                         (if isStatic: @[] 
                         else: @[nnkIdentDefs.newTree([identWithInject "obj", objType, newEmptyNode()])]) &  
-                        signatureAsNode(identWithInject))
+                        funField.signatureAsNode(identWithInject))
     # let pragmas = nnkPragma.newTree([ident "inject"])
     let generateObjForStaticFunCalls = 
         if isStatic: 
@@ -316,27 +334,7 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
                 let obj {.inject.} = getDefaultObjectFromClassName(clsName)
         else: newEmptyNode()
 
-    let paramsInsideFuncDef = nnkTypeSection.newTree([nnkTypeDef.newTree([identWithInject "Params", newEmptyNode(), 
-                                nnkObjectTy.newTree([
-                                    newEmptyNode(), newEmptyNode(),  
-                                    nnkRecList.newTree(
-                                        signatureAsNode(identWrapper) &
-                                        
-                                        returnProp.map(prop=>
-                                            @[nnkIdentDefs.newTree([ident("toReturn"), 
-                                                                ident prop.uePropType, 
-                                                                newEmptyNode()])]).get(@[])
-                                    )])
-                            ])])
 
-    let paramObjectConstrCall = nnkObjConstr.newTree(@[ident "Params"] &  #creates Params(param0:param0, param1:param1)
-                                funField.signature
-                                    .filter(prop=>not isReturnParam(prop))
-                                    .map(param=>ident(param.name.firstToLow()))
-                                    .map(param=>nnkExprColonExpr.newTree(param, param))
-                            )
-
-    let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
     
     let callUFuncOn = 
         case typeDef.kind:
@@ -354,9 +352,16 @@ func genFunc(typeDef : UEType, funField : UEField) : NimNode =
                         genAst(): 
                             return param.toReturn 
                      else: newEmptyNode()
-
-    var fnBody = genAst(uFnName=newStrLitNode(funField.name), paramsInsideFuncDef, paramDeclaration, generateObjForStaticFunCalls, callUFuncOn, returnCall):
-        paramsInsideFuncDef
+    let paramInsideBodyAsType = genParamInFnBodyAsType(funField)
+    let paramObjectConstrCall = nnkObjConstr.newTree(@[ident "Params"] &  #creates Params(param0:param0, param1:param1)
+                                funField.signature
+                                    .filter(prop=>not isReturnParam(prop))
+                                    .map(param=>ident(param.name.firstToLow()))
+                                    .map(param=>nnkExprColonExpr.newTree(param, param))
+                            )
+    let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
+    var fnBody = genAst(uFnName=newStrLitNode(funField.name), paramInsideBodyAsType, paramDeclaration, generateObjForStaticFunCalls, callUFuncOn, returnCall):
+        paramInsideBodyAsType
         paramDeclaration
         var fnName {.inject, used .} : FString = uFnName
         generateObjForStaticFunCalls
@@ -486,60 +491,4 @@ macro genUFun*(className : static string, funField : static UEField) : untyped =
         
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
     
-import ../unreal/coreuobject/uobject
-import ../unreal/nimforue/nimforuebindings
 
-
-func genNativeFunction*(className : string, funField : UEField, body:NimNode) : NimNode =
-    let ueType = UEType(name:className, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
-    # let fnNode = genFunc(ueType, funField)
-
-    #[
-    proc newFunction*(obj {.inject.}: UMyClassToTestNimPtr;
-                  testProperty {.inject.}: FString): void =
-        
-        proc fnImpl(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
-            stack.increaseStack()
-            let obj = cast[UMyClassToTestNimPtr](context) 
-            type Param = object
-                testProperty : FString
-            let params = cast[ptr Param](stack.locals)
-            
-            let testProperty = params.testProperty
-
-            ??????
-    ]#
-    let className = ident ueType.name
-    result = genAst(className, body):        
-        proc fnImplMacro(context:UObjectPtr, stack:var FFrame,  result: pointer):void {. inject,  cdecl .} =
-            stack.increaseStack()
-            let self {.inject.} = ueCast[className](context) 
-            type Param = object
-                testProperty : FString
-            let params = cast[ptr Param](stack.locals)
-            let testProperty{.inject.} = params.testProperty
-
-            body
-    # debugEcho result.repr
-
-
-macro ufunc*(fn:untyped) : untyped =
-    #this will generate a UEField for the function 
-    #and then call genNativeFunction passing the body
-    let body = fn.children.toSeq()
-                 .filter(n => n.kind == nnkStmtList)
-                 .head()
-                 .get()
-
-    
-    const fnField = UEField(kind:uefFunction, name:"NewFunction", fnFlags: FUNC_Native, 
-                signature: @[
-                    UEField(kind:uefProp, name: "TestProperty", uePropType: "FString", propFlags:CPF_Parm)
-                    # UEField(kind:uefProp, name: "TestProperty2", uePropType: "FString", propFlags:CPF_Parm)
-                ]
-    )             
-    let ueType = UEType(name:"UMyClassToTestNim", kind:uetClass) #Notice it only looks for the name and the kind (delegates)
-    let fnReprNode = genFunc(ueType, fnField)
-    let fnImplNode = genNativeFunction("UMyClassToTestNim", fnField, body)
-    result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
-    debugEcho result.repr

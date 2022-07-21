@@ -56,12 +56,12 @@ const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uetC
                         makeFieldAsUPropMulDel("MulticastDynamicDelegateOneParamProperty", "FDynamicMulticastDelegateOneParamTest"),
                         UEField(kind:uefProp, name: "bWasCalled", uePropType: "bool"),
                         #functions TODO Create in cpp, functions that has out params. and also a mix of all. Also make one with TArray, TMap etc
-                        makeFieldAsUFun("BindDelegateFuncToDelegateOneParam", @[]),
-                        makeFieldAsUFun("BindDelegateFuncToMultcasDynOneParam", @[]),
-                        makeFieldAsUFun("DelegateFunc", @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)]),
-                        makeFieldAsUFun("FakeFunc", @[]),
-                        makeFieldAsUFun("GetHelloWorld", @[makeFieldAsUPropParam("ReturnValue", "FString", CPF_ReturnParm or CPF_Parm)]),
-                        makeFieldAsUFun("GetHelloWorldStatic", @[makeFieldAsUPropParam("Par", "FString", CPF_ReturnParm or CPF_Parm)], FUNC_Static),
+                        makeFieldAsUFun("BindDelegateFuncToDelegateOneParam", @[], "UMyClassToTest"),
+                        makeFieldAsUFun("BindDelegateFuncToMultcasDynOneParam", @[], "UMyClassToTest"),
+                        makeFieldAsUFun("DelegateFunc", @[makeFieldAsUPropParam("Par", "FString", CPF_Parm)], "UMyClassToTest"),
+                        makeFieldAsUFun("FakeFunc", @[], "UMyClassToTest"),
+                        makeFieldAsUFun("GetHelloWorld", @[makeFieldAsUPropParam("ReturnValue", "FString", CPF_ReturnParm or CPF_Parm)], "UMyClassToTest"),
+                        makeFieldAsUFun("GetHelloWorldStatic", @[makeFieldAsUPropParam("Par", "FString", CPF_ReturnParm or CPF_Parm)],"UMyClassToTest", FUNC_Static),
                         ])
 
 

@@ -40,6 +40,7 @@ type
                 propFlags*:EPropertyFlagsVal
 
             of uefFunction:
+                className*:string
                 #note cant use option type. If it has a returnParm it will be the first param that has CPF_ReturnParm
                 signature* : seq[UEField]
                 fnFlags* : EFunctionFlagsVal
