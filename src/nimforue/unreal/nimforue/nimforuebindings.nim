@@ -136,6 +136,7 @@ type
         classesToReinstance* {.importcpp: "ClassesToReinstance" .} : TMap[UClassPtr, UClassPtr]
         delegatesToReinstance* {.importcpp: "DelegatesToReinstance" .} : TMap[UDelegateFunctionPtr, UDelegateFunctionPtr]
         enumsToReinstance* {.importcpp: "EnumsToReinstance" .} : TMap[UEnumPtr, UEnumPtr]
+        nativeFunctionsToReinstance* {.importcpp: "NativeFunctionsToReinstance" .} : TArray[TPair[FNativeFuncPtr, FNativeFuncPtr]]
         bShouldHotReload* {.importcpp: "bShouldHotReload" .} : bool
     FNimHotReloadPtr* = ptr FNimHotReload
 

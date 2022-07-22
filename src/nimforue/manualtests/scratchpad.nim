@@ -272,15 +272,22 @@ uClass AActorDsl of AActor:
 
 
 
-proc helloActorDsl(self:AActorDslPtr) : void {.ufunc.} = 
+proc helloActorDsl(sel2:AActorDslPtr) : void {.ufunc.} = 
     UE_Warn "Hello from Aactor" 
+    
 
 
 
 proc helloActorDslWithIntParamter(self:AActorDsl, param:FString, param2:int32) : void {.ufunc.} = 
     let str = $param
-    UE_Warn "Hello from Aactor" & str & " " & $param2
+    UE_Warn "Hello from Aactor modified:" & str & " " & $param2
 
+proc helloActorDslWithIntParamterAndObjectParam(self:AActorDsl, param:FString, param2:int32, param3:UObjectPtr) : void {.ufunc.} = 
+    let str = $param
+    UE_Warn "Hello from Aactor modified:" & str & " " & $param2 & " " & param3.getName()
+
+proc functionThatReturns(self:AActorDsl) : FString {.ufunc.} = 
+    return "Whatever"
 
 
 uClass UObjectNim of UObject:
@@ -289,8 +296,18 @@ uClass UObjectNim of UObject:
         testField : FString
        
 
-proc helloObjectNim(self:UObjectNimPtr, param:FString) : void {.ufunc.} = 
+
+proc helloObjectNim2(self:UObjectNimPtr, param:FString) : FString {.ufunc.} = 
     UE_Warn "Hello from object" & param
+
+
+    
+proc helloObjectNim(self:UObjectNimPtr, param:FString) : int {.ufunc.} = 
+    UE_Warn "Hello from object" & param
+    78
+    
+
+
 
 
 type UMyClassToDeriveToTestUFunctions = object of UObject
@@ -301,9 +318,9 @@ uClass UMyClassToDeriveToTestUFunctionsNim of UMyClassToDeriveToTestUFunctions:
         testField : FString
        
 
-proc implementableEventTest(self:UMyClassToDeriveToTestUFunctionsNimPtr, param:FString) : void {.ufunc.} = 
-    UE_Warn "Hello from nim " & param
-    discard
+# proc implementableEventTest(self:UMyClassToDeriveToTestUFunctionsNimPtr, param:FString) : void {.ufunc.} = 
+#     UE_Warn "Hello from nim " & param
+#     discard
 
 
 

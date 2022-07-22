@@ -45,8 +45,8 @@ uClass UMyClassToTestNim of UObject: #TODO specify the package
 
 # genUFun("UMyClassToTestNim", fnField)
  
-proc newFunctionDsl(self:UMyClassToTestNimPtr, param:FString) {.ufunc.}=
-    self.bWasCalled = true
+# proc newFunctionDsl(self:UMyClassToTestNimPtr, param:FString) {.ufunc.}=
+#     self.bWasCalled = true
     # self.testProperty = param
     # UE_Warn "Got updated?" & "shit this is so crazy that I dont fully get what's going on!!!" & param
     
@@ -228,7 +228,7 @@ suite "NimForUE.FunctionEmit":
         while i<times:
             inc i
             let expectedStr = "ParameterValue" & $i
-            obj.newFunctionDsl(expectedStr)
+            # obj.newFunctionDsl(expectedStr)
         assert obj.bWasCalled
         # assert fn.numParms == 1
         # assert obj.testProperty.equals(expectedStr) 

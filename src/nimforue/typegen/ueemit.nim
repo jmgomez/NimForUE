@@ -78,6 +78,15 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo,
         prev.run prepareForReinst
         some ueCast[T](emitter.generator(pkg))
 
+proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, ueType:UEType, fnGen:UPackagePtr->UFieldPtr,  prev:Option[ptr T]) : Option[ptr T]= 
+    let areEquals = prev.isSome() and prev.get().toUEType() == ueType
+    if areEquals: none[ptr T]()
+    else: 
+        prev.run prepareForReinst
+        some ueCast[T](fnGen(pkg))
+
+
+
 proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr = 
     var hotReloadInfo = newNimHotReload()
     for emitter in ueEmitter.emitters:
@@ -110,10 +119,18 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
             #resolve the class
             let cls = getClassByName emitter.uFunction.className.removeFirstLetter()
             UE_Log fmt"generating the function for class: {cls.getName()}"
-            discard emitter.fnGenerator(cls)
+            discard emitter.fnGenerator(cls) 
             
     for ueType in ueEmitter.types:
-        discard ueType.emitUClass(pkg, ueEmitter.fnTable)
+        let ueType = ueType
+        let fnGen = (pkg:UPackagePtr)=> ueType.emitUClass(pkg, ueEmitter.fnTable)
+        let prevClassPtr = someNil getClassByName ueType.name.removeFirstLetter()
+        let newClassPtr = emitUStructInPackage(pkg, ueType, fnGen, prevClassPtr)
+        prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
+            .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
+
+    #check if a fn changed (check if the pointer points to the same direction). But how we can detect that, I mean, how we can detect a change if we cant look into the implementation.. this wont work.
+    #ON HOLD
 
     hotReloadInfo.setShouldHotReload()
     hotReloadInfo
@@ -283,7 +300,7 @@ macro uEnum*(name:untyped, body : untyped) : untyped =
     emitUEnum(ueType)
 
 
-func genNativeFunction*(funField : UEField, body:NimNode) : NimNode =
+func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : NimNode =
     let ueType = UEType(name:funField.className, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
     let className = ident ueType.name
 
@@ -320,46 +337,67 @@ func genNativeFunction*(funField : UEField, body:NimNode) : NimNode =
                                                 .filter(prop=>not isReturnParam(prop))
                                                 .map(genParamArgFor))
                             
-
-    result = genAst(className, body, paramInsideBodyAsType, genParmas, funField=newLit funField):        
-            let fnImplPtr = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  result: pointer):void {. cdecl .} =
+    let returnParam = funField.signature.first(isReturnParam)
+    let returnType = ident returnParam.map(x=>x.uePropType).get("void")
+    let innerCall = 
+        if funField.doesReturn():
+            genAst(returnType):
+                cast[ptr returnType](returnResult)[] = inner()
+        else: nnkCall.newTree(ident "inner")
+    let innerFunction = 
+        genAst(body, returnType, innerCall): 
+            proc inner() : returnType = 
+                body
+            innerCall
+    # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())
+    let fnImplName = ident funField.name&"_Impl" #probably this needs to be injected so we can inspect it later
+    let selfName = ident firstParam.name
+    result = genAst(className, genParmas, innerFunction, fnImplName, selfName, funField=newLit funField):        
+            let fnImplName = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
             
                 genParmas    
                 stack.increaseStack()
-                let self {.inject.} = ueCast[className](context) 
+                let selfName {.inject.} = ueCast[className](context) 
+                innerFunction
+                # inner()
+                # body
+                # cast[ptr FString](result)[] = test(self, anotherParam, anotherParamMore)
                 
-                body
-
                 #TODO return/out etc.
-            addEmitterInfo(funField, fnImplPtr)
+            addEmitterInfo(funField, fnImplName)
 
-    # debugEcho result.repr
 
 
 macro ufunc*(fn:untyped) : untyped =
     #this will generate a UEField for the function 
     #and then call genNativeFunction passing the body
 
-
     #converts the params to fields (notice returns is not included)
     let fnName = fn[0].strVal().firstToUpper()
-    let fields = fn.children.toSeq() #TODO this can be handle in a way so multiple args can be defined as the smae type
-                     .filter(n=>n.kind==nnkFormalParams)
-                     .head()
-                     .get(newEmptyNode()) #throw error?
-                     .children.toSeq()
-                     .filter(n=>n.kind==nnkIdentDefs)
-                     .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip()))
+    let formalParamsNode = fn.children.toSeq() #TODO this can be handle in a way so multiple args can be defined as the smae type
+                             .filter(n=>n.kind==nnkFormalParams)
+                             .head()
+                             .get(newEmptyNode()) #throw error?
+                             .children
+                             .toSeq()
+
+    let fields = formalParamsNode
+                    .filter(n=>n.kind==nnkIdentDefs)
+                    .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip()))
 
     #what about static funcs?
     let firstParam = fields.head().getOrRaise("Class not found")
     let className = firstParam.uePropType.removeLastLettersIfPtr()
+    
 
-    let actualParams = fields.tail()
-    #return param TODO
-    #TODO add return pararm to FIELD
+    let returnParam = formalParamsNode #for being void it can be empty or void
+                        .first(n=>n.kind==nnkIdent)
+                        .flatMap((n:NimNode)=>(if n.strVal()=="void": none[NimNode]() else: some(n)))
+                        .map(n=>makeFieldAsUPropParam("toReturn", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
 
-    let fnImplementationBody = fn.children.toSeq()
+    let actualParams = fields.tail() & returnParam.map(f => @[f]).get(@[])
+    
+    let fnImplementationBody = fn.children.toSeq() #TODO the last [^1] should be the body or fn.body
                  .filter(n => n.kind == nnkStmtList)
                  .head()
                  .get()
@@ -367,16 +405,33 @@ macro ufunc*(fn:untyped) : untyped =
     let fnField = makeFieldAsUFun(fnName, actualParams, className, FUNC_Native or FUNC_BlueprintCallable)
 
     let fnReprNode = genFunc(UEType(name:className, kind:uetClass), fnField)
-    let fnImplNode = genNativeFunction(fnField, fnImplementationBody)
+    let fnImplNode = genNativeFunction(firstParam, fnField, fnImplementationBody)
+    # echo fnImplNode.repr
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
-    # debugEcho fn.treeRepr
     debugEcho result.repr
 
 
+#falta genererar el call
+#void vs no void
+#return type
 
 
 
-     
+# proc functionThatReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool) : FString {.ufunc.} = 
+#     return "Whatever"
+
+# proc functionThatReturns2(self:UObjectPtr) : string {.ufunc.} = 
+#     discard
+#     "Whatever2"
+# #     
+
+# proc functionThatNoReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool)  {.ufunc.} =  
+#     echo "hello mi ninio"
+
     
+# proc functionThatNoReturns2(self:UObjectPtr)  {.ufunc.} : void =  discard
 
- 
+
+
+    
+    # inner(anotherParam, anotherParamMore)

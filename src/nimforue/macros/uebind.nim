@@ -291,7 +291,29 @@ func genParamInFnBodyAsType*(funField:UEField) : NimNode =
     
     paramsInsideFuncDef
 
+func isStatic*(funField:UEField) : bool = (FUNC_Static in funField.fnFlags)
+func getReturnProp*(funField:UEField) : Option[UEField] =  funField.signature.filter(isReturnParam).head()
+func doesReturn*(funField:UEField) : bool = funField.getReturnProp().isSome()
 
+func genParamInFunctionSignature*(typeDef : UEType, funField:UEField, firstParamName:string) : NimNode = #returns (obj:UObjectPr, param:Fstring..) : FString 
+#notice the first part has to be introduced. see the final part of genFunc
+    let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
+
+    let returnType =    if funField.doesReturn():
+                            ident funField.getReturnProp().get().uePropType
+                        else:
+                            ident "void"
+
+
+    let objType = if typeDef.kind == uetDelegate:
+                        nnkVarTy.newTree(ptrName)
+                    else:
+                        ptrName
+    nnkFormalParams.newTree(
+                    @[returnType] &
+                    (if funField.isStatic(): @[] 
+                    else: @[nnkIdentDefs.newTree([identWithInject firstParamName, objType, newEmptyNode()])]) &  
+                    funField.signatureAsNode(identWithInject))
 
 #this is used for both, to generate regular function binds and delegate broadcast/execute functions
 #for the most part the same code is used for both
@@ -301,39 +323,13 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
     let isStatic = FUNC_Static in funField.fnFlags
     let clsName = typeDef.name.substr(1)
 
-    let funReturns = funField.signature
-                                .filter(isReturnParam)
-                                .head()
-                                .isSome()
-    
-
-
-    let returnProp = funField.signature.filter(isReturnParam).head()
-
-
-    let returnType =    if funReturns:
-                            #edges cases here
-                            ident returnProp.get().uePropType
-                        else:
-                            ident "void"
-    
-    #produces either obj : UObjPtr or obj : var DelegateType
-    let objType = if typeDef.kind == uetDelegate:
-                        nnkVarTy.newTree(ptrName)
-                    else:
-                        ptrName
-    let fnParams = nnkFormalParams.newTree(
-                        @[returnType] &
-                        (if isStatic: @[] 
-                        else: @[nnkIdentDefs.newTree([identWithInject "obj", objType, newEmptyNode()])]) &  
-                        funField.signatureAsNode(identWithInject))
+    let fnParams = genParamInFunctionSignature(typeDef, funField, "obj")
     # let pragmas = nnkPragma.newTree([ident "inject"])
     let generateObjForStaticFunCalls = 
         if isStatic: 
             genAst(clsName=newStrLitNode(clsName)): 
                 let obj {.inject.} = getDefaultObjectFromClassName(clsName)
         else: newEmptyNode()
-
 
     
     let callUFuncOn = 
@@ -348,7 +344,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
 
 
 
-    let returnCall = if funReturns: 
+    let returnCall = if funField.doesReturn(): 
                         genAst(): 
                             return param.toReturn 
                      else: newEmptyNode()

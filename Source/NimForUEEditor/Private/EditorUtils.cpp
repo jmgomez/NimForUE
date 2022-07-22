@@ -710,6 +710,9 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
 
 		for (const auto& EnumToReinstancePair: NimHotReload->EnumsToReinstance)
 			Reload->NotifyChange(EnumToReinstancePair.Value, EnumToReinstancePair.Key);
+
+		for (const auto& NativeFuncPair: NimHotReload->NativeFunctionsToReinstance)
+			Reload->NotifyFunctionRemap(NativeFuncPair.Value, NativeFuncPair.Key);
 		
 		
 		Reload->Reinstance();

@@ -6,5 +6,6 @@ struct FNimHotReload {
 	TMap<UClass*, UClass*> ClassesToReinstance = {};
 	TMap<UDelegateFunction*, UDelegateFunction*> DelegatesToReinstance = {}; //This is just for updating blueprint nodes
 	TMap<UEnum*, UEnum*> EnumsToReinstance = {}; 
+	TArray<TPair<FNativeFuncPtr, FNativeFuncPtr>> NativeFunctionsToReinstance = {}; 
 	bool bShouldHotReload;
 };
