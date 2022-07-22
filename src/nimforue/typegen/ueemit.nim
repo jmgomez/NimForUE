@@ -1,6 +1,6 @@
 include ../unreal/prelude
 include ../utils/utils
-import std/[sugar, macros, algorithm, strutils, strformat, tables, genasts, sequtils, options]
+import std/[sugar, macros, algorithm, strutils, strformat, tables, genasts, sequtils, options, hashes]
 import nuemacrocache
 import uemeta
 
@@ -129,9 +129,26 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
         prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
             .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
 
+
+    for fnName, fnPtr in ueEmitter.fnTable:
+        let prevFn = someNil getUTypeByName[UNimFunction](fnName)
+        let funField = getFieldByName(ueEmitter.types, fnName)
+
+        if prevFn.isSome() and funField.isSome():
+            #TODO improve the check
+            let prev = prevFn.get()
+            let newHash = funField.get().sourceHash
+            if not prev.sourceHash.equals(newHash):
+                UE_Warn fmt"A function changed {fnName} updating the pointer"
+                prev.setNativeFunc(cast[FNativeFuncPtr](fnPtr)) 
+                prev.sourceHash = newHash
+        #finds the function in unearl
+        #get the fnField from the type
+        #if the function exists in both places and it is different, then add it to the hotReload 
+        #if it exists see if the source if t
     #check if a fn changed (check if the pointer points to the same direction). But how we can detect that, I mean, how we can detect a change if we cant look into the implementation.. this wont work.
     #ON HOLD
-
+  
     hotReloadInfo.setShouldHotReload()
     hotReloadInfo
 
@@ -352,8 +369,8 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())
     let fnImplName = ident funField.name&"_Impl" #probably this needs to be injected so we can inspect it later
     let selfName = ident firstParam.name
-    result = genAst(className, genParmas, innerFunction, fnImplName, selfName, funField=newLit funField):        
-            let fnImplName = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
+    let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName):        
+            let fnImplName {.inject.} = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
             
                 genParmas    
                 stack.increaseStack()
@@ -364,8 +381,15 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                 # cast[ptr FString](result)[] = test(self, anotherParam, anotherParamMore)
                 
                 #TODO return/out etc.
-            addEmitterInfo(funField, fnImplName)
+            # addEmitterInfo(funField, fnImplName)
+    var funField = funField
+    funField.sourceHash = $hash(repr fnImpl)
 
+    genAst(fnImplName,fnImpl, funField = newLit funField): 
+        fnImpl
+        addEmitterInfo(funField, fnImplName)
+    
+    
 
 
 macro ufunc*(fn:untyped) : untyped =
@@ -408,7 +432,7 @@ macro ufunc*(fn:untyped) : untyped =
     let fnImplNode = genNativeFunction(firstParam, fnField, fnImplementationBody)
     # echo fnImplNode.repr
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
-    debugEcho result.repr
+    # debugEcho result.repr
 
 
 #falta genererar el call

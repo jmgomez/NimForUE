@@ -1,26 +1,28 @@
 #this is temp until we have tests working (have to bind dyn delegates first)
 include ../unreal/prelude
-import std/[times,strformat, strutils, options, sugar, sequtils, json, jsonutils]
+import std/[times, strformat, strutils, options, sugar, sequtils, json, jsonutils]
 import ../typegen/[uemeta, models, ueemit]
 
-proc saySomething(obj:UObjectPtr, msg:FString) : void {.uebind.}
+proc saySomething(obj: UObjectPtr, msg: FString): void {.uebind.}
 
 
-proc testArrays(obj:UObjectPtr) : TArray[FString] {.uebind.}
+proc testArrays(obj: UObjectPtr): TArray[FString] {.uebind.}
 
-proc testMultipleParams(obj:UObjectPtr, msg:FString,  num:int) : FString {.uebind.}
+proc testMultipleParams(obj: UObjectPtr, msg: FString,
+        num: int): FString {.uebind.}
 
-proc boolTestFromNimAreEquals(obj:UObjectPtr, numberStr:FString, number:cint, boolParam:bool) : bool {.uebind.}
+proc boolTestFromNimAreEquals(obj: UObjectPtr, numberStr: FString, number: cint,
+        boolParam: bool): bool {.uebind.}
 
-proc setColorByStringInMesh(obj:UObjectPtr, color:FString): void  {.uebind.}
+proc setColorByStringInMesh(obj: UObjectPtr, color: FString): void {.uebind.}
 
 var returnString = ""
 
-proc printArray(obj:UObjectPtr, arr:TArray[FString]) =
+proc printArray(obj: UObjectPtr, arr: TArray[FString]) =
     for str in arr: #add posibility to iterate over
-        obj.saySomething(str) 
+        obj.saySomething(str)
 
-proc testArrayEntryPoint*(executor:UObjectPtr) =
+proc testArrayEntryPoint*(executor: UObjectPtr) =
     let msg = testMultipleParams(executor, "hola", 10)
 
     executor.saySomething(msg)
@@ -47,11 +49,12 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
     arr2.add($now() & " is it Nim TIME?")
 
     # printArray(executor, arr)
-    let lastElement : FString = arr2[0]
+    let lastElement: FString = arr2[0]
     # let lastElement = makeFString("")
-    returnString = "number of elements " & $arr.num() & "the element last element is " & lastElement
+    returnString = "number of elements " & $arr.num() &
+            "the element last element is " & lastElement
 
-    # let nowDontCrash = 
+    # let nowDontCrash =
     # let msgArr = "The length of the array is " & $ arr.num()
     executor.saySomething(returnString)
     executor.printArray arr2
@@ -59,14 +62,16 @@ proc testArrayEntryPoint*(executor:UObjectPtr) =
     executor.saySomething("length of the array5 is " & $ arr2.num())
     arr2.removeAt(0)
     arr2.remove("hola5")
-    executor.saySomething("length of the array2 is after removed yeah " & $ arr2.num())
+    executor.saySomething("length of the array2 is after removed yeah " & $
+            arr2.num())
 
 
-proc K2_SetActorLocation(obj:UObjectPtr, newLocation: FVector, bSweep:bool, SweepHitResult: var FHitResult, bTeleport: bool) {.uebind.}
+proc K2_SetActorLocation(obj: UObjectPtr, newLocation: FVector, bSweep: bool,
+        SweepHitResult: var FHitResult, bTeleport: bool) {.uebind.}
 
-proc testVectorEntryPoint*(executor:UObjectPtr) = 
-    let v : FVector = makeFVector(10, 80, 100)
-    let v2 = v+v 
+proc testVectorEntryPoint*(executor: UObjectPtr) =
+    let v: FVector = makeFVector(10, 80, 100)
+    let v2 = v+v
     let position = makeFVector(1100, 1000, 150)
     var hitResult = makeFHitResult()
     K2_SetActorLocation(executor, position, false, hitResult, true)
@@ -81,7 +86,7 @@ proc testVectorEntryPoint*(executor:UObjectPtr) =
 
 
 
-    
+
 
     # if "TEnumAsByte" in cppType: #Not sure if it would be better to just support it on the macro
     #     return cppType.replace("TEnumAsByte<","")
@@ -105,7 +110,7 @@ proc testVectorEntryPoint*(executor:UObjectPtr) =
 
 
 var isExecuted = false
-proc scratchpad*(executor:UObjectPtr) = 
+proc scratchpad*(executor: UObjectPtr) =
     if isExecuted: return
     isExecuted = true
 
@@ -123,16 +128,16 @@ proc scratchpad*(executor:UObjectPtr) =
 #temp
 type
     AActor* = object of UObject
-    AActorPtr* = ptr AActor    
+    AActorPtr* = ptr AActor
     ACharacter* = object of UObject
     ACharacterPtr* = ptr ACharacter
 
-const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum, 
+const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
                             fields: @[
-                                UEField(kind:uefEnumVal, name:"TestValue"),
-                                UEField(kind:uefEnumVal, name:"TestValue2")
-                            ]
-                        )
+                                UEField(kind: uefEnumVal, name: "TestValue"),
+                                UEField(kind: uefEnumVal, name: "TestValue2")
+    ]
+)
 genType(ueEnumType)
 
 # uStruct FIntPropTests:
@@ -162,33 +167,33 @@ genType(ueEnumType)
 uStruct FMyUStructDemo:
     (BlueprintType)
     uprop(EditAnywhere, BlueprintReadWrite):
-        propString : FString
-        propInt : int32
-        propInt64 : int
-        propInt642 : int64
-        propFloat32 : float32
+        propString: FString
+        propInt: int32
+        propInt64: int
+        propInt642: int64
+        propFloat32: float32
         # structInt : FIntPropTests
         # propEnum : EMyTestEnum
-        propBool : bool
-        propObject : UObjectPtr
-        propClass : UClassPtr
-        propSubClass : TSubclassOf[AActor]
-        propArray : TArray[FString]
-        propArrayFloat : TArray[float]
-        propArrayBool : TArray[bool]
-        propAnother : int
-        propAnother2 : int 
-        propAnother3 : int
-        propAnother22 : int 
-        propAnother31 : int
+        propBool: bool
+        propObject: UObjectPtr
+        propClass: UClassPtr
+        propSubClass: TSubclassOf[AActor]
+        propArray: TArray[FString]
+        propArrayFloat: TArray[float]
+        propArrayBool: TArray[bool]
+        propAnother: int
+        propAnother2: int
+        propAnother3: int
+        propAnother22: int
+        propAnother31: int
         # propMapFloat : TMap[FString, float]
 
-      
+
     uprop(EditAnywhere, BlueprintReadOnly):
-        propReadOnly : FString
-        propFloat : float
-        propFloat64 : float64
-        propFName : FName
+        propReadOnly: FString
+        propFloat: float
+        propFloat64: float64
+        propFName: FName
 
 
 
@@ -196,42 +201,42 @@ uClass UObjectDsl of UObject:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         # testField : FString
-       
-        testFieldInt : int
-        testFieldAnother : FString
-        testFieldAnother2 : bool
-        
-        testFieldAnother3 : bool
-        testFieldAnother321 : FString
-        testFieldAnother32 : FString
-        testFieldAnotherFSTRING : FString
-        testFieldAnother4 : int32
-        testFieldAnother5 : int32
-        testFieldAnother6 : int32
+
+        testFieldInt: int
+        testFieldAnother: FString
+        testFieldAnother2: bool
+
+        testFieldAnother3: bool
+        testFieldAnother321: FString
+        testFieldAnother32: FString
+        testFieldAnotherFSTRING: FString
+        testFieldAnother4: int32
+        testFieldAnother5: int32
+        testFieldAnother6: int32
         # testFieldAnother7 : int32
-        testFieldAnother8 : int32
+        testFieldAnother8: int32
         # testFieldAnother9 : int32
         # testFieldAnother91 : int32
-        testFieldAnother10 : int32
-        testFieldAnother120 : int32
-        testFieldAnother121 : int32
+        testFieldAnother10: int32
+        testFieldAnother120: int32
+        testFieldAnother121: int32
         testFieldAnother123: int32
         # testFieldAnother124: int32
         # testFieldAnother128: int32
 
-# type FDynamicMulticastDelegateOneParamTest = object of UDelegateFunction
-# type FDynamicDelegateOneParamTest = object of UDelegateFunction
-# genDelegate(UEField(kind:uefDelegate, name: "DynamicMulticastDelegateOneParamTest", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]))
-# genDelegate(makeFieldAsMulDel("DynamicMulticastDelegateOneParamTest", @["FString"]))
+    # type FDynamicMulticastDelegateOneParamTest = object of UDelegateFunction
+    # type FDynamicDelegateOneParamTest = object of UDelegateFunction
+    # genDelegate(UEField(kind:uefDelegate, name: "DynamicMulticastDelegateOneParamTest", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]))
+    # genDelegate(makeFieldAsMulDel("DynamicMulticastDelegateOneParamTest", @["FString"]))
 
-# type Whatever* = FDynamicMulticastDelegateOneParamTest
+    # type Whatever* = FDynamicMulticastDelegateOneParamTest
 
-const ueType = UEType(name: "EMyEnumCreatedInNim2", kind:uetEnum, 
+const ueType = UEType(name: "EMyEnumCreatedInNim2", kind: uetEnum,
                             fields: @[
-                                UEField(kind:uefEnumVal, name:"eTestValue"),
-                                UEField(kind:uefEnumVal, name:"eTestValue2")
-                            ]
-                        )
+                                UEField(kind: uefEnumVal, name: "eTestValue"),
+                                UEField(kind: uefEnumVal, name: "eTestValue2")
+    ]
+)
 discard ueType.emitUEnum(nimPackage)
 genType(ueType)
 
@@ -244,24 +249,24 @@ uEnum EMyEnumCreatedInDsl:
 
 
 
-uDelegate FMyDelegate(str:FString, number:FString)
-uDelegate FMyDelegate2Params(str:FString, param:TArray[FString])
+uDelegate FMyDelegate(str: FString, number: FString)
+uDelegate FMyDelegate2Params(str: FString, param: TArray[FString])
 uDelegate FMyDelegateNoParams()
 
 uClass AActorDsl of AActor:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-        testField : FString
-        test2 : bool
-        test3 : float
-        anotherField3 : int32
-        anotherField2 : int32
-        anotherField1 : int32
-        anotherFieldArr : TArray[int32]
-        anotherFieldEnum : EMyTestEnum
-        nimCreatedEnum2 : EMyEnumCreatedInNim2
-        nimCreatedDsl : EMyEnumCreatedInDsl
-        
+        testField: FString
+        test2: bool
+        test3: float
+        anotherField3: int32
+        anotherField2: int32
+        anotherField1: int32
+        anotherFieldArr: TArray[int32]
+        anotherFieldEnum: EMyTestEnum
+        nimCreatedEnum2: EMyEnumCreatedInNim2
+        nimCreatedDsl: EMyEnumCreatedInDsl
+
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
         multicastDynOneParamNimAnother: FMyDelegate
@@ -272,40 +277,48 @@ uClass AActorDsl of AActor:
 
 
 
-proc helloActorDsl(sel2:AActorDslPtr) : void {.ufunc.} = 
-    UE_Warn "Hello from Aactor" 
-    
+proc helloActorDsl(sel2: AActorDslPtr): void {.ufunc.} =
+    UE_Warn "Hello from Aactor"
 
 
 
-proc helloActorDslWithIntParamter(self:AActorDsl, param:FString, param2:int32) : void {.ufunc.} = 
+
+proc helloActorDslWithIntParamter(self: AActorDsl, param: FString,
+        param2: int32): void {.ufunc.} =
     let str = $param
     UE_Warn "Hello from Aactor modified:" & str & " " & $param2
 
-proc helloActorDslWithIntParamterAndObjectParam(self:AActorDsl, param:FString, param2:int32, param3:UObjectPtr) : void {.ufunc.} = 
+proc helloActorDslWithIntParamterAndObjectParam(self: AActorDsl, param: FString,
+        param2: int32, param3: UObjectPtr): void {.ufunc.} =
     let str = $param
-    UE_Warn "Hello from Aactor modified:" & str & " " & $param2 & " " & param3.getName()
+    UE_Warn "Hello from Aactor modified:" & str & " " & $param2 & " " &
+            param3.getName()
 
-proc functionThatReturns(self:AActorDsl) : FString {.ufunc.} = 
+proc functionThatReturns(self: AActorDsl): FString {.ufunc.} =
     return "Whatever"
 
 
 uClass UObjectNim of UObject:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-        testField : FString
-       
+        testField: FString
 
 
-proc helloObjectNim2(self:UObjectNimPtr, param:FString) : FString {.ufunc.} = 
+
+proc helloObject(self: UObjectNimPtr, param: FString): FString {.ufunc.} =
     UE_Warn "Hello from object" & param
 
 
-    
-proc helloObjectNim(self:UObjectNimPtr, param:FString) : int {.ufunc.} = 
+
+proc helloObjectNimParam(self: UObjectNimPtr, param: FString): int {.ufunc.} =
     UE_Warn "Hello from object" & param
-    78
-    
+    45001
+
+
+proc addTwoNumbers(self: UObjectNimPtr, param: FString): int {.ufunc.} =
+    UE_Warn "Hello from object" & param
+    120
+
 
 
 
@@ -315,28 +328,28 @@ type UMyClassToDeriveToTestUFunctions = object of UObject
 uClass UMyClassToDeriveToTestUFunctionsNim of UMyClassToDeriveToTestUFunctions:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-        testField : FString
-       
+        testField: FString
 
-# proc implementableEventTest(self:UMyClassToDeriveToTestUFunctionsNimPtr, param:FString) : void {.ufunc.} = 
+
+# proc implementableEventTest(self:UMyClassToDeriveToTestUFunctionsNimPtr, param:FString) : void {.ufunc.} =
 #     UE_Warn "Hello from nim " & param
 #     discard
 
 
 
 
-#Review the how 
-proc scratchpadEditor*() = 
+#Review the how
+proc scratchpadEditor*() =
     try:
         let nueBingingsPkg = getPackageByName("NimForUEBindings")
-        
+
         # for obj in getAllObjectsFromPackage[UEnum](nueBingingsPkg):
         #     UE_Warn "Found enum  at NimForUEBindings " & obj.getName()
         # for obj in getAllObjectsFromPackage[UEnum](nimPackage):
         #     UE_Warn "Found enum at Nim " & obj.getName()
 
     except Exception as e:
-        
+
         UE_Warn e.msg
         UE_Warn e.getStackTrace()
 

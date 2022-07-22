@@ -44,6 +44,7 @@ type
                 #note cant use option type. If it has a returnParm it will be the first param that has CPF_ReturnParm
                 signature* : seq[UEField]
                 fnFlags* : EFunctionFlagsVal
+                sourceHash* : string 
             
             of uefEnumVal:
                 discard
@@ -85,6 +86,13 @@ func isMulticastDelegate*(field:UEField) : bool = hasUEMetadata(field, Multicast
 func isDelegate*(field:UEField) : bool = hasUEMetadata(field, DelegateMetadataKey)
 
 func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")
+
+func getFieldByName*(ueType:UEType, name:string) : Option[UEField] = ueType.fields.first(f=>f.name == name)
+func getFieldByName*(ueTypes:seq[UEType], name:string) : Option[UEField] = 
+    ueTypes
+        .map(ueType=>ueType.fields)
+        .foldl(a & b)
+        .first(f=>f.name == name)
 
 func shouldBeReturnedAsVar*(field:UEField) : bool = 
     let typesReturnedAsVar = ["TMap"]
@@ -133,8 +141,8 @@ func `==`*(a, b : UEField) : bool =
         of uefProp: 
             compareUEPropTypes(a.uePropType, b.uePropType) #and
             # a.propFlags == b.propFlags
-        of uefFunction: false
-            # a.signature == b.signature   
+        of uefFunction: 
+            a.signature == b.signature   
             # a.fnFlags == b.fnFlags
         of uefEnumVal: true)
     if not result: #This is just for debugging types. This functions has to be moved from here so there is no unreal symbols in this file

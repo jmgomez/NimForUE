@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[times,strformat,tables, strutils, options, sugar, algorithm, sequtils]
+import std/[times,strformat,tables, strutils, options, sugar, algorithm, sequtils, hashes]
 import fproperty
 import models
 export models
@@ -149,7 +149,7 @@ proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
 proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
     let fnName = fnField.name.makeFName()
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
-    var fn = newUObject[UFunction](cls, fnName, objFlags)
+    var fn = newUObject[UNimFunction](cls, fnName, objFlags)
     fn.functionFlags = fnField.fnFlags | FUNC_Native
 
     let superCls = cls.getSuperClass()
@@ -171,6 +171,7 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSign
     cls.addFunctionToFunctionMap(fn, fnName)
     fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
     fn.staticLink(true)
+    fn.sourceHash = $hash(fnField.sourceHash) #TODO convert it into a hash
     # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
     fn
 
@@ -205,7 +206,7 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, U
         case field.kind:
         of uefProp: discard field.emitFProperty(newCls) 
         of uefFunction: 
-            UE_Warn fmt"Emitting function {field.name} in class {newCls.getName()}"
+            UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}"
             discard emitUFunction(field, newCls, fnTable[field.name]) 
         else:
             UE_Error("Unsupported field kind: " & $field.kind)

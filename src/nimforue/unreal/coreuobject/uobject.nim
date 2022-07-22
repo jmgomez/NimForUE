@@ -201,6 +201,7 @@ proc initializeDerivedMembers*(fn:UFunctionPtr) : void {.importcpp:"#->Initializ
 proc getReturnProperty*(fn:UFunctionPtr) : FPropertyPtr {.importcpp:"#->GetReturnProperty()".}
 
 
+
 #UENUM
 #virtual bool SetEnums(TArray<TPair<FName, int64>>& InNames, ECppForm InCppForm, EEnumFlags InFlags = EEnumFlags::None, bool bAddMaxKeyIfMissing = true) override;
 

@@ -17,6 +17,11 @@ type
     UNimEnum* {.importcpp.} = object of UEnum
     UNimEnumPtr* = ptr UNimEnum
 
+    UNimFunction* {.importcpp.} = object of UFunction
+        sourceHash* {.importcpp: "SourceHash".} : FString
+    UNimFunctionPtr* = ptr UNimFunction
+
+
 proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
 
 
