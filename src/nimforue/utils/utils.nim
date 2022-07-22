@@ -14,10 +14,24 @@ func tail*[T](xs: seq[T]) : seq[T] =
     else: xs[1..^1]
     
 func any*[T](xs: seq[T]) : bool = len(xs) != 0
-    
 
+func firstIndexOf*[T](xs: seq[T], fn:T->bool) : int = 
+    var i=0
+    while i < len(xs):
+        if fn(xs[i]):
+            return i
+        inc i
+    -1
 
-func mapi*[T, U](xs : seq[T], fn : (t : T, idx:int)->U) : seq[U] = 
+func first*[T](xs: seq[T], fn:T->bool) : Option[T] = xs.filter(fn).head()
+       
+
+func replaceFirst*[T](xs: var seq[T], fnCriteria : T -> bool, newValue : T) : seq[T]= 
+    let idx = firstIndexOf(xs, fnCriteria)
+    xs[idx] = newValue #throw on purpose if there is no value. Handle it with types? 
+    xs
+
+func mapi*[T, U](xs : seq[T], fn : (T, int)->U) : seq[U] = 
     var toReturn : seq[U] = @[] #Todo how to reserve memory upfront to avoid reallocations?
     for i, x in xs:
         toReturn.add(fn(x, i))
@@ -47,6 +61,10 @@ func spacesToCamelCase*(str:string) :string =
 
 func firstToLow*(str:string) : string = 
     if str.len()>0: toLower($str[0]) & str.substr(1) 
+    else: str
+
+func firstToUpper*(str:string) : string = 
+    if str.len()>0: toUpper($str[0]) & str.substr(1) 
     else: str
 
 func removeFirstLetter*(str:string) : string = 

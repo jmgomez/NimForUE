@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
+import std/[times,strformat,tables, strutils, options, sugar, algorithm, sequtils]
 import fproperty
 import models
 export models
@@ -136,6 +136,8 @@ func toUEType*(uenum:UNimEnumPtr) : UEType = #notice we have to specify the type
     UEType(name:name, kind:uetEnum, fields: fields) #TODO
 
 proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
+    assert propField.kind == uefProp
+
     let prop : FPropertyPtr = newFProperty(outer, propField)
     prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
     for metadata in propField.metadata:
@@ -143,9 +145,36 @@ proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
     outer.addCppProperty(prop)
     prop
 
+#note at some point class can be resolved from the UEField?
+proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
+    let fnName = fnField.name.makeFName()
+    let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    var fn = newUObject[UFunction](cls, fnName, objFlags)
+    fn.functionFlags = fnField.fnFlags | FUNC_Native
 
+    let superCls = cls.getSuperClass()
+    let superFn = superCls.findFunctionByName(fnName)
+    if not superFn.isNil():
+        UE_Error "Overrides the function " & fnName.toFString()
+        fn.functionFlags = fn.functionFlags  | (superFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))
+        copyMetadata(superFn, fn)
+    else:
+        UE_Error "Doesnt find the function " & fnName.toFString() & " in the super class " & superCls.getPrefixCpp() & superCls.getName()
 
-proc emitUClass*(ueType : UEType, package:UPackagePtr) : UFieldPtr =
+    fn.Next = cls.Children 
+    cls.Children = fn
+    
+    for field in fnField.signature.reversed():
+        let fprop =  field.emitFProperty(fn)
+        # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
+
+    cls.addFunctionToFunctionMap(fn, fnName)
+    fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
+    fn.staticLink(true)
+    # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
+    fn
+
+proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, UFunctionNativeSignature]) : UFieldPtr =
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
     # const objClsFlags  =  (RF_Public || RF_Standalone || RF_Transactional || RF_LoadCompleted)
     # let objClsFlags  =  RF_Standalone || RF_Public
@@ -171,8 +200,16 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr) : UFieldPtr =
     newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
     newCls.setMetadata("BlueprintType", "true") #todo move to ueType
     
+
     for field in ueType.fields:
-        let fProp = field.emitFProperty(newCls) 
+        case field.kind:
+        of uefProp: discard field.emitFProperty(newCls) 
+        of uefFunction: 
+            UE_Warn fmt"Emitting function {field.name} in class {newCls.getName()}"
+            discard emitUFunction(field, newCls, fnTable[field.name]) 
+        else:
+            UE_Error("Unsupported field kind: " & $field.kind)
+        #should gather the functions here?
 
 
     newCls.bindType()
@@ -236,25 +273,7 @@ proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr =
     fn.staticLink(true)
     fn
 
-#note at some point class can be resolved from the UEField?
-proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
-    let fnName = fnField.name.makeFName()
-    let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
-    var fn = newUObject[UFunction](cls, fnName, objFlags)
-    fn.functionFlags = fnField.fnFlags
 
-    fn.Next = cls.Children 
-    cls.Children = fn
-    
-    for field in fnField.signature:
-        let fprop =  field.emitFProperty(fn)
-        # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
-
-    cls.addFunctionToFunctionMap(fn, fnName)
-    fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
-    fn.staticLink(true)
-    # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
-    fn
 
 proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr {.deprecated: "use emitUFunction instead".}= 
     fnField.emitUFunction(cls, fnImpl)

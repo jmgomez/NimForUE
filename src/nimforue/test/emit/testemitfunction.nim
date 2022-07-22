@@ -45,10 +45,10 @@ uClass UMyClassToTestNim of UObject: #TODO specify the package
 
 # genUFun("UMyClassToTestNim", fnField)
  
-proc newFunctionDsl(self:UMyClassToTestNimPtr, another:FString) {.ufunc.}=
+proc newFunctionDsl(self:UMyClassToTestNimPtr, param:FString) {.ufunc.}=
     self.bWasCalled = true
-    self.testProperty = another
-    UE_Warn "Got updated?" & "shit this is so crazy that I dont fully get what's going on!!!"
+    # self.testProperty = param
+    # UE_Warn "Got updated?" & "shit this is so crazy that I dont fully get what's going on!!!" & param
     
     
     
@@ -223,12 +223,15 @@ suite "NimForUE.FunctionEmit":
         #         ])
         
         # let fn = emitUFunction(fnField, cls, nil)
-        let expectedStr = "ParameterValue"
-        
-        obj.newFunctionDsl(expectedStr)
+        let times = 10
+        var i = 0
+        while i<times:
+            inc i
+            let expectedStr = "ParameterValue" & $i
+            obj.newFunctionDsl(expectedStr)
         assert obj.bWasCalled
         # assert fn.numParms == 1
-        assert obj.testProperty.equals(expectedStr) 
+        # assert obj.testProperty.equals(expectedStr) 
         
         # cls.removeFunctionFromClass fn 
 

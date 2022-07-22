@@ -269,8 +269,41 @@ uClass AActorDsl of AActor:
         multicastDel: FMyDelegateNoParams
         # anotherField5 : FString
 
-proc helloActorDsl(self:AActorDsl) : void {.ufunc.} = 
-    UE_Warn "Hello from Aactor"
+
+
+
+proc helloActorDsl(self:AActorDslPtr) : void {.ufunc.} = 
+    UE_Warn "Hello from Aactor" 
+
+
+
+proc helloActorDslWithIntParamter(self:AActorDsl, param:FString, param2:int32) : void {.ufunc.} = 
+    let str = $param
+    UE_Warn "Hello from Aactor" & str & " " & $param2
+
+
+
+uClass UObjectNim of UObject:
+    (BlueprintType, Blueprintable)
+    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+        testField : FString
+       
+
+proc helloObjectNim(self:UObjectNimPtr, param:FString) : void {.ufunc.} = 
+    UE_Warn "Hello from object" & param
+
+
+type UMyClassToDeriveToTestUFunctions = object of UObject
+
+uClass UMyClassToDeriveToTestUFunctionsNim of UMyClassToDeriveToTestUFunctions:
+    (BlueprintType, Blueprintable)
+    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+        testField : FString
+       
+
+proc implementableEventTest(self:UMyClassToDeriveToTestUFunctionsNimPtr, param:FString) : void {.ufunc.} = 
+    UE_Warn "Hello from nim " & param
+    discard
 
 
 

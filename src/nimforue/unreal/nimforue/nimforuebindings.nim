@@ -118,8 +118,10 @@ proc makeFNativeFuncPtr*(fun:proc (context:ptr UObject, stack:var FFrame,  resul
 proc setNativeFunc*(ufunc: ptr UFunction, funcPtr: FNativeFuncPtr) : void {.importcpp: "#->SetNativeFunc(#)" .}
 
 proc increaseStack*(stack: var FFrame) : void {.importcpp: "UReflectionHelpers::IncreaseStack(#)" .}
+proc stepCompiledIn*[T : FProperty](frame:var FFrame, result:pointer, prop:ptr T) : void {.importcpp:"UReflectionHelpers::StepCompiledIn<'*3>(@)".}
 
-
+ 
+ 
 #UPACKAGE
 func getPackageByName*(packageName:FString) : UPackagePtr = 
         findObject[UPackage](nil, convertToLongScriptPackageName(packageName))

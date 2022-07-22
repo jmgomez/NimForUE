@@ -64,11 +64,14 @@ public:
 		return FnPtr;
 	}
 	static void IncreaseStack(FFrame& Stack);
+	template<typename TProperty>
+	static void StepCompiledIn(FFrame& Stack, void* Result,   TProperty* FakePropType) {
+		Stack.StepCompiledIn<TProperty>(Result);
+	}
 
 
 	static TArray<UClass*> GetAllClassesFromModule(FString ModuleName);
-
-
+	
 	template<typename T>
 	static TArray<T*> GetAllObjectsFromPackage(UPackage* Package) {
 			TArray<T*> Objects = {};

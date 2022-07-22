@@ -1,6 +1,6 @@
 include ../unreal/prelude
 include ../utils/utils
-import std/[sugar, macros, algorithm, strutils, strformat, genasts, sequtils, options]
+import std/[sugar, macros, algorithm, strutils, strformat, tables, genasts, sequtils, options]
 import nuemacrocache
 import uemeta
 
@@ -23,15 +23,24 @@ type
     
     UEEmitter* = ref object 
         emitters* : seq[EmitterInfo]
+        types* : seq[UEType]
+        fnTable* : Table[string, UFunctionNativeSignature]
 
 
 var ueEmitter* = UEEmitter() 
 
+proc addEmitterInfo*(ueType:UEType) : void =  
+    ueEmitter.types.add(ueType)
+
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
     ueEmitter.emitters.add(EmitterInfo(kind:ekType, ueType:ueType, generator:fn))
 
-proc addEmitterInfo*(ueField:UEField, fn : UClassPtr->UFunctionPtr, fnImpl:UFunctionNativeSignature) : void =  
-    ueEmitter.emitters.add(EmitterInfo(kind: ekFunction, uFunction:ueField, fnGenerator:fn, fnImpl:fnImpl))
+proc addEmitterInfo*(ueField:UEField, fnImpl:UFunctionNativeSignature) : void =  
+    var ueClassType = ueEmitter.types.first(t=>t.name == ueField.className).get()
+    ueClassType.fields.add ueField
+    
+    ueEmitter.fnTable[ueField.name] = fnImpl
+    ueEmitter.types = ueEmitter.types.replaceFirst(t=>t.name == ueField.className, ueClassType)
 
 proc prepReinst(prev:UObjectPtr) = 
     prev.setFlags(RF_NewerVersionExists)
@@ -81,10 +90,11 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                 prevStructPtr.flatmap((prev : UScriptStructPtr) => newStructPtr.map(newStr=>(prev, newStr)))
                     .run((pair:(UScriptStructPtr, UScriptStructPtr)) => hotReloadInfo.structsToReinstance.add(pair[0], pair[1]))
             of uetClass:
-                let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
-                let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
-                prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
-                    .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
+                discard
+                # let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
+                # let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
+                # prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
+                #     .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
                 let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr)
@@ -102,6 +112,9 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
             UE_Log fmt"generating the function for class: {cls.getName()}"
             discard emitter.fnGenerator(cls)
             
+    for ueType in ueEmitter.types:
+        discard ueType.emitUClass(pkg, ueEmitter.fnTable)
+
     hotReloadInfo.setShouldHotReload()
     hotReloadInfo
 
@@ -125,7 +138,7 @@ proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
-                addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUClass(typeDefAsNode, package))
+                addEmitterInfo(typeDefAsNode)
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
@@ -286,19 +299,40 @@ func genNativeFunction*(funField : UEField, body:NimNode) : NimNode =
                             
     # let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode()]))
 
-    result = genAst(className, body, paramInsideBodyAsType, paramArgumentAssignation, funField=newLit funField):        
-        let fnImplPtr =    
-            proc (context:UObjectPtr, stack:var FFrame,  result: pointer):void {. cdecl .} =
+    let typeTable = { "FString": "FStrProperty" }.toTable()
+
+    proc genParamArgFor(param:UEField) : NimNode = 
+        let paraName = ident param.name
+        let paramType = ident param.uePropType
+        genAst(paraName, paramType): #Notice it may fail with Ref types
+            #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (wich we dont)
+            var paraName {.inject.} : paramType #Define the param
+            var paramAddr = cast[pointer](paraName.addr) #Cast the Param with   
+            if not stack.code.isNil():
+                stack.step(context, paramAddr)
+            else:
+                var prop = cast[FPropertyPtr](stack.propertyChainForCompiledIn)
+                stack.propertyChainForCompiledIn = stack.propertyChainForCompiledIn.next
+                stepExplicitProperty(stack, paramAddr, prop)
+
+    
+    let genParmas = nnkStmtList.newTree(funField.signature
+                                                .filter(prop=>not isReturnParam(prop))
+                                                .map(genParamArgFor))
+                            
+
+    result = genAst(className, body, paramInsideBodyAsType, genParmas, funField=newLit funField):        
+            let fnImplPtr = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  result: pointer):void {. cdecl .} =
+            
+                genParmas    
                 stack.increaseStack()
                 let self {.inject.} = ueCast[className](context) 
-                paramInsideBodyAsType
-                let params {.inject.} = cast[ptr Params](stack.locals)
-                paramArgumentAssignation #i.e  let testProperty{.inject.} = params.testProperty
-                # let testProperty{.inject.} = params.testProperty
+                
                 body
 
                 #TODO return/out etc.
-        addEmitterInfo(funField, (cls:UClassPtr) => emitUFunction(funField, cls, fnImplPtr), fnImplPtr)
+            addEmitterInfo(funField, fnImplPtr)
+
     # debugEcho result.repr
 
 
@@ -308,7 +342,7 @@ macro ufunc*(fn:untyped) : untyped =
 
 
     #converts the params to fields (notice returns is not included)
-    let fnName = fn[0].strVal()
+    let fnName = fn[0].strVal().firstToUpper()
     let fields = fn.children.toSeq() #TODO this can be handle in a way so multiple args can be defined as the smae type
                      .filter(n=>n.kind==nnkFormalParams)
                      .head()
@@ -335,7 +369,7 @@ macro ufunc*(fn:untyped) : untyped =
     let fnReprNode = genFunc(UEType(name:className, kind:uetClass), fnField)
     let fnImplNode = genNativeFunction(fnField, fnImplementationBody)
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
-    debugEcho fn.treeRepr
+    # debugEcho fn.treeRepr
     debugEcho result.repr
 
 

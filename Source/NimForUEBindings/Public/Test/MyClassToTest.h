@@ -45,6 +45,31 @@ struct FStructToUseAsVarDelTest {
 	FString TestProperty = "Hello World!";
 };
 
+
+UCLASS(Blueprintable, BlueprintType)
+class UMyClassToDeriveToTestUFunctions : public UObject {
+	GENERATED_BODY()
+public:
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void ImplementableEventTest(const FString& Param);
+	UFUNCTION()
+	void ImplementableEventTest2Params(int32 Whaatever,FString Param);
+	
+	UFUNCTION()
+	int32 ImplementableEventTestReturns(FString Param);
+	
+};
+UCLASS(Blueprintable, BlueprintType)
+class AUseClassToDeriveToTestFunction : public AActor {
+	GENERATED_BODY()
+public:
+	
+	UFUNCTION(BlueprintCallable)
+	void TestCallFromCpp(UMyClassToDeriveToTestUFunctions* Object);
+	
+};
+
 UCLASS(Blueprintable, BlueprintType)
 class UClassToUseAsVar : public UObject {
 	GENERATED_BODY()

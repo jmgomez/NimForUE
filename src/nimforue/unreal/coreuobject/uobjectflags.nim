@@ -121,7 +121,7 @@ type
     EFunctionFlags* {.importcpp, size:sizeof(uint32).} = enum 
         # Function flags.
         FUNC_None = 0x00000000,
-        FUNC_Fina = 0x00000001,  # Function is final (prebindable, non-overridable function).
+        FUNC_Final = 0x00000001,  # Function is final (prebindable, non-overridable function).
         FUNC_RequiredAPI      = 0x00000002,  # Indicates this function is DLL exported/imported.
         FUNC_BlueprintAuthorityOnly= 0x00000004,   # Function will only run if the object has network authority
         FUNC_BlueprintCosmetic  = 0x00000008,   # Function is cosmetic in nature and should not be invoked on dedicated servers
@@ -382,3 +382,9 @@ const STRUCT_Inherit        = STRUCT_HasInstancedReference | STRUCT_Atomic
 
 # #* Flags that are always computed, never loaded or done with code generation */
 const STRUCT_ComputedFlags    = STRUCT_NetDeltaSerializeNative | STRUCT_NetSerializeNative | STRUCT_SerializeNative | STRUCT_PostSerializeNative | STRUCT_CopyNative | STRUCT_IsPlainOldData | STRUCT_NoDestructor | STRUCT_ZeroConstructor | STRUCT_IdenticalNative | STRUCT_AddStructReferencedObjects | STRUCT_ExportTextItemNative | STRUCT_ImportTextItemNative | STRUCT_SerializeFromMismatchedTag | STRUCT_PostScriptConstruct | STRUCT_NetSharedSerialization
+
+
+const FUNC_FuncInherit*       = (FUNC_Exec | FUNC_Event | FUNC_BlueprintCallable | FUNC_BlueprintEvent | FUNC_BlueprintAuthorityOnly | FUNC_BlueprintCosmetic | FUNC_Const)
+const FUNC_FuncOverrideMatch* = (FUNC_Exec | FUNC_Final | FUNC_Static | FUNC_Public | FUNC_Protected | FUNC_Private)
+const FUNC_NetFuncFlags*      = (FUNC_Net | FUNC_NetReliable | FUNC_NetServer | FUNC_NetClient | FUNC_NetMulticast)
+const FUNC_AccessSpecifiers*  = (FUNC_Public | FUNC_Private | FUNC_Protected)

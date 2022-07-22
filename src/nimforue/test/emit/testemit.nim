@@ -4,7 +4,7 @@ import ../testutils
 import ../testdata
 import ../../typegen/[models, uemeta]
 import testemitfunction
-
+import tables
 
 suite "NimForUE.ClassEmit":
     ueTest "Should emit an UClass and be able to create props on it based on the type definition":
@@ -19,7 +19,8 @@ suite "NimForUE.ClassEmit":
                             makeFieldAsUProp("TestField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                             makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                         ])
-        let newCls = ueCast[UClass]ueVarType.emitUClass(package)
+        var fnTable : Table[string, UFunctionNativeSignature]
+        let newCls = ueCast[UClass]ueVarType.emitUClass(package, fnTable)
         
         let fields = getFPropsFromUStruct(newCls)
         

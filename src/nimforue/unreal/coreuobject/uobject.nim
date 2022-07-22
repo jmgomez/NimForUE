@@ -142,7 +142,6 @@ type
         propAddr* {.importcpp:"PropAddr".}: pointer 
         nextOutParm* {.importcpp:"NextOutParm".}: ptr FOutParmRec
         mostRecentProperty* {.importcpp:"MostRecentProperty".}: FPropertyPtr
-        propertyChainForCompiledIn* {.importcpp:"PropertyChainForCompiledIn".}: FPropertyPtr#This is FField but should not matter
         
        
     FFrame* {.importcpp .} = object
@@ -150,6 +149,10 @@ type
         node* {.importcpp:"Node".} : UFunctionPtr
         locals* {.importcpp:"Locals".} : ptr uint8
         outParms* {.importcpp:"OutParms".} : ptr FOutParmRec
+        propertyChainForCompiledIn* {.importcpp:"PropertyChainForCompiledIn".}: FFieldPtr
+
+
+
 
 
 
@@ -221,6 +224,7 @@ iterator items*[T](it:var TFieldIterator[T]) : var TFieldIterator[T] =
 
 #StepExplicitProperty
 proc stepExplicitProperty*(frame:var FFrame, result:pointer, prop:FPropertyPtr) {.importcpp:"#.StepExplicitProperty(@)".}
+proc step*(frame:var FFrame, contex:UObjectPtr, result:pointer) {.importcpp:"#.Step(@)".}
 
 
 
