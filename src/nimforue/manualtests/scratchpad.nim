@@ -283,8 +283,7 @@ proc helloActorDsl(sel2: AActorDslPtr): void {.ufunc.} =
 
 
 
-proc helloActorDslWithIntParamter(self: AActorDsl, param: FString,
-        param2: int32): void {.ufunc.} =
+proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void {.ufunc.} =
     let str = $param
     UE_Warn "Hello from Aactor modified:" & str & " " & $param2
 
@@ -315,10 +314,15 @@ proc helloObjectNimParam(self: UObjectNimPtr, param: FString): int {.ufunc.} =
     45001
 
 
-proc addTwoNumbers(self: UObjectNimPtr, param: FString): int {.ufunc.} =
-    UE_Warn "Hello from object" & param
-    120
+proc addTwoNumbers(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc.} = param + param2
+proc sumAllNumbers(self: UObjectNimPtr, param: TArray[int]) : int {.ufunc.} =
+    param.toSeq().foldl(a+b)
+    
 
+proc returnObjectTest(self: UObjectNimPtr, param: int, param2: int) : UObjectNimPtr {.ufunc.} =
+    UE_Warn "Hello from object" & $param
+    
+    newUObject[UObjectNim](self)
 
 
 

@@ -148,7 +148,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
         #if it exists see if the source if t
     #check if a fn changed (check if the pointer points to the same direction). But how we can detect that, I mean, how we can detect a change if we cant look into the implementation.. this wont work.
     #ON HOLD
-  
+ 
     hotReloadInfo.setShouldHotReload()
     hotReloadInfo
 
@@ -321,23 +321,11 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     let ueType = UEType(name:funField.className, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
     let className = ident ueType.name
 
-    let paramInsideBodyAsType = funField.genParamInFnBodyAsType()
-    let paramArgumentAssignation = nnkStmtList.newTree(
-                                funField.signature
-                                    .filter(prop=>not isReturnParam(prop))
-                                    .map(param =>
-                                        nnkLetSection.newTree(
-                                            nnkIdentDefs.newTree(identWithInject param.name, newEmptyNode(), 
-                                                nnkDotExpr.newTree(ident "params", ident param.name)))))
-                                    
-                            
-    # let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode()]))
-
-    let typeTable = { "FString": "FStrProperty" }.toTable()
-
+    
     proc genParamArgFor(param:UEField) : NimNode = 
         let paraName = ident param.name
-        let paramType = ident param.uePropType
+        # let paramType = ident param.uePropType
+        let paramType = param.getTypeNodeFromUProp()# param.uePropType
         genAst(paraName, paramType): #Notice it may fail with Ref types
             #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (wich we dont)
             var paraName {.inject.} : paramType #Define the param

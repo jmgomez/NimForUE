@@ -183,7 +183,7 @@ macro uebindstatic* (className: string, fn : untyped) : untyped =
     fn
 
 
-#Converts a UEField type into a NimNode
+#Converts a UEField type into a NimNode (useful when dealing with generics)
 func getTypeNodeFromUProp*(prop : UEField) : NimNode = 
     #naive check on generic types:
     case prop.kind:
@@ -199,6 +199,8 @@ func getTypeNodeFromUProp*(prop : UEField) : NimNode =
         else:
             newEmptyNode()
 
+# func getTypeNodeFromUProp*(ueTypeProp : string) : NimNode = getTypeNodeFromUProp(UEField(kind:uefProp, uePropType:ueTypeProp))
+   
 
 
 func getTypeNodeForReturn(prop: UEField, typeNode : NimNode) : NimNode = 

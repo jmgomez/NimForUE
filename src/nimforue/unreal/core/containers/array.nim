@@ -46,6 +46,12 @@ proc toSeq*[T](arr:TArray[T]) : seq[T] =
     xs.add x
   xs
 
+proc toTArray*[T](arr:seq[T]) : TArray[T] = 
+  var xs = makeTArray[T]()
+  for x in arr:
+    xs.add x
+  xs
+
 # iterator pairs*[T](arr: TArray[T]): tuple[key: int, val: T] =
 #   for i in 0 .. <arr.len:
 #     yield (i.int, arr[i])
