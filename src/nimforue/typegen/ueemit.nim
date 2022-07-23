@@ -359,17 +359,11 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     let selfName = ident firstParam.name
     let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName):        
             let fnImplName {.inject.} = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
-            
                 genParmas    
                 stack.increaseStack()
                 let selfName {.inject.} = ueCast[className](context) 
                 innerFunction
-                # inner()
-                # body
-                # cast[ptr FString](result)[] = test(self, anotherParam, anotherParamMore)
-                
-                #TODO return/out etc.
-            # addEmitterInfo(funField, fnImplName)
+               
     var funField = funField
     funField.sourceHash = $hash(repr fnImpl)
 
@@ -377,8 +371,17 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
         fnImpl
         addEmitterInfo(funField, fnImplName)
     
-    
 
+
+func getFunctionFlags(fn:NimNode) : EFunctionFlags = 
+    var flags = FUNC_Native or FUNC_BlueprintCallable
+    func hasMeta(meta:string) : bool = fn.pragma.children.toSeq().any(n=> repr(n)==meta)
+
+    if hasMeta("BlueprintPure"):
+        flags = flags | FUNC_BlueprintPure
+    if hasMeta("BlueprintCallable"):
+        flags = flags | FUNC_BlueprintCallable
+    flags
 
 macro ufunc*(fn:untyped) : untyped =
     #this will generate a UEField for the function 
@@ -409,15 +412,13 @@ macro ufunc*(fn:untyped) : untyped =
 
     let actualParams = fields.tail() & returnParam.map(f => @[f]).get(@[])
     
-    let fnImplementationBody = fn.children.toSeq() #TODO the last [^1] should be the body or fn.body
-                 .filter(n => n.kind == nnkStmtList)
-                 .head()
-                 .get()
     
-    let fnField = makeFieldAsUFun(fnName, actualParams, className, FUNC_Native or FUNC_BlueprintCallable)
+    let flags = getFunctionFlags(fn)
+
+    let fnField = makeFieldAsUFun(fnName, actualParams, className, flags)
 
     let fnReprNode = genFunc(UEType(name:className, kind:uetClass), fnField)
-    let fnImplNode = genNativeFunction(firstParam, fnField, fnImplementationBody)
+    let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
     # echo fnImplNode.repr
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
     # debugEcho result.repr

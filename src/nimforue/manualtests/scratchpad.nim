@@ -314,8 +314,9 @@ proc helloObjectNimParam(self: UObjectNimPtr, param: FString): int {.ufunc.} =
     45001
 
 
-proc addTwoNumbers(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc.} = param + param2
-proc sumAllNumbers(self: UObjectNimPtr, param: TArray[int]) : int {.ufunc.} =
+proc addTwoNumbers(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc BlueprintPure .} = param + param2
+proc addTwoNumbers2(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc.} = param + param2
+proc sumAllNumbers(self: UObjectNimPtr, param: TArray[int]) : int {.ufunc, BlueprintPure, Category:"Wharever".} =
     param.toSeq().foldl(a+b)
     
 

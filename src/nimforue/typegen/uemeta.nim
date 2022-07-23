@@ -158,8 +158,7 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSign
         UE_Error "Overrides the function " & fnName.toFString()
         fn.functionFlags = fn.functionFlags  | (superFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))
         copyMetadata(superFn, fn)
-    else:
-        UE_Error "Doesnt find the function " & fnName.toFString() & " in the super class " & superCls.getPrefixCpp() & superCls.getName()
+    
 
     fn.Next = cls.Children 
     cls.Children = fn
@@ -206,7 +205,7 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, U
         case field.kind:
         of uefProp: discard field.emitFProperty(newCls) 
         of uefFunction: 
-            UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}"
+            # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}"
             discard emitUFunction(field, newCls, fnTable[field.name]) 
         else:
             UE_Error("Unsupported field kind: " & $field.kind)
