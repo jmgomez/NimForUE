@@ -424,27 +424,62 @@ macro ufunc*(fn:untyped) : untyped =
     # debugEcho result.repr
 
 
+#this macro is ment to be used as a block that allows you to define a bunch of ufuncs 
+#that share the same flags. You dont need to specify uFunc if the func is inside
+#now it only support procDef but it will support funct too 
+macro uFunctions*(body : untyped) : untyped = 
+    # let structMetas = getMetasForType(body)
+    # let ueFields = getUPropsAsFieldsForType(body)
+    let metas = getMetasForType(body)
+
+    let pragmasToAdd = @["ufunc"] & metas.map(n=>n.name)
+    let pragmaChildNodes = pragmasToAdd.map(n=>ident n)
+    proc ensureHasPragmaNode(procDef:NimNode) = 
+        let pragmaNode = procDef.children.toSeq()
+                                .first(n=>n.kind==nnkPragma)
+                                .map((pragmaNode)=>pragmaNode.add(pragmaChildNodes))
+
+        let formalParamsIdx = procDef.children.toSeq().firstIndexOf(n=>n.kind==nnkFormalParams)
+        if pragmaNode.isSome():#pragma goes after the formal params
+            procDef[formalParamsIdx+1] = pragmaNode.get()
+        else:
+            procDef.insert(formalParamsIdx+1, nnkPragma.newTree(pragmaChildNodes))
+
+    let allFuncs = body.children.toSeq()
+        .filter(n=>n.kind==nnkProcDef)
+        .tap(ensureHasPragmaNode)
+        
+        # .tap(fnNode=>fnNode.addPragma(symbol "ufunc"))
+    
+    result = nnkStmtList.newTree allFuncs
+    echo result.repr
 #falta genererar el call
 #void vs no void
 #return type
+#param
 
 
+# uFunctions:
+#     (BlueprintPure, BlueprintCallable)
 
-# proc functionThatReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool) : FString {.ufunc.} = 
-#     return "Whatever"
+#     proc functionThatReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool) : FString  = 
+#         return "Whatever"
 
-# proc functionThatReturns2(self:UObjectPtr) : string {.ufunc.} = 
-#     discard
-#     "Whatever2"
-# #     
+#     proc functionThatReturns2(self:UObjectPtr) : string {.adasdasd.}  = 
+#         discard
+#         "Whatever2"
+#     #     
 
-# proc functionThatNoReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool)  {.ufunc.} =  
-#     echo "hello mi ninio"
-
+#     proc functionThatNoReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool)   =  
+#         echo "hello mi ninio"
     
-# proc functionThatNoReturns2(self:UObjectPtr)  {.ufunc.} : void =  discard
+
+        
+#     proc functionThatNoReturns2(self:UObjectPtr) : void =  discard
 
 
-
+# dumpTree:
+#      proc functionThatNoReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool) {.ufunc.}   =  
+#         echo "hello mi ninio"
     
     # inner(anotherParam, anotherParamMore)

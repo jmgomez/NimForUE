@@ -326,6 +326,15 @@ proc returnObjectTest(self: UObjectNimPtr, param: int, param2: int) : UObjectNim
     newUObject[UObjectNim](self)
 
 
+uFunctions:
+    
+    proc addTwoNumbers3(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
+    proc addTwoNumbers4(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
+    proc addTwoNumbers5(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
+    proc addTwoNumbers6(self: UObjectNimPtr, param: int, param2: int) : int  = 
+        param
+
+
 
 
 type UMyClassToDeriveToTestUFunctions = object of UObject
