@@ -141,8 +141,8 @@ func `==`*(a, b : UEField) : bool =
         of uefProp: 
             compareUEPropTypes(a.uePropType, b.uePropType) #and
             # a.propFlags == b.propFlags
-        of uefFunction: 
-            a.signature == b.signature  #and  
+        of uefFunction: false
+            # a.signature == b.signature  #and  
             # a.fnFlags == b.fnFlags
         of uefEnumVal: true)
     if not result: #This is just for debugging types. This functions has to be moved from here so there is no unreal symbols in this file

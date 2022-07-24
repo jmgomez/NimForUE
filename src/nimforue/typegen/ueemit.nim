@@ -99,6 +99,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                 prevStructPtr.flatmap((prev : UScriptStructPtr) => newStructPtr.map(newStr=>(prev, newStr)))
                     .run((pair:(UScriptStructPtr, UScriptStructPtr)) => hotReloadInfo.structsToReinstance.add(pair[0], pair[1]))
             of uetClass:
+                #Class are passed as types directly but this will likely break the order of dependencies. Need to jump into use the nim cache
                 discard
                 # let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
                 # let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
@@ -122,13 +123,16 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
             discard emitter.fnGenerator(cls) 
             
     for ueType in ueEmitter.types:
-        let ueType = ueType
-        let fnGen = (pkg:UPackagePtr)=> ueType.emitUClass(pkg, ueEmitter.fnTable)
-        let prevClassPtr = someNil getClassByName ueType.name.removeFirstLetter()
-        let newClassPtr = emitUStructInPackage(pkg, ueType, fnGen, prevClassPtr)
-        prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
-            .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
-
+        case ueType.kind:
+        of uetClass:
+            let ueType = ueType
+            let fnGen = (pkg:UPackagePtr)=> ueType.emitUClass(pkg, ueEmitter.fnTable)
+            let prevClassPtr = someNil getClassByName ueType.name.removeFirstLetter()
+            let newClassPtr = emitUStructInPackage(pkg, ueType, fnGen, prevClassPtr)
+            prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
+                .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
+        else:
+            discard
 
     for fnName, fnPtr in ueEmitter.fnTable:
         let funField = getFieldByName(ueEmitter.types, fnName)
@@ -360,11 +364,12 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                 body
             innerCall
     # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())
-    let fnImplName = ident funField.name&"_Impl" #probably this needs to be injected so we can inspect it later
+    let fnImplName = ident funField.name&"_Impl"&"_"&funField.className #probably this needs to be injected so we can inspect it later
     let selfName = ident firstParam.name
     let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName):        
             let fnImplName {.inject.} = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
-                genParmas    
+                genParmas
+                # var stackCopy {.inject.} = stack This would allow to create a super function to call the impl but not sure if it worth the trouble   
                 stack.increaseStack()
                 let selfName {.inject.} = ueCast[className](context) 
                 innerFunction
@@ -378,15 +383,21 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     
 
 
-func getFunctionFlags(fn:NimNode) : EFunctionFlags = 
-    var flags = FUNC_Native or FUNC_BlueprintCallable
+func getFunctionFlags(fn:NimNode) : (EFunctionFlags, seq[UEMetadata]) = 
+    var flags = FUNC_Native or FUNC_BlueprintCallable or FUNC_Public
+    var metas : seq[UEMetadata]
     func hasMeta(meta:string) : bool = fn.pragma.children.toSeq().any(n=> repr(n)==meta)
 
     if hasMeta("BlueprintPure"):
         flags = flags | FUNC_BlueprintPure
     if hasMeta("BlueprintCallable"):
         flags = flags | FUNC_BlueprintCallable
-    flags
+    if hasMeta("BlueprintImplementableEvent"):
+        flags = flags | (FUNC_Native | FUNC_Event | FUNC_BlueprintEvent | FUNC_BlueprintCallable)
+    if hasMeta("CallInEditor"):
+        metas.add(makeUEMetadata("CallInEditor"))
+        
+    (flags, metas)
 
 
 func ufuncImpl(fn:NimNode) : NimNode = 
@@ -419,9 +430,9 @@ func ufuncImpl(fn:NimNode) : NimNode =
     let actualParams = fields.tail() & returnParam.map(f => @[f]).get(@[])
     
     
-    let flags = getFunctionFlags(fn)
+    let flagMetas = getFunctionFlags(fn)
 
-    let fnField = makeFieldAsUFun(fnName, actualParams, className, flags)
+    let fnField = makeFieldAsUFun(fnName, actualParams, className, flagMetas[0], flagMetas[1])
 
     let fnReprNode = genFunc(UEType(name:className, kind:uetClass), fnField)
     let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)

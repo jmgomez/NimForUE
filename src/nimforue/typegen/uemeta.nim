@@ -16,8 +16,8 @@ func makeFieldAsUPropDel*(name, uPropType: string, flags=CPF_None, metas:seq[UEM
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata: @[makeUEMetadata(DelegateMetadataKey)]&metas)       
 
 
-func makeFieldAsUFun*(name:string, signature:seq[UEField], className:string, flags=FUNC_None) : UEField = 
-    UEField(kind:uefFunction, name:name, signature:signature, className:className, fnFlags:EFunctionFlagsVal(flags))
+func makeFieldAsUFun*(name:string, signature:seq[UEField], className:string, flags=FUNC_None, metadata: seq[UEMetadata] = @[]) : UEField = 
+    UEField(kind:uefFunction, name:name, signature:signature, className:className, fnFlags:EFunctionFlagsVal(flags), metadata:metadata)
 
 func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
@@ -150,31 +150,29 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSign
     let fnName = fnField.name.makeFName()
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UNimFunction](cls, fnName, objFlags)
-    fn.functionFlags = fnField.fnFlags | FUNC_Native
+    fn.functionFlags = EFunctionFlags(fnField.fnFlags) | FUNC_BlueprintCallable
 
+    UE_Log "Creating functions " & fnField.name
 
     let superCls = cls.getSuperClass()
     let superFn = superCls.findFunctionByName(fnName)
     if not superFn.isNil():
-        UE_Error "Overrides the function " & fnName.toFString()
-        fn.functionFlags = fn.functionFlags  | (superFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))
-        # fn.functionFlags =  (superFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))
-        
+        UE_Log "Overrides the function " & fnName.toFString()
+        fn.functionFlags = fn.functionFlags  | (superFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))        
         copyMetadata(superFn, fn)
         setSuperStruct(fn, superFn)
 
     for field in fnField.signature.reversed():
         let fprop =  field.emitFProperty(fn)
    
-   
-    #I DONT THINK I HAVE TO DO THAT IF ALREADY SET THE SUPER DO I? *****************
-    
-        # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
+    for metadata in fnField.metadata:
+        UE_Error metadata.name
+        fn.setMetadata(metadata.name, $metadata.value)
 
     cls.addFunctionToFunctionMap(fn, fnName)
     fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
     fn.staticLink(true)
-    fn.sourceHash = $hash(fnField.sourceHash) #TODO convert it into a hash
+    fn.sourceHash = $hash(fnField.sourceHash) 
     # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
     fn
 

@@ -130,8 +130,11 @@ type
     AActor* = object of UObject
     AActorPtr* = ptr AActor
     ACharacter* = object of AActor
-    ANimForUEDemoCharacter* = object of ACharacter
     ACharacterPtr* = ptr ACharacter
+    ATestActor* = object of AActor
+    ATestActorPtr* = ptr ATestActor
+    
+    ANimForUEDemoCharacter* = object of ACharacter
 
 const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
                             fields: @[
@@ -232,15 +235,6 @@ uClass UObjectDsl of UObject:
 
     # type Whatever* = FDynamicMulticastDelegateOneParamTest
 
-const ueType = UEType(name: "EMyEnumCreatedInNim2", kind: uetEnum,
-                            fields: @[
-                                UEField(kind: uefEnumVal, name: "eTestValue"),
-                                UEField(kind: uefEnumVal, name: "eTestValue2")
-    ]
-)
-discard ueType.emitUEnum(nimPackage)
-genType(ueType)
-
 
 uEnum EMyEnumCreatedInDsl:
     (BlueprintType)
@@ -254,7 +248,16 @@ uDelegate FMyDelegate(str: FString, number: FString)
 uDelegate FMyDelegate2Params(str: FString, param: TArray[FString])
 uDelegate FMyDelegateNoParams()
 
-uClass AActorDsl of AActor:
+
+uClass AActorDslParentNim of ATestActor:
+    (BlueprintType, Blueprintable)
+    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+        testFieldparent: FString
+uFunctions:
+    proc receiveBeginPlay(self:AActorDslParentNimPtr)  = 
+        UE_Error("begin play called in actor DSL parent nim")
+
+uClass AActorDsl of AActorDslParentNim:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         testField: FString
@@ -265,7 +268,6 @@ uClass AActorDsl of AActor:
         anotherField1: int32
         anotherFieldArr: TArray[int32]
         anotherFieldEnum: EMyTestEnum
-        nimCreatedEnum2: EMyEnumCreatedInNim2
         nimCreatedDsl: EMyEnumCreatedInDsl
 
 
@@ -292,15 +294,26 @@ proc receiveActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.
 # proc receiveTick(self: AActorDslPtr, deltaSeconds:float32): void {.ufunc.} =
 #     UE_Warn "Hello begin play from Aactor" & $deltaSeconds
 
+proc whateverWTF(self:AActorDslPtr, test:FString) : FString {.ufunc, BlueprintPure.} = 
+        UE_Log "Hello from the editor"
+        "test"
 uFunctions:
     #TODO handle the prefixes so the user can just use the same name
-    proc receiveBeginPlay(self: AActorDslPtr)   =
-        UE_Warn "Hello begin play from Aactor nim3" & "sad51"
+    proc receiveBeginPlay(self: AActorDslPtr)   =       
+        UE_Warn "Hello begin play from Aactor child" 
 
-    proc receiveTick(self: AActorDslPtr, deltaSeconds:float32): void  =
-        UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds"
+    # proc receiveTick(self: AActorDslPtr, deltaSeconds:float32): void  =
+    #     UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds" & self.getName()
 
- 
+    proc implmentableEventTest(self: AActorDslPtr)  =
+        UE_Warn "hello implementable event"
+
+
+
+    proc userConstructionScript(self: AActorDslPtr) =
+        #maybe with this is enough and we can just create components here?
+        #no still the constructor needs to be bind if we wan to use it
+        UE_Warn "Hello from the construction script, pretty cool" & self.getName()
 
     # proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void=
     #     let str = $param 
