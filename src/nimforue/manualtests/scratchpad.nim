@@ -129,7 +129,8 @@ proc scratchpad*(executor: UObjectPtr) =
 type
     AActor* = object of UObject
     AActorPtr* = ptr AActor
-    ACharacter* = object of UObject
+    ACharacter* = object of AActor
+    ANimForUEDemoCharacter* = object of ACharacter
     ACharacterPtr* = ptr ACharacter
 
 const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
@@ -139,6 +140,7 @@ const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
     ]
 )
 genType(ueEnumType)
+
 
 # uStruct FIntPropTests:
 #     (BlueprintType)
@@ -194,7 +196,6 @@ uStruct FMyUStructDemo:
         propFloat: float
         propFloat64: float64
         propFName: FName
-
 
 
 uClass UObjectDsl of UObject:
@@ -274,28 +275,60 @@ uClass AActorDsl of AActor:
         multicastDel: FMyDelegateNoParams
         # anotherField5 : FString
 
-
-
-
-proc helloActorDsl(sel2: AActorDslPtr): void {.ufunc.} =
+proc helloActorDsl(sel2: AActorDslPtr): void  {.ufunc.}=
     UE_Warn "Hello from Aactor"
 
+proc notifyActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.}  =
+    UE_Log "Actor overlaped "
+
+# uFunctions:
+#     (BlueprintCallable)
+proc receiveActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.}  =
+    UE_Log "Actor overlaped begin NIM"
+
+# proc receiveBeginPlay(self: AActorDslPtr)  {.ufunc.} =
+#     UE_Warn "Hello begin play from Aactor nim" 
+
+# proc receiveTick(self: AActorDslPtr, deltaSeconds:float32): void {.ufunc.} =
+#     UE_Warn "Hello begin play from Aactor" & $deltaSeconds
+
+uFunctions:
+    #TODO handle the prefixes so the user can just use the same name
+    proc receiveBeginPlay(self: AActorDslPtr)   =
+        UE_Warn "Hello begin play from Aactor nim3" & "sad51"
+
+    proc receiveTick(self: AActorDslPtr, deltaSeconds:float32): void  =
+        UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds"
+
+ 
+
+    # proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void=
+    #     let str = $param 
+        
+    #     UE_Warn "Hello from Aactor modified:" & str & " " & $param2
+
+    # proc helloActorDslWithIntParamterAndObjectParam(self: AActorDsl, param: FString,
+    #         param2: int32, param3: UObjectPtr): void =
+    #     let str = $param
+    #     UE_Warn "Hello from Aactor modified:" & str & " " & $param2 & " " &
+    #             param3.getName()
+
+    # proc functionThatReturns(self: AActorDsl): FString =
+    #     return "Whatever"
 
 
 
-proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void {.ufunc.} =
-    let str = $param
-    UE_Warn "Hello from Aactor modified:" & str & " " & $param2
+uClass ANimCharacter of ACharacter:
+    (BlueprintType, Blueprintable)
+    uprop(EditAnywhere, BlueprintReadWrite):
+        jumpSpeed : FString
 
-proc helloActorDslWithIntParamterAndObjectParam(self: AActorDsl, param: FString,
-        param2: int32, param3: UObjectPtr): void {.ufunc.} =
-    let str = $param
-    UE_Warn "Hello from Aactor modified:" & str & " " & $param2 & " " &
-            param3.getName()
-
-proc functionThatReturns(self: AActorDsl): FString {.ufunc.} =
-    return "Whatever"
-
+uFunctions:
+    (BlueprintCallable)
+    proc onJumped(self:ANimCharacterPtr) = 
+        UE_Warn "onJumped nim"
+    proc didJump(self:ANimCharacterPtr) = 
+        UE_Warn "didJump nim"
 
 uClass UObjectNim of UObject:
     (BlueprintType, Blueprintable)
@@ -311,14 +344,11 @@ proc helloObject(self: UObjectNimPtr, param: FString): FString {.ufunc.} =
 
 proc helloObjectNimParam(self: UObjectNimPtr, param: FString): int {.ufunc.} =
     UE_Warn "Hello from object" & param
-    45001
+    45002
 
 
 proc addTwoNumbers(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc BlueprintPure .} = param + param2
 proc addTwoNumbers2(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc.} = param + param2
-proc sumAllNumbers(self: UObjectNimPtr, param: TArray[int]) : int {.ufunc, BlueprintPure, Category:"Wharever".} =
-    param.toSeq().foldl(a+b)
-    
 
 proc returnObjectTest(self: UObjectNimPtr, param: int, param2: int) : UObjectNimPtr {.ufunc.} =
     UE_Warn "Hello from object" & $param
@@ -327,12 +357,12 @@ proc returnObjectTest(self: UObjectNimPtr, param: int, param2: int) : UObjectNim
 
 
 uFunctions:
-    
+    (BlueprintPure)
     proc addTwoNumbers3(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
     proc addTwoNumbers4(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
     proc addTwoNumbers5(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
-    proc addTwoNumbers6(self: UObjectNimPtr, param: int, param2: int) : int  = 
-        param
+    proc addTwoNumbers6(self: UObjectNimPtr, param: int, param2: int) : int  = param
+
 
 
 
@@ -345,9 +375,9 @@ uClass UMyClassToDeriveToTestUFunctionsNim of UMyClassToDeriveToTestUFunctions:
         testField: FString
 
 
-# proc implementableEventTest(self:UMyClassToDeriveToTestUFunctionsNimPtr, param:FString) : void {.ufunc.} =
-#     UE_Warn "Hello from nim " & param
-#     discard
+proc implementableEventTest(self:UMyClassToDeriveToTestUFunctionsNimPtr, param:FString) : void {.ufunc, BlueprintCallable.} =
+    UE_Warn "Hello from nim modified " & param
+    discard
 
 
 
@@ -361,7 +391,10 @@ proc scratchpadEditor*() =
         #     UE_Warn "Found enum  at NimForUEBindings " & obj.getName()
         # for obj in getAllObjectsFromPackage[UEnum](nimPackage):
         #     UE_Warn "Found enum at Nim " & obj.getName()
-
+        for obj in getAllObjectsFromPackage[UFunction](getPackageByName("Engine")):
+            if obj.getName() == "ReceiveBeginPlay":
+                UE_Warn "Found function at " & obj.getOuter().getName()
+                UE_Log "Flags are " & $uint32(obj.functionFlags)
     except Exception as e:
 
         UE_Warn e.msg

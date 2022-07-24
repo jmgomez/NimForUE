@@ -23,7 +23,9 @@ proc stringToFString*(str :string) : FString =
 
 #TODO should we be explicit about fstrings?
 
-proc `==`*(a, b: FString): bool = a.equals(b)
-
 converter toStr*(fstr :Fstring) : string = $ fstr
 converter toFStr*(str :string) : FString =  stringToFString(str)
+
+proc `==`*(a, b: FString): bool = a.equals(b)
+proc `==`*(a:string, b: FString): bool = a.equals(b)
+proc `==`*(a:FString, b: string): bool = a.equals(b)

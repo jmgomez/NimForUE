@@ -131,8 +131,11 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
 
 
     for fnName, fnPtr in ueEmitter.fnTable:
-        let prevFn = someNil getUTypeByName[UNimFunction](fnName)
         let funField = getFieldByName(ueEmitter.types, fnName)
+        let prevFn = funField
+                        .flatmap((ff:UEField)=>getClassByName(ff.className).getFuncFromClass(ff.name))
+                        .flatmap((fn:UFunctionPtr)=>tryUECast[UNimFunction](fn))
+        # let prevFn = someNil getUTypeByName[UNimFunction](fnName)
 
         if prevFn.isSome() and funField.isSome():
             #TODO improve the check
@@ -317,6 +320,8 @@ macro uEnum*(name:untyped, body : untyped) : untyped =
     emitUEnum(ueType)
 
 
+
+
 func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : NimNode =
     let ueType = UEType(name:funField.className, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
     let className = ident ueType.name
@@ -383,8 +388,9 @@ func getFunctionFlags(fn:NimNode) : EFunctionFlags =
         flags = flags | FUNC_BlueprintCallable
     flags
 
-macro ufunc*(fn:untyped) : untyped =
-    #this will generate a UEField for the function 
+
+func ufuncImpl(fn:NimNode) : NimNode = 
+ #this will generate a UEField for the function 
     #and then call genNativeFunction passing the body
 
     #converts the params to fields (notice returns is not included)
@@ -423,6 +429,11 @@ macro ufunc*(fn:untyped) : untyped =
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
     # debugEcho result.repr
 
+macro ufunc*(fn:untyped) : untyped = ufuncImpl fn
+   
+
+
+
 
 #this macro is ment to be used as a block that allows you to define a bunch of ufuncs 
 #that share the same flags. You dont need to specify uFunc if the func is inside
@@ -447,12 +458,15 @@ macro uFunctions*(body : untyped) : untyped =
 
     let allFuncs = body.children.toSeq()
         .filter(n=>n.kind==nnkProcDef)
-        .tap(ensureHasPragmaNode)
+        # .tap(ensureHasPragmaNode)
+        .map(ufuncImpl)
         
         # .tap(fnNode=>fnNode.addPragma(symbol "ufunc"))
     
     result = nnkStmtList.newTree allFuncs
-    echo result.repr
+    # echo result.repr
+
+
 #falta genererar el call
 #void vs no void
 #return type

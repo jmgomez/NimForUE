@@ -152,19 +152,23 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSign
     var fn = newUObject[UNimFunction](cls, fnName, objFlags)
     fn.functionFlags = fnField.fnFlags | FUNC_Native
 
+
     let superCls = cls.getSuperClass()
     let superFn = superCls.findFunctionByName(fnName)
     if not superFn.isNil():
         UE_Error "Overrides the function " & fnName.toFString()
         fn.functionFlags = fn.functionFlags  | (superFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))
+        # fn.functionFlags =  (superFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))
+        
         copyMetadata(superFn, fn)
-    
+        setSuperStruct(fn, superFn)
 
-    fn.Next = cls.Children 
-    cls.Children = fn
-    
     for field in fnField.signature.reversed():
         let fprop =  field.emitFProperty(fn)
+   
+   
+    #I DONT THINK I HAVE TO DO THAT IF ALREADY SET THE SUPER DO I? *****************
+    
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
 
     cls.addFunctionToFunctionMap(fn, fnName)

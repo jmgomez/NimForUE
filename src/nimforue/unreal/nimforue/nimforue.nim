@@ -2,10 +2,10 @@ import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes]
 import ../core/containers/[unrealstring, array]
 import nimforuebindings
 import ../../macros/uebind
-import std/strformat
+import std/[strformat, options]
 include ../definitions
 import ../../typegen/models
-
+import ../../utils/utils
 
 import std/[typetraits, strutils, sequtils, sugar]
 #This file contains logic on top of ue types that it isnt necessarily bind 
@@ -30,6 +30,8 @@ proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UF
         xs.add it.get()
     xs
 
+proc getFuncFromClass*(cls:UClassPtr, name:FString) : Option[UFunctionPtr] =
+    getFuncsFromClass(cls).first(fn => fn.getName().equals(name))
 
 proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FPropertyPtr] = 
     let isIn = (p:FPropertyPtr) => flag in p.getPropertyFlags()
