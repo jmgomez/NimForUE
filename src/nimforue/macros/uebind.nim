@@ -182,20 +182,35 @@ macro uebindstatic* (className: string, fn : untyped) : untyped =
     fn.body = rootNode
     fn
 
+        
+
+func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
+func isOutParam*(field:UEField) : bool = (CPF_OutParm in field.propFlags)
+
+
+dumpTree:
+    proc test(regular:string, gene:seq[string], outParam: var string, outGen: var seq[string]) = discard
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 func getTypeNodeFromUProp*(prop : UEField) : NimNode = 
     #naive check on generic types:
     case prop.kind:
         of uefProp:
+
             let supportedGenericTypes = ["TArray", "TSubclassOf", "TSoftObjectPtr", "TMap"]
-            if not prop.isGeneric:
-                return ident prop.uePropType
-            let genericType = prop.uePropType.split("[")[0]
-            let innerTypesStr =  prop.uePropType.extractTypeFromGenericInNimFormat(genericType)
-            let innerTypes = innerTypesStr.split(",").map(innerType => ident(innerType.strip()))
-            let bracketsNode = nnkBracketExpr.newTree((ident genericType) & innerTypes)
-            return bracketsNode
+            let typeNode =  if not prop.isGeneric: ident prop.uePropType
+                else:
+                    let genericType = prop.uePropType.split("[")[0]
+                    let innerTypesStr =  prop.uePropType.extractTypeFromGenericInNimFormat(genericType)
+                    let innerTypes = innerTypesStr.split(",").map(innerType => ident(innerType.strip()))
+                    nnkBracketExpr.newTree((ident genericType) & innerTypes)
+            if prop.isOutParam:
+                nnkVarTy.newTree typeNode
+            else:
+                typeNode
+            # debugEcho repr typeNode
+
+
         else:
             newEmptyNode()
 
@@ -230,6 +245,8 @@ func identWithInject*(name:string) : NimNode =
 func identWrapper*(name:string) : NimNode = ident(name) #cant use ident as argument
 func identPublic*(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
 
+
+
 func genProp(typeDef : UEType, prop : UEField) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
   
@@ -257,26 +274,32 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
                 let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
    
-        
-
-func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
 
 
 #helper func used in geneFunc and genParamsInsideFunc
 #returns for each param a type definition node
 #the functions that it receives as param is used with ident/identWithInject/ etc. to make fields public or injected
+#isGeneratingType 
 func signatureAsNode(funField:UEField, identFn : string->NimNode) : seq[NimNode] =  
     case funField.kind:
     of uefFunction: 
        return funField.signature
             .filter(prop=>not isReturnParam(prop))
-            .map(param=>[identFn(param.name.firstToLow()), getTypeNodeFromUProp param, newEmptyNode()])
+            .map(param=>
+                [identFn(param.name.firstToLow()), param.getTypeNodeFromUProp(), newEmptyNode()])
             .map(n=>nnkIdentDefs.newTree(n))
     else:
         error("funField: not a func")
 
-func genParamInFnBodyAsType*(funField:UEField) : NimNode = 
+func genParamInFnBodyAsType(funField:UEField) : NimNode = 
     let returnProp = funField.signature.filter(isReturnParam).head()
+    #make sure we remove the out flag so we dont emit var on type variables which is not allowed
+    var i = 0
+    var funField = funField
+    while i<len funField.signature:
+        if  funField.signature[i].isOutParam:
+            funField.signature[i].propFlags = CPF_None #remove out flag before the signatureCall, cant do and for some reason. Maybe a bug?
+        inc i
 
     let paramsInsideFuncDef = nnkTypeSection.newTree([nnkTypeDef.newTree([identWithInject "Params", newEmptyNode(), 
                             nnkObjectTy.newTree([
@@ -297,7 +320,7 @@ func isStatic*(funField:UEField) : bool = (FUNC_Static in funField.fnFlags)
 func getReturnProp*(funField:UEField) : Option[UEField] =  funField.signature.filter(isReturnParam).head()
 func doesReturn*(funField:UEField) : bool = funField.getReturnProp().isSome()
 
-func genParamInFunctionSignature*(typeDef : UEType, funField:UEField, firstParamName:string) : NimNode = #returns (obj:UObjectPr, param:Fstring..) : FString 
+func genParamInFunctionSignature(typeDef : UEType, funField:UEField, firstParamName:string) : NimNode = #returns (obj:UObjectPr, param:Fstring..) : FString 
 #notice the first part has to be introduced. see the final part of genFunc
     let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
 
@@ -321,6 +344,8 @@ func genParamInFunctionSignature*(typeDef : UEType, funField:UEField, firstParam
 #for the most part the same code is used for both
 #this is also used for native function implementation but the ast is changed afterwards
 func genFunc*(typeDef : UEType, funField : UEField) : NimNode = 
+    
+
     let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
     let isStatic = FUNC_Static in funField.fnFlags
     let clsName = typeDef.name.substr(1)
@@ -358,6 +383,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
                                     .map(param=>nnkExprColonExpr.newTree(param, param))
                             )
     let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
+    
     var fnBody = genAst(uFnName=newStrLitNode(funField.name), paramInsideBodyAsType, paramDeclaration, generateObjForStaticFunCalls, callUFuncOn, returnCall):
         paramInsideBodyAsType
         paramDeclaration
@@ -377,7 +403,6 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
                             newEmptyNode(), newEmptyNode(),
                             fnBody
                         ])
-
 
     
 

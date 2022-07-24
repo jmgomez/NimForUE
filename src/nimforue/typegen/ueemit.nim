@@ -334,6 +334,8 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     proc genParamArgFor(param:UEField) : NimNode = 
         let paraName = ident param.name
         # let paramType = ident param.uePropType
+        var param = param
+        param.propFlags = CPF_None #Makes sure there is no CPF_ParmOut flag before calling GetTypeNodeFromUprop so it doenst produce var here
         let paramType = param.getTypeNodeFromUProp()# param.uePropType
         genAst(paraName, paramType): #Notice it may fail with Ref types
             #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (wich we dont)
@@ -400,6 +402,17 @@ func getFunctionFlags(fn:NimNode) : (EFunctionFlags, seq[UEMetadata]) =
     (flags, metas)
 
 
+func makeUEFieldFromNimParamNode(n:NimNode) : UEField = 
+    #make sure there is no var at this point, but CPF_Out
+    var nimType = n[1].repr.strip()
+    let paramName = n[0].strVal()
+    var paramFlags = CPF_Parm
+    if nimType.split(" ")[0] == "var":
+        paramFlags = paramFlags | CPF_OutParm
+        nimType = nimType.split(" ")[1]
+        
+    makeFieldAsUPropParam(paramName, nimType, paramFlags)
+
 func ufuncImpl(fn:NimNode) : NimNode = 
  #this will generate a UEField for the function 
     #and then call genNativeFunction passing the body
@@ -415,7 +428,8 @@ func ufuncImpl(fn:NimNode) : NimNode =
 
     let fields = formalParamsNode
                     .filter(n=>n.kind==nnkIdentDefs)
-                    .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip()))
+                    .map(makeUEFieldFromNimParamNode)
+
 
     #what about static funcs?
     let firstParam = fields.head().getOrRaise("Class not found")
@@ -430,12 +444,17 @@ func ufuncImpl(fn:NimNode) : NimNode =
     let actualParams = fields.tail() & returnParam.map(f => @[f]).get(@[])
     
     
-    let flagMetas = getFunctionFlags(fn)
+    var flagMetas = getFunctionFlags(fn)
+    if actualParams.any(isOutParam):
+        flagMetas[0] = FUNC_HasOutParms
 
     let fnField = makeFieldAsUFun(fnName, actualParams, className, flagMetas[0], flagMetas[1])
 
     let fnReprNode = genFunc(UEType(name:className, kind:uetClass), fnField)
+
     let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
+    debugEcho "******PARA QUIQ" & repr fnImplNode
+
     # echo fnImplNode.repr
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
     # debugEcho result.repr

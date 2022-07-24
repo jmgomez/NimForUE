@@ -316,6 +316,10 @@ uFunctions:
         #maybe with this is enough and we can just create components here?
         #no still the constructor needs to be bind if we wan to use it
         UE_Warn "Hello from the construction script, pretty cool" & self.getName()
+    
+    proc addTwoNumbers6(self: AActorDslPtr, param: TArray[int], param2: var TArray[int]) : void  = 
+        param2 = param.toSeq().map(x=>x*x).toTArray()
+        
 
     # proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void=
     #     let str = $param 
@@ -377,7 +381,6 @@ uFunctions:
     proc addTwoNumbers3(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
     proc addTwoNumbers4(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
     proc addTwoNumbers5(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
-    proc addTwoNumbers6(self: UObjectNimPtr, param: int, param2: int) : int  = param
 
 
 
