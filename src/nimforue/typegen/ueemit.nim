@@ -393,7 +393,7 @@ func getFunctionFlags(fn:NimNode) : (EFunctionFlags, seq[UEMetadata]) =
     if hasMeta("BlueprintCallable"):
         flags = flags | FUNC_BlueprintCallable
     if hasMeta("BlueprintImplementableEvent"):
-        flags = flags | (FUNC_Native | FUNC_Event | FUNC_BlueprintEvent | FUNC_BlueprintCallable)
+        flags = flags | FUNC_BlueprintEvent
     if hasMeta("CallInEditor"):
         metas.add(makeUEMetadata("CallInEditor"))
         

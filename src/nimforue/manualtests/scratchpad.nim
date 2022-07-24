@@ -294,9 +294,7 @@ proc receiveActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.
 # proc receiveTick(self: AActorDslPtr, deltaSeconds:float32): void {.ufunc.} =
 #     UE_Warn "Hello begin play from Aactor" & $deltaSeconds
 
-proc whateverWTF(self:AActorDslPtr, test:FString) : FString {.ufunc, BlueprintPure.} = 
-        UE_Log "Hello from the editor"
-        "test"
+
 uFunctions:
     #TODO handle the prefixes so the user can just use the same name
     proc receiveBeginPlay(self: AActorDslPtr)   =       
@@ -305,10 +303,14 @@ uFunctions:
     # proc receiveTick(self: AActorDslPtr, deltaSeconds:float32): void  =
     #     UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds" & self.getName()
 
-    proc implmentableEventTest(self: AActorDslPtr)  =
+    proc implmentableEventTest(self: AActorDslPtr) {.BlueprintImplementableEvent.} =
         UE_Warn "hello implementable event"
+    
 
 
+    proc callEditorTest(self: AActorDslPtr)  {.ufunc, CallInEditor.} =  
+        UE_Log "Hello from the editor"
+        self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
 
     proc userConstructionScript(self: AActorDslPtr) =
         #maybe with this is enough and we can just create components here?
@@ -328,6 +330,7 @@ uFunctions:
 
     # proc functionThatReturns(self: AActorDsl): FString =
     #     return "Whatever"
+
 
 
 
@@ -412,4 +415,5 @@ proc scratchpadEditor*() =
 
         UE_Warn e.msg
         UE_Warn e.getStackTrace()
+
 

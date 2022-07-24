@@ -150,7 +150,7 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSign
     let fnName = fnField.name.makeFName()
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UNimFunction](cls, fnName, objFlags)
-    fn.functionFlags = EFunctionFlags(fnField.fnFlags) | FUNC_BlueprintCallable
+    fn.functionFlags = EFunctionFlags(fnField.fnFlags) 
 
     UE_Log "Creating functions " & fnField.name
 
@@ -161,6 +161,9 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSign
         fn.functionFlags = fn.functionFlags  | (superFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))        
         copyMetadata(superFn, fn)
         setSuperStruct(fn, superFn)
+
+    fn.Next = cls.Children 
+    cls.Children = fn
 
     for field in fnField.signature.reversed():
         let fprop =  field.emitFProperty(fn)
