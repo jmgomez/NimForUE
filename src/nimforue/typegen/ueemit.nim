@@ -271,6 +271,7 @@ func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} =
         .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
         .map(n => n.children.toSeq())
         .foldl( a & b, newSeq[NimNode]())
+        .filter(n=>n.kind!=nnkExprColonExpr and n.kind!=nnkExprEqExpr) #ignore : and =. The later will be used for category and probably meta, etc. The former is rerserved for specifying types in uFunctions
         .map(n=>n.strVal().strip())
         .map(makeUEMetadata)
 
@@ -385,10 +386,11 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     
 
 
-func getFunctionFlags(fn:NimNode) : (EFunctionFlags, seq[UEMetadata]) = 
-    var flags = FUNC_Native or FUNC_BlueprintCallable or FUNC_Public
+func getFunctionFlags(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFunctionFlags, seq[UEMetadata]) = 
+    var flags = FUNC_Native or FUNC_Public
     var metas : seq[UEMetadata]
-    func hasMeta(meta:string) : bool = fn.pragma.children.toSeq().any(n=> repr(n)==meta)
+    func hasMeta(meta:string) : bool = fn.pragma.children.toSeq().any(n=> repr(n)==meta) or 
+                                        functionsMetadata.any(metadata=>metadata.name==meta)
 
     if hasMeta("BlueprintPure"):
         flags = flags | FUNC_BlueprintPure
@@ -413,7 +415,9 @@ func makeUEFieldFromNimParamNode(n:NimNode) : UEField =
         
     makeFieldAsUPropParam(paramName, nimType, paramFlags)
 
-func ufuncImpl(fn:NimNode) : NimNode = 
+#first is the param specify on ufunctions when specified one. Otherwise it will use the first
+#parameter of the function
+func ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[UEMetadata] = @[]) : NimNode = 
  #this will generate a UEField for the function 
     #and then call genNativeFunction passing the body
 
@@ -432,7 +436,7 @@ func ufuncImpl(fn:NimNode) : NimNode =
 
 
     #what about static funcs?
-    let firstParam = fields.head().getOrRaise("Class not found")
+    let firstParam = classParam.chainNone(()=>fields.head()).getOrRaise("Class not found")
     let className = firstParam.uePropType.removeLastLettersIfPtr()
     
 
@@ -441,25 +445,24 @@ func ufuncImpl(fn:NimNode) : NimNode =
                         .flatMap((n:NimNode)=>(if n.strVal()=="void": none[NimNode]() else: some(n)))
                         .map(n=>makeFieldAsUPropParam("toReturn", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
 
-    let actualParams = fields.tail() & returnParam.map(f => @[f]).get(@[])
+    let actualParams = classParam.map(n=>fields) #if there is class param, first param would be use as actual param
+                                 .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
     
     
-    var flagMetas = getFunctionFlags(fn)
+    var flagMetas = getFunctionFlags(fn, functionsMetadata)
     if actualParams.any(isOutParam):
-        flagMetas[0] = FUNC_HasOutParms
+        flagMetas[0] = flagMetas[0] or FUNC_HasOutParms
 
     let fnField = makeFieldAsUFun(fnName, actualParams, className, flagMetas[0], flagMetas[1])
 
     let fnReprNode = genFunc(UEType(name:className, kind:uetClass), fnField)
 
     let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
-    debugEcho "******PARA QUIQ" & repr fnImplNode
-
     # echo fnImplNode.repr
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
     # debugEcho result.repr
 
-macro ufunc*(fn:untyped) : untyped = ufuncImpl fn
+macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField]())
    
 
 
@@ -472,29 +475,25 @@ macro uFunctions*(body : untyped) : untyped =
     # let structMetas = getMetasForType(body)
     # let ueFields = getUPropsAsFieldsForType(body)
     let metas = getMetasForType(body)
+    let firstParam = body.children.toSeq()
+                    .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
+                    .map(n => n.children.toSeq())
+                    .foldl( a & b, newSeq[NimNode]())
+                    .first(n=>n.kind==nnkExprColonExpr)
+                    .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip().addPtrToUObjectIfNotPresentAlready(), CPF_None)) #notice no generic/var allowed. Only UObjects
+                    
 
-    let pragmasToAdd = @["ufunc"] & metas.map(n=>n.name)
-    let pragmaChildNodes = pragmasToAdd.map(n=>ident n)
-    proc ensureHasPragmaNode(procDef:NimNode) = 
-        let pragmaNode = procDef.children.toSeq()
-                                .first(n=>n.kind==nnkPragma)
-                                .map((pragmaNode)=>pragmaNode.add(pragmaChildNodes))
 
-        let formalParamsIdx = procDef.children.toSeq().firstIndexOf(n=>n.kind==nnkFormalParams)
-        if pragmaNode.isSome():#pragma goes after the formal params
-            procDef[formalParamsIdx+1] = pragmaNode.get()
-        else:
-            procDef.insert(formalParamsIdx+1, nnkPragma.newTree(pragmaChildNodes))
+   
 
     let allFuncs = body.children.toSeq()
         .filter(n=>n.kind==nnkProcDef)
-        # .tap(ensureHasPragmaNode)
-        .map(ufuncImpl)
+        .map(procBody=>ufuncImpl(procBody, firstParam, metas))
         
         # .tap(fnNode=>fnNode.addPragma(symbol "ufunc"))
     
     result = nnkStmtList.newTree allFuncs
-    # echo result.repr
+    echo result.repr
 
 
 #falta genererar el call
@@ -504,12 +503,13 @@ macro uFunctions*(body : untyped) : untyped =
 
 
 # uFunctions:
-#     (BlueprintPure, BlueprintCallable)
+#     (BlueprintPure, test : UObjectPtr, Category="whatever" BlueprintCallable)
 
 #     proc functionThatReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool) : FString  = 
 #         return "Whatever"
 
 #     proc functionThatReturns2(self:UObjectPtr) : string {.adasdasd.}  = 
+
 #         discard
 #         "Whatever2"
 #     #     

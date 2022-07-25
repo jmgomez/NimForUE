@@ -58,6 +58,10 @@ public:
 	
 	UFUNCTION()
 	int32 ImplementableEventTestReturns(FString Param);
+	UFUNCTION()
+	int32 TestFuncWithOut(FString Param, bool& outParam);
+	UFUNCTION()
+	int32 TestFuncWithOut2(FString Param, TArray<FString>& Test);
 	
 };
 UCLASS(Blueprintable, BlueprintType)

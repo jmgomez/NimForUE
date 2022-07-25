@@ -15,6 +15,9 @@ proc extractKeyValueFromMapProp*(str:string) : seq[string] =
 proc removeLastLettersIfPtr*(str:string) : string = 
     if str.endsWith("Ptr"): str.substr(0, str.len()-4) else: str
 
+proc addPtrToUObjectIfNotPresentAlready*(str:string) : string = 
+    if str.endsWith("Ptr"): str else: str & "Ptr"
+
 func tryUECast*[T : UObject](obj:UObjectPtr) : Option[ptr T] = someNil ueCast[T](obj)
     
 

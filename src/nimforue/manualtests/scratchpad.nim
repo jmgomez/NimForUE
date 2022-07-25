@@ -283,19 +283,10 @@ proc helloActorDsl(sel2: AActorDslPtr): void  {.ufunc.}=
 proc notifyActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.}  =
     UE_Log "Actor overlaped "
 
-# uFunctions:
-#     (BlueprintCallable)
-proc receiveActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.}  =
-    UE_Log "Actor overlaped begin NIM"
-
-# proc receiveBeginPlay(self: AActorDslPtr)  {.ufunc.} =
-#     UE_Warn "Hello begin play from Aactor nim" 
-
-# proc receiveTick(self: AActorDslPtr, deltaSeconds:float32): void {.ufunc.} =
-#     UE_Warn "Hello begin play from Aactor" & $deltaSeconds
-
-
 uFunctions:
+    (BlueprintCallable)
+
+
     #TODO handle the prefixes so the user can just use the same name
     proc receiveBeginPlay(self: AActorDslPtr)   =       
         UE_Warn "Hello begin play from Aactor child" 
@@ -308,7 +299,7 @@ uFunctions:
     
 
 
-    proc callEditorTest(self: AActorDslPtr)  {.ufunc, CallInEditor.} =  
+    proc callEditorTest(self: AActorDslPtr)  {.CallInEditor.} =  
         UE_Log "Hello from the editor"
         self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
 
@@ -320,8 +311,9 @@ uFunctions:
     proc addTwoNumbers6(self: AActorDslPtr, param: TArray[int], param2: var TArray[int]) : void  = 
         param2 = param.toSeq().map(x=>x*x).toTArray()
         
-
-    # proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void=
+    proc anotherFn(self:AActorDslPtr, paramOut: var bool, test : FString) : void  = 
+        paramOut = true
+        # proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void=
     #     let str = $param 
         
     #     UE_Warn "Hello from Aactor modified:" & str & " " & $param2
@@ -335,6 +327,10 @@ uFunctions:
     # proc functionThatReturns(self: AActorDsl): FString =
     #     return "Whatever"
 
+uFunctions:
+    (BlueprintCallable, this:AActorDslPtr)
+    proc sayHelloNewWay() {. CallInEditor .} = 
+        UE_Log "hello" &  this.getName
 
 
 
