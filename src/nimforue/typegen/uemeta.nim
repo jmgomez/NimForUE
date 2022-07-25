@@ -167,7 +167,7 @@ func findFunctionByNameWithPrefixes*(cls: UClassPtr, name:string) : Option[UFunc
     none[UFunctionPtr]()
 
 #note at some point class can be resolved from the UEField?
-proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
+proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNativeSignature]) : UFunctionPtr = 
     let superCls = someNil cls.getSuperClass()
     let superFn  = superCls.flatmap((scls:UClassPtr)=>scls.findFunctionByNameWithPrefixes(fnField.name))
     #the only 
@@ -198,13 +198,14 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSign
         fn.setMetadata(metadata.name, $metadata.value)
 
     cls.addFunctionToFunctionMap(fn, fnName)
-    fn.setNativeFunc(makeFNativeFuncPtr(fnImpl))
+    if fnImpl.isSome(): #blueprint implementable events doesnt have a function implementation 
+        fn.setNativeFunc(makeFNativeFuncPtr(fnImpl.get()))
     fn.staticLink(true)
     fn.sourceHash = $hash(fnField.sourceHash) 
     # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
     fn
 
-proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, UFunctionNativeSignature]) : UFieldPtr =
+proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, Option[UFunctionNativeSignature]]) : UFieldPtr =
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
     # const objClsFlags  =  (RF_Public || RF_Standalone || RF_Transactional || RF_LoadCompleted)
     # let objClsFlags  =  RF_Standalone || RF_Public
@@ -306,7 +307,7 @@ proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr =
 
 
 proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr {.deprecated: "use emitUFunction instead".}= 
-    fnField.emitUFunction(cls, fnImpl)
+    fnField.emitUFunction(cls, some fnImpl)
 
 
 

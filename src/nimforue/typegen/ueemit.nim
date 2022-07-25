@@ -24,7 +24,7 @@ type
     UEEmitter* = ref object 
         emitters* : seq[EmitterInfo]
         types* : seq[UEType]
-        fnTable* : Table[string, UFunctionNativeSignature]
+        fnTable* : Table[string, Option[UFunctionNativeSignature]]
 
 
 var ueEmitter* = UEEmitter() 
@@ -35,7 +35,8 @@ proc addEmitterInfo*(ueType:UEType) : void =
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
     ueEmitter.emitters.add(EmitterInfo(kind:ekType, ueType:ueType, generator:fn))
 
-proc addEmitterInfo*(ueField:UEField, fnImpl:UFunctionNativeSignature) : void =  
+
+proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
     var ueClassType = ueEmitter.types.first(t=>t.name == ueField.className).get()
     ueClassType.fields.add ueField
     
@@ -326,6 +327,7 @@ macro uEnum*(name:untyped, body : untyped) : untyped =
 
 
 
+func isBlueprintEvent(fnField:UEField) : bool = FUNC_BlueprintEvent in fnField.fnFlags
 
 func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : NimNode =
     let ueType = UEType(name:funField.className, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
@@ -410,9 +412,13 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     var funField = funField
     funField.sourceHash = $hash(repr fnImpl)
 
-    genAst(fnImplName,fnImpl, funField = newLit funField): 
-        fnImpl
-        addEmitterInfo(funField, fnImplName)
+    if funField.isBlueprintEvent(): #blueprint events doesnt have a body
+        genAst(fnImpl, funField = newLit funField): 
+            addEmitterInfo(funField, none[UFunctionNativeSignature]())
+    else:
+        genAst(fnImplName,fnImpl, funField = newLit funField): 
+            fnImpl
+            addEmitterInfo(funField, some fnImplName)
     
 
 
@@ -446,6 +452,7 @@ func makeUEFieldFromNimParamNode(n:NimNode) : UEField =
         nimType = nimType.split(" ")[1]
         
     makeFieldAsUPropParam(paramName, nimType, paramFlags)
+
 
 #first is the param specify on ufunctions when specified one. Otherwise it will use the first
 #parameter of the function
@@ -490,8 +497,9 @@ func ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
     let fnField = makeFieldAsUFun(fnName, actualParams, className, flagMetas[0], flagMetas[1])
 
     let fnReprNode = genFunc(UEType(name:className, kind:uetClass), fnField)
-
+    
     let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
+                     
     # echo fnImplNode.repr
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
     # debugEcho result.repr

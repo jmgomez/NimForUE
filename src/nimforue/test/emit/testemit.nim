@@ -1,5 +1,5 @@
 include ../../unreal/prelude
-import std/[strutils, sugar]
+import std/[strutils, sugar, options]
 import ../testutils
 import ../testdata
 import ../../typegen/[models, uemeta]
@@ -19,7 +19,7 @@ suite "NimForUE.ClassEmit":
                             makeFieldAsUProp("TestField", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                             makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                         ])
-        var fnTable : Table[string, UFunctionNativeSignature]
+        var fnTable : Table[string, Option[UFunctionNativeSignature]]
         let newCls = ueCast[UClass]ueVarType.emitUClass(package, fnTable)
         
         let fields = getFPropsFromUStruct(newCls)

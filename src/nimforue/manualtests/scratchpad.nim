@@ -284,34 +284,37 @@ proc notifyActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.}
     UE_Log "Actor overlaped "
 
 uFunctions:
-    (BlueprintCallable)
+    (BlueprintCallable, self: AActorDslPtr)
 
 
     #TODO handle the prefixes so the user can just use the same name
-    proc beginPlay(self: AActorDslPtr)   =       
+    proc beginPlay()   =       
         UE_Warn "Hello begin play from Aactor child in NIm" 
 
     # proc tick(self: AActorDslPtr, deltaSeconds:float32): void  =
     #     UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds" & self.getName()
 
-    proc implmentableEventTest(self: AActorDslPtr) {.BlueprintImplementableEvent.} =
-        UE_Warn "hello implementable event"
+    proc implmentableEventTest() {.BlueprintImplementableEvent.} 
+    proc implmentableEventTestWithReturn(str:FString, str2 : var FString)  {.BlueprintImplementableEvent.} 
     
 
 
-    proc callEditorTest(self: AActorDslPtr)  {.CallInEditor.} =  
+    proc callEditorTest()  {.CallInEditor.} =  
         UE_Log "Hello from the editor"
         self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
+        var str:FString = ""
+        self.implmentableEventTestWithReturn("echo", str)
+        UE_Log "Called from nim and returns " & $ str
 
-    proc userConstructionScript(self: AActorDslPtr) =
+    proc userConstructionScript() =
         #maybe with this is enough and we can just create components here?
         #no still the constructor needs to be bind if we wan to use it
         UE_Warn "Hello from the construction script, pretty cool" & self.getName()
     
-    proc addTwoNumbers6(self: AActorDslPtr, param: TArray[int], param2: var TArray[int], param3: var bool) : void  = 
+    proc addTwoNumbers6(param: TArray[int], param2: var TArray[int], param3: var bool) : void  = 
         param2 = param.toSeq().map(x=>x*x).toTArray()
         
-    proc anotherFn(self:AActorDslPtr, paramOut: var bool, test : FString) : void  = 
+    proc anotherFn(paramOut: var bool, test : FString) : void  = 
         paramOut = true
         # proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void=
     #     let str = $param 
