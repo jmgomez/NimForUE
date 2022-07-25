@@ -334,11 +334,10 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     
     proc genParamArgFor(param:UEField) : NimNode = 
         let paraName = ident param.name
-        # let paramType = ident param.uePropType
         var param = param
         param.propFlags = CPF_None #Makes sure there is no CPF_ParmOut flag before calling GetTypeNodeFromUprop so it doenst produce var here
         let paramType = param.getTypeNodeFromUProp()# param.uePropType
-        genAst(paraName, paramType): #Notice it may fail with Ref types
+        genAst(paraName, paramType): 
             #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (wich we dont)
             var paraName {.inject.} : paramType #Define the param
             var paramAddr = cast[pointer](paraName.addr) #Cast the Param with   
@@ -349,10 +348,57 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                 stack.propertyChainForCompiledIn = stack.propertyChainForCompiledIn.next
                 stepExplicitProperty(stack, paramAddr, prop)
 
+    proc genOutParamArgFor(param:UEField) : NimNode = 
+        let paraName = ident param.name
+        # let paramType = ident param.uePropType
+        var param = param
+        param.propFlags = CPF_None #Makes sure there is no CPF_ParmOut flag before calling GetTypeNodeFromUprop so it doenst produce var here
+        let paramType = param.getTypeNodeFromUProp()# param.uePropType
+        genAst(paraName, paramType): #Notice it may fail with Ref types
+            #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (wich we dont)
+            var paraName {.inject.} : paramType #TempBuffer
+            var paramAddr = cast[pointer](paraName.addr) #Cast the Param with   
+            
+            stack.mostRecentPropertyAddress = nil
+            if not stack.code.isNil():
+                stack.step(context, paramAddr)
+            else:
+                var prop = cast[FPropertyPtr](stack.propertyChainForCompiledIn)
+                stack.propertyChainForCompiledIn = stack.propertyChainForCompiledIn.next
+                stepExplicitProperty(stack, paramAddr, prop)
+            var outAddr {.inject.} : pointer
+            if not stack.mostRecentPropertyAddress.isNil():
+                outAddr = stack.mostRecentPropertyAddress
+            else:
+                outAddr = paramAddr
+
+                #here collects the params and set it to the actual address
+
     
+    proc genSetOutParams(param:UEField) : NimNode = 
+        let paraName = ident param.name
+        var param = param
+        param.propFlags = CPF_None #Makes sure there is no CPF_ParmOut flag before calling GetTypeNodeFromUprop so it doenst produce var here
+        let paramType = param.getTypeNodeFromUProp()# param.uePropType
+        genAst(paraName, paramType): 
+            if not stack.outParms.isNil():
+                cast[ptr paramType](stack.outParms.propAddr)[] = paraName
+            else:
+                cast[ptr paramType](outAddr)[] = paraName
+
+
+
+    func genParmArg(prop:UEField) : NimNode = 
+        if prop.isOutParam(): prop.genOutParamArgFor() 
+        else: prop.genParamArgFor()
+
     let genParmas = nnkStmtList.newTree(funField.signature
                                                 .filter(prop=>not isReturnParam(prop))
-                                                .map(genParamArgFor))
+                                                .map(genParmArg))
+
+    let setOutParams = nnkStmtList.newTree(funField.signature
+                                                .filter(isOutParam)
+                                                .map(genSetOutParams))
                             
     let returnParam = funField.signature.first(isReturnParam)
     let returnType = ident returnParam.map(x=>x.uePropType).get("void")
@@ -361,6 +407,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
             genAst(returnType):
                 cast[ptr returnType](returnResult)[] = inner()
         else: nnkCall.newTree(ident "inner")
+        
     let innerFunction = 
         genAst(body, returnType, innerCall): 
             proc inner() : returnType = 
@@ -369,14 +416,15 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())
     let fnImplName = ident funField.name&"_Impl"&"_"&funField.className #probably this needs to be injected so we can inspect it later
     let selfName = ident firstParam.name
-    let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName):        
+    let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName, setOutParams):        
             let fnImplName {.inject.} = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
                 genParmas
                 # var stackCopy {.inject.} = stack This would allow to create a super function to call the impl but not sure if it worth the trouble   
                 stack.increaseStack()
                 let selfName {.inject.} = ueCast[className](context) 
                 innerFunction
-               
+                setOutParams
+
     var funField = funField
     funField.sourceHash = $hash(repr fnImpl)
 

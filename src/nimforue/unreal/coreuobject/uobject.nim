@@ -150,6 +150,7 @@ type
         locals* {.importcpp:"Locals".} : ptr uint8
         outParms* {.importcpp:"OutParms".} : ptr FOutParmRec
         propertyChainForCompiledIn* {.importcpp:"PropertyChainForCompiledIn".}: FFieldPtr
+        mostRecentPropertyAddress* {.importcpp:"MostRecentPropertyAddress".}: ptr uint8
 
 
 

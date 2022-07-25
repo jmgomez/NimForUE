@@ -329,6 +329,7 @@ uFunctions:
 
 uFunctions:
     (BlueprintCallable, this:AActorDslPtr)
+    proc anotherFunction() : FString =  "Whatever"
     proc sayHelloNewWay() {. CallInEditor .} = 
         UE_Log "hello" &  this.getName
 
