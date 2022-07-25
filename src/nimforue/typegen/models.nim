@@ -41,6 +41,7 @@ type
 
             of uefFunction:
                 className*:string
+                actualFunctionName*:string #some functions are called differently on unreal (receivve, k2_ etc.)
                 #note cant use option type. If it has a returnParm it will be the first param that has CPF_ReturnParm
                 signature* : seq[UEField]
                 fnFlags* : EFunctionFlagsVal
@@ -141,8 +142,9 @@ func `==`*(a, b : UEField) : bool =
         of uefProp: 
             compareUEPropTypes(a.uePropType, b.uePropType) #and
             # a.propFlags == b.propFlags
-        of uefFunction: false
-            # a.signature == b.signature  #and  
+        of uefFunction: 
+            a.signature == b.signature  and  
+            a.sourceHash == b.sourceHash
             # a.fnFlags == b.fnFlags
         of uefEnumVal: true)
     if not result: #This is just for debugging types. This functions has to be moved from here so there is no unreal symbols in this file

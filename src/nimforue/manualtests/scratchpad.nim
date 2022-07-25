@@ -248,11 +248,11 @@ uDelegate FMyDelegate(str: FString, number: FString)
 uDelegate FMyDelegate2Params(str: FString, param: TArray[FString])
 uDelegate FMyDelegateNoParams()
 
-
 uClass AActorDslParentNim of ATestActor:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         testFieldparent: FString
+
 uFunctions:
     proc receiveBeginPlay(self:AActorDslParentNimPtr)  = 
         UE_Error("begin play called in actor DSL parent nim")
@@ -288,10 +288,10 @@ uFunctions:
 
 
     #TODO handle the prefixes so the user can just use the same name
-    proc receiveBeginPlay(self: AActorDslPtr)   =       
-        UE_Warn "Hello begin play from Aactor child" 
+    proc beginPlay(self: AActorDslPtr)   =       
+        UE_Warn "Hello begin play from Aactor child in NIm" 
 
-    # proc receiveTick(self: AActorDslPtr, deltaSeconds:float32): void  =
+    # proc tick(self: AActorDslPtr, deltaSeconds:float32): void  =
     #     UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds" & self.getName()
 
     proc implmentableEventTest(self: AActorDslPtr) {.BlueprintImplementableEvent.} =
@@ -365,7 +365,7 @@ proc helloObjectNimParam(self: UObjectNimPtr, param: FString): int {.ufunc.} =
 
 
 proc addTwoNumbers(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc BlueprintPure .} = param + param2
-proc addTwoNumbers2(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc.} = param + param2
+proc addTwoNumbers2(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc BlueprintCallable .} = param + param2
 
 proc returnObjectTest(self: UObjectNimPtr, param: int, param2: int) : UObjectNimPtr {.ufunc.} =
     UE_Warn "Hello from object" & $param
@@ -377,7 +377,16 @@ uFunctions:
     (BlueprintPure, self: UObjectNimPtr, Static)
     proc addTwoNumbers3(param: int, param2: int) : int  = param + param2
     proc addTwoNumbers4(param: int, param2: int) : int  = param + param2
-    proc addTwoNumbers5(param: int, param2: int) : int  = param + param2
+    proc addTwoNumbers5(param: int, param2: int) : int  = 
+        UE_Warn "Hello from object" & self.getName()
+        param + param2
+
+
+
+
+
+
+
 
 
 

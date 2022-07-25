@@ -71,11 +71,20 @@ func removeFirstLetter*(str:string) : string =
     if str.len()>0: str.substr(1)
     else: str
 
+func removePref*(str:string, prefix:string) : string = 
+    if str.startsWith(prefix): str.substr(prefix.len())
+    else: str
+
+func removePrefixes*(str:string, prefixes:seq[string]) : string =
+    var str = str
+    for prefix in prefixes:
+        str = str.removePref(prefix)
+    str
 func nonEmptyOr*(value, orValue:string) : string = nonDefaultOr(value, orValue)
 
 
 #OPTION
-func getOrCompute*[T, U](opt:Option[T], fn : ()->T) : lent T = 
+func getOrCompute*[T, U](opt:Option[T], fn : ()->T) :  T = 
     if opt.isSome(): opt.get() else: fn()
 
 proc getOrRaise*[T](self: Option[T], msg:string, exceptn:typedesc=Exception): T {.inline.} =

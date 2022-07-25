@@ -55,7 +55,9 @@ public:
 	void ImplementableEventTest(const FString& Param);
 	UFUNCTION()
 	void ImplementableEventTest2Params(int32 Whaatever,FString Param);
-	
+	UFUNCTION()
+	void BPNativeEventTest(int Test);
+	FString BPNativeEventTest2(int Test);
 	UFUNCTION()
 	int32 ImplementableEventTestReturns(FString Param);
 	UFUNCTION()

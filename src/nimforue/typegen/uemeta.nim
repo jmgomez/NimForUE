@@ -5,6 +5,9 @@ import models
 export models
 
 
+const fnPrefixes = @["", "Receive", "K2_"]
+
+
 #UE META CONSTRUCTORS. Notice they are here because they pull type definitions from Cpp which cant be loaded in the ScriptVM
 func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[]) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata:metas)       
@@ -98,14 +101,15 @@ func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something t
 func toUEField*(ufun:UFunctionPtr) : UEField = 
     # let asDel = ueCast[UDelegateFunction](ufun)
     # if not asDel.isNil(): return toUEField asDel
-
     let params = getFPropsFromUStruct(ufun).map(toUEField)
     # UE_Warn(fmt"{ufun.getName()}")
     let class = ueCast[UClass](ufun.getOuter())
     let className = class.getPrefixCpp() & class.getName()
-
-    makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
-    
+    let actualName : string = uFun.getName()
+    let fnNameNim = actualName.removePrefixes(fnPrefixes)
+    var fnField = makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
+    fnField.actualFunctionName = actualName
+    fnField
 
 func toUEType*(cls:UClassPtr) : UEType =
     let fields = getFuncsFromClass(cls)
@@ -145,22 +149,43 @@ proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
     outer.addCppProperty(prop)
     prop
 
+
+#this functions should only being use when trying to resolve
+#the nim name in unreal on the emit, when the actual name is not set already. 
+#it is also taking into consideration when converting from ue to nim via UClass->UEType
+func findFunctionByNameWithPrefixes*(cls: UClassPtr, name:string) : Option[UFunctionPtr] = 
+    for prefix in fnPrefixes:
+        let fnName = prefix & name
+        # assert not cls.isNil()
+        if cls.isNil():
+            UE_Error "WTF the CLASS is None for " & name
+            return none[UFunctionPtr]()
+        let fun = cls.findFunctionByName(makeFName(fnName))
+        if not fun.isNil(): 
+            return some fun
+    
+    none[UFunctionPtr]()
+
 #note at some point class can be resolved from the UEField?
 proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:UFunctionNativeSignature) : UFunctionPtr = 
-    let fnName = fnField.name.makeFName()
+    let superCls = someNil cls.getSuperClass()
+    let superFn  = superCls.flatmap((scls:UClassPtr)=>scls.findFunctionByNameWithPrefixes(fnField.name))
+    #the only 
+
+    #if we are overriden a function we use the name with the prefix
+    #notice this only works with BlueprintEvent so check that too. 
+    let fnName = superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
+
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UNimFunction](cls, fnName, objFlags)
     fn.functionFlags = EFunctionFlags(fnField.fnFlags) 
 
-    UE_Log "Creating functions " & fnField.name
-
-    let superCls = cls.getSuperClass()
-    let superFn = superCls.findFunctionByName(fnName)
-    if not superFn.isNil():
+    if superFn.isSome():
+        let sFn = superFn.get()
         UE_Log "Overrides the function " & fnName.toFString()
-        fn.functionFlags = fn.functionFlags  | (superFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))        
-        copyMetadata(superFn, fn)
-        setSuperStruct(fn, superFn)
+        fn.functionFlags = fn.functionFlags  | (sFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))        
+        copyMetadata(sFn, fn)
+        setSuperStruct(fn, sFn)
 
     fn.Next = cls.Children 
     cls.Children = fn

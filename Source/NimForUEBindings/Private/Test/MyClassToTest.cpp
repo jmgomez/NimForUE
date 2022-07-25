@@ -6,6 +6,15 @@
 void UMyClassToDeriveToTestUFunctions::ImplementableEventTest2Params(int32 Whaatever, FString Param) {
 }
 
+void UMyClassToDeriveToTestUFunctions::BPNativeEventTest(int Test) {
+
+}
+
+FString UMyClassToDeriveToTestUFunctions::BPNativeEventTest2(int Test) {
+	
+	return "";
+}
+
 int32 UMyClassToDeriveToTestUFunctions::ImplementableEventTestReturns(FString Param) {
 	return 1;
 }

@@ -137,7 +137,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
     for fnName, fnPtr in ueEmitter.fnTable:
         let funField = getFieldByName(ueEmitter.types, fnName)
         let prevFn = funField
-                        .flatmap((ff:UEField)=>getClassByName(ff.className).getFuncFromClass(ff.name))
+                        .flatmap((ff:UEField)=>getClassByName(ff.className).findFunctionByNameWithPrefixes(ff.name))
                         .flatmap((fn:UFunctionPtr)=>tryUECast[UNimFunction](fn))
         # let prevFn = someNil getUTypeByName[UNimFunction](fnName)
 
@@ -339,7 +339,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
             if param.isOutParam:
                 genAst(paraName, outAddr=ident(param.name & "Out")):
                     var outAddr {.inject.} : pointer
-                    if not stack.mostRecentPropertyAddress.isNil():
+                    if not stack.mostRecentPropertyAddress.isNil(): #look at StepCompiledInReference in the cpp side of things
                         outAddr = stack.mostRecentPropertyAddress
                     else:
                         outAddr = cast[pointer](paraName.addr)
@@ -352,7 +352,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
         genAst(paraName, paramType, genOutParam): 
             stack.mostRecentPropertyAddress = nil
 
-            #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (wich we dont)
+            #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (which we dont)
             var paraName {.inject.} : paramType #Define the param
             var paramAddr = cast[pointer](paraName.addr) #Cast the Param with   
             if not stack.code.isNil():
@@ -518,7 +518,6 @@ macro uFunctions*(body : untyped) : untyped =
                     
 
 
-   
 
     let allFuncs = body.children.toSeq()
         .filter(n=>n.kind==nnkProcDef)
@@ -527,7 +526,7 @@ macro uFunctions*(body : untyped) : untyped =
         # .tap(fnNode=>fnNode.addPragma(symbol "ufunc"))
     
     result = nnkStmtList.newTree allFuncs
-    echo result.repr
+
 
 
 #falta genererar el call
