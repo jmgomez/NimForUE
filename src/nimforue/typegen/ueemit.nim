@@ -419,15 +419,17 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
 func getFunctionFlags(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFunctionFlags, seq[UEMetadata]) = 
     var flags = FUNC_Native or FUNC_Public
     var metas : seq[UEMetadata]
-    func hasMeta(meta:string) : bool = fn.pragma.children.toSeq().any(n=> repr(n)==meta) or 
-                                        functionsMetadata.any(metadata=>metadata.name==meta)
+    func hasMeta(meta:string) : bool = fn.pragma.children.toSeq().any(n=> repr(n).toLower()==meta.toLower()) or 
+                                        functionsMetadata.any(metadata=>metadata.name.toLower()==meta.toLower())
 
     if hasMeta("BlueprintPure"):
-        flags = flags | FUNC_BlueprintPure
+        flags = flags | FUNC_BlueprintPure | FUNC_BlueprintCallable
     if hasMeta("BlueprintCallable"):
         flags = flags | FUNC_BlueprintCallable
     if hasMeta("BlueprintImplementableEvent"):
-        flags = flags | FUNC_BlueprintEvent
+        flags = flags | FUNC_BlueprintEvent | FUNC_BlueprintCallable
+    if hasMeta("Static"):
+        flags = flags | FUNC_Static
     if hasMeta("CallInEditor"):
         metas.add(makeUEMetadata("CallInEditor"))
         
@@ -465,8 +467,9 @@ func ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
                     .map(makeUEFieldFromNimParamNode)
 
 
-    #what about static funcs?
-    let firstParam = classParam.chainNone(()=>fields.head()).getOrRaise("Class not found")
+    #For statics funcs this is also true becase they are only allow
+    #in ufunctions macro with the parma.
+    let firstParam = classParam.chainNone(()=>fields.head()).getOrRaise("Class not found. Please use the ufunctions macr and specify the type there if you are trying to define a static function. Otherwise, you can also set the type as first argument")
     let className = firstParam.uePropType.removeLastLettersIfPtr()
     
 
@@ -482,6 +485,7 @@ func ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
     var flagMetas = getFunctionFlags(fn, functionsMetadata)
     if actualParams.any(isOutParam):
         flagMetas[0] = flagMetas[0] or FUNC_HasOutParms
+
 
     let fnField = makeFieldAsUFun(fnName, actualParams, className, flagMetas[0], flagMetas[1])
 

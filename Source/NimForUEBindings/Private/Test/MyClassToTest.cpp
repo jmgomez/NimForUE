@@ -18,6 +18,10 @@ int32 UMyClassToDeriveToTestUFunctions::TestFuncWithOut2(FString Param, TArray<F
 	return 10;
 }
 
+int UMyClassToDeriveToTestUFunctions::TestStatic(FString Param) {
+	return 4;
+}
+
 // void UMyClassToDeriveToTestUFunctions::ImplementableEventTest(FString Param) {
 // 	UE_LOG(LogTemp, Log, TEXT("ClassToDerivetoTEstFunction called from cpp"));
 // }

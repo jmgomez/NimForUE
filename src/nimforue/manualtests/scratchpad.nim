@@ -374,10 +374,10 @@ proc returnObjectTest(self: UObjectNimPtr, param: int, param2: int) : UObjectNim
 
 
 uFunctions:
-    (BlueprintPure)
-    proc addTwoNumbers3(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
-    proc addTwoNumbers4(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
-    proc addTwoNumbers5(self: UObjectNimPtr, param: int, param2: int) : int  = param + param2
+    (BlueprintPure, self: UObjectNimPtr, Static)
+    proc addTwoNumbers3(param: int, param2: int) : int  = param + param2
+    proc addTwoNumbers4(param: int, param2: int) : int  = param + param2
+    proc addTwoNumbers5(param: int, param2: int) : int  = param + param2
 
 
 

@@ -62,7 +62,8 @@ public:
 	int32 TestFuncWithOut(FString Param, bool& outParam);
 	UFUNCTION()
 	int32 TestFuncWithOut2(FString Param, TArray<FString>& Test);
-	
+	UFUNCTION()
+	static int TestStatic(FString Param);
 };
 UCLASS(Blueprintable, BlueprintType)
 class AUseClassToDeriveToTestFunction : public AActor {
