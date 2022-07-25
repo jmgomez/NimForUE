@@ -308,7 +308,7 @@ uFunctions:
         #no still the constructor needs to be bind if we wan to use it
         UE_Warn "Hello from the construction script, pretty cool" & self.getName()
     
-    proc addTwoNumbers6(self: AActorDslPtr, param: TArray[int], param2: var TArray[int]) : void  = 
+    proc addTwoNumbers6(self: AActorDslPtr, param: TArray[int], param2: var TArray[int], param3: var bool) : void  = 
         param2 = param.toSeq().map(x=>x*x).toTArray()
         
     proc anotherFn(self:AActorDslPtr, paramOut: var bool, test : FString) : void  = 
