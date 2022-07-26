@@ -265,7 +265,7 @@ uClass AActorDsl of AActorDslParentNim:
         test3: float
         anotherField3: int32
         anotherField2: int32
-        anotherField1: int32
+        anotherField1: int32 
         anotherFieldArr: TArray[int32]
         anotherFieldEnum: EMyTestEnum
         nimCreatedDsl: EMyEnumCreatedInDsl
@@ -281,30 +281,28 @@ proc helloActorDsl(sel2: AActorDslPtr): void  {.ufunc.}=
     UE_Warn "Hello from Aactor"
 
 proc notifyActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.}  =
-    UE_Log "Actor overlaped "
+    UE_Log "Actor overlaped whatev1"
 
 uFunctions:
     (BlueprintCallable, self: AActorDslPtr)
 
 
     #TODO handle the prefixes so the user can just use the same name
-    proc beginPlay()   =       
+    proc beginPlay()   =        
         UE_Warn "Hello begin play from Aactor child in NIm" 
 
     # proc tick(self: AActorDslPtr, deltaSeconds:float32): void  =
     #     UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds" & self.getName()
 
     proc implmentableEventTest() {.BlueprintImplementableEvent.} 
-    proc implmentableEventTestWithReturn(str:FString, str2 : var FString)  {.BlueprintImplementableEvent.} 
     
-
 
     proc callEditorTest()  {.CallInEditor.} =  
         UE_Log "Hello from the editor"
         self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
         var str:FString = ""
-        self.implmentableEventTestWithReturn("echo", str)
-        UE_Log "Called from nim and returns " & $ str
+        # self.implmentableEventTestWithReturn("echo", str)
+        UE_Log "Called from nim and returns  " & $ str
 
     proc userConstructionScript() =
         #maybe with this is enough and we can just create components here?
@@ -313,6 +311,7 @@ uFunctions:
     
     proc addTwoNumbers6(param: TArray[int], param2: var TArray[int], param3: var bool) : void  = 
         param2 = param.toSeq().map(x=>x*x).toTArray()
+        
         
     proc anotherFn(paramOut: var bool, test : FString) : void  = 
         paramOut = true

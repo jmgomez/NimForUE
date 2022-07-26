@@ -188,8 +188,6 @@ func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
 func isOutParam*(field:UEField) : bool = (CPF_OutParm in field.propFlags)
 
 
-dumpTree:
-    proc test(regular:string, gene:seq[string], outParam: var string, outGen: var seq[string]) = discard
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 func getTypeNodeFromUProp*(prop : UEField) : NimNode = 
@@ -220,7 +218,6 @@ func getTypeNodeFromUProp*(prop : UEField) : NimNode =
 
 func getTypeNodeForReturn(prop: UEField, typeNode : NimNode) : NimNode = 
     if prop.shouldBeReturnedAsVar():
-        debugEcho "returned as var" & prop.name
         return nnkVarTy.newTree(typeNode)
     typeNode
 

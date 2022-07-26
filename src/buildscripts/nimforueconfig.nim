@@ -164,7 +164,7 @@ proc getUESymbols*(conf:NimForUEConfig) : seq[string] =
           
         elif defined windows:
             let libName = fmt "UnrealEditor-NimForUEBindings.lib" 
-            let libPath = addQuotes(pluginDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / "NimForUEBindings" / libName)
+            let libPath = addQuotes(pluginDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor" / confDir / "NimForUEBindings" / libName)
             let libEditorName = fmt "UnrealEditor-NimForUEEditor.lib" 
             let libPathEditor = addQuotes(pluginDir / "Intermediate"/"Build"/ platformDir / "UnrealEditor"/ confDir / "NimForUEEditor" / libEditorName)
            

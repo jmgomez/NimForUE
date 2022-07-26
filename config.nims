@@ -15,6 +15,10 @@ switch("backend", "cpp")
 switch("exceptions", "cpp") #need to investigate further how to get Unreal exceptions and nim exceptions to work together so UE doesn't crash when generating an exception in cpp
 switch("define", "useMalloc")
 # switch("warning:UnusedImport", "off")
+# --parallelBuild:10
+--w:off
+# --hints:off
+# --profileVM:on
 
 when not defined copylib:
     # switch("listcmd")
@@ -24,7 +28,7 @@ when not defined copylib:
     switch("define", "pluginDir:"& nueConfig.pluginDir)
     #todo get from NueConfig?
     let withPCH = true and defined withue
-    let withDebug = true
+    let withDebug = false
     
 
     let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform
