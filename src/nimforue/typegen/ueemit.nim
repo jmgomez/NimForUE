@@ -36,6 +36,8 @@ type
 var ueEmitter* = UEEmitter() 
 
 #rename these to register
+proc getTypesFromEmitters(): seq[UEType] =
+    ueEmitter.types
 
 proc addEmitterInfo*(ueType:UEType) : void =  
     ueEmitter.types.add(ueType)
@@ -52,6 +54,8 @@ proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) :
     
     ueEmitter.fnTable[ueField.name] = fnImpl
     ueEmitter.types = ueEmitter.types.replaceFirst(t=>t.name == ueField.className, ueClassType)
+
+
 
 proc prepReinst(prev:UObjectPtr) = 
     prev.setFlags(RF_NewerVersionExists)
@@ -249,22 +253,41 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
    
 
 
-func fromUPropNodeToField(node : NimNode) : seq[UEField] = 
+func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] = 
     let metas = node.childrenAsSeq()
                     .filter(n=>n.kind==nnkIdent and n.strVal().toLower() != "uprop")
                     .map(n=>n.strVal())
                     .fromStringAsMetaToFlag()
 
     func nodeToUEField (n: NimNode)  : UEField = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
-        let typ = n[1].repr.strip()
-        let name = n[0].repr
+        let fieldName = n[0].repr
         
-        if isMulticastDelegate typ:
-            makeFieldAsUPropMulDel(name, typ, metas[0], metas[1])
-        elif isDelegate typ:
-            makeFieldAsUPropDel(name, typ, metas[0], metas[1])
+        #stores the assigment but without the first ident on the dot expression as we dont know it yet
+        func prepareAssigmentForLaterUsage(propName:string, right:NimNode) : NimNode = #to show intent
+            nnkAsgn.newTree(
+                nnkDotExpr.newTree( #left
+                    #here goes the var sets when generating the constructor, i.e. self, this what ever the user wants
+                    ident propName
+                ), 
+                right
+            )
+        let assigmentNode = n[1].children.toSeq()
+                                  .first(n=>n.kind == nnkAsgn)
+                                  .map(n=>prepareAssigmentForLaterUsage(fieldName, n[^1]))
+
+        var propType = if assigmentNode.isSome(): n[1][0][0].repr else: n[1].repr.strip()
+        assigmentNode.run (n:NimNode)=> addPropAssigment(ueTypeName, n)
+        # debugEcho treeRepr n
+        # debugEcho "-----"
+
+        # debugEcho treeRepr assigmentNode.get(newEmptyNode())
+        # debugEcho "--------------------------------"
+        if isMulticastDelegate propType:
+            makeFieldAsUPropMulDel(fieldName, propType, metas[0], metas[1])
+        elif isDelegate propType:
+            makeFieldAsUPropDel(fieldName, propType, metas[0], metas[1])
         else:
-            makeFieldAsUProp(name, typ, metas[0], metas[1])
+            makeFieldAsUProp(fieldName, propType, metas[0], metas[1])
 
     #TODO Metas to flags
     let ueFields = node.childrenAsSeq()
@@ -286,17 +309,17 @@ func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} =
         .map(n=>n.strVal().strip())
         .map(makeUEMetadata)
 
-func getUPropsAsFieldsForType(body:NimNode) : seq[UEField]  = 
+func getUPropsAsFieldsForType(body:NimNode, ueTypeName:string) : seq[UEField]  = 
     body.toSeq()
-        .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ["uprop", "uproperty"])
-        .map(fromUPropNodeToField)
+        .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ["uprop", "uprops", "uproperty", "uproperties"])
+        .map(n=>fromUPropNodeToField(n, ueTypeName))
         .foldl(a & b, newSeq[UEField]())
         .reversed()
     
 macro uStruct*(name:untyped, body : untyped) : untyped = 
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
     let structMetas = getMetasForType(body)
-    let ueFields = getUPropsAsFieldsForType(body)
+    let ueFields = getUPropsAsFieldsForType(body, structTypeName)
     let structFlags = (STRUCT_NoFlags)
     let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas, structFlags)
 
@@ -309,7 +332,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let parent = name[^1].strVal()
     let className = name[1].strVal()
     let classMetas = getMetasForType(body)
-    let ueFields = getUPropsAsFieldsForType(body)
+    let ueFields = getUPropsAsFieldsForType(body, className)
     let classFlags = (CLASS_Inherit | CLASS_ScriptInherit ) #| CLASS_CompiledFromBlueprint
     let ueType = makeUEClass(className, parent, classFlags, ueFields, classMetas)
     
@@ -544,9 +567,8 @@ macro uFunctions*(body : untyped) : untyped =
     result = nnkStmtList.newTree allFuncs
 
 
-
 macro uConstructor*(fn:untyped) : untyped = 
-    # echo treeRepr header
+    #infers neccesary data as UEFields for ergonomics
     echo treeRepr fn.params
     let params = fn.params
                    .children
@@ -556,16 +578,34 @@ macro uConstructor*(fn:untyped) : untyped =
     let typeParam = params.head().get() #TODO errors
     let initializerParam = params.tail().head().get() #TODO errors
 
-    let typeIdent = ident typeParam.uePropType.removeLastLettersIfPtr()
-    let typeLiteral = newStrLitNode typeParam.uePropType.removeLastLettersIfPtr()
+
+    #prepare for gen ast
+    let typeName = typeParam.uePropType.removeLastLettersIfPtr()
+    let typeIdent = ident typeName
+    let typeLiteral = newStrLitNode typeName
     let selfIdent = ident typeParam.name
     let initName = ident initializerParam.name
     let fnName = fn.name
     let fnBody = fn.body
-    result = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral, initName):
+    #gets the UEType and expands the assigments for the nodes that has cachedNodes implemented
+    func insertReferenceToSelfInAssigmentNode(assgnNode:NimNode) : NimNode = 
+        assgnNode[0].insert(0, selfIdent)
+        assgnNode
+
+    var assigmentsNode = getPropAssigment(typeName).get(newEmptyNode()) #TODO error
+    let assigments = 
+            nnkStmtList.newTree(
+                assigmentsNode
+                    .children
+                    .toSeq()
+                    .map(insertReferenceToSelfInAssigmentNode)
+            )
+
+    result = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assigments, initName):
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
             var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
             #calls the cpp constructor first
+            assigments
             selfIdent.getClass().getFirstCppClass().classConstructor(initializer)
             fnBody #user code
        
@@ -580,7 +620,7 @@ macro uConstructor*(fn:untyped) : untyped =
 
     #Last call is to add it to the list of available constructors
     # echo treeRepr result
-    # echo repr result
+    echo repr result
 
 
 # constructor(UTypeName):
@@ -599,29 +639,18 @@ macro uConstructor*(fn:untyped) : untyped =
 #return type
 #param
 
+proc testFunc() : int32 = 2
 
-# uFunctions:
-#     (BlueprintPure, test : UObjectPtr, Category="whatever" BlueprintCallable)
+uClass UClassTest of UObject:
+    uprops():
+        whatever : FString
+        whatever2 : int = 4
+        whatever1 : int32 = testFunc()
 
-#     proc functionThatReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool) : FString  = 
-#         return "Whatever"
+dumpTree:
+    self.whatever2 = 2
+    self.whatever2 = testFunc()
 
-#     proc functionThatReturns2(self:UObjectPtr) : string {.adasdasd.}  = 
-
-#         discard
-#         "Whatever2"
-#     #     
-
-#     proc functionThatNoReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool)   =  
-#         echo "hello mi ninio"
-    
-
-        
-#     proc functionThatNoReturns2(self:UObjectPtr) : void =  discard
-
-
-# dumpTree:
-#      proc functionThatNoReturns(self:UObjectPtr, anotherParam:int, anotherParamMore:bool) {.ufunc.}   =  
-#         echo "hello mi ninio"
-    
-    # inner(anotherParam, anotherParamMore)
+proc test(this:UClassTestPtr, initializer: FObjectInitializer) {.uConstructor.} =
+    echo "hola"
+    echo "whatever"

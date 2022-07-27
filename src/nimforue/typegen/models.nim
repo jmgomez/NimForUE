@@ -95,6 +95,8 @@ func getFieldByName*(ueTypes:seq[UEType], name:string) : Option[UEField] =
         .foldl(a & b)
         .first(f=>f.name == name)
 
+func getUETypeByName*(ueTypes:seq[UEType], name:string) : Option[UEType] = ueTypes.first(ueType=>ueType.name)
+
 func shouldBeReturnedAsVar*(field:UEField) : bool = 
     let typesReturnedAsVar = ["TMap"]
     field.kind == uefProp and 

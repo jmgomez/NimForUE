@@ -325,15 +325,18 @@ uFunctions:
     proc receiveBeginPlay(self:AActorDslParentNimPtr)  = 
         UE_Error("begin play called in actor DSL parent nim")
 
+
+
+func calcSomething(x:int32):int32 = x * 2
 uClass AActorDsl of AActorDslParentNim:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         testField: FString
-        test2: bool
-        test3: float
-        anotherField3: int32
-        anotherField2: int32
-        anotherField1: int32 
+        test2: bool 
+        test3: float  
+        anotherField3: int32 = 20
+        anotherField2: int32 = calcSomething(200)
+        anotherField1: int32 = 100
         anotherFieldArr: TArray[int32]
         anotherFieldEnum: EMyTestEnum
         nimCreatedDsl: EMyEnumCreatedInDsl
@@ -348,6 +351,7 @@ uClass AActorDsl of AActorDslParentNim:
         multicastDynOneParamNimAnother2Params: FMyDelegate2Params
         multicastDel: FMyDelegateNoParams
         # anotherField5 : FString
+
 
 
 
