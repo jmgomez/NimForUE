@@ -264,8 +264,8 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
     newCls.classCastFlags = parent.classCastFlags
     
     copyMetadata(parent, newCls)
-    # newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
-    # newCls.setMetadata("BlueprintType", "true") #todo move to ueType
+    newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType. BlueprintType should be producing this
+    newCls.setMetadata("BlueprintType", "true") #todo move to ueType
     for metadata in ueType.metadata:
         newCls.setMetadata(metadata.name, $metadata.value)
 

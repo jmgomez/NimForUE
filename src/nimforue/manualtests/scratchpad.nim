@@ -255,6 +255,62 @@ uClass UNimTestComponent of UActorComponent:
     uprop(BlueprintAssignable):
         onWhatever : FMyDelegate
 
+
+
+proc nimComponentConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
+    var obj = ueCast[UNimTestComponent](initializer.getObj())
+    #call first cpp constructor:
+    #maybe we should add default constructor and call only the parent constructor here?
+    #if so, we could automatize it so it just call it first on the macro itself. 
+    obj.getClass().getFirstCppClass().classConstructor(initializer)
+    obj.propString = "Hey CDO modified here"
+    #first
+    UE_Warn "Class Constructor Called from for the UNimTestComponent!!"
+
+addClassConstructor("UNimTestComponent", nimComponentConstructor)
+
+
+uClass UObjectNim of UObject:
+    (BlueprintType, Blueprintable)
+    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+        testField: FString
+
+
+uFunctions:
+    (BlueprintPure, self: UObjectNimPtr, Static)
+    proc addTwoNumbers3(param: int, param2: int) : int  = param + param2
+    proc addTwoNumbers4(param: int, param2: int) : int  = param + param2
+    proc addTwoNumbers5(param: int, param2: int) : int  = 
+        UE_Warn "Hello from object" & self.getName()
+        param + param2
+
+    proc helloObject(param: FString): FString {.ufunc.} =
+        UE_Warn "Hello from object" & param
+
+    proc helloObjectNimParam(param: FString): int {.ufunc.} =
+        UE_Warn "Hello from object" & param
+        45002
+    proc addTwoNumbers(param: int, param2: int) : int {.ufunc BlueprintPure .} = param + param2
+    proc addTwoNumbers2(param: int, param2: int) : int {.ufunc BlueprintCallable .} = param + param2
+    proc returnObjectTest(param: int, param2: int) : UObjectNimPtr {.ufunc.} =
+        UE_Warn "Hello from object" & $param
+        newUObject[UObjectNim](self)
+
+proc objectNimConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
+    var obj = ueCast[UObjectNim](initializer.getObj())
+    #call first cpp constructor:
+    #maybe we should add default constructor and call only the parent constructor here?
+    #if so, we could automatize it so it just call it first on the macro itself. 
+    obj.getClass().getFirstCppClass().classConstructor(initializer)
+    obj.testField = "Hey CDO modified here"
+    #first
+    UE_Warn "Class Constructor Called from for the UObjectNim!!"
+
+addClassConstructor("UObjectNim", objectNimConstructor)
+
+
+
+
 uClass AActorDslParentNim of ATestActor:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
@@ -278,8 +334,9 @@ uClass AActorDsl of AActorDslParentNim:
         anotherFieldEnum: EMyTestEnum
         nimCreatedDsl: EMyEnumCreatedInDsl
 
-    uprop(VisibleAnywhere, BlueprintReadWrite):
+    uprop(EditAnywhere, BlueprintReadWrite):
         nimTestComp: UNimTestComponentPtr
+        objectNim: UObjectNimPtr
 
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
@@ -289,30 +346,25 @@ uClass AActorDsl of AActorDslParentNim:
         # anotherField5 : FString
 
 
- 
-proc actorDslConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
-    let parent = initializer.getObj().getFirstNimBase()
-    parent.getSuperClass().getSuperClass().classConstructor(initializer)
 
+
+proc actorDslConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
     var obj = ueCast[AActorDsl](initializer.getObj())
-    
-    # obj.nimTestComp = createDefaultSubobject[UNimTestComponent](initializer, n"NimTestComponent")
-    let cls = staticClass[UNimTestComponent]()
-    # let subObj = createDefaultSubobject(initializer, obj, n"Test", cls, cls, true, false)
-    # obj.nimTestComp = ueCast[UNimTestComponent](subObj)
-    obj.nimTestComp =  ueCast[UNimTestComponent](initializer.createDefaultSubobject(obj, n"NimTestComponent", staticClass[UNimTestComponent](), staticClass[UNimTestComponent](), true, false))
-    if obj.nimTestComp.isNil():
-        UE_Error("nimTestComp null")
-    # obj.actorComp2 = createDefaultSubobjectNim[UMyTestActorComponent2](obj, n"TestComponentNim2")
-    # obj.actorComp2 = createDefaultSubobjectNim[UMyTestActorComponent2](obj, n"TestComponentNim2")
-    
+    #call first cpp constructor:
+    #maybe we should add default constructor and call only the parent constructor here?
+    #if so, we could automatize it so it just call it first on the macro itself. 
+    obj.getClass().getFirstCppClass().classConstructor(initializer)
+    obj.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
+    obj.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"ObjectNim")
     obj.test3 = 2323
     #first
-    
-    UE_Log parent.getName()
     UE_Warn "Class Constructor Called from for the actorDsl!!"
 
 addClassConstructor("AActorDsl", actorDslConstructor)
+
+
+#test constructor on NimComponent and on a Regular Object (then do a test over the default constructor approach)
+
 
 proc helloActorDsl(sel2: AActorDslPtr): void  {.ufunc.}=
     UE_Warn "Hello from Aactor"
@@ -322,7 +374,6 @@ proc notifyActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.}
 
 uFunctions:
     (BlueprintCallable, self: AActorDslPtr)
-
 
     #TODO handle the prefixes so the user can just use the same name
     proc beginPlay()   =        
@@ -343,8 +394,6 @@ uFunctions:
         UE_Log "Called from nim and returns  " & $ str
 
     proc userConstructionScript() =
-        #maybe with this is enough and we can just create components here?
-        #no still the constructor needs to be bind if we wan to use it
         UE_Warn "Hello from the construction script, pretty cool" & self.getName()
     
     proc addTwoNumbers6(param: TArray[int], param2: var TArray[int], param3: var bool) : void  = 
@@ -353,19 +402,7 @@ uFunctions:
 
     proc anotherFn(paramOut: var bool, test : FString) : void  = 
         paramOut = true
-        # proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void=
-    #     let str = $param 
-        
-    #     UE_Warn "Hello from Aactor modified:" & str & " " & $param2
 
-    # proc helloActorDslWithIntParamterAndObjectParam(self: AActorDsl, param: FString,
-    #         param2: int32, param3: UObjectPtr): void =
-    #     let str = $param
-    #     UE_Warn "Hello from Aactor modified:" & str & " " & $param2 & " " &
-    #             param3.getName()
-
-    # proc functionThatReturns(self: AActorDsl): FString =
-    #     return "Whatever"
 
 uFunctions:
     (BlueprintCallable, this:AActorDslPtr)
@@ -386,41 +423,6 @@ uFunctions:
         UE_Warn "onJumped snim"
     proc didJump(self:ANimCharacterPtr) = 
         UE_Warn "didJump nim"
-
-uClass UObjectNim of UObject:
-    (BlueprintType, Blueprintable)
-    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-        testField: FString
-
-
-
-proc helloObject(self: UObjectNimPtr, param: FString): FString {.ufunc.} =
-    UE_Warn "Hello from object" & param
-
-
-
-proc helloObjectNimParam(self: UObjectNimPtr, param: FString): int {.ufunc.} =
-    UE_Warn "Hello from object" & param
-    45002
-
-
-proc addTwoNumbers(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc BlueprintPure .} = param + param2
-proc addTwoNumbers2(self: UObjectNimPtr, param: int, param2: int) : int {.ufunc BlueprintCallable .} = param + param2
-
-proc returnObjectTest(self: UObjectNimPtr, param: int, param2: int) : UObjectNimPtr {.ufunc.} =
-    UE_Warn "Hello from object" & $param
-    
-    newUObject[UObjectNim](self)
-
-
-uFunctions:
-    (BlueprintPure, self: UObjectNimPtr, Static)
-    proc addTwoNumbers3(param: int, param2: int) : int  = param + param2
-    proc addTwoNumbers4(param: int, param2: int) : int  = param + param2
-    proc addTwoNumbers5(param: int, param2: int) : int  = 
-        UE_Warn "Hello from object" & self.getName()
-        param + param2
-
 
 
 

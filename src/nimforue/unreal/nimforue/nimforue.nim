@@ -5,7 +5,7 @@ import ../../macros/uebind
 import std/[strformat, options]
 include ../definitions
 import ../../typegen/models
-import ../../utils/utils
+import ../../utils/[utils, ueutils]
 
 import std/[typetraits, strutils, sequtils, sugar]
 
@@ -33,6 +33,20 @@ proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UF
         xs.add it.get()
     xs
 
+
+#it will call super until UObject is reached
+iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr = 
+    var super = cls
+    let uObjCls = staticClass[UObject]()
+    while super != uObjCls:
+        super = super.getSuperClass()
+        yield super
+
+func getFirstCppClass*(cls:UClassPtr) : UClassPtr =
+    for super in getClassHierarchy(cls):
+        if tryUECast[UNimClassBase](super).isSome():
+            continue
+        return super
 
 proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FPropertyPtr] = 
     let isIn = (p:FPropertyPtr) => flag in p.getPropertyFlags()
