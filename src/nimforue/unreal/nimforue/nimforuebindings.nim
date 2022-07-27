@@ -131,8 +131,10 @@ proc getDefaultObject*[T:UObject]() : ptr T =
     let cls = staticClass[T]()
     ueCast[T](cls.getDefaultObject())
 
-    
-
+proc createDefaultSubobject*[T:UObject](initializer:var FObjectInitializer, name:FName) : ptr T = 
+    let cls = staticClass[T]()
+    let subObj = initializer.createDefaultSubobject(initializer.getObj(), name, cls, cls, true, false)
+    ueCast[T](subObj)
 
 proc addClassFlag*(cls:UClassPtr, flag:EClassFlags) : void {.importcpp:"UReflectionHelpers::AddClassFlag(@)".}    
 proc addScriptStructFlag*(cls:UScriptStructPtr, flag:EStructFlags) : void {.importcpp:"UReflectionHelpers::AddScriptStructFlag(@)".}    
