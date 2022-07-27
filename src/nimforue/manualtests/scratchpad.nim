@@ -248,6 +248,10 @@ uDelegate FMyDelegate2Params(str: FString, param: TArray[FString])
 uDelegate FMyDelegateNoParams()
 
 
+
+uClass UComponentWithoutProps of UActorComponent:
+    (BlueprintType, Blueprintable, BlueprintSpawnableComponent)
+
 uClass UNimTestComponent of UActorComponent:
     (BlueprintType, Blueprintable, BlueprintSpawnableComponent)#BlueprintSpawnableComponent
     uprop(EditAnywhere, BluerpintReadWrite):
@@ -355,7 +359,7 @@ proc actorDslConstructor(initializer: var FObjectInitializer) {.cdecl.} =
     #if so, we could automatize it so it just call it first on the macro itself. 
     obj.getClass().getFirstCppClass().classConstructor(initializer)
     obj.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
-    obj.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"ObjectNim")
+    obj.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"Object")
     obj.test3 = 2323
     #first
     UE_Warn "Class Constructor Called from for the actorDsl!!"

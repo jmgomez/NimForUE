@@ -288,9 +288,9 @@ func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} =
 
 func getUPropsAsFieldsForType(body:NimNode) : seq[UEField]  = 
     body.toSeq()
-        .filter(n=>n.kind == nnkCall and n[0].strVal() == "uprop")
+        .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ["uprop", "uproperty"])
         .map(fromUPropNodeToField)
-        .foldl(a & b)
+        .foldl(a & b, newSeq[UEField]())
         .reversed()
     
 macro uStruct*(name:untyped, body : untyped) : untyped = 

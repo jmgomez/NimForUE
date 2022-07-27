@@ -222,19 +222,12 @@ proc isNotNil[T](x:ptr T) : bool = not x.isNil()
 # template isNotNil(x:typed) = (not x.isNil())
 proc isNimClassBase(cls:UClassPtr) : bool = ueCast[UNimClassBase](cls) != nil
 
-#move this from here
-proc getFirstNimBase*(obj:UObjectPtr) : UNimClassBasePtr {.importcpp:"UNimClassBase::GetFirstNimClassBase(#)"}
 
-
-proc classConstructorTest[T](objInitializer: var FObjectInitializer) {.cdecl.}= 
-    var obj = objInitializer.getObj()
-    let parent = obj.getFirstNimBase()
-
-    #first
-    parent.getSuperClass().getSuperClass().classConstructor(objInitializer)
-    
-    UE_Log parent.getName()
-    UE_Warn "Class Constructor Called from Nim!!"
+#here for reference
+proc defaultClassConstructor(initializer: var FObjectInitializer) {.cdecl.}= 
+    var obj = initializer.getObj()
+    obj.getClass().getSuperClass().classConstructor(initializer)    
+    UE_Warn "Class Constructor Called from Nim!!" & obj.getName()
 
 
 
@@ -283,8 +276,7 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
 
     newCls.bindType()
     newCls.staticLink(true)
-    if clsConstructor.isSome():
-        newCls.setClassConstructor(clsConstructor.get())
+    clsConstructor.run((cons:UClassConstructor)=>newCls.setClassConstructor(cons))
     # newCls.addConstructorToActor()
 
     newCls.assembleReferenceTokenStream()
