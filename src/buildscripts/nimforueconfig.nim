@@ -97,6 +97,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     let pluginDir = conf.pluginDir
 
     let pluginDefinitionsPaths = pluginDir / "./Intermediate"/"Build"/ platformDir / "UnrealEditor" / confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
+    let nimForUEIntermidateHeaders = pluginDir/ "Intermediate"/ "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUE"
     let nimForUEBindingsHeaders =  pluginDir / "Source/NimForUEBindings/Public/"
     let nimForUEBindingsIntermidateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
     let nimForUEEditorHeaders =  pluginDir / "Source/NimForUEEditor/Public/"
@@ -108,6 +109,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     let essentialHeaders = @[
         pluginDefinitionsPaths / "NimForUE",
         pluginDefinitionsPaths / "NimForUEBindings",
+        nimForUEIntermidateHeaders,
         nimForUEBindingsHeaders,
         nimForUEBindingsIntermidateHeaders,
     #notice this shouldnt be included when target <> Editor
@@ -124,15 +126,17 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     let runtimeModules = @["CoreUObject", "Core", "Engine", "TraceLog", "Launch", "ApplicationCore", 
         "Projects", "Json", "PakFile", "RSA", "Engine", "RenderCore",
         "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
-        "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore", "AssetRegistry"]
+        "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore", "AssetRegistry", "DeveloperSettings"]
 
     let developerModules = @["DesktopPlatform", "ToolMenus", "TargetPlatform", "SourceControl"]
-    let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry"]
+    let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry", "InputCore", "DeveloperSettings"]
 
     let moduleHeaders = 
         runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
         developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
-        intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module))
+        intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module)) &
+        addQuotes(engineDir / "Source/Runtime/InputCore/Classes")
+
 
     return essentialHeaders & moduleHeaders
         

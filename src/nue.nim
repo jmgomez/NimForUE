@@ -1,19 +1,19 @@
 # tooling for NimForUE
 
-import std / [os, osproc, parseopt, tables, strformat, strutils, times, sequtils]
+import std / [os, osproc, parseopt, tables, strformat, strutils, times, sequtils, options]
 import buildscripts / [nimforueconfig, copylib, nimcachebuild]
 
-var options: Table[string, string]
+var taskOptions: Table[string, string]
 
 type Task = object
   name: string
   description: string
-  routine: proc(options: Table[string, string]) {.nimcall.}
+  routine: proc(taskOptions: Table[string, string]) {.nimcall.}
 
 var tasks: seq[tuple[name:string, t:Task]]
 
 template task(taskName: untyped, desc: string, body: untyped): untyped =
-  proc `taskName`(options: Table[string, string]) {.nimcall.} =
+  proc `taskName`(taskOptions: Table[string, string]) {.nimcall.} =
     let start = now()
     echo ">>>> Task: ", astToStr(taskName), " <<<<"
     body
@@ -44,12 +44,13 @@ proc echoTasks() =
     echo "  ", t.name, if t.name.len < 6: "\t\t" else: "\t", t.t.description
 
 proc main() =
-  var params = commandLineParams().join(" ")
-  if params.len == 0:
+  if commandLineParams().join(" ").len == 0:
     echo "nue: NimForUE tool"
     echoTasks()
 
   var p = initOptParser()
+  var ts:Option[Task]
+  var args: string
   for kind, key, val in p.getopt():
     case kind
     of cmdEnd: doAssert(false) # cannot happen with getopt
@@ -60,14 +61,20 @@ proc main() =
         echoTasks()
         quit()
       else:
-        options[key] = val
+        taskOptions[key] = val
     of cmdArgument:
-      var ts = tasks.filterIt(it.name == key)
-      if ts.len == 1:
-        ts[0].t.routine(options)
+      let res = tasks.filterIt(it.name == key)
+      if res.len > 0:
+        ts = some(res[0].t)
+      elif ts.isSome():
+        doAssert(not taskOptions.hasKey("args"), "TODO: accept more than one task argument")
+        taskOptions["args"] = key
       else:
         echo &"!! Unknown task {key}."
         echoTasks()
+
+  if ts.isSome():
+    ts.get().routine(taskOptions)
 
 # --- Define Tasks ---
 
@@ -116,7 +123,7 @@ task watch, "Monitors the components folder for changes to recompile.":
     sleep watchInterval
 
 task w, "Alias for watch":
-  watch(options)
+  watch(taskOptions)
 
 task guest, "Builds the main lib. The one that makes sense to hot reload.":
     generateFFIGenFile()
@@ -127,10 +134,10 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
     generateFFIGenFile()
 
     var force = ""
-    if "f" in options:
+    if "f" in taskOptions:
       force = "-f"
     
-    var noGen = "nogen" in options
+    var noGen = "nogen" in taskOptions
 
     if not noGen:
       discard execCmd(&"nim cpp {force} -g --stacktrace:on --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim")
@@ -139,10 +146,17 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
       copyNimForUELibToUEDir()
 
 task g, "Alias to guestpch":
-  guestpch(options)
+  guestpch(taskOptions)
 
 task winpch, "For Windows, Builds the pch file for Unreal Engine via nim":
   winpch()
+
+task pp, "Preprocess a file with MSVC":
+  if "args" in taskOptions:
+    preprocess(taskOptions["args"])
+  else:
+    quit("Usage: nue.exe pp filepath")
+
 
 # --- End Tasks ---
 
