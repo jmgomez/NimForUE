@@ -1,7 +1,12 @@
-include ../unreal/prelude
-import std/[sugar, macros, algorithm, strutils, strformat, tables, genasts, sequtils, options, hashes]
+# include ../unreal/prelude
+import std/[sugar, macros, algorithm, strutils, strformat, tables, times, genasts, sequtils, options, hashes]
+import ../unreal/coreuobject/[uobject, package, uobjectglobals, nametypes]
+import ../unreal/core/containers/[unrealstring, array, map]
+import ../unreal/nimforue/[nimforue, nimforuebindings]
+import ../utils/[utils, ueutils]
 import nuemacrocache
 import uemeta
+import ../macros/uebind
 
 
 
@@ -25,9 +30,12 @@ type
         emitters* : seq[EmitterInfo]
         types* : seq[UEType]
         fnTable* : Table[string, Option[UFunctionNativeSignature]]
+        clsConstructorTable* : Table[string, Option[UClassConstructor]]
 
 
 var ueEmitter* = UEEmitter() 
+
+#rename these to register
 
 proc addEmitterInfo*(ueType:UEType) : void =  
     ueEmitter.types.add(ueType)
@@ -35,6 +43,8 @@ proc addEmitterInfo*(ueType:UEType) : void =
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
     ueEmitter.emitters.add(EmitterInfo(kind:ekType, ueType:ueType, generator:fn))
 
+proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor) : void =  
+    ueEmitter.clsConstructorTable.add(clsName, some classConstructor)
 
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
     var ueClassType = ueEmitter.types.first(t=>t.name == ueField.className).get()
@@ -123,11 +133,11 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
             UE_Log fmt"generating the function for class: {cls.getName()}"
             discard emitter.fnGenerator(cls) 
             
-    for ueType in ueEmitter.types:
+    for ueType in ueEmitter.types: 
         case ueType.kind:
         of uetClass:
             let ueType = ueType
-            let fnGen = (pkg:UPackagePtr)=> ueType.emitUClass(pkg, ueEmitter.fnTable)
+            let fnGen = (pkg:UPackagePtr)=> ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name).flatten())
             let prevClassPtr = someNil getClassByName ueType.name.removeFirstLetter()
             let newClassPtr = emitUStructInPackage(pkg, ueType, fnGen, prevClassPtr)
             prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
@@ -228,7 +238,7 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
         if m == "Transient":
                 flags = flags | CPF_Transient
         if m == "BlueprintAssignable":
-                flags = flags | CPF_BlueprintAssignable 
+                flags = flags | CPF_BlueprintAssignable | CPF_BlueprintVisible
         if m == "BlueprintCallable":
                 flags = flags | CPF_BlueprintCallable
             #Notice this is only required in the unlikely case that the user wants to use a delegate that is not exposed to Blueprint in any way
@@ -507,7 +517,7 @@ func ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
 macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField]())
    
 
-
+ 
 
 
 #this macro is ment to be used as a block that allows you to define a bunch of ufuncs 
@@ -525,17 +535,14 @@ macro uFunctions*(body : untyped) : untyped =
                     .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip().addPtrToUObjectIfNotPresentAlready(), CPF_None)) #notice no generic/var allowed. Only UObjects
                     
 
-
-
+   
     let allFuncs = body.children.toSeq()
         .filter(n=>n.kind==nnkProcDef)
         .map(procBody=>ufuncImpl(procBody, firstParam, metas))
-        
-        # .tap(fnNode=>fnNode.addPragma(symbol "ufunc"))
     
+    # exec("sleep 1")
     result = nnkStmtList.newTree allFuncs
-
-
+  
 
 #falta genererar el call
 #void vs no void

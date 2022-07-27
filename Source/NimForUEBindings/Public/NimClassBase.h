@@ -3,17 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
+#include "GameFramework/Actor.h"
+
 #include "NimClassBase.generated.h"
 
 /**
  * 
  */
+
+
+
+
 UCLASS()
 class NIMFORUEBINDINGS_API UNimClassBase : public UClass {
 GENERATED_BODY()
+public:
+	void SetClassConstructor(void (*NimClassConstructor) (FObjectInitializer&));
 
- 
+
+static UNimClassBase* GetFirstNimClassBase(UObject* Obj);
 
 };
 

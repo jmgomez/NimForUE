@@ -1,5 +1,5 @@
 include ../definitions
-import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, templates/subclassof, nametypes, uobjectglobals]
+import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, templates/subclassof, nametypes]
 import ../core/containers/[unrealstring, array, map]
 import std/[typetraits, strutils]
 
@@ -31,6 +31,8 @@ proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : v
 func getEnums*(uenum:UNimEnumPtr) : TArray[TPair[FName, int64]] {.importcpp:"#->GetEnums()".}
 proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVersionExists()".}
 
+#UNimClassBase
+proc setClassConstructor*(cls:UNimClassBasePtr, classConstructor:UClassConstructor) : void {.importcpp:"#->SetClassConstructor(#)".}
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:openarray[pointer]) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
@@ -114,6 +116,23 @@ proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     let cls = getClassByName(className)
     return cls
+
+proc staticClass*[T:UObject]() : UClassPtr = 
+    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
+    let cls = getClassByName(className) #TODO stop doing this and use fname instead
+    return cls
+proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
+
+proc isChildOf*[T:UObject](cls: UClassPtr) : bool =
+    let someBase = staticClass[T]()
+    isChildOf(cls, someBase)
+
+proc getDefaultObject*[T:UObject]() : ptr T =
+    let cls = staticClass[T]()
+    ueCast[T](cls.getDefaultObject())
+
+    
+
 
 proc addClassFlag*(cls:UClassPtr, flag:EClassFlags) : void {.importcpp:"UReflectionHelpers::AddClassFlag(@)".}    
 proc addScriptStructFlag*(cls:UScriptStructPtr, flag:EStructFlags) : void {.importcpp:"UReflectionHelpers::AddScriptStructFlag(@)".}    

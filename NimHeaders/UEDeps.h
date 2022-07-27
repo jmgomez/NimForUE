@@ -11,6 +11,9 @@
 #include "Misc/AutomationTest.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/UserDefinedEnum.h"
+#include "Components/ActorComponent.h"
+
+
 //NimForUEBindingsHeaders.h
 #include "NimForUEBindingsHeaders.h"
 //Editor only

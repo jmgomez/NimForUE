@@ -7,6 +7,15 @@
 #include <stdbool.h>
 #include "TestActor.generated.h"
 
+
+UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent))
+class UMyTestActorComponent : public UActorComponent {
+	GENERATED_BODY()
+public:
+	
+};
+
+
 UCLASS(BlueprintType, Blueprintable)
 class NIMFORUE_API ATestActor : public AActor {
 	GENERATED_BODY()
@@ -14,7 +23,8 @@ class NIMFORUE_API ATestActor : public AActor {
 public:
 	// Sets default values for this actor's properties
 	ATestActor();
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMyTestActorComponent* TestActorComponentCpp;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

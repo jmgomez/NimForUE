@@ -20,7 +20,7 @@ suite "NimForUE.ClassEmit":
                             makeFieldAsUProp("TestFieldOtra", "FString", CPF_BlueprintVisible | CPF_Edit | CPF_ExposeOnSpawn),
                         ])
         var fnTable : Table[string, Option[UFunctionNativeSignature]]
-        let newCls = ueCast[UClass]ueVarType.emitUClass(package, fnTable)
+        let newCls = ueCast[UClass]ueVarType.emitUClass(package, fnTable, none[UClassConstructor]())
         
         let fields = getFPropsFromUStruct(newCls)
         

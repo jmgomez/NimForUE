@@ -34,7 +34,7 @@ func makeUEStruct*(name:string, fields:seq[UEField], superStruct="", metadata : 
     UEType(kind:uetStruct, name:name, fields:fields, superStruct:superStruct, metadata: metadata, structFlags: flags)
 
 func makeUEMulDelegate*(name:string, fields:seq[UEField]) : UEType = 
-    UEType(kind:uetDelegate, name:name, fields:fields)
+    UEType(kind:uetDelegate, delKind:uedelMulticastDynScriptDelegate, name:name, fields:fields)
 
 func makeUEEnum*(name:string, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
     UEType(kind:uetEnum, name:name, fields:fields, metadata: metadata)
@@ -172,6 +172,7 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNat
     let superFn  = superCls.flatmap((scls:UClassPtr)=>scls.findFunctionByNameWithPrefixes(fnField.name))
     #the only 
 
+
     #if we are overriden a function we use the name with the prefix
     #notice this only works with BlueprintEvent so check that too. 
     let fnName = superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
@@ -205,17 +206,52 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNat
     # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
     fn
 
-proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, Option[UFunctionNativeSignature]]) : UFieldPtr =
+
+# UNimClassBase* GetFirstNimBase(UObject* Object) {
+# 	UClass* Parent = Object->GetClass();
+# 	while (Parent != nullptr)
+# 	{
+# 		if (Cast<UNimClassBase>(Parent) != nullptr)
+# 			return (UNimClassBase*)Parent;
+# 		Parent = Parent->GetSuperClass();
+# 	}
+# 	return nullptr;
+# }
+
+proc isNotNil[T](x:ptr T) : bool = not x.isNil()
+# template isNotNil(x:typed) = (not x.isNil())
+proc isNimClassBase(cls:UClassPtr) : bool = ueCast[UNimClassBase](cls) != nil
+
+#move this from here
+proc getFirstNimBase*(obj:UObjectPtr) : UNimClassBasePtr {.importcpp:"UNimClassBase::GetFirstNimClassBase(#)"}
+
+
+proc classConstructorTest[T](objInitializer: var FObjectInitializer) {.cdecl.}= 
+    var obj = objInitializer.getObj()
+    let parent = obj.getFirstNimBase()
+
+    #first
+    parent.getSuperClass().getSuperClass().classConstructor(objInitializer)
+    
+    UE_Log parent.getName()
+    UE_Warn "Class Constructor Called from Nim!!"
+
+
+
+proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, Option[UFunctionNativeSignature]], clsConstructor : Option[UClassConstructor] ) : UFieldPtr =
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
     # const objClsFlags  =  (RF_Public || RF_Standalone || RF_Transactional || RF_LoadCompleted)
     # let objClsFlags  =  RF_Standalone || RF_Public
     let
         newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
-        parent = getClassByName(ueType.parent.removeFirstLetter())
+        parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
     
+    let parent = parentCls
+                    .getOrRaise(fmt "Parent class {ueType.parent} not found for {ueType.name}")
+    
+        
     assetCreated(newCls)
 
-    newCls.classConstructor = nil
     newCls.propertyLink = parent.propertyLink
     newCls.classWithin = parent.classWithin
     newCls.classConfigName = parent.classConfigName
@@ -232,7 +268,8 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
     newCls.setMetadata("BlueprintType", "true") #todo move to ueType
     
 
-    for field in ueType.fields:
+
+    for field in ueType.fields: 
         case field.kind:
         of uefProp: discard field.emitFProperty(newCls) 
         of uefFunction: 
@@ -245,7 +282,12 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
 
     newCls.bindType()
     newCls.staticLink(true)
+    if clsConstructor.isSome():
+        newCls.setClassConstructor(clsConstructor.get())
+    # newCls.addConstructorToActor()
+
     newCls.assembleReferenceTokenStream()
+
     # discard newCls.getDefaultObject() #forces the creation of the cdo
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
     newCls
@@ -298,7 +340,7 @@ proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr =
     let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UDelegateFunction](package, fnName, objFlags)
     fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
-    for field in delType.fields:
+    for field in delType.fields.reversed():
         let fprop =  field.emitFProperty(fn)
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
     fn.staticLink(true)

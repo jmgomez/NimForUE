@@ -3,6 +3,25 @@
 
 #include "NimClassBase.h"
 
+#include "ReflectionHelpers.h"
+
+
+void UNimClassBase::SetClassConstructor(void(* NimClassConstructor)(FObjectInitializer&)) {
+	this->ClassConstructor = reinterpret_cast<ClassConstructorType>(NimClassConstructor);
+}
+
+
+UNimClassBase* UNimClassBase::GetFirstNimClassBase(UObject* Obj) {
+	UClass* Parent = Obj->GetClass();
+	while (Parent != nullptr)
+	{
+		if (Cast<UNimClassBase>(Parent) != nullptr)
+			return (UNimClassBase*)Parent;
+		Parent = Parent->GetSuperClass();
+	}
+	return nullptr;
+}
+
 UNimEnum::UNimEnum(const FObjectInitializer& Initializer) : UEnum(Initializer) {
 	SetEnumFlags(EEnumFlags::Flags);
 }

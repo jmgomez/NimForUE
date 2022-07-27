@@ -19,7 +19,7 @@ switch("define", "useMalloc")
 --w:off
 # --hints:off
 # --profileVM:on
-
+# --benchmarkVM:on
 when not defined copylib:
     # switch("listcmd")
     # switch("f")
@@ -28,7 +28,7 @@ when not defined copylib:
     switch("define", "pluginDir:"& nueConfig.pluginDir)
     #todo get from NueConfig?
     let withPCH = true and defined withue
-    let withDebug = false
+    let withDebug = true
     
 
     let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $ nueConfig.targetPlatform

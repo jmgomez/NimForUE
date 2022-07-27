@@ -123,16 +123,14 @@ proc scratchpad*(executor: UObjectPtr) =
     let ueType = cls.toUEType()
 
 
-
+ 
 
 #temp
 type
-    AActor* = object of UObject
-    AActorPtr* = ptr AActor
+
     ACharacter* = object of AActor
     ACharacterPtr* = ptr ACharacter
     ATestActor* = object of AActor
-    ATestActorPtr* = ptr ATestActor
     
     ANimForUEDemoCharacter* = object of ACharacter
 
@@ -143,6 +141,7 @@ const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
     ]
 )
 genType(ueEnumType)
+
 
 
 # uStruct FIntPropTests:
@@ -248,10 +247,19 @@ uDelegate FMyDelegate(str: FString, number: FString)
 uDelegate FMyDelegate2Params(str: FString, param: TArray[FString])
 uDelegate FMyDelegateNoParams()
 
+
+uClass UNimTestComponent of UActorComponent:
+    (BlueprintType)#BlueprintSpawnableComponent
+    uprop(EditAnywhere, BluerpintReadWrite):
+        propString : FString
+    uprop(BlueprintAssignable):
+        onWhatever : FMyDelegate
+
 uClass AActorDslParentNim of ATestActor:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         testFieldparent: FString
+
 
 uFunctions:
     proc receiveBeginPlay(self:AActorDslParentNimPtr)  = 
@@ -270,12 +278,36 @@ uClass AActorDsl of AActorDslParentNim:
         anotherFieldEnum: EMyTestEnum
         nimCreatedDsl: EMyEnumCreatedInDsl
 
+    uprop(EditAnywhere, BlueprintReadWrite):
+        nimTestComp : UNimTestComponentPtr
+
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
         multicastDynOneParamNimAnother: FMyDelegate
         multicastDynOneParamNimAnother2Params: FMyDelegate2Params
         multicastDel: FMyDelegateNoParams
         # anotherField5 : FString
+
+
+ 
+proc actorDslConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
+    let parent = initializer.getObj().getFirstNimBase()
+    parent.getSuperClass().getSuperClass().classConstructor(initializer)
+
+    var obj = ueCast[AActorDsl](initializer.getObj())
+    
+    obj.nimTestComp =  ueCast[UNimTestComponent](initializer.createDefaultSubobject(obj, n"NimTestComponent", staticClass[UNimTestComponent](), staticClass[UNimTestComponent](), true, false))
+
+    # obj.actorComp2 = createDefaultSubobjectNim[UMyTestActorComponent2](obj, n"TestComponentNim2")
+    # obj.actorComp2 = createDefaultSubobjectNim[UMyTestActorComponent2](obj, n"TestComponentNim2")
+    
+    obj.test3 = 2323
+    #first
+    
+    UE_Log parent.getName()
+    UE_Warn "Class Constructor Called from for the actorDsl!!"
+
+addClassConstructor("AActorDsl", actorDslConstructor)
 
 proc helloActorDsl(sel2: AActorDslPtr): void  {.ufunc.}=
     UE_Warn "Hello from Aactor"
@@ -289,7 +321,8 @@ uFunctions:
 
     #TODO handle the prefixes so the user can just use the same name
     proc beginPlay()   =        
-        UE_Warn "Hello begin play from Aactor child in NIm" 
+        UE_Warn "Hello begin play from Aactor child in NIm" & self.getName()
+        self.nimTestComp.onWhatever.broadcast("whaaat", "loool")
 
     # proc tick(self: AActorDslPtr, deltaSeconds:float32): void  =
     #     UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds" & self.getName()
@@ -298,7 +331,7 @@ uFunctions:
     
 
     proc callEditorTest()  {.CallInEditor.} =  
-        UE_Log "Hello from the editor"
+        UE_Log "Hello from the editor1"
         self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
         var str:FString = ""
         # self.implmentableEventTestWithReturn("echo", str)
@@ -312,7 +345,7 @@ uFunctions:
     proc addTwoNumbers6(param: TArray[int], param2: var TArray[int], param3: var bool) : void  = 
         param2 = param.toSeq().map(x=>x*x).toTArray()
         
-        
+
     proc anotherFn(paramOut: var bool, test : FString) : void  = 
         paramOut = true
         # proc helloActorDslWithIntParamter(self: AActorDsl, param: FString, param2: int32): void=
@@ -345,7 +378,7 @@ uClass ANimCharacter of ACharacter:
 uFunctions:
     (BlueprintCallable)
     proc onJumped(self:ANimCharacterPtr) = 
-        UE_Warn "onJumped nim"
+        UE_Warn "onJumped snim"
     proc didJump(self:ANimCharacterPtr) = 
         UE_Warn "didJump nim"
 

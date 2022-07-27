@@ -2,7 +2,7 @@
 include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
 import models
-import ../utils/[utils, ueutils]
+
 
 func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
     let flags = RF_NoFlags #OBJECT FLAGS
@@ -37,6 +37,7 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
 
     some case eMeta:
     of emClass, emTSubclassOf:
+        #check if it's a component here
         let clsProp = newFClassProperty(makeFieldVariant(outer), name, flags)
         clsProp.setPropertyMetaClass(cls)
         clsProp
@@ -45,8 +46,11 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
         clsProp.setPropertyMetaClass(cls)
         clsProp
     of emObjPtr:
+        let isComponent = isChildOf[UActorComponent](cls)
         let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
         objProp.setPropertyClass(cls)
+        if isComponent:
+            objProp.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
         objProp
     of emTSoftObjectPtr:
         let softObjProp = newFSoftObjectProperty(makeFieldVariant(outer), name, flags)

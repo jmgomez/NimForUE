@@ -1,24 +1,24 @@
 
 
 include unreal/prelude
-import typegen/[uemeta, ueemit]
+# import typegen/[uemeta, ueemit]
 
 
-import macros/[ffi, uebind]
-import std/[times]
+import macros/[ffi]
+# import std/[times]
 import strformat
 import manualtests/scratchpad
 #define on config.nims
 const genFilePath* {.strdefine.} : string = ""
 
-proc fromTheEditor() : void  {.ffi:genFilePath}  = 
-    scratchpadEditor()
+# proc fromTheEditor() : void  {.ffi:genFilePath}  = 
+#     scratchpadEditor()
 
-proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
-    let executor = cast[UObjectPtr](obj)
-    testArrayEntryPoint(executor)
-    # testVectorEntryPoint(executor)
-    scratchpad(executor)
+# proc testCallUFuncOn(obj:pointer) : void  {.ffi:genFilePath}  = 
+#     let executor = cast[UObjectPtr](obj)
+#     testArrayEntryPoint(executor)
+#     # testVectorEntryPoint(executor)
+#     scratchpad(executor)
 
 
 #function called right after the dyn lib is load

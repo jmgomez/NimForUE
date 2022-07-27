@@ -44,7 +44,11 @@ public:
 		return Frame->StepCompiledInRef<TProperty, TNativeType>(TemporaryBuffer);
 	}
 	
-
+	template<class T>
+	static T* CreateDefaultSubobjectNim(UObject* Outer, FName Name) {
+		return Outer->CreateDefaultSubobject<T>(Name, false);
+	}
+	
 	template<typename T>
 	static UClass* FromSubclass(TSubclassOf<T> SubclassOf) {
 		return SubclassOf;

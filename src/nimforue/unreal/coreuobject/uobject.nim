@@ -35,14 +35,17 @@ type
 
     UStructPtr* = ptr UStruct 
 
+    FObjectInitializer* {.importcpp.} = object
 
+    #Notice this is not really the signature. It has const 
+    UClassConstructor* = proc (objectInitializer:var FObjectInitializer) : void {.cdecl.}
 
     UClass* {.importcpp, inheritable, pure .} = object of UStruct
         classWithin* {.importcpp:"ClassWithin".}: UClassPtr #  The required type for the outer of instances of this class */
         classConfigName* {.importcpp:"ClassConfigName".}: FName 
         classFlags* {.importcpp:"ClassFlags".}: EClassFlags
         classCastFlags* {.importcpp:"ClassCastFlags".}: EClassCastFlags
-        classConstructor* {.importcpp:"ClassConstructor".}: pointer
+        classConstructor* {.importcpp:"ClassConstructor".}: UClassConstructor
 
 
     UClassPtr* = ptr UClass
@@ -65,6 +68,13 @@ type
 
 proc castField*[T : FField ](src:FFieldPtr) : ptr T {. importcpp:"CastField<'*0>(#)" .}
 proc ueCast*[T : UObject ](src:UObjectPtr) : ptr T {. importcpp:"Cast<'*0>(#)" .}
+proc createDefaultSubobject*[T : UObject ](obj:var FObjectInitializer, outer:UObjectPtr, subObjName:FName, bTransient=false) : ptr T {. importcpp:"#.CreateDefaultSubobject<'*0>(@)" .}
+proc createDefaultSubobject*(obj:var FObjectInitializer, outer:UObjectPtr, subObjName:FName, returnCls, defualtCls: UClassPtr, bIsRequired, bTransient:bool) : UObjectPtr {. importcpp:"#.CreateDefaultSubobject(@)" .}
+
+#todo change this for ActorComponent?
+proc createDefaultSubobjectNim*[T:UObject](outer:UObjectPtr, name:FName) : ptr T {.importcpp:"UReflectionHelpers::CreateDefaultSubobjectNim<'*0>(@)" .}
+
+
 
 proc getName*(prop:FFieldPtr) : FString {. importcpp:"#->GetName()" .}
 
@@ -228,7 +238,8 @@ iterator items*[T](it:var TFieldIterator[T]) : var TFieldIterator[T] =
 proc stepExplicitProperty*(frame:var FFrame, result:pointer, prop:FPropertyPtr) {.importcpp:"#.StepExplicitProperty(@)".}
 proc step*(frame:var FFrame, contex:UObjectPtr, result:pointer) {.importcpp:"#.Step(@)".}
 
-
+#object initializer
+proc getObj*(obj: var FObjectInitializer) : UObjectPtr {.importcpp:"#.GetObj()".}
 
 iterator items*(ustr: UStructPtr): FFieldPtr =
     var currentProp = ustr.childProperties

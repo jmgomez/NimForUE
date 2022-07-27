@@ -1,4 +1,4 @@
-import std/[options, strutils, sequtils, sugar]
+import std/[options, strutils, sequtils, sugar, tables]
 #NOTE Do not include UE Types here
 
 
@@ -112,3 +112,8 @@ func someNil*[T](val: sink T): Option[T] {.inline.} =
     else: some val
 
 
+#tables
+
+proc tryGet*[K, V](self: Table[K, V], key:K): Option[V] {.inline.} =
+  if self.contains(key): some(self[key])
+  else: none[V]()
