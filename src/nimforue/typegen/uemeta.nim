@@ -168,7 +168,7 @@ func findFunctionByNameWithPrefixes*(cls: UClassPtr, name:string) : Option[UFunc
 
 #note at some point class can be resolved from the UEField?
 proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNativeSignature]) : UFunctionPtr = 
-    let superCls = someNil cls.getSuperClass()
+    let superCls = someNil(cls.getSuperClass())
     let superFn  = superCls.flatmap((scls:UClassPtr)=>scls.findFunctionByNameWithPrefixes(fnField.name))
     #the only 
 
@@ -264,9 +264,10 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
     newCls.classCastFlags = parent.classCastFlags
     
     copyMetadata(parent, newCls)
-    newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
-    newCls.setMetadata("BlueprintType", "true") #todo move to ueType
-    
+    # newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType
+    # newCls.setMetadata("BlueprintType", "true") #todo move to ueType
+    for metadata in ueType.metadata:
+        newCls.setMetadata(metadata.name, $metadata.value)
 
 
     for field in ueType.fields: 

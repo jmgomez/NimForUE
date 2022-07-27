@@ -249,7 +249,7 @@ uDelegate FMyDelegateNoParams()
 
 
 uClass UNimTestComponent of UActorComponent:
-    (BlueprintType)#BlueprintSpawnableComponent
+    (BlueprintType, Blueprintable, BlueprintSpawnableComponent)#BlueprintSpawnableComponent
     uprop(EditAnywhere, BluerpintReadWrite):
         propString : FString
     uprop(BlueprintAssignable):
@@ -278,8 +278,8 @@ uClass AActorDsl of AActorDslParentNim:
         anotherFieldEnum: EMyTestEnum
         nimCreatedDsl: EMyEnumCreatedInDsl
 
-    uprop(EditAnywhere, BlueprintReadWrite):
-        nimTestComp : UNimTestComponentPtr
+    uprop(VisibleAnywhere, BlueprintReadWrite):
+        nimTestComp: UNimTestComponentPtr
 
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
@@ -296,8 +296,13 @@ proc actorDslConstructor(initializer: var FObjectInitializer) {.cdecl.} =
 
     var obj = ueCast[AActorDsl](initializer.getObj())
     
+    # obj.nimTestComp = createDefaultSubobject[UNimTestComponent](initializer, n"NimTestComponent")
+    let cls = staticClass[UNimTestComponent]()
+    # let subObj = createDefaultSubobject(initializer, obj, n"Test", cls, cls, true, false)
+    # obj.nimTestComp = ueCast[UNimTestComponent](subObj)
     obj.nimTestComp =  ueCast[UNimTestComponent](initializer.createDefaultSubobject(obj, n"NimTestComponent", staticClass[UNimTestComponent](), staticClass[UNimTestComponent](), true, false))
-
+    if obj.nimTestComp.isNil():
+        UE_Error("nimTestComp null")
     # obj.actorComp2 = createDefaultSubobjectNim[UMyTestActorComponent2](obj, n"TestComponentNim2")
     # obj.actorComp2 = createDefaultSubobjectNim[UMyTestActorComponent2](obj, n"TestComponentNim2")
     
