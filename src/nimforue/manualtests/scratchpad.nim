@@ -1,7 +1,7 @@
 #this is temp until we have tests working (have to bind dyn delegates first)
 include ../unreal/prelude
 import std/[times, strformat, strutils, options, sugar, sequtils, json, jsonutils]
-import ../typegen/[uemeta, models, ueemit]
+import ../typegen/[uemeta, models]
 
 proc saySomething(obj: UObjectPtr, msg: FString): void {.uebind.}
 
@@ -351,21 +351,26 @@ uClass AActorDsl of AActorDslParentNim:
 
 
 
+# proc actorDslConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
+#     var obj = ueCast[AActorDsl](initializer.getObj())
+#     #call first cpp constructor:
+#     #maybe we should add default constructor and call only the parent constructor here?
+#     #if so, we could automatize it so it just call it first on the macro itself. 
+#     obj.getClass().getFirstCppClass().classConstructor(initializer)
+#     obj.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
+#     obj.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"Object")
+#     obj.test3 = 2323
+#     #first
+#     UE_Warn "Class Constructor Called from for the actorDsl!!"
 
-proc actorDslConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
-    var obj = ueCast[AActorDsl](initializer.getObj())
-    #call first cpp constructor:
-    #maybe we should add default constructor and call only the parent constructor here?
-    #if so, we could automatize it so it just call it first on the macro itself. 
-    obj.getClass().getFirstCppClass().classConstructor(initializer)
-    obj.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
-    obj.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"Object")
-    obj.test3 = 2323
+# addClassConstructor("AActorDsl", actorDslConstructor)
+
+proc actorDslConstructor(self:AActorDslPtr, initializer:FObjectInitializer) {.uConstructor.} = 
+    self.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
+    self.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"Object")
+    self.test3 = 2323
     #first
-    UE_Warn "Class Constructor Called from for the actorDsl!!"
-
-addClassConstructor("AActorDsl", actorDslConstructor)
-
+    UE_Warn "Class Constructor Called for the actorDsl via the macro!"
 
 #test constructor on NimComponent and on a Regular Object (then do a test over the default constructor approach)
 

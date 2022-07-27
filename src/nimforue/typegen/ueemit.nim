@@ -542,7 +542,57 @@ macro uFunctions*(body : untyped) : untyped =
     
     # exec("sleep 1")
     result = nnkStmtList.newTree allFuncs
-  
+
+
+
+macro uConstructor*(fn:untyped) : untyped = 
+    # echo treeRepr header
+    echo treeRepr fn.params
+    let params = fn.params
+                   .children
+                   .toSeq()
+                   .filter(n=>n.kind==nnkIdentDefs)
+                   .map(makeUEFieldFromNimParamNode)
+    let typeParam = params.head().get() #TODO errors
+    let initializerParam = params.tail().head().get() #TODO errors
+
+    let typeIdent = ident typeParam.uePropType.removeLastLettersIfPtr()
+    let typeLiteral = newStrLitNode typeParam.uePropType.removeLastLettersIfPtr()
+    let selfIdent = ident typeParam.name
+    let initName = ident initializerParam.name
+    let fnName = fn.name
+    let fnBody = fn.body
+    result = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral, initName):
+        proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
+            var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
+            #calls the cpp constructor first
+            selfIdent.getClass().getFirstCppClass().classConstructor(initializer)
+            fnBody #user code
+       
+        #add constructor to constructor table
+        addClassConstructor(typeLiteral, fnName)
+
+
+
+    #body starts in StmtList
+    #GenAst first with the call to cpp.
+    #Also, when there is something else to emit in the UEType (should be available at this point, emit it.)
+
+    #Last call is to add it to the list of available constructors
+    # echo treeRepr result
+    # echo repr result
+
+
+# constructor(UTypeName):
+#     echo "hola"
+
+# proc test(myType:UTypeName, initializer:var FObjectInitializer) {.uConstructor.} =
+#     echo "hola"
+#     echo "whatever"
+
+    
+
+
 
 #falta genererar el call
 #void vs no void
