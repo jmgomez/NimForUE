@@ -11,19 +11,11 @@ import ../macros/uebind
 
 
 type 
-    EmitterKind* = enum
-        ekType #Class, Struct, Delegate, Enum
-        ekFunction 
-    EmitterInfo* = object #The function generator doesnt seem really required. Revisit this and see if I can get it around using the UEType directly. If so, it may be possible to use macro cache instead (so it works with IC)
+   
+    EmitterInfo* = object 
         uStructPointer* : UFieldPtr
-        case kind* : EmitterKind:
-        of ekType:
-            ueType : UEType
-            generator* : UPackagePtr->UFieldPtr
-        of ekFunction:
-            uFunction* : UEField
-            fnImpl* : UFunctionNativeSignature
-            fnGenerator*: UClassPtr->UFunctionPtr
+        ueType : UEType
+        generator* : UPackagePtr->UFieldPtr
         
     
     UEEmitter* = ref object 
@@ -31,7 +23,7 @@ type
         types* : seq[UEType]
         fnTable* : Table[string, Option[UFunctionNativeSignature]]
         clsConstructorTable* : Table[string, UClassConstructor]
-
+        
 
 var ueEmitter* = UEEmitter() 
 
@@ -43,7 +35,7 @@ proc addEmitterInfo*(ueType:UEType) : void =
     ueEmitter.types.add(ueType)
 
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
-    ueEmitter.emitters.add(EmitterInfo(kind:ekType, ueType:ueType, generator:fn))
+    ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
 
 proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor) : void =  
     if not ueEmitter.clsConstructorTable.contains(clsName):
@@ -108,8 +100,6 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, ueType:UEType, fnGen
 proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr = 
     var hotReloadInfo = newNimHotReload()
     for emitter in ueEmitter.emitters:
-        case emitter.kind:
-        of ekType:
             case emitter.ueType.kind:
             of uetStruct:
                 let prevStructPtr = someNil getScriptStructByName emitter.ueType.name.removeFirstLetter()
@@ -133,12 +123,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                 let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr)
                 prevDelptr.flatmap((prev : UDelegateFunctionPtr) => newDelPtr.map(newDel=>(prev, newDel)))
                     .run((pair:(UDelegateFunctionPtr, UDelegateFunctionPtr)) => hotReloadInfo.delegatesToReinstance.add(pair[0], pair[1]))
-        of ekFunction: 
-            UE_Log "generating the function"
-            #resolve the class
-            let cls = getClassByName emitter.uFunction.className.removeFirstLetter()
-            UE_Log fmt"generating the function for class: {cls.getName()}"
-            discard emitter.fnGenerator(cls) 
+        
             
     for ueType in ueEmitter.types: 
         case ueType.kind:
