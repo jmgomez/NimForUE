@@ -49,5 +49,6 @@ func getPropAssigment*(typeName:string) : Option[NimNode] =
         some mcPropAssigmentsTable[typeName]
     else: none[NimNode]()
 
+
 func uClassNeedsConstructor*(typeName:string) : bool = 
     mcPropAssigmentsTable.hasKey(typeName)

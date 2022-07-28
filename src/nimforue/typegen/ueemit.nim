@@ -351,7 +351,11 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
 
     #gets the UEType and expands the assigments for the nodes that has cachedNodes implemented
     func insertReferenceToSelfInAssigmentNode(assgnNode:NimNode) : NimNode = 
-        assgnNode[0].insert(0, selfIdent)
+        debugEcho treeRepr assgnNode
+        if assgnNode[0].len()==1: #if there is any insert it. Otherwise, replace the existing one (user has a defined a custom constructor)
+            assgnNode[0].insert(0, selfIdent)
+        else:
+            assgnNode[0][0] = selfIdent
         assgnNode
 
     var assigmentsNode = getPropAssigment(fnField.className).get(newEmptyNode()) #TODO error
@@ -362,13 +366,17 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
                     .toSeq()
                     .map(insertReferenceToSelfInAssigmentNode)
             )
-
     result = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assigments, initName):
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
             var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
+            when not declared(self): #declares self and initializer so the default compiler compiles when using the assigments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
+                var self{.inject.} = selfIdent
+            when not declared(initializer):
+                var initializer{.inject.} = initName
+
+            selfIdent.getClass().getFirstCppClass().classConstructor(initializer)
             #calls the cpp constructor first
             assigments
-            selfIdent.getClass().getFirstCppClass().classConstructor(initializer)
             fnBody #user code
        
         #add constructor to constructor table
@@ -388,20 +396,19 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let ueType = makeUEClass(className, parent, classFlags, ueFields, classMetas)
     
 
-    let uClassNode = emitUClass(ueType)
+    var uClassNode = emitUClass(ueType)
 
-    # if uClassNeedsConstructor(className):
-    #     let constructorName = ident (className&"Default")
-    #     let consTemplate = 
-    #         genAst(constructorName, classPtr = ident(className&"Ptr")):
-    #             proc constructorName(self{.inject.}:classPtr, initializer{.inject.}: FObjectInitializer) {.uConstructor.} =
-    #                 discard
-    #     echo treeRepr consTemplate
-    #     echo repr consTemplate
-    #     let constructor = constructorImpl(consTemplate) 
-    #     nnkStmtList.newTree(uClassNode, constructor)
-    # else: uClassNode
+    if uClassNeedsConstructor(className):
+        let typeParam = makeFieldAsUPropParam("self", className)
+        let initParam = makeFieldAsUPropParam("initializer", "FObjectInitializer")
+        let fnField = makeFieldAsUFun(className&"DefaultConstructor", @[typeParam, initParam], className)
+        
+        let constructor = constructorImpl(fnField, newEmptyNode())
+        # echo repr constructor
+        uClassNode.add constructor
+    # echo treeRepr uClassNode className`
     uClassNode
+    
 
 
 macro uDelegate*(body:untyped) : untyped = 
@@ -586,7 +593,7 @@ func ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
     let fnReprNode = genFunc(UEType(name:className, kind:uetClass), fnField)
     
     let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
-                     
+
     # echo fnImplNode.repr
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
     # debugEcho result.repr

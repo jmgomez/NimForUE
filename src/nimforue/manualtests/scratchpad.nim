@@ -205,9 +205,9 @@ uClass UObjectDsl of UObject:
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         # testField : FString
 
-        testFieldInt: int
-        testFieldAnother: FString
-        testFieldAnother2: bool
+        testFieldInt: int = 100
+        testFieldAnother: FString = "hello world!"
+        testFieldAnother2: bool = true
 
         testFieldAnother3: bool
         testFieldAnother321: FString
@@ -226,7 +226,7 @@ uClass UObjectDsl of UObject:
         testFieldAnother123: int32
         # testFieldAnother124: int32
         # testFieldAnother128: int32
-
+ 
     # type FDynamicMulticastDelegateOneParamTest = object of UDelegateFunction
     # type FDynamicDelegateOneParamTest = object of UDelegateFunction
     # genDelegate(UEField(kind:uefDelegate, name: "DynamicMulticastDelegateOneParamTest", delKind:uedelMulticastDynScriptDelegate, delegateSignature: @["FString"]))
@@ -371,11 +371,11 @@ uClass AActorDsl of AActorDslParentNim:
 
 # addClassConstructor("AActorDsl", actorDslConstructor)
 
-proc actorDslConstructor(self:AActorDslPtr, initializer:FObjectInitializer) {.uConstructor.} = 
-    self.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
-    self.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"Object")
-    self.test3 = 2323
-    self.testBoolConstructor = true
+proc actorDslConstructor(self2:AActorDslPtr, initializer:FObjectInitializer) {.uConstructor.} = 
+    self2.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
+    self2.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"Object")
+    self2.test3 = 2323
+    self2.testBoolConstructor = true
     #first
     UE_Warn "Class Constructor Called for the actorDsl via the macro!"
 
