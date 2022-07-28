@@ -126,13 +126,21 @@ proc scratchpad*(executor: UObjectPtr) =
  
 
 #temp
-type
 
+type
     ACharacter* = object of AActor
     ACharacterPtr* = ptr ACharacter
     ATestActor* = object of AActor
     
     ANimForUEDemoCharacter* = object of ACharacter
+
+
+
+uClass ANimGameCharTest of ANimForUEDemoCharacter:
+    (BlueprintType, Blueprintable)
+    uprop(BlueprintReadWrite):
+        testName : FString
+
 
 const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
                             fields: @[
@@ -206,7 +214,7 @@ uClass UObjectDsl of UObject:
         # testField : FString
 
         testFieldInt: int = 100
-        testFieldAnother: FString = "hello world!"
+        testFieldAnother: FString = "hello world!!"
         testFieldAnother2: bool = true
 
         testFieldAnother3: bool
@@ -343,7 +351,7 @@ uClass AActorDsl of AActorDslParentNim:
         nimCreatedDsl: EMyEnumCreatedInDsl = SomethingElse
 
     uprop(EditAnywhere, BlueprintReadWrite):
-        nimTestComp: UNimTestComponentPtr 
+        nimTestComp: UNimTestComponentPtr
         nimTestComp2: UNimTestComponentPtr = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent2")
         objectNim: UObjectNimPtr
 

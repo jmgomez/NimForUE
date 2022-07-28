@@ -30,7 +30,7 @@ type
         emitters* : seq[EmitterInfo]
         types* : seq[UEType]
         fnTable* : Table[string, Option[UFunctionNativeSignature]]
-        clsConstructorTable* : Table[string, Option[UClassConstructor]]
+        clsConstructorTable* : Table[string, UClassConstructor]
 
 
 var ueEmitter* = UEEmitter() 
@@ -46,7 +46,10 @@ proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =
     ueEmitter.emitters.add(EmitterInfo(kind:ekType, ueType:ueType, generator:fn))
 
 proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor) : void =  
-    ueEmitter.clsConstructorTable.add(clsName, some classConstructor)
+    if not ueEmitter.clsConstructorTable.contains(clsName):
+        ueEmitter.clsConstructorTable.add(clsName, classConstructor)
+    else:
+        ueEmitter.clsConstructorTable[clsName] = classConstructor 
 
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
     var ueClassType = ueEmitter.types.first(t=>t.name == ueField.className).get()
@@ -141,7 +144,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
         case ueType.kind:
         of uetClass:
             let ueType = ueType
-            let fnGen = (pkg:UPackagePtr)=> ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name).flatten())
+            let fnGen = (pkg:UPackagePtr)=> ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
             let prevClassPtr = someNil getClassByName ueType.name.removeFirstLetter()
             let newClassPtr = emitUStructInPackage(pkg, ueType, fnGen, prevClassPtr)
             prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
@@ -277,11 +280,6 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
 
         var propType = if assigmentNode.isSome(): n[1][0][0].repr else: n[1].repr.strip()
         assigmentNode.run (n:NimNode)=> addPropAssigment(ueTypeName, n)
-        # debugEcho treeRepr n
-        # debugEcho "-----"
-
-        # debugEcho treeRepr assigmentNode.get(newEmptyNode())
-        # debugEcho "--------------------------------"
         if isMulticastDelegate propType:
             makeFieldAsUPropMulDel(fieldName, propType, metas[0], metas[1])
         elif isDelegate propType:
@@ -351,7 +349,6 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
 
     #gets the UEType and expands the assigments for the nodes that has cachedNodes implemented
     func insertReferenceToSelfInAssigmentNode(assgnNode:NimNode) : NimNode = 
-        debugEcho treeRepr assgnNode
         if assgnNode[0].len()==1: #if there is any insert it. Otherwise, replace the existing one (user has a defined a custom constructor)
             assgnNode[0].insert(0, selfIdent)
         else:
@@ -665,9 +662,6 @@ uClass UClassTest of UObject:
         whatever2 : int = 4
         whatever1 : int32 = testFunc()
 
-dumpTree:
-    self.whatever2 = 2
-    self.whatever2 = testFunc()
 
 proc test(this:UClassTestPtr, initializer: FObjectInitializer) {.uConstructor.} =
     echo "hola"

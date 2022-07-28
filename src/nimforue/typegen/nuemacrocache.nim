@@ -38,7 +38,6 @@ const mcPropAssigmentsTable = CacheTable"propAssigmentsTable"
 #with the left value as DotExpr which is not set at the time of creation
 #so it has to be set on the usage (the uClass constructor)
 func addPropAssigment*(typeName:string, assigmentNode:NimNode) = 
-    debugEcho typeName
     if mcPropAssigmentsTable.hasKey(typeName):
         mcPropAssigmentsTable[typeName].add assigmentNode
     else:
