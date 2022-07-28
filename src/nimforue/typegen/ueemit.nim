@@ -325,6 +325,57 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
 
     emitUStruct(ueType) 
 
+
+
+func makeUEFieldFromNimParamNode(n:NimNode) : UEField = 
+    #make sure there is no var at this point, but CPF_Out
+    
+    var nimType = n[1].repr.strip()
+    let paramName = n[0].strVal()
+    var paramFlags = CPF_Parm
+    if nimType.split(" ")[0] == "var":
+        paramFlags = paramFlags | CPF_OutParm
+        nimType = nimType.split(" ")[1]
+    makeFieldAsUPropParam(paramName, nimType, paramFlags)
+
+func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode = 
+
+    let typeParam = fnField.signature.head().get() #TODO errors
+
+    #prepare for gen ast
+    let typeIdent = ident fnField.className
+    let typeLiteral = newStrLitNode fnField.className
+    let selfIdent = ident typeParam.name
+    let initName = ident fnField.signature[1].name #there are always two params.a
+    let fnName = ident fnField.name
+
+    #gets the UEType and expands the assigments for the nodes that has cachedNodes implemented
+    func insertReferenceToSelfInAssigmentNode(assgnNode:NimNode) : NimNode = 
+        assgnNode[0].insert(0, selfIdent)
+        assgnNode
+
+    var assigmentsNode = getPropAssigment(fnField.className).get(newEmptyNode()) #TODO error
+    let assigments = 
+            nnkStmtList.newTree(
+                assigmentsNode
+                    .children
+                    .toSeq()
+                    .map(insertReferenceToSelfInAssigmentNode)
+            )
+
+    result = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assigments, initName):
+        proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
+            var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
+            #calls the cpp constructor first
+            assigments
+            selfIdent.getClass().getFirstCppClass().classConstructor(initializer)
+            fnBody #user code
+       
+        #add constructor to constructor table
+        addClassConstructor(typeLiteral, fnName)
+
+
+
 macro uClass*(name:untyped, body : untyped) : untyped = 
     if name.toSeq().len() < 3:
         error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
@@ -336,8 +387,22 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let classFlags = (CLASS_Inherit | CLASS_ScriptInherit ) #| CLASS_CompiledFromBlueprint
     let ueType = makeUEClass(className, parent, classFlags, ueFields, classMetas)
     
-    emitUClass(ueType)
-  
+
+    let uClassNode = emitUClass(ueType)
+
+    # if uClassNeedsConstructor(className):
+    #     let constructorName = ident (className&"Default")
+    #     let consTemplate = 
+    #         genAst(constructorName, classPtr = ident(className&"Ptr")):
+    #             proc constructorName(self{.inject.}:classPtr, initializer{.inject.}: FObjectInitializer) {.uConstructor.} =
+    #                 discard
+    #     echo treeRepr consTemplate
+    #     echo repr consTemplate
+    #     let constructor = constructorImpl(consTemplate) 
+    #     nnkStmtList.newTree(uClassNode, constructor)
+    # else: uClassNode
+    uClassNode
+
 
 macro uDelegate*(body:untyped) : untyped = 
     let name = body[0].strVal()
@@ -475,17 +540,6 @@ func getFunctionFlags(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFunctio
     (flags, metas)
 
 
-func makeUEFieldFromNimParamNode(n:NimNode) : UEField = 
-    #make sure there is no var at this point, but CPF_Out
-    var nimType = n[1].repr.strip()
-    let paramName = n[0].strVal()
-    var paramFlags = CPF_Parm
-    if nimType.split(" ")[0] == "var":
-        paramFlags = paramFlags | CPF_OutParm
-        nimType = nimType.split(" ")[1]
-        
-    makeFieldAsUPropParam(paramName, nimType, paramFlags)
-
 
 #first is the param specify on ufunctions when specified one. Otherwise it will use the first
 #parameter of the function
@@ -566,62 +620,19 @@ macro uFunctions*(body : untyped) : untyped =
     # exec("sleep 1")
     result = nnkStmtList.newTree allFuncs
 
-
 macro uConstructor*(fn:untyped) : untyped = 
-    #infers neccesary data as UEFields for ergonomics
-    echo treeRepr fn.params
+        #infers neccesary data as UEFields for ergonomics
     let params = fn.params
                    .children
                    .toSeq()
                    .filter(n=>n.kind==nnkIdentDefs)
                    .map(makeUEFieldFromNimParamNode)
-    let typeParam = params.head().get() #TODO errors
+
+    let firstParam = params.head().get() #TODO errors
     let initializerParam = params.tail().head().get() #TODO errors
 
-
-    #prepare for gen ast
-    let typeName = typeParam.uePropType.removeLastLettersIfPtr()
-    let typeIdent = ident typeName
-    let typeLiteral = newStrLitNode typeName
-    let selfIdent = ident typeParam.name
-    let initName = ident initializerParam.name
-    let fnName = fn.name
-    let fnBody = fn.body
-    #gets the UEType and expands the assigments for the nodes that has cachedNodes implemented
-    func insertReferenceToSelfInAssigmentNode(assgnNode:NimNode) : NimNode = 
-        assgnNode[0].insert(0, selfIdent)
-        assgnNode
-
-    var assigmentsNode = getPropAssigment(typeName).get(newEmptyNode()) #TODO error
-    let assigments = 
-            nnkStmtList.newTree(
-                assigmentsNode
-                    .children
-                    .toSeq()
-                    .map(insertReferenceToSelfInAssigmentNode)
-            )
-
-    result = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assigments, initName):
-        proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
-            var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
-            #calls the cpp constructor first
-            assigments
-            selfIdent.getClass().getFirstCppClass().classConstructor(initializer)
-            fnBody #user code
-       
-        #add constructor to constructor table
-        addClassConstructor(typeLiteral, fnName)
-
-
-
-    #body starts in StmtList
-    #GenAst first with the call to cpp.
-    #Also, when there is something else to emit in the UEType (should be available at this point, emit it.)
-
-    #Last call is to add it to the list of available constructors
-    # echo treeRepr result
-    echo repr result
-
+    let fnField = makeFieldAsUFun(fn.name.strVal(), params, firstParam.uePropType.removeLastLettersIfPtr())
+    constructorImpl(fnField, fn.body)
 
 # constructor(UTypeName):
 #     echo "hola"

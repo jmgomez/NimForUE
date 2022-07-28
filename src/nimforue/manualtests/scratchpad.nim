@@ -331,18 +331,20 @@ func calcSomething(x:int32):int32 = x * 2
 uClass AActorDsl of AActorDslParentNim:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-        testField: FString
-        test2: bool 
+        testField: FString = self.getName()
+        testBoolConstructor : bool 
+        testBoolDefault : bool = true
         test3: float  
-        anotherField3: int32 = 20
+        anotherField3: int32 = 21       
         anotherField2: int32 = calcSomething(200)
         anotherField1: int32 = 100
         anotherFieldArr: TArray[int32]
         anotherFieldEnum: EMyTestEnum
-        nimCreatedDsl: EMyEnumCreatedInDsl
+        nimCreatedDsl: EMyEnumCreatedInDsl = SomethingElse
 
     uprop(EditAnywhere, BlueprintReadWrite):
-        nimTestComp: UNimTestComponentPtr
+        nimTestComp: UNimTestComponentPtr 
+        nimTestComp2: UNimTestComponentPtr = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent2")
         objectNim: UObjectNimPtr
 
 
@@ -373,6 +375,7 @@ proc actorDslConstructor(self:AActorDslPtr, initializer:FObjectInitializer) {.uC
     self.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
     self.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"Object")
     self.test3 = 2323
+    self.testBoolConstructor = true
     #first
     UE_Warn "Class Constructor Called for the actorDsl via the macro!"
 
@@ -391,6 +394,7 @@ uFunctions:
     #TODO handle the prefixes so the user can just use the same name
     proc beginPlay()   =        
         UE_Warn "Hello begin play from Aactor child in NIm" & self.getName()
+        self.testBoolConstructor = true
         self.nimTestComp.onWhatever.broadcast("whaaat", "loool")
 
     # proc tick(self: AActorDslPtr, deltaSeconds:float32): void  =
