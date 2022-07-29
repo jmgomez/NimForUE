@@ -20,7 +20,7 @@ type
     
     UEEmitter* = ref object 
         emitters* : seq[EmitterInfo]
-        types* : seq[UEType]
+        # types* : seq[UEType]
         fnTable* : Table[string, Option[UFunctionNativeSignature]]
         clsConstructorTable* : Table[string, UClassConstructor]
         
@@ -28,14 +28,14 @@ type
 var ueEmitter* = UEEmitter() 
 
 #rename these to register
-proc getTypesFromEmitters(): seq[UEType] =
-    ueEmitter.types
-
-proc addEmitterInfo*(ueType:UEType) : void =  
-    ueEmitter.types.add(ueType)
-
+proc getFnGetForUClass(ueType:UEType) : UPackagePtr->UFieldPtr = 
+   (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
+    
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
     ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
+
+proc addEmitterInfo*(ueType:UEType) : void =  
+    addEmitterInfo(ueType, getFnGetForUClass(ueType))
 
 proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor) : void =  
     if not ueEmitter.clsConstructorTable.contains(clsName):
@@ -43,14 +43,26 @@ proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor) : 
     else:
         ueEmitter.clsConstructorTable[clsName] = classConstructor 
 
-proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
-    var ueClassType = ueEmitter.types.first(t=>t.name == ueField.className).get()
-    ueClassType.fields.add ueField
+# proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
+#     var ueClassType = ueEmitter.types.first(t=>t.name == ueField.className).get()
+#     ueClassType.fields.add ueField
     
+#     ueEmitter.fnTable[ueField.name] = fnImpl
+#     ueEmitter.types = ueEmitter.types.replaceFirst(t=>t.name == ueField.className, ueClassType)
+
+proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
+    var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == ueField.className).get()
+
+    var ueClassType = emitter.ueType
+    ueClassType.fields.add ueField
     ueEmitter.fnTable[ueField.name] = fnImpl
-    ueEmitter.types = ueEmitter.types.replaceFirst(t=>t.name == ueField.className, ueClassType)
+
+    ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == ueField.className, emitter)
 
 
+
+proc getEmmitedTypes() : seq[UEType] = 
+    ueEmitter.emitters.map(e=>e.ueType)
 
 proc prepReinst(prev:UObjectPtr) = 
     prev.setFlags(RF_NewerVersionExists)
@@ -106,13 +118,11 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                 let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr)
                 prevStructPtr.flatmap((prev : UScriptStructPtr) => newStructPtr.map(newStr=>(prev, newStr)))
                     .run((pair:(UScriptStructPtr, UScriptStructPtr)) => hotReloadInfo.structsToReinstance.add(pair[0], pair[1]))
-            of uetClass:
-                #Class are passed as types directly but this will likely break the order of dependencies. Need to jump into use the nim cache
-                discard
-                # let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
-                # let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
-                # prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
-                #     .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
+            of uetClass:                
+                let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
+                let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
+                prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
+                    .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
                 let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr)
@@ -122,48 +132,31 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                 let prevDelPtr = someNil getUTypeByName[UDelegateFunction](emitter.ueType.name.removeFirstLetter())
                 let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr)
                 prevDelptr.flatmap((prev : UDelegateFunctionPtr) => newDelPtr.map(newDel=>(prev, newDel)))
-                    .run((pair:(UDelegateFunctionPtr, UDelegateFunctionPtr)) => hotReloadInfo.delegatesToReinstance.add(pair[0], pair[1]))
-        
-            
-    for ueType in ueEmitter.types: 
-        case ueType.kind:
-        of uetClass:
-            let ueType = ueType
-            let fnGen = (pkg:UPackagePtr)=> ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
-            let prevClassPtr = someNil getClassByName ueType.name.removeFirstLetter()
-            let newClassPtr = emitUStructInPackage(pkg, ueType, fnGen, prevClassPtr)
-            prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
-                .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
-        else:
-            discard
+       
 
     for fnName, fnPtr in ueEmitter.fnTable:
-        let funField = getFieldByName(ueEmitter.types, fnName)
+        let funField = getFieldByName(getEmmitedTypes(), fnName)
         let prevFn = funField
                         .flatmap((ff:UEField)=>getClassByName(ff.className).findFunctionByNameWithPrefixes(ff.name))
                         .flatmap((fn:UFunctionPtr)=>tryUECast[UNimFunction](fn))
-        # let prevFn = someNil getUTypeByName[UNimFunction](fnName)
 
         if prevFn.isSome() and funField.isSome():
-            #TODO improve the check
             let prev = prevFn.get()
             let newHash = funField.get().sourceHash
             if not prev.sourceHash.equals(newHash):
                 UE_Warn fmt"A function changed {fnName} updating the pointer"
                 prev.setNativeFunc(cast[FNativeFuncPtr](fnPtr)) 
                 prev.sourceHash = newHash
-        #finds the function in unearl
-        #get the fnField from the type
-        #if the function exists in both places and it is different, then add it to the hotReload 
-        #if it exists see if the source if t
-    #check if a fn changed (check if the pointer points to the same direction). But how we can detect that, I mean, how we can detect a change if we cant look into the implementation.. this wont work.
-    #ON HOLD
+     
  
     hotReloadInfo.setShouldHotReload()
     hotReloadInfo
 
 
 #By default ue types are emitted in the /Script/Nim package. But we can use another for the tests. 
+#This emit block below can be moved to the macro cache. And then have another macro that generates the registration of the types. 
+#That would allow for intecepting the constructor, but would it worth the extra complexity?
+
 proc emitUStructsForPackage*(pkgName:FString = "Nim") : FNimHotReloadPtr = 
     let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("Nim"))
     emitUStructsForPackage(pkg)
@@ -176,13 +169,13 @@ proc emitUStruct(typeDef:UEType) : NimNode =
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUStruct[name](typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
-    # debugEcho repr result
+    # debugEcho repr resulti
 
 proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
-                addEmitterInfo(typeDefAsNode)
+                addEmitterInfo(typeDefAsNode, getFnGetForUClass(typeDefAsNode))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
@@ -201,6 +194,7 @@ proc emitUEnum(typedef:UEType) : NimNode =
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUEnum(typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
+
 #iterate childrens and returns a sequence fo them
 func childrenAsSeq*(node:NimNode) : seq[NimNode] =
     var nodes : seq[NimNode] = @[]

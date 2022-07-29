@@ -44,7 +44,7 @@ type NimForUEConfig* = object
     pluginDir* : string
     targetConfiguration* : TargetConfiguration #Sets by UBT (Development, Build)
     targetPlatform* : TargetPlatform #Sets by UBT
-
+    # currentCompilation* : int 
     #WithEditor? 
     #DEBUG?
 
