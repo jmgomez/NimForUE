@@ -132,7 +132,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                 let prevDelPtr = someNil getUTypeByName[UDelegateFunction](emitter.ueType.name.removeFirstLetter())
                 let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr)
                 prevDelptr.flatmap((prev : UDelegateFunctionPtr) => newDelPtr.map(newDel=>(prev, newDel)))
-       
+                    .run((pair:(UDelegateFunctionPtr, UDelegateFunctionPtr)) => hotReloadInfo.delegatesToReinstance.add(pair[0], pair[1]))
 
     for fnName, fnPtr in ueEmitter.fnTable:
         let funField = getFieldByName(getEmmitedTypes(), fnName)

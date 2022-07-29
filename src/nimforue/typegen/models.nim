@@ -54,6 +54,7 @@ type
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
         metadata* : seq[UEMetadata]
+        sourceHash*: string
         case kind*: UETypeKind
             of uetClass:
                 parent* : string
@@ -104,8 +105,9 @@ func shouldBeReturnedAsVar*(field:UEField) : bool =
     field.isMulticastDelegate() or 
     field.isDelegate()
  
-
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
+func `$`*(a : EPropertyFlagsVal) : string {.borrow.}
+
 func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
 # func `==`*(a, b : EClassFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EStructFlagsVal) : bool {.borrow.}
@@ -142,12 +144,11 @@ func `==`*(a, b : UEField) : bool =
         a.kind == b.kind and
         (case a.kind:
         of uefProp: 
-            compareUEPropTypes(a.uePropType, b.uePropType) #and
-            # a.propFlags == b.propFlags
+            compareUEPropTypes(a.uePropType, b.uePropType) and
+            a.propFlags == b.propFlags #Flags are modified in UE so the test here will fail if the type was recreated from UE. 
         of uefFunction: 
-            a.signature == b.signature  and  
-            a.sourceHash == b.sourceHash
-            # a.fnFlags == b.fnFlags
+            a.signature == b.signature  and  #two functions from the point of view of a class are equals if they have the same signature 
+            a.fnFlags == b.fnFlags
         of uefEnumVal: true)
     if not result: #This is just for debugging types. This functions has to be moved from here so there is no unreal symbols in this file
         UE_Error2 $a 

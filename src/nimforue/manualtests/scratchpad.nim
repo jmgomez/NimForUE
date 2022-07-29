@@ -296,13 +296,13 @@ uFunctions:
         UE_Warn "Hello from object" & self.getName()
         param + param2
 
-    proc helloObject(param: FString): FString {.ufunc.} =
+    proc helloObject(param: FString): FString {. CallInEditor .} =
         UE_Warn "Hello from object" & param
 
     proc helloObjectNimParam(param: FString): int {.ufunc.} =
         UE_Warn "Hello from object" & param
         45002
-    proc addTwoNumbers(param: int, param2: int) : int {.ufunc BlueprintPure .} = param + param2
+    proc addTwoNumbers(param: int, param2: int) : int  = param + param2
     proc addTwoNumbers2(param: int, param2: int) : int {.ufunc BlueprintCallable .} = param + param2
     proc returnObjectTest(param: int, param2: int) : UObjectNimPtr {.ufunc.} =
         UE_Warn "Hello from object" & $param
@@ -338,11 +338,11 @@ uFunctions:
 func calcSomething(x:int32):int32 = x * 2
 uClass AActorDsl of AActorDslParentNim:
     (BlueprintType, Blueprintable)
-    uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+    uprop(EditAnywhere, BlueprintReadWrite):
         testField: FString = self.getName()
         testBoolConstructor : bool 
         testBoolDefault : bool = true
-        test3: float  
+        test4: float  
         anotherField3: int32 = 21       
         anotherField2: int32 = calcSomething(200)
         anotherField1: int32 = 100
@@ -382,8 +382,8 @@ uClass AActorDsl of AActorDslParentNim:
 proc actorDslConstructor(self2:AActorDslPtr, initializer:FObjectInitializer) {.uConstructor.} = 
     self2.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
     self2.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"Object")
-    self2.test3 = 2323
     self2.testBoolConstructor = true
+
     #first
     UE_Warn "Class Constructor Called for the actorDsl via the macro!"
 
@@ -431,7 +431,7 @@ uFunctions:
 
 uFunctions:
     (BlueprintCallable, this:AActorDslPtr)
-    proc anotherFunction() : FString =  "Whatever"
+    proc anotherFunction(test:int) : FString {.BlueprintPure.} =  "Whatever"
     proc sayHelloNewWay() {. CallInEditor .} = 
         UE_Log "hello" &  this.getName
 
@@ -439,7 +439,7 @@ uFunctions:
 
 uClass ANimCharacter of ACharacter:
     (BlueprintType, Blueprintable)
-    uprop(EditAnywhere, BlueprintReadWrite):
+    uprop(EditAnywhere, BlueprintReadOnly):
         jumpSpeed : FString
 
 uFunctions:

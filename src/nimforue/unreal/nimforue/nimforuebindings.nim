@@ -2,13 +2,14 @@ include ../definitions
 import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, templates/subclassof, nametypes]
 import ../core/containers/[unrealstring, array, map]
 import std/[typetraits, strutils]
-
+import ../../typegen/models
 
 type 
     UFunctionCaller* {.importc, inheritable, pure .} = object
     FNativeFuncPtr* {.importcpp.} = object
     
     UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
+        ueTypePtr* {.importcpp: "UETypePtr".} : pointer
     UNimClassBasePtr* = ptr UNimClassBase
 
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct

@@ -18,8 +18,9 @@ UCLASS()
 class NIMFORUEBINDINGS_API UNimClassBase : public UClass {
 GENERATED_BODY()
 public:
-	void SetClassConstructor(void (*NimClassConstructor) (FObjectInitializer&));
+	void* UETypePtr;
 
+	void SetClassConstructor(void (*NimClassConstructor) (FObjectInitializer&));
 
 static UNimClassBase* GetFirstNimClassBase(UObject* Obj);
 

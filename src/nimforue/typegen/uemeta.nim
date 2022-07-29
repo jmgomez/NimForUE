@@ -8,7 +8,7 @@ export models
 const fnPrefixes = @["", "Receive", "K2_"]
 
 
-#UE META CONSTRUCTORS. Notice they are here because they pull type definitions from Cpp which cant be loaded in the ScriptVM
+#UE META CONSTRUCTORS. Noticuee they are here because they pull type definitions from Cpp which cant be loaded in the ScriptVM
 func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[]) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata:metas)       
 
@@ -78,18 +78,6 @@ func getNimTypeAsStr(prop:FPropertyPtr) : string = #The expected type is somethi
 func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something that UEField can understand
     let name = prop.getName()
     let nimType = prop.getNimTypeAsStr()
-    #MOVE THIS 
-    # if prop.isDynDel() or prop.isMulticastDel():
-    #     let signature = if prop.isDynDel(): 
-    #                         castField[FDelegateProperty](prop).getSignatureFunction() 
-    #                     else: 
-    #                         castField[FMulticastDelegateProperty](prop).getSignatureFunction()
-        
-    #     var signatureAsStrs = getFPropsFromUStruct(signature)
-    #                             .map(prop=>getNimTypeAsStr(prop))
-    #     return makeFieldAsDel(name, uedelDynScriptDelegate, signatureAsStrs)
-
-
     return makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
 
     
@@ -112,6 +100,14 @@ func toUEField*(ufun:UFunctionPtr) : UEField =
     fnField
 
 func toUEType*(cls:UClassPtr) : UEType =
+    #First it tries to see if it is a UNimClassBase and if it has a UEType stored.
+    #Otherwise tries to parse the UEType from the Runtime information.
+    let storedUEType = tryUECast[UNimClassBase](cls)
+                        .flatmap((cls:UNimClassBasePtr)=> someNil(cast[ptr UEType](cls.ueTypePtr)))
+                        .map((ueTypePtr) => ueTypePtr[])
+
+    if storedUEType.isSome(): return storedUEType.get()
+
     let fields = getFuncsFromClass(cls)
                     .map(toUEField) & 
                  getFPropsFromUStruct(cls)
@@ -281,11 +277,17 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
 
     newCls.assembleReferenceTokenStream()
 
+    let ueTypePtr = create(UEType)
+    ueTypePtr[] = ueType
+    newCls.ueTypePtr = cast[pointer](ueTypePtr)
+    #TODO free this memory on prepareReinstance
+    UE_Log("Size of " & $sizeof(UEType))
+
     # discard newCls.getDefaultObject() #forces the creation of the cdo
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
     newCls
 
-
+ 
 proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UFieldPtr =
       
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet)
