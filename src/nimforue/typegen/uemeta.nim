@@ -318,7 +318,7 @@ proc emitUStruct*[T](ueType : UEType, package:string) : UFieldPtr =
     
 proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr = 
     let name = enumType.name.makeFName()
-    let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     let uenum = newUObject[UNimEnum](package, name, objFlags)
     for metadata in enumType.metadata:
         uenum.setMetadata(metadata.name, $metadata.value)
@@ -332,7 +332,7 @@ proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr =
 
 proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr = 
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
-    let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UDelegateFunction](package, fnName, objFlags)
     fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
     for field in delType.fields.reversed():

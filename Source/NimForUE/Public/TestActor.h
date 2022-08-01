@@ -35,11 +35,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	class AStaticMeshActor* MeshActor;
 	
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = TestActor)
-	static void CallUFuncFFI(UObject* Object);
-
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = TestActor)
-	static void CallInEditor();
+	
 
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = TestActor)
 	static void ReproduceStringIssue();

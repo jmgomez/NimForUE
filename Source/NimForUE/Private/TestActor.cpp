@@ -31,13 +31,6 @@ void ATestActor::Tick(float DeltaTime) {
 
 static bool init = false;
 
-void ATestActor::CallUFuncFFI(UObject* Object) {
-	testCallUFuncOn(Object);
-}
-
-void ATestActor::CallInEditor() {
-	fromTheEditor();
-}
 
 void ATestActor::ReproduceStringIssue() { //Doesnt happen
 }

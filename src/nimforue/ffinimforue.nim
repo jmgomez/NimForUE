@@ -43,7 +43,7 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
   
     try:
     
-
+  
         # printAllClassAndProps("PRE", pkg)
         let nimHotReload = emitUStructsForPackage()
         
