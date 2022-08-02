@@ -23,7 +23,7 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 	}
 	UEditorUtils::HotReload(NimHotReload);
 	UEditorUtils::RefreshNodes(NimHotReload);
-	delete NimHotReload;
+	// delete NimHotReload;
 	
 	UEditorUtils::ShowLoadNotification(bIsFirstLoad);
 	UE_LOG(LogTemp, Log, TEXT("NimForUE just hot reloaded!! %s"), *Msg);

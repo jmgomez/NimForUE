@@ -29,7 +29,11 @@ var ueEmitter* = UEEmitter()
 
 #rename these to register
 proc getFnGetForUClass(ueType:UEType) : UPackagePtr->UFieldPtr = 
-   (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
+#    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
+    proc toReturn (pgk:UPackagePtr) : UFieldPtr = #the UEType changes when functions are added
+        var ueType = ueEmitter.emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
+        ueType.emitUClass(pgk, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
+    toReturn
     
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
     ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
@@ -52,12 +56,12 @@ proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor) : 
 
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
     var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == ueField.className).get()
-
-    var ueClassType = emitter.ueType
-    ueClassType.fields.add ueField
+    UE_LOG("Emitter pre  " &  $ueEmitter.emitters)
+    emitter.ueType.fields.add ueField
     ueEmitter.fnTable[ueField.name] = fnImpl
 
     ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == ueField.className, emitter)
+    UE_LOG("Emitter post  " &  $ueEmitter.emitters)
 
 
 
@@ -194,6 +198,7 @@ proc emitUEnum(typedef:UEType) : NimNode =
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUEnum(typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
+
 
 #iterate childrens and returns a sequence fo them
 func childrenAsSeq*(node:NimNode) : seq[NimNode] =

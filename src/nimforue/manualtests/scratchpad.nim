@@ -303,6 +303,7 @@ uFunctions:
         UE_Warn "Hello from object" & param
         45002
     proc addTwoNumbers(param: int, param2: int) : int  = param + param2
+    proc addTwoNumbersTest(param: int, param2: int) : int  = param + param2
     proc addTwoNumbers2(param: int, param2: int) : int {.ufunc BlueprintCallable .} = param + param2
     proc returnObjectTest(param: int, param2: int) : UObjectNimPtr {.ufunc.} =
         UE_Warn "Hello from object" & $param
@@ -360,9 +361,7 @@ uClass AActorDsl of AActorDslParentNim:
         multicastDynOneParamNimAnother: FMyDelegate
         multicastDynOneParamNimAnother2Params: FMyDelegate2Params
         multicastDel: FMyDelegateNoParams
-        # anotherField5 : FString
-
-
+        anotherField5 : FString
 
 
 # proc actorDslConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
@@ -388,6 +387,8 @@ proc actorDslConstructor(self2:AActorDslPtr, initializer:FObjectInitializer) {.u
     UE_Warn "Class Constructor Called for the actorDsl via the macro!"
 
 #test constructor on NimComponent and on a Regular Object (then do a test over the default constructor approach)
+
+
 
 
 proc helloActorDsl(sel2: AActorDslPtr): void  {.ufunc.}=
@@ -428,12 +429,14 @@ uFunctions:
     proc anotherFn(paramOut: var bool, test : FString) : void  = 
         paramOut = true
 
+    proc another2() : FString = "another"
 
 uFunctions:
     (BlueprintCallable, this:AActorDslPtr)
     proc anotherFunction(test:int) : FString {.BlueprintPure.} =  "Whatever"
     proc sayHelloNewWay() {. CallInEditor .} = 
         UE_Log "hello" &  this.getName
+
 
 
 
@@ -448,7 +451,6 @@ uFunctions:
         UE_Warn "onJumped snim"
     proc didJump(self:ANimCharacterPtr) = 
         UE_Warn "didJump nim"
-
 
 
 
