@@ -193,9 +193,9 @@ proc nimcacheBuild*(): BuildStatus =
     else:
       continue
 
-  if compileCmds.len == 0:
-    echo "-- No changes detected --"
-    return NoChange
+  # if compileCmds.len == 0:
+  #   echo "-- No changes detected --"
+  #   return NoChange
 
   if parallelBuild:
     var res = newSeq[FlowVar[int]]()

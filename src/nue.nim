@@ -142,7 +142,7 @@ task watch, "Monitors the components folder for changes to recompile.":
         let p = startProcess(updateCmd[0], getCurrentDir(), updateCmd[1])
 
         for line in p.lines:
-          if line.contains("Error:"):
+          if line.contains("Error:") or line.contains("fatal error"):
             log(line, lgError)
           else:
             echo line
