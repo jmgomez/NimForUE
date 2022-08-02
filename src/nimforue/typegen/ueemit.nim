@@ -56,13 +56,10 @@ proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor) : 
 
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
     var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == ueField.className).get()
-    UE_LOG("Emitter pre  " &  $ueEmitter.emitters)
     emitter.ueType.fields.add ueField
     ueEmitter.fnTable[ueField.name] = fnImpl
 
     ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == ueField.className, emitter)
-    UE_LOG("Emitter post  " &  $ueEmitter.emitters)
-
 
 
 proc getEmmitedTypes() : seq[UEType] = 
@@ -638,15 +635,3 @@ macro uConstructor*(fn:untyped) : untyped =
 #return type
 #param
 
-proc testFunc() : int32 = 2
-
-uClass UClassTest of UObject:
-    uprops():
-        whatever : FString
-        whatever2 : int = 4
-        whatever1 : int32 = testFunc()
-
-
-proc test(this:UClassTestPtr, initializer: FObjectInitializer) {.uConstructor.} =
-    echo "hola"
-    echo "whatever"

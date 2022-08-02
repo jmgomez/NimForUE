@@ -245,7 +245,7 @@ uClass UObjectDsl of UObject:
 
 uEnum EMyEnumCreatedInDsl:
     (BlueprintType)
-    Whatever
+    WhateverEnumValue
     SomethingElse
 
 
@@ -303,7 +303,10 @@ uFunctions:
         UE_Warn "Hello from object" & param
         45002
     proc addTwoNumbers(param: int, param2: int) : int  = param + param2
-    proc addTwoNumbersTest(param: int, param2: int) : int  = param + param2
+    proc addTwoNumbersTest(param: int, param2: int) : FString {.BlueprintPure.}  = $(param + param2)
+    proc addTwoNumbersTest3(param: int, param2: int) : FString {.BlueprintPure.}  = $(param + param2)
+    proc addTwoNumbersTest4(param: int, param2: int) : FString {.BlueprintPure.}  = $(param + param2)
+    proc addTwoNumbersTest5(param: int, param2: int) : int {.BlueprintPure.}  = param + param2
     proc addTwoNumbers2(param: int, param2: int) : int {.ufunc BlueprintCallable .} = param + param2
     proc returnObjectTest(param: int, param2: int) : UObjectNimPtr {.ufunc.} =
         UE_Warn "Hello from object" & $param
@@ -404,7 +407,7 @@ uFunctions:
     proc beginPlay()   =        
         UE_Warn "Hello begin play from Aactor child in NIm" & self.getName()
         self.testBoolConstructor = true
-        self.nimTestComp.onWhatever.broadcast("whaaat", "loool")
+        self.nimTestComp.onWhatever.broadcast("whaaat", "")
 
     # proc tick(self: AActorDslPtr, deltaSeconds:float32): void  =
     #     UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds" & self.getName()
@@ -412,12 +415,13 @@ uFunctions:
     proc implmentableEventTest() {.BlueprintImplementableEvent.} 
     
 
-    proc callEditorTest()  {.CallInEditor.} =  
-        UE_Log "Hello from the editor1"
-        self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
-        var str:FString = ""
-        # self.implmentableEventTestWithReturn("echo", str)
-        UE_Log "Called from nim and returns  " & $ str
+    proc callEditorTest()  {.CallInEditor.} = 
+        discard 
+        # UE_Log "Hello from the editor1"
+        # self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
+        # var str:FString = ""
+        # # self.implmentableEventTestWithReturn("echo", str)
+        # UE_Log "Called from nim and returns  " & $ str
 
     proc userConstructionScript() =
         UE_Warn "Hello from the construction script, pretty cool" & self.getName()

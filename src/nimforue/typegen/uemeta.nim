@@ -48,7 +48,7 @@ func isDynDel(prop:FPropertyPtr) : bool = not castField[FDelegateProperty](prop)
 func isMulticastDel(prop:FPropertyPtr) : bool = not castField[FMulticastDelegateProperty](prop).isNil()
 #TODO Dels
 
-func getNimTypeAsStr(prop:FPropertyPtr) : string = #The expected type is something that UEField can understand
+func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expected type is something that UEField can understand
     if prop.isTArray(): 
         let innerType = castField[FArrayProperty](prop).getInnerProp().getCPPType()
         return fmt"TArray[{innerType}]"
@@ -58,26 +58,30 @@ func getNimTypeAsStr(prop:FPropertyPtr) : string = #The expected type is somethi
         let keyType = mapProp.getKeyProp().getCPPType()
         let valueType = mapProp.getValueProp().getCPPType()
         return fmt"TMap[{keyType}, {valueType}]"
-
-    let cppType = prop.getCPPType() #TODO review this
-
-    if prop.isTEnum(): #Not sure if it would be better to just support it on the macro
-        return cppType.replace("TEnumAsByte<","")
-                      .replace(">", "")
-
-
-    let nimType = cppType.replace("<", "[")
-                         .replace(">", "]")
-                         .replace("*", "Ptr")
     
+    try:
+        UE_Log "Will get cpp type for prop " & prop.getName() & " and outer " & outer.getName()
+        let cppType = prop.getCPPType() #TODO review this
 
-    # UE_Warn prop.getTypeName() #private?
-    return nimType
+        if prop.isTEnum(): #Not sure if it would be better to just support it on the macro
+            return cppType.replace("TEnumAsByte<","")
+                        .replace(">", "")
+
+
+        let nimType = cppType.replace("<", "[")
+                            .replace(">", "]")
+                            .replace("*", "Ptr")
+        
+
+        # UE_Warn prop.getTypeName() #private?
+        return nimType
+    except:
+        raise newException(Exception, fmt"Unsupported type {prop.getName()}")
 
 #Function that receives a FProperty and returns a Type as string
-func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something that UEField can understand
+func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : UEField = #The expected type is something that UEField can understand
     let name = prop.getName()
-    let nimType = prop.getNimTypeAsStr()
+    let nimType = prop.getNimTypeAsStr(outer)
     return makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
 
     
@@ -89,7 +93,7 @@ func toUEField*(prop:FPropertyPtr) : UEField = #The expected type is something t
 func toUEField*(ufun:UFunctionPtr) : UEField = 
     # let asDel = ueCast[UDelegateFunction](ufun)
     # if not asDel.isNil(): return toUEField asDel
-    let params = getFPropsFromUStruct(ufun).map(toUEField)
+    let params = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun))
     # UE_Warn(fmt"{ufun.getName()}")
     let class = ueCast[UClass](ufun.getOuter())
     let className = class.getPrefixCpp() & class.getName()
@@ -102,16 +106,17 @@ func toUEField*(ufun:UFunctionPtr) : UEField =
 func toUEType*(cls:UClassPtr) : UEType =
     #First it tries to see if it is a UNimClassBase and if it has a UEType stored.
     #Otherwise tries to parse the UEType from the Runtime information.
-    let storedUEType = tryUECast[UNimClassBase](cls)
-                        .flatmap((cls:UNimClassBasePtr)=> someNil(cast[ptr UEType](cls.ueTypePtr)))
-                        .map((ueTypePtr) => ueTypePtr[])
+    # let storedUEType = tryUECast[UNimClassBase](cls)
+    #                     .flatmap((cls:UNimClassBasePtr)=> someNil(cast[ptr UEType](cls.ueTypePtr)))
+    #                     .map((ueTypePtr) => ueTypePtr[])
 
-    if storedUEType.isSome(): return storedUEType.get()
+    # if storedUEType.isSome(): return storedUEType.get()
+
 
     let fields = getFuncsFromClass(cls)
                     .map(toUEField) & 
                  getFPropsFromUStruct(cls)
-                    .map(toUEField)
+                    .map(x=>toUEField(x, cls))
     let name = cls.getPrefixCpp() & cls.getName()
     let parent = cls.getSuperClass()
     let parentName = parent.getPrefixCpp() & parent.getName()
@@ -120,7 +125,7 @@ func toUEType*(cls:UClassPtr) : UEType =
 
 func toUEType*(str:UStructPtr) : UEType =
     let fields = getFPropsFromUStruct(str)
-                    .map(toUEField)
+                    .map(x=>toUEField(x, str))
     let name = str.getPrefixCpp() & str.getName()
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
@@ -144,6 +149,7 @@ proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
         prop.setMetadata(metadata.name, $metadata.value)
     outer.addCppProperty(prop)
     prop
+
 
 
 #this functions should only being use when trying to resolve
@@ -173,7 +179,9 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNat
     #notice this only works with BlueprintEvent so check that too. 
     let fnName = superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
 
-    let objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    UE_Warn "Emitting function " & fnField.name
+
+    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
     var fn = newUObject[UNimFunction](cls, fnName, objFlags)
     fn.functionFlags = EFunctionFlags(fnField.fnFlags) 
 
@@ -263,11 +271,12 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
         case field.kind:
         of uefProp: discard field.emitFProperty(newCls) 
         of uefFunction: 
-            # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}"
+            UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}"
             discard emitUFunction(field, newCls, fnTable[field.name]) 
         else:
             UE_Error("Unsupported field kind: " & $field.kind)
         #should gather the functions here?
+
 
 
     newCls.bindType()
