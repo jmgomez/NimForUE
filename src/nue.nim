@@ -1,6 +1,6 @@
 # tooling for NimForUE
 
-import std / [os, osproc, parseopt, tables, strformat, strutils, times, sequtils, options]
+import std / [os, osproc, parseopt, tables, strformat, strutils, times, sequtils, options, terminal]
 import buildscripts / [nimforueconfig, copylib, nimcachebuild]
 
 var taskOptions: Table[string, string]
@@ -36,6 +36,33 @@ import hostbase
   # if nnot fileExists(genFilePath):
     
   writeFile(genFilePath, content)
+
+
+
+#TODO this file contains repetition that can be error prone. Needs to be cleaned up and unify with the mac way of doing things
+
+
+type LogLevel* = enum 
+    lgNone
+    lgInfo
+    lgDebug 
+    lgWarning
+    lgError
+
+proc log*(msg:string, level=lgInfo) = 
+
+  # stdout.setBackGroundColor(bg8Bit, true)
+    #Change it base on the level
+    let fgColor = case level 
+            of lgNone: fgWhite
+            of lgInfo: fgBlue
+            of lgDebug: fgMagenta
+            of lgWarning: fgYellow
+            of lgError: fgRed
+
+    stdout.setForegroundColor(fgColor)
+    echo msg
+    stdout.resetAttributes()
 
 
 proc echoTasks() =
@@ -111,14 +138,17 @@ task watch, "Monitors the components folder for changes to recompile.":
         
       if lastTime > lastTimes[path]:
         lastTimes[path] = lastTime
-        echo &"-- Recompiling {path} --"
+        log(&"-- Recompiling {path} --")
         let p = startProcess(updateCmd[0], getCurrentDir(), updateCmd[1])
 
         for line in p.lines:
-          echo line
+          if line.contains("Error:"):
+            log(line, lgError)
+          else:
+            echo line
         p.close
 
-        echo &"-- Finished Recompiling {path} --"
+        log(&"-- Finished Recompiling {path} --")
 
     sleep watchInterval
 
