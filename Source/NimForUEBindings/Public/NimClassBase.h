@@ -30,7 +30,7 @@ UCLASS()
 class NIMFORUEBINDINGS_API UNimEnum : public UEnum {
 GENERATED_BODY()
 public:
-	
+	void* UETypePtr;
 	UNimEnum(const FObjectInitializer& Initializer);
 
 	TArray<TPair<FName, int64>> GetEnums();

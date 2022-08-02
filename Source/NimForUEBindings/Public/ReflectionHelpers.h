@@ -73,7 +73,7 @@ public:
 		Stack.StepCompiledIn<TProperty>(Result);
 	}
 
-
+	static FString GetCppType(FProperty* Property);
 	static TArray<UClass*> GetAllClassesFromModule(FString ModuleName);
 	
 	template<typename T>

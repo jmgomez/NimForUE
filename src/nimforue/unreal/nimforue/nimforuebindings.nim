@@ -1,9 +1,9 @@
 include ../definitions
 import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, templates/subclassof, nametypes]
 import ../core/containers/[unrealstring, array, map]
-import std/[typetraits, strutils]
+import std/[typetraits, strutils, options]
 import ../../typegen/models
-
+import ../../utils/utils
 type 
     UFunctionCaller* {.importc, inheritable, pure .} = object
     FNativeFuncPtr* {.importcpp.} = object
@@ -13,9 +13,13 @@ type
     UNimClassBasePtr* = ptr UNimClassBase
 
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
+        ueTypePtr* {.importcpp: "UETypePtr".} : pointer
+
     UNimScriptStructPtr* = ptr UNimScriptStruct
 
     UNimEnum* {.importcpp.} = object of UEnum
+        ueTypePtr* {.importcpp: "UETypePtr".} : pointer
+
     UNimEnumPtr* = ptr UNimEnum
 
     UNimFunction* {.importcpp.} = object of UFunction
@@ -89,6 +93,7 @@ proc newObjectFromClass(params:FStaticConstructObjectParameters) : UObjectPtr {.
 #2. Do not pass copy of FStrings around.
 #3. Cache
 proc getClassByName*(className:FString) : UClassPtr = getUTypeByName[UClass](className)
+proc tryGetClassByName*(className:FString) : Option[UClassPtr] = someNil(getClassByName(className))
 
 proc getScriptStructByName*(structName:FString) : UScriptStructPtr = getUTypeByName[UScriptStruct](structName)
 proc getUStructByName*(structName:FString) : UStructPtr = getUTypeByName[UStruct](structName)

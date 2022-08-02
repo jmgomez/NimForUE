@@ -110,7 +110,15 @@ func tap*[T](opt:Option[T], fn : (x : T)->void) : Option[T] =
 func someNil*[T](val: sink T): Option[T] {.inline.} =
     if val == nil: none[T]()
     else: some val
+type
+    SomePointer = ref | ptr | pointer | proc
 
+func tryCast*[T:SomePointer](pntr : SomePointer) : Option[T] =
+    if pntr.isNil() : 
+        return none[T]()
+    let casted = cast[T](pntr)
+    if casted.isNil(): none[T]()
+    else: some(casted)
 
 #tables
 

@@ -138,7 +138,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
     for fnName, fnPtr in ueEmitter.fnTable:
         let funField = getFieldByName(getEmmitedTypes(), fnName)
         let prevFn = funField
-                        .flatmap((ff:UEField)=>getClassByName(ff.className).findFunctionByNameWithPrefixes(ff.name))
+                        .flatmap((ff:UEField)=> tryGetClassByName(ff.className).flatmap((cls:UClassPtr)=>cls.findFunctionByNameWithPrefixes(ff.name)))
                         .flatmap((fn:UFunctionPtr)=>tryUECast[UNimFunction](fn))
 
         if prevFn.isSome() and funField.isSome():
@@ -348,7 +348,11 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
             var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
             when not declared(self): #declares self and initializer so the default compiler compiles when using the assigments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
-                var self{.inject.} = selfIdent
+                var self{.inject used .} = selfIdent
+            
+            when not declared(this): 
+                var this{.inject used .} = selfIdent
+            
             when not declared(initializer):
                 var initializer{.inject.} = initName
 

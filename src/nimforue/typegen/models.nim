@@ -74,7 +74,13 @@ type
         types* : seq[UEType]
         dependencies* : seq[UEModule]   
 
-
+#allocates a newUEType based on an UEType value.
+#the allocated version will be stored in the NimBase class/struct in UE so we can 
+#check what changes have been made to the type.
+proc newUETypeWith*(ueType:UEType) : ptr UEType = 
+    let ueTypePtr = create(UEType)
+    ueTypePtr[] = ueType
+    ueTypePtr
 
 const MulticastDelegateMetadataKey* = "MulticastDelegate"
 const DelegateMetadataKey* = "Delegate"

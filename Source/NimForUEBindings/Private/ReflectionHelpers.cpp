@@ -67,6 +67,10 @@ void UReflectionHelpers::IncreaseStack(FFrame& Stack) {
 	Stack.Code += !!Stack.Code; /* increment the code ptr unless it is null */
 }
 
+FString UReflectionHelpers::GetCppType(FProperty* Property) {
+	return Property->GetCPPType();
+}
+
 TArray<UClass*> UReflectionHelpers::GetAllClassesFromModule(FString ModuleName) {
 	//Should I grab only native classes?
 	FString ModulePackageName = FPackageName::ConvertToLongScriptPackageName(*ModuleName);

@@ -277,7 +277,7 @@ proc nimComponentConstructor(initializer: var FObjectInitializer) {.cdecl.} =
     obj.getClass().getFirstCppClass().classConstructor(initializer)
     obj.propString = "Hey CDO modified here"
     #first
-    UE_Warn "Class Constructor Called from for the UNimTestComponent!!"
+    UE_Warn "Class Constructor called from for the UNimTestComponent!!"
 
 addClassConstructor("UNimTestComponent", nimComponentConstructor)
 
@@ -286,7 +286,8 @@ uClass UObjectNim of UObject:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         testField: FString
-
+        testField2: FString 
+        anoptherField : int
 
 uFunctions:
     (BlueprintPure, self: UObjectNimPtr, Static)
@@ -294,22 +295,22 @@ uFunctions:
     proc addTwoNumbers4(param: int, param2: int) : int  = param + param2
     proc addTwoNumbers5(param: int, param2: int) : int  = 
         UE_Warn "Hello from object" & self.getName()
-        param + param2
+        param + param2 
 
     proc helloObject(param: FString): FString {. CallInEditor .} =
         UE_Warn "Hello from object" & param
 
     proc helloObjectNimParam(param: FString): int {.ufunc.} =
-        UE_Warn "Hello from object" & param
+        UE_Warn "Hello from object2 " & param
         45002
     proc addTwoNumbers(param: int, param2: int) : int  = param + param2
     proc addTwoNumbersTest(param: int, param2: int) : FString {.BlueprintPure.}  = $(param + param2)
     proc addTwoNumbersTest3(param: int, param2: int) : FString {.BlueprintPure.}  = $(param + param2)
     proc addTwoNumbersTest4(param: int, param2: int) : FString {.BlueprintPure.}  = $(param + param2)
-    proc addTwoNumbersTest5(param: int, param2: int) : int {.BlueprintPure.}  = param + param2
+    proc addTwoNumbersTest9(param: int, param2: int) : int {.BlueprintPure.}  = param + param2
     proc addTwoNumbers2(param: int, param2: int) : int {.ufunc BlueprintCallable .} = param + param2
     proc returnObjectTest(param: int, param2: int) : UObjectNimPtr {.ufunc.} =
-        UE_Warn "Hello from object" & $param
+        UE_Warn "Hello from object " & $param
         newUObject[UObjectNim](self)
 
 proc objectNimConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
@@ -318,12 +319,11 @@ proc objectNimConstructor(initializer: var FObjectInitializer) {.cdecl.} =
     #maybe we should add default constructor and call only the parent constructor here?
     #if so, we could automatize it so it just call it first on the macro itself. 
     obj.getClass().getFirstCppClass().classConstructor(initializer)
-    obj.testField = "Hey CDO modified here"
+    obj.testField = "Hey CDO modified here another"
     #first
     UE_Warn "Class Constructor Called from for the UObjectNim!!"
 
 addClassConstructor("UObjectNim", objectNimConstructor)
-
 
 
 
@@ -346,7 +346,7 @@ uClass AActorDsl of AActorDslParentNim:
         testField: FString = self.getName()
         testBoolConstructor : bool 
         testBoolDefault : bool = true
-        test4: float  
+        test9: float  
         anotherField3: int32 = 21       
         anotherField2: int32 = calcSomething(200)
         anotherField1: int32 = 100
@@ -357,7 +357,8 @@ uClass AActorDsl of AActorDslParentNim:
     uprop(EditAnywhere, BlueprintReadWrite):
         nimTestComp: UNimTestComponentPtr
         nimTestComp2: UNimTestComponentPtr = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent2")
-        objectNim: UObjectNimPtr
+        objectNim: UObjectNimPtr =  initializer.createDefaultSubobject[:UObjectNim](n"Object")
+        objectNim2: UObjectNimPtr 
 
 
     uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
@@ -383,7 +384,7 @@ uClass AActorDsl of AActorDslParentNim:
 
 proc actorDslConstructor(self2:AActorDslPtr, initializer:FObjectInitializer) {.uConstructor.} = 
     self2.nimTestComp = initializer.createDefaultSubobject[:UNimTestComponent](n"NimTestComponent")
-    self2.objectNim = initializer.createDefaultSubobject[:UObjectNim](n"Object")
+    self2.objectNim2 = initializer.createDefaultSubobject[:UObjectNim](n"Object2")
     self2.testBoolConstructor = true
 
     #first
@@ -394,8 +395,12 @@ proc actorDslConstructor(self2:AActorDslPtr, initializer:FObjectInitializer) {.u
 
 
 
-proc helloActorDsl(sel2: AActorDslPtr): void  {.ufunc.}=
+proc helloActorDsl(self: AActorDslPtr): void  {.ufunc.}=
     UE_Warn "Hello from Aactor"
+
+proc helloActorDsl2(self: AActorDslPtr): void  {.ufunc.}=
+    UE_Warn "Hello from Aactor2"
+
 
 proc notifyActorBeginOverlap(self: AActorDslPtr, otherActor:AActorPtr) {.ufunc.}  =
     UE_Log "Actor overlaped whatev1"
@@ -416,12 +421,12 @@ uFunctions:
     
 
     proc callEditorTest()  {.CallInEditor.} = 
-        discard 
-        # UE_Log "Hello from the editor1"
-        # self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
-        # var str:FString = ""
-        # # self.implmentableEventTestWithReturn("echo", str)
-        # UE_Log "Called from nim and returns  " & $ str
+        # discard 
+        UE_Log "Hello from the editor1"
+        self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
+        var str:FString = ""
+        # self.implmentableEventTestWithReturn("echo", str)
+        UE_Log "Called from nim and returns  " & $ str
 
     proc userConstructionScript() =
         UE_Warn "Hello from the construction script, pretty cool" & self.getName()
@@ -471,6 +476,7 @@ uClass UMyClassToDeriveToTestUFunctionsNim of UMyClassToDeriveToTestUFunctions:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
         testField: FString
+        testField3: FString
 
 
 proc implementableEventTest(self:UMyClassToDeriveToTestUFunctionsNimPtr, param:FString) : void {.ufunc, BlueprintCallable.} =
@@ -494,8 +500,8 @@ proc scratchpadEditor*() =
                 UE_Warn "Found function at " & obj.getOuter().getName()
                 UE_Log "Flags are " & $uint32(obj.functionFlags)
     except Exception as e:
-
+        echo ""
         UE_Warn e.msg
-        UE_Warn e.getStackTrace()
+        UE_Warn e.getStackTrace() 
 
 

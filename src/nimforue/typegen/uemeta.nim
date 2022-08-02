@@ -60,8 +60,9 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         return fmt"TMap[{keyType}, {valueType}]"
     
     try:
-        UE_Log "Will get cpp type for prop " & prop.getName() & " and outer " & outer.getName()
-        let cppType = prop.getCPPType() #TODO review this
+        UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()} and outer {outer.getName()}"
+
+        let cppType = prop.getCPPType() #TODO review this. Hiphothesis it should not reach this point in the hotreload if the struct has the pointer to the prev ue type and therefore it shouldnt crash
 
         if prop.isTEnum(): #Not sure if it would be better to just support it on the macro
             return cppType.replace("TEnumAsByte<","")
@@ -90,6 +91,7 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : UEField = #The expected t
 #     makeFieldAsMulDel(udel.getName(), params)
 
 
+
 func toUEField*(ufun:UFunctionPtr) : UEField = 
     # let asDel = ueCast[UDelegateFunction](ufun)
     # if not asDel.isNil(): return toUEField asDel
@@ -103,16 +105,16 @@ func toUEField*(ufun:UFunctionPtr) : UEField =
     fnField.actualFunctionName = actualName
     fnField
 
+
 func toUEType*(cls:UClassPtr) : UEType =
     #First it tries to see if it is a UNimClassBase and if it has a UEType stored.
     #Otherwise tries to parse the UEType from the Runtime information.
-    # let storedUEType = tryUECast[UNimClassBase](cls)
-    #                     .flatmap((cls:UNimClassBasePtr)=> someNil(cast[ptr UEType](cls.ueTypePtr)))
-    #                     .map((ueTypePtr) => ueTypePtr[])
+    let storedUEType = tryUECast[UNimClassBase](cls)
+                        .flatMap((cls:UNimClassBasePtr)=>tryCast[ptr UEType](cls.ueTypePtr))
+                        
+    if storedUEType.isSome(): return storedUEType.get()[]
 
-    # if storedUEType.isSome(): return storedUEType.get()
-
-
+ 
     let fields = getFuncsFromClass(cls)
                     .map(toUEField) & 
                  getFPropsFromUStruct(cls)
@@ -127,6 +129,12 @@ func toUEType*(str:UStructPtr) : UEType =
     let fields = getFPropsFromUStruct(str)
                     .map(x=>toUEField(x, str))
     let name = str.getPrefixCpp() & str.getName()
+    #same as above 
+    let storedUEType = tryUECast[UNimScriptStruct](str)
+                        .flatMap((str:UNimScriptStructPtr)=>tryCast[ptr UEType](str.ueTypePtr))
+
+    if storedUEType.isSome(): return storedUEType.get()[]
+
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
 
@@ -134,6 +142,11 @@ func toUEType*(str:UStructPtr) : UEType =
 
 func toUEType*(uenum:UNimEnumPtr) : UEType = #notice we have to specify the type because we use specific functions here. All types are Nim base types
     # let fields = getFPropsFromUStruct(enum).map(toUEField)
+    let storedUEType = tryUECast[UNimEnum](uenum)
+                        .flatMap((uenum:UNimEnumPtr)=>tryCast[ptr UEType](uenum.ueTypePtr))
+                        
+    if storedUEType.isSome(): return storedUEType.get()[]
+
     let name = uenum.getName()
     let fields = uenum.getEnums()
                       .map((x)=>makeFieldASUEnum(x.key.toFString()))
@@ -149,7 +162,6 @@ proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr =
         prop.setMetadata(metadata.name, $metadata.value)
     outer.addCppProperty(prop)
     prop
-
 
 
 #this functions should only being use when trying to resolve
@@ -220,7 +232,7 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNat
 # 		Parent = Parent->GetSuperClass();
 # 	}
 # 	return nullptr;
-# }
+# } 
 
 proc isNotNil[T](x:ptr T) : bool = not x.isNil()
 # template isNotNil(x:typed) = (not x.isNil())
@@ -286,11 +298,8 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
 
     newCls.assembleReferenceTokenStream()
 
-    let ueTypePtr = create(UEType)
-    ueTypePtr[] = ueType
-    newCls.ueTypePtr = cast[pointer](ueTypePtr)
-    #TODO free this memory on prepareReinstance
-    UE_Log("Size of " & $sizeof(UEType))
+    newCls.ueTypePtr = newUETypeWith ueType 
+
 
     # discard newCls.getDefaultObject() #forces the creation of the cdo
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
@@ -314,8 +323,9 @@ proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UFieldPtr =
     setCppStructOpFor[T](scriptStruct, nil)
     scriptStruct.bindType()
     scriptStruct.staticLink(true)
-
+    scriptStruct.ueTypePtr = newUETypeWith ueType 
     scriptStruct
+
 
 
 
@@ -337,6 +347,7 @@ proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr =
         enumFields.add(makeTPair(fieldName,  field.key.int64))
         # uenum.setMetadata("DisplayName", "Whatever"&field.val.name)) TODO the display name seems to be stored into a metadata prop that isnt the one we usually use
     discard uenum.setEnums(enumFields)
+    uenum.ueTypePtr = newUETypeWith enumType 
     uenum
 
 proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr = 
@@ -349,7 +360,6 @@ proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr =
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
     fn.staticLink(true)
     fn
-
 
 
 proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr {.deprecated: "use emitUFunction instead".}= 
