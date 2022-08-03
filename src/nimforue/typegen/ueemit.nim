@@ -95,18 +95,12 @@ type UEmitable = UScriptStruct | UClass | UDelegateFunction | UEnum
         
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
+    UE_Log &"Emitter info for {emitter.ueType.name}"
     let areEquals = prev.isSome() and prev.get().toUEType() == emitter.ueType
     if areEquals: none[ptr T]()
     else: 
         prev.run prepareForReinst
         some ueCast[T](emitter.generator(pkg))
-
-proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, ueType:UEType, fnGen:UPackagePtr->UFieldPtr,  prev:Option[ptr T]) : Option[ptr T]= 
-    let areEquals = prev.isSome() and prev.get().toUEType() == ueType
-    if areEquals: none[ptr T]()
-    else: 
-        prev.run prepareForReinst
-        some ueCast[T](fnGen(pkg))
 
 
 

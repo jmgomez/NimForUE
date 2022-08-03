@@ -74,10 +74,13 @@ type
         types* : seq[UEType]
         dependencies* : seq[UEModule]   
 
+proc UE_Error2*(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEError(@)".}
+
 #allocates a newUEType based on an UEType value.
 #the allocated version will be stored in the NimBase class/struct in UE so we can 
 #check what changes have been made to the type.
 proc newUETypeWith*(ueType:UEType) : ptr UEType = 
+    UE_Error2 &"Allocating UEType for {ueType.name}"
     let ueTypePtr = create(UEType)
     ueTypePtr[] = ueType
     ueTypePtr
@@ -119,7 +122,6 @@ func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EStructFlagsVal) : bool {.borrow.}
 
 
-proc UE_Error2*(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEError(@)".}
 
 func compareUEPropTypes(a, b:string) : bool = 
     #maps the type difference between ue and nim (this is relevant because we want to compare a runtime generated type with ours)

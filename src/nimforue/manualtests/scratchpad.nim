@@ -349,7 +349,7 @@ uClass AActorDsl of AActorDslParentNim:
         test9: float  
         anotherField3: int32 = 21       
         anotherField2: int32 = calcSomething(200)
-        anotherField1: int32 = 100
+        anotherField1: int32 = 120
         anotherFieldArr: TArray[int32]
         anotherFieldEnum: EMyTestEnum
         nimCreatedDsl: EMyEnumCreatedInDsl = SomethingElse
@@ -422,7 +422,7 @@ uFunctions:
 
     proc callEditorTest()  {.CallInEditor.} = 
         # discard 
-        UE_Log "Hello from the editor1"
+        UE_Log "Hello from the editor5"
         self.implmentableEventTest() #call the function above instead of the blueprint one when being overriden
         var str:FString = ""
         # self.implmentableEventTestWithReturn("echo", str)
