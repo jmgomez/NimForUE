@@ -15,12 +15,13 @@ genType(testActorUEType)
 
 uClass ANimTestActor of ATestActor:
     (BlueprintType, Blueprintable)
-    name : FString
+    uprops(EditAnywhere, BlueprintReadWrite):
+        name : FString 
 
 
 uFunctions:
     proc tick(self:ANimTestActorPtr, deltaTime:float)  = 
-        self.setColorByStringInMesh("(R=0,G=1,B=0,A=1)")
+        self.setColorByStringInMesh("(R=1,G=0.5,B=0.2,A=1)")
         
 
 
