@@ -138,7 +138,9 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
     for fnName, fnPtr in ueEmitter.fnTable:
         let funField = getFieldByName(getEmmitedTypes(), fnName)
         let prevFn = funField
-                        .flatmap((ff:UEField)=> tryGetClassByName(ff.className).flatmap((cls:UClassPtr)=>cls.findFunctionByNameWithPrefixes(ff.name)))
+                        .flatmap((ff:UEField)=> 
+                                tryGetClassByName(ff.className)
+                                .flatmap((cls:UClassPtr)=>cls.findFunctionByNameWithPrefixes(ff.name)))
                         .flatmap((fn:UFunctionPtr)=>tryUECast[UNimFunction](fn))
 
         if prevFn.isSome() and funField.isSome():

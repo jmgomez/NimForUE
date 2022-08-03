@@ -126,14 +126,17 @@ func toUEType*(cls:UClassPtr) : UEType =
     UEType(name:name, kind:uetClass, parent:parentName, fields:fields.reversed())
 
 func toUEType*(str:UStructPtr) : UEType =
-    let fields = getFPropsFromUStruct(str)
-                    .map(x=>toUEField(x, str))
-    let name = str.getPrefixCpp() & str.getName()
+    
     #same as above 
     let storedUEType = tryUECast[UNimScriptStruct](str)
                         .flatMap((str:UNimScriptStructPtr)=>tryCast[ptr UEType](str.ueTypePtr))
 
-    if storedUEType.isSome(): return storedUEType.get()[]
+    if storedUEType.isSome(): return storedUEType.get()[]  
+
+    let name = str.getPrefixCpp() & str.getName()
+
+    let fields = getFPropsFromUStruct(str)
+                    .map(x=>toUEField(x, str))
 
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
