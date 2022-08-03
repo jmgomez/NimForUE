@@ -379,7 +379,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     if uClassNeedsConstructor(className):
         let typeParam = makeFieldAsUPropParam("self", className)
         let initParam = makeFieldAsUPropParam("initializer", "FObjectInitializer")
-        let fnField = makeFieldAsUFun(className&"DefaultConstructor", @[typeParam, initParam], className)
+        let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)
         
         let constructor = constructorImpl(fnField, newEmptyNode())
         # echo repr constructor
@@ -481,14 +481,14 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                 body
             innerCall
     # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())
-    let fnImplName = ident funField.name&"_Impl"&"_"&funField.className #probably this needs to be injected so we can inspect it later
+    let fnImplName = ident &"impl{funField.name}{funField.className}" #probably this needs to be injected so we can inspect it later
     let selfName = ident firstParam.name
     let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName, setOutParams):        
             let fnImplName {.inject.} = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
                 genParmas
                 # var stackCopy {.inject.} = stack This would allow to create a super function to call the impl but not sure if it worth the trouble   
                 stack.increaseStack()
-                let selfName {.inject.} = ueCast[className](context) 
+                let selfName {.inject used.} = ueCast[className](context) 
                 innerFunction
                 setOutParams
 
