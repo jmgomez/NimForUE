@@ -81,9 +81,9 @@ proc UE_Error2*(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEE
 #check what changes have been made to the type.
 proc newUETypeWith*(ueType:UEType) : ptr UEType = 
     UE_Error2 &"Allocating UEType for {ueType.name}"
-    let ueTypePtr = create(UEType)
-    ueTypePtr[] = ueType
-    ueTypePtr
+    result = create(UEType)
+    result[] = ueType
+    
 
 const MulticastDelegateMetadataKey* = "MulticastDelegate"
 const DelegateMetadataKey* = "Delegate"
@@ -165,7 +165,7 @@ func `==`*(a, b : UEField) : bool =
 func `==`*(a, b:UEType) : bool = 
     # UE_Error2 $a
     # UE_Error2 $b
-    # 
+    #  
     a.name == b.name and
     a.fields == b.fields and
     # a.metadata == b.metadata and

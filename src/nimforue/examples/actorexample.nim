@@ -18,6 +18,7 @@ uClass AExampleActor of AActor:
 proc myExampleActorCostructor(self: AExampleActorPtr, initializer: FObjectInitializer) {.uConstructor.} =
     UE_Log "The constructor is called for the actor"
     self.anotherVale = 5
+    
     #you can override the values set by the default constructor too since they are added adhoc before this constructor is called.
     self.predValue = "Hello World"
 
@@ -43,5 +44,5 @@ uFunctions:
     proc customPragma(param : FString) : int32 {. BlueprintPure .} = 10 #you can also specify custom pragmas per functions rather than creating a new block
 
     proc callFromTheEditor() {. CallInEditor .} = 
-        UE_Log "Call from the editor"
-        
+        UE_Log "Call from the editor. Changed again now with the watcher. Was change this, asa"
+    proc test(param:int32) = discard  

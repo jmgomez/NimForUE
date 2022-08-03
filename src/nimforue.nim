@@ -1,7 +1,7 @@
 # include nimforue/unreal/definitions
 import nimforue/[ffinimforue]
 
-import nimforue/examples/[actorexample]
+import nimforue/examples/examples
 
 # import nimforue/macros/[ffi, uebind]
 #TODO add with test definition so they are pulled only if we want to 
