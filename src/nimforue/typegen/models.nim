@@ -80,8 +80,9 @@ proc UE_Error2*(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEE
 #the allocated version will be stored in the NimBase class/struct in UE so we can 
 #check what changes have been made to the type.
 proc newUETypeWith*(ueType:UEType) : ptr UEType = 
-    UE_Error2 &"Allocating UEType for {ueType.name}"
     result = create(UEType)
+    if result.isNil():
+        raise newException(Exception, &"Failed to allocate UEType {ueType.name}")
     result[] = ueType
     
 
