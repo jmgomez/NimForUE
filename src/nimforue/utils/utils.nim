@@ -120,6 +120,16 @@ func tryCast*[T:SomePointer](pntr : SomePointer) : Option[T] =
     if casted.isNil(): none[T]()
     else: some(casted)
 
+
+
+func tryParseInt*(s:string) : Option[int] =
+    try:
+      return some(s.parseInt())
+    except:
+      return none(int)
+
+
+
 #tables
 
 proc tryGet*[K, V](self: Table[K, V], key:K): Option[V] {.inline.} =

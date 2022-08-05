@@ -1,7 +1,42 @@
 #This file exists due to the lack of support 
-import std/[times, os, options, sugar, strutils, strscans, sequtils, random, algorithm]
+import std/[times, os, options, sugar, strutils, strformat, terminal, strscans, sequtils, random, algorithm]
 import nimforueconfig
 import ../nimforue/utils/utils
+
+
+
+type LogLevel* = enum 
+    lgNone
+    lgInfo
+    lgDebug 
+    lgWarning
+    lgError
+
+proc log*(msg:string, level=lgInfo) = 
+
+  # stdout.setBackGroundColor(bg8Bit, true)
+    #Change it base on the level
+    let fgColor = case level 
+            of lgNone: fgWhite
+            of lgInfo: fgBlue
+            of lgDebug: fgMagenta
+            of lgWarning: fgYellow
+            of lgError: fgRed
+
+    stdout.setForegroundColor(fgColor)
+    echo msg
+    stdout.resetAttributes()
+
+func getNextFileName*(currentFilename : string) : string = 
+  const splitter = "-"
+  let (dir, filename, extension) = splitFile(currentFilename)
+
+  let fileSplit = filename.split(splitter)
+  if fileSplit.len > 1:
+    let num = fileSplit[1].tryParseInt().get(0) + 1
+    return &"{fileSplit[0]}{splitter}{num}{extension}"
+  &"{filename}{splitter}1{extension}"
+  
 
 func getFullLibName(baseLibName:string) :string  = 
     when defined macosx:
@@ -29,7 +64,7 @@ proc getLastLibPath*(libPath:string): Option[string] =
         some libs[0]
 
 
-proc copyNimForUELibToUEDir*() = 
+proc copyNimForUELibToUEDirSwap*() = 
     var conf = getNimForUEConfig()
     let libDir = conf.pluginDir/"Binaries"/"nim"
     let libDirUE = libDir / "ue"   
@@ -55,7 +90,7 @@ proc copyNimForUELibToUEDir*() =
     copyFile(fileFullSrc, fileFullDst)
     echo "Copied " & fileFullSrc & " to " & fileFullDst
 
-proc copyNimForUELibToUEDirMacOs*() = 
+proc copyNimForUELibToUEDir*() = 
     var conf = getNimForUEConfig()
     let libDir = conf.pluginDir/"Binaries"/"nim"
     let libDirUE = libDir / "ue"   
@@ -85,7 +120,10 @@ proc copyNimForUELibToUEDirMacOs*() =
     
     for libPath in libsCandidates:
         #deletes previus used ones
-        removeFile(libPath)
+        try:
+            removeFile(libPath)
+        except:
+            log &"Could not delete {libPath}. Are you debugging in Windows?", lgWarning
     
     let nLibs = len (libsCandidates)
     var fileFullDst  : string #This would be much better with pattern matching
@@ -98,13 +136,17 @@ proc copyNimForUELibToUEDirMacOs*() =
     copyFile(fileFullSrc, fileFullDst)
     echo "Copied " & fileFullSrc & " to " & fileFullDst
 
+    when defined windows:
+        let debugFolder = conf.pluginDir / ".nimcache/guestpch/debug"
+        try:
+            removeDir(debugFolder)
+        except:
+            log &"Could not delete {debugFolder}", lgWarning
+
     
        
 
 
 when isMainModule:
     echo "CopyLib script:"
-    when defined macosx:
-        copyNimForUELibToUEDirMacOs()
-    elif defined windows:
-        copyNimForUELibToUEDir()
+    copyNimForUELibToUEDir()

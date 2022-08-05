@@ -1,6 +1,7 @@
 # script to build the from .nimcache
 import std / [os, osproc, strutils, sequtils, times, options, strformat, sugar, threadpool]
 import nimforueconfig
+import copylib
 
 template quotes(path: string): untyped =
   "\"" & path & "\""
@@ -19,7 +20,12 @@ let cacheDir = pluginDir / ".nimcache/guestpch"
 let isDebug = nueConfig.targetConfiguration in [Debug, Development]
 let debugFlags =
   if isDebug:
-    let pdbFile = quotes(pluginDir / ".nimcache/guestpch/nimforue.pdb")
+    let debugFolder = pluginDir / ".nimcache/guestpch/debug"
+    createDir(debugFolder)
+    var pdbFile = debugFolder / "nimforue.pdb"
+    while fileExists pdbFile:
+      pdbFile = debugFolder / getNextFileName(pdbFile)
+   
     &"/Fd{pdbFile} /link /ASSEMBLYDEBUG /DEBUG /PDB:{pdbFile}"
   else:
     ""

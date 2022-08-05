@@ -43,28 +43,6 @@ import hostbase
 #TODO this file contains repetition that can be error prone. Needs to be cleaned up and unify with the mac way of doing things
 
 
-type LogLevel* = enum 
-    lgNone
-    lgInfo
-    lgDebug 
-    lgWarning
-    lgError
-
-proc log*(msg:string, level=lgInfo) = 
-
-  # stdout.setBackGroundColor(bg8Bit, true)
-    #Change it base on the level
-    let fgColor = case level 
-            of lgNone: fgWhite
-            of lgInfo: fgBlue
-            of lgDebug: fgMagenta
-            of lgWarning: fgYellow
-            of lgError: fgRed
-
-    stdout.setForegroundColor(fgColor)
-    echo msg
-    stdout.resetAttributes()
-
 proc echoTasks() =
   echo "Here are the task available: "
   for t in tasks:
