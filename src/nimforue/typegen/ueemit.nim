@@ -65,13 +65,15 @@ proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) :
 proc getEmmitedTypes() : seq[UEType] = 
     ueEmitter.emitters.map(e=>e.ueType)
 
+const ReinstSuffix = "_Reinst"
+
 proc prepReinst(prev:UObjectPtr) = 
     prev.setFlags(RF_NewerVersionExists)
 
     # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
     prev.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32))
 
-    let prevNameStr : FString =  fmt("{prev.getName()}_REINST")
+    let prevNameStr : FString =  fmt("{prev.getName()}{ReinstSuffix}")
     let oldClassName = makeUniqueObjectName(prev.getOuter(), prev.getClass(), makeFName(prevNameStr))
     discard prev.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
@@ -86,9 +88,9 @@ proc prepareForReinst(prevScriptStruct : UScriptStructPtr) =
 
 proc prepareForReinst(prevDel : UDelegateFunctionPtr) = 
     prepReinst(prevDel)
-proc prepareForReinst(prevUEnum : UNimEnumPtr) = discard 
+proc prepareForReinst(prevUEnum : UNimEnumPtr) =  
     # prevUEnum.markNewVersionExists()
-    # prepReinst(prevUEnum)
+    prepReinst(prevUEnum)
 
 
 type UEmitable = UScriptStruct | UClass | UDelegateFunction | UEnum
@@ -96,6 +98,11 @@ type UEmitable = UScriptStruct | UClass | UDelegateFunction | UEnum
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
     UE_Log &"Emitter info for {emitter.ueType.name}"
+    if prev.isSome: #BUG TRACE
+        UE_Log &"Previous type is {prev.get().getName()}"
+    else:
+        UE_Log &"Previous type is none"
+
     let areEquals = prev.isSome() and prev.get().toUEType() == emitter.ueType
     if areEquals: none[ptr T]()
     else: 
@@ -103,6 +110,18 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo,
         some ueCast[T](emitter.generator(pkg))
 
 
+proc addDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr)  =    
+    #iterate all UNimClasses, if they arent not reintanced already (name) and they dont exists in the type emitted this round, they must be deleted
+    let getEmitterByName = (name:FString) => ueEmitter.emitters.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
+    for cls in getAllObjectsFromPackage[UNimClassBase](nimPackage):
+        if ReinstSuffix in cls.getName(): continue
+        let clsName  = cls.getPrefixCpp() & cls.getName()
+        if getEmitterByName(clsName).isNone():
+            UE_Warn &"Class has to be deleted {clsName}"
+            hotReloadInfo.deletedClasses.add(cls)
+        
+    
+    
 
 proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr = 
     var hotReloadInfo = newNimHotReload()
@@ -144,8 +163,11 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                 UE_Warn fmt"A function changed {fnName} updating the pointer"
                 prev.setNativeFunc(cast[FNativeFuncPtr](fnPtr)) 
                 prev.sourceHash = newHash
-     
  
+   
+    addDeletedTypesToHotReload(hotReloadInfo)
+
+    
     hotReloadInfo.setShouldHotReload()
     hotReloadInfo
 

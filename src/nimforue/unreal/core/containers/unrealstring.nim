@@ -12,6 +12,7 @@ proc toCString*(fstr: FString): cstring {.importcpp: " TCHAR_TO_ANSI(*#)", nodec
 proc `$`*(fstr: FString): string = $ fstr.toCString
 
 proc append*(a, b: FString): FString {.importcpp: "#.Append(#)", noSideEffect.}
+
 proc equals*(a, b: FString): bool {.importcpp: "#.Equals(#)", noSideEffect.}
 
 proc fStringToString*(fstr :FString) : string = $ fstr
@@ -29,3 +30,8 @@ converter toFStr*(str :string) : FString =  stringToFString(str)
 proc `==`*(a, b: FString): bool = a.equals(b)
 proc `==`*(a:string, b: FString): bool = a.equals(b)
 proc `==`*(a:FString, b: string): bool = a.equals(b)
+
+
+func `&`*(a, b: FString): FString = a.append(b)
+func `&`*(a:string, b: FString): FString = a.toFStr().append(b)
+func `&`*(a:FString, b: string): FString = a.append(b)

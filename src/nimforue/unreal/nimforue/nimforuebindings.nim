@@ -169,6 +169,15 @@ type
         delegatesToReinstance* {.importcpp: "DelegatesToReinstance" .} : TMap[UDelegateFunctionPtr, UDelegateFunctionPtr]
         enumsToReinstance* {.importcpp: "EnumsToReinstance" .} : TMap[UEnumPtr, UEnumPtr]
         nativeFunctionsToReinstance* {.importcpp: "NativeFunctionsToReinstance" .} : TArray[TPair[FNativeFuncPtr, FNativeFuncPtr]]
+        newStructs* {.importcpp: "NewStructs" .} : TArray[UScriptStructPtr]
+        newClasses* {.importcpp: "NewClasses" .} : TArray[UClassPtr]
+        newDelegates* {.importcpp: "NewDelegates" .} : TArray[UDelegateFunctionPtr]
+        newEnums* {.importcpp: "NewEnums" .} : TArray[UEnumPtr]
+        deletedStructs* {.importcpp: "DeletedStructs" .} : TArray[UScriptStructPtr]
+        deletedClasses* {.importcpp: "DeletedClasses" .} : TArray[UClassPtr]
+        deletedDelegates* {.importcpp: "DeletedDelegates" .} : TArray[UDelegateFunctionPtr]
+        deletedEnums* {.importcpp: "DeletedEnums" .} : TArray[UEnumPtr]
+
         bShouldHotReload* {.importcpp: "bShouldHotReload" .} : bool
     FNimHotReloadPtr* = ptr FNimHotReload
 
