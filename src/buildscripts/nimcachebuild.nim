@@ -1,5 +1,5 @@
 # script to build the from .nimcache
-import std / [os, osproc, strutils, sequtils, times, options, strformat, sugar, threadpool]
+import std / [os, osproc, strutils, sequtils, times, options, strformat, sugar, threadpool, algorithm, strscans]
 import nimforueconfig
 import copylib
 
@@ -18,14 +18,31 @@ let pluginDir = nueConfig.pluginDir
 let cacheDir = pluginDir / ".nimcache/guestpch"
 
 let isDebug = nueConfig.targetConfiguration in [Debug, Development]
-let debugFlags =
+
+proc debugFlags(): string =
   if isDebug:
-    let debugFolder = pluginDir / ".nimcache/guestpch/debug"
-    createDir(debugFolder)
-    var pdbFile = debugFolder / "nimforue.pdb"
-    while fileExists pdbFile:
-      pdbFile = debugFolder / getNextFileName(pdbFile)
-   
+    let pdbFolder = pluginDir / ".nimcache/guestpch/pdbs"
+    createDir(pdbFolder)
+
+    proc toVersion(s: string):int =
+      let (_, f, _) = s.splitFile
+      var n : int
+      discard f.scanf("nimforue-$i", n)
+      n
+
+    # generate a new pdb name
+    # get the version numbers and inc the highest to get the next
+    let versions : seq[int] = walkFiles(pdbFolder/"nimforue*.pdb").toSeq.map(toVersion).sorted(Descending)
+    let version : string =
+      if versions.len > 0:
+        "-" & $(versions[0]+1)
+      else: ""
+
+    # clean up pdbs
+    for pdbPath in walkFiles(pdbFolder/"nimforue*.pdb"):
+      discard tryRemoveFile(pdbPath)
+
+    let pdbFile = pdbFolder / "nimforue" & version & ".pdb"
     &"/Fd{pdbFile} /link /ASSEMBLYDEBUG /DEBUG /PDB:{pdbFile}"
   else:
     ""
@@ -148,7 +165,7 @@ proc compileCmd(cpppath: string, objpath: string): string =
     (if withPCH and usesPCHFile(cppPath): pchFlags() else: "") & " " &
     getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b, " ") & " " &
     "/Fo" & objpath & " " & cppPath &
-    " " & debugFlags
+    " " & debugFlags()
 
 # generate the pch file for windows
 proc winpch*() =
@@ -165,7 +182,7 @@ proc winpch*() =
     quit("!Error: " & definitionsCppPath & " not found!")
 
   let curDir = getCurrentDir()
-  pchCmd &= " " & debugFlags
+  pchCmd &= " " & debugFlags()
   #echo pchCmd
   setCurrentDir(".nimcache/winpch")
   discard execCmd(pchCmd)
@@ -232,7 +249,7 @@ proc nimcacheBuild*(): BuildStatus =
 
   let linkcmd = &"vccexe.exe {dllFlag} --platform:amd64  /nologo /Fe" & dllpath & " " &
     getUESymbols(nueConfig).foldl(a & " " & b, " ") & " " & objpaths.join(" ") & " " & (if withPCH: pchObj else: "") &
-    " " & debugFlags
+    " " & debugFlags()
 
  
   let linkRes = execCmd(linkCmd)
@@ -242,11 +259,17 @@ proc nimcacheBuild*(): BuildStatus =
   Success
 
 proc preprocessCmd(cpppath: string): string =
+  echo &"{cpppath = }"
+  echo cpppath.parentDirs(fromRoot = true).toSeq()
   let baseDir = absolutePath(cpppath.parentDirs(fromRoot = true).toSeq()[1])
+
+  echo &"{baseDir = }"
 
   let includeDirs = collect:
       for path in baseDir.walkDirRec(yieldFilter = {pcDir}):
         quotes(path)
+  
+  echo &"{includeDirs = }"
 
   # pulled from AppData/Local/UnrealBuildTool/Log.txt
   let ubtflags = "/D_WIN64 /I \"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.32.31326\\INCLUDE\" /I \"C:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.8\\include\\um\" /I \"C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.18362.0\\ucrt\" /I \"C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.18362.0\\shared\" /I \"C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.18362.0\\um\" /I \"C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.18362.0\\winrt\" /DIS_PROGRAM=0 /DUE_EDITOR=1 /DENABLE_PGO_PROFILE=0 /DUSE_VORBIS_FOR_STREAMING=1 /DUSE_XMA2_FOR_STREAMING=1 /DWITH_DEV_AUTOMATION_TESTS=1 /DWITH_PERF_AUTOMATION_TESTS=1 /DUNICODE /D_UNICODE /D__UNREAL__ /DIS_MONOLITHIC=0 /DWITH_ENGINE=1 /DWITH_UNREAL_DEVELOPER_TOOLS=1 /DWITH_UNREAL_TARGET_DEVELOPER_TOOLS=1 /DWITH_APPLICATION_CORE=1 /DWITH_COREUOBJECT=1 /DWITH_VERSE=0 /DUSE_STATS_WITHOUT_ENGINE=0 /DWITH_PLUGIN_SUPPORT=0 /DWITH_ACCESSIBILITY=1 /DWITH_PERFCOUNTERS=1 /DUSE_LOGGING_IN_SHIPPING=0 /DWITH_LOGGING_TO_MEMORY=0 /DUSE_CACHE_FREED_OS_ALLOCS=1 /DUSE_CHECKS_IN_SHIPPING=0 /DUSE_ESTIMATED_UTCNOW=0 /DWITH_EDITOR=1 /DWITH_IOSTORE_IN_EDITOR=1 /DWITH_SERVER_CODE=1 /DWITH_PUSH_MODEL=1 /DWITH_CEF3=1 /DWITH_LIVE_CODING=1 /DWITH_CPP_MODULES=0 /DWITH_CPP_COROUTINES=0 /DUBT_MODULE_MANIFEST=\"UnrealEditor.modules\" /DUBT_MODULE_MANIFEST_DEBUGGAME=\"UnrealEditor-Win64-DebugGame.modules\" /DUBT_COMPILED_PLATFORM=Win64 /DUBT_COMPILED_TARGET=Editor /DUE_APP_NAME=\"UnrealEditor\" /DNDIS_MINIPORT_MAJOR_VERSION=0 /DWIN32=1 /D_WIN32_WINNT=0x0601 /DWINVER=0x0601 /DPLATFORM_WINDOWS=1 /DPLATFORM_MICROSOFT=1 /DOVERRIDE_PLATFORM_HEADER_NAME=Windows /DRHI_RAYTRACING=1 /DNDEBUG=1 /DUE_BUILD_DEVELOPMENT=1 /DORIGINAL_FILE_NAME=\"UnrealEditor-NimForUEEditor.dll\" /DBUILT_FROM_CHANGELIST=20979098 /DBUILD_VERSION=++UE5+Release-5.0-CL-20979098 /DBUILD_ICON_FILE_NAME=\"\\\"..\\Build\\Windows\\Resources\\Default.ico\\\"\" /DPROJECT_COPYRIGHT_STRING=\"Fill out your copyright notice in the Description page of Project Settings.\" /DPROJECT_PRODUCT_NAME=\"Third Person Game Template\" /DPROJECT_PRODUCT_IDENTIFIER=NimForUEDemo"
@@ -262,17 +285,16 @@ proc preprocessCmd(cpppath: string): string =
 
 proc preprocess*(srcPath: string) =
 
-  let (dir, filename, ext) = srcPath.splitFile
-  createDir(pluginDir / ".nimcache/preprocess" / filename)
+  let (_, filename, _) = srcPath.splitFile
+  let processedDir = pluginDir / ".nimcache/preprocess" / filename
+  createDir(processedDir)
 
   let cmd = preprocessCmd(srcPath)
   echo &"--- preprocessing"
   let res = execCmd(cmd)
   if res == 0:
-    let (dir, filename, ext) = srcPath.splitFile
-    let destPath = quotes(pluginDir / ".nimcache/preprocess" / filename / filename & ".i")
+    let destPath = quotes(processedDir / filename & ".i")
     echo &"Generated: {destPath}"
 
 when isMainModule:
-  #compileBat()
   nimcacheBuild()

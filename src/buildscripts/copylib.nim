@@ -95,14 +95,13 @@ proc copyNimForUELibToUEDir*() =
     let libDir = conf.pluginDir/"Binaries"/"nim"
     let libDirUE = libDir / "ue"   
     if not dirExists(libDirUE):
-      createDir(libDirUE)
-    
+        createDir(libDirUE)
+
     let libsCandidates = getAllLibsFromPath(libDirUE)
-    proc extractNumber(filename:string): int = 
-        var number : int = 0
+    proc extractNumber(filepath:string): int = 
         var ignore : string
-        discard scanf(filename, "$*-$i.$*", ignore, number, ignore)
-        number
+        let (_, filename, _) = filepath.splitFile
+        discard scanf(filename, "$*-$i", ignore, result) # ok if no match, number is 0
 
     let nextLibNumber = if libsCandidates.any():
                             libsCandidates
@@ -111,20 +110,17 @@ proc copyNimForUELibToUEDir*() =
                                 .max() + 1
                         else:
                             0
-    
 
     let baseLibName = getFullLibName("nimforue")
     let nextFileName = getFullLibName("nimforue-" & $(nextLibNumber))
 
     let fileFullSrc = libDir/baseLibName
-    
+
+    #deletes previous used ones
     for libPath in libsCandidates:
-        #deletes previus used ones
-        try:
-            removeFile(libPath)
-        except:
+        if not tryRemoveFile(libPath):
             log &"Could not delete {libPath}. Are you debugging in Windows?", lgWarning
-    
+
     let nLibs = len (libsCandidates)
     var fileFullDst  : string #This would be much better with pattern matching
     if nLibs == 0: #no libs, we just keep the same name
