@@ -553,6 +553,8 @@ void FReloadClassReinstancer::SerializeCDOProperties(UObject* InObject, FReloadC
 	TSet<UObject*> VisitedObjects;
 	VisitedObjects.Add(InObject);
 	FCDOWriter Ar(OutData, VisitedObjects, NAME_None);
+	//Test if the class exists here? For now just log it so we know on the next crash
+	checkf(InObject->GetClass(), TEXT("Class for %s is null"), *InObject->GetName());
 	InObject->SerializeScriptProperties(Ar);
 }
 
