@@ -170,6 +170,7 @@ type
 #UFIELD
 proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) : void {.importcpp:"#->SetMetaData(*#, *#)".}
 proc bindType*(field:UFieldPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
+proc getPrefixCpp*(str:UFieldPtr | UStructPtr | UEnumPtr) : FString {.importcpp:"FString(#->GetPrefixCPP())".}
 
 #USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
@@ -177,7 +178,6 @@ proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.import
 #This belongs to this file due to nim not being able to forward declate types. We may end up merging this file into uobject
 proc addCppProperty*(str:UStructPtr, prop:FPropertyPtr) : void {.importcpp:"#->AddCppProperty(@)".}
 #     virtual const TCHAR* GetPrefixCPP() const { return TEXT("F"); }
-proc getPrefixCpp*(str:UStructPtr) : FString {.importcpp:"FString(#->GetPrefixCPP())".}
 proc setSuperStruct*(str, suprStruct :UStructPtr) : void {.importcpp:"#->SetSuperStruct(#)".}
 
 #UCLASS

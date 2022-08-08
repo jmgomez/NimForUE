@@ -45,3 +45,11 @@ public:
 	FString SourceHash; 
 };
 
+UCLASS()
+class NIMFORUEBINDINGS_API UNimDelegateFunction : public UDelegateFunction {
+	GENERATED_BODY()
+public:
+	void* UETypePtr;
+
+};
+

@@ -19,9 +19,15 @@ uClass ANimTestActor of ATestActor:
         name : FString 
 
 
+proc regularNimFunction() = 
+    UE_Log "This is a regular nim function"
+
 uFunctions:
     proc tick(self:ANimTestActorPtr, deltaTime:float)  = 
         self.setColorByStringInMesh("(R=1,G=0.5,B=0.2,A=1)")
-        
+    
+    proc beginPlay(self:ANimTestActorPtr) = 
+        UE_Log "Que pasa another change did this carah"
+        regularNimFunction()
 
 

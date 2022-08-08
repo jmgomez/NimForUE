@@ -109,16 +109,28 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo,
         prev.run prepareForReinst
         some ueCast[T](emitter.generator(pkg))
 
+template deleteUStruct(T : typedesc, executeAfterDelete:untyped) = 
+     for instance {.inject.} in getAllObjectsFromPackage[T](nimPackage):
+        if ReinstSuffix in instance.getName(): continue
+        let clsName {.inject.} = instance.getPrefixCpp() & instance.getName()
+        if getEmitterByName(clsName).isNone():
+            UE_Log &"Deleting {clsName}"
+            executeAfterDelete
+
 
 proc addDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr)  =    
+    discard
     #iterate all UNimClasses, if they arent not reintanced already (name) and they dont exists in the type emitted this round, they must be deleted
-    let getEmitterByName = (name:FString) => ueEmitter.emitters.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
-    for cls in getAllObjectsFromPackage[UNimClassBase](nimPackage):
-        if ReinstSuffix in cls.getName(): continue
-        let clsName  = cls.getPrefixCpp() & cls.getName()
-        if getEmitterByName(clsName).isNone():
-            UE_Warn &"Class has to be deleted {clsName}"
-            hotReloadInfo.deletedClasses.add(cls)
+    # let getEmitterByName = (name:FString) => ueEmitter.emitters.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
+    # deleteUStruct(UNimClassBase):
+    #     hotReloadInfo.deletedClasses.add(instance)
+    # deleteUStruct(UNimScriptStruct):
+    #     hotReloadInfo.deletedStructs.add(instance)
+    # deleteUStruct(UNimDelegateFunction):
+    #     hotReloadInfo.deletedDelegatesFunctions.add(instance)
+    # # deleteUStruct(UNimEnum):
+    # #     hotReloadInfo.deletedEnums.add(instance)
+
         
     
     

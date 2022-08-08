@@ -26,6 +26,10 @@ type
         sourceHash* {.importcpp: "SourceHash".} : FString
     UNimFunctionPtr* = ptr UNimFunction
 
+    UNimDelegateFunction* {.importcpp.} = object of UDelegateFunction
+        ueTypePtr* {.importcpp: "UETypePtr".} : pointer
+
+    UNimDelegateFunctionPtr* = ptr UDelegateFunction
 
 proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
 
@@ -175,7 +179,7 @@ type
         newEnums* {.importcpp: "NewEnums" .} : TArray[UEnumPtr]
         deletedStructs* {.importcpp: "DeletedStructs" .} : TArray[UScriptStructPtr]
         deletedClasses* {.importcpp: "DeletedClasses" .} : TArray[UClassPtr]
-        deletedDelegates* {.importcpp: "DeletedDelegates" .} : TArray[UDelegateFunctionPtr]
+        deletedDelegatesFunctions* {.importcpp: "DeletedDelegateFunctions" .} : TArray[UDelegateFunctionPtr]
         deletedEnums* {.importcpp: "DeletedEnums" .} : TArray[UEnumPtr]
 
         bShouldHotReload* {.importcpp: "bShouldHotReload" .} : bool
