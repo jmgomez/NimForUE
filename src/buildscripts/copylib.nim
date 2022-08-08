@@ -97,6 +97,10 @@ proc copyNimForUELibToUEDir*() =
     if not dirExists(libDirUE):
         createDir(libDirUE)
 
+    #deletes previous used ones
+    for libPath in getAllLibsFromPath(libDirUE):
+        discard tryRemoveFile(libPath) #We just ignore if it fails as it isnt critical to keep going
+
     let libsCandidates = getAllLibsFromPath(libDirUE)
     proc extractNumber(filepath:string): int = 
         var ignore : string
@@ -115,10 +119,6 @@ proc copyNimForUELibToUEDir*() =
     let nextFileName = getFullLibName("nimforue-" & $(nextLibNumber))
 
     let fileFullSrc = libDir/baseLibName
-
-    #deletes previous used ones
-    for libPath in libsCandidates:
-        discard tryRemoveFile(libPath) #We just ignore if it fails as it isnt critical to keep going
 
 
     let nLibs = len (libsCandidates)

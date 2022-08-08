@@ -30,6 +30,10 @@ let debugFlags =
       discard f.scanf("nimforue-$i", n)
       n
 
+    # clean up pdbs
+    for pdbPath in walkFiles(pdbFolder/"nimforue*.pdb"):
+      discard tryRemoveFile(pdbPath) # ignore if the pdb is locked by the debugger
+
     # generate a new pdb name
     # get the version numbers and inc the highest to get the next
     let versions : seq[int] = walkFiles(pdbFolder/"nimforue*.pdb").toSeq.map(toVersion).sorted(Descending)
@@ -37,10 +41,6 @@ let debugFlags =
       if versions.len > 0:
         "-" & $(versions[0]+1)
       else: ""
-
-    # clean up pdbs
-    for pdbPath in walkFiles(pdbFolder/"nimforue*.pdb"):
-      discard tryRemoveFile(pdbPath)
 
     let pdbFile = pdbFolder / "nimforue" & version & ".pdb"
     &"/Fd{pdbFile} /link /ASSEMBLYDEBUG /DEBUG /PDB:{pdbFile}"
