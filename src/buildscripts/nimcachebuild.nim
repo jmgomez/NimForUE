@@ -19,7 +19,7 @@ let cacheDir = pluginDir / ".nimcache/guestpch"
 
 let isDebug = nueConfig.targetConfiguration in [Debug, Development]
 
-proc debugFlags(): string =
+let debugFlags =
   if isDebug:
     let pdbFolder = pluginDir / ".nimcache/guestpch/pdbs"
     createDir(pdbFolder)
@@ -165,7 +165,7 @@ proc compileCmd(cpppath: string, objpath: string): string =
     (if withPCH and usesPCHFile(cppPath): pchFlags() else: "") & " " &
     getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b, " ") & " " &
     "/Fo" & objpath & " " & cppPath &
-    " " & debugFlags()
+    " " & debugFlags
 
 # generate the pch file for windows
 proc winpch*() =
@@ -182,7 +182,7 @@ proc winpch*() =
     quit("!Error: " & definitionsCppPath & " not found!")
 
   let curDir = getCurrentDir()
-  pchCmd &= " " & debugFlags()
+  pchCmd &= " " & debugFlags
   #echo pchCmd
   setCurrentDir(".nimcache/winpch")
   discard execCmd(pchCmd)
@@ -249,7 +249,7 @@ proc nimcacheBuild*(): BuildStatus =
 
   let linkcmd = &"vccexe.exe {dllFlag} --platform:amd64  /nologo /Fe" & dllpath & " " &
     getUESymbols(nueConfig).foldl(a & " " & b, " ") & " " & objpaths.join(" ") & " " & (if withPCH: pchObj else: "") &
-    " " & debugFlags()
+    " " & debugFlags
 
  
   let linkRes = execCmd(linkCmd)
