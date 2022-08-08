@@ -249,8 +249,11 @@ proc defaultClassConstructor(initializer: var FObjectInitializer) {.cdecl.}=
     UE_Warn "Class Constructor Called from Nim!!" & obj.getName()
 
 
+type CtorInfo* = object #stores the constuctor information for a class. 
+        fn* : UClassConstructor
+        hash* : string
 
-proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, Option[UFunctionNativeSignature]], clsConstructor : Option[UClassConstructor] ) : UFieldPtr =
+proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, Option[UFunctionNativeSignature]], clsConstructor : Option[CtorInfo] ) : UFieldPtr =
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_WasLoaded) # RF_LoadCompleted deprecated per the ObjectMacros.h comments
 
     let
@@ -292,10 +295,12 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
         #should gather the functions here?
 
 
-
     newCls.bindType()
     newCls.staticLink(true)
-    clsConstructor.run((cons:UClassConstructor)=>newCls.setClassConstructor(cons))
+    clsConstructor.run(proc (cons:CtorInfo) = 
+        newCls.setClassConstructor(cons.fn)
+        newCls.constructorSourceHash = cons.hash
+    )
     # newCls.addConstructorToActor()
 
     newCls.assembleReferenceTokenStream()

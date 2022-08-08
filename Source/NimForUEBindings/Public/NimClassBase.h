@@ -19,7 +19,8 @@ class NIMFORUEBINDINGS_API UNimClassBase : public UClass {
 GENERATED_BODY()
 public:
 	void* UETypePtr;
-
+	//Stores a hash of the implementation of a function in nim that acts as constructor so in the next compilation we can see if they are different so we can swap the fn pointer if they arent
+	FString ConstructorSourceHash; 
 	void SetClassConstructor(void (*NimClassConstructor) (FObjectInitializer&));
 
 static UNimClassBase* GetFirstNimClassBase(UObject* Obj);
@@ -41,7 +42,7 @@ UCLASS()
 class NIMFORUEBINDINGS_API UNimFunction : public UFunction {
 	GENERATED_BODY()
 public:
-	//Stores a hash of the implementation of a function in nim so in next compilation we can see if they are different so we can swap the fn pointer if they arent
+	//Stores a hash of the implementation of a function in nim so in the next compilation we can see if they are different so we can swap the fn pointer if they arent
 	FString SourceHash; 
 };
 

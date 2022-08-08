@@ -11,7 +11,6 @@ import ../macros/uebind
 
 
 type 
-   
     EmitterInfo* = object 
         uStructPointer* : UFieldPtr
         ueType : UEType
@@ -22,7 +21,7 @@ type
         emitters* : seq[EmitterInfo]
         # types* : seq[UEType]
         fnTable* : Table[string, Option[UFunctionNativeSignature]]
-        clsConstructorTable* : Table[string, UClassConstructor]
+        clsConstructorTable* : Table[string, CtorInfo]
         
 
 var ueEmitter* = UEEmitter() 
@@ -41,11 +40,18 @@ proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =
 proc addEmitterInfo*(ueType:UEType) : void =  
     addEmitterInfo(ueType, getFnGetForUClass(ueType))
 
-proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor) : void =  
+proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor, hash:string) : void =  
+    let ctorInfo = CtorInfo(fn:classConstructor, hash:hash)
     if not ueEmitter.clsConstructorTable.contains(clsName):
-        ueEmitter.clsConstructorTable.add(clsName, classConstructor)
+        ueEmitter.clsConstructorTable.add(clsName, ctorInfo)
     else:
-        ueEmitter.clsConstructorTable[clsName] = classConstructor 
+        ueEmitter.clsConstructorTable[clsName] = ctorInfo 
+
+    #update type information in the constructor
+    var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == clsName).get()
+    emitter.ueType.ctorSourceHash = hash
+    ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == clsName, emitter)
+
 
 # proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
 #     var ueClassType = ueEmitter.types.first(t=>t.name == ueField.className).get()
@@ -177,8 +183,6 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                 if prevDelPtr.isSome() and newDelPtr.isSome():
                     hotReloadInfo.delegatesToReinstance.add(prevDelPtr.get(), newDelPtr.get())
 
-                prevDelptr.flatmap((prev : UDelegateFunctionPtr) => newDelPtr.map(newDel=>(prev, newDel)))
-                    .run((pair:(UDelegateFunctionPtr, UDelegateFunctionPtr)) => hotReloadInfo.delegatesToReinstance.add(pair[0], pair[1]))
 
     for fnName, fnPtr in ueEmitter.fnTable:
         let funField = getFieldByName(getEmmitedTypes(), fnName)
@@ -394,7 +398,7 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
                     .toSeq()
                     .map(insertReferenceToSelfInAssigmentNode)
             )
-    result = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assigments, initName):
+    let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assigments, initName):
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
             var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
             when not declared(self): #declares self and initializer so the default compiler compiles when using the assigments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
@@ -410,10 +414,12 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             #calls the cpp constructor first
             assigments
             fnBody #user code
-       
+    
+    let ctorRes = genAst(fnName, typeLiteral, hash=newStrLitNode(repr(ctorImpl))):
         #add constructor to constructor table
-        addClassConstructor(typeLiteral, fnName)
+        addClassConstructor(typeLiteral, fnName, hash)
 
+    result = nnkStmtList.newTree(ctorImpl, ctorRes)
 
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
@@ -436,6 +442,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
         let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)
         
         let constructor = constructorImpl(fnField, newEmptyNode())
+       
         # echo repr constructor
         uClassNode.add constructor
     # echo treeRepr uClassNode className`
@@ -631,10 +638,6 @@ func ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
     # debugEcho result.repr
 
 macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField]())
-   
-
- 
-
 
 #this macro is ment to be used as a block that allows you to define a bunch of ufuncs 
 #that share the same flags. You dont need to specify uFunc if the func is inside

@@ -269,17 +269,17 @@ uClass UNimTestComponent of UActorComponent:
 
 
 
-proc nimComponentConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
-    var obj = ueCast[UNimTestComponent](initializer.getObj())
-    #call first cpp constructor:
-    #maybe we should add default constructor and call only the parent constructor here?
-    #if so, we could automatize it so it just call it first on the macro itself. 
-    obj.getClass().getFirstCppClass().classConstructor(initializer)
-    obj.propString = "Hey CDO modified here"
-    #first
-    UE_Warn "Class Constructor called from for the UNimTestComponent!!"
+# proc nimComponentConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
+#     var obj = ueCast[UNimTestComponent](initializer.getObj())
+#     #call first cpp constructor:
+#     #maybe we should add default constructor and call only the parent constructor here?
+#     #if so, we could automatize it so it just call it first on the macro itself. 
+#     obj.getClass().getFirstCppClass().classConstructor(initializer)
+#     obj.propString = "Hey CDO modified here"
+#     #first
+#     UE_Warn "Class Constructor called from for the UNimTestComponent!!"
 
-addClassConstructor("UNimTestComponent", nimComponentConstructor)
+# addClassConstructor("UNimTestComponent", nimComponentConstructor)
 
 
 uClass UObjectNim of UObject:
@@ -313,17 +313,17 @@ uFunctions:
         UE_Warn "Hello from object " & $param
         newUObject[UObjectNim](self)
 
-proc objectNimConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
-    var obj = ueCast[UObjectNim](initializer.getObj())
-    #call first cpp constructor:
-    #maybe we should add default constructor and call only the parent constructor here?
-    #if so, we could automatize it so it just call it first on the macro itself. 
-    obj.getClass().getFirstCppClass().classConstructor(initializer)
-    obj.testField = "Hey CDO modified here another"
-    #first
-    UE_Warn "Class Constructor Called from for the UObjectNim!!"
+# proc objectNimConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
+#     var obj = ueCast[UObjectNim](initializer.getObj())
+#     #call first cpp constructor:
+#     #maybe we should add default constructor and call only the parent constructor here?
+#     #if so, we could automatize it so it just call it first on the macro itself. 
+#     obj.getClass().getFirstCppClass().classConstructor(initializer)
+#     obj.testField = "Hey CDO modified here another"
+#     #first
+#     UE_Warn "Class Constructor Called from for the UObjectNim!!"
 
-addClassConstructor("UObjectNim", objectNimConstructor)
+# addClassConstructor("UObjectNim", objectNimConstructor)
 
 
 

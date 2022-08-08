@@ -54,11 +54,11 @@ type
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
         metadata* : seq[UEMetadata]
-        sourceHash*: string
         case kind*: UETypeKind
             of uetClass:
                 parent* : string
                 clsFlags*: EClassFlagsVal
+                ctorSourceHash*: string
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal
@@ -173,7 +173,8 @@ func `==`*(a, b:UEType) : bool =
     a.kind == b.kind and
     (case a.kind:
     of uetClass:
-        a.parent == b.parent #and
+        a.parent == b.parent and
+        a.ctorSourceHash == b.ctorSourceHash 
         # a.clsFlags == b.clsFlags
     of uetStruct:
         a.superStruct == b.superStruct #and

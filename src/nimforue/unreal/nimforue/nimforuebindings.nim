@@ -10,6 +10,7 @@ type
     
     UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
         ueTypePtr* {.importcpp: "UETypePtr".} : pointer
+        constructorSourceHash* {.importcpp: "ConstructorSourceHash".} : FString
     UNimClassBasePtr* = ptr UNimClassBase
 
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
