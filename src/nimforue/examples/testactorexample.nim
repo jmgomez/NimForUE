@@ -24,7 +24,7 @@ proc regularNimFunction() =
 
 uFunctions:
     proc tick(self:ANimTestActorPtr, deltaTime:float)  = 
-        self.setColorByStringInMesh("(R=1,G=0.5,B=0.2,A=1)")
+        self.setColorByStringInMesh("(R=0,G=0.5,B=0.2,A=1)")
     
     proc beginPlay(self:ANimTestActorPtr) = 
         UE_Log "Que pasa another change did this carah"

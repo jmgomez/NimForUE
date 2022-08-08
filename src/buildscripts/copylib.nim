@@ -118,8 +118,8 @@ proc copyNimForUELibToUEDir*() =
 
     #deletes previous used ones
     for libPath in libsCandidates:
-        if not tryRemoveFile(libPath):
-            log &"Could not delete {libPath}. Are you debugging in Windows?", lgWarning
+        discard tryRemoveFile(libPath) #We just ignore if it fails as it isnt critical to keep going
+
 
     let nLibs = len (libsCandidates)
     var fileFullDst  : string #This would be much better with pattern matching
@@ -137,7 +137,8 @@ proc copyNimForUELibToUEDir*() =
         try:
             removeDir(debugFolder)
         except:
-            log &"Could not delete {debugFolder}", lgWarning
+            discard
+            #Debug folder was used. We just ignore it as it isnt critical to keep going
 
     
        
