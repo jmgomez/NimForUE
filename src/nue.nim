@@ -138,7 +138,7 @@ task guest, "Builds the main lib. The one that makes sense to hot reload.":
     discard execCmd("nim cpp --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim")
     copyNimForUELibToUEDir()
 
-task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nogen to compile from nimcache cpp sources without generating.":
+task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nogen to compile from nimcache cpp sources without generating, --nolinedir turns off #line directives in cpp output.":
     generateFFIGenFile()
 
     var force = ""
@@ -147,8 +147,10 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
     
     var noGen = "nogen" in taskOptions
 
+    var lineDir = if "nolinedir" in taskOptions: "off" else: "on"
+
     if not noGen:
-      discard execCmd(&"nim cpp {force} -g --stacktrace:on --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim")
+      discard execCmd(&"nim cpp {force} -g --lineDir:{lineDir} --stacktrace:on --genscript --app:lib --nomain --d:genffi -d:withue -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim")
 
     if nimcacheBuild() == Success:
       copyNimForUELibToUEDir()
@@ -163,7 +165,7 @@ task pp, "Preprocess a file with MSVC":
   if "args" in taskOptions:
     preprocess(taskOptions["args"])
   else:
-    quit("Usage: nue.exe pp filepath")
+    quit("Usage: nue.exe pp relative_filepath\n\tThe filepath should be relative and the base directory and its sub-directories will be included for the compiler.\n\tExample: nue pp ./Source/NimForUE/Private/TestActor.cpp\n\tThe ./Source directory and its subdirectories will be included for preprocessing.")
 
 task host, "Builds the host":
   discard execCmd("nimble host")

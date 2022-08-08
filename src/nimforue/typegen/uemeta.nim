@@ -251,9 +251,8 @@ proc defaultClassConstructor(initializer: var FObjectInitializer) {.cdecl.}=
 
 
 proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, Option[UFunctionNativeSignature]], clsConstructor : Option[UClassConstructor] ) : UFieldPtr =
-    const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_LoadCompleted)
-    # const objClsFlags  =  (RF_Public || RF_Standalone || RF_Transactional || RF_LoadCompleted)
-    # let objClsFlags  =  RF_Standalone || RF_Public
+    const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_WasLoaded) # RF_LoadCompleted deprecated per the ObjectMacros.h comments
+
     let
         newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
         parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
