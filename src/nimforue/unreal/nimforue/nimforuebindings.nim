@@ -174,7 +174,7 @@ type
         nativeFunctionsToReinstance* {.importcpp: "NativeFunctionsToReinstance" .} : TArray[TPair[FNativeFuncPtr, FNativeFuncPtr]]
         newStructs* {.importcpp: "NewStructs" .} : TArray[UScriptStructPtr]
         newClasses* {.importcpp: "NewClasses" .} : TArray[UClassPtr]
-        newDelegates* {.importcpp: "NewDelegates" .} : TArray[UDelegateFunctionPtr]
+        newDelegatesFunctions* {.importcpp: "NewDelegateFunctions" .} : TArray[UDelegateFunctionPtr]
         newEnums* {.importcpp: "NewEnums" .} : TArray[UEnumPtr]
         deletedStructs* {.importcpp: "DeletedStructs" .} : TArray[UScriptStructPtr]
         deletedClasses* {.importcpp: "DeletedClasses" .} : TArray[UClassPtr]

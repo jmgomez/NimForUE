@@ -109,7 +109,9 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo,
         prev.run prepareForReinst
         some ueCast[T](emitter.generator(pkg))
 
-template deleteUStruct(T : typedesc, executeAfterDelete:untyped) = 
+
+
+template registerDeleteUType(T : typedesc, executeAfterDelete:untyped) = 
      for instance {.inject.} in getAllObjectsFromPackage[T](nimPackage):
         if ReinstSuffix in instance.getName(): continue
         let clsName {.inject.} = 
@@ -117,26 +119,22 @@ template deleteUStruct(T : typedesc, executeAfterDelete:untyped) =
             else: instance.getPrefixCpp() & instance.getName()
 
         if getEmitterByName(clsName).isNone():
-            UE_Log &"Deleting {clsName}"
             executeAfterDelete
 
 
-proc addDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr)  =    
+proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr)  =    
     #iterate all UNimClasses, if they arent not reintanced already (name) and they dont exists in the type emitted this round, they must be deleted
     let getEmitterByName = (name:FString) => ueEmitter.emitters.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
-    deleteUStruct(UNimClassBase):
+    registerDeleteUType(UNimClassBase):
         hotReloadInfo.deletedClasses.add(instance)
-    deleteUStruct(UNimScriptStruct):
+    registerDeleteUType(UNimScriptStruct):
         hotReloadInfo.deletedStructs.add(instance)
-    deleteUStruct(UNimDelegateFunction):
+    registerDeleteUType(UNimDelegateFunction):
         hotReloadInfo.deletedDelegatesFunctions.add(instance)
-    deleteUStruct(UNimEnum):
+    registerDeleteUType(UNimEnum):
         hotReloadInfo.deletedEnums.add(instance)
 
         
-    
-    
-
 proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr = 
     var hotReloadInfo = newNimHotReload()
     for emitter in ueEmitter.emitters:
@@ -144,21 +142,41 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
             of uetStruct:
                 let prevStructPtr = someNil getScriptStructByName emitter.ueType.name.removeFirstLetter()
                 let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr)
-                prevStructPtr.flatmap((prev : UScriptStructPtr) => newStructPtr.map(newStr=>(prev, newStr)))
-                    .run((pair:(UScriptStructPtr, UScriptStructPtr)) => hotReloadInfo.structsToReinstance.add(pair[0], pair[1]))
+
+                if prevStructPtr.isNone() and newStructPtr.isSome():
+                    hotReloadInfo.newStructs.add(newStructPtr.get())
+                if prevStructPtr.isSome() and newStructPtr.isSome():
+                    hotReloadInfo.structsToReinstance.add(prevStructPtr.get(), newStructPtr.get())
+
+               
             of uetClass:                
                 let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
                 let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
-                prevClassPtr.flatmap((prev:UClassPtr) => newClassPtr.map(newCls=>(prev, newCls)))
-                    .run((pair:(UClassPtr, UClassPtr)) => hotReloadInfo.classesToReinstance.add(pair[0], pair[1]))
+
+                if prevClassPtr.isNone() and newClassPtr.isSome():
+                    hotReloadInfo.newClasses.add(newClassPtr.get())
+                if prevClassPtr.isSome() and newClassPtr.isSome():
+                    hotReloadInfo.classesToReinstance.add(prevClassPtr.get(), newClassPtr.get())
+
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
                 let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr)
-                prevEnumPtr.flatmap((prev:UNimEnumPtr) => newEnumPtr.map(newEnum=>(prev, newEnum)))
-                    .run((pair:(UNimEnumPtr, UNimEnumPtr)) => hotReloadInfo.enumsToReinstance.add(pair[0], pair[1]))
+
+                if prevEnumPtr.isNone() and newEnumPtr.isSome():
+                    hotReloadInfo.newEnums.add(newEnumPtr.get())
+                if prevEnumPtr.isSome() and newEnumPtr.isSome():
+                    hotReloadInfo.enumsToReinstance.add(prevEnumPtr.get(), newEnumPtr.get())
+
+
             of uetDelegate:
                 let prevDelPtr = someNil getUTypeByName[UDelegateFunction](emitter.ueType.name.removeFirstLetter())
                 let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr)
+
+                if prevDelPtr.isNone() and newDelPtr.isSome():
+                    hotReloadInfo.newDelegatesFunctions.add(newDelPtr.get())
+                if prevDelPtr.isSome() and newDelPtr.isSome():
+                    hotReloadInfo.delegatesToReinstance.add(prevDelPtr.get(), newDelPtr.get())
+
                 prevDelptr.flatmap((prev : UDelegateFunctionPtr) => newDelPtr.map(newDel=>(prev, newDel)))
                     .run((pair:(UDelegateFunctionPtr, UDelegateFunctionPtr)) => hotReloadInfo.delegatesToReinstance.add(pair[0], pair[1]))
 
@@ -179,7 +197,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                 prev.sourceHash = newHash
  
    
-    addDeletedTypesToHotReload(hotReloadInfo)
+    registerDeletedTypesToHotReload(hotReloadInfo)
 
     
     hotReloadInfo.setShouldHotReload()
