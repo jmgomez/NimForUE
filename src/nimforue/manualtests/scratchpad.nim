@@ -268,7 +268,6 @@ uClass UNimTestComponent of UActorComponent:
         onWhatever : FMyDelegate
 
 
-
 # proc nimComponentConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
 #     var obj = ueCast[UNimTestComponent](initializer.getObj())
 #     #call first cpp constructor:

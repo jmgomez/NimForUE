@@ -422,32 +422,6 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
     result = nnkStmtList.newTree(ctorImpl, ctorRes)
 
 
-macro uClass*(name:untyped, body : untyped) : untyped = 
-    if name.toSeq().len() < 3:
-        error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
-
-    let parent = name[^1].strVal()
-    let className = name[1].strVal()
-    let classMetas = getMetasForType(body)
-    let ueFields = getUPropsAsFieldsForType(body, className)
-    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit ) #| CLASS_CompiledFromBlueprint
-    let ueType = makeUEClass(className, parent, classFlags, ueFields, classMetas)
-    
-
-    var uClassNode = emitUClass(ueType)
-
-    if uClassNeedsConstructor(className):
-        let typeParam = makeFieldAsUPropParam("self", className)
-        let initParam = makeFieldAsUPropParam("initializer", "FObjectInitializer")
-        let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)
-        
-        let constructor = constructorImpl(fnField, newEmptyNode())
-       
-        # echo repr constructor
-        uClassNode.add constructor
-    # echo treeRepr uClassNode className`
-    uClassNode
-    
 
 
 macro uDelegate*(body:untyped) : untyped = 
@@ -654,7 +628,6 @@ macro uFunctions*(body : untyped) : untyped =
                     .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip().addPtrToUObjectIfNotPresentAlready(), CPF_None)) #notice no generic/var allowed. Only UObjects
                     
 
-   
     let allFuncs = body.children.toSeq()
         .filter(n=>n.kind==nnkProcDef)
         .map(procBody=>ufuncImpl(procBody, firstParam, metas))
@@ -676,14 +649,61 @@ macro uConstructor*(fn:untyped) : untyped =
     let fnField = makeFieldAsUFun(fn.name.strVal(), params, firstParam.uePropType.removeLastLettersIfPtr())
     constructorImpl(fnField, fn.body)
 
-# constructor(UTypeName):
-#     echo "hola"
+func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) : NimNode = 
+    let metas = funcBlock.childrenAsSeq()
+                    .filter(n=>n.kind==nnkIdent)
+                    .map(n=>n.strVal().strip())
+                    .map(makeUEMetadata)
+    #TODO add first parameter
+    let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), CPF_None) #notice no generic/var allowed. Only UObjects
+   
+    # debugEcho "FUNC BLOCK " & funcBlock.treeRepr()
 
-# proc test(myType:UTypeName, initializer:var FObjectInitializer) {.uConstructor.} =
-#     echo "hola"
-#     echo "whatever"
+    let allFuncs = funcBlock[^1].children.toSeq()
+        .filter(n=>n.kind==nnkProcDef)
+        .map(procBody=>ufuncImpl(procBody, firstParam, metas))
 
+    result = nnkStmtList.newTree allFuncs
+
+
+func genUFuncsForUClass(body:NimNode, ueTypeName:string) : seq[NimNode] = 
+    let fnBlocks = body.toSeq()
+                       .filter(n=>n.kind == nnkCall and 
+                            n[0].strVal().toLower() in ["ufunc", "ufuncs", "ufunction", "ufunctions"])
+
+    fnBlocks.map(fnBlock=>funcBlockToFunctionInUClass(fnBlock, ueTypeName))
+   
+
+macro uClass*(name:untyped, body : untyped) : untyped = 
+    if name.toSeq().len() < 3:
+        error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
+
+    let parent = name[^1].strVal()
+    let className = name[1].strVal()
+    let classMetas = getMetasForType(body)
+    let ueProps = getUPropsAsFieldsForType(body, className)
+    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit ) #| CLASS_CompiledFromBlueprint
+    let ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
     
+    var uClassNode = emitUClass(ueType)
+
+    if uClassNeedsConstructor(className):
+        let typeParam = makeFieldAsUPropParam("self", className)
+        let initParam = makeFieldAsUPropParam("initializer", "FObjectInitializer")
+        let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)
+        
+        let constructor = constructorImpl(fnField, newEmptyNode())
+       
+        # echo repr constructor
+        uClassNode.add constructor
+    # echo treeRepr uClassNode className`
+    let fns = genUFuncsForUClass(body, className)
+    result =  nnkStmtList.newTree(@[uClassNode] & fns)
+   
+    
+    
+
+
 
 
 
