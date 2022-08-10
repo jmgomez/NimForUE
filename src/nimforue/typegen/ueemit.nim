@@ -51,6 +51,7 @@ proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor, ha
     var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == clsName).get()
     emitter.ueType.ctorSourceHash = hash
     ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == clsName, emitter)
+    ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == clsName, emitter)
 
 
 # proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
@@ -75,10 +76,11 @@ const ReinstSuffix = "_Reinst"
 
 proc prepReinst(prev:UObjectPtr) = 
     prev.setFlags(RF_NewerVersionExists)
-
+    UE_Warn &"Reinstancing {prev.getName()}"
     # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
     prev.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32))
 
+    prev.addToRoot()
     let prevNameStr : FString =  fmt("{prev.getName()}{ReinstSuffix}")
     let oldClassName = makeUniqueObjectName(prev.getOuter(), prev.getClass(), makeFName(prevNameStr))
     discard prev.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
@@ -102,12 +104,19 @@ proc prepareForReinst(prevUEnum : UNimEnumPtr) =
 type UEmitable = UScriptStruct | UClass | UDelegateFunction | UEnum
         
 #emit the type only if one doesn't exist already and if it's different
-proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T]) : Option[ptr T]= 
+proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T], isFirstLoad:bool) : Option[ptr T]= 
+
+    if not isFirstLoad and not defined withReinstanciation:
+        UE_Warn "Reinstanciation is disabled."
+        return none[ptr T]()
+
     UE_Log &"Emitter info for {emitter.ueType.name}"
     if prev.isSome: #BUG TRACE
         UE_Log &"Previous type is {prev.get().getName()}"
     else:
         UE_Log &"Previous type is none"
+    
+
 
     let areEquals = prev.isSome() and prev.get().toUEType() == emitter.ueType
     if areEquals: none[ptr T]()
@@ -141,13 +150,13 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr)  =
         hotReloadInfo.deletedEnums.add(instance)
 
         
-proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr = 
+proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReloadPtr = 
     var hotReloadInfo = newNimHotReload()
     for emitter in ueEmitter.emitters:
             case emitter.ueType.kind:
             of uetStruct:
                 let prevStructPtr = someNil getScriptStructByName emitter.ueType.name.removeFirstLetter()
-                let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr)
+                let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr, isFirstLoad)
 
                 if prevStructPtr.isNone() and newStructPtr.isSome():
                     hotReloadInfo.newStructs.add(newStructPtr.get())
@@ -157,7 +166,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
                
             of uetClass:                
                 let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
-                let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr)
+                let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr, isFirstLoad)
 
                 if prevClassPtr.isNone() and newClassPtr.isSome():
                     hotReloadInfo.newClasses.add(newClassPtr.get())
@@ -166,7 +175,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
 
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
-                let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr)
+                let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr, isFirstLoad)
 
                 if prevEnumPtr.isNone() and newEnumPtr.isSome():
                     hotReloadInfo.newEnums.add(newEnumPtr.get())
@@ -176,7 +185,7 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
 
             of uetDelegate:
                 let prevDelPtr = someNil getUTypeByName[UDelegateFunction](emitter.ueType.name.removeFirstLetter())
-                let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr)
+                let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr, isFirstLoad)
 
                 if prevDelPtr.isNone() and newDelPtr.isSome():
                     hotReloadInfo.newDelegatesFunctions.add(newDelPtr.get())
@@ -205,6 +214,9 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
 
     
     hotReloadInfo.setShouldHotReload()
+    if not hotReloadInfo.bShouldHotReload:
+        UE_Log "Nothing to Hot Reload (reinstance)"
+
     hotReloadInfo
 
 
@@ -212,9 +224,9 @@ proc emitUStructsForPackage*(pkg: UPackagePtr) : FNimHotReloadPtr =
 #This emit block below can be moved to the macro cache. And then have another macro that generates the registration of the types. 
 #That would allow for intecepting the constructor, but would it worth the extra complexity?
 
-proc emitUStructsForPackage*(pkgName:FString = "Nim") : FNimHotReloadPtr = 
+proc emitUStructsForPackage*(isFirstLoad:bool, pkgName:FString = "Nim") : FNimHotReloadPtr = 
     let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("Nim"))
-    emitUStructsForPackage(pkg)
+    emitUStructsForPackage(isFirstLoad, pkg)
 
 
 proc emitUStruct(typeDef:UEType) : NimNode =
@@ -686,8 +698,8 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
     
     var uClassNode = emitUClass(ueType)
-
-    if uClassNeedsConstructor(className):
+  
+    if doesClassNeedsConstructor(className):
         let typeParam = makeFieldAsUPropParam("self", className)
         let initParam = makeFieldAsUPropParam("initializer", "FObjectInitializer")
         let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)

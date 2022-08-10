@@ -20,6 +20,9 @@ switch("define", "useMalloc")
 # --hints:off
 # --profileVM:on
 # --benchmarkVM:on
+
+# --d:withReinstantiation
+
 when not defined copylib:
     # switch("listcmd")
     # switch("f")

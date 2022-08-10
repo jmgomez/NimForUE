@@ -20,10 +20,15 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 	if(NimHotReload == nullptr){
 		UE_LOG(LogTemp, Error, TEXT("NimForUE just crashed. Review the log"), *Msg);
 		return;
+		
 	}
-	UEditorUtils::HotReload(NimHotReload);
-	UEditorUtils::RefreshNodes(NimHotReload);
+	if (NimHotReload->bShouldHotReload)
+		UEditorUtils::HotReload(NimHotReload);
+	//UEditorUtils::RefreshNodes(NimHotReload);
 	// delete NimHotReload;
+
+	FCoreUObjectDelegates::ReloadCompleteDelegate.Broadcast(EReloadCompleteReason::HotReloadManual);
+
 	
 	UEditorUtils::ShowLoadNotification(bIsFirstLoad);
 	UE_LOG(LogTemp, Log, TEXT("NimForUE just hot reloaded!! %s"), *Msg);
@@ -35,6 +40,7 @@ void UNimForUEEngineSubsystem::CreateNimPackage() {
 	NimForUEPackage->SetPackageFlags(PKG_CompiledIn);
 	NimForUEPackage->SetFlags(RF_Standalone);
 	NimForUEPackage->AddToRoot();
+
 }
 
 void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)

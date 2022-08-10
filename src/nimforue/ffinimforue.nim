@@ -45,12 +45,13 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
     
   
         # printAllClassAndProps("PRE", pkg)
-        let nimHotReload = emitUStructsForPackage()
+        let isFirstLoad = n == 0
+        let nimHotReload = emitUStructsForPackage(isFirstLoad)
         
     
         # printAllClassAndProps("POST", pkg)
 
-        scratchpadEditor()
+        # scratchpadEditor()
         return nimHotReload
     except Exception as e:
         UE_Error "Nim CRASHED "

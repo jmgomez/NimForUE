@@ -194,6 +194,8 @@ proc getFlags*(obj:UObjectPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
 proc setFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->SetFlags(#)" .}
 proc clearFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->ClearFlags(#)" .}
 
+proc addToRoot*(obj:UObjectPtr) : void {. importcpp: "#->AddToRoot()" .}
+
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
 proc getOuter*(obj : UObjectPtr) : UObjectPtr {. importcpp: "#->GetOuter()" .}
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
