@@ -46,6 +46,8 @@ proc toSeq*[T](arr:TArray[T]) : seq[T] =
     xs.add x
   xs
 
+proc `$`*[T](arr:TArray[T]) : string = $toSeq(arr)
+
 proc toTArray*[T](arr:seq[T]) : TArray[T] = 
   var xs = makeTArray[T]()
   for x in arr:

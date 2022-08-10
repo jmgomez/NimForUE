@@ -19,6 +19,7 @@ proc fStringToString*(fstr :FString) : string = $ fstr
 proc stringToFString*(str :string) : FString = 
   let cstr : cstring = str
   makeFString(cstr)
+proc f*(str :string) : FString {.inline.}= stringToFString(str)
 
 
 
