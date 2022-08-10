@@ -21,6 +21,7 @@ proc add*[K, V](map : TMap[K, V], pair:TPair[K, V]) : void  {.importcpp: "#.Add(
 proc add*[K, V](map : TMap[K, V], k:K, v:V) : void  {.importcpp: "#.Add(@)", .}
 
 proc num*[K, V](arr:TMap[K, V]): int32 {.importcpp: "#.Num()" noSideEffect}
+proc len*[K, V](arr:TMap[K, V]): int = arr.num()
 
 proc contains*[K, V](arr:TMap[K, V], key:K): bool {.importcpp: "#.Contains(#)" noSideEffect}
 
@@ -58,4 +59,15 @@ proc toTMap*[K, V](table:var Table[K, V]): TMap[K, V] =
         map.add(k, v)
     map
 
-proc `$`*[K, V](map:TMap[K, V]) : string = $ toTable(map)
+# proc `$`*[K, V](map:TMap[K, V]) : string = $ toTable(map)
+proc `$`*[K, V](map:TMap[K, V]) : string =
+    if map.num == 0:
+        return  "{:}"
+    result = "{"
+    for key in map.keys():
+      if result.len > 1: result.add(", ")
+      let val = map[key]
+      result.addQuoted(key)
+      result.add(": ")
+      result.addQuoted(val)
+    result.add("}")

@@ -1,7 +1,7 @@
 include ../definitions
 import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, templates/subclassof, nametypes]
 import ../core/containers/[unrealstring, array, map]
-import std/[typetraits, strutils, options]
+import std/[typetraits, strutils, options, strformat]
 import ../../typegen/models
 import ../../utils/utils
 type 
@@ -195,3 +195,19 @@ proc setShouldHotReload*(hotReloadInfo: ptr FNimHotReload) =
         hotReloadInfo.delegatesToReinstance.keys().len() > 0
 
 
+proc `$`*(hr:FNimHotReloadPtr) : string = 
+    &"""StructsToReinstance: {hr.structsToReinstance}  
+        ClassesToReinstance: {hr.classesToReinstance} 
+        DelegatesToReinstance: {hr.delegatesToReinstance} 
+        EnumsToReinstance: {hr.enumsToReinstance} 
+        NewStructs: {hr.newStructs} 
+        NewClasses: {hr.newClasses} 
+        NewDelegateFunctions: {hr.newDelegatesFunctions} 
+        NewEnums: {hr.newEnums} 
+        DeletedStructs: {hr.deletedStructs} 
+        DeletedClasses: {hr.deletedClasses} 
+        DeletedDelegateFunctions: {hr.deletedDelegatesFunctions} 
+        DeletedEnums: {hr.deletedEnums} 
+        bShouldHotReload: {hr.bShouldHotReload} 
+    
+    """

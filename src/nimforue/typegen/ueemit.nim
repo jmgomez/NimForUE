@@ -105,7 +105,12 @@ type UEmitable = UScriptStruct | UNimClassBase | UDelegateFunction | UEnum
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T], isFirstLoad:bool) : Option[ptr T]= 
 
-    if not isFirstLoad and not defined withReinstanciation:
+    when defined withReinstantiation:
+        let reinst = true
+    else:
+        let reinst = false
+
+    if not isFirstLoad and not reinst:
         UE_Warn "Reinstanciation is disabled."
         return none[ptr T]()
 
@@ -174,6 +179,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
 
                 if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated
                     let ctor = ueEmitter.clsConstructorTable.tryGet(emitter.ueType.name)
+                    UE_Log &"Updating constructor for {emitter.ueType.name}"
                     prevClassPtr.get().setClassConstructor(ctor.map(ctor=>ctor.fn).get(defaultClassConstructor))
 
             of uetEnum:
@@ -221,8 +227,8 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
 
     
     hotReloadInfo.setShouldHotReload()
-    if not hotReloadInfo.bShouldHotReload:
-        UE_Log "Nothing to Hot Reload (reinstance)"
+
+    UE_Log $hotReloadInfo
 
     hotReloadInfo
 

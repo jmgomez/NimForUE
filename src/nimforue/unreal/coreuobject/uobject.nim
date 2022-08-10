@@ -81,6 +81,7 @@ proc createDefaultSubobjectNim*[T:UObject](outer:UObjectPtr, name:FName) : ptr T
 
 proc getName*(prop:FFieldPtr) : FString {. importcpp:"#->GetName()" .}
 
+
 proc getOffsetForUFunction*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffset_ForUFunction()".}
 proc initializeValueInContainer*(prop:FPropertyPtr, container:pointer) : void {. importcpp:"#->InitializeValue_InContainer(#)".}
 
@@ -204,6 +205,8 @@ proc getOuter*(obj : UObjectPtr) : UObjectPtr {. importcpp: "#->GetOuter()" .}
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
 proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
 proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
+
+proc `$`*(obj:UObjectPtr) : string = obj.getName()
 
 #bool UClass::Rename( const TCHAR* InName, UObject* NewOuter, ERenameFlags Flags )
 #notice rename flags is not an enum in cpp we define it here adhoc
