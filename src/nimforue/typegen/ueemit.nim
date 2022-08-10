@@ -41,7 +41,7 @@ proc addEmitterInfo*(ueType:UEType) : void =
     addEmitterInfo(ueType, getFnGetForUClass(ueType))
 
 proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor, hash:string) : void =  
-    let ctorInfo = CtorInfo(fn:classConstructor, hash:hash)
+    let ctorInfo = CtorInfo(fn:classConstructor, hash:hash, className: clsName)
     if not ueEmitter.clsConstructorTable.contains(clsName):
         ueEmitter.clsConstructorTable.add(clsName, ctorInfo)
     else:
@@ -84,7 +84,7 @@ proc prepReinst(prev:UObjectPtr) =
     let oldClassName = makeUniqueObjectName(prev.getOuter(), prev.getClass(), makeFName(prevNameStr))
     discard prev.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
-proc prepareForReinst(prevClass : UClassPtr) = 
+proc prepareForReinst(prevClass : UNimClassBasePtr) = 
     # prevClass.classFlags = prevClass.classFlags | CLASS_NewerVersionExists
     prevClass.addClassFlag CLASS_NewerVersionExists
     prepReinst(prevClass)
@@ -100,7 +100,7 @@ proc prepareForReinst(prevUEnum : UNimEnumPtr) =
     prepReinst(prevUEnum)
 
 
-type UEmitable = UScriptStruct | UClass | UDelegateFunction | UEnum
+type UEmitable = UScriptStruct | UNimClassBase | UDelegateFunction | UEnum
         
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T], isFirstLoad:bool) : Option[ptr T]= 
@@ -164,13 +164,17 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
 
                
             of uetClass:                
-                let prevClassPtr = someNil getClassByName emitter.ueType.name.removeFirstLetter()
+                let prevClassPtr = someNil getUTypeByName[UNimClassBase](emitter.ueType.name.removeFirstLetter())
                 let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr, isFirstLoad)
 
                 if prevClassPtr.isNone() and newClassPtr.isSome():
                     hotReloadInfo.newClasses.add(newClassPtr.get())
                 if prevClassPtr.isSome() and newClassPtr.isSome():
                     hotReloadInfo.classesToReinstance.add(prevClassPtr.get(), newClassPtr.get())
+
+                if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated
+                    let ctor = ueEmitter.clsConstructorTable.tryGet(emitter.ueType.name)
+                    prevClassPtr.get().setClassConstructor(ctor.map(ctor=>ctor.fn).get(defaultClassConstructor))
 
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
@@ -192,6 +196,8 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
                     hotReloadInfo.delegatesToReinstance.add(prevDelPtr.get(), newDelPtr.get())
 
 
+
+    #Updates function pointers (after a few reloads they got out scope)
     for fnName, fnPtr in ueEmitter.fnTable:
         let funField = getFieldByName(getEmmitedTypes(), fnName)
         let prevFn = funField
@@ -209,6 +215,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
             prev.setNativeFunc(cast[FNativeFuncPtr](fnPtr)) 
             prev.sourceHash = newHash
  
+     
    
     registerDeletedTypesToHotReload(hotReloadInfo)
 

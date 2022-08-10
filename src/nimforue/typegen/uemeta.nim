@@ -242,8 +242,7 @@ proc isNotNil[T](x:ptr T) : bool = not x.isNil()
 proc isNimClassBase(cls:UClassPtr) : bool = ueCast[UNimClassBase](cls) != nil
 
 
-#here for reference
-proc defaultClassConstructor(initializer: var FObjectInitializer) {.cdecl.}= 
+proc defaultClassConstructor*(initializer: var FObjectInitializer) {.cdecl.}= 
     var obj = initializer.getObj()
     obj.getClass().getFirstCppClass().classConstructor(initializer)
     UE_Warn "Class Default Constructor Called from Nim!!" & obj.getName()
@@ -252,6 +251,7 @@ proc defaultClassConstructor(initializer: var FObjectInitializer) {.cdecl.}=
 type CtorInfo* = object #stores the constuctor information for a class. 
         fn* : UClassConstructor
         hash* : string
+        className* : string
 
 proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, Option[UFunctionNativeSignature]], clsConstructor : Option[CtorInfo] ) : UFieldPtr =
     const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_WasLoaded | RF_MarkAsNative) 
