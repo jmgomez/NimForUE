@@ -5,8 +5,8 @@ import models
 
 
 func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
-    let flags = RF_NoFlags #OBJECT FLAGS
- #It holds a complex type, like a struct or a class
+    const flags = RF_MarkAsNative | RF_Public | RF_Standalone  #OBJECT FLAGS
+         #It holds a complex type, like a struct or a class
     type EObjectMetaProp = enum
         emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, emTSoftClassPtr, emScriptStruct#, TSoftClassPtr = "TSoftClassPtr"
     
@@ -64,7 +64,7 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
 
 func newDelegateBasedProperty(outer : UStructPtr, propType:string, name:FName) : Option[FPropertyPtr] = 
     #Try to find it as Delegate
-    let flags = RF_NoFlags #OBJECT FLAGS
+    const flags = RF_MarkAsNative | RF_Public | RF_Standalone  #OBJECT FLAGS
     UE_Log "Not a struct based prorperty. Trying as delegate.." & propType
     let delegateName = propType.removeFirstLetter() & DelegateFuncSuffix
     
@@ -85,7 +85,7 @@ func newDelegateBasedProperty(outer : UStructPtr, propType:string, name:FName) :
     
 func newEnumBasedProperty(outer : UStructPtr, propType:string, name:FName) : Option[FPropertyPtr] = 
     #Try to find it as Enum
-    let flags = RF_NoFlags #OBJECT FLAGS
+    const flags = RF_MarkAsNative | RF_Public | RF_Standalone  #OBJECT FLAGS
     UE_Log "Not a delegate based prorperty. Trying as enum.." & propType
     
     someNil(getUTypeByName[UEnum](propType))
@@ -104,7 +104,8 @@ func newFProperty*(outer : UStructPtr, propField:UEField, optPropType="", optNam
     let 
         propType = optPropType.nonEmptyOr(propField.uePropType)
         name = optName.nonEmptyOr(propField.name).makeFName()
-        flags = RF_NoFlags #OBJECT FLAGS
+
+    const flags = RF_MarkAsNative | RF_Public | RF_Standalone  #OBJECT FLAGS
 
     let prop : FPropertyPtr = 
         if propType == "FString": 

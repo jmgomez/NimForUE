@@ -10,6 +10,22 @@ void UNimClassBase::SetClassConstructor(void(* NimClassConstructor)(FObjectIniti
 	this->ClassConstructor = reinterpret_cast<ClassConstructorType>(NimClassConstructor);
 }
 
+void UNimClassBase::SetAddClassReferencedObjectType(void(* ClassAddReferencedObjectsFn)(UObject*, FReferenceCollector&)) {
+	// this->ClassAddReferencedObjects = ClassAddReferencedObjectsFn;
+	this->ParentClassReferencedObject = ClassAddReferencedObjectsFn;
+	this->ClassAddReferencedObjects = [](UObject* InThis, FReferenceCollector& Collector) {
+		UClass* This = Cast<UClass>(InThis);
+		if(!This)
+			This = Cast<UClass>(InThis->GetClass());
+		// UClass::AddReferencedObjects(This, Collector);
+		// This->ParentClassReferencedObject(This, Collector);
+	};
+}
+
+void UNimClassBase::AddNimReferenceObjects(UObject* InThis, FReferenceCollector& Collector) {
+	
+}
+
 
 UNimClassBase* UNimClassBase::GetFirstNimClassBase(UObject* Obj) {
 	UClass* Parent = Obj->GetClass();

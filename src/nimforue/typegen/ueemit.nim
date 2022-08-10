@@ -79,7 +79,6 @@ proc prepReinst(prev:UObjectPtr) =
     UE_Warn &"Reinstancing {prev.getName()}"
     # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
     prev.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32))
-
     prev.addToRoot()
     let prevNameStr : FString =  fmt("{prev.getName()}{ReinstSuffix}")
     let oldClassName = makeUniqueObjectName(prev.getOuter(), prev.getClass(), makeFName(prevNameStr))
@@ -694,7 +693,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let className = name[1].strVal()
     let classMetas = getMetasForType(body)
     let ueProps = getUPropsAsFieldsForType(body, className)
-    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit ) #| CLASS_CompiledFromBlueprint
+    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit | CLASS_Native) #| CLASS_CompiledFromBlueprint
     let ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
     
     var uClassNode = emitUClass(ueType)

@@ -42,6 +42,7 @@ proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVers
 
 #UNimClassBase
 proc setClassConstructor*(cls:UNimClassBasePtr, classConstructor:UClassConstructor) : void {.importcpp:"#->SetClassConstructor(#)".}
+proc setAddClassReferencedObjectFn*(cls:UNimClassBasePtr, addClassReferencedObjectFn:UClassAddReferencedObjectsType) : void {.importcpp:"#->SetAddClassReferencedObjectType(#)".}
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:openarray[pointer]) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}

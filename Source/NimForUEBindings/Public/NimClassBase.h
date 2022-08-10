@@ -17,12 +17,18 @@
 UCLASS()
 class NIMFORUEBINDINGS_API UNimClassBase : public UClass {
 GENERATED_BODY()
+	static void AddNimReferenceObjects(UObject* InThis, FReferenceCollector& Collector);
 public:
+	ClassAddReferencedObjectsType ParentClassReferencedObject; //Workaround to being able to call the parent function set in Nim
+
 	void* UETypePtr;
 	//Stores a hash of the implementation of a function in nim that acts as constructor so in the next compilation we can see if they are different so we can swap the fn pointer if they arent
 	FString ConstructorSourceHash; 
 	void SetClassConstructor(void (*NimClassConstructor) (FObjectInitializer&));
+	void SetAddClassReferencedObjectType(void		(*ClassAddReferencedObjectsFn)	(UObject*, class FReferenceCollector&));
 
+
+	
 static UNimClassBase* GetFirstNimClassBase(UObject* Obj);
 
 };

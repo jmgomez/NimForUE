@@ -196,7 +196,7 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNat
 
     UE_Warn "Emitting function " & fnField.name
 
-    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative
     var fn = newUObject[UNimFunction](cls, fnName, objFlags)
     fn.functionFlags = EFunctionFlags(fnField.fnFlags) 
 
@@ -245,8 +245,8 @@ proc isNimClassBase(cls:UClassPtr) : bool = ueCast[UNimClassBase](cls) != nil
 #here for reference
 proc defaultClassConstructor(initializer: var FObjectInitializer) {.cdecl.}= 
     var obj = initializer.getObj()
-    obj.getClass().getSuperClass().classConstructor(initializer)    
-    UE_Warn "Class Constructor Called from Nim!!" & obj.getName()
+    obj.getClass().getFirstCppClass().classConstructor(initializer)
+    UE_Warn "Class Default Constructor Called from Nim!!" & obj.getName()
 
 
 type CtorInfo* = object #stores the constuctor information for a class. 
@@ -254,7 +254,7 @@ type CtorInfo* = object #stores the constuctor information for a class.
         hash* : string
 
 proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, Option[UFunctionNativeSignature]], clsConstructor : Option[CtorInfo] ) : UFieldPtr =
-    const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_WasLoaded) # RF_LoadCompleted deprecated per the ObjectMacros.h comments
+    const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_WasLoaded | RF_MarkAsNative) 
 
     let
         newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
@@ -295,15 +295,19 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
         #should gather the functions here?
 
 
-    newCls.bindType()
+    # newCls.bindType()
     newCls.staticLink(true)
+    newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultClassConstructor))
     clsConstructor.run(proc (cons:CtorInfo) = 
-        newCls.setClassConstructor(cons.fn)
         newCls.constructorSourceHash = cons.hash
     )
+    # assert not parent.addReferencedObjects.isNil()
+    # newCls.addReferencedObjects = parent.addReferencedObjects
+    newCls.setAddClassReferencedObjectFn(parent.addReferencedObjects)
+
     # newCls.addConstructorToActor()
 
-    newCls.assembleReferenceTokenStream()
+    # newCls.assembleReferenceTokenStream()
 
     newCls.ueTypePtr = newUETypeWith ueType 
 
@@ -315,7 +319,7 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
  
 proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UFieldPtr =
       
-    const objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet)
+    const objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative)
     let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
         
     # scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
@@ -344,7 +348,7 @@ proc emitUStruct*[T](ueType : UEType, package:string) : UFieldPtr =
     
 proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr = 
     let name = enumType.name.makeFName()
-    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative
     let uenum = newUObject[UNimEnum](package, name, objFlags)
     for metadata in enumType.metadata:
         uenum.setMetadata(metadata.name, $metadata.value)
@@ -358,15 +362,21 @@ proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr =
     uenum
 
 proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr = 
+    UE_Warn &"Emitting delegate {delType}"
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
-    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet
+    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative
     var fn = newUObject[UNimDelegateFunction](package, fnName, objFlags)
     fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
     for field in delType.fields.reversed():
         let fprop =  field.emitFProperty(fn)
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
     fn.staticLink(true)
+    UE_Warn &"Emitted delegate {fn.getName()}"
+    for p in  getFPropsFromUStruct(fn):
+      UE_Log fmt"{p.getName()}" 
+
     fn
+    
 
 
 proc createUFunctionInClass*(cls:UClassPtr, fnField : UEField, fnImpl:UFunctionNativeSignature) : UFunctionPtr {.deprecated: "use emitUFunction instead".}= 

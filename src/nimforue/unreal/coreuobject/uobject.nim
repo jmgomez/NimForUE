@@ -36,9 +36,11 @@ type
     UStructPtr* = ptr UStruct 
 
     FObjectInitializer* {.importcpp.} = object
+    FReferenceCollector* {.importcpp.} = object
 
     #Notice this is not really the signature. It has const 
     UClassConstructor* = proc (objectInitializer:var FObjectInitializer) : void {.cdecl.}
+    UClassAddReferencedObjectsType* = proc (obj:UObjectPtr, collector:var FReferenceCollector) : void {.cdecl.}
 
     UClass* {.importcpp, inheritable, pure .} = object of UStruct
         classWithin* {.importcpp:"ClassWithin".}: UClassPtr #  The required type for the outer of instances of this class */
@@ -46,6 +48,7 @@ type
         classFlags* {.importcpp:"ClassFlags".}: EClassFlags
         classCastFlags* {.importcpp:"ClassCastFlags".}: EClassCastFlags
         classConstructor* {.importcpp:"ClassConstructor".}: UClassConstructor
+        addReferencedObjects* {.importcpp:"AddReferencedObjects".}: UClassAddReferencedObjectsType
 
 
     UClassPtr* = ptr UClass
