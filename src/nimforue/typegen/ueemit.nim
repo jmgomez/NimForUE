@@ -196,17 +196,18 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
         let funField = getFieldByName(getEmmitedTypes(), fnName)
         let prevFn = funField
                         .flatmap((ff:UEField)=> 
-                                tryGetClassByName(ff.className)
+                                tryGetClassByName(ff.className.removeFirstLetter())
                                 .flatmap((cls:UClassPtr)=>cls.findFunctionByNameWithPrefixes(ff.name)))
                         .flatmap((fn:UFunctionPtr)=>tryUECast[UNimFunction](fn))
 
+       
         if prevFn.isSome() and funField.isSome():
             let prev = prevFn.get()
             let newHash = funField.get().sourceHash
-            if not prev.sourceHash.equals(newHash):
-                UE_Warn fmt"A function changed {fnName} updating the pointer"
-                prev.setNativeFunc(cast[FNativeFuncPtr](fnPtr)) 
-                prev.sourceHash = newHash
+            # if not prev.sourceHash.equals(newHash):
+            # UE_Warn fmt"A function changed {fnName} updating the pointer"
+            prev.setNativeFunc(cast[FNativeFuncPtr](fnPtr)) 
+            prev.sourceHash = newHash
  
    
     registerDeletedTypesToHotReload(hotReloadInfo)
