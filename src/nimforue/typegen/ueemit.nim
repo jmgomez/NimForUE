@@ -51,7 +51,6 @@ proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor, ha
     var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == clsName).get()
     emitter.ueType.ctorSourceHash = hash
     ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == clsName, emitter)
-    ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == clsName, emitter)
 
 
 # proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
@@ -443,7 +442,7 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             assigments
             fnBody #user code
     
-    let ctorRes = genAst(fnName, typeLiteral, hash=newStrLitNode(repr(ctorImpl))):
+    let ctorRes = genAst(fnName, typeLiteral, hash=newStrLitNode($hash(repr(ctorImpl)))):
         #add constructor to constructor table
         addClassConstructor(typeLiteral, fnName, hash)
 
