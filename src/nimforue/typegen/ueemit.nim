@@ -93,7 +93,7 @@ proc prepareForReinst(prevScriptStruct : UScriptStructPtr) =
     prevScriptStruct.addScriptStructFlag(STRUCT_NewerVersionExists)
     prepReinst(prevScriptStruct)
 
-proc prepareForReinst(prevDel : UDelegateFunctionPtr) = 
+proc prepareForReinst(prevDel : UNimDelegateFunctionPtr) = 
     prepReinst(prevDel)
 proc prepareForReinst(prevUEnum : UNimEnumPtr) =  
     # prevUEnum.markNewVersionExists()
@@ -193,9 +193,10 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
 
 
             of uetDelegate:
-                let prevDelPtr = someNil getUTypeByName[UDelegateFunction](emitter.ueType.name.removeFirstLetter())
+                let prevDelPtr = someNil getUTypeByName[UNimDelegateFunction](emitter.ueType.name.removeFirstLetter() & DelegateFuncSuffix)
                 let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr, isFirstLoad)
-
+                UE_Warn &"Prev Delegate is {prevDelPtr.isSome()}"
+                UE_Warn &"New Delegate is {newDelPtr.isSome()}"
                 if prevDelPtr.isNone() and newDelPtr.isSome():
                     hotReloadInfo.newDelegatesFunctions.add(newDelPtr.get())
                 if prevDelPtr.isSome() and newDelPtr.isSome():
@@ -262,7 +263,9 @@ proc emitUClass(typeDef:UEType) : NimNode =
 proc emitUDelegate(typedef:UEType) : NimNode = 
     let typeDecl = genTypeDecl(typedef)
     
-    let typeEmitter = genAst(name=ident typedef.name, typeDefAsNode=newLit typedef): #defers the execution
+    var typedef = typedef
+
+    let typeEmitter = genAst(typeDefAsNode=newLit typedef): #defers the execution
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUDelegate(typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]

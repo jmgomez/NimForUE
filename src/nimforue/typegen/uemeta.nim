@@ -143,6 +143,27 @@ func toUEType*(str:UStructPtr) : UEType =
 
     UEType(name:name, kind:uetStruct, fields:fields.reversed())
 
+
+func toUEType*(del:UNimDelegateFunctionPtr) : UEType =
+    
+    #same as above 
+    let storedUEType = tryUECast[UNimDelegateFunction](del)
+                        .flatMap((del:UNimDelegateFunctionPtr)=>tryCast[ptr UEType](del.ueTypePtr))
+    UE_Warn &"To UE Type in del is {storedUEType.isSome()}"
+    if storedUEType.isSome(): return storedUEType.get()[]  
+
+    let name = del.getPrefixCpp() & del.getName()
+
+    let fields = getFPropsFromUStruct(del)
+                    .map(x=>toUEField(x, del))
+
+    #TODO is defaulting to MulticastDelegate this may be wrong when trying to autogen the types 
+    UEType(name:name, kind:uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields:fields.reversed())
+
+
+
+
+
 func toUEType*(uenum:UNimEnumPtr) : UEType = #notice we have to specify the type because we use specific functions here. All types are Nim base types
     # let fields = getFPropsFromUStruct(enum).map(toUEField)
     let storedUEType = tryUECast[UNimEnum](uenum)
@@ -155,6 +176,8 @@ func toUEType*(uenum:UNimEnumPtr) : UEType = #notice we have to specify the type
                       .map((x)=>makeFieldASUEnum(x.key.toFString()))
                       .toSeq()
     UEType(name:name, kind:uetEnum, fields: fields) #TODO
+
+
 
 proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
     assert propField.kind == uefProp
@@ -362,7 +385,6 @@ proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr =
     uenum
 
 proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr = 
-    UE_Warn &"Emitting delegate {delType}"
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
     const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative
     var fn = newUObject[UNimDelegateFunction](package, fnName, objFlags)
@@ -371,9 +393,9 @@ proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr =
         let fprop =  field.emitFProperty(fn)
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
     fn.staticLink(true)
-    UE_Warn &"Emitted delegate {fn.getName()}"
-    for p in  getFPropsFromUStruct(fn):
-      UE_Log fmt"{p.getName()}" 
+  
+    fn.ueTypePtr = newUETypeWith delType
+
 
     fn
     

@@ -251,9 +251,9 @@ uEnum EMyEnumCreatedInDsl:
 
 
 
-uDelegate FMyDelegate(str: FString, number: FString)
-uDelegate FMyDelegate2Params(str: FString, param: TArray[FString])
-uDelegate FMyDelegateNoParams()
+# uDelegate FMyDelegate(str: FString, number: FString)
+# uDelegate FMyDelegate2Params(str: FString, param: TArray[FString])
+# uDelegate FMyDelegateNoParams()
 
 
 
@@ -264,8 +264,8 @@ uClass UNimTestComponent of UActorComponent:
     (BlueprintType, Blueprintable, BlueprintSpawnableComponent)#BlueprintSpawnableComponent
     uprop(EditAnywhere, BluerpintReadWrite):
         propString : FString
-    uprop(BlueprintAssignable):
-        onWhatever : FMyDelegate
+    # uprop(BlueprintAssignable):
+    #     onWhatever : FMyDelegate
 
 
 # proc nimComponentConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
@@ -360,11 +360,11 @@ uClass AActorDsl of AActorDslParentNim:
         objectNim2: UObjectNimPtr 
 
 
-    uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
-        multicastDynOneParamNimAnother: FMyDelegate
-        multicastDynOneParamNimAnother2Params: FMyDelegate2Params
-        multicastDel: FMyDelegateNoParams
-        anotherField5 : FString
+    # uprop(BlueprintReadWrite, BlueprintAssignable, BlueprintCallable):
+    #     multicastDynOneParamNimAnother: FMyDelegate
+    #     multicastDynOneParamNimAnother2Params: FMyDelegate2Params
+    #     multicastDel: FMyDelegateNoParams
+    #     anotherField5 : FString
 
 
 # proc actorDslConstructor(initializer: var FObjectInitializer) {.cdecl.} = 
@@ -411,7 +411,7 @@ uFunctions:
     proc beginPlay()   =        
         UE_Warn "Hello begin play from Aactor child in NIm" & self.getName()
         self.testBoolConstructor = true
-        self.nimTestComp.onWhatever.broadcast("whaaat", "")
+        # self.nimTestComp.onWhatever.broadcast("whaaat", "")
 
     # proc tick(self: AActorDslPtr, deltaSeconds:float32): void  =
     #     UE_Warn "Hello begin play from Aactor whatever takes a lot of time about seem to work5 seconds" & self.getName()

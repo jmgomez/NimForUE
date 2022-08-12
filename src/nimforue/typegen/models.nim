@@ -1,5 +1,5 @@
 include ../unreal/definitions
-import ../utils/utils
+import ../utils/[utils, ueutils]
 import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
 import ../unreal/core/containers/unrealstring
 
@@ -167,20 +167,28 @@ func `==`*(a, b:UEType) : bool =
     # UE_Error2 $a
     # UE_Error2 $b
     #  
-    a.name == b.name and
-    a.fields == b.fields and
-    # a.metadata == b.metadata and
-    a.kind == b.kind and
-    (case a.kind:
-    of uetClass:
-        a.parent == b.parent and
-        a.ctorSourceHash == b.ctorSourceHash 
-        # a.clsFlags == b.clsFlags
-    of uetStruct:
-        a.superStruct == b.superStruct #and
-        # a.structFlags == b.structFlags
-    of uetEnum: true
-    of uetDelegate: true) 
+    result = 
+      
+        (a.name == b.name and
+
+        a.fields == b.fields and
+        # a.metadata == b.metadata and
+        a.kind == b.kind and
+        (case a.kind:
+        of uetClass:
+            a.parent == b.parent and
+            a.ctorSourceHash == b.ctorSourceHash 
+            # a.clsFlags == b.clsFlags
+        of uetStruct:
+            a.superStruct == b.superStruct #and
+            # a.structFlags == b.structFlags
+        of uetEnum: true
+        of uetDelegate: true))
+    
+    if not result:
+        UE_Error2 "Types are different"
+        UE_Error2 &"A: {a}"
+        UE_Error2 &"B: {b}"
         
 
 

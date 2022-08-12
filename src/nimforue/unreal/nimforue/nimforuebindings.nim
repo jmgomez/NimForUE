@@ -29,7 +29,7 @@ type
 
     UNimDelegateFunction* {.importcpp.} = object of UDelegateFunction
         ueTypePtr* {.importcpp: "UETypePtr".} : pointer
-    UNimDelegateFunctionPtr* = ptr UDelegateFunction
+    UNimDelegateFunctionPtr* = ptr UNimDelegateFunction
 
 proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
 

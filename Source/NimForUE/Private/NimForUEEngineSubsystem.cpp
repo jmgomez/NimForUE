@@ -22,8 +22,8 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 		return;
 		
 	}
-	if (NimHotReload->bShouldHotReload)
-		UEditorUtils::HotReload(NimHotReload);
+	// if (NimHotReload->bShouldHotReload)
+		// UEditorUtils::HotReload(NimHotReload);
 	//UEditorUtils::RefreshNodes(NimHotReload);
 	// delete NimHotReload;
 
