@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[times,strformat,tables, strutils, options, sugar, algorithm, sequtils, hashes]
+import std/[times,strformat,tables, json, jsonUtils, strutils, options, sugar, algorithm, sequtils, hashes]
 import fproperty
 import models
 export models
@@ -105,14 +105,21 @@ func toUEField*(ufun:UFunctionPtr) : UEField =
     fnField.actualFunctionName = actualName
     fnField
 
+func tryParseJson[T](jsonStr : string) : Option[T] = 
+    {.cast(noSideEffect).}:
+        try:
+            some parseJson(jsonStr).jsonTo(T)
+        except:
+            UE_Error &"Crashed parsing json for with json {jsonStr}" 
+            none[T]()
 
 func toUEType*(cls:UClassPtr) : UEType =
     #First it tries to see if it is a UNimClassBase and if it has a UEType stored.
     #Otherwise tries to parse the UEType from the Runtime information.
     let storedUEType = tryUECast[UNimClassBase](cls)
-                        .flatMap((cls:UNimClassBasePtr)=>tryCast[ptr UEType](cls.ueTypePtr))
+                        .flatMap((cls:UNimClassBasePtr)=>tryParseJson[UEType](cls.ueType))
                         
-    if storedUEType.isSome(): return storedUEType.get()[]
+    if storedUEType.isSome(): return storedUEType.get()
 
  
     let fields = getFuncsFromClass(cls)
@@ -129,9 +136,9 @@ func toUEType*(str:UStructPtr) : UEType =
     
     #same as above 
     let storedUEType = tryUECast[UNimScriptStruct](str)
-                        .flatMap((str:UNimScriptStructPtr)=>tryCast[ptr UEType](str.ueTypePtr))
+                        .flatMap((str:UNimScriptStructPtr)=>tryParseJson[UEType](str.ueType))
 
-    if storedUEType.isSome(): return storedUEType.get()[]  
+    if storedUEType.isSome(): return storedUEType.get()
 
     let name = str.getPrefixCpp() & str.getName()
 
@@ -148,9 +155,9 @@ func toUEType*(del:UNimDelegateFunctionPtr) : UEType =
     
     #same as above 
     let storedUEType = tryUECast[UNimDelegateFunction](del)
-                        .flatMap((del:UNimDelegateFunctionPtr)=>tryCast[ptr UEType](del.ueTypePtr))
-    UE_Warn &"To UE Type in del is {storedUEType.isSome()}"
-    if storedUEType.isSome(): return storedUEType.get()[]  
+                        .flatMap((del:UNimDelegateFunctionPtr)=>tryParseJson[UEType](del.ueType))
+
+    if storedUEType.isSome(): return storedUEType.get() 
 
     let name = del.getPrefixCpp() & del.getName()
 
@@ -167,9 +174,9 @@ func toUEType*(del:UNimDelegateFunctionPtr) : UEType =
 func toUEType*(uenum:UNimEnumPtr) : UEType = #notice we have to specify the type because we use specific functions here. All types are Nim base types
     # let fields = getFPropsFromUStruct(enum).map(toUEField)
     let storedUEType = tryUECast[UNimEnum](uenum)
-                        .flatMap((uenum:UNimEnumPtr)=>tryCast[ptr UEType](uenum.ueTypePtr))
+                        .flatMap((uenum:UNimEnumPtr)=>tryParseJson[UEType](uenum.ueType))
                         
-    if storedUEType.isSome(): return storedUEType.get()[]
+    if storedUEType.isSome(): return storedUEType.get()
 
     let name = uenum.getName()
     let fields = uenum.getEnums()
@@ -217,7 +224,6 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNat
     #notice this only works with BlueprintEvent so check that too. 
     let fnName = superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
 
-    UE_Warn "Emitting function " & fnField.name
 
     const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative
     var fn = newUObject[UNimFunction](cls, fnName, objFlags)
@@ -225,7 +231,6 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNat
 
     if superFn.isSome():
         let sFn = superFn.get()
-        UE_Log "Overrides the function " & fnName.toFString()
         fn.functionFlags = fn.functionFlags  | (sFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))        
         copyMetadata(sFn, fn)
         setSuperStruct(fn, sFn)
@@ -248,17 +253,6 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNat
     # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary 
     fn
 
-
-# UNimClassBase* GetFirstNimBase(UObject* Object) {
-# 	UClass* Parent = Object->GetClass();
-# 	while (Parent != nullptr)
-# 	{
-# 		if (Cast<UNimClassBase>(Parent) != nullptr)
-# 			return (UNimClassBase*)Parent;
-# 		Parent = Parent->GetSuperClass();
-# 	}
-# 	return nullptr;
-# } 
 
 proc isNotNil[T](x:ptr T) : bool = not x.isNil()
 # template isNotNil(x:typed) = (not x.isNil())
@@ -332,7 +326,8 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
 
     # newCls.assembleReferenceTokenStream()
 
-    newCls.ueTypePtr = newUETypeWith ueType 
+    newCls.ueType =  $ueType.toJson() 
+
 
 
     # discard newCls.getDefaultObject() #forces the creation of the cdo
@@ -357,7 +352,7 @@ proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UFieldPtr =
     setCppStructOpFor[T](scriptStruct, nil)
     scriptStruct.bindType()
     scriptStruct.staticLink(true)
-    scriptStruct.ueTypePtr = newUETypeWith ueType 
+    scriptStruct.ueType =  $ueType.toJson() 
     scriptStruct
 
 
@@ -381,7 +376,7 @@ proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr =
         enumFields.add(makeTPair(fieldName,  field.key.int64))
         # uenum.setMetadata("DisplayName", "Whatever"&field.val.name)) TODO the display name seems to be stored into a metadata prop that isnt the one we usually use
     discard uenum.setEnums(enumFields)
-    uenum.ueTypePtr = newUETypeWith enumType 
+    uenum.ueType =  $enumType.toJson() 
     uenum
 
 proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr = 
@@ -394,7 +389,7 @@ proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr =
         # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
     fn.staticLink(true)
   
-    fn.ueTypePtr = newUETypeWith delType
+    fn.ueType =  $delType.toJson() 
 
 
     fn

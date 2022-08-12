@@ -6,8 +6,8 @@
       {
         "label": "Build guest",
         "type": "shell",
-        // "command": "./nue    g",
-        "command": "./nue --nolinedir g",
+        "command": "./nue    g",
+        // "command": "./nue --nolinedir g",
         
         "group": "build",
         

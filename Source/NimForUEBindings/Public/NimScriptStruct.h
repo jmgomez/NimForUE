@@ -24,7 +24,7 @@ class NIMFORUEBINDINGS_API UNimScriptStruct : public UScriptStruct {
 	GENERATED_BODY()
 
 public:
-	void* UETypePtr;
+	FString ueType;
 	template<typename T>
 	void SetCppStructOpFor(T* FakeType) {
 		auto StructOps = new TCppStructOps<T>();

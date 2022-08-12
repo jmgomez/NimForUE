@@ -6,6 +6,8 @@ import ../typegen/[uemeta]
 
 proc regularNimFunction() = 
     UE_Log "This is a regular nim function"
+    UE_Log "This is a regular nim function"
+    UE_Log "This is a regular nim function"
 
 
 
@@ -23,7 +25,7 @@ genType(testActorUEType)
 uClass ANimTestActor of ATestActor:
     (BlueprintType, Blueprintable)
     uprops(EditAnywhere, BlueprintReadWrite):
-        name : FString = "Test Default Value"
+        name : FString = "Test2"
 
     ufuncs(BlueprintCallable):
         proc testStatic() {.static.} = 
@@ -38,6 +40,6 @@ uClass ANimTestActor of ATestActor:
             regularNimFunction()
 
         proc setColorInEditor() {.CallInEditor.} = 
-            self.setColorByStringInMesh("(R=0,G=0.5,B=0.2,A=1)")
+            self.setColorByStringInMesh("(R=0,G=0.5,B=1.2,A=1)")
             testStatic()
         

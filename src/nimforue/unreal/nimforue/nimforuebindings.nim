@@ -9,17 +9,17 @@ type
     FNativeFuncPtr* {.importcpp.} = object
     
     UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
-        ueTypePtr* {.importcpp: "UETypePtr".} : pointer
+        ueType* {.importcpp: "ueType".} : FString
         constructorSourceHash* {.importcpp: "ConstructorSourceHash".} : FString
     UNimClassBasePtr* = ptr UNimClassBase
 
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
-        ueTypePtr* {.importcpp: "UETypePtr".} : pointer
+        ueType* {.importcpp: "ueType".} : FString
 
     UNimScriptStructPtr* = ptr UNimScriptStruct
 
     UNimEnum* {.importcpp.} = object of UEnum
-        ueTypePtr* {.importcpp: "UETypePtr".} : pointer
+        ueType* {.importcpp: "ueType".} : FString
 
     UNimEnumPtr* = ptr UNimEnum
 
@@ -28,7 +28,8 @@ type
     UNimFunctionPtr* = ptr UNimFunction
 
     UNimDelegateFunction* {.importcpp.} = object of UDelegateFunction
-        ueTypePtr* {.importcpp: "UETypePtr".} : pointer
+        ueType* {.importcpp: "ueType".} : FString
+        
     UNimDelegateFunctionPtr* = ptr UNimDelegateFunction
 
 proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}

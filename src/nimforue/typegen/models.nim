@@ -168,7 +168,6 @@ func `==`*(a, b:UEType) : bool =
     # UE_Error2 $b
     #  
     result = 
-      
         (a.name == b.name and
 
         a.fields == b.fields and
