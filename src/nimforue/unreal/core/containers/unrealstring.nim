@@ -1,36 +1,33 @@
 include ../../definitions
 
-
+import system/[widestrs]
+import array
 
 type
+  TChar {.importcpp: "TCHAR", nodecl .} = object
   FString* {. exportc, importcpp, header: ueIncludes, bycopy.} = object
 
-proc makeFString*(cstr : cstring) : FString {.importcpp: "'0(ANSI_TO_TCHAR(#))", constructor,  noSideEffect.}
-proc makeFString*(fstr : FString) : FString {.importcpp: "'0'(#)", constructor,  noSideEffect.}
-proc toCString*(fstr: FString): cstring {.importcpp: " TCHAR_TO_ANSI(*#)", nodecl, noSideEffect.}
 
-proc `$`*(fstr: FString): string = $ fstr.toCString
+func getCharArray(fstr : FString) : TArray[TChar] {. importcpp: "#.GetCharArray()" .}
 
-proc append*(a, b: FString): FString {.importcpp: "#.Append(#)", noSideEffect.}
+func makeFString*(fstr : FString) : FString {.importcpp: "'0'(#)", constructor .}
 
-proc equals*(a, b: FString): bool {.importcpp: "#.Equals(#)", noSideEffect.}
+func makeFString(cstr : WideCString) : FString {.importcpp: "'0(reinterpret_cast<TCHAR*>(#))", constructor .}
 
-proc fStringToString*(fstr :FString) : string = $ fstr
-proc stringToFString*(str :string) : FString = 
-  let cstr : cstring = str
-  makeFString(cstr)
-proc f*(str :string) : FString {.inline.}= stringToFString(str)
+func f*(str :string) : FString {.inline.} = makeFString(newWideCString(str))
 
+func `$`*(fstr: FString): string {.inline.} = $cast[WideCString](fstr.getCharArray().getData())
 
+func append*(a, b: FString): FString {.importcpp: "#.Append(#)".}
 
-#TODO should we be explicit about fstrings?
+func equals*(a, b: FString): bool {.importcpp: "#.Equals(#)".}
 
-converter toStr*(fstr :Fstring) : string = $ fstr
-converter toFStr*(str :string) : FString =  stringToFString(str)
+converter toStr*(fstr :Fstring) : string {.inline.} = $ fstr
+converter toFStr*(str :string) : FString {.inline.} = f str 
 
-proc `==`*(a, b: FString): bool = a.equals(b)
-proc `==`*(a:string, b: FString): bool = a.equals(b)
-proc `==`*(a:FString, b: string): bool = a.equals(b)
+func `==`*(a, b: FString): bool = a.equals(b)
+func `==`*(a:string, b: FString): bool = a.equals(b)
+func `==`*(a:FString, b: string): bool = a.equals(b)
 
 
 func `&`*(a, b: FString): FString = a.append(b)

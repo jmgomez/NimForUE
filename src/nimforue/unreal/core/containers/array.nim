@@ -21,6 +21,8 @@ proc makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
 
 # proc makeTArray*[T](values:openarray[T]): TArray[T] {.importcpp: "'0({@})", constructor, nodecl.} #TODO
 
+proc getData*[T](arr:TArray[T]): ptr T {.importcpp: "#.GetData()", nodecl.}
+
 proc len*[T](arr:TArray[T]) : int {.inline.} = arr.num()
 
 iterator items*[T](arr: TArray[T]): T =
