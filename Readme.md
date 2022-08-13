@@ -105,6 +105,23 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
             uprops(MoreParams..)
                 ...
                 More props
+            ufuncs(BlueprintCallable):
+                proc testStatic() {.static.} = 
+                    UE_Log "Test static2"
+                    regularNimFunction()
+
+                proc tick(deltaTime:float)  = 
+                    UE_Warn "Im ticking"
+                
+                proc beginPlay() = 
+                    regularNimFunction()
+
+                proc setColorInEditor() {.CallInEditor.} = 
+                    self.setColorByStringInMesh("(R=0,G=0,B=1,A=1)")
+                    testStatic()
+            ufuncs(BlueprintCallable, BlueprintPure):
+                proc getSalute() : FString = "Hello World"
+                proc addTwoNumbers(a, b : int ) : int = a + b
     ```
 - [x] Being able to emit most used FProperties
 
@@ -121,6 +138,8 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 
 - [ ] Nimscripter support? (allows nim in runtime)
 - [ ] Improve Debugger
+  - [x] Keep the debugger hook after hot reloading
+  - [ ] Research if it's possible to have a better mapping on the Nim types.
 - [ ] Test Nim code that consumes Unreal Code without starting the editor. 
 - [ ] REPL
 - [ ] Editor Extension for auto completation on the DSL
