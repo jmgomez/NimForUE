@@ -4,6 +4,7 @@
 #include "NimClassBase.h"
 
 #include "ReflectionHelpers.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 
 
 void UNimClassBase::SetClassConstructor(void(* NimClassConstructor)(FObjectInitializer&)) {
@@ -14,11 +15,8 @@ void UNimClassBase::SetAddClassReferencedObjectType(void(* ClassAddReferencedObj
 	// this->ClassAddReferencedObjects = ClassAddReferencedObjectsFn;
 	this->ParentClassReferencedObject = ClassAddReferencedObjectsFn;
 	this->ClassAddReferencedObjects = [](UObject* InThis, FReferenceCollector& Collector) {
-		UClass* This = Cast<UClass>(InThis);
-		if(!This)
-			This = Cast<UClass>(InThis->GetClass());
-		// UClass::AddReferencedObjects(This, Collector);
-		// This->ParentClassReferencedObject(This, Collector);
+		if (InThis->HasAnyFlags(RF_ClassDefaultObject))
+			return;
 	};
 }
 

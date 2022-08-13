@@ -77,15 +77,14 @@ proc prepReinst(prev:UObjectPtr) =
     prev.setFlags(RF_NewerVersionExists)
     UE_Warn &"Reinstancing {prev.getName()}"
     # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
-    prev.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32))
-    prev.addToRoot()
+    # prev.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32 or RF_MarkAsRootSet.uint32))
     let prevNameStr : FString =  fmt("{prev.getName()}{ReinstSuffix}")
     let oldClassName = makeUniqueObjectName(prev.getOuter(), prev.getClass(), makeFName(prevNameStr))
     discard prev.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
 proc prepareForReinst(prevClass : UNimClassBasePtr) = 
     # prevClass.classFlags = prevClass.classFlags | CLASS_NewerVersionExists
-    prevClass.addClassFlag CLASS_NewerVersionExists
+    # prevClass.addClassFlag CLASS_NewerVersionExists
     prepReinst(prevClass)
 
 proc prepareForReinst(prevScriptStruct : UScriptStructPtr) = 

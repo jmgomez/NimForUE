@@ -17,4 +17,6 @@ struct FNimHotReload {
 	TArray<UEnum*> DeletedEnums = {};
 	
 	bool bShouldHotReload;
+
+	
 };

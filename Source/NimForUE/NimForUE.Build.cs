@@ -41,7 +41,8 @@ public class NimForUE : ModuleRules
 		if (Target.bBuildEditor) {
 			PrivateDependencyModuleNames.AddRange(new string[]{
 				"UnrealEd",
-				"NimForUEEditor"
+				"NimForUEEditor",
+				
 			});
 		}
 

@@ -22,10 +22,14 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 		return;
 		
 	}
-	if (NimHotReload->bShouldHotReload)
-		UEditorUtils::HotReload(NimHotReload);
-	//UEditorUtils::RefreshNodes(NimHotReload);
-	// delete NimHotReload;
+	if (NimHotReload->bShouldHotReload) {
+	// if (!bIsFirstLoad) {
+		UEditorUtils* EditorUtils = NewObject<UEditorUtils>();
+		// EditorUtils->HotReload(NimHotReload);
+		EditorUtils->HotReloadV2(NimHotReload);
+		// UEditorUtils::RefreshNodes(NimHotReload);
+	}
+		// delete NimHotReload;
 
 	// FCoreUObjectDelegates::ReloadCompleteDelegate.Broadcast(EReloadCompleteReason::HotReloadManual);
 
