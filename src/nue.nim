@@ -1,7 +1,8 @@
 # tooling for NimForUE
-
+echo "test"
+#[
 import std / [os, osproc, parseopt, tables, strformat, strutils, times, sequtils, options, terminal, sugar]
-import buildscripts / [nimforueconfig, copylib, nimcachebuild, buildscripts]
+import buildscripts / [nimforueconfig, nimcachebuild, buildscripts]
 
 var taskOptions: Table[string, string]
 let config = getNimForUEConfig()
@@ -16,13 +17,14 @@ var tasks: seq[tuple[name:string, t:Task]]
 template task(taskName: untyped, desc: string, body: untyped): untyped =
   proc `taskName`(taskOptions: Table[string, string]) {.nimcall.} =
     let start = now()
-    echo ">>>> Task: ", astToStr(taskName), " <<<<"
+    log ">>>> Task: " & astToStr(taskName) & " <<<<"
     body
-    echo "!!>> ", astToStr(taskName), " Time: ", $(now() - start), " <<<<"
+    log "!!>> " & astToStr(taskName) & " Time: " & $(now() - start) & " <<<<"
   tasks.add (name:astToStr(taskName), t:Task(name: astToStr(taskName), description: desc, routine: `taskName`))
 
 
 proc generateFFIGenFile*() = 
+  #makes sure FFI gen file exists (not tracked) so it can be imported from hostnimforue but only if it doesnt exists so it doesnt override its content
   if fileExists(config.genFilePath):
     return
   let content = fmt"""
@@ -39,13 +41,13 @@ import hostbase
 
 
 proc echoTasks() =
-  echo "Here are the task available: "
+  log "Here are the task available: "
   for t in tasks:
-    echo "  ", t.name, if t.name.len < 6: "\t\t" else: "\t", t.t.description
+    log("  " & t.name & (if t.name.len < 6: "\t\t" else: "\t") & t.t.description)
 
 proc main() =
   if commandLineParams().join(" ").len == 0:
-    echo "nue: NimForUE tool"
+    log "nue: NimForUE tool"
     echoTasks()
 
   var p = initOptParser()
@@ -57,7 +59,7 @@ proc main() =
     of cmdShortOption, cmdLongOption:
       case key:
       of "h", "help":
-        echo "Usage, Commands and Options for nue"
+        log "Usage, Commands and Options for nue"
         echoTasks()
         quit()
       else:
@@ -70,7 +72,7 @@ proc main() =
         doAssert(not taskOptions.hasKey("args"), "TODO: accept more than one task argument")
         taskOptions["args"] = key
       else:
-        echo &"!! Unknown task {key}."
+        log &"!! Unknown task {key}."
         echoTasks()
 
   if ts.isSome():
@@ -83,7 +85,7 @@ let watchInterval = 500
 
 task watch, "Monitors the components folder for changes to recompile.":
   proc ctrlc() {.noconv.} =
-    echo "Ending watcher"
+    log "Ending watcher"
     quit()
 
   setControlCHook(ctrlc)
@@ -95,7 +97,7 @@ task watch, "Monitors the components folder for changes to recompile.":
       ("/bin/zsh", ["nueMac.sh"])
 
   let srcDir = getCurrentDir() / "src/nimforue/"
-  echo &"Monitoring components for changes in \"{srcDir}\".  Ctrl+C to stop"
+  log &"Monitoring components for changes in \"{srcDir}\".  Ctrl+C to stop"
   var lastTimes = newTable[string, Time]()
   for path in walkDirRec(srcDir ):
     if not path.endsWith(".nim"):
@@ -119,7 +121,7 @@ task watch, "Monitors the components folder for changes to recompile.":
           if line.contains("Error:") or line.contains("fatal error") or line.contains("error C"):
             log(line, lgError)
           else:
-            echo line
+            log(line)
         p.close
 
         log(&"-- Finished Recompiling {path} --")
@@ -140,9 +142,7 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
     var force = ""
     if "f" in taskOptions:
       force = "-f"
-    
     var noGen = "nogen" in taskOptions
-
     var lineDir = if "nolinedir" in taskOptions: "off" else: "on"
 
     if not noGen:
@@ -164,20 +164,20 @@ task pp, "Preprocess a file with MSVC":
     quit("Usage: nue.exe pp relative_filepath\n\tThe filepath should be relative and the base directory and its sub-directories will be included for the compiler.\n\tExample: nue pp ./Source/NimForUE/Private/TestActor.cpp\n\tThe ./Source directory and its subdirectories will be included for preprocessing.")
 
 task host, "Builds the host that's hooked to unreal":
-  generateFFIGenFile() #makes sure FFI gen file exists (not tracked) so it can be imported from hostnimforue but only if it doesnt exists so it doesnt override its content
-
-  let hostLibName = "hostnimforue"
+  generateFFIGenFile()
   doAssert(execCmd("nim cpp --app:lib --nomain --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
-
+  # copy header
   let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
   let ffiHeaderDest = "NimHeaders/NimForUEFFI.h"
-  echo "  copying ", ffiHeaderSrc, " to ", ffiHeaderDest
   copyFile(ffiHeaderSrc, ffiHeaderDest)
+  log("Copied " & ffiHeaderSrc & " to " & ffiHeaderDest)
 
+  # copy lib
   let libDir = "./Binaries/nim"
   let libDirUE = libDir / "ue"
   createDir(libDirUE)
 
+  let hostLibName = "hostnimforue"
   let baseFullLibName = getFullLibName(hostLibName)
   let fileFullSrc = libDir/baseFullLibName
   let fileFullDst = libDirUE/baseFullLibName
@@ -188,19 +188,19 @@ task host, "Builds the host that's hooked to unreal":
     when defined windows: # This will fail on windows if the host dll is in use.
       quit("Error copying to " & fileFullDst & ". " & e.msg, QuitFailure)
 
-  echo fileFullSrc & " copied to " & fileFullDst
+  log("Copied " & fileFullSrc & " to " & fileFullDst)
 
   when defined windows:
     let weakSymbolsLib = hostLibName & ".lib"
     copyFile(libDir/weakSymbolsLib, libDirUE/weakSymbolsLib)
-  elif defined macosx:
-    #needed for dllimport in ubt mac only
+  elif defined macosx: #needed for dllimport in ubt mac only
     let dst = "/usr/local/lib" / baseFullLibName
     copyFile(fileFullSrc, dst)
-    echo "Copied " & fileFullSrc & " to " & dst
+    log("Copied " & fileFullSrc & " to " & dst)
 
 task h, "Alias to host":
   host(taskOptions)
+
 
 task cleanh, "Clean the .nimcache/host folder":
   removeDir(".nimcache/host")
@@ -246,3 +246,4 @@ task dumpConfig, "Displays the config variables":
 # --- End Tasks ---
 
 main()
+]#

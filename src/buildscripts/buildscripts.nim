@@ -1,16 +1,20 @@
-import std/[os, strutils, options, strformat, json, jsonUtils]
-import sugar
+import std/[
+  algorithm,
+  json,
+  jsonUtils,
+  options,
+  os,
+  sequtils,
+  strformat,
+  strscans,
+  strutils,
+  sugar,
+  terminal,
+  times
+  ]
+
 import nimforueconfig
-
-#TODO Move this
-func isEmpty*[T](s:seq[T]) : bool = s.len == 0
-
-func tryParseInt*(s:string) : Option[int] =
-    try:
-      return some(s.parseInt())
-    except:
-      return none(int)
-
+import ../nimforue/utils/utils
 
 
 proc generateFFIGenFile*() = 
@@ -29,8 +33,130 @@ import hostbase
     
   writeFile(genFilePath, content)
 
-proc generateUBTScriptFile*() =
-  let pluginDir = getCurrentDir()
-  let content = fmt(""" cd {pluginDir} && nimble host""") #only ffi to avoid chicken egg problem
-  let filename = if defined Windows: "buildlibs.bat" else: "buildlibs.sh"
-  writeFile(pluginDir/"src/buildscripts"/filename, content)
+type LogLevel* = enum 
+  lgNone
+  lgInfo
+  lgDebug 
+  lgWarning
+  lgError
+
+proc log*(msg:string, level=lgInfo) = 
+  let color = case level 
+    of lgNone: fgwhite
+    of lgInfo: fgblue
+    of lgDebug: fgmagenta
+    of lgWarning: fgyellow
+    of lgError: fgred
+
+  styledEcho(color, msg, resetStyle)
+
+func getNextFileName*(currentFilename : string) : string = 
+  const splitter = "-"
+  let (_, filename, extension) = splitFile(currentFilename)
+  let fileSplit = filename.split(splitter)
+  doAssert(fileSplit.len == 1 or fileSplit.len == 2)
+  if fileSplit.len == 2:
+    let num = fileSplit[1].tryParseInt().get(0) + 1
+    return &"{fileSplit[0]}{splitter}{num}{extension}"
+  else:
+    &"{filename}{splitter}1{extension}"
+
+
+func getFullLibName*(baseLibName: string): string  = 
+  when defined macosx:
+    return "lib" & baseLibName & ".dylib"
+  elif defined windows:
+    return  baseLibName & ".dll"
+  #elif defined linux:
+  #    return ""
+  else:
+    raise newException(Defect, "Uknown platform")
+
+
+proc getAllLibsFromPath*(libPath:string) : seq[string] =
+  let libName = getFullLibName("nimforue")
+  let libDir = libPath.replace(libName, "")
+  let walkPattern = libDir / libName.replace(".", "*.")
+  var libs = toSeq(walkFiles(walkPattern))
+  let orderByRecent = (a, b : string) => cmp(getLastModificationTime(a), getLastModificationTime(b))
+  libs.sorted(orderByRecent, Descending)
+
+
+proc getLastLibPath*(libPath:string): Option[string] =
+  let libs = getAllLibsFromPath(libPath)
+  if libs.len == 0:
+    return none[string]()
+  some libs[0]
+
+
+#[
+proc copyNimForUELibToUEDirSwap*() = 
+  var conf = getNimForUEConfig()
+  let libDir = conf.pluginDir/"Binaries"/"nim"
+  let libDirUE = libDir / "ue"   
+  if not dirExists(libDirUE):
+    createDir(libDirUE)
+  
+  let baseLibName = getFullLibName("nimforue")
+  let nextFileName = getFullLibName("nimforue-1")
+
+  let fileFullSrc = libDir/baseLibName
+  #if there is no lib, we just keep the same name
+  let libsCandidates = getAllLibsFromPath(libDirUE)
+  let nLibs = len (libsCandidates)
+  var fileFullDst  : string #This would be much better with pattern matching
+  if nLibs == 0: #no libs, we just keep the same name
+    fileFullDst = libDirUE/baseLibName
+  elif nLibs == 1: #one lib, we create a new name
+    fileFullDst = libDirUE/nextFileName
+  elif nLibs == 2: #we just replace the oldest 
+    fileFullDst = libsCandidates[^1]
+  else:
+    discard
+  copyFile(fileFullSrc, fileFullDst)
+  log("Copied " & fileFullSrc & " to " & fileFullDst)
+]#
+
+proc copyNimForUELibToUEDir*() = 
+  var conf = getNimForUEConfig()
+  let libDir = conf.pluginDir/"Binaries/nim"
+  let libDirUE = libDir / "ue"   
+  createDir(libDirUE)
+
+  #deletes previous used ones
+  for libPath in getAllLibsFromPath(libDirUE):
+    discard tryRemoveFile(libPath) #We just ignore if it fails as it isnt critical to keep going
+
+  let libsCandidates = getAllLibsFromPath(libDirUE)
+
+  proc extractNumber(path: string): int = 
+    var ignore : string
+    let (_, filename, _) = path.splitFile
+    discard scanf(filename, "$*-$i", ignore, result) # ok if no match, number is 0
+
+  let nextLibNumber = if libsCandidates.any():
+                        libsCandidates
+                          .map(path => extractNumber(path))
+                          .max() + 1
+                      else:
+                        0
+
+  let baseLibName = getFullLibName("nimforue")
+  let nextFileName = getFullLibName("nimforue-" & $(nextLibNumber))
+
+  let fileFullSrc = libDir/baseLibName
+  let fileFullDst: string =
+    if libsCandidates.isEmpty: #no libs, we just keep the same name
+      libDirUE/baseLibName
+    else: #more than one lib, we create a new name
+      libDirUE/nextFileName
+
+  copyFile(fileFullSrc, fileFullDst)
+  log "Copied " & fileFullSrc & " to " & fileFullDst
+
+  when defined windows:
+    let debugFolder = conf.pluginDir / ".nimcache/guestpch/debug"
+    try:
+      removeDir(debugFolder)
+    except:
+      discard #Debug folder was used. We just ignore it as it isnt critical to keep going
