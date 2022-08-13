@@ -80,6 +80,9 @@ func removePrefixes*(str:string, prefixes:seq[string]) : string =
     for prefix in prefixes:
         str = str.removePref(prefix)
     str
+
+
+
 func nonEmptyOr*(value, orValue:string) : string = nonDefaultOr(value, orValue)
 
 

@@ -134,9 +134,11 @@ template registerDeleteUType(T : typedesc, executeAfterDelete:untyped) =
         if ReinstSuffix in instance.getName(): continue
         let clsName {.inject.} = 
             when T is UNimEnum: instance.getName() 
+            elif T is UNimDelegateFunction:  "F" & instance.getName().replace(DelegateFuncSuffix, "")
             else: instance.getPrefixCpp() & instance.getName()
 
         if getEmitterByName(clsName).isNone():
+            UE_Warn &"No emitter found for {clsName}"
             executeAfterDelete
 
 
