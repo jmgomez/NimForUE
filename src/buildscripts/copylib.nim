@@ -28,23 +28,26 @@ proc log*(msg:string, level=lgInfo) =
     stdout.resetAttributes()
 
 func getNextFileName*(currentFilename : string) : string = 
-  const splitter = "-"
-  let (dir, filename, extension) = splitFile(currentFilename)
+    const splitter = "-"
+    let (_, filename, extension) = splitFile(currentFilename)
 
-  let fileSplit = filename.split(splitter)
-  if fileSplit.len > 1:
-    let num = fileSplit[1].tryParseInt().get(0) + 1
-    return &"{fileSplit[0]}{splitter}{num}{extension}"
-  &"{filename}{splitter}1{extension}"
-  
+    let fileSplit = filename.split(splitter)
+    if fileSplit.len > 1:
+        let num = fileSplit[1].tryParseInt().get(0) + 1
+        return &"{fileSplit[0]}{splitter}{num}{extension}"
+    &"{filename}{splitter}1{extension}"
 
-func getFullLibName(baseLibName:string) :string  = 
+
+func getFullLibName*(baseLibName: string): string  = 
     when defined macosx:
         return "lib" & baseLibName & ".dylib"
     elif defined windows:
         return  baseLibName & ".dll"
-    elif defined linux:
-        return ""
+    #elif defined linux:
+    #    return ""
+    else:
+        raise newException(Defect, "Uknown platform")
+
 
 proc getAllLibsFromPath*(libPath:string) : seq[string] =
     let libName = getFullLibName("nimforue")
