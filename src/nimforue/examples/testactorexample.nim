@@ -32,7 +32,7 @@ uClass ANimTestActor of ATestActor:
             UE_Log "Test static"
 
         proc tick(deltaTime:float)  = 
-            self.setColorByStringInMesh("(R=0,G=0.5,B=0.2,A=1)")
+            self.setColorByStringInMesh("(R=1,G=0.5,B=0.2,A=1)")
            
 
         proc beginPlay() = 

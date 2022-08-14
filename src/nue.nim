@@ -213,14 +213,15 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
   if not noGen:
     doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --debugger:native --stacktrace:on --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0)
 
-  if nimcacheBuild() == Success:
+  if nimcacheBuild(buildFlags) == Success:
     copyNimForUELibToUEDir()
 
 task g, "Alias to guestpch":
   guestpch(taskOptions)
 
 task winpch, "For Windows, Builds the pch file for Unreal Engine via nim":
-  winpch()
+  let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
+  winpch(buildFlags)
 
 task pp, "Preprocess a file with MSVC":
   if "args" in taskOptions:
