@@ -277,7 +277,16 @@ task cleang, "Clean the .nimcache guestpch and winpch folder":
   removeDir(".nimcache/winpch")
   removeDir(".nimcache/guestpch")
 
+when defined windows:
+  task killlink, "Windows: Kills link.exe if it's running":
+    var (msg, code) = execCmdEx("tasklist /m link.exe")
+    if "INFO: No tasks are running which match the specified criteria." notin msg:
+      log("link.exe is running. Killing it.", lgWarning)
+      discard execCmd("taskkill /f /im link.exe")
+
 task clean, "Clean the nimcache folder":
+  when defined windows:
+    killlink(taskOptions)
   cleanh(taskOptions)
   cleang(taskOptions)
 
