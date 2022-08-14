@@ -1,1 +1,0 @@
- cd /Volumes/Store/Dropbox/GameDev/UnrealProjects/NimForUEDemo/Plugins/NimForUE && nimble host

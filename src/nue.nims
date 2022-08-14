@@ -1,2 +1,4 @@
-##--skipParentCfg # we don't want nue executable in dll directory
-switch("outdir", ".") # override config.nims
+switch("outdir", ".") #override config.nims, output to the plugin folder instead of Binaries/nim
+switch("mm", "arc")
+switch("threads", "on")
+switch("tlsEmulation", "off")
