@@ -1,14 +1,8 @@
-import src/buildscripts/[buildscripts, nimForUEConfig]
+#[
+import src/buildscripts/[nimForUEConfig]
 import std/[strutils,sequtils, sugar, os, strformat]
 # let compiledFileName = projectPath().split("/")[^1].split(".")[0]
 # switch("nimcache", "./Binaries/nim/nimcache/" & compiledFileName)
-
-
-
-when defined host:
-    switch("header", "NimForUEFFI.h")
-    switch("threads") #needed to watch
-    switch("tlsEmulation", "off")
 
 switch("outdir", "./Binaries/nim/")
 switch("backend", "cpp")
@@ -94,3 +88,4 @@ when defined withue:
         switch("passL", symbolPath)
 
 switch("mm", "orc") #this needs to be at the end
+]#

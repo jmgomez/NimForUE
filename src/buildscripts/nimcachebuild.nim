@@ -1,19 +1,12 @@
 # script to build the from .nimcache
-import std / [os, osproc, strutils, sequtils, times, options, strformat, sugar, threadpool, algorithm, strscans]
-import nimforueconfig
-import copylib
-
-template quotes(path: string): untyped =
-  "\"" & path & "\""
+import std / [os, osproc, strutils, sequtils, times, strformat, sugar, threadpool, algorithm, strscans]
+import buildcommon, nimforueconfig
 
 const withPCH = true
 const parallelBuild = true # for debugging purposes, normally we want to execute in parallel
 const PCHFile = "UEDeps.h"
 
 let nueConfig = getNimForUEConfig()
-let platformDir = if nueConfig.targetPlatform == Mac: "Mac/x86_64" else: $nueConfig.targetPlatform
-let confDir = $nueConfig.targetConfiguration
-let engineDir = nueConfig.engineDir
 let pluginDir = nueConfig.pluginDir
 let cacheDir = pluginDir / ".nimcache/guestpch"
 
@@ -70,7 +63,7 @@ proc usesPCHFile(path: string): bool =
 # https://docs.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-alphabetically?view=msvc-170
 # These flags are from the .response in the Intermediate folder for the UE Modules
 # TODO?: get the flags from the PCH response file in Intermediate instead of hardcoding
-let CompileFlags = [
+let compileFlags = [
 "/c",
 (if isDebug: "/Od /Z7" else: "/O2"),
 "--platform:amd64",
@@ -118,9 +111,9 @@ proc pchFlags(shouldCreate: bool = false): string =
   # /Yc https://docs.microsoft.com/en-us/cpp/build/reference/yc-create-precompiled-header-file?view=msvc-170
   # /Yu https://docs.microsoft.com/en-us/cpp/build/reference/yu-use-precompiled-header-file?view=msvc-170
   # /Fp https://docs.microsoft.com/en-us/cpp/build/reference/fp-name-dot-pch-file?view=msvc-170
-  let Yflag = if shouldCreate: "/Yc" else: "/Yu"
+  let yflag = if shouldCreate: "/Yc" else: "/Yu"
   
-  result = Yflag & PCHFile & " /Fp" & quotes(pchFilepath)
+  result = yflag & PCHFile & " /Fp" & quotes(pchFilepath)
 
 # User defined types can appear in Nim std lib cpp files
 # When we import types from an external header when used with generic containers.
@@ -161,7 +154,7 @@ proc isCompiled(path: string): bool =
 # vccexe.exe /c --platform:amd64  /nologo /EHsc -DWIN32_LEAN_AND_MEAN /FS /std:c++17 /Zp8 /source-charset:utf-8 /execution-charset:utf-8 /MD -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Source\NimForUEBindings\Public\ -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Inc\NimForUEBindings -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\NimHeaders -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Classes" -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Classes\Engine" -I"D:\UE_5.0\Engine\Source\Runtime\Net\Core\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Net\Core\Classes" -I"D:\UE_5.0\Engine\Source\Runtime\CoreUObject\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Core\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Public" -I"D:\UE_5.0\Engine\Source\Runtime\TraceLog\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Launch\Public" -I"D:\UE_5.0\Engine\Source\Runtime\ApplicationCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Projects\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Json\Public" -I"D:\UE_5.0\Engine\Source\Runtime\PakFile\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RSA\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RenderCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\NetCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\CoreOnline\Public" -I"D:\UE_5.0\Engine\Source\Runtime\PhysicsCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Experimental\Chaos\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Experimental\ChaosCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\InputCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RHI\Public" -I"D:\UE_5.0\Engine\Source\Runtime\AudioMixerCore\Public" -I"D:\UE_5.0\Engine\Source\Developer\DesktopPlatform\Public" -I"D:\UE_5.0\Engine\Source\Developer\ToolMenus\Public" -I"D:\UE_5.0\Engine\Source\Developer\TargetPlatform\Public" -I"D:\UE_5.0\Engine\Source\Developer\SourceControl\Public" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\NetCore" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\Engine" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\PhysicsCore" -IG:\Dropbox\GameDev\UnrealProjects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE\ /Z7 /FS /Od   /IC:\Nim\lib /ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\src /nologo /FoD:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@sdigitsutils.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@sdigitsutils.nim.cpp
 proc compileCmd(cpppath: string, objpath: string): string =
   "vccexe.exe" & " " &
-    CompileFlags.join(" ") & " " &
+    compileFlags.join(" ") & " " &
     (if withPCH and usesPCHFile(cppPath): pchFlags() else: "") & " " &
     getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b, " ") & " " &
     "/Fo" & objpath & " " & cppPath &
@@ -172,8 +165,8 @@ proc winpch*() =
   if execCmd("nim cpp --genscript --app:lib --nomain --nimcache:.nimcache/winpch src/nimforue/unreal/winpch.nim") != 0:
     quit("! Error: Could not compile winpch.")
 
-  var pchCmd = r"vccexe.exe /c --platform:amd64 /nologo "& pchFlags(shouldCreate = true) & " " &
-    CompileFlags.join(" ") & " " & getUEHeadersIncludePaths(nueConfig).foldl( a & " -I" & b, " ")
+  var pchCmd = r"vccexe.exe /c --platform:amd64 /nologo " & pchFlags(shouldCreate = true) & " " &
+    compileFlags.join(" ") & " " & getUEHeadersIncludePaths(nueConfig).foldl( a & " -I" & b, " ")
 
   let definitionsCppPath = pluginDir / ".nimcache/winpch/@mdefinitions.nim.cpp"
   if fileExists(definitionsCppPath):
@@ -194,8 +187,6 @@ proc compileThread(cmd: string):int {.thread.} =
 
 proc nimcacheBuild*(): BuildStatus =
   # Generate commands for compilation and linking by examining the contents of the nimcache
-  let start = now()
-
   if withPCH and defined(windows) and not fileExists(pchFilepath):
     echo("PCH file " & pchFilepath & " not found. Building...")
     winpch()
@@ -275,10 +266,10 @@ proc preprocessCmd(cpppath: string): string =
   let ubtflags = "/D_WIN64 /I \"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.32.31326\\INCLUDE\" /I \"C:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.8\\include\\um\" /I \"C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.18362.0\\ucrt\" /I \"C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.18362.0\\shared\" /I \"C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.18362.0\\um\" /I \"C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.18362.0\\winrt\" /DIS_PROGRAM=0 /DUE_EDITOR=1 /DENABLE_PGO_PROFILE=0 /DUSE_VORBIS_FOR_STREAMING=1 /DUSE_XMA2_FOR_STREAMING=1 /DWITH_DEV_AUTOMATION_TESTS=1 /DWITH_PERF_AUTOMATION_TESTS=1 /DUNICODE /D_UNICODE /D__UNREAL__ /DIS_MONOLITHIC=0 /DWITH_ENGINE=1 /DWITH_UNREAL_DEVELOPER_TOOLS=1 /DWITH_UNREAL_TARGET_DEVELOPER_TOOLS=1 /DWITH_APPLICATION_CORE=1 /DWITH_COREUOBJECT=1 /DWITH_VERSE=0 /DUSE_STATS_WITHOUT_ENGINE=0 /DWITH_PLUGIN_SUPPORT=0 /DWITH_ACCESSIBILITY=1 /DWITH_PERFCOUNTERS=1 /DUSE_LOGGING_IN_SHIPPING=0 /DWITH_LOGGING_TO_MEMORY=0 /DUSE_CACHE_FREED_OS_ALLOCS=1 /DUSE_CHECKS_IN_SHIPPING=0 /DUSE_ESTIMATED_UTCNOW=0 /DWITH_EDITOR=1 /DWITH_IOSTORE_IN_EDITOR=1 /DWITH_SERVER_CODE=1 /DWITH_PUSH_MODEL=1 /DWITH_CEF3=1 /DWITH_LIVE_CODING=1 /DWITH_CPP_MODULES=0 /DWITH_CPP_COROUTINES=0 /DUBT_MODULE_MANIFEST=\"UnrealEditor.modules\" /DUBT_MODULE_MANIFEST_DEBUGGAME=\"UnrealEditor-Win64-DebugGame.modules\" /DUBT_COMPILED_PLATFORM=Win64 /DUBT_COMPILED_TARGET=Editor /DUE_APP_NAME=\"UnrealEditor\" /DNDIS_MINIPORT_MAJOR_VERSION=0 /DWIN32=1 /D_WIN32_WINNT=0x0601 /DWINVER=0x0601 /DPLATFORM_WINDOWS=1 /DPLATFORM_MICROSOFT=1 /DOVERRIDE_PLATFORM_HEADER_NAME=Windows /DRHI_RAYTRACING=1 /DNDEBUG=1 /DUE_BUILD_DEVELOPMENT=1 /DORIGINAL_FILE_NAME=\"UnrealEditor-NimForUEEditor.dll\" /DBUILT_FROM_CHANGELIST=20979098 /DBUILD_VERSION=++UE5+Release-5.0-CL-20979098 /DBUILD_ICON_FILE_NAME=\"\\\"..\\Build\\Windows\\Resources\\Default.ico\\\"\" /DPROJECT_COPYRIGHT_STRING=\"Fill out your copyright notice in the Description page of Project Settings.\" /DPROJECT_PRODUCT_NAME=\"Third Person Game Template\" /DPROJECT_PRODUCT_IDENTIFIER=NimForUEDemo"
   let winsdkflags = "/D__midl=0 /DUE_ENABLE_ICU=0 /DWITH_DIRECTXMATH=0"
 
-  let (dir, filename, ext) = cpppath.splitFile
+  let (_, filename, _) = cpppath.splitFile
   let destPath = quotes(pluginDir / ".nimcache/preprocess" / filename / filename & ".i")
   "vccexe.exe" & " " &
-    CompileFlags.dup(`[]=`(0, &"/P /C /Fi{destPath} {ubtflags} {winsdkflags}")).join(" ") & " " &
+    compileFlags.dup(`[]=`(0, &"/P /C /Fi{destPath} {ubtflags} {winsdkflags}")).join(" ") & " " &
     getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b, " ") & " " &
     includeDirs.foldl(a & " -I" & b, " ") & " " &
     " " & cppPath

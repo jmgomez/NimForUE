@@ -1,6 +1,6 @@
 import std/[times, os, dynlib, strutils, sequtils, algorithm, locks, sugar, options]
 import pure/asyncdispatch
-import ../buildscripts/[nimforueconfig, copyLib]
+import ../buildscripts/[buildscripts]
 import ffigen
 
 import hostbase
