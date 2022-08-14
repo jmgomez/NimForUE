@@ -1,5 +1,7 @@
 # script to build the from .nimcache
-import std / [os, osproc, strutils, sequtils, times, strformat, sugar, threadpool, algorithm, strscans]
+import std / [ 
+algorithm, os, osproc, sequtils, strformat, strscans, strutils, sugar, threadpool, times
+]
 import buildcommon, nimforueconfig
 
 const withPCH = true

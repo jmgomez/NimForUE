@@ -136,8 +136,8 @@ let platformSwitches: Switches =
     else:
       @[]
 
-let ueincludes: Switches = getUEHeadersIncludePaths(config).map(headerPath => passC("-I" & headerPath))
-let uesymbols: Switches = getUESymbols(config).map(symbolPath => ("passL", symbolPath))
+let ueincludes: Switches = getUEHeadersIncludePaths(config).map(headerPath => passC("-I" & escape(headerPath)))
+let uesymbols: Switches = getUESymbols(config).map(symbolPath => ("passL", escape(symbolPath)))
 
 # --- End Compile flags
 
@@ -211,7 +211,7 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
   var lineDir = if "nolinedir" in taskOptions: "off" else: "on"
 
   if not noGen:
-    doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --debugger:native --stacktrace:on --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0)
+    doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0)
 
   if nimcacheBuild(buildFlags) == Success:
     copyNimForUELibToUEDir()
