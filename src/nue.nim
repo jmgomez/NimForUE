@@ -317,13 +317,25 @@ task ubuild, "Calls Unreal Build Tool for your project":
     quit(QuitFailure)
 
 task rebuild, "Cleans and rebuilds the host and guest":
-  clean(taskOptions)
+  var attempts = 0
+  while dirExists(".nimcache/guestpch"):
+    try:
+      clean(taskOptions)
+    except:
+      log("Could not clean nimCache. Retrying...\n", lgWarning)
+      inc attempts
+      if attempts > 5:
+        quit("Could not clean nimCache. Aborting.", QuitFailure)
+   
   ubuild(taskOptions)
+  winpch(taskOptions)
   guestpch(taskOptions)
   host(taskOptions)
 
 task dumpConfig, "Displays the config variables":
   dump config
+
+
 
 # --- End Tasks ---
 
