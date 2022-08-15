@@ -113,10 +113,11 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   let confDir = $conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = conf.pluginDir
-  
+  #We only support Debug and Development for now and Debug is Windows only
+  let suffix = if conf.targetConfiguration == Debug : "-Win64-Debug" else: "" 
   proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string): string =  
     when defined windows:
-      engineDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / moduleName / &"{prefix}-{moduleName}.lib"
+      engineDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / moduleName / &"{prefix}-{moduleName}{suffix}.lib"
     elif defined macosx:
       let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
       engineDir / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"
@@ -127,8 +128,8 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
       #notice this shouldnt be included when target <> Editor
       let libPathEditor  = pluginDir / "Binaries" / $conf.targetPlatform / "UnrealEditor-NimForUEEditor.dylib"
     elif defined windows:
-      let libPath = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / "NimForUEBindings/UnrealEditor-NimForUEBindings.lib"
-      let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / "NimForUEEditor/UnrealEditor-NimForUEEditor.lib"
+      let libPath = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
+      let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / &"NimForUEEditor/UnrealEditor-NimForUEEditor{suffix}.lib"
 
     @[libPath, libPathEditor]
 
