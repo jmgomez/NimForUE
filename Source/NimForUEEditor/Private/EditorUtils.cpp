@@ -766,7 +766,8 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
 			ReplaceHelper->AddToRoot();
 		}
 
-		FNimReload* Reload(new FNimReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
+		// FNimReload* Reload(new FNimReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
+		FReload* Reload(new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
 
 		for (const auto& ClassToReinstancePair : NimHotReload->ClassesToReinstance)
 			Reload->NotifyChange(ClassToReinstancePair.Value, ClassToReinstancePair.Key);

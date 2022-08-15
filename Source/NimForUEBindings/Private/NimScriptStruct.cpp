@@ -2,3 +2,8 @@
 
 
 #include "NimScriptStruct.h"
+
+void UNimScriptStruct::PrepareCppStructOps() {
+
+	UScriptStruct::PrepareCppStructOps();
+}

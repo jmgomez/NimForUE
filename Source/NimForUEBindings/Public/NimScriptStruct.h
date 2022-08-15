@@ -16,7 +16,7 @@ struct TNimCppStructOps : public UScriptStruct::TCppStructOps<T> {
 	virtual bool HasZeroConstructor() override {
 		return false;
 	}
-
+	
 };
 
 UCLASS()
@@ -27,9 +27,12 @@ public:
 	FString ueType;
 	template<typename T>
 	void SetCppStructOpFor(T* FakeType) {
-		auto StructOps = new TCppStructOps<T>();
-		
+		// auto StructOps = new TCppStructOps<T>();
+		auto StructOps = new TNimCppStructOps<T>();
+		UScriptStruct::DeferCppStructOps(this->GetFName(), StructOps);
 		this->CppStructOps = new TNimCppStructOps<T>();
 	}
 
+	virtual void PrepareCppStructOps() override;
+	
 };
