@@ -5,10 +5,11 @@ import buildscripts / [buildcommon, buildscripts, nimforueconfig, nimcachebuild]
 var taskOptions: Table[string, string]
 let config = getNimForUEConfig()
 
-type Task = object
-  name: string
-  description: string
-  routine: proc(taskOptions: Table[string, string]) {.nimcall.}
+type
+  Task = object
+    name: string
+    description: string
+    routine: proc(taskOptions: Table[string, string]) {.nimcall.}
 
 var tasks: seq[tuple[name:string, t:Task]]
 
@@ -136,8 +137,8 @@ let platformSwitches: Switches =
     else:
       @[]
 
-let ueincludes: Switches = getUEHeadersIncludePaths(config).map(headerPath => passC("-I" & escape(headerPath)))
-let uesymbols: Switches = getUESymbols(config).map(symbolPath => ("passL", escape(symbolPath)))
+let ueincludes: Switches = getUEHeadersIncludePaths(config).map(headerPath => passC("-I" & quotes(headerPath)))
+let uesymbols: Switches = getUESymbols(config).map(symbolPath => ("passL", quotes(symbolPath)))
 
 # --- End Compile flags
 
@@ -215,6 +216,9 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
 
   if nimcacheBuild(buildFlags) == Success:
     copyNimForUELibToUEDir()
+  else:
+    log("!!>> Task: guestpch failed to build. <<<<", lgError)
+    quit(QuitFailure)
 
 task g, "Alias to guestpch":
   guestpch(taskOptions)
@@ -279,15 +283,15 @@ task cleang, "Clean the .nimcache guestpch and winpch folder":
   removeDir(".nimcache/guestpch")
 
 when defined windows:
-  task killlink, "Windows: Kills link.exe if it's running":
-    var (msg, code) = execCmdEx("tasklist /m link.exe")
-    if "INFO: No tasks are running which match the specified criteria." notin msg:
-      log("link.exe is running. Killing it.", lgWarning)
-      discard execCmd("taskkill /f /im link.exe")
+  task killvcc, "Windows: Kills cl.exe and link.exe if they're running":
+    log("Killing cl.exe", lgWarning)
+    discard execCmd("taskkill /F /T /IM cl.exe")
+    log("Killing link.exe", lgWarning)
+    discard execCmd("taskkill /F /T /IM link.exe")
 
 task clean, "Clean the nimcache folder":
   when defined windows:
-    killlink(taskOptions)
+    killvcc(taskOptions)
   cleanh(taskOptions)
   cleang(taskOptions)
 
@@ -314,9 +318,9 @@ task ubuild, "Calls Unreal Build Tool for your project":
 
 task rebuild, "Cleans and rebuilds the host and guest":
   clean(taskOptions)
-  host(taskOptions)
   ubuild(taskOptions)
   guestpch(taskOptions)
+  host(taskOptions)
 
 task dumpConfig, "Displays the config variables":
   dump config

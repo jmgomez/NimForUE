@@ -14,20 +14,20 @@ let cacheDir = pluginDir / ".nimcache/guestpch"
 
 let isDebug = nueConfig.targetConfiguration in [Debug, Development]
 
-let debugFlags =
+proc debugFlags():string =
   if isDebug:
     let pdbFolder = pluginDir / ".nimcache/guestpch/pdbs"
     createDir(pdbFolder)
+
+    # clean up pdbs
+    for pdbPath in walkFiles(pdbFolder/"nimforue*.pdb"):
+      discard tryRemoveFile(pdbPath) # ignore if the pdb is locked by the debugger
 
     proc toVersion(s: string):int =
       let (_, f, _) = s.splitFile
       var n : int
       discard f.scanf("nimforue-$i", n)
       n
-
-    # clean up pdbs
-    for pdbPath in walkFiles(pdbFolder/"nimforue*.pdb"):
-      discard tryRemoveFile(pdbPath) # ignore if the pdb is locked by the debugger
 
     # generate a new pdb name
     # get the version numbers and inc the highest to get the next
@@ -152,15 +152,18 @@ proc isCompiled(path: string): bool =
   let objpath = path & ".obj"
   return fileExists(objpath) and getLastModificationTime(objpath) > getLastModificationTime(path)
 
+proc foldIncludes(paths: seq[string]):string =
+    paths.foldl(a & " -I" & quotes(b), " ")
+
 # example compile command
 # vccexe.exe /c --platform:amd64  /nologo /EHsc -DWIN32_LEAN_AND_MEAN /FS /std:c++17 /Zp8 /source-charset:utf-8 /execution-charset:utf-8 /MD -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Source\NimForUEBindings\Public\ -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Inc\NimForUEBindings -ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\NimHeaders -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Classes" -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Classes\Engine" -I"D:\UE_5.0\Engine\Source\Runtime\Net\Core\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Net\Core\Classes" -I"D:\UE_5.0\Engine\Source\Runtime\CoreUObject\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Core\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Engine\Public" -I"D:\UE_5.0\Engine\Source\Runtime\TraceLog\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Launch\Public" -I"D:\UE_5.0\Engine\Source\Runtime\ApplicationCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Projects\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Json\Public" -I"D:\UE_5.0\Engine\Source\Runtime\PakFile\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RSA\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RenderCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\NetCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\CoreOnline\Public" -I"D:\UE_5.0\Engine\Source\Runtime\PhysicsCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Experimental\Chaos\Public" -I"D:\UE_5.0\Engine\Source\Runtime\Experimental\ChaosCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\InputCore\Public" -I"D:\UE_5.0\Engine\Source\Runtime\RHI\Public" -I"D:\UE_5.0\Engine\Source\Runtime\AudioMixerCore\Public" -I"D:\UE_5.0\Engine\Source\Developer\DesktopPlatform\Public" -I"D:\UE_5.0\Engine\Source\Developer\ToolMenus\Public" -I"D:\UE_5.0\Engine\Source\Developer\TargetPlatform\Public" -I"D:\UE_5.0\Engine\Source\Developer\SourceControl\Public" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\NetCore" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\Engine" -I"D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\PhysicsCore" -IG:\Dropbox\GameDev\UnrealProjects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE\ /Z7 /FS /Od   /IC:\Nim\lib /ID:\unreal-projects\NimForUEDemo\Plugins\NimForUE\src /nologo /FoD:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@sdigitsutils.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@sdigitsutils.nim.cpp
-proc compileCmd(cpppath: string, objpath: string): string =
+proc compileCmd(cpppath: string, objpath: string, dbgFlags: string): string =
   "vccexe.exe" & " " &
     compileFlags.join(" ") & " " &
     (if withPCH and usesPCHFile(cppPath): pchFlags() else: "") & " " &
-    getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b, " ") & " " &
+    getUEHeadersIncludePaths(nueConfig).foldIncludes() & " " &
     "/Fo" & objpath & " " & cppPath &
-    " " & debugFlags
+    " " & dbgFlags
 
 # generate the pch file for windows
 proc winpch*(buildFlags: string) =
@@ -168,7 +171,7 @@ proc winpch*(buildFlags: string) =
     quit("! Error: Could not compile winpch.")
 
   var pchCmd = r"vccexe.exe /c --platform:amd64 /nologo " & pchFlags(shouldCreate = true) & " " &
-    compileFlags.join(" ") & " " & getUEHeadersIncludePaths(nueConfig).foldl( a & " -I" & b, " ")
+    compileFlags.join(" ") & " " & getUEHeadersIncludePaths(nueConfig).foldIncludes()
 
   let definitionsCppPath = pluginDir / ".nimcache/winpch/@mdefinitions.nim.cpp"
   if fileExists(definitionsCppPath):
@@ -177,7 +180,7 @@ proc winpch*(buildFlags: string) =
     quit("!Error: " & definitionsCppPath & " not found!")
 
   let curDir = getCurrentDir()
-  pchCmd &= " " & debugFlags
+  pchCmd &= " " & debugFlags()
   #echo pchCmd
   setCurrentDir(".nimcache/winpch")
   discard execCmd(pchCmd)
@@ -194,6 +197,7 @@ proc nimcacheBuild*(buildFlags: string): BuildStatus =
     winpch(buildFlags)
 
   var compileCmds: seq[string]
+  let dbgFlags = debugFlags()
 
   var objpaths: seq[string]
   for kind, path in walkDir(cacheDir):
@@ -204,7 +208,7 @@ proc nimcacheBuild*(buildFlags: string): BuildStatus =
       if cpppath.endsWith("nim.cpp"): #ignore nue.cpp
         if not isCompiled(cpppath):
           cpppath = validateNimCPPHeaders(cpppath)
-          compileCmds.add compileCmd(cpppath, objpath)
+          compileCmds.add compileCmd(cpppath, objpath, dbgFlags)
         objpaths.add(objpath)
     else:
       continue
@@ -240,10 +244,9 @@ proc nimcacheBuild*(buildFlags: string): BuildStatus =
 
   var dllFlag = if isDebug: "/LDd" else: "/LD"
 
-  let linkcmd = &"vccexe.exe {dllFlag} --platform:amd64  /nologo /Fe" & dllpath & " " &
-    getUESymbols(nueConfig).foldl(a & " " & b, " ") & " " & objpaths.join(" ") & " " & (if withPCH: pchObj else: "") &
-    " " & debugFlags
-
+  let linkCmd = &"vccexe.exe {dllFlag} --platform:amd64  /nologo /Fe" & dllpath & " " &
+    getUESymbols(nueConfig).foldl(a & " " & quotes(b), " ") & " " & objpaths.join(" ") & " " & (if withPCH: pchObj else: "") &
+    " " & dbgFlags
  
   let linkRes = execCmd(linkCmd)
   if linkRes != 0:
@@ -272,8 +275,8 @@ proc preprocessCmd(cpppath: string): string =
   let destPath = quotes(pluginDir / ".nimcache/preprocess" / filename / filename & ".i")
   "vccexe.exe" & " " &
     compileFlags.dup(`[]=`(0, &"/P /C /Fi{destPath} {ubtflags} {winsdkflags}")).join(" ") & " " &
-    getUEHeadersIncludePaths(nueConfig).foldl(a & " -I" & b, " ") & " " &
-    includeDirs.foldl(a & " -I" & b, " ") & " " &
+    getUEHeadersIncludePaths(nueConfig).foldIncludes() & " " &
+    includeDirs.foldIncludes() & " " &
     " " & cppPath
 
 proc preprocess*(srcPath: string) =
@@ -288,6 +291,3 @@ proc preprocess*(srcPath: string) =
   if res == 0:
     let destPath = quotes(processedDir / filename & ".i")
     echo &"Generated: {destPath}"
-
-when isMainModule:
-  nimcacheBuild()

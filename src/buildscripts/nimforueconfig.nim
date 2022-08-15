@@ -49,6 +49,8 @@ proc getNimForUEConfig*(pluginDirPath="") : NimForUEConfig =
   config.nimForUELibPath = ueLibsDir / getFullLibName("nimforue")
   config.hostLibPath =  ueLibsDir / getFullLibName("hostnimforue")
   config.genFilePath = genFilePath
+  config.engineDir = config.engineDir.normalizedPath().normalizePathEnd()
+  config.pluginDir = config.pluginDir.normalizedPath().normalizePathEnd()
   #Rest of the fields are sets by UBT
   config.saveConfig()
   config
@@ -102,7 +104,8 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
     intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module))
 
-  essentialHeaders & moduleHeaders
+  (essentialHeaders & moduleHeaders).map(path => path.normalizedPath().normalizePathEnd())
+
 
 
 proc getUESymbols*(conf: NimForUEConfig): seq[string] =
@@ -132,5 +135,5 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   let modules = @["Core", "CoreUObject", "Engine"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName))
 
-  engineSymbolsPaths & getNimForUESymbols()
+  (engineSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
 
