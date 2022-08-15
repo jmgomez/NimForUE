@@ -16,6 +16,7 @@ void UNimScriptStruct::PrepareCppStructOps() {
 	if(GetName().Contains("Reinst") && this->CppStructOps == nullptr){
 		check(CppStructOpsBackup)
 		this->CppStructOps = CppStructOpsBackup;
+		this->bPrepareCppStructOpsCompleted = true;
 		return;
 	}
 	UScriptStruct::PrepareCppStructOps();

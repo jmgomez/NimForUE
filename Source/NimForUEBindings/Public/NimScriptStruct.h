@@ -13,9 +13,10 @@
 
 template<class T>
 struct TNimCppStructOps : public UScriptStruct::TCppStructOps<T> {
-	virtual bool HasZeroConstructor() override {
-		return false;
-	}
+	virtual bool HasDestructor() override { return false; }
+
+	virtual bool HasZeroConstructor() override { return false; }
+	
 	
 };
 

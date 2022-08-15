@@ -100,7 +100,7 @@ func newEnumBasedProperty(outer : UStructPtr, propType:string, name:FName) : Opt
             )
 
 
-func newFProperty*(outer : UStructPtr, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr = 
+func newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr = 
     let 
         propType = optPropType.nonEmptyOr(propField.uePropType)
         name = optName.nonEmptyOr(propField.name).makeFName()
@@ -137,23 +137,23 @@ func newFProperty*(outer : UStructPtr, propField:UEField, optPropType="", optNam
         elif propType.contains("TArray"):
             let arrayProp = newFArrayProperty(makeFieldVariant(outer), name, flags)
             let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-            let inner = newFProperty(outer, propField, optPropType=innerType, optName="Inner")
+            let inner = newFProperty(arrayProp, propField, optPropType=innerType, optName="Inner")
             arrayProp.addCppProperty(inner)
             arrayProp
 
         elif propType.contains("TMap"):
             let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
             let innerTypes = propType.extractKeyValueFromMapProp()
-            let key = newFProperty(outer, propField, optPropType=innerTypes[0], optName="Key", propFlags=CPF_HasGetValueTypeHash) 
-            let value = newFProperty(outer, propField, optPropType=innerTypes[1], optName="Value")
+            let key = newFProperty(mapProp, propField, optPropType=innerTypes[0], optName="Key", propFlags=CPF_HasGetValueTypeHash) 
+            let value = newFProperty(mapProp, propField, optPropType=innerTypes[1], optName="Value")
 
             mapProp.addCppProperty(key)
             mapProp.addCppProperty(value)
             mapProp
         else: #ustruct based?
-            newUStructBasedFProperty(outer, propType, name, propFlags)
-                .chainNone(()=>newDelegateBasedProperty(outer, propType, name))
-                .chainNone(()=>newEnumBasedProperty(outer, propType, name))
+            newUStructBasedFProperty(cast[UStructPtr](outer), propType, name, propFlags)
+                .chainNone(()=>newDelegateBasedProperty(cast[UStructPtr](outer), propType, name))
+                .chainNone(()=>newEnumBasedProperty(cast[UStructPtr](outer), propType, name))
                 .getOrRaise("FProperty not covered in the types for " & propType, Exception)
                     
         

@@ -831,6 +831,13 @@ void UEditorUtils::ReloadClasses(FNimHotReload* NimHotReload) {
 
 
 void UEditorUtils::PostReload() {
+
+	// We want to force-update all the property editing UI now that we've done this reload.
+	//  The easiest way to do that is to send this NotifyCustomizationModuleChanged, since
+	//  all this does is a refresh on the UI, but there's no separate 'force refresh'.
+	FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor");
+	if (PropertyModule)
+		PropertyModule->NotifyCustomizationModuleChanged();
 	if(GEngine == nullptr) return;
 	// Refresh action list in blueprint, this is what
 	// is used to populate the right click menu.
@@ -1105,13 +1112,6 @@ void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
 		}
 
 
-	
-	// We want to force-update all the property editing UI now that we've done this reload.
-	//  The easiest way to do that is to send this NotifyCustomizationModuleChanged, since
-	//  all this does is a refresh on the UI, but there's no separate 'force refresh'.
-	FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor");
-	if (PropertyModule)
-		PropertyModule->NotifyCustomizationModuleChanged();
 
 	
 	// If we've created any new volumes, we want to make sure they have actor factories

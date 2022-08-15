@@ -95,8 +95,8 @@ proc getOwnerStruct*(str:FPropertyPtr) : UStructPtr {.importcpp:"#->GetOwnerStru
 
 
 type FFieldVariant* {.importcpp.} = object
-proc makeFieldVariant*(field:FFieldPtr) : FFieldVariant {. importcpp: "'0(#)", constructor.}
-proc makeFieldVariant*(obj:UObjectPtr) : FFieldVariant {. importcpp: "'0(#)", constructor.}
+# proc makeFieldVariant*(field:FFieldPtr) : FFieldVariant {. importcpp: "'0(#)", constructor.}
+proc makeFieldVariant*(obj:UObjectPtr | FFieldPtr) : FFieldVariant {. importcpp: "'0(#)", constructor.}
 
 
 macro bindFProperty(propNames : static openarray[string] ) : untyped = 
