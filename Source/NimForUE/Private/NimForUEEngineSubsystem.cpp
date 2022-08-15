@@ -5,6 +5,7 @@
 
 #include "Editor.h"
 #include "EditorUtils.h"
+#include "FNimReload.h"
 #include "NimForUEFFI.h"
 
 DEFINE_LOG_CATEGORY(NimForUEEngineSubsystem);
@@ -13,6 +14,10 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 	//Notice this function is static because it needs to be used in a FFI function.
 	UNimForUEEngineSubsystem* NimForUESubsystem = GEngine->GetEngineSubsystem<UNimForUEEngineSubsystem>();
 	bool bIsFirstLoad = NimForUESubsystem->ReloadTimes == 0;
+	FReload* UnrealReload = nullptr;
+	if(!bIsFirstLoad) //We need to instanciate the unreal reloader because it's used across the engine when reloading
+		UnrealReload = new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog);
+
 	FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(NimForUESubsystem->ReloadTimes));
 	if(bIsFirstLoad) {//Only crash on first load
 		checkf(NimHotReload, TEXT("NimHotReload is null. Probably nim crashed on startup. See the log for a stacktrace."));
@@ -25,10 +30,12 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 	if (NimHotReload->bShouldHotReload) {
 	// if (!bIsFirstLoad) {
 		UEditorUtils* EditorUtils = NewObject<UEditorUtils>();
-		EditorUtils->HotReload(NimHotReload);
-		// EditorUtils->HotReloadV2(NimHotReload);
-		// UEditorUtils::RefreshNodes(NimHotReload);
+	
+		EditorUtils->HotReload(NimHotReload, UnrealReload);
+	
 	}
+	if (UnrealReload != nullptr)
+		delete UnrealReload;
 		// delete NimHotReload;
 
 	// FCoreUObjectDelegates::ReloadCompleteDelegate.Broadcast(EReloadCompleteReason::HotReloadManual);

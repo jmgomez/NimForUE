@@ -751,7 +751,7 @@ void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
 
 }
 
-void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
+void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload) {
 
 		// PreReload(NimHotReload);
 		
@@ -767,23 +767,21 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload) {
 		}
 
 		// FNimReload* Reload(new FNimReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
-		FReload* Reload(new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
+		// FReload* Reload(new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
 
 		for (const auto& ClassToReinstancePair : NimHotReload->ClassesToReinstance)
-			Reload->NotifyChange(ClassToReinstancePair.Value, ClassToReinstancePair.Key);
+			UnrealReload->NotifyChange(ClassToReinstancePair.Value, ClassToReinstancePair.Key);
 		
 		for (const auto& StructToReinstancePair : NimHotReload->StructsToReinstance)
-			Reload->NotifyChange(StructToReinstancePair.Value, StructToReinstancePair.Key);
+			UnrealReload->NotifyChange(StructToReinstancePair.Value, StructToReinstancePair.Key);
 
 		for (const auto& EnumToReinstancePair: NimHotReload->EnumsToReinstance)
-			Reload->NotifyChange(EnumToReinstancePair.Value, EnumToReinstancePair.Key);
+			UnrealReload->NotifyChange(EnumToReinstancePair.Value, EnumToReinstancePair.Key);
 			
 		
-		Reload->Reinstance();
-		Reload->Finalize(true);
-		Reload->SetSendReloadCompleteNotification(true);
-
-		delete Reload;
+		UnrealReload->Reinstance();
+		UnrealReload->Finalize(true);
+		UnrealReload->SetSendReloadCompleteNotification(true);
 
 
 

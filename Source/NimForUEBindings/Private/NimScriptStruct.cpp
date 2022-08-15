@@ -3,7 +3,20 @@
 
 #include "NimScriptStruct.h"
 
-void UNimScriptStruct::PrepareCppStructOps() {
+#include "Kismet2/ReloadUtilities.h"
 
+void UNimScriptStruct::RegisterStructInDeferredList(ICppStructOps* StructOps)
+{
+
+	DeferCppStructOps(this->GetFName(), StructOps);
+
+}
+
+void UNimScriptStruct::PrepareCppStructOps() {
+	if(GetName().Contains("Reinst") && this->CppStructOps == nullptr){
+		check(CppStructOpsBackup)
+		this->CppStructOps = CppStructOpsBackup;
+		return;
+	}
 	UScriptStruct::PrepareCppStructOps();
 }
