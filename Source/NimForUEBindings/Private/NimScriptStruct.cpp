@@ -55,6 +55,11 @@ void UNimScriptStruct::InitializeStruct(void* InDest, int32 ArrayDim) const
 	}
 }
 
+void UNimScriptStruct::DestroyStruct(void* Dest, int32 ArrayDim) const
+{
+	//Our structs has no destructors
+}
+
 void UNimScriptStruct::PrepareCppStructOps() {
 	if(NewNimScriptStruct && NewNimScriptStruct->bPrepareCppStructOpsCompleted) {
 		CppStructOps = NewNimScriptStruct->CppStructOpsBackup;

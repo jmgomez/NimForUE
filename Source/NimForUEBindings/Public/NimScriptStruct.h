@@ -152,6 +152,7 @@ public:
 	UNimScriptStruct(const FObjectInitializer& ObjectInitializer);
 	UNimScriptStruct* NewNimScriptStruct; //If ther
 	virtual void InitializeStruct(void* Dest, int32 ArrayDim) const override;
+	virtual void DestroyStruct(void* Dest, int32 ArrayDim) const override;
 	FString ueType;
 	template<typename T>
 	void SetCppStructOpFor(T* FakeObject) {
