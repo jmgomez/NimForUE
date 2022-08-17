@@ -168,10 +168,11 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
                     hotReloadInfo.newStructs.add(newStructPtr.get())
                 if prevStructPtr.isSome() and newStructPtr.isSome():
                     #Updates all prev emitted structs to point to the recently created.
-                    for instance in getAllObjectsFromPackage[UNimScriptStruct](nimPackage):
-                        if structName in instance.getName() and ReinstSuffix in instance.getName():
-                            instance.newNimScriptStruct = newStructPtr.get()
-                    
+                    for prevInstance in getAllObjectsFromPackage[UNimScriptStruct](nimPackage):
+                        if structName in prevInstance.getName() and ReinstSuffix in prevInstance.getName():
+                            UE_Warn &"Updating NewNimScriptStruct {prevInstance} to {newStructPtr}"
+                            prevInstance.newNimScriptStruct = newStructPtr.get()
+                            prevInstance.childProperties = newStructPtr.get().childProperties
                     hotReloadInfo.structsToReinstance.add(prevStructPtr.get(), newStructPtr.get())
 
                

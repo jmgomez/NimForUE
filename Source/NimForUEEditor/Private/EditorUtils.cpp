@@ -755,8 +755,22 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload)
 
 		PreReload(NimHotReload);
 		
+		//Refresh nodes first, so we can set the proper blueprint)
+		//Extract method, get dependent blueprints which will returns all blueprint that must be changed. 
+		TArray<UBlueprint*> Blueprints = this->GetDependentBlueprints(NimHotReload);
+		for(auto Bp : Blueprints)
+		{
+			auto var = Bp->NewVariables[0];
+			FEdGraphPinType GraphPinType = var.VarType;
+			for (const auto& StructToReinstancePair : NimHotReload->StructsToReinstance)
+			{
+				GraphPinType.PinSubCategoryObject = StructToReinstancePair.Value;// NimHotReload->StructsToReinstance[0].Value;
+				FBlueprintEditorUtils::ChangeMemberVariableType(Bp, var.VarName, GraphPinType);
+			}
 
-	
+
+			UE_LOG(LogTemp, Log, TEXT("Blueprint Dependent name is "), *Bp->GetName());
+		}
 		// FNimReload* Reload(new FNimReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
 		// FReload* Reload(new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
 
@@ -775,7 +789,7 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload)
 		UnrealReload->SetSendReloadCompleteNotification(true);
 
 
-	this->HotReloadV2(NimHotReload);
+	this->GetDependentBlueprints(NimHotReload);
 }
 
 void UEditorUtils::ReloadClass(UClass* OldClass, UClass* NewClass) {
@@ -856,6 +870,114 @@ void UEditorUtils::PreReload(FNimHotReload* NimHotReload) {
 		ReplaceHelper->AddToRoot();
 	}
 
+}
+
+TArray<UBlueprint*> UEditorUtils::GetDependentBlueprints(FNimHotReload* NimHotReload) {
+	TMap<UScriptStruct*, UScriptStruct*> ReloadStructs = NimHotReload->StructsToReinstance;
+	TMap<UClass*, UClass*> ReloadClasses = NimHotReload->ClassesToReinstance;	
+
+	TArray<UBlueprint*> DependencyBPs;
+	TArray<UK2Node*> AllNodes;
+	// Go through all blueprints and find any that are using a struct
+	// or delegate that we have replaced, and change their pins
+	// to point to the new ones instead.
+	
+	TMap<UObject*, UObject*> ClassReplaceList;
+	for (auto& Elem : ReloadClasses)
+		ClassReplaceList.Add(Elem.Key, Elem.Value);
+	for (auto& Elem : ReloadStructs)
+		ClassReplaceList.Add(Elem.Key, Elem.Value);
+
+	auto ReplacePinType = [&](FEdGraphPinType& PinType) -> bool
+	{
+		if (PinType.PinCategory != UEdGraphSchema_K2::PC_Struct)
+			return false;
+
+		UScriptStruct* Struct = Cast<UScriptStruct>(PinType.PinSubCategoryObject.Get());
+		if (Struct == nullptr)
+			return false;
+
+		UScriptStruct** NewStruct = ReloadStructs.Find(Struct);
+		if (NewStruct == nullptr)
+			return false;
+
+		PinType.PinSubCategoryObject = *NewStruct;
+		return true;
+	};
+
+	for (TObjectIterator<UBlueprint> BlueprintIt; BlueprintIt; ++BlueprintIt)
+	{
+		UBlueprint* BP = *BlueprintIt;
+
+		AllNodes.Reset();
+		FBlueprintEditorUtils::GetAllNodesOfClass(BP, AllNodes);
+
+		bool bHasDependency = false;
+		for (UK2Node* Node : AllNodes)
+		{
+			TArray<UStruct*> Dependencies;
+			if (Node->HasExternalDependencies(&Dependencies))
+			{
+				for (UStruct* Struct : Dependencies)
+				{
+					if (ReloadClasses.Contains((UClass*)Struct))
+						bHasDependency = true;
+					if (ReloadStructs.Contains((UScriptStruct*)Struct))
+						bHasDependency = true;
+
+					if (bHasDependency)
+						break;
+				}
+			}
+
+			for (auto* Pin : Node->Pins)
+			{
+				bHasDependency |= ReplacePinType(Pin->PinType);
+			}
+
+			if (auto* EditableBase = Cast<UK2Node_EditablePinBase>(Node))
+			{
+				for (auto Desc : EditableBase->UserDefinedPins)
+				{
+					bHasDependency |= ReplacePinType(Desc->PinType);
+				}
+			}
+			// TODO GetTiedSignatureFunction needs to be reimplemented or rething. They modified the engine to get it
+			// if (auto* Event = Cast<UK2Node_Event>(Node))
+			// {
+			// 	if (auto* Function = Cast<UDelegateFunction>(Event->GetTiedSignatureFunction()))
+			// 	{
+			// 		if (NimHotReload->NewDelegateFunctions.Contains(Function) || NimHotReload->DelegatesToReinstance.Contains(Function))
+			// 		{
+			// 			bHasDependency = true;
+			// 		}
+			// 	}
+			// // }
+
+			if (auto* MacroInst = Cast<UK2Node_MacroInstance>(Node))
+			{
+				bHasDependency |= ReplacePinType(MacroInst->ResolvedWildcardType);
+			}
+		}
+
+		for (auto& Variable : BP->NewVariables)
+		{
+			bHasDependency |= ReplacePinType(Variable.VarType);
+		}
+
+		// Check if the blueprint references any of our replacing classes at all
+		FArchiveReplaceObjectRef<UObject> ReplaceObjectArch(
+			BP, ClassReplaceList,
+			EArchiveReplaceObjectFlags::IgnoreOuterRef | EArchiveReplaceObjectFlags::IgnoreArchetypeRef);
+		if (ReplaceObjectArch.GetCount())
+			bHasDependency = true;
+
+		if (bHasDependency)
+			DependencyBPs.Add(BP);
+	}
+		
+
+	return DependencyBPs;
 }
 
 void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
