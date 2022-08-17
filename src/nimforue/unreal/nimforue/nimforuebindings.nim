@@ -15,6 +15,7 @@ type
 
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
         ueType* {.importcpp: "ueType".} : FString
+        newNimScriptStruct* {.importcpp: "NewNimScriptStruct".} : ptr UNimScriptStruct
 
     UNimScriptStructPtr* = ptr UNimScriptStruct
 

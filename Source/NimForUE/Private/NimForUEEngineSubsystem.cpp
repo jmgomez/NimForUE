@@ -24,6 +24,7 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 	}
 	if(NimHotReload == nullptr){
 		UE_LOG(LogTemp, Error, TEXT("NimForUE just crashed. Review the log"), *Msg);
+		delete UnrealReload;
 		return;
 		
 	}

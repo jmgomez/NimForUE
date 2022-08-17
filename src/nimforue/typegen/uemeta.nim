@@ -337,12 +337,13 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
  
 proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UFieldPtr =
       
-    const objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative)
+    const objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsNative)
     let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
         
     # scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
     for metadata in ueType.metadata:
         scriptStruct.setMetadata(metadata.name, $metadata.value)
+
 
     scriptStruct.assetCreated()
     
@@ -366,7 +367,7 @@ proc emitUStruct*[T](ueType : UEType, package:string) : UFieldPtr =
     
 proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr = 
     let name = enumType.name.makeFName()
-    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative
+    const objFlags = RF_Public | RF_Standalone | RF_MarkAsNative
     let uenum = newUObject[UNimEnum](package, name, objFlags)
     for metadata in enumType.metadata:
         uenum.setMetadata(metadata.name, $metadata.value)
@@ -381,7 +382,7 @@ proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr =
 
 proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr = 
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
-    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative
+    const objFlags = RF_Public | RF_Standalone | RF_MarkAsNative
     var fn = newUObject[UNimDelegateFunction](package, fnName, objFlags)
     fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
     for field in delType.fields.reversed():

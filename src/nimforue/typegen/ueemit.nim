@@ -73,13 +73,14 @@ proc getEmmitedTypes() : seq[UEType] =
 
 const ReinstSuffix = "_Reinst"
 
-proc prepReinst(prev:UObjectPtr) = 
-    prev.setFlags(RF_NewerVersionExists)
+proc prepReinst(prev:UObjectPtr) =
+    const objFlags = RF_NewerVersionExists or RF_Transactional
+    prev.setFlags(objFlags)
     UE_Warn &"Reinstancing {prev.getName()}"
     # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
     # prev.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32 or RF_MarkAsRootSet.uint32))
     let prevNameStr : FString =  fmt("{prev.getName()}{ReinstSuffix}")
-    let oldClassName = makeUniqueObjectName(prev.getOuter(), prev.getClass(), makeFName(prevNameStr))
+    let oldClassName = makeUniqueObjectName(getTransientPackage(), prev.getClass(), makeFName(prevNameStr))
     discard prev.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
 proc prepareForReinst(prevClass : UNimClassBasePtr) = 
@@ -87,7 +88,7 @@ proc prepareForReinst(prevClass : UNimClassBasePtr) =
     # prevClass.addClassFlag CLASS_NewerVersionExists
     prepReinst(prevClass)
 
-proc prepareForReinst(prevScriptStruct : UScriptStructPtr) = 
+proc prepareForReinst(prevScriptStruct : UNimScriptStructPtr) = 
     prevScriptStruct.addScriptStructFlag(STRUCT_NewerVersionExists)
     prepReinst(prevScriptStruct)
 
@@ -98,7 +99,7 @@ proc prepareForReinst(prevUEnum : UNimEnumPtr) =
     prepReinst(prevUEnum)
 
 
-type UEmitable = UScriptStruct | UNimClassBase | UDelegateFunction | UEnum
+type UEmitable = UNimScriptStruct | UNimClassBase | UDelegateFunction | UEnum
         
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T], isFirstLoad:bool) : Option[ptr T]= 
@@ -159,12 +160,18 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
     for emitter in ueEmitter.emitters:
             case emitter.ueType.kind:
             of uetStruct:
-                let prevStructPtr = someNil getScriptStructByName emitter.ueType.name.removeFirstLetter()
+                let structName = emitter.ueType.name.removeFirstLetter()
+                let prevStructPtr = someNil getUTypeByName[UNimScriptStruct] structName
                 let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr, isFirstLoad)
 
                 if prevStructPtr.isNone() and newStructPtr.isSome():
                     hotReloadInfo.newStructs.add(newStructPtr.get())
                 if prevStructPtr.isSome() and newStructPtr.isSome():
+                    #Updates all prev emitted structs to point to the recently created.
+                    for instance in getAllObjectsFromPackage[UNimScriptStruct](nimPackage):
+                        if structName in instance.getName() and ReinstSuffix in instance.getName():
+                            instance.newNimScriptStruct = newStructPtr.get()
+                    
                     hotReloadInfo.structsToReinstance.add(prevStructPtr.get(), newStructPtr.get())
 
                
@@ -381,7 +388,7 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
     let structMetas = getMetasForType(body)
     let ueFields = getUPropsAsFieldsForType(body, structTypeName)
-    let structFlags = (STRUCT_NoFlags)
+    let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
     let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas, structFlags)
 
     emitUStruct(ueType) 

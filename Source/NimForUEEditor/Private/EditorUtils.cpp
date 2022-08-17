@@ -15,6 +15,7 @@
 #include "ActorFactories/ActorFactoryVolume.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Async/Async.h"
+#include "Engine/DataTable.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetStringLibrary.h"
@@ -37,7 +38,6 @@ void UNimReferenceReplacementHelper::AddReferencedObjects(UObject* InThis, FRefe
 {
 	if (InThis->HasAnyFlags(RF_ClassDefaultObject))
 		return;
-
 	UAssetEditorSubsystem* SubSystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
 
 	TArray<UObject*> OpenAssets = SubSystem->GetAllEditedAssets();
@@ -753,19 +753,10 @@ void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
 
 void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload) {
 
-		// PreReload(NimHotReload);
+		PreReload(NimHotReload);
 		
 
-		// Do a full-on garbage collection step to make sure old stuff is gone
-		// before we start reinstancing things we no longer need.
-		// CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
-		// Init our replace helper that ReparentHierarchies will try to replace stuff in later
-		if (ReplaceHelper == nullptr)
-		{
-			ReplaceHelper = NewObject<UNimReferenceReplacementHelper>(GetTransientPackage());
-			ReplaceHelper->AddToRoot();
-		}
-
+	
 		// FNimReload* Reload(new FNimReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
 		// FReload* Reload(new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog));
 
@@ -784,15 +775,7 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload)
 		UnrealReload->SetSendReloadCompleteNotification(true);
 
 
-
-	//Do a full-on garbage collection step to make sure old stuff is gon
-	// CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
-	// Forces to update all properties
-	FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor");
-	if (PropertyModule)
-		PropertyModule->NotifyCustomizationModuleChanged();
-
-	PostReload();
+	this->HotReloadV2(NimHotReload);
 }
 
 void UEditorUtils::ReloadClass(UClass* OldClass, UClass* NewClass) {
@@ -876,7 +859,6 @@ void UEditorUtils::PreReload(FNimHotReload* NimHotReload) {
 }
 
 void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
-	PreReload(NimHotReload);
 	TMap<UScriptStruct*, UScriptStruct*> ReloadStructs = NimHotReload->StructsToReinstance;
 	TMap<UClass*, UClass*> ReloadClasses = NimHotReload->ClassesToReinstance;	
 
@@ -980,28 +962,28 @@ void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
 			DependencyBPs.Add(BP);
 	}
 		
-		// for (auto& Struct : ReloadStructs)
-		// {
-		// 	// FStructureEditorUtils::BroadcastPreChange(Struct.Key); //TODO this are UserDefinedStrucs. We use Native structs. Maybe we should change them?
-		// 	
-		//
-		// 	// Update struct pointers in DataTable with newly generated replacements.
-		// 	TArray<UDataTable*> Tables = GetTablesDependentOnStruct(Struct.Key);
-		// 	for (UDataTable* Table : Tables)
-		// 	{
-		// 		Table->RowStruct = Struct.Value;
-		// 	}
-		// }
+		for (auto& Struct : ReloadStructs)
+		{
+			// FStructureEditorUtils::BroadcastPreChange(Cast<UUserDefinedStruct>(Struct.Key)); //TODO this are UserDefinedStrucs. We use Native structs. Maybe we should change them?
+			
+			
+			// Update struct pointers in DataTable with newly generated replacements.
+			// TArray<UDataTable*> Tables = GetTablesDependentOnStruct(Struct.Key);
+			// for (UDataTable* Table : Tables)
+			// {
+			// 	Table->RowStruct = Struct.Value;
+			// }
+		}
 
 	
 
 		// Do a full-on garbage collection step to make sure old stuff is gone
 		// before we start reinstancing things we no longer need.
-		CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+		// CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
 
 		// Call into unreal's standard reinstancing system to
 		// actually recreate objects using the old classes.
-		FBlueprintCompilationManager::ReparentHierarchies(ReloadClasses);
+		// FBlueprintCompilationManager::ReparentHierarchies(ReloadClasses);
 
 		// Do a full-on garbage collection step to make sure old stuff is gone
 		// by the time we recompile blueprints below.
@@ -1087,7 +1069,6 @@ void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
 					{
 						bShouldRefresh |= CheckRefresh(MacroInst->ResolvedWildcardType);
 					}
-
 					if (bShouldRefresh)
 					{
 						const UEdGraphSchema* Schema = Node->GetGraph()->GetSchema();
@@ -1096,6 +1077,7 @@ void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
 				}
 			};
 
+
 			// Trigger a compile of all blueprints that we detected dependencies to our class in
 			for (UBlueprint* BP : DependencyBPs)
 			{
@@ -1103,15 +1085,24 @@ void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
 				FBlueprintCompilationManager::QueueForCompilation(BP);
 			}
 
-			FBlueprintCompilationManager::FlushCompilationQueueAndReinstance();
+			// FBlueprintCompilationManager::FlushCompilationQueueAndReinstance();
 		}
 
 		for (auto& Struct : ReloadStructs)
 		{
-			// FStructureEditorUtils::BroadcastPostChange(Struct.Value); SAME AS ABOVE
+			//Try to remove the FProperties
+			// for (TFieldIterator<FProperty> It(Struct.Key); It; ++It) {
+			// 	// (*It)->Conditional();
+			// }
+			// Struct.Key->ConditionalBeginDestroy();
+			// FStructureEditorUtils::BroadcastPostChange(Cast<UUserDefinedStruct>(Struct.Value)); //SAME AS ABOVE
+			// FStructureEditorUtils::FStructEditorManager::Get().PostChange(Struct.Key);
+			// FBlueprintEditorUtils::ChangeLocalVariableType(Bl);
 		}
+		
 
-
+		//If the above doesnt work 
+		// FBlueprintEditorUtils::variable
 
 	
 	// If we've created any new volumes, we want to make sure they have actor factories
@@ -1134,7 +1125,7 @@ void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
 			if (TestClass->IsChildOf(UActorFactoryVolume::StaticClass()) && !TestClass->HasAnyClassFlags(CLASS_Abstract))
 				VolumeFactoryClasses.Add(TestClass);
 		}
-
+		
 		// Generate factories for the volume actor we just created
 		for (UClass* VolumeFactoryClass : VolumeFactoryClasses)
 		{

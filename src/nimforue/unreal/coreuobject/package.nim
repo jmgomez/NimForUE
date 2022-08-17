@@ -8,6 +8,7 @@ type
 
 
 func anyPackage*() : UPackagePtr {.importcpp:"(ANY_PACKAGE)".}
+func getTransientPackage*() : UPackagePtr {.importcpp:"GetTransientPackage()".}
 
 #ConvertToLongScriptPackageName
 # * Helper function for converting short to long script package name (InputCore -> /Script/InputCore)
