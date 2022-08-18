@@ -20,17 +20,14 @@ public:
 	virtual void Serialize(FStructuredArchive::FRecord Record) override;
 };
 
-/**
- * 
- */
 UCLASS()
 class NIMFORUEEDITOR_API UEditorUtils : public UObject {
 	GENERATED_BODY()
+	TArray<UBlueprint*> BlueprintsWithAssetOpen = {};
+	
 public:
 	UNimReferenceReplacementHelper* ReplaceHelper = nullptr;
 	
-	static void RefreshNodes();
-	static void RefreshNodes(FNimHotReload* NimHotReload);
 	static void PerformReinstance(FNimHotReload* NimHotReload);
 	TArray<UBlueprint*> GetDependentBlueprints(FNimHotReload* NimHotReload);
 	void HotReload(FNimHotReload* NimHotReload, class FReload* UnrealReload);
@@ -40,25 +37,8 @@ public:
 	void PreReload(FNimHotReload* NimHotReload);
 	void HotReloadV2(FNimHotReload* NimHotReload);
 	static void ShowLoadNotification(bool bIsFirstLoad);
-
-	//
-	// static TArray<UDataTable*> GetTablesDependentOnStruct(UStruct* Struct)
-	// {
-	// 	TArray<UDataTable*> Result;
-	// 	if (Struct)
-	// 	{
-	// 		TArray<UObject*> DataTables;
-	// 		GetObjectsOfClass(UDataTable::StaticClass(), DataTables);
-	// 		for (UObject* DataTableObj : DataTables)
-	// 		{
-	// 			UDataTable* DataTable = Cast<UDataTable>(DataTableObj);
-	// 			if (DataTable && (Struct == DataTable->RowStruct))
-	// 			{
-	// 				Result.Add(DataTable);
-	// 			}
-	// 		}
-	// 	}
-	// 	return Result;
-	// }
+	//Called by the Subsystem.
+	void Tick(float DeltaTime);
+	
 };
 

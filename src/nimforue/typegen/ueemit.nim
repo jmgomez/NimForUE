@@ -172,7 +172,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
                         if structName in prevInstance.getName() and ReinstSuffix in prevInstance.getName():
                             UE_Warn &"Updating NewNimScriptStruct {prevInstance} to {newStructPtr}"
                             prevInstance.newNimScriptStruct = newStructPtr.get()
-                            prevInstance.childProperties = newStructPtr.get().childProperties
+                            # prevInstance.childProperties = newStructPtr.get().childProperties
                     hotReloadInfo.structsToReinstance.add(prevStructPtr.get(), newStructPtr.get())
 
                

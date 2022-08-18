@@ -30,9 +30,8 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 	}
 	if (NimHotReload->bShouldHotReload) {
 	// if (!bIsFirstLoad) {
-		UEditorUtils* EditorUtils = NewObject<UEditorUtils>();
-	
-		EditorUtils->HotReload(NimHotReload, UnrealReload);
+		NimForUESubsystem->EditorUtils = NewObject<UEditorUtils>();\
+		NimForUESubsystem->EditorUtils->HotReload(NimHotReload, UnrealReload);
 	
 	}
 	if (UnrealReload != nullptr)
@@ -71,7 +70,7 @@ void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	
 	checkReload();
 
-	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick), 0.3);
+	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick), 0.1);
 }
 
 void UNimForUEEngineSubsystem::Deinitialize()
@@ -81,6 +80,8 @@ void UNimForUEEngineSubsystem::Deinitialize()
 
 bool UNimForUEEngineSubsystem::Tick(float DeltaTime)
 {
+	if (EditorUtils)
+		EditorUtils->Tick(DeltaTime);
 	checkReload();
 	return true;
 }
