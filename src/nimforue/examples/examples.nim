@@ -1,2 +1,3 @@
 import testactorexample
 import actorexample
+import structexample
