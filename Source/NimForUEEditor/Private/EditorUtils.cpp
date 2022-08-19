@@ -344,7 +344,7 @@ void UEditorUtils::Tick(float DeltaTime){
 		//We need to close an open the editor because some properties of the prev
 		//bp changed struct have a reference which has been staled
 		//it needs to happen on the next slate tick to take effect
-		AssetEditor->OpenEditorForAsset(Bp);
+		// AssetEditor->OpenEditorForAsset(Bp);
 	}
 	BlueprintsWithAssetOpen = {};
 }
@@ -382,8 +382,9 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload)
 
 		FBlueprintEditorUtils::RefreshVariables(Bp);
 		//Need to temp close the editor so the FProps are unlinked from slate (see comment on tick)
-		AssetEditor->CloseAllEditorsForAsset(Bp);
-
+		// AssetEditor->CloseAllEditorsForAsset(Bp);
+		FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyEditorModule.NotifyCustomizationModuleChanged();
 		Bp->GeneratedClass->Bind();
 		Bp->GeneratedClass->StaticLink(true);
 

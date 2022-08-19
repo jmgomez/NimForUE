@@ -15,8 +15,11 @@ DECLARE_LOG_CATEGORY_EXTERN(NimForUEEngineSubsystem, Log, All);
 UCLASS()
 class NIMFORUE_API UNimForUEEngineSubsystem : public UEngineSubsystem {
 	GENERATED_BODY()
+	UPROPERTY()
 	//Package where all nim classes will live.
 	UPackage* NimForUEPackage;
+	UPROPERTY()
+	class UEditorUtils* EditorUtils;
 	bool Tick(float DeltaTime);
 	FTSTicker::FDelegateHandle TickDelegateHandle;
 	static void LoadNimGuest(FString Msg);
