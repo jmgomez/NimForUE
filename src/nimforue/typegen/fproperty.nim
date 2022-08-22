@@ -3,9 +3,10 @@ include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
 import models
 
+const propObjFlags = RF_Public | RF_Transient | RF_MarkAsNative
 
 func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
-    const flags = RF_MarkAsNative | RF_Public | RF_Standalone  #OBJECT FLAGS
+    const flags = propObjFlags
          #It holds a complex type, like a struct or a class
     type EObjectMetaProp = enum
         emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, emTSoftClassPtr, emScriptStruct#, TSoftClassPtr = "TSoftClassPtr"
@@ -64,7 +65,7 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
 
 func newDelegateBasedProperty(outer : UStructPtr, propType:string, name:FName) : Option[FPropertyPtr] = 
     #Try to find it as Delegate
-    const flags = RF_MarkAsNative | RF_Public | RF_Standalone  #OBJECT FLAGS
+    const flags = propObjFlags
     UE_Log "Not a struct based prorperty. Trying as delegate.." & propType
     let delegateName = propType.removeFirstLetter() & DelegateFuncSuffix
     
@@ -85,7 +86,7 @@ func newDelegateBasedProperty(outer : UStructPtr, propType:string, name:FName) :
     
 func newEnumBasedProperty(outer : UStructPtr, propType:string, name:FName) : Option[FPropertyPtr] = 
     #Try to find it as Enum
-    const flags = RF_MarkAsNative | RF_Public | RF_Standalone  #OBJECT FLAGS
+    const flags = propObjFlags
     UE_Log "Not a delegate based prorperty. Trying as enum.." & propType
     
     someNil(getUTypeByName[UEnum](propType))
@@ -105,7 +106,7 @@ func newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
         propType = optPropType.nonEmptyOr(propField.uePropType)
         name = optName.nonEmptyOr(propField.name).makeFName()
 
-    const flags = RF_MarkAsNative | RF_Public | RF_Standalone  #OBJECT FLAGS
+    const flags = propObjFlags
 
     let prop : FPropertyPtr = 
         if propType == "FString": 

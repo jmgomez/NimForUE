@@ -296,7 +296,7 @@ func childrenAsSeq*(node:NimNode) : seq[NimNode] =
     
 func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]) = 
     # var flags : EPropertyFlags = CPF_SkipSerialization
-    var flags : EPropertyFlags = CPF_NoDestructor
+    var flags : EPropertyFlags = CPF_NativeAccessSpecifierPublic
     var metadata : seq[UEMetadata] = @[]
     #TODO THROW ERROR WHEN NON MULTICAST AND USE MC ONLY
     # var flags : EPropertyFlags = CPF_None

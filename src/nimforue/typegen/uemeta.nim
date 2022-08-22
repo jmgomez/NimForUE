@@ -225,7 +225,7 @@ proc emitUFunction*(fnField : UEField, cls:UClassPtr, fnImpl:Option[UFunctionNat
     let fnName = superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
 
 
-    const objFlags = RF_Public | RF_Standalone | RF_MarkAsRootSet | RF_MarkAsNative
+    const objFlags = RF_Public | RF_Transient | RF_MarkAsRootSet | RF_MarkAsNative
     var fn = newUObject[UNimFunction](cls, fnName, objFlags)
     fn.functionFlags = EFunctionFlags(fnField.fnFlags) 
 
@@ -271,7 +271,7 @@ type CtorInfo* = object #stores the constuctor information for a class.
         className* : string
 
 proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, Option[UFunctionNativeSignature]], clsConstructor : Option[CtorInfo] ) : UFieldPtr =
-    const objClsFlags  =  (RF_Public | RF_Standalone | RF_Transactional | RF_WasLoaded | RF_MarkAsNative) 
+    const objClsFlags  =  (RF_Public | RF_Transient | RF_Transactional | RF_WasLoaded | RF_MarkAsNative) 
 
     let
         newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
@@ -337,7 +337,7 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
  
 proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UFieldPtr =
       
-    const objClsFlags  =  (RF_Public | RF_Standalone | RF_MarkAsNative)
+    const objClsFlags  =  (RF_Public | RF_Transient | RF_MarkAsNative)
     let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
         
     # scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
@@ -367,7 +367,7 @@ proc emitUStruct*[T](ueType : UEType, package:string) : UFieldPtr =
     
 proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr = 
     let name = enumType.name.makeFName()
-    const objFlags = RF_Public | RF_Standalone | RF_MarkAsNative
+    const objFlags = RF_Public | RF_Transient | RF_MarkAsNative
     let uenum = newUObject[UNimEnum](package, name, objFlags)
     for metadata in enumType.metadata:
         uenum.setMetadata(metadata.name, $metadata.value)
@@ -382,7 +382,7 @@ proc emitUEnum*(enumType:UEType, package:UPackagePtr) : UFieldPtr =
 
 proc emitUDelegate*(delType : UEType, package:UPackagePtr) : UFieldPtr = 
     let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
-    const objFlags = RF_Public | RF_Standalone | RF_MarkAsNative
+    const objFlags = RF_Public | RF_Transient | RF_MarkAsNative
     var fn = newUObject[UNimDelegateFunction](package, fnName, objFlags)
     fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
     for field in delType.fields.reversed():
