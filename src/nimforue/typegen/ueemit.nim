@@ -22,7 +22,7 @@ type
         # types* : seq[UEType]
         fnTable* : Table[string, Option[UFunctionNativeSignature]]
         clsConstructorTable* : Table[string, CtorInfo]
-        
+        setStructOpsWrapperTable* : Table[string, UNimScriptStructPtr->void]
 
 var ueEmitter* = UEEmitter() 
 
@@ -39,6 +39,9 @@ proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =
 
 proc addEmitterInfo*(ueType:UEType) : void =  
     addEmitterInfo(ueType, getFnGetForUClass(ueType))
+
+proc addStructOpsWrapper*(structName : string, fn : UNimScriptStructPtr->void) = 
+    ueEmitter.setStructOpsWrapperTable.add(structName, fn)
 
 proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor, hash:string) : void =  
     let ctorInfo = CtorInfo(fn:classConstructor, hash:hash, className: clsName)
@@ -164,6 +167,10 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
                 let prevStructPtr = someNil getUTypeByName[UNimScriptStruct] structName
                 let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr, isFirstLoad)
 
+                if prevStructPtr.isSome():
+                   #updates the structOps wrapper wit the current type informatin 
+                   ueEmitter.setStructOpsWrapperTable[emitter.ueType.name](prevStructPtr.get())
+
                 if prevStructPtr.isNone() and newStructPtr.isSome():
                     hotReloadInfo.newStructs.add(newStructPtr.get())
                 if prevStructPtr.isSome() and newStructPtr.isSome():
@@ -172,6 +179,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
                         if structName in prevInstance.getName() and ReinstSuffix in prevInstance.getName():
                             UE_Warn &"Updating NewNimScriptStruct {prevInstance} to {newStructPtr}"
                             prevInstance.newNimScriptStruct = newStructPtr.get()
+                         
                             # prevInstance.childProperties = newStructPtr.get().childProperties
                     hotReloadInfo.structsToReinstance.add(prevStructPtr.get(), newStructPtr.get())
 
@@ -254,9 +262,9 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkgName:FString = "Nim") : FNimHo
 proc emitUStruct(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
-    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
+    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, structName=newStrLitNode(typeDef.name)): #defers the execution
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUStruct[name](typeDefAsNode, package))
-
+                addStructOpsWrapper(structName, (str:UNimScriptStructPtr) => setCppStructOpFor[name](str, nil))
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr resulti
 

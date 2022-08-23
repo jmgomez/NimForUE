@@ -6,103 +6,140 @@
 #include "Engine/UserDefinedStruct.h"
 #include "UObject/Object.h"
 #include "NimScriptStruct.generated.h"
- 
-/**
- * 
- */
+
+class UNimScriptStruct;
+
+template<typename T>
+struct NimStructOps : UScriptStruct::ICppStructOps
+{
+	
+	UNimScriptStruct* Struct;
+	T Default;
 
 
-template<class T>
-struct TNimCppStructOps : public UScriptStruct::TCppStructOps<T> {
-	virtual bool HasIdentical() override
-	{
-		return false; //TODO review this. Identical means an equals operator, we should be able to generate it. (It seems that it needs to be implemented in the Identical overload)
-	}
-	virtual bool HasSerializer() override
-	{
-		return false;
-	}
-
-	virtual bool HasZeroConstructor() override
-	{
-		return false;
+	NimStructOps(UNimScriptStruct* InStruct) :
+		Struct(InStruct),
+		ICppStructOps(sizeof(T), alignof(T)) {
 	}
 
-
-	virtual bool Serialize(FArchive& Ar, void* Data) override
+	bool HasNoopConstructor() override
 	{
 		return false;
 	}
 
-	virtual bool HasPostSerialize() override
+	bool HasZeroConstructor() override
 	{
 		return false;
 	}
 
-	virtual void PostSerialize(const FArchive& Ar, void* Data) override
+	void Construct(void* Dest) override {
+		*(static_cast<T*>(Dest)) = *(new T());
+	}
+	virtual void ConstructForTests(void* Dest) override
 	{
+		Construct(Dest);
 	}
 
-	virtual bool HasNetSerializer() override
-	{
-		return false;
-	}
-
-	virtual bool HasNetSharedSerialization() override
-	{
-		return false;
-	}
-
-	virtual bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess, void* Data) override
+	bool HasDestructor() override
 	{
 		return false;
 	}
 
-	virtual bool HasNetDeltaSerializer()
+	void Destruct(void* Dest) override {
+		//Doesnt have destructor so this shouldnt be called
+		FMemory::Memzero(Dest, GetSize());
+	}
+
+	bool HasCopy() override {
+		return true;
+	}
+
+	bool Copy(void* Dest, void const* Src, int32 ArrayDim) override {
+		T const * Source = reinterpret_cast<T const*>(Src);
+		*(static_cast<T*>(Dest)) = *(Source);
+		return true;
+	}
+
+	bool HasIdentical() override {
+		return false; //vNext
+	}
+
+	bool Identical(const void* A, const void* B, uint32 PortFlags, bool& bOutResult) override {
+
+		return false;
+	}
+
+	bool HasSerializer() override {
+		return false;
+	}
+
+	bool Serialize(FArchive& Ar, void* Data) override {
+		return false;
+	}
+
+	bool HasPostSerialize() override {
+		return false;
+	}
+
+	void PostSerialize(const FArchive& Ar, void* Data) override {
+	}
+
+	bool HasNetSerializer() override {
+		return false;
+	}
+
+	bool HasNetSharedSerialization() override {
+		return false;
+	}
+
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess, void* Data) override {
+		return false;
+	}
+
+	bool HasNetDeltaSerializer() {
+		return false;
+	}
+
+	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms, void* Data) override
 	{
 		return false;
 	}
 
-	virtual bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms, void* Data) override
+	bool HasPostScriptConstruct() override
 	{
 		return false;
 	}
 
-	virtual bool HasPostScriptConstruct() override
+	void PostScriptConstruct(void* Data) override
+	{
+	}
+
+	bool IsPlainOldData() override
 	{
 		return false;
 	}
 
-	virtual void PostScriptConstruct(void* Data) override
-	{
-	}
-
-	virtual bool IsPlainOldData() override
+	bool HasExportTextItem() override
 	{
 		return false;
 	}
 
-	virtual bool HasExportTextItem() override
+	bool ExportTextItem(FString& ValueStr, const void* PropertyValue, const void* DefaultValue, class UObject* Parent, int32 PortFlags, class UObject* ExportRootScope) override
 	{
 		return false;
 	}
 
-	virtual bool ExportTextItem(FString& ValueStr, const void* PropertyValue, const void* DefaultValue, class UObject* Parent, int32 PortFlags, class UObject* ExportRootScope) override
+	bool HasImportTextItem() override
 	{
 		return false;
 	}
 
-	virtual bool HasImportTextItem() override
+	bool ImportTextItem(const TCHAR*& Buffer, void* Data, int32 PortFlags, class UObject* OwnerObject, FOutputDevice* ErrorText) override
 	{
 		return false;
 	}
 
-	virtual bool ImportTextItem(const TCHAR*& Buffer, void* Data, int32 PortFlags, class UObject* OwnerObject, FOutputDevice* ErrorText) override
-	{
-		return false;
-	}
-
-	virtual bool HasAddStructReferencedObjects() override
+	bool HasAddStructReferencedObjects() override
 	{
 		return false;
 	}
@@ -112,57 +149,109 @@ struct TNimCppStructOps : public UScriptStruct::TCppStructOps<T> {
 		return nullptr;
 	}
 
-	virtual bool HasSerializeFromMismatchedTag() override
+	bool HasSerializeFromMismatchedTag() override
 	{
 		return false;
 	}
 
-	virtual bool SerializeFromMismatchedTag(struct FPropertyTag const& Tag, FArchive& Ar, void* Data) override
+	bool SerializeFromMismatchedTag(struct FPropertyTag const& Tag, FArchive& Ar, void* Data) override
 	{
 		return false;
 	}
 
-	virtual bool HasGetTypeHash() override
+	bool HasGetTypeHash() override
 	{
 		return false;
 	}
 
-	virtual uint32 GetStructTypeHash(const void* Src) override
+	uint32 GetStructTypeHash(const void* Src) override
 	{
 		return 0;
 	}
 
-	virtual EPropertyFlags GetComputedPropertyFlags() const override
+	EPropertyFlags GetComputedPropertyFlags() const override
 	{
 		return CPF_None;
 	}
-	virtual bool HasDestructor() { return false; }
-	
+
+	bool IsAbstract() const override
+	{
+		return false;
+	}
+
+	void GetCppTraits(bool& OutHasConstructor, bool& OutHasDestructor, bool& OutHasAssignmentOperator, bool& OutHasCopyConstructor) const
+	{
+		OutHasConstructor = true;
+		OutHasDestructor = false;
+		OutHasAssignmentOperator = true;
+		OutHasCopyConstructor = true;
+	}
+
+	bool HasStructuredSerializer() override
+	{
+		return false;
+	}
+
+	bool HasStructuredSerializeFromMismatchedTag() override
+	{
+		return false;
+	}
+
+	bool Serialize(FStructuredArchive::FSlot Slot, void* Data) override
+	{
+		return false;
+	}
+
+	bool StructuredSerializeFromMismatchedTag(struct FPropertyTag const& Tag, FStructuredArchive::FSlot Slot, void* Data) override
+	{
+		return false;
+	}
+
+	bool IsUECoreType() override
+	{
+		return false;
+	}
+
+	bool IsUECoreVariant() override
+	{
+		return false;
+	}
+
+	void GetPreloadDependencies(void* Data, TArray<UObject*>& OutDeps) override
+	{
+	}
 };
+
+//ENDS NimStructOps
+
 
 UCLASS()
 class NIMFORUEBINDINGS_API UNimScriptStruct : public UScriptStruct {
 	GENERATED_BODY()
 		//Used when hot reloading as a backup so when the UEReloader cleans the previous, we can set this one in PrepareStruct. 
-		ICppStructOps* CppStructOpsBackup;
+	// ICppStructOps* CppStructOpsBackup;
 	void RegisterStructInDeferredList(ICppStructOps* StructOps);
 
 
+
 public:
-	UNimScriptStruct(const FObjectInitializer& ObjectInitializer);
+	// UNimScriptStruct(const FObjectInitializer& ObjectInitializer);
 	UNimScriptStruct* NewNimScriptStruct; //If ther
-	virtual void InitializeStruct(void* Dest, int32 ArrayDim) const override;
-	virtual void DestroyStruct(void* Dest, int32 ArrayDim) const override;
+	// virtual void InitializeStruct(void* Dest, int32 ArrayDim) const override;
+	// virtual void DestroyStruct(void* Dest, int32 ArrayDim) const override;
 	FString ueType;
 	template<typename T>
 	void SetCppStructOpFor(T* FakeObject) {
 		
-		auto StructOps = new TNimCppStructOps<T>();
+		auto StructOps = new NimStructOps<T>(this);
 		RegisterStructInDeferredList(StructOps);
-		CppStructOpsBackup = StructOps;
+		// CppStructOpsBackup = new NimStructOps<T>(this);
 		this->CppStructOps = StructOps;
+		this->PrepareCppStructOps();
 	}
 
-	virtual void PrepareCppStructOps() override;
+
+
+	// virtual void PrepareCppStructOps() override;
 	
 };
