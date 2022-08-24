@@ -61,12 +61,15 @@ struct NimStructOps : UScriptStruct::ICppStructOps
 	}
 
 	bool HasIdentical() override {
-		return false; //vNext
+		return true; //vNext
 	}
 
 	bool Identical(const void* A, const void* B, uint32 PortFlags, bool& bOutResult) override {
-
-		return false;
+		T const* a = reinterpret_cast<T const*>(A);
+		T const* b = reinterpret_cast<T const*>(B);
+		//T has == defined in Nim
+		bOutResult = a == b;
+		return true;
 	}
 
 	bool HasSerializer() override {

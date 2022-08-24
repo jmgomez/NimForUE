@@ -385,8 +385,8 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload)
 		// AssetEditor->CloseAllEditorsForAsset(Bp);
 		FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyEditorModule.NotifyCustomizationModuleChanged();
-		Bp->GeneratedClass->Bind();
-		Bp->GeneratedClass->StaticLink(true);
+		// Bp->GeneratedClass->Bind();
+		// Bp->GeneratedClass->StaticLink(true);
 
 		
 		
