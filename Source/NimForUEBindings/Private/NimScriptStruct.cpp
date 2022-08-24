@@ -62,12 +62,12 @@ void UNimScriptStruct::RegisterStructInDeferredList(ICppStructOps* StructOps)
 // 	//Our structs has no destructors
 // }
 
-// void UNimScriptStruct::PrepareCppStructOps() {
-	// if(NewNimScriptStruct && NewNimScriptStruct->bPrepareCppStructOpsCompleted) {
-	// 	CppStructOps = NewNimScriptStruct->CppStructOps;
-	// 	bPrepareCppStructOpsCompleted = true;
-	// 	return;
-	// }
+void UNimScriptStruct::PrepareCppStructOps() {
+	if(NewNimScriptStruct && NewNimScriptStruct->bPrepareCppStructOpsCompleted) {
+		CppStructOps = NewNimScriptStruct->CppStructOps;
+		bPrepareCppStructOpsCompleted = true;
+		return;
+	}
 	//
 	// if(CppStructOps == nullptr){
 	// 	check(CppStructOpsBackup)
@@ -75,5 +75,5 @@ void UNimScriptStruct::RegisterStructInDeferredList(ICppStructOps* StructOps)
 	// 	bPrepareCppStructOpsCompleted = true;
 	// 	return;
 	// }
-	// Super::PrepareCppStructOps();
-// }
+	Super::PrepareCppStructOps();
+}

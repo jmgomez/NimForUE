@@ -255,6 +255,6 @@ public:
 
 
 
-	// virtual void PrepareCppStructOps() override;
+	virtual void PrepareCppStructOps() override;
 	
 };
