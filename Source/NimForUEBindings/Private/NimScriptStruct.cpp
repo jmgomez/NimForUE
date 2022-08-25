@@ -63,7 +63,10 @@ void UNimScriptStruct::RegisterStructInDeferredList(ICppStructOps* StructOps)
 // }
 
 void UNimScriptStruct::PrepareCppStructOps() {
-	if(NewNimScriptStruct && NewNimScriptStruct->bPrepareCppStructOpsCompleted) {
+	if(NewNimScriptStruct){
+		if (!NewNimScriptStruct->bPrepareCppStructOpsCompleted) {
+			NewNimScriptStruct->PrepareCppStructOps();
+		}
 		CppStructOps = NewNimScriptStruct->CppStructOps;
 		bPrepareCppStructOpsCompleted = true;
 		return;
