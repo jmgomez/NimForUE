@@ -88,7 +88,7 @@ proc prepReinst(prev:UObjectPtr) =
 
 proc prepareForReinst(prevClass : UNimClassBasePtr) = 
     # prevClass.classFlags = prevClass.classFlags | CLASS_NewerVersionExists
-    # prevClass.addClassFlag CLASS_NewerVersionExists
+    prevClass.addClassFlag CLASS_NewerVersionExists
     prepReinst(prevClass)
 
 proc prepareForReinst(prevScriptStruct : UNimScriptStructPtr) = 
@@ -168,7 +168,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
                 let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr, isFirstLoad)
 
                 if prevStructPtr.isSome():
-                   #updates the structOps wrapper wit the current type informatin 
+                   #updates the structOps wrapper with the current type information 
                    ueEmitter.setStructOpsWrapperTable[emitter.ueType.name](prevStructPtr.get())
 
                 if prevStructPtr.isNone() and newStructPtr.isSome():
@@ -185,12 +185,24 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
 
                
             of uetClass:                
-                let prevClassPtr = someNil getUTypeByName[UNimClassBase](emitter.ueType.name.removeFirstLetter())
+                let clsName = emitter.ueType.name.removeFirstLetter()
+
+                let prevClassPtr = someNil getUTypeByName[UNimClassBase](clsName)
                 let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr, isFirstLoad)
 
                 if prevClassPtr.isNone() and newClassPtr.isSome():
                     hotReloadInfo.newClasses.add(newClassPtr.get())
                 if prevClassPtr.isSome() and newClassPtr.isSome():
+                   
+                    prevClassPtr.get().prepareNimClass()
+                    #update each properties for the cdo. 
+                    for prevInstance in getAllObjectsFromPackage[UNimClassBase](nimPackage):
+                        if clsName in prevInstance.getName() and ReinstSuffix in prevInstance.getName():
+                            prevInstance.newNimClass = newClassPtr.get()
+
+                            
+
+
                     hotReloadInfo.classesToReinstance.add(prevClassPtr.get(), newClassPtr.get())
 
                 if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated

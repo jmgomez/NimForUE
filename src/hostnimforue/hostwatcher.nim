@@ -46,7 +46,7 @@ proc checkReload*() {.ex.} =
         lastLoaded = nextLibName
         if lib != nil:
             onNimForUEUnloaded()
-            unloadLib(lib)
+            # unloadLib(lib) 
 
         if not onPreReload.isnil():
             onPreReload(nextLibName)

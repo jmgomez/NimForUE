@@ -20,6 +20,22 @@ void UNimClassBase::SetAddClassReferencedObjectType(void(* ClassAddReferencedObj
 	};
 }
 
+void UNimClassBase::PrepareNimClass()
+{
+	check(ClassDefaultObject);
+	// UObject* NewCDO = DuplicateObject(NewNimClass->ClassDefaultObject, this);
+	FArchiveUObject Ar;
+	// NewCDO->SerializeScriptProperties(Ar);
+	ClassDefaultObject->SerializeScriptProperties(Ar);//This crashes. And it's issue we are trying to solve
+	//
+	// //
+	// // NewCDO = NewObject<UObject>(this, this->NewNimClass, ClassDefaultObject->GetFName(), ClassDefaultObject->GetFlags());
+	// NewCDO = ClassDefaultObject = StaticAllocateObject(this, GetOuter(), NAME_None, EObjectFlags(RF_Public | RF_ClassDefaultObject | RF_ArchetypeObject));
+	//
+	// // ClassDefaultObject->Be
+	// this->ClassDefaultObject = NewCDO;
+}
+
 void UNimClassBase::AddNimReferenceObjects(UObject* InThis, FReferenceCollector& Collector) {
 	
 }

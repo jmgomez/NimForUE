@@ -19,6 +19,8 @@ class NIMFORUEBINDINGS_API UNimClassBase : public UClass {
 GENERATED_BODY()
 	static void AddNimReferenceObjects(UObject* InThis, FReferenceCollector& Collector);
 public:
+	UNimClassBase* NewNimClass;
+
 	ClassAddReferencedObjectsType ParentClassReferencedObject; //Workaround to being able to call the parent function set in Nim
 
 	FString ueType;
@@ -27,9 +29,10 @@ public:
 	void SetClassConstructor(void (*NimClassConstructor) (FObjectInitializer&));
 	void SetAddClassReferencedObjectType(void		(*ClassAddReferencedObjectsFn)	(UObject*, class FReferenceCollector&));
 
+	void PrepareNimClass();
 
 	
-static UNimClassBase* GetFirstNimClassBase(UObject* Obj);
+	static UNimClassBase* GetFirstNimClassBase(UObject* Obj);
 
 };
 

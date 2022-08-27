@@ -11,6 +11,8 @@ type
     UNimClassBase* {.importcpp, inheritable, pure .} = object of UClass
         ueType* {.importcpp: "ueType".} : FString
         constructorSourceHash* {.importcpp: "ConstructorSourceHash".} : FString
+        newNimClass* {.importcpp: "NewNimClass".} : ptr UNimClassBase
+
     UNimClassBasePtr* = ptr UNimClassBase
 
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
@@ -44,6 +46,8 @@ proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVers
 
 #UNimClassBase
 proc setClassConstructor*(cls:UNimClassBasePtr, classConstructor:UClassConstructor) : void {.importcpp:"#->SetClassConstructor(#)".}
+proc prepareNimClass*(cls:UNimClassBasePtr) : void {.importcpp:"#->PrepareNimClass()".}
+
 proc setAddClassReferencedObjectFn*(cls:UNimClassBasePtr, addClassReferencedObjectFn:UClassAddReferencedObjectsType) : void {.importcpp:"#->SetAddClassReferencedObjectType(#)".}
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
 proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:openarray[pointer]) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
