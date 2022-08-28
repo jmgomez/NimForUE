@@ -356,6 +356,7 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload)
 	TArray<UBlueprint*> Blueprints = this->GetDependentBlueprints(NimHotReload);
 	BlueprintsWithAssetOpen = Blueprints;
 	for(auto Bp : Blueprints){
+
 		UE_LOG(LogTemp, Log, TEXT("Blueprint Dependent name is %s"), *Bp->GetName());
 		TArray<UStruct*> GenClasses = { Bp->GeneratedClass, Bp->SkeletonGeneratedClass };
 		for (UStruct* GenClass : GenClasses) {
@@ -365,11 +366,9 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload)
 					for (const auto& StructToReinstancePair : NimHotReload->StructsToReinstance) {
 						if (StructProperty->Struct == StructToReinstancePair.Key) {
 							StructProperty->Struct = StructToReinstancePair.Value;
-
 							UE_LOG(NimForUEEditor, Warning, TEXT("Blueprint %s replaced type %s with %s "), *Bp->GetName(), *StructToReinstancePair.Key->GetName(), *StructToReinstancePair.Value->GetName());
 							//Clean all FProps
 							ToUpdateInBp.Add(StructToReinstancePair);
-
 						}
 					}
 		
@@ -414,6 +413,10 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload)
 		StructToReinstancePair.Key->ConditionalBeginDestroy();
 	}
 
+	PostReload();
+	for (UBlueprint* Bp : Blueprints){
+		FBlueprintEditorUtils::RefreshAllNodes(Bp);
+	}
 }
 
 void UEditorUtils::ReloadClass(UClass* OldClass, UClass* NewClass) {
@@ -892,6 +895,7 @@ void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
 
 //POST RELOAD
 	PostReload();
+	
 }
 
 void UEditorUtils::ShowLoadNotification(bool bIsFirstLoad) {
