@@ -358,7 +358,11 @@ macro genEnumOperators(enumName, enumType:static string, genValConverters : stat
 
     let converters = genAst(name, valName=ident enumName&"Val", typ):
         converter toValName*(a:name) : valName = valName(typ(ord(a)))
-        converter toName*(a:valName) : name = name(typ(a))
+        converter toName*(a:valName) : name = 
+            try:
+                name(typ(a))
+            except:
+                name(0) #prevents a type overflow when parsing engine types. 
     
     if genValConverters:
         result.add converters
