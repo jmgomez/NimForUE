@@ -39,6 +39,8 @@ func makeUEMulDelegate*(name:string, fields:seq[UEField]) : UEType =
 func makeUEEnum*(name:string, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
     UEType(kind:uetEnum, name:name, fields:fields, metadata: metadata)
 
+func makeUEModule*(name:string, types:seq[UEType], dependencies:seq[UEModule]= @[]) : UEModule = 
+    UEModule(name: name, types: types, dependencies: dependencies)
 
 
 func isTArray(prop:FPropertyPtr) : bool = not castField[FArrayProperty](prop).isNil()
@@ -60,7 +62,7 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         return fmt"TMap[{keyType}, {valueType}]"
     
     try:
-        UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()} and outer {outer.getName()}"
+        # UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()} and outer {outer.getName()}"
 
         let cppType = prop.getCPPType() #TODO review this. Hiphothesis it should not reach this point in the hotreload if the struct has the pointer to the prev ue type and therefore it shouldnt crash
 
@@ -184,6 +186,31 @@ func toUEType*(uenum:UEnumPtr) : UEType = #notice we have to specify the type be
                       .toSeq()
     UEType(name:name, kind:uetEnum, fields: fields) #TODO
 
+
+
+
+func convertToUEType[T](obj:UObjectPtr) : Option[UEType] = 
+  tryUECast[T](obj).map((val:ptr T)=>toUEType(val))
+
+
+func getUETypeFrom(obj:UObjectPtr) : Option[UEType] = 
+  if obj.getFlags() & RF_ClassDefaultObject == RF_ClassDefaultObject: 
+    return none[UEType]()
+  
+  convertToUEType[UClass](obj)
+    .chainNone(()=>convertToUEType[UScriptStruct](obj))
+    .chainNone(()=>convertToUEType[UEnum](obj))
+    .chainNone(()=>convertToUEType[UDelegateFunction](obj))
+  
+func toUEModule*(pkg:UPackagePtr) : Option[UEModule] = 
+  let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
+  let types = allObjs.toSeq()
+                .map((x:UObjectPtr)=>getUETypeFrom(x))
+                .filter(x=>x.isSome())
+                .map(x=>x.get())
+
+  some makeUEModule(pkg.getName().split("/")[1], types)
+  
 
 
 proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
