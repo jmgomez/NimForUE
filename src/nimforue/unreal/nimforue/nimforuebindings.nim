@@ -41,7 +41,7 @@ proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : v
 
 
 #UNimEnum
-func getEnums*(uenum:UNimEnumPtr) : TArray[TPair[FName, int64]] {.importcpp:"#->GetEnums()".}
+func getEnums*(uenum:UEnumPtr) : TArray[TPair[FName, int64]] {.importcpp:"UReflectionHelpers::GetEnums(#)".}
 proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVersionExists()".}
 
 #UNimClassBase
@@ -91,7 +91,6 @@ proc getUTypeByName*[T :UField](typeName:FString) : ptr T {.importcpp:"UReflecti
 
 proc getAllClassesFromModule*(moduleName:FString) : TArray[UClassPtr] {.importcpp:"UReflectionHelpers::GetAllClassesFromModule(@)" .}
 
-proc getAllObjectsFromPackage*[T](package:UPackagePtr) : TArray[ptr T] {.importcpp:"UReflectionHelpers::GetAllObjectsFromPackage<'**0>(@)".}
 #nil here and in newUObject is equivalent to GetTransient() (like ue does). Once GetTrasientPackage is bind, use that instead since 
 #it's better design
 proc newObjectFromClass*(owner:UObjectPtr, cls:UClassPtr, name:FName) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
@@ -168,6 +167,8 @@ proc stepCompiledIn*[T : FProperty](frame:var FFrame, result:pointer, prop:ptr T
 #UPACKAGE
 func getPackageByName*(packageName:FString) : UPackagePtr = 
         findObject[UPackage](nil, convertToLongScriptPackageName(packageName))
+func getAllObjectsFromPackage*[T](package:UPackagePtr) : TArray[ptr T] {.importcpp:"UReflectionHelpers::GetAllObjectsFromPackage<'**0>(@)".}
+
 let nimPackage* = getPackageByName("Nim")
 
 ##EDITOR

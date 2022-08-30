@@ -171,7 +171,7 @@ func toUEType*(del:UNimDelegateFunctionPtr) : UEType =
 
 
 
-func toUEType*(uenum:UNimEnumPtr) : UEType = #notice we have to specify the type because we use specific functions here. All types are Nim base types
+func toUEType*(uenum:UEnumPtr) : UEType = #notice we have to specify the type because we use specific functions here. All types are Nim base types
     # let fields = getFPropsFromUStruct(enum).map(toUEField)
     let storedUEType = tryUECast[UNimEnum](uenum)
                         .flatMap((uenum:UNimEnumPtr)=>tryParseJson[UEType](uenum.ueType))
