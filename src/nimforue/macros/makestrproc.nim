@@ -1,5 +1,8 @@
+include ../unreal/prelude
 import std / [strformat]
 import std / [macros, genasts]
+
+import ../typegen/models
 
 # This macro makes a proc(v: T): string for use with emitting to the VM
 #macro makeStrProc*(t: typedesc): untyped
@@ -86,42 +89,46 @@ macro makeStrProc*(t: typedesc): untyped =
 
 #example usage with the VM
 
-#[
-import compiler / [ast, nimeval, llstream, types]
 
-makeStrProc(UEMetadata)
-makeStrProc(UEField)
-makeStrProc(UEType)
+# import compiler / [ast, nimeval, llstream, types]
 
-var uemetadata = UEMetadata(name: "fieldmeta", value: false)
-var uefield = UEField(name: "field", metadata: @[uemetadata], kind: uefEnumVal)
-var uetype = UEType(name: "type", fields: @[uefield], metadata: @[uemetadata], kind: uStruct)
+# makeStrProc(UEMetadata)
+# makeStrProc(UEField)
+# makeStrProc(UEType)
 
-echo $ueType
+# var uemetadata = UEMetadata(name: "fieldmeta", value: false)
+# var uefield = UEField(name: "field", metadata: @[uemetadata], kind: uefEnumVal)
+# var uetype = UEType(name: "type", fields: @[uefield], metadata: @[uemetadata], kind: uetStruct)
 
-var i = createInterpreter("main.nims", [findNimStdLib()])
+# echo $ueType
 
-var input = "var o* {.test.} = " & $ueType
+# var i = createInterpreter("main.nims", [findNimStdLib()])
 
-var script = &"""
-import test
-export code
-import models
+# var input = "var o* {.test.} = " & $ueType
 
-{input}
+# var script = &"""
+# import test
+# export code
+# import models
 
-"""
-echo script
-i.evalScript(llstreamopen(script))
+# {input}
 
-var codeSym = i.selectUniqueSymbol("code")
-if codeSym.isNil:
-  quit("could not find code symbol, did you export it?")
+# """
+# UE_Log script
+# try:
+#   i.evalScript(llstreamopen(script))
+# except:
+#   let msg = getCurrentExceptionMsg()
+  
 
-var code = i.getGlobalValue(codeSym)
-if code.isNil:
-  quit("could not get code value")
+# var codeSym = i.selectUniqueSymbol("code")
+# if codeSym.isNil:
+#   quit("could not find code symbol, did you export it?")
 
-echo "code: --- "
-echo code.strVal
-]#
+# var code = i.getGlobalValue(codeSym)
+# if code.isNil:
+#   quit("could not get code value")
+
+# UE_Log "code: --- "
+# UE_Log code.strVal
+

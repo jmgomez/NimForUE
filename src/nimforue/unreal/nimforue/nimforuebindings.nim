@@ -165,11 +165,8 @@ proc stepCompiledIn*[T : FProperty](frame:var FFrame, result:pointer, prop:ptr T
  
  
 #UPACKAGE
-func getPackageByName*(packageName:FString) : UPackagePtr = 
-        findObject[UPackage](nil, convertToLongScriptPackageName(packageName))
 func getAllObjectsFromPackage*[T](package:UPackagePtr) : TArray[ptr T] {.importcpp:"UReflectionHelpers::GetAllObjectsFromPackage<'**0>(@)".}
 
-let nimPackage* = getPackageByName("Nim")
 
 ##EDITOR
 proc broadcastAsset*(asset:UObjectPtr) : void {.importcpp: "UFakeFactory::BroadcastAsset(#)" .}

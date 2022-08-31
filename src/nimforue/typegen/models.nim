@@ -117,6 +117,8 @@ func shouldBeReturnedAsVar*(field:UEField) : bool =
  
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
 func `$`*(a : EPropertyFlagsVal) : string {.borrow.}
+func `$`*(a : EFunctionFlagsVal) : string {.borrow.}
+func `$`*(a : EStructFlagsVal) : string {.borrow.}
 
 func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
 # func `==`*(a, b : EClassFlagsVal) : bool {.borrow.}

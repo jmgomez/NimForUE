@@ -1,5 +1,9 @@
 include ../definitions
 import uobject
+import uobjectglobals
+import std/[options]
+import ../../utils/utils
+
 import ../core/containers/[unrealstring]
 type 
 
@@ -13,3 +17,13 @@ func getTransientPackage*() : UPackagePtr {.importcpp:"GetTransientPackage()".}
 #ConvertToLongScriptPackageName
 # * Helper function for converting short to long script package name (InputCore -> /Script/InputCore)
 proc convertToLongScriptPackageName*(inShortName:FString) : FString {.importcpp:"FPackageName::ConvertToLongScriptPackageName(*#)".}
+
+
+func getPackageByName*(packageName:FString) : UPackagePtr = 
+        findObject[UPackage](nil, convertToLongScriptPackageName(packageName))
+
+func tryGetPackageByName*(packageName:FString) : Option[UPackagePtr] = 
+    someNil(getPackageByName(packageName))
+
+let nimPackage* = getPackageByName("Nim")
+

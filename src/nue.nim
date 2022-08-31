@@ -329,6 +329,9 @@ task rebuild, "Cleans and rebuilds the host and guest":
 task dumpConfig, "Displays the config variables":
   dump config
 
+task codegen, "Runs the process that will automatically generate the API based on the reflection data.":
+  let buildFlags = @[buildSwitches, targetSwitches, platformSwitches].foldl(a & " " & fold(b), "")
+  doAssert(execCmd(&"nim c {buildFlags} --nimcache:.nimcache/codegen -r src/buildscripts/codegen.nim") == 0)
 
 
 # --- End Tasks ---
