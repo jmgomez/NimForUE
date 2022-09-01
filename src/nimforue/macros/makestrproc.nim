@@ -8,7 +8,6 @@ import ../typegen/models
 #macro makeStrProc*(t: typedesc): untyped
 
 proc getField(f: NimNode, output:NimNode): NimNode =
-  #echo f.treeRepr
   case f.kind:
   of nnkIdentDefs:
     let fname = f[0].strval
@@ -16,6 +15,7 @@ proc getField(f: NimNode, output:NimNode): NimNode =
       output.add fname
       output.addQuoted v.fident
       output.add ", "
+    
   of nnkRecCase:
     var stmts = nnkStmtList.newTree()
     let kindName = f[0][0].repr
@@ -34,11 +34,23 @@ proc getField(f: NimNode, output:NimNode): NimNode =
       caseStmt.add ofBranch
       if o[1].len > 0:
         for i in o[1]: #RecList of IdentDefs
-          let oStmt = genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval):
-            output.add fname
-            output.addQuoted v.fident
-            output.add ", "
-          oStmts.add oStmt
+          case i[1].kind:
+          of nnkSym:
+            let ftype = i[1].strval() 
+            let oStmt = genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval, ftype):
+              output.add fname
+              output.addQuoted v.fident
+              output.add "."&ftype
+              output.add ", "
+            oStmts.add oStmt
+            
+          else:
+            let oStmt = genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval):
+              output.add fname
+              output.addQuoted v.fident
+              output.add ", "
+            oStmts.add oStmt
+           
       else:
         oStmts.add nnkDiscardStmt.newTree(newEmptyNode())
     stmts.add caseStmt
@@ -84,7 +96,7 @@ macro makeStrProc*(t: typedesc): untyped =
     output
 
   strproc.add(nnkStmtList.newTree(head, fields, tail))
-  #echo strproc.repr
+  # echo strproc.repr
   strproc
 
 #example usage with the VM

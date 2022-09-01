@@ -7,11 +7,27 @@
         "label": "Build guest",
         "type": "shell",
         "command": "./nue    g",
-        // "command": "./nue --nolinedir g",
-        
+        "group": "build",
+    }, 
+    {
+        "label": "Build guest with nolinedir directive",
+        "type": "shell",
+        "command": "./nue --nolinedir g",
         "group": "build",
         
-        
+    },
+     {
+        "label": "Rebuild ",
+        "type": "shell",
+        "command": "./nue rebuild",
+        "group": "build",
+    },
+    {
+        "label": "Build Nue",
+        "type": "shell",
+        "command": "nimble nue",
+        "group": "build",
     }
+    
     ]
   }

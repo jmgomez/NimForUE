@@ -17,7 +17,6 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
                 elif propType == ("UClass"): emClass
                 else: emObjPtr #defaults to emObjPtr but it can be scriptStruct since the name it's the same(will worth to do an or?)
                 
-
     let className = case eMeta 
         of emTSubclassOf: propType.extractTypeFromGenericInNimFormat("TSubclassOf").removeFirstLetter() 
         of emTSoftObjectPtr: propType.extractTypeFromGenericInNimFormat("TSoftObjectPtr").removeFirstLetter() 

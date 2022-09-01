@@ -1,11 +1,19 @@
-
-include ../unreal/definitions
 import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
-import ../utils/[ueutils, utils]
-import ../unreal/coreuobject/[uobjectflags]
-import ../typegen/models
 
-import ../typegen/nuemacrocache
+when defined codegen:
+    type FString = string
+    proc extractTypeFromGenericInNimFormat*(str, genericType :string) : string = 
+        str.replace(genericType, "").replace("[").replace("]", "")
+
+else:
+    include ../unreal/definitions
+    import ../utils/ueutils
+
+import ../utils/utils
+import ../unreal/coreuobject/[uobjectflags]
+import ../typegen/[nuemacrocache, models]
+
+
 
 proc getParamsTypeDef(fn:NimNode, params:seq[NimNode], retType: NimNode) : NimNode = 
     # nnkTypeSection.newTree(

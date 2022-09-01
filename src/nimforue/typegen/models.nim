@@ -1,7 +1,11 @@
-include ../unreal/definitions
-import ../utils/[utils, ueutils]
+when defined codegen:
+    type FString = string
+else:
+    include ../unreal/definitions
+
+import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
-import ../unreal/core/containers/unrealstring
+
 
 
 type
@@ -74,7 +78,6 @@ type
         types* : seq[UEType]
         dependencies* : seq[UEModule]   
 
-proc UE_Error2*(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEError(@)".}
 
 #allocates a newUEType based on an UEType value.
 #the allocated version will be stored in the NimBase class/struct in UE so we can 
@@ -145,8 +148,7 @@ func compareUEPropTypes(a, b:string) : bool =
     if b in typeMap:
         b = typeMap[b]
     result = a == b
-    if not result: #This is just for debugging types. This functions has to be moved from here so there is no unreal symbols in this file
-        UE_Error2 a & " " & b
+  
 
 
 func `==`*(a, b : UEField) : bool = 
@@ -161,9 +163,7 @@ func `==`*(a, b : UEField) : bool =
             a.signature == b.signature  and  #two functions from the point of view of a class are equals if they have the same signature 
             a.fnFlags == b.fnFlags
         of uefEnumVal: true)
-    if not result: #This is just for debugging types. This functions has to be moved from here so there is no unreal symbols in this file
-        UE_Error2 $a 
-        UE_Error2 $b
+  
 
 func `==`*(a, b:UEType) : bool = 
     # UE_Error2 $a
@@ -186,10 +186,4 @@ func `==`*(a, b:UEType) : bool =
         of uetEnum: true
         of uetDelegate: true))
     
-    if not result:
-        UE_Error2 "Types are different"
-        UE_Error2 &"A: {a}"
-        UE_Error2 &"B: {b}"
-        
-
-
+   

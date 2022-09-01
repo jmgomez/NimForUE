@@ -116,7 +116,7 @@ proc scratchpad*(executor: UObjectPtr) =
 
     # UE_Log("here we test back")
     let moduleName = FString("NimForUEBindings")
-    # let classes = getAllClassesFromModule(moduleName)
+    let classes = getAllClassesFromModule(moduleName)
     let ef = EFieldIterationFlags.None
 
     let cls = getClassByName("MyClassToTest")
