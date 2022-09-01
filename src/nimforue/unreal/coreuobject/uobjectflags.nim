@@ -2,10 +2,15 @@ import bitops
 import ../../typegen/models
 import std/[genasts, macros, sugar, json, sequtils]
 
+when defined codegen:
+    {.pragma: importflag .}
+else:
+    {.pragma: importflag, importcpp, nodecl, header: ueincludes.}
+  
 
 type
 
-    EPropertyFlags* {.importcpp, header: ueincludes, size:sizeof(uint64).} = enum
+    EPropertyFlags* {. importflag, size:sizeof(uint64).} = enum
         CPF_None = 0,
         CPF_Edit              = 0x0000000000000001,  #< Property is user-settable in the editor.
         CPF_ConstParm            = 0x0000000000000002,  #< This is a constant function parameter
@@ -66,7 +71,7 @@ type
 
     EObjectFlagsVal* = distinct(uint32)
 
-    EObjectFlags* {.importcpp, size:sizeof(uint32).} = enum
+    EObjectFlags* {.importflag, size:sizeof(uint32).} = enum
         # if you change any the bit of any of the RF_Load flags, then you will need legacy serialization
         RF_NoFlags = 0x00000000, #< No flags, used to avoid a cast=
         # This first group of flags mostly has to do with what kind of object it is. Other than transient, these are the persistent object flags.
@@ -118,7 +123,7 @@ type
         RF_AllocatedInSharedPage  =0x80000000,  #< Allocated from a ref-counted page shared with other UObjects
 
 
-    EFunctionFlags* {.importcpp, size:sizeof(uint32).} = enum 
+    EFunctionFlags* {.importflag, size:sizeof(uint32).} = enum 
         # Function flags.
         FUNC_None = 0x00000000,
         FUNC_Final = 0x00000001,  # Function is final (prebindable, non-overridable function).
@@ -159,7 +164,7 @@ type
 
 
 
-    EClassFlags* {.importcpp, size:sizeof(uint32).} = enum #TODO Test sizeof in cpp to see if they are uint32
+    EClassFlags* {.importflag, size:sizeof(uint32).} = enum #TODO Test sizeof in cpp to see if they are uint32
         #* No Flags */
         CLASS_None      =  0x00000000,
         #* Class is abstract and can't be instantiated directly. */
@@ -235,11 +240,11 @@ type
         #* Class has been consigned to oblivion as part of a blueprint recompile, and a newer version currently exists. */
         CLASS_NewerVersionExists  = 0x80000000
 
-    EClassCastFlags* {.importcpp, size:sizeof(uint64).} = enum #Dont think we will ever need the values imported
+    EClassCastFlags* {.importflag, size:sizeof(uint64).} = enum #Dont think we will ever need the values imported
         CASTCLASS_None = 0x0000000000000000
     
 
-    EStructFlags* {.importcpp, size:sizeof(uint32).} = enum
+    EStructFlags* {.importflag, size:sizeof(uint32).} = enum
         # State flags.
         STRUCT_NoFlags        = 0x00000000,  
         STRUCT_Native        = 0x00000001,
@@ -313,7 +318,7 @@ type
 
 
     
-    EFieldIterationFlags* {.importcpp, size:sizeof(uint8).} = enum 
+    EFieldIterationFlags* {.importflag, size:sizeof(uint8).} = enum 
         None = 0
         IncludeSuper = rotateLeftBits(1.uint8, 0)#1<<0       # Include super class
         IncludeDeprecated = rotateLeftBits(1.uint8, 1.int32)#1<<1  # Include deprecated properties

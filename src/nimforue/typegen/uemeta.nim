@@ -209,7 +209,8 @@ func toUEModule*(pkg:UPackagePtr) : Option[UEModule] =
                 .filter(x=>x.isSome())
                 .map(x=>x.get())
 
-  some makeUEModule(pkg.getName().split("/")[1], types)
+  some makeUEModule(pkg.getName().split("/")[^1], types)
+  
   
 
 

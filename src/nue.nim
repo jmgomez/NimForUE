@@ -214,7 +214,7 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
   if not noGen:
     doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0)
 
-  if nimcacheBuild(buildFlags) == Success:
+  if nimcacheBuild(buildFlags, "guestpch") == Success:
     copyNimForUELibToUEDir()
   else:
     log("!!>> Task: guestpch failed to build. <<<<", lgError)
@@ -330,10 +330,28 @@ task dumpConfig, "Displays the config variables":
   dump config
 
 task codegen, "Runs the process that will automatically generate the API based on the reflection data.":
-  let buildFlags = @[buildSwitches, targetSwitches, platformSwitches].foldl(a & " " & fold(b), "")
-  doAssert(execCmd(&"nim c {buildFlags} --nimcache:.nimcache/codegen -r src/buildscripts/codegen.nim") == 0)
+  # let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
+
+  # doAssert(execCmd(&"nim cpp {buildFlags} --nimcache:.nimcache/codegen --genscript -d:withPCH --app:lib src/buildscripts/codegen.nim") == 0)
+  # discard nimcacheBuild(buildFlags, "codegen")
 
 
+  let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
+
+  var force = ""
+  if "f" in taskOptions:
+    force = "-f"
+  var noGen = "nogen" in taskOptions
+  var lineDir = if "nolinedir" in taskOptions: "off" else: "on"
+
+  if not noGen:
+    doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/codegen src/buildscripts/codegen.nim") == 0)
+
+  if nimcacheBuild(buildFlags, "codegen") == Success:
+    copyNimForUELibToUEDir()
+  else:
+    log("!!>> Task: guestpch failed to build. <<<<", lgError)
+    quit(QuitFailure)
 # --- End Tasks ---
 
 main()

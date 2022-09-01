@@ -10,7 +10,7 @@ const PCHFile = "UEDeps.h"
 
 let nueConfig = getNimForUEConfig()
 let pluginDir = nueConfig.pluginDir
-let cacheDir = pluginDir / ".nimcache/guestpch"
+let cacheDir = pluginDir / ".nimcache"
 
 let isDebug = nueConfig.targetConfiguration in [Debug, Development]
 
@@ -119,6 +119,7 @@ proc pchFlags(shouldCreate: bool = false): string =
 # User defined types can appear in Nim std lib cpp files
 # When we import types from an external header when used with generic containers.
 # We need to move the inclusion of Unreal headers above nimbase.h to get them to compile.
+# Note: Nim produces warnings that get elevated to erorrs by unreal pragmas. 
 proc validateNimCPPHeaders(path: string): string =
   result = path
   if usesPCHFile(path):
@@ -189,7 +190,7 @@ proc winpch*(buildFlags: string) =
 proc compileThread(cmd: string):int {.thread.} =
   execCmd(cmd)
 
-proc nimcacheBuild*(buildFlags: string): BuildStatus =
+proc nimcacheBuild*(buildFlags: string, relCacheDir:string): BuildStatus =
   # Generate commands for compilation and linking by examining the contents of the nimcache
   if withPCH and defined(windows) and not fileExists(pchFilepath):
     echo("PCH file " & pchFilepath & " not found. Building...")
@@ -199,7 +200,7 @@ proc nimcacheBuild*(buildFlags: string): BuildStatus =
   let dbgFlags = debugFlags()
 
   var objpaths: seq[string]
-  for kind, path in walkDir(cacheDir):
+  for kind, path in walkDir(cacheDir/relCacheDir):
     var cpppath = path
     var objpath = path & ".obj"
     case kind:

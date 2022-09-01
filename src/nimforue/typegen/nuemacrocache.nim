@@ -1,8 +1,7 @@
-include ../unreal/definitions
+
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, macros, macrocache, tables]
-import ../unreal/core/containers/unrealstring
-import ../unreal/coreuobject/[package, uobject]
+
 import ../typegen/models
 
 
