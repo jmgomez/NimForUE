@@ -41,8 +41,8 @@ uClass ANimTestActor of ATestActor:
             UE_Log "Test static"
 
         proc tick(deltaTime:float)  = 
-            self.setColorByStringInMesh("(R=1,G=0.5,B=0.2,A=1)")
-            self.testPrint2()
+            self.setColorByStringInMesh("(R=1,G=0.1,B=0.8,A=1)")
+            #self.testPrint2()
 
         proc beginPlay() = 
             UE_Log "Que pasa another change did this carah"

@@ -2,7 +2,7 @@
 import nimforue/[ffinimforue]
 
 import nimforue/examples/examples
-import ./.reflectiondata/nimforuebindings
+#import ./.reflectiondata/nimforuebindings
 
 # import nimforue/macros/[ffi, uebind]
 #TODO add with test definition so they are pulled only if we want to 
@@ -14,4 +14,4 @@ import ./.reflectiondata/nimforuebindings
 
 
 
-echo $module
+#echo $module

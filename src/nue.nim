@@ -5,6 +5,7 @@ import buildscripts / [buildcommon, buildscripts, nimforueconfig, nimcachebuild]
 var taskOptions: Table[string, string]
 let config = getNimForUEConfig()
 
+
 type
   Task = object
     name: string
@@ -214,7 +215,7 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
   if not noGen:
     doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0)
 
-  if nimcacheBuild(buildFlags, "guestpch") == Success:
+  if nimcacheBuild(buildFlags, "guestpch", "nimforue") == Success:
     copyNimForUELibToUEDir()
   else:
     log("!!>> Task: guestpch failed to build. <<<<", lgError)
@@ -275,6 +276,7 @@ task cleanh, "Clean the .nimcache/host folder":
 task cleang, "Clean the .nimcache guestpch and winpch folder":
   removeDir(".nimcache/winpch")
   removeDir(".nimcache/guestpch")
+  removeDir(".nimcache/codegen")
 
 when defined windows:
   task killvcc, "Windows: Kills cl.exe and link.exe if they're running":
@@ -330,12 +332,6 @@ task dumpConfig, "Displays the config variables":
   dump config
 
 task codegen, "Runs the process that will automatically generate the API based on the reflection data.":
-  # let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
-
-  # doAssert(execCmd(&"nim cpp {buildFlags} --nimcache:.nimcache/codegen --genscript -d:withPCH --app:lib src/buildscripts/codegen.nim") == 0)
-  # discard nimcacheBuild(buildFlags, "codegen")
-
-
   let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
 
   var force = ""
@@ -347,10 +343,10 @@ task codegen, "Runs the process that will automatically generate the API based o
   if not noGen:
     doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/codegen src/buildscripts/codegen.nim") == 0)
 
-  if nimcacheBuild(buildFlags, "codegen") == Success:
-    copyNimForUELibToUEDir()
+  if nimcacheBuild(buildFlags, "codegen", "codegen") == Success:
+    log("!!>> Task: codegen built! <<<<")
   else:
-    log("!!>> Task: guestpch failed to build. <<<<", lgError)
+    log("!!>> Task: codegen failed to build. <<<<", lgError)
     quit(QuitFailure)
 # --- End Tasks ---
 
