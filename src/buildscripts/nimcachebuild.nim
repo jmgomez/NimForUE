@@ -260,18 +260,3 @@ proc nimcacheBuild*(buildFlags: string, relCacheDir:string, linkFileName: string
     return FailedLink
 
   Success
-
-proc codegenBuild*(buildFlags: string): BuildStatus =
-  # Generate commands for compilation and linking by examining the contents of the nimcache
-  # similiar to nimcacheBuild, but we don't need the pdbs for debugging
-  doAssert(fileExists(pchFilepath), "The guest pch needs to run first so we get a pch file.")
-
-  let dbgFlags = "" # don't need it for codegen
-  let (status, objpaths) = compileCpp("codegen", dbgFlags)
-  if status != Success:
-    return status
-
-  # TODO codegen we want to generate an exe to spit out a nim file
-  # link if all the compiles succeed
-
-  Success

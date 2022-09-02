@@ -51,8 +51,8 @@ proc main() =
       if res.len > 0:
         ts = some(res[0].t)
       elif ts.isSome():
-        doAssert(not taskOptions.hasKey("args"), "TODO: accept more than one task argument")
-        taskOptions["args"] = key
+        doAssert(not taskOptions.hasKey("task_arg"), "TODO: accept more than one task argument")
+        taskOptions["task_arg"] = key
       else:
         log &"!! Unknown task {key}."
         echoTasks()
@@ -332,22 +332,11 @@ task dumpConfig, "Displays the config variables":
   dump config
 
 task codegen, "Runs the process that will automatically generate the API based on the reflection data.":
-  let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
+  doAssert(taskOptions.hasKey("module"), "Missing module argument! Usage: nue codegen --module:codegenFilePath")
+  let codegenFilePath = taskOptions["module"]
+  doAssert(execCmd(&"nim cpp --compileonly --nomain --nimcache:.nimcache/codegen {codegenFilePath}") == 0)
+  log(&"!!>> Task: codegen complete! <<<<")
 
-  var force = ""
-  if "f" in taskOptions:
-    force = "-f"
-  var noGen = "nogen" in taskOptions
-  var lineDir = if "nolinedir" in taskOptions: "off" else: "on"
-
-  if not noGen:
-    doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/codegen src/buildscripts/codegen.nim") == 0)
-
-  if codegenBuild(buildFlags) == Success:
-    log("!!>> Task: codegen built! <<<<")
-  else:
-    log("!!>> Task: codegen failed to build. <<<<", lgError)
-    quit(QuitFailure)
 # --- End Tasks ---
 
 main()
