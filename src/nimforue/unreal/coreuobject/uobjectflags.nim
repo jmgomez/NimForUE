@@ -2,10 +2,8 @@ import bitops
 import ../../typegen/models
 import std/[genasts, macros, sugar, json, sequtils]
 
-when defined codegen:
-    {.pragma: importflag .}
-else:
-    {.pragma: importflag, importcpp, nodecl, header: ueincludes.}
+
+{.pragma: importflag, importcpp, nodecl, header: ueincludes.}
   
 
 type
