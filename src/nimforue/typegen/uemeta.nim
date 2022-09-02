@@ -82,10 +82,10 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         raise newException(Exception, fmt"Unsupported type {prop.getName()}")
 
 #Function that receives a FProperty and returns a Type as string
-func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : UEField = #The expected type is something that UEField can understand
+func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : Option[UEField] = #The expected type is something that UEField can understand
     let name = prop.getName()
     let nimType = prop.getNimTypeAsStr(outer)
-    return makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
+    some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
 
     
 # func toUEField(udel:UDelegateFunctionPtr) : UEField = 
@@ -94,10 +94,10 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : UEField = #The expected t
 
 
 
-func toUEField*(ufun:UFunctionPtr) : UEField = 
+func toUEField*(ufun:UFunctionPtr) : Option[UEField] = 
     # let asDel = ueCast[UDelegateFunction](ufun)
     # if not asDel.isNil(): return toUEField asDel
-    let params = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun))
+    let params = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun)).sequence()
     # UE_Warn(fmt"{ufun.getName()}")
     let class = ueCast[UClass](ufun.getOuter())
     let className = class.getPrefixCpp() & class.getName()
@@ -105,7 +105,7 @@ func toUEField*(ufun:UFunctionPtr) : UEField =
     let fnNameNim = actualName.removePrefixes(fnPrefixes)
     var fnField = makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
     fnField.actualFunctionName = actualName
-    fnField
+    some fnField
 
 func tryParseJson[T](jsonStr : string) : Option[T] = 
     {.cast(noSideEffect).}:
@@ -125,9 +125,10 @@ func toUEType*(cls:UClassPtr) : UEType =
 
  
     let fields = getFuncsFromClass(cls)
-                    .map(toUEField) & 
+                    .map(toUEField).sequence() & 
                  getFPropsFromUStruct(cls)
                     .map(x=>toUEField(x, cls))
+                    .sequence()
     let name = cls.getPrefixCpp() & cls.getName()
     let parent = cls.getSuperClass()
     let parentName = parent.getPrefixCpp() & parent.getName()
@@ -146,6 +147,7 @@ func toUEType*(str:UStructPtr) : UEType =
 
     let fields = getFPropsFromUStruct(str)
                     .map(x=>toUEField(x, str))
+                    .sequence()
 
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
@@ -165,6 +167,7 @@ func toUEType*(del:UNimDelegateFunctionPtr) : UEType =
 
     let fields = getFPropsFromUStruct(del)
                     .map(x=>toUEField(x, del))
+                    .sequence()
 
     #TODO is defaulting to MulticastDelegate this may be wrong when trying to autogen the types 
     UEType(name:name, kind:uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields:fields.reversed())
@@ -208,6 +211,7 @@ func toUEModule*(pkg:UPackagePtr) : Option[UEModule] =
                 .map((x:UObjectPtr)=>getUETypeFrom(x))
                 .filter(x=>x.isSome())
                 .map(x=>x.get())
+               
 
   some makeUEModule(pkg.getName().split("/")[^1], types)
   

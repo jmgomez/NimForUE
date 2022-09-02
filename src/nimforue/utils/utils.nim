@@ -3,6 +3,7 @@ import std/[options, strutils, sequtils, sugar, tables]
 
 
 #seq
+
 func isEmpty*[T](s: seq[T]): bool = s.len == 0
 
 func head*[T](xs: seq[T]): Option[T] =
@@ -44,6 +45,10 @@ func tap*[T](xs: seq[T], fn: (x: T)->void): seq[T] =
     fn(x)
   xs
 
+
+#TODO use concepts to make the general case
+func sequence*[T](xs : seq[Option[T]]) : seq[T] = 
+  xs.filter((x:Option[T])=>x.isSome()).map((x:Option[T])=>x.get())
 
 ##GENERAL
 func nonDefaultOr*[T](value, orValue: T): T =
