@@ -81,11 +81,24 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
     except:
         raise newException(Exception, fmt"Unsupported type {prop.getName()}")
 
+
+func isBPExposed(prop:FPropertyPtr) : bool = CPF_BlueprintVisible in prop.getPropertyFlags() 
+
+func isBPExposed(ufun:UFunctionPtr) : bool = FUNC_BlueprintCallable in ufun.functionFlags
+
+func isBPExposed(str:UStructPtr) : bool = 
+    let metadata = someNil(str.findMetaData("BlueprintType")).map(x=>x[])
+    metadata.get("false") == "true"
+
+
 #Function that receives a FProperty and returns a Type as string
 func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : Option[UEField] = #The expected type is something that UEField can understand
     let name = prop.getName()
     let nimType = prop.getNimTypeAsStr(outer)
-    some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
+    if prop.isBPExposed():
+        some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
+    else:
+        none(UEField)
 
     
 # func toUEField(udel:UDelegateFunctionPtr) : UEField = 
@@ -105,7 +118,10 @@ func toUEField*(ufun:UFunctionPtr) : Option[UEField] =
     let fnNameNim = actualName.removePrefixes(fnPrefixes)
     var fnField = makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
     fnField.actualFunctionName = actualName
-    some fnField
+    if ufun.isBPExposed():
+        some fnField
+    else:
+        none(UEField)
 
 func tryParseJson[T](jsonStr : string) : Option[T] = 
     {.cast(noSideEffect).}:
@@ -115,13 +131,13 @@ func tryParseJson[T](jsonStr : string) : Option[T] =
             UE_Error &"Crashed parsing json for with json {jsonStr}" 
             none[T]()
 
-func toUEType*(cls:UClassPtr) : UEType =
+func toUEType*(cls:UClassPtr) : Option[UEType] =
     #First it tries to see if it is a UNimClassBase and if it has a UEType stored.
     #Otherwise tries to parse the UEType from the Runtime information.
     let storedUEType = tryUECast[UNimClassBase](cls)
                         .flatMap((cls:UNimClassBasePtr)=>tryParseJson[UEType](cls.ueType))
                         
-    if storedUEType.isSome(): return storedUEType.get()
+    if storedUEType.isSome(): return storedUEType
 
  
     let fields = getFuncsFromClass(cls)
@@ -132,16 +148,19 @@ func toUEType*(cls:UClassPtr) : UEType =
     let name = cls.getPrefixCpp() & cls.getName()
     let parent = cls.getSuperClass()
     let parentName = parent.getPrefixCpp() & parent.getName()
+    if cls.isBpExposed():
+        some UEType(name:name, kind:uetClass, parent:parentName, fields:fields.reversed())
+    else:
+        UE_Warn &"Class {name} is not exposed to BP"
+        none(UEType)
 
-    UEType(name:name, kind:uetClass, parent:parentName, fields:fields.reversed())
-
-func toUEType*(str:UStructPtr) : UEType =
+func toUEType*(str:UStructPtr) : Option[UEType] =
     
     #same as above 
     let storedUEType = tryUECast[UNimScriptStruct](str)
                         .flatMap((str:UNimScriptStructPtr)=>tryParseJson[UEType](str.ueType))
 
-    if storedUEType.isSome(): return storedUEType.get()
+    if storedUEType.isSome(): return storedUEType
 
     let name = str.getPrefixCpp() & str.getName()
 
@@ -151,49 +170,53 @@ func toUEType*(str:UStructPtr) : UEType =
 
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
+    if str.isBpExposed():
+        some UEType(name:name, kind:uetStruct, fields:fields.reversed())
+    else:
+        UE_Warn &"Struct {name} is not exposed to BP"
+        none(UEType)
 
-    UEType(name:name, kind:uetStruct, fields:fields.reversed())
 
 
-func toUEType*(del:UNimDelegateFunctionPtr) : UEType =
+func toUEType*(del:UNimDelegateFunctionPtr) : Option[UEType] =
     
     #same as above 
     let storedUEType = tryUECast[UNimDelegateFunction](del)
                         .flatMap((del:UNimDelegateFunctionPtr)=>tryParseJson[UEType](del.ueType))
 
-    if storedUEType.isSome(): return storedUEType.get() 
+    if storedUEType.isSome(): return storedUEType
 
     let name = del.getPrefixCpp() & del.getName()
 
     let fields = getFPropsFromUStruct(del)
                     .map(x=>toUEField(x, del))
                     .sequence()
-
+    
     #TODO is defaulting to MulticastDelegate this may be wrong when trying to autogen the types 
-    UEType(name:name, kind:uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields:fields.reversed())
+    
+    some UEType(name:name, kind:uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields:fields.reversed())
 
 
 
 
 
-func toUEType*(uenum:UEnumPtr) : UEType = #notice we have to specify the type because we use specific functions here. All types are Nim base types
+func toUEType*(uenum:UEnumPtr) : Option[UEType] = #notice we have to specify the type because we use specific functions here. All types are Nim base types
     # let fields = getFPropsFromUStruct(enum).map(toUEField)
     let storedUEType = tryUECast[UNimEnum](uenum)
                         .flatMap((uenum:UNimEnumPtr)=>tryParseJson[UEType](uenum.ueType))
                         
-    if storedUEType.isSome(): return storedUEType.get()
+    if storedUEType.isSome(): return storedUEType
 
     let name = uenum.getName()
     let fields = uenum.getEnums()
                       .map((x)=>makeFieldASUEnum(x.key.toFString()))
                       .toSeq()
-    UEType(name:name, kind:uetEnum, fields: fields) #TODO
-
-
+    some UEType(name:name, kind:uetEnum, fields:fields)
+   
 
 
 func convertToUEType[T](obj:UObjectPtr) : Option[UEType] = 
-  tryUECast[T](obj).map((val:ptr T)=>toUEType(val))
+  tryUECast[T](obj).flatMap((val:ptr T)=>toUEType(val))
 
 
 func getUETypeFrom(obj:UObjectPtr) : Option[UEType] = 

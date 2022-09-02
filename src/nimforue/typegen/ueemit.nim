@@ -124,7 +124,7 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo,
     
 
 
-    let areEquals = prev.isSome() and prev.get().toUEType() == emitter.ueType
+    let areEquals = prev.isSome() and prev.get().toUEType().get() == emitter.ueType
     if areEquals: none[ptr T]()
     else: 
         prev.run prepareForReinst

@@ -8,7 +8,12 @@ import std/[os, strutils, strformat]
 
 
 macro genCode(module:static UEModule) =
-  let code = repr(genModuleDecl(module)) 
+  let code = repr(genModuleDecl(module))
+              .multiReplace(
+    ("{.inject.}", ""),
+    ("{.inject, ", "{."),
+    ("__DelegateSignature", "")
+  )
   #It will require prelude 
   let path = "src"/"nimforue"/"unreal"/"bindings"/module.name.toLower() & ".nim"
   writeFile(path, code)
