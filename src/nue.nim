@@ -343,7 +343,7 @@ task codegen, "Runs the process that will automatically generate the API based o
   if not noGen:
     doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/codegen src/buildscripts/codegen.nim") == 0)
 
-  if nimcacheBuild(buildFlags, "codegen", "codegen") == Success:
+  if codegenBuild(buildFlags) == Success:
     log("!!>> Task: codegen built! <<<<")
   else:
     log("!!>> Task: codegen failed to build. <<<<", lgError)

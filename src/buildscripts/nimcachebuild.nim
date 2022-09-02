@@ -15,6 +15,7 @@ let cacheDir = pluginDir / ".nimcache"
 let isDebug = nueConfig.targetConfiguration in [Debug, Development]
 
 proc debugFlags():string =
+  # This has some hardcoded paths for guestpch!
   if isDebug:
     let pdbFolder = pluginDir / ".nimcache/guestpch/pdbs"
     createDir(pdbFolder)
@@ -87,7 +88,8 @@ let compileFlags = [
 "/GF", # Enables string pooling.
 "/bigobj", # Increases the number of addressable sections in an .obj file.
 "/GR-", # /GR[-]	Enables run-time type information (RTTI).
-"/std:c++20", # unreal uses std:c++17, we need c++20 for designated initializers
+#"/std:c++latest", # unreal uses std:c++17, we need c++20 for designated initializers, but unreal uses c++latest if C++ 20 modules are enabled via ModuleRules bEnableCPPModules
+"/std:c++20", # we're sticking to 20 for now (need to update as time goes on). unreal uses std:c++17, we need c++20 for designated initializers, but unreal uses c++latest if C++ 20 modules are enabled via ModuleRules bEnableCPPModules
 "/Zc:strictStrings-", # need this for converting const char []  to NCString since it loses const, for std:c++20
 "/Zp8",
 "/source-charset:utf-8" ,
@@ -191,16 +193,11 @@ proc winpch*(buildFlags: string) =
 proc compileThread(cmd: string):int {.thread.} =
   execCmd(cmd)
 
-proc nimcacheBuild*(buildFlags: string, relCacheDir:string, linkFileName: string): BuildStatus =
-  # Generate commands for compilation and linking by examining the contents of the nimcache
-  if withPCH and defined(windows) and not fileExists(pchFilepath):
-    echo("PCH file " & pchFilepath & " not found. Building...")
-    winpch(buildFlags)
 
+proc compileCpp(relCacheDir: string, dbgFlags: string): (BuildStatus, seq[string]) =
   var compileCmds: seq[string]
-  let dbgFlags = debugFlags()
-
   var objpaths: seq[string]
+
   for kind, path in walkDir(cacheDir/relCacheDir):
     var cpppath = path
     var objpath = path & ".obj"
@@ -214,10 +211,6 @@ proc nimcacheBuild*(buildFlags: string, relCacheDir:string, linkFileName: string
     else:
       continue
 
-  # if compileCmds.len == 0:
-  #   echo "-- No changes detected --"
-  #   return NoChange
-
   if parallelBuild:
     var res = newSeq[FlowVar[int]]()
     for i, cmd in compileCmds:
@@ -230,12 +223,25 @@ proc nimcacheBuild*(buildFlags: string, relCacheDir:string, linkFileName: string
         isCompileSuccessful = false
 
     if not isCompileSuccessful:
-      return FailedCompile
+      return (FailedCompile, objpaths)
   else:
     for i, cmd in compileCmds:
       if compileThread(cmd) != 0:
-        return FailedCompile
-  
+        return (FailedCompile, objpaths)
+
+  result = (Success, objpaths)
+
+proc nimcacheBuild*(buildFlags: string, relCacheDir:string, linkFileName: string): BuildStatus =
+  # Generate commands for compilation and linking by examining the contents of the nimcache
+  if withPCH and defined(windows) and not fileExists(pchFilepath):
+    echo("PCH file " & pchFilepath & " not found. Building...")
+    winpch(buildFlags)
+
+  let dbgFlags = debugFlags()
+  let (status, objpaths) = compileCpp(relCacheDir, dbgFlags)
+  if status != Success:
+    return status
+
   # link if all the compiles succeed
   # example link command
   # vccexe.exe  /LD --platform:amd64 /FeD:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Binaries\nim\nimforue.dll  D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@sdigitsutils.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sassertions.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@ssystem@sdollars.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@ssyncio.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@ssystem.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@spure@smath.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@spure@sstrutils.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@sunreal@sCore@sContainers@sunrealstring.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@sunreal@scoreuobject@suobject.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@sunreal@scoreuobject@sunrealtype.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@sunreal@snimforue@snimforuebindings.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@sunreal@score@smath@svector.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@sunreal@score@senginetypes.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@spure@sdynlib.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@swindows@swinlean.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@spure@stimes.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@sstd@sprivate@swin_setenv.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mC@c@sNim@slib@spure@sos.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@smanualtests@smanualtestsarray.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@sffinimforue.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@stest@stestuobject.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue@stest@stest.nim.cpp.obj D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\.nimcache\nimforuepch\@mnimforue.nim.cpp.obj  /nologo   "D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Development\Core\UnrealEditor-Core.lib" "D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Development\CoreUObject\UnrealEditor-CoreUObject.lib" "D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Development\Engine\UnrealEditor-Engine.lib" "D:\UE_5.0\Engine\Intermediate\Build\Win64\UnrealEditor\Development\Projects\UnrealEditor-Projects.lib" "D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings\UnrealEditor-NimForUEBindings.lib"   /Zi /FS /Od "D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings\Module.NimForUEBindings.cpp.obj" "D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings\Module.NimForUEBindings.gen.cpp.obj" "D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUEBindings\PCH.NimForUEBindings.h.obj"
@@ -252,5 +258,20 @@ proc nimcacheBuild*(buildFlags: string, relCacheDir:string, linkFileName: string
   let linkRes = execCmd(linkCmd)
   if linkRes != 0:
     return FailedLink
+
+  Success
+
+proc codegenBuild*(buildFlags: string): BuildStatus =
+  # Generate commands for compilation and linking by examining the contents of the nimcache
+  # similiar to nimcacheBuild, but we don't need the pdbs for debugging
+  doAssert(fileExists(pchFilepath), "The guest pch needs to run first so we get a pch file.")
+
+  let dbgFlags = "" # don't need it for codegen
+  let (status, objpaths) = compileCpp("codegen", dbgFlags)
+  if status != Success:
+    return status
+
+  # TODO codegen we want to generate an exe to spit out a nim file
+  # link if all the compiles succeed
 
   Success
