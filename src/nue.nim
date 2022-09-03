@@ -322,7 +322,6 @@ task rebuild, "Cleans and rebuilds the host and guest":
       inc attempts
       if attempts > 5:
         quit("Could not clean nimCache. Aborting.", QuitFailure)
-   
   ubuild(taskOptions)
   winpch(taskOptions)
   guestpch(taskOptions)
