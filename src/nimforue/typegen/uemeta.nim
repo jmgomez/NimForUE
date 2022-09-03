@@ -88,7 +88,14 @@ func isBPExposed(ufun:UFunctionPtr) : bool = FUNC_BlueprintCallable in ufun.func
 
 func isBPExposed(str:UStructPtr) : bool = 
     let metadata = someNil(str.findMetaData("BlueprintType")).map(x=>x[])
-    metadata.get("false") == "true"
+    result = metadata.get("false") == "true"
+    if not result: #We need to check if the class has any function exposed to blueprint (.ie. BlueprintLibraries or static classes with exposed functions)
+        result = tryUECast[UClass](str)
+                    .map((cls:UClassPtr)=>
+                            cls.getFuncsFromClass()
+                               .filter(isBPExposed)
+                               .any())
+                    .get(false)
 
 
 #Function that receives a FProperty and returns a Type as string
@@ -151,7 +158,7 @@ func toUEType*(cls:UClassPtr) : Option[UEType] =
     if cls.isBpExposed():
         some UEType(name:name, kind:uetClass, parent:parentName, fields:fields.reversed())
     else:
-        UE_Warn &"Class {name} is not exposed to BP"
+        # UE_Warn &"Class {name} is not exposed to BP"
         none(UEType)
 
 func toUEType*(str:UStructPtr) : Option[UEType] =
@@ -173,7 +180,7 @@ func toUEType*(str:UStructPtr) : Option[UEType] =
     if str.isBpExposed():
         some UEType(name:name, kind:uetStruct, fields:fields.reversed())
     else:
-        UE_Warn &"Struct {name} is not exposed to BP"
+        # UE_Warn &"Struct {name} is not exposed to BP"
         none(UEType)
 
 
@@ -231,9 +238,9 @@ func getUETypeFrom(obj:UObjectPtr) : Option[UEType] =
 func toUEModule*(pkg:UPackagePtr) : Option[UEModule] = 
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let types = allObjs.toSeq()
-                .map((x:UObjectPtr)=>getUETypeFrom(x))
-                .filter(x=>x.isSome())
-                .map(x=>x.get())
+                .map(getUETypeFrom)
+                .sequence()
+                .filter((x:UEType)=>x.kind != uetDelegate)
                
 
   some makeUEModule(pkg.getName().split("/")[^1], types)
@@ -260,7 +267,6 @@ func findFunctionByNameWithPrefixes*(cls: UClassPtr, name:string) : Option[UFunc
         let fnName = prefix & name
         # assert not cls.isNil()
         if cls.isNil():
-            UE_Error "WTF the CLASS is None for " & name
             return none[UFunctionPtr]()
         let fun = cls.findFunctionByName(makeFName(fnName))
         if not fun.isNil(): 
@@ -360,7 +366,7 @@ proc emitUClass*(ueType : UEType, package:UPackagePtr, fnTable : Table[string, O
         case field.kind:
         of uefProp: discard field.emitFProperty(newCls) 
         of uefFunction: 
-            UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}"
+            # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}"
             discard emitUFunction(field, newCls, fnTable[field.name]) 
         else:
             UE_Error("Unsupported field kind: " & $field.kind)
