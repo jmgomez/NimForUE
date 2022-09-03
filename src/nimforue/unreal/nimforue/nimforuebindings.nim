@@ -41,7 +41,7 @@ proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : v
 
 
 #UNimEnum
-func getEnums*(uenum:UEnumPtr) : TArray[TPair[FName, int64]] {.importcpp:"UReflectionHelpers::GetEnums(#)".}
+func getEnums*(uenum:UEnumPtr) : TArray[TPair[FString, int64]] {.importcpp:"UReflectionHelpers::GetEnums(#)".}
 proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVersionExists()".}
 
 #UNimClassBase

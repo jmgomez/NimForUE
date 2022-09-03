@@ -15,6 +15,21 @@ public:
 	
 };
 
+UENUM()
+enum EMyTestRegularEnum
+{
+	OneValue,
+	TwoValues,
+	ThreeValues
+};
+
+UENUM()
+enum class EMyTestEnumClass
+{
+	OneClassValue,
+	AnotherClassValue,
+	AnotherMore
+};
 
 UCLASS(BlueprintType, Blueprintable)
 class NIMFORUE_API ATestActor : public AActor {

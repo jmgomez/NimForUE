@@ -100,13 +100,14 @@ void UReflectionHelpers::NimForUEError(FString Msg) {
 
 }
 
-TArray<TPair<FName, int64>> UReflectionHelpers::GetEnums(UEnum* Enum)
+TArray<TPair<FString, int64>> UReflectionHelpers::GetEnums(UEnum* Enum)
 {
 	int Values = Enum->NumEnums();
-	TArray<TPair<FName, int64>> Names;
+	TArray<TPair<FString, int64>> Names;
 	Names.Reserve(Values);
 	for (int i=0; i<Values; i++){
-		Names.Add(MakeTuple(Enum->GetNameByIndex(i), i));
+		// Names.Add(MakeTuple(Enum->GetNameByIndex(i), i));
+		Names.Add(MakeTuple(Enum->GetNameStringByIndex(i), i));
 	}
 	return Names;
 }

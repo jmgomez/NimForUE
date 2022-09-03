@@ -82,22 +82,22 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         raise newException(Exception, fmt"Unsupported type {prop.getName()}")
 
 
+
 func isBPExposed(prop:FPropertyPtr) : bool = CPF_BlueprintVisible in prop.getPropertyFlags() 
 
 func isBPExposed(ufun:UFunctionPtr) : bool = FUNC_BlueprintCallable in ufun.functionFlags
 
-func isBPExposed(str:UStructPtr) : bool = 
-    let metadata = someNil(str.findMetaData("BlueprintType")).map(x=>x[])
-    result = metadata.get("false") == "true"
-    if not result: #We need to check if the class has any function exposed to blueprint (.ie. BlueprintLibraries or static classes with exposed functions)
-        result = tryUECast[UClass](str)
-                    .map((cls:UClassPtr)=>
-                            cls.getFuncsFromClass()
-                               .filter(isBPExposed)
-                               .any())
-                    .get(false)
+func isBPExposed(str:UFieldPtr) : bool = str.hasMetadata("BlueprintType")
 
-
+func isBPExposed(cls:UClassPtr) : bool =
+     cls.hasMetadata("BlueprintType") or 
+     cls.getFuncsFromClass()
+        .filter(isBPExposed)
+        .any()
+        
+func isBPExposed(uenum:UEnumPtr) : bool =
+    uenum.hasMetadata("BlueprintType")
+  
 #Function that receives a FProperty and returns a Type as string
 func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : Option[UEField] = #The expected type is something that UEField can understand
     let name = prop.getName()
@@ -216,9 +216,14 @@ func toUEType*(uenum:UEnumPtr) : Option[UEType] = #notice we have to specify the
 
     let name = uenum.getName()
     let fields = uenum.getEnums()
-                      .map((x)=>makeFieldASUEnum(x.key.toFString()))
+                      .map((x)=>makeFieldASUEnum(x.key))
                       .toSeq()
-    some UEType(name:name, kind:uetEnum, fields:fields)
+    
+    if uenum.isBpExposed():
+        some UEType(name:name, kind:uetEnum, fields:fields)
+    else:
+        UE_Warn &"Enum {name} is not exposed to BP"
+        none(UEType)
    
 
 
