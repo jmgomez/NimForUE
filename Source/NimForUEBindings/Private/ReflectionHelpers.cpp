@@ -106,7 +106,18 @@ TArray<TPair<FString, int64>> UReflectionHelpers::GetEnums(UEnum* Enum)
 	TArray<TPair<FString, int64>> Names;
 	Names.Reserve(Values);
 	for (int i=0; i<Values; i++){
-		// Names.Add(MakeTuple(Enum->GetNameByIndex(i), i));
+		//
+		// FString Name;
+		// Enum->GetNameByIndex(i).ToString(Name);
+		// Names.Add(MakeTuple(Name, i));
+		// Names.Add(MakeTuple(Enum->GetNameStringByIndex(i), i));
+		FString Name = Enum->GetNameByIndex(i).ToString();
+
+		int32 ColonPos;
+		if (Name.FindLastChar((TCHAR)':', ColonPos))
+			Name = Name.RightChop(ColonPos + 1);
+
+		// Names.Add(MakeTuple(Enum->GetNameStringByIndex(i), i));
 		Names.Add(MakeTuple(Enum->GetNameStringByIndex(i), i));
 	}
 	return Names;

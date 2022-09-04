@@ -52,3 +52,21 @@ uClass AActorScratchpad of AActor:
     proc showUEConfig() = 
       let config = getNimForUEConfig()
       createDir(config.pluginDir / ".reflectiondata")
+
+    proc findEnum() = 
+      let enumToFind = "EMaterialSamplerType"
+      UE_Log &"looking for enum {enumToFind}"
+      let uenum = someNil findObject[UEnum](anyPackage(), enumToFind)
+      UE_Log &"Found {uenum}"
+      let ueField = uenum.map(toUEType)
+      UE_Warn &"Field {ueField}"
+      # let enums = uenum.get().getEnums().toSeq()
+      # UE_Log &"Enum values: {enums}"
+
+
+    
+    proc showTotalEnums() = 
+      let module = tryGetPackageByName("Engine")
+                      .flatmap(toUEModule)
+      let enums = module.get().types.filter((x:UEType)=> x.kind == uetEnum)
+      UE_Log &"Total enums: {enums.len}"
