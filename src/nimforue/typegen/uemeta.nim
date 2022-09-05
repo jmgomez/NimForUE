@@ -215,9 +215,9 @@ func toUEType*(uenum:UEnumPtr) : Option[UEType] = #notice we have to specify the
     if storedUEType.isSome(): return storedUEType
 
     let name = uenum.getName()
-    let fields = uenum.getEnums()
-                      .map((x)=>makeFieldASUEnum(x.key))
-                      .toSeq()
+    var fields:seq[UEField]
+    for f in uenum.getEnums:
+        fields.add makeFieldAsUENum(f.key)
     
     if uenum.isBpExposed():
         some UEType(name:name, kind:uetEnum, fields:fields)

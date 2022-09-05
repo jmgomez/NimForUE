@@ -23,7 +23,7 @@ uClass AActorScratchpad of AActor:
       let config = getNimForUEConfig()
       let reflectionDataPath = config.pluginDir / "src" / ".reflectiondata" #temporary
       createDir(reflectionDataPath)
-      let bindingsDir = "src"/"nimforue"/"unreal"/"bindings"
+      let bindingsDir = config.pluginDir / "src"/"nimforue"/"unreal"/"bindings"
       createDir(bindingsDir)
       let moduleNames = @["NimForUEBindings", "Engine"]
       for moduleName in moduleNames:
@@ -42,6 +42,8 @@ uClass AActorScratchpad of AActor:
           removeFile(codegenPath)
           #UE_Log &"The result is {result} "
           UE_Log &"-= Bindings for {moduleName} generated in {bindingsPath} =- "
+
+          doAssert(fileExists(bindingsPath))
         except:
           let e : ref Exception = getCurrentException()
 
@@ -60,8 +62,8 @@ uClass AActorScratchpad of AActor:
       UE_Log &"Found {uenum}"
       let ueField = uenum.map(toUEType)
       UE_Warn &"Field {ueField}"
-      # let enums = uenum.get().getEnums().toSeq()
-      # UE_Log &"Enum values: {enums}"
+      let enums = uenum.get().getEnums()
+      UE_Log &"Enum values: {enums}"
 
 
     
