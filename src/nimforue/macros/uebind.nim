@@ -271,12 +271,12 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
             proc propIdent* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
-                let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
+                let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
                 getPropertyValuePtr[typeNode](prop, obj)[]
             
             proc `propIdent=`* (obj {.inject.} : ptrName, val {.inject.} :typeNode) = 
                 var value {.inject.} : typeNode = val
-                let prop {.inject.} = getClassByName(className).getFPropertyByName propUEName
+                let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
    
 
