@@ -185,7 +185,7 @@ func toUEType*(str:UStructPtr) : Option[UEType] =
 
 
 
-func toUEType*(del:UNimDelegateFunctionPtr) : Option[UEType] =
+func toUEType*(del:UDelegateFunctionPtr) : Option[UEType] =
     
     #same as above 
     let storedUEType = tryUECast[UNimDelegateFunction](del)
@@ -247,7 +247,7 @@ func toUEModule*(pkg:UPackagePtr) : Option[UEModule] =
   let types = allObjs.toSeq()
                 .map(getUETypeFrom)
                 .sequence()
-                .filter((x:UEType)=>x.kind != uetDelegate)
+                # .filter((x:UEType)=>x.kind != uetDelegate)
                
 
   some makeUEModule(pkg.getName().split("/")[^1], types)
