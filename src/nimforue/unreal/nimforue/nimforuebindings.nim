@@ -41,7 +41,7 @@ proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : v
 
 
 #UNimEnum
-func getEnums*(uenum:UEnumPtr) : TArray[TPair[FString, int64]] {.importcpp:"UReflectionHelpers::GetEnums(#)".}
+func getEnums*(uenum:UEnumPtr) : TArray[FString] {.importcpp:"UReflectionHelpers::GetEnums(#)".}
 proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVersionExists()".}
 
 #UNimClassBase
@@ -162,7 +162,6 @@ proc setNativeFunc*(ufunc: ptr UFunction, funcPtr: FNativeFuncPtr) : void {.impo
 proc increaseStack*(stack: var FFrame) : void {.importcpp: "UReflectionHelpers::IncreaseStack(#)" .}
 proc stepCompiledIn*[T : FProperty](frame:var FFrame, result:pointer, prop:ptr T) : void {.importcpp:"UReflectionHelpers::StepCompiledIn<'*3>(@)".}
 
- 
  
 #UPACKAGE
 func getAllObjectsFromPackage*[T](package:UPackagePtr) : TArray[ptr T] {.importcpp:"UReflectionHelpers::GetAllObjectsFromPackage<'**0>(@)".}

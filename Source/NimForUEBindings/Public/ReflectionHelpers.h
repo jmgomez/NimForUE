@@ -100,5 +100,5 @@ public:
 	static void NimForUEWarn(FString Msg);
 	static void NimForUEError(FString Msg);
 	
-	static TArray<TPair<FString, int64>> GetEnums(UEnum* Enum);
+	static TArray<FString> GetEnums(UEnum* Enum);
 };

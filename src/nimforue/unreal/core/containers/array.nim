@@ -3,10 +3,11 @@ import std/[sugar]
 
 type TArray*[T] {.importcpp: "TArray<'0>", bycopy } = object
 
-proc num*[T](arr:TArray[T]): int32 {.importcpp: "#.Num()" noSideEffect}
+func num*[T](arr:TArray[T]): int32 {.importcpp: "#.Num()" noSideEffect}
 proc remove*[T](arr:TArray[T], value:T) {.importcpp: "#.Remove(#)".}
 proc removeAt*[T](arr:TArray[T], idx:int32) {.importcpp: "#.RemoveAt(#)".}
 proc add*[T](arr:TArray[T], value:T) {.importcpp: "#.Add(#)".}
+func reserve*[T](arr:TArray[T], value:int32) {.importcpp: "#.Reserve(#)".}
 
 proc `[]`*[T](arr:TArray[T], i: int32): var T {. importcpp: "#[#]",  noSideEffect.}
 proc `[]=`*[T](arr:TArray[T], i: int32, val : T)  {. importcpp: "#[#]=#",  }
@@ -16,49 +17,47 @@ proc `[]=`*[T](arr:TArray[T], i: int32, val : T)  {. importcpp: "#[#]=#",  }
 # proc `[]=`*[T](arr:TArray[T], i: int, val : T)  {. inline  .} = arr[i.int32] = val why this doesnt work like so?
 
 
-proc makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
+func makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
 # proc makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
 
 # proc makeTArray*[T](values:openarray[T]): TArray[T] {.importcpp: "'0({@})", constructor, nodecl.} #TODO
 
-proc getData*[T](arr:TArray[T]): ptr T {.importcpp: "#.GetData()", nodecl.}
+func getData*[T](arr:TArray[T]): ptr T {.importcpp: "#.GetData()", nodecl.}
 
-proc len*[T](arr:TArray[T]) : int {.inline.} = arr.num()
+func len*[T](arr:TArray[T]) : int {.inline.} = arr.num()
 
 iterator items*[T](arr: TArray[T]): T =
   for i in 0..(arr.num()-1):
     yield arr[i.int32]
 
-proc map*[T, U](xs:TArray[T], fn : T -> U) : TArray[U] = 
-  var arr = makeTArray[U]() #TODO bind the capacity and set it here so it doesnt reallocate the size
+func map*[T, U](xs:TArray[T], fn : T -> U) : TArray[U] = 
+  var arr = makeTArray[U]()
+  arr.reserve(xs.num())
   for x in xs:
     arr.add(fn(x))
   arr
 
-proc filter*[T](xs:TArray[T], fn : T -> bool) : TArray[T] =
+func filter*[T](xs:TArray[T], fn : T -> bool) : TArray[T] =
   var arr = makeTArray[T]()
+  arr.reserve(xs.num())
   for x in xs:
     if fn(x):
       arr.add x
   arr
 
-proc toSeq*[T](arr:TArray[T]) : seq[T] = 
-  var xs : seq[T] = @[]
+func toSeq*[T](arr:TArray[T]) : seq[T] = 
+  var xs = newSeqOfCap[T](arr.num())
   for x in arr:
     xs.add x
   xs
 
-proc `$`*[T](arr:TArray[T]) : string = $toSeq(arr)
+func `$`*[T](arr:TArray[T]) : string = $toSeq(arr)
 
-proc toTArray*[T](arr:seq[T]) : TArray[T] = 
+func toTArray*[T](arr:seq[T]) : TArray[T] = 
   var xs = makeTArray[T]()
+  xs.reserve(arr.len().int32)
   for x in arr:
     xs.add x
   xs
-
-# iterator pairs*[T](arr: TArray[T]): tuple[key: int, val: T] =
-#   for i in 0 .. <arr.len:
-#     yield (i.int, arr[i])
-
 
 
