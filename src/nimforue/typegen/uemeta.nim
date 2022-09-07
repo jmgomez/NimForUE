@@ -50,10 +50,14 @@ func isDynDel(prop:FPropertyPtr) : bool = not castField[FDelegateProperty](prop)
 func isMulticastDel(prop:FPropertyPtr) : bool = not castField[FMulticastDelegateProperty](prop).isNil()
 #TODO Dels
 
+
 func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expected type is something that UEField can understand
+    func cleanCppType(cppType:string) : string = 
+         cppType.replace("<", "[").replace(">", "]").replace("*", "Ptr")
+
     if prop.isTArray(): 
         let innerType = castField[FArrayProperty](prop).getInnerProp().getCPPType()
-        return fmt"TArray[{innerType}]"
+        return fmt"TArray[{innerType.cleanCppType()}]"
 
     if prop.isTMap(): #better pattern here, i.e. option chain
         let mapProp = castField[FMapProperty](prop)
@@ -71,9 +75,7 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
                         .replace(">", "")
 
 
-        let nimType = cppType.replace("<", "[")
-                            .replace(">", "]")
-                            .replace("*", "Ptr")
+        let nimType = cppType.cleanCppType()
         
 
         # UE_Warn prop.getTypeName() #private?
@@ -95,8 +97,8 @@ func isBPExposed(cls:UClassPtr) : bool =
         .filter(isBPExposed)
         .any()
         
-func isBPExposed(uenum:UEnumPtr) : bool =
-    uenum.hasMetadata("BlueprintType")
+func isBPExposed(uenum:UEnumPtr) : bool = true
+    # uenum.hasMetadata("BlueprintType")
   
 #Function that receives a FProperty and returns a Type as string
 func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : Option[UEField] = #The expected type is something that UEField can understand

@@ -12,6 +12,8 @@ macro genCode(module:static UEModule) =
               .multiReplace(
     ("{.inject.}", ""),
     ("{.inject, ", "{."),
+    ("::Type", ""), #Enum namespaces EEnumName::Type
+    ("::", "."), #Enum namespace
     ("__DelegateSignature", "")
   )
   #It will require prelude 
