@@ -89,10 +89,10 @@ func newEnumBasedProperty(outer : UStructPtr, propType:string, name:FName) : Opt
     #Try to find it as Enum
     const flags = propObjFlags
     UE_Log "Not a delegate based prorperty. Trying as enum.." & propType
-    
-    someNil(getUTypeByName[UEnum](propType))
+    let enumProp = propType.extractTypeFromGenericInNimFormat("TEnumAsByte")
+    someNil(getUTypeByName[UEnum](enumProp))
         .map(func (ueEnum:UEnumPtr) : FPropertyPtr = 
-                UE_Log "Found " & propType & " as Enum. Creating prop"
+                UE_Log "Found " & enumProp & " as Enum. Creating prop"
                 let enumProp = newFEnumProperty(makeFieldVariant(outer), name, flags)
                 enumProp.setEnum(ueEnum)
                 #Assuming that Enums are exposed via TEnumAsByte or they are uint8. Revisit in the future (only bp exposed enums meets that)

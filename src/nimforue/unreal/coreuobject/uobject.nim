@@ -67,7 +67,7 @@ type
     UDelegateFunctionPtr* = ptr UDelegateFunction
 
     TObjectPtr*[out T ] {.importcpp.} = object 
-
+    TEnumAsByte*[T : enum] {.importcpp.} = object
 
 
 
