@@ -44,7 +44,7 @@ uClass AActorScratchpad of AUseClassToDeriveToTestFunction:
         UE_Log &"-= The codegen module path is {codegenPath} =-"
 
         try:
-          let codegenTemplate = codegen_nim_template % [$module.get(), escape(bindingsPath)]
+          let codegenTemplate = codegenNimTemplate % [$module.get(), escape(bindingsPath)]
           #UE_Warn &"{codegenTemplate}"
           writeFile(codegenPath, codegenTemplate)
           let nueCmd = config.pluginDir/"nue.exe codegen --module:\"" & codegenPath & "\""

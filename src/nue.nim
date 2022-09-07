@@ -5,7 +5,6 @@ import buildscripts / [buildcommon, buildscripts, nimforueconfig, nimcachebuild]
 var taskOptions: Table[string, string]
 let config = getNimForUEConfig()
 
-
 type
   Task = object
     name: string
@@ -202,13 +201,18 @@ task guest, "Builds the main lib. The one that makes sense to hot reload.":
 
 task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nogen to compile from nimcache cpp sources without generating, --nolinedir turns off #line directives in cpp output.":
   generateFFIGenFile(config)
-  let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
 
   var force = ""
   if "f" in taskOptions:
     force = "-f"
   var noGen = "nogen" in taskOptions
-  var lineDir = if "nolinedir" in taskOptions: "off" else: "on"
+  var lineDir = "on"
+  var curTargetSwitches = targetSwitches
+  if "nolinedir" in taskOptions: 
+    lineDir = "off"
+    curTargetSwitches = targetSwitches.filterIt(it[0] != "debugger" and it[0] != "stacktrace")
+
+  let buildFlags = @[buildSwitches, curTargetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
 
   if not noGen:
     doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0)

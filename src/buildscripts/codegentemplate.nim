@@ -1,5 +1,5 @@
 # We only compile this code to run the Nim VM on the reflectiondata to generate the nim bindings.
-const codegen_nim_template* = """
+const codegenNimTemplate* = """
 import std/[os, strutils, strformat]
 import ../nimforue/typegen/models
 import ../nimforue/macros/uebind
@@ -15,7 +15,7 @@ macro genCode(module:static UEModule) =
     ("__DelegateSignature", "")
   )
   #It will require prelude 
-  writeFile(bindingsPath, code)
+  writeFile(bindingsPath, "include ../prelude\n{.experimental:\"codereordering\".}\n" & code)
 
 genCode(module)
 """
