@@ -66,6 +66,7 @@ type
     UDelegateFunction* {.importcpp, inheritable, pure .} = object of UFunction
     UDelegateFunctionPtr* = ptr UDelegateFunction
 
+    TObjectPtr*[out T ] {.importcpp.} = object 
 
 
 
@@ -199,6 +200,11 @@ proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {
 proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()" .}
 proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()" .}
 proc assembleReferenceTokenStream*(cls:UClassPtr, bForce = false) : void {. importcpp:"#->AssembleReferenceTokenStream(@)" .}
+
+
+#TObjectPtr
+
+converter toUObjectPtr*(obj:TObjectPtr) : UObjectPtr {.importcpp:"#.Get()".}
 
 #UOBJECT
 proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}

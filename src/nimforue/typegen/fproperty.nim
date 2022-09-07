@@ -9,11 +9,12 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
     const flags = propObjFlags
          #It holds a complex type, like a struct or a class
     type EObjectMetaProp = enum
-        emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, emTSoftClassPtr, emScriptStruct#, TSoftClassPtr = "TSoftClassPtr"
+        emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, emTSoftClassPtr, emScriptStruct, emTObjectPtr#, TSoftClassPtr = "TSoftClassPtr"
     
     var eMeta = if propType.contains("TSubclassOf"): emTSubclassOf
                 elif propType.contains("TSoftObjectPtr"): emTSoftObjectPtr
                 elif propType.contains("TSoftClassPtr"): emTSoftClassPtr
+                elif propType.contains("TObjectPtr"): emTObjectPtr
                 elif propType == ("UClass"): emClass
                 else: emObjPtr #defaults to emObjPtr but it can be scriptStruct since the name it's the same(will worth to do an or?)
                 
@@ -21,6 +22,7 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
         of emTSubclassOf: propType.extractTypeFromGenericInNimFormat("TSubclassOf").removeFirstLetter() 
         of emTSoftObjectPtr: propType.extractTypeFromGenericInNimFormat("TSoftObjectPtr").removeFirstLetter() 
         of emTSoftClassPtr: propType.extractTypeFromGenericInNimFormat("TSoftClassPtr").removeFirstLetter() 
+        of emTObjectPtr: propType.extractTypeFromGenericInNimFormat("TObjectPtr").removeFirstLetter() 
         of emObjPtr, emClass, emScriptStruct: propType.removeFirstLetter().removeLastLettersIfPtr()
 
     UE_Log "Looking for ustruct.." & className 
@@ -45,7 +47,7 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
         let clsProp = newFSoftClassProperty(makeFieldVariant(outer), name, flags)
         clsProp.setPropertyMetaClass(cls)
         clsProp
-    of emObjPtr:
+    of emObjPtr, emTObjectPtr:
         let isComponent = isChildOf[UActorComponent](cls)
         let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
         objProp.setPropertyClass(cls)
