@@ -102,9 +102,7 @@ let platformSwitches: Switches =
   block:
     when defined windows:
       @[
-        ("cc", "vcc"),
-        passC("/MP"),
-        passC("/std:c++17"),
+        ("cc", "vcc")
       ]
     elif defined macosx:
       let platformDir = 
@@ -294,8 +292,11 @@ task clean, "Clean the nimcache folder":
 task ubuild, "Calls Unreal Build Tool for your project":
   let curDir = getCurrentDir()
   let walkPattern = config.pluginDir & "/../../*.uproject"
+  let uprojectFiles = walkPattern.walkFiles.toSeq()
+  doAssert(uprojectFiles.len == 1, &"There should only be 1 uproject file. uprojectfiles: {uprojectFiles}")
+
+  let uprojectFile = uprojectFiles[0]
   try:
-    let uprojectFile = walkPattern.walkFiles.toSeq[0]
     setCurrentDir(config.engineDir)
     let buildCmd = r"Build\BatchFiles\" & (
       case config.targetPlatform
