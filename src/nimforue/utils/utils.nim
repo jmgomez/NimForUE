@@ -89,6 +89,16 @@ func removePrefixes*(str: string, prefixes: seq[string]): string =
 
 func nonEmptyOr*(value, orValue: string): string = nonDefaultOr(value, orValue)
 
+func countSubStr*(str:string, subStr:string): int =
+  var count = 0
+  var i = 0
+  while i < str.len():
+    if str[i..^1].startsWith(subStr):
+      inc count
+      i += subStr.len()
+    else:
+      inc i
+  count
 
 #OPTION
 func getOrCompute*[T, U](opt: Option[T], fn: ()->T): T =

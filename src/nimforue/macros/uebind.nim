@@ -196,15 +196,19 @@ func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
 func isOutParam*(field:UEField) : bool = (CPF_OutParm in field.propFlags)
 
 
-
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 func getTypeNodeFromUProp*(prop : UEField) : NimNode = 
     #naive check on generic types:
     case prop.kind:
         of uefProp:
-
-            let supportedGenericTypes = ["TArray", "TSubclassOf", "TSoftObjectPtr", "TMap"]
             let typeNode =  if not prop.isGeneric: ident prop.uePropType
+                elif prop.uePropType.countSubStr("[") == 2:
+                    let outerGeneric = prop.uePropType.split("[")[0]
+                    let innerGeneric = prop.uePropType.split("[")[1].split("[")[0]
+                    let innerTypesStr = prop.uePropType.extractTypeFromGenericInNimFormat(outerGeneric, innerGeneric)
+                    let innerTypes = innerTypesStr.split(",").map(innerType => ident(innerType.strip()))
+                    nnkBracketExpr.newTree(ident outerGeneric, 
+                                nnkBracketExpr.newTree((ident innerGeneric) & innerTypes))
                 else:
                     let genericType = prop.uePropType.split("[")[0]
                     let innerTypesStr =  prop.uePropType.extractTypeFromGenericInNimFormat(genericType)
