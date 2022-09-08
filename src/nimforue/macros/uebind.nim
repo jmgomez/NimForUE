@@ -193,8 +193,11 @@ macro uebindstatic* (className: string, fn : untyped) : untyped =
         
 
 func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
-func isOutParam*(field:UEField) : bool = (CPF_OutParm in field.propFlags)
-
+func isOutParam*(field:UEField) : bool = 
+    # debugEcho &"Field is {field}"
+  
+    (CPF_OutParm in field.propFlags)
+   
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 func getTypeNodeFromUProp*(prop : UEField) : NimNode = 
@@ -274,7 +277,7 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
     # debugEcho treeRepr typeNodeAsReturnValue
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
-            proc propIdent* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
+            proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
                 let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
                 getPropertyValuePtr[typeNode](prop, obj)[]
             
@@ -284,7 +287,11 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
    
 
-
+func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
+        let reservedKeywords = ["object", "method", "type"] 
+        if propName in reservedKeywords: 
+            &"`{propName}`" 
+        else: propName
 #helper func used in geneFunc and genParamsInsideFunc
 #returns for each param a type definition node
 #the functions that it receives as param is used with ident/identWithInject/ etc. to make fields public or injected
@@ -295,7 +302,7 @@ func signatureAsNode(funField:UEField, identFn : string->NimNode) : seq[NimNode]
        return funField.signature
             .filter(prop=>not isReturnParam(prop))
             .map(param=>
-                [identFn(param.name.firstToLow()), param.getTypeNodeFromUProp(), newEmptyNode()])
+                [identFn(param.name.firstToLow().ueNameToNimName()), param.getTypeNodeFromUProp(), newEmptyNode()])
             .map(n=>nnkIdentDefs.newTree(n))
     else:
         error("funField: not a func")
@@ -329,6 +336,7 @@ func isStatic*(funField:UEField) : bool = (FUNC_Static in funField.fnFlags)
 func getReturnProp*(funField:UEField) : Option[UEField] =  funField.signature.filter(isReturnParam).head()
 func doesReturn*(funField:UEField) : bool = funField.getReturnProp().isSome()
 
+
 func genParamInFunctionSignature(typeDef : UEType, funField:UEField, firstParamName:string) : NimNode = #returns (obj:UObjectPr, param:Fstring..) : FString 
 #notice the first part has to be introduced. see the final part of genFunc
     let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
@@ -348,6 +356,8 @@ func genParamInFunctionSignature(typeDef : UEType, funField:UEField, firstParamN
                     (if funField.isStatic(): @[] 
                     else: @[nnkIdentDefs.newTree([identWithInject firstParamName, objType, newEmptyNode()])]) &  
                     funField.signatureAsNode(identWithInject))
+
+
 
 #this is used for both, to generate regular function binds and delegate broadcast/execute functions
 #for the most part the same code is used for both
@@ -388,7 +398,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
     let paramObjectConstrCall = nnkObjConstr.newTree(@[ident "Params"] &  #creates Params(param0:param0, param1:param1)
                                 funField.signature
                                     .filter(prop=>not isReturnParam(prop))
-                                    .map(param=>ident(param.name.firstToLow()))
+                                    .map(param=>ident(param.name.firstToLow().ueNameToNimName()))
                                     .map(param=>nnkExprColonExpr.newTree(param, param))
                             )
     let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
@@ -421,7 +431,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
 
 
 
-func genUClassTypeDef(typeDef : UEType) : NimNode =
+func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNode =
     let ptrName = ident typeDef.name & "Ptr"
     let parent = ident typeDef.parent
     let props = nnkStmtList.newTree(
@@ -434,22 +444,37 @@ func genUClassTypeDef(typeDef : UEType) : NimNode =
                        .filter(prop=>prop.kind==uefFunction)
                        .map(fun=>genFunc(typeDef, fun)))
     
+    let typeDecl = if rule == uerCodeGenOnlyFields: newEmptyNode()
+                   else: genAst(name = ident typeDef.name, ptrName, parent, props, funcs):
+                    type 
+                        name* {.inject.} = object of parent #TODO OF BASE CLASS 
+                        ptrName* {.inject.} = ptr name
+    
     result = 
-        genAst(name = ident typeDef.name, ptrName, parent, props, funcs):
-                type 
-                    name* {.inject.} = object of parent #TODO OF BASE CLASS 
-                    ptrName* {.inject.} = ptr name
+        genAst(typeDecl, parent, props, funcs):
+                typeDecl
                 props
                 funcs
+
+        # genAst(name = ident typeDef.name, ptrName, parent, props, funcs):
+        #         type 
+        #             name* {.inject.} = object of parent #TODO OF BASE CLASS 
+        #             ptrName* {.inject.} = ptr name
+        #         props
+        #         funcss
+
+
+
     # if result.repr.contains("AActorDsl"):
     #     debugEcho result.repr
 
-func genUStructTypeDef(typeDef: UEType) : NimNode =   
+func genUStructTypeDef(typeDef: UEType) : NimNode = 
+    
     let typeName = identWithInjectPublic typeDef.name
     #TODO Needs to handle TArray/Etc. like it does above with classes
     let fields = typeDef.fields
                         .map(prop => nnkIdentDefs.newTree(
-                            [identPublic toLower($prop.name[0])&prop.name.substr(1), 
+                            [identPublic ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)), 
                              prop.getTypeNodeFromUProp(), newEmptyNode()]))
                         .foldl(a.add b, nnkRecList.newTree)
 #   let fields = typeDef.fields
@@ -472,7 +497,7 @@ func genUEnumTypeDef(typeDef:UEType) : NimNode =
     fields.insert(0, newEmptyNode()) #required empty node in enums
 
     result = genAst(typeName, fields):
-                type typeName* {.inject, size:sizeof(uint8).} = enum         
+                type typeName* {.inject, size:sizeof(uint8), pure.} = enum         
                     fields
     
     result[0][^1] = fields #replaces enum 
@@ -505,10 +530,10 @@ proc genDelType(delType:UEType) : NimNode =
     # debugEcho treeRepr result
     
 
-proc genTypeDecl*(typeDef : UEType) : NimNode = 
+proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode = 
     case typeDef.kind:
         of uetClass:
-            genUClassTypeDef(typeDef)
+            genUClassTypeDef(typeDef, rule)
         of uetStruct:
             genUStructTypeDef(typeDef)
         of uetEnum:
@@ -517,7 +542,12 @@ proc genTypeDecl*(typeDef : UEType) : NimNode =
             genDelType(typeDef)
 
 proc genModuleDecl*(moduleDef:UEModule) : NimNode = 
-    nnkStmtList.newTree(moduleDef.types.map(genTypeDecl))
+    result = nnkStmtList.newTree()
+    for typeDef in moduleDef.types:
+        let rules = moduleDef.getAllMatchingRulesForType(typeDef)
+        result.add genTypeDecl(typeDef, rules)
+
+
     
 #notice this is only for testing ATM the final shape probably wont be like this
 macro genUFun*(className : static string, funField : static UEField) : untyped =

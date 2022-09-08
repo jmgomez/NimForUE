@@ -15,7 +15,6 @@ UCLASS()
 class NIMFORUEBINDINGS_API UReflectionHelpers : public UObject {
 	GENERATED_BODY()
 public:
-	UFUNCTION(BlueprintCallable)
 	static UClass* GetClassByName(FString ClassName);
 	UFUNCTION(BlueprintCallable)
 	static UScriptStruct* GetScriptStructByName(FString StructName);

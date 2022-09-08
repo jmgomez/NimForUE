@@ -73,11 +73,35 @@ type
                 # delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
                 delKind*: UEDelegateKind
 
+    UERule* = enum
+        uerNone
+        uerCodeGenOnlyFields #wont generate the type. Just its fields. Only make sense in uClass. Will affect code generation (we try to do it at the import time when possible) 
+        uerIgnore #Will ignore the type. It just wont be imported
+
+    UEImportRule* = object #used only to customize the codegen
+        affectedTypes* : seq[string]
+        rule* : UERule
+
     UEModule* = object
         name* : string
         types* : seq[UEType]
+        rules* : seq[UEImportRule]
         dependencies* : seq[UEModule]   
 
+func makeImportedRule*(rule:UERule, affectedTypes:seq[string], ):UEImportRule =
+    result.affectedTypes = affectedTypes
+    result.rule = rule
+
+# func getAllMatchingTypes*(module:UEModule, rule:UERule) : seq[UEType] =
+#    module.types
+#          .filter(ueType:UEType => ueType in rule.affectedTypes)   
+func getAllMatchingRulesForType*(module:UEModule, ueType:UEType) : UERule =
+    let rules = module.rules
+                .filter((rule:UEImportRule) => rule.affectedTypes.any(name=>name==ueType.name))
+                .map((rule:UEImportRule) => rule.rule)
+    if rules.any(): rules[0]  #TODO fold the values instead of returning the first
+    else: uerNone
+       
 
 #allocates a newUEType based on an UEType value.
 #the allocated version will be stored in the NimBase class/struct in UE so we can 
@@ -88,6 +112,8 @@ proc newUETypeWith*(ueType:UEType) : ptr UEType =
         raise newException(Exception, &"Failed to allocate UEType {ueType.name}")
     result[] = ueType
     
+
+
 
 const MulticastDelegateMetadataKey* = "MulticastDelegate"
 const DelegateMetadataKey* = "Delegate"

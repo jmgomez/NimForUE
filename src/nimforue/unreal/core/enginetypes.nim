@@ -19,6 +19,11 @@ type
   UShapeComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
   UShapeComponentPtr* = ptr UShapeComponent
 
+  UBlueprintFunctionLibrary* {.importcpp, inheritable, pure .} = object of UObject
+  UBlueprintGeneratedClass* {.importcpp, inheritable, pure .} = object of UClass
+  UBlueprintGeneratedClassPtr* = ptr UBlueprintGeneratedClass
+  UAnimBlueprintGeneratedClass* {.importcpp, inheritable, pure .} = object of UBlueprintGeneratedClass
+  UAnimBlueprintGeneratedClassPtr* = ptr UAnimBlueprintGeneratedClass
 
   FHitResult* {.importc, bycopy} = object
     bBlockingHit: bool

@@ -85,20 +85,20 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
 
 
 
-func isBPExposed(prop:FPropertyPtr) : bool = CPF_BlueprintVisible in prop.getPropertyFlags() 
+func isBPExposed(prop:FPropertyPtr) : bool = true #CPF_BlueprintVisible in prop.getPropertyFlags() 
 
-func isBPExposed(ufun:UFunctionPtr) : bool = FUNC_BlueprintCallable in ufun.functionFlags
+# func isBPExposed(ufun:UFunctionPtr) : bool = FUNC_BlueprintCallable in ufun.functionFlags
 
-func isBPExposed(str:UFieldPtr) : bool = str.hasMetadata("BlueprintType")
+func isBPExposed(str:UFieldPtr) : bool = true #str.hasMetadata("BlueprintType")
 
-func isBPExposed(cls:UClassPtr) : bool =
-     cls.hasMetadata("BlueprintType") or 
-     cls.getFuncsFromClass()
-        .filter(isBPExposed)
-        .any()
+# func isBPExposed(cls:UClassPtr) : bool = true
+#      cls.hasMetadata("BlueprintType") or 
+#      cls.getFuncsFromClass()
+#         .filter(isBPExposed)
+#         .any()
         
-func isBPExposed(uenum:UEnumPtr) : bool = true
-    # uenum.hasMetadata("BlueprintType")
+# func isBPExposed(uenum:UEnumPtr) : bool = true
+#     # uenum.hasMetadata("BlueprintType")
   
 #Function that receives a FProperty and returns a Type as string
 func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : Option[UEField] = #The expected type is something that UEField can understand

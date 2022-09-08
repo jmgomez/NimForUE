@@ -24,13 +24,17 @@ proc getFPropsFromUStruct*(ustr:UStructPtr, flags=EFieldIterationFlags.None) : s
     var xs : seq[FPropertyPtr] = @[]
     var fieldIterator = makeTFieldIterator[FProperty](ustr, flags)
     for it in fieldIterator:
-        xs.add it.get()
+        let prop = it.get()
+        # if CPF_BlueprintVisible in prop.getPropertyFlags():
+        xs.add prop
     xs
 proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UFunctionPtr] = 
     var xs : seq[UFunctionPtr] = @[]
     var fieldIterator = makeTFieldIterator[UFunction](cls, flags)
     for it in fieldIterator:
-        xs.add it.get()
+        let fn = it.get()
+      #  if FUNC_BlueprintCallable in fn.functionFlags: 
+        xs.add fn
     xs
 
 

@@ -50,9 +50,9 @@ type
         classCastFlags* {.importcpp:"ClassCastFlags".}: EClassCastFlags
         classConstructor* {.importcpp:"ClassConstructor".}: UClassConstructor
         addReferencedObjects* {.importcpp:"AddReferencedObjects".}: UClassAddReferencedObjectsType
-
-
     UClassPtr* = ptr UClass
+    UInterface* {.importcpp, inheritable, pure .} = object of UObject
+    UInterfacePtr* = ptr UInterface
 
     UScriptStruct* {.importcpp, inheritable, pure .} = object of UStruct
     UScriptStructPtr* = ptr UScriptStruct
@@ -69,7 +69,7 @@ type
     TObjectPtr*[out T ] {.importcpp.} = object 
     TEnumAsByte*[T : enum] {.importcpp.} = object
 
-
+    TWeakObjectPtr*[out T] {.importcpp.} = object
 
 proc castField*[T : FField ](src:FFieldPtr) : ptr T {. importcpp:"CastField<'*0>(#)" .}
 proc ueCast*[T : UObject ](src:UObjectPtr) : ptr T {. importcpp:"Cast<'*0>(#)" .}
