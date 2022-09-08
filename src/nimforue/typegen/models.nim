@@ -5,7 +5,7 @@ else:
 
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
-
+# import ../unreal/coreuobject/uobjectflags
 
 
 type
@@ -77,10 +77,13 @@ type
         uerNone
         uerCodeGenOnlyFields #wont generate the type. Just its fields. Only make sense in uClass. Will affect code generation (we try to do it at the import time when possible) 
         uerIgnore #Will ignore the type. It just wont be imported
-
+    UERuleTarget* = enum 
+        uertType
+        uertField
     UEImportRule* = object #used only to customize the codegen
         affectedTypes* : seq[string]
         rule* : UERule
+        target* : UERuleTarget
 
     UEModule* = object
         name* : string
@@ -88,9 +91,15 @@ type
         rules* : seq[UEImportRule]
         dependencies* : seq[UEModule]   
 
-func makeImportedRule*(rule:UERule, affectedTypes:seq[string], ):UEImportRule =
+func makeImportedRuleType*(rule:UERule, affectedTypes:seq[string], ):UEImportRule =
     result.affectedTypes = affectedTypes
     result.rule = rule
+    result.target = uertType
+
+func makeImportedRuleField*(rule:UERule, affectedTypes:seq[string], ):UEImportRule =
+    result.affectedTypes = affectedTypes
+    result.rule = rule
+    result.target = uertField
 
 # func getAllMatchingTypes*(module:UEModule, rule:UERule) : seq[UEType] =
 #    module.types

@@ -194,8 +194,10 @@ macro uebindstatic* (className: string, fn : untyped) : untyped =
 
 func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
 func isOutParam*(field:UEField) : bool = 
+    # debugEcho field.uePropType
     # debugEcho &"Field is {field}"
-  
+    # if 40536794692846145.uint64 == field.propFlags.uint64: return false
+    # else: 
     (CPF_OutParm in field.propFlags)
    
 

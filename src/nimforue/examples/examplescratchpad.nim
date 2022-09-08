@@ -6,7 +6,8 @@ import ../macros/makestrproc
 
 import ../../buildscripts/codegentemplate
 
-import ../unreal/bindings/nimforuebindings
+# import ../unreal/bindings/[nimforuebindings, engine]
+import ../unreal/bindings/[nimforuebindings]
 
 # {.experimental: "codeReordering".}
 
@@ -15,41 +16,66 @@ import ../unreal/bindings/nimforuebindings
 makeStrProc(UEMetadata)
 makeStrProc(UEField)
 makeStrProc(UEType)
+makeStrProc(UEImportRule)
 makeStrProc(UEModule)
 
 
+uEnum ETest:
+  testA
+  testB
+  testC
+
+
+type
+  EComponentMobility* {.size: sizeof(uint8).} = enum
+    Static, Stationary, Movable, EComponentMobility_MAX
+#-------
+#withEditor
+#Platforms
+#-------
 # uClass AActorScratchpad of AActor:
 uClass AActorScratchpad of AUseClassToDeriveToTestFunction:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     stringProp : FString
     intProp : int32#
+    objTest : TObjectPtr[AActor]
+    # objTestInArray : TArray[TObjectPtr[AActor]]
+    beatiful: EComponentMobility
   
     # intProp2 : int32
   
   ufuncs(CallInEditor):
     proc generateUETypes() = 
+      # let a = ETest.testB
       let config = getNimForUEConfig()
       let reflectionDataPath = config.pluginDir / "src" / ".reflectiondata" #temporary
       createDir(reflectionDataPath)
       let bindingsDir = config.pluginDir / "src"/"nimforue"/"unreal"/"bindings"
       createDir(bindingsDir)
-      # let moduleNames = @["NimForUEBindings", "Engine"]
-      let moduleNames = @["NimForUEBindings"]
+      let moduleNames = @["NimForUEBindings", "Engine"]
+      let moduleRules = @[
+          makeImportedRuleType(uerCodeGenOnlyFields, @["AActor"]), 
+          makeImportedRuleField(uerIgnore, @["PerInstanceSMCustomData", "PerInstanceSMData" ])
+
+        ]
+      # let moduleNames = @["NimForUEBindings"]
       for moduleName in moduleNames:
-        let module = tryGetPackageByName(moduleName)
-                      .flatmap(toUEModule)
+        var module = tryGetPackageByName(moduleName)
+                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
+                      .get()
+
         let codegenPath = reflectionDataPath / moduleName.toLower() & ".nim"
         let bindingsPath = bindingsDir / moduleName.toLower() & ".nim"
         UE_Log &"-= The codegen module path is {codegenPath} =-"
 
         try:
-          let codegenTemplate = codegenNimTemplate % [$module.get(), escape(bindingsPath)]
+          let codegenTemplate = codegenNimTemplate % [$module, escape(bindingsPath)]
           #UE_Warn &"{codegenTemplate}"
           writeFile(codegenPath, codegenTemplate)
           let nueCmd = config.pluginDir/"nue.exe codegen --module:\"" & codegenPath & "\""
           let result = execProcess(nueCmd, workingDir = config.pluginDir)
-          removeFile(codegenPath)
+          # removeFile(codegenPath)
           UE_Log &"The result is {result} "
           UE_Log &"-= Bindings for {moduleName} generated in {bindingsPath} =- "
 
@@ -66,31 +92,26 @@ uClass AActorScratchpad of AUseClassToDeriveToTestFunction:
       createDir(config.pluginDir / ".reflectiondata")
 
     proc findEnum() = 
+      
       let enumToFind = "EMaterialSamplerType"
       UE_Log &"looking for enum {enumToFind}"
-      let uenum = someNil findObject[UEnum](anyPackage(), enumToFind)
-      UE_Log &"Found {uenum}"
-      let ueField = uenum.map(toUEType)
-      UE_Warn &"Field {ueField}"
-      let enums = uenum.get().getEnums()#.toSeq()
-      UE_Log &"Enum values: {enums}"
+      # let uenum = someNil findObject[UEnum](anyPackage(), enumToFind)
+      # UE_Log &"Found {uenum}"
+      # let ueField = uenum.map(toUEType)
+      # UE_Warn &"Field {ueField}"
+      # let enums = uenum.get().getEnums()#.toSeq()
+      # UE_Log &"Enum values: {enums}"
 
 
     
-    proc showTotalEnums() = 
-      let module = tryGetPackageByName("Engine")
-                      .flatmap(toUEModule)
-      let enums = module.get().types.filter((x:UEType)=> x.kind == uetEnum)
-      UE_Log &"Total enums: {enums.len}"
-      # self.sayHello()
-
     proc showDelegates() = 
       let module = tryGetPackageByName("NimForUEBindings")
-                      .flatmap(toUEModule)
+                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(@[]))
       let delegates = module.get().types.filter((x:UEType)=> x.kind == uetDelegate)
       UE_Log &"Delegates: {delegates}"
 
   ufuncs(BlueprintCallable):
     proc sayHello() = 
     
+      UE_Log &"Hello from the scratchpad"
       UE_Log &"Hello from the scratchpad"

@@ -39,8 +39,8 @@ func makeUEMulDelegate*(name:string, fields:seq[UEField]) : UEType =
 func makeUEEnum*(name:string, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
     UEType(kind:uetEnum, name:name, fields:fields, metadata: metadata)
 
-func makeUEModule*(name:string, types:seq[UEType], dependencies:seq[UEModule]= @[]) : UEModule = 
-    UEModule(name: name, types: types, dependencies: dependencies)
+func makeUEModule*(name:string, types:seq[UEType], rules: seq[UEImportRule] = @[], dependencies:seq[UEModule]= @[]) : UEModule = 
+    UEModule(name: name, types: types, dependencies: dependencies, rules: rules)
 
 
 func isTArray(prop:FPropertyPtr) : bool = not castField[FArrayProperty](prop).isNil()
@@ -101,9 +101,12 @@ func isBPExposed(str:UFieldPtr) : bool = true #str.hasMetadata("BlueprintType")
 #     # uenum.hasMetadata("BlueprintType")
   
 #Function that receives a FProperty and returns a Type as string
-func toUEField*(prop:FPropertyPtr, outer:UObjectPtr) : Option[UEField] = #The expected type is something that UEField can understand
+func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UEField] = #The expected type is something that UEField can understand
     let name = prop.getName()
     let nimType = prop.getNimTypeAsStr(outer)
+    for rule in rules:
+        if name in rule.affectedTypes and rule.target == uerTField and rule.rule == uerIgnore: #TODO extract
+            return none(UEField)
     if prop.isBPExposed():
         some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
     else:
@@ -140,7 +143,7 @@ func tryParseJson[T](jsonStr : string) : Option[T] =
             UE_Error &"Crashed parsing json for with json {jsonStr}" 
             none[T]()
 
-func toUEType*(cls:UClassPtr) : Option[UEType] =
+func toUEType*(cls:UClassPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
     #First it tries to see if it is a UNimClassBase and if it has a UEType stored.
     #Otherwise tries to parse the UEType from the Runtime information.
     let storedUEType = tryUECast[UNimClassBase](cls)
@@ -152,7 +155,7 @@ func toUEType*(cls:UClassPtr) : Option[UEType] =
     let fields = getFuncsFromClass(cls)
                     .map(toUEField).sequence() & 
                  getFPropsFromUStruct(cls)
-                    .map(x=>toUEField(x, cls))
+                    .map(x=>toUEField(x, cls, rules))
                     .sequence()
     let name = cls.getPrefixCpp() & cls.getName()
     let parent = cls.getSuperClass()
@@ -163,7 +166,7 @@ func toUEType*(cls:UClassPtr) : Option[UEType] =
         # UE_Warn &"Class {name} is not exposed to BP"
         none(UEType)
 
-func toUEType*(str:UStructPtr) : Option[UEType] =
+func toUEType*(str:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
     
     #same as above 
     let storedUEType = tryUECast[UNimScriptStruct](str)
@@ -187,7 +190,7 @@ func toUEType*(str:UStructPtr) : Option[UEType] =
 
 
 
-func toUEType*(del:UDelegateFunctionPtr) : Option[UEType] =
+func toUEType*(del:UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
     
     #same as above 
     let storedUEType = tryUECast[UNimDelegateFunction](del)
@@ -209,7 +212,7 @@ func toUEType*(del:UDelegateFunctionPtr) : Option[UEType] =
 
 
 
-func toUEType*(uenum:UEnumPtr) : Option[UEType] = #notice we have to specify the type because we use specific functions here. All types are Nim base types
+func toUEType*(uenum:UEnumPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] = #notice we have to specify the type because we use specific functions here. All types are Nim base types
     # let fields = getFPropsFromUStruct(enum).map(toUEField)
     let storedUEType = tryUECast[UNimEnum](uenum)
                         .flatMap((uenum:UNimEnumPtr)=>tryParseJson[UEType](uenum.ueType))
@@ -231,28 +234,28 @@ func toUEType*(uenum:UEnumPtr) : Option[UEType] = #notice we have to specify the
    
 
 
-func convertToUEType[T](obj:UObjectPtr) : Option[UEType] = 
-  tryUECast[T](obj).flatMap((val:ptr T)=>toUEType(val))
+func convertToUEType[T](obj:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] = 
+  tryUECast[T](obj).flatMap((val:ptr T)=>toUEType(val, rules))
 
 
-func getUETypeFrom(obj:UObjectPtr) : Option[UEType] = 
+func getUETypeFrom(obj:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] = 
   if obj.getFlags() & RF_ClassDefaultObject == RF_ClassDefaultObject: 
     return none[UEType]()
   
-  convertToUEType[UClass](obj)
-    .chainNone(()=>convertToUEType[UScriptStruct](obj))
-    .chainNone(()=>convertToUEType[UEnum](obj))
-    .chainNone(()=>convertToUEType[UDelegateFunction](obj))
+  convertToUEType[UClass](obj, rules)
+    .chainNone(()=>convertToUEType[UScriptStruct](obj, rules))
+    .chainNone(()=>convertToUEType[UEnum](obj, rules))
+    .chainNone(()=>convertToUEType[UDelegateFunction](obj, rules))
   
-func toUEModule*(pkg:UPackagePtr) : Option[UEModule] = 
+func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule]) : Option[UEModule] = 
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let types = allObjs.toSeq()
-                .map(getUETypeFrom)
+                .map((obj:UObjectPtr) => getUETypeFrom(obj, rules))
                 .sequence()
                 # .filter((x:UEType)=>x.kind != uetDelegate)
                
 
-  some makeUEModule(pkg.getName().split("/")[^1], types)
+  some makeUEModule(pkg.getName().split("/")[^1], types, rules)
   
   
 
