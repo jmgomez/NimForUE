@@ -6,7 +6,7 @@ import ../macros/makestrproc
 
 import ../../buildscripts/codegentemplate
 
-# import ../unreal/bindings/[nimforuebindings, engine]
+import ../unreal/bindings/[nimforuebindings, engine]
 import ../unreal/bindings/[nimforuebindings]
 
 # {.experimental: "codeReordering".}
@@ -23,7 +23,6 @@ makeStrProc(UEModule)
 uEnum ETest:
   testA
   testB
-  testC
 
 
 type
@@ -34,7 +33,7 @@ type
 #Platforms
 #-------
 # uClass AActorScratchpad of AActor:
-uClass AActorScratchpad of AUseClassToDeriveToTestFunction:
+uClass AActorScratchpad of APlayerController:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     stringProp : FString
@@ -90,18 +89,20 @@ uClass AActorScratchpad of AUseClassToDeriveToTestFunction:
     proc showUEConfig() = 
       let config = getNimForUEConfig()
       createDir(config.pluginDir / ".reflectiondata")
+      UE_Log &"-= The plugin dir is {config.pluginDir} =-"
+      UE_Log &"-= The plugin dir is {config.pluginDir} =-"
 
+    
     proc findEnum() = 
       
       let enumToFind = "EMaterialSamplerType"
-      UE_Log &"looking for enum {enumToFind}"
+      UE_Log &"looking for enum aaa{enumToFind}"
       # let uenum = someNil findObject[UEnum](anyPackage(), enumToFind)
       # UE_Log &"Found {uenum}"
       # let ueField = uenum.map(toUEType)
       # UE_Warn &"Field {ueField}"
       # let enums = uenum.get().getEnums()#.toSeq()
       # UE_Log &"Enum values: {enums}"
-
 
     
     proc showDelegates() = 
@@ -112,6 +113,5 @@ uClass AActorScratchpad of AUseClassToDeriveToTestFunction:
 
   ufuncs(BlueprintCallable):
     proc sayHello() = 
-    
-      UE_Log &"Hello from the scratchpad"
+      UE_Log &"Hello from the scratchpad 5"
       UE_Log &"Hello from the scratchpad"

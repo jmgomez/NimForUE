@@ -64,9 +64,10 @@ proc copyNimForUELibToUEDir*() =
   let libDirUE = libDir / "ue"   
   createDir(libDirUE)
 
-  #deletes previous used ones
-  for libPath in getAllLibsFromPath(libDirUE):
-    discard tryRemoveFile(libPath) #We just ignore if it fails as it isnt critical to keep going
+  when defined(windows):
+    # #deletes previous used ones
+    for libPath in getAllLibsFromPath(libDirUE):
+      discard tryRemoveFile(libPath) #We just ignore if it fails as it isnt critical to keep going
 
   let libsCandidates = getAllLibsFromPath(libDirUE)
 
