@@ -81,6 +81,7 @@ let buildSwitches: Switches = @[
   ("backend", "cpp"),
   ("exceptions", "cpp"), #need to investigate further how to get Unreal exceptions and nim exceptions to work together so UE doesn't crash when generating an exception in cpp
   ("warnings", "off"),
+  ("path", "$nim"),
   d("useMalloc"),
   d("withReinstantiation"),
   d("genFilePath:" & quotes(config.genFilePath)),
@@ -338,7 +339,7 @@ task dumpConfig, "Displays the config variables":
 task codegen, "Runs the process that will automatically generate the API based on the reflection data.":
   doAssert(taskOptions.hasKey("module"), "Missing module argument! Usage: nue codegen --module:codegenFilePath")
   let codegenFilePath = taskOptions["module"]
-  doAssert(execCmd(&"nim cpp --compileonly --nomain --nimcache:.nimcache/codegen {codegenFilePath}") == 0)
+  doAssert(execCmd(&"nim cpp --compileonly --nomain --maxLoopIterationsVM:20000000 --nimcache:.nimcache/codegen {codegenFilePath}") == 0)
   log(&"!!>> Task: codegen complete! <<<<")
 
 # --- End Tasks ---
