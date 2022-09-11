@@ -118,7 +118,7 @@ let platformSwitches: Switches =
         ("cc", "clang"),
         ("putenv", "MACOSX_DEPLOYMENT_TARGET=10.15"),
         passC("-stdlib=libc++"),
-        passC("-x objective-c++"),
+        passC(escape("-x objective-c++")),
         passC("-fno-unsigned-char"),
         passC("-std=c++17"),
         passC("-fno-rtti"),
@@ -131,8 +131,8 @@ let platformSwitches: Switches =
         passC("-Wno-macro-redefined"),
         passC("-Wno-duplicate-decl-specifier"),
         passC("-mincremental-linker-compatible"),
-      ] &
-        (if withPCH: @[passC("-include-pch " & pchPath)] else: @[])
+      ] & 
+        (if withPCH: @[passC(escape("-include-pch " & pchPath))] else: @[])
     else:
       @[]
 

@@ -220,11 +220,10 @@ func toUEType*(uenum:UEnumPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
     if storedUEType.isSome(): return storedUEType
 
     let name = uenum.getName()
-    
-    let fields = uenum.getEnums()
-                      .toSeq()
-                      .map(x=>makeFieldASUEnum(x))
-    
+    var fields = newSeq[UEField]()
+    for fieldName in uenum.getEnums():
+        fields.add(makeFieldASUEnum(fieldName))
+
 
     if uenum.isBpExposed():
         some UEType(name:name, kind:uetEnum, fields:fields)

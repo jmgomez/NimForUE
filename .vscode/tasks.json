@@ -4,9 +4,16 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Build guest",
+        "label": "Build guest (WinPCH)",
         "type": "shell",
-        "command": "./nue    g",
+        "command": "./nue g",
+        "group": "build",
+    }, 
+    {
+        "dependsOn":[],
+        "label": "Build guest (no WinPCH, MacOs)",
+        "type": "shell",
+        "command": "./nue guest",
         "group": "build",
     }, 
     {

@@ -7,14 +7,17 @@ type
   TChar {.importcpp: "TCHAR", nodecl .} = object
   FString* {. exportc, importcpp, header: ueIncludes, bycopy.} = object
 
-
+proc `=destroy`(dst: var FString) =
+  discard
 func getCharArray(fstr : FString) : TArray[TChar] {. importcpp: "#.GetCharArray()" .}
 
 func makeFString*(fstr : FString) : FString {.importcpp: "'0'(#)", constructor .}
 
 func makeFString(cstr : WideCString) : FString {.importcpp: "'0(reinterpret_cast<TCHAR*>(#))", constructor .}
 
-func f*(str :string) : FString {.inline.} = makeFString(newWideCString(str))
+func f*(str :string) : FString {.inline.} = 
+  {.cast(noSideEffect).}:
+    makeFString(newWideCString(str))
 
 func `$`*(fstr: FString): string {.inline.} = $cast[WideCString](fstr.getCharArray().getData())
 
