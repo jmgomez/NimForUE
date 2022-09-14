@@ -168,6 +168,7 @@ proc compileCmd(cpppath: string, objpath: string, dbgFlags: string): string =
     "/Fo" & objpath & " " & cppPath &
     " " & dbgFlags
 
+
 # generate the pch file for windows
 proc winpch*(buildFlags: string) =
   if execCmd(&"nim cpp {buildFlags} --genscript --app:lib --nomain --nimcache:.nimcache/winpch src/nimforue/unreal/winpch.nim") != 0:
@@ -260,3 +261,43 @@ proc nimcacheBuild*(buildFlags: string, relCacheDir:string, linkFileName: string
     return FailedLink
 
   Success
+
+
+
+proc buildUETypeTranspiled*(headerDir, cppPath, objDir:string) : BuildStatus = 
+  # let compileFlags = [
+  #   "/c",
+  #   "--platform:amd64",
+  #   "/nologo",
+  #   "/EHsc"
+  #   ]
+
+  let cppPath = absolutePath(cppPath)
+  
+  let objPath = objDir & "uetypetranspiler.obj"
+  let compileCmd = "vccexe.exe " & 
+    compileFlags.join(" ") & " " &
+    (if withPCH and usesPCHFile(cppPath): pchFlags() else: "") & " " &
+    getUEHeadersIncludePaths(nueConfig).foldIncludes() & " " &
+    "/I" & headerDir  & " " &
+    "/Fo" & objpath & " " & cppPath #&
+    # " " & debugFlags()
+  
+  echo execCmd(compileCmd)
+
+
+  Success
+
+proc linkRunUETypeTranspiled*() = 
+  let cacheDir = r"G:\Dropbox\GameDev\UnrealProjects\NimForUEDemo\Plugins\NimForUE\.nimcache\runuetypetranspiler"
+
+  let objFiles = walkFiles(cacheDir/"*.obj").toSeq().join(" ")
+
+  let linkCmd = &"vccexe.exe  --platform:amd64 /Ferunuetypetranspiler.exe {objFiles}  /nologo "
+
+  echo "OBJECT FILES ARE  " & $objFiles
+  echo execCmd(linkCmd)
+
+  echo "LINK COMMANDS ARE "
+  echo linkCmd
+  

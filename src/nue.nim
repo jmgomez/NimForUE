@@ -351,6 +351,20 @@ task codegen, "Runs the process that will automatically generate the API based o
   doAssert(execCmd(&"nim cpp --compileonly --nomain --maxLoopIterationsVM:20000000 --nimcache:.nimcache/codegen {codegenFilePath}") == 0)
   log(&"!!>> Task: codegen complete! <<<<")
 
+
+task uetypetranspiler, "Transpiles UETypes to C++":
+  let nimHeadersPath = absolutePath(config.pluginDir / "NimHeaders")
+  echo nimHeadersPath
+  doAssert(execCmd(&"nim cpp --cc:vcc -f --nimcache:.nimcache/uetypetranspiler -r src/codegen/uetypetranspiler.nim ") == 0)
+
+
+  doAssert(execCmd(&"nim cpp --passC:-I{nimHeadersPath} -c --cc:vcc -f --nimcache:.nimcache/runuetypetranspiler src/codegen/runuetypetranspiler.nim ") == 0)
+  echo &"nim cpp --passC:-I{nimHeadersPath}  --cc:vcc -f --nimcache:.nimcache/runuetypetranspiler src/codegen/runuetypetranspiler.nim "
+  linkRunUETypeTranspiled()
+
+  echo execCmd("./runuetypetranspiler")
+  log(&"!!>> Task: UEType transpiler complete! <<<<")
+
 # --- End Tasks ---
 
 main()

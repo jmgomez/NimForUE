@@ -7,11 +7,12 @@
         "label": "Build guest (WinPCH)",
         "type": "shell",
         "command": "./nue g",
+        
         "group": "build",
     }, 
     {
         "dependsOn":[],
-        "label": "Build guest (no WinPCH, MacOs)",
+        "label": "Build guest (MacOs)",
         "type": "shell",
         "command": "./nue guest",
         "group": "build",
@@ -33,6 +34,12 @@
         "label": "Build Nue",
         "type": "shell",
         "command": "nimble nue",
+        "group": "build",
+    },
+    {
+        "label": "Build UEType Transpiler",
+        "type": "shell",
+        "command": "./nue uetypetranspiler",
         "group": "build",
     }
     
