@@ -81,7 +81,13 @@ let buildSwitches: Switches = @[
   ("backend", "cpp"),
   ("exceptions", "cpp"), #need to investigate further how to get Unreal exceptions and nim exceptions to work together so UE doesn't crash when generating an exception in cpp
   ("warnings", "off"),
+  ("ic", "off"),
+  ("threads", "off"),
   ("path", "$nim"),
+  # ("hints", "off"),
+  ("hint:XDeclaredButNotUsed", "off"), 
+  ("hint:Name", "off"), 
+  ("hint:DuplicateModuleImport", "off"), 
   d("useMalloc"),
   d("withReinstantiation"),
   d("genFilePath:" & quotes(config.genFilePath)),
@@ -197,7 +203,9 @@ task guest, "Builds the main lib. The one that makes sense to hot reload.":
   generateFFIGenFile(config)
   let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
 
+  # doAssert(execCmd(&"nim  cpp {buildFlags} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim") == 0)
   doAssert(execCmd(&"nim cpp {buildFlags} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim") == 0)
+  echo "NUE_TEMP"
   copyNimForUELibToUEDir()
 
 task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nogen to compile from nimcache cpp sources without generating, --nolinedir turns off #line directives in cpp output.":
@@ -216,6 +224,7 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
   let buildFlags = @[buildSwitches, curTargetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
 
   if not noGen:
+    # doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0)
     doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0)
 
   if nimcacheBuild(buildFlags, "guestpch", "nimforue") == Success:
