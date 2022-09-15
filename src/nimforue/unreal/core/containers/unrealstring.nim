@@ -7,8 +7,7 @@ type
   TChar {.importcpp: "TCHAR", nodecl .} = object
   FString* {. exportc, importcpp, header: ueIncludes, bycopy.} = object
 
-proc `=destroy`(dst: var FString) =
-  discard
+#proc `=destroy`(dst: var FString) = discard
 func getCharArray(fstr : FString) : TArray[TChar] {. importcpp: "#.GetCharArray()" .}
 
 func makeFString*(fstr : FString) : FString {.importcpp: "'0'(#)", constructor .}

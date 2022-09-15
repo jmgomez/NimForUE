@@ -383,6 +383,7 @@ task gencppbindings, "Generates the cpp bindings":
   copyFile("./.nimcache/gencppbindings/@mgencppbindings.nim.cpp", "./.nimcache/guestpch/@mgencppbindings.nim.cpp")
   # echo genCppBindingsBuild(buildFlags, "gencppbindings")
 
+  guestpch(taskOptions)
 # --- End Tasks ---
 
 main()
