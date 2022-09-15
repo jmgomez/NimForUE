@@ -4,10 +4,10 @@ import ../typegen/uemeta
 import ../../buildscripts/nimforueconfig
 import ../macros/makestrproc
 
-import ../../buildscripts/codegentemplate
+import ../../codegen/codegentemplate
 
-import ../unreal/bindings/[nimforuebindings, engine]
-import ../unreal/bindings/[nimforuebindings]
+# import ../unreal/bindings/[nimforuebindings, testimport]
+# import ../unreal/bindings/[nimforuebindings]
 
 # {.experimental: "codeReordering".}
 
@@ -20,6 +20,23 @@ makeStrProc(UEImportRule)
 makeStrProc(UEModule)
 
 
+
+# {.compile:(".nimcache/gencppbindings/@mgencppbindings.nim.cpp").}
+
+
+
+
+
+type 
+  UMyClassToTest* {.importcpp, header:"UEGenBindings.h".} = object of UObject
+  UMyClassToTestPtr* = ptr UMyClassToTest
+
+
+
+proc getHelloWorld*(obj : UMyClassToTestPtr) : FString {. importcpp:"getHelloWorld2(#)", header:"UEGenBindings.h" .} 
+# proc getNameFromCpp*(obj : UMyClassToTestPtr) : FString {. importcpp:"getNameFromCpp(#)", header:"UEGenBindings.h" .} 
+
+
 uEnum ETest:
   testA
   testB
@@ -27,24 +44,32 @@ uEnum ETest:
 
 type
   EComponentMobility* {.size: sizeof(uint8).} = enum
-    Static, Stationary, Movable, EComponentMobility_MAX
+    Static, Stationary, Movable, EComponentMobilityMAX
 #-------
 #withEditor
 #Platforms
 #-------
-# uClass AActorScratchpad of AActor:
-uClass AActorScratchpad of APlayerController:
+uClass AActorScratchpad of AActor:
+# uClass AActorScratchpad of APlayerController:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     stringProp : FString
     intProp : int32#
     objTest : TObjectPtr[AActor]
-    # objTestInArray : TArray[TObjectPtr[AActor]]
+    objTest2 : TObjectPtr[AActor]
+    # objTestInArray : TArray[TObjectPtr[AActor] g.packed[module].module
     beatiful: EComponentMobility
   
     # intProp2 : int32
   
   ufuncs(CallInEditor):
+    proc testHelloWorld() =
+      let obj = newUObject[UMyClassToTest]()
+      UE_Log "Hey! This is from the cpp binding updated" & obj.getHelloWorld()
+      # UE_Log $typeof(obj)
+      # UE_Log "Hey! Test static " & $testStatic("string parameter")
+      # UE_Log "Hey! Test static " & getNameFromCpp(obj)
+
     proc generateUETypes() = 
       # let a = ETest.testB
       let config = getNimForUEConfig()
@@ -113,5 +138,5 @@ uClass AActorScratchpad of APlayerController:
 
   ufuncs(BlueprintCallable):
     proc sayHello() = 
-      UE_Log &"Hello from the scratchpad 5"
-      UE_Log &"Hello from the scratchpad"
+      UE_Log &"Hello from the scratchpad doesnt  sens taskes more "
+      UE_Log &"Hello from the scratchpad sa holly dasds"

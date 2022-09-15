@@ -41,7 +41,14 @@
         "type": "shell",
         "command": "./nue uetypetranspiler",
         "group": "build",
+    },
+    {
+        "label": "gencppbindings",
+        "type": "shell",
+        "command": "./nue gencppbindings",
+        "group": "build",
     }
+    
     
     ]
   }

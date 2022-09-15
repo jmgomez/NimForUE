@@ -354,7 +354,6 @@ task codegen, "Runs the process that will automatically generate the API based o
 
 task uetypetranspiler, "Transpiles UETypes to C++":
   let nimHeadersPath = absolutePath(config.pluginDir / "NimHeaders")
-  echo nimHeadersPath
   doAssert(execCmd(&"nim cpp --cc:vcc -f --nimcache:.nimcache/uetypetranspiler -r src/codegen/uetypetranspiler.nim ") == 0)
 
 
@@ -362,8 +361,27 @@ task uetypetranspiler, "Transpiles UETypes to C++":
   echo &"nim cpp --passC:-I{nimHeadersPath}  --cc:vcc -f --nimcache:.nimcache/runuetypetranspiler src/codegen/runuetypetranspiler.nim "
   linkRunUETypeTranspiled()
 
-  echo execCmd("./runuetypetranspiler")
+  echo execCmdEx("./runuetypetranspiler").output
   log(&"!!>> Task: UEType transpiler complete! <<<<")
+
+
+task gencppbindings, "Generates the cpp bindings":
+  var force = ""
+  if "f" in taskOptions:
+    force = "-f"
+  var noGen = "nogen" in taskOptions
+  var lineDir = "on"
+  var curTargetSwitches = targetSwitches
+  if "nolinedir" in taskOptions: 
+    lineDir = "off"
+    curTargetSwitches = targetSwitches.filterIt(it[0] != "debugger" and it[0] != "stacktrace")
+
+  let buildFlags = @[buildSwitches, curTargetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
+
+  doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --noMain --compileOnly --header:UEGenBindings.h --nimcache:.nimcache/gencppbindings src/codegen/maingencppbindings.nim") == 0)
+  copyFile("./.nimcache/gencppbindings/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")
+  copyFile("./.nimcache/gencppbindings/@mgencppbindings.nim.cpp", "./.nimcache/guestpch/@mgencppbindings.nim.cpp")
+  # echo genCppBindingsBuild(buildFlags, "gencppbindings")
 
 # --- End Tasks ---
 

@@ -449,7 +449,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNode =
     let typeDecl = if rule == uerCodeGenOnlyFields: newEmptyNode()
                    else: genAst(name = ident typeDef.name, ptrName, parent, props, funcs):
                     type 
-                        name* {.inject.} = object of parent #TODO OF BASE CLASS 
+                        name* {.inject, exportcpp.} = object of parent #TODO OF BASE CLASS 
                         ptrName* {.inject.} = ptr name
     
     result = 
