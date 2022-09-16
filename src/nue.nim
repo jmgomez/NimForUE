@@ -380,8 +380,8 @@ task gencppbindings, "Generates the cpp bindings":
 
   doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --noMain --compileOnly --header:UEGenBindings.h --nimcache:.nimcache/gencppbindings src/codegen/maingencppbindings.nim") == 0)
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")
+  createDir("./.nimcache/guestpch")
   copyFile("./.nimcache/gencppbindings/@mgencppbindings.nim.cpp", "./.nimcache/guestpch/@mgencppbindings.nim.cpp")
-  # echo genCppBindingsBuild(buildFlags, "gencppbindings")
 
   guestpch(taskOptions)
 # --- End Tasks ---

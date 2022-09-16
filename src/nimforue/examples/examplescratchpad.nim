@@ -21,20 +21,50 @@ makeStrProc(UEModule)
 
 
 
-# {.compile:(".nimcache/gencppbindings/@mgencppbindings.nim.cpp").}
+#[
+#this works
+const uePropType* = UEType(name: "UMyClassToTest", parent: "UObject", kind: uetClass, 
+                    fields: @[
+                        makeFieldAsUFun("GetHelloWorld", @[makeFieldAsUPropParam("ReturnValue", "FString", CPF_ReturnParm or CPF_Parm)], "UMyClassToTest"),
+                        ])
 
+genType(uePropType)
+]#
 
-
-
-
-type 
-  UMyClassToTest* {.importcpp, header:"UEGenBindings.h".} = object of UObject
+#[
+# this works
+type
+  UMyClassToTest* = object of UObject
   UMyClassToTestPtr* = ptr UMyClassToTest
 
+proc getHelloWorld*(obj: UMyClassToTestPtr): FString =
+  type
+    Params = object
+      returnValue: FString
+
+  var param = Params()
+  var fnName: FString = "GetHelloWorld"
+  callUFuncOn(obj, fnName, param.addr)
+  return param.returnValue
+]#
 
 
-proc getHelloWorld*(obj : UMyClassToTestPtr) : FString {. importcpp:"getHelloWorld2(#)", header:"UEGenBindings.h" .} 
-# proc getNameFromCpp*(obj : UMyClassToTestPtr) : FString {. importcpp:"getNameFromCpp(#)", header:"UEGenBindings.h" .} 
+type
+  UMyClassToTest {.importcpp, header:"UEGenBindings.h".} = object of UObject
+  UMyClassToTestPtr = ptr UMyClassToTest
+
+#this works I think it was failing before because of how importcpp was defined
+#[
+#this fails:
+error C2027: use of undefined type 'UMyClassToTest'
+D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\NimHeaders\UEGenBindings.h(24): note: see declaration of 'UMyClassToTest'
+D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\src\nimforue\examples\examplescratchpad.nim(88): error C2660: 'amp___nimforueZunrealZ67oreZ67ontainersZunrealstring_86': function does not take 1 arguments
+D:\unreal-projects\NimForUEDemo\Plugins\NimForUE\src\nimforue\unreal\definitions.nim(43): note: see declaration of 'amp___nimforueZunrealZ67oreZ67ontainersZunrealstring_86'
+#proc getHelloWorld(obj : UMyClassToTestPtr) : FString {. importcpp:"#.$1()", header:"UEGenBindings.h" .}
+]#
+
+#this works!
+proc getHelloWorld(obj : UMyClassToTestPtr) : FString {. importcpp:"$1(#)", header:"UEGenBindings.h" .}
 
 
 uEnum ETest:
@@ -65,10 +95,7 @@ uClass AActorScratchpad of AActor:
   ufuncs(CallInEditor):
     proc testHelloWorld() =
       let obj = newUObject[UMyClassToTest]()
-      UE_Log "Hey! This is from the cpp binding updated" & obj.getHelloWorld()
-      # UE_Log $typeof(obj)
-      # UE_Log "Hey! Test static " & $testStatic("string parameter")
-      # UE_Log "Hey! Test static " & getNameFromCpp(obj)
+      UE_Log "testHelloWorld: " & obj.getHelloWorld()
 
     proc generateUETypes() = 
       # let a = ETest.testB
@@ -77,7 +104,8 @@ uClass AActorScratchpad of AActor:
       createDir(reflectionDataPath)
       let bindingsDir = config.pluginDir / "src"/"nimforue"/"unreal"/"bindings"
       createDir(bindingsDir)
-      let moduleNames = @["NimForUEBindings", "Engine"]
+      #let moduleNames = @["NimForUEBindings", "Engine"]
+      let moduleNames = @["NimForUEBindings"]
       let moduleRules = @[
           makeImportedRuleType(uerCodeGenOnlyFields, @["AActor"]), 
           makeImportedRuleField(uerIgnore, @["PerInstanceSMCustomData", "PerInstanceSMData" ])

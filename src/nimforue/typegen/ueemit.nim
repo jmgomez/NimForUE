@@ -418,7 +418,7 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
 
 func makeUEFieldFromNimParamNode(n:NimNode) : UEField = 
     #make sure there is no var at this point, but CPF_Out
-    
+
     var nimType = n[1].repr.strip()
     let paramName = n[0].strVal()
     var paramFlags = CPF_Parm
@@ -646,7 +646,7 @@ func ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
     let returnParam = formalParamsNode #for being void it can be empty or void
                         .first(n=>n.kind==nnkIdent)
                         .flatMap((n:NimNode)=>(if n.strVal()=="void": none[NimNode]() else: some(n)))
-                        .map(n=>makeFieldAsUPropParam("toReturn", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
+                        .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
 
     let actualParams = classParam.map(n=>fields) #if there is class param, first param would be use as actual param
                                  .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
