@@ -104,10 +104,10 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
                 let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
 
-            # proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode) {.exportcpp.} = 
-            #     var value {.inject.} : typeNode = val
-            #     let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
-            #     setPropertyValuePtr[typeNode](prop, obj, value.addr)
+            proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode) {.exportcpp.} = 
+                var value {.inject.} : typeNode = val
+                let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
+                setPropertyValuePtr[typeNode](prop, obj, value.addr)
     
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types

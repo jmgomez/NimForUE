@@ -75,13 +75,16 @@ type
                 # delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
                 delKind*: UEDelegateKind
 
+    #Rules applies to UERuleTarget
     UERule* = enum
         uerNone
         uerCodeGenOnlyFields #wont generate the type. Just its fields. Only make sense in uClass. Will affect code generation (we try to do it at the import time when possible) 
-        uerIgnore #Will ignore the type. It just wont be imported
+        uerIgnore 
+    
     UERuleTarget* = enum 
         uertType
         uertField
+
     UEImportRule* = object #used only to customize the codegen
         affectedTypes* : seq[string]
         rule* : UERule

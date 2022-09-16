@@ -85,7 +85,7 @@ uClass AActorScratchpad of AActor:
 
     proc testUProp() =
       let obj = newUObject[UMyClassToTest]()
-      # obj.nameProperty=n"NameProperty"
+      obj.nameProperty=n"NameProperty"
       UE_Log nameProperty(obj).toFString()
 
     proc testStaticFunction() =
