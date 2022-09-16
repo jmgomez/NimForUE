@@ -3,7 +3,7 @@ import math/vector
 import ../coreuobject/[uobject]
 
 type 
-  AActor*  = object of UObject
+  AActor* {.importcpp.}  = object of UObject
   AActorPtr* = ptr AActor
   AInfo* = object of AActor
   AInfoPtr* = ptr AInfo

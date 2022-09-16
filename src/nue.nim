@@ -382,8 +382,10 @@ task gencppbindings, "Generates the cpp bindings":
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")
   createDir("./.nimcache/guestpch")
   copyFile("./.nimcache/gencppbindings/@mgencppbindings.nim.cpp", "./.nimcache/guestpch/@mgencppbindings.nim.cpp")
+  copyFile("./.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@snimforuebindings.nim.cpp", "./.nimcache/guestpch/@m..@snimforue@sunreal@sbindings@snimforuebindings.nim.cpp")
 
   guestpch(taskOptions)
 # --- End Tasks ---
 
 main()
+

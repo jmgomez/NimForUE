@@ -5,6 +5,7 @@ else:
 
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
+
 # import ../unreal/coreuobject/uobjectflags
 
 
@@ -58,6 +59,7 @@ type
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
         metadata* : seq[UEMetadata]
+        
         case kind*: UETypeKind
             of uetClass:
                 parent* : string
@@ -90,6 +92,8 @@ type
         types* : seq[UEType]
         rules* : seq[UEImportRule]
         dependencies* : seq[UEModule]   
+
+
 
 func makeImportedRuleType*(rule:UERule, affectedTypes:seq[string], ):UEImportRule =
     result.affectedTypes = affectedTypes

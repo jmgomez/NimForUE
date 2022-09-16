@@ -64,18 +64,21 @@ proc getField(f: NimNode, output:NimNode): NimNode =
     error("Unknown field kind: " & f.kind.repr)
     newLit ""
 
+
 macro makeStrProc*(t: typedesc): untyped =
   # generates a proc `$`(v: t): string
   let timpl = t.getTypeImpl[1].getTypeImpl()
   #echo timpl.treeRepr
   var strproc = nnkProcDef.newTree(
-    nnkAccQuoted.newTree(ident("$")), 
-    newEmptyNode(),
-    newEmptyNode(),
-    nnkFormalParams.newTree(
-      ident "string",
-      nnkIdentDefs.newTree( ident "v", ident t.strval, newEmptyNode())
-    ),
+      nnkPostfix.newTree(
+        ident("*"),
+        nnkAccQuoted.newTree(ident("$"))), 
+      newEmptyNode(),
+      newEmptyNode(),
+      nnkFormalParams.newTree(
+        ident "string",
+        nnkIdentDefs.newTree( ident "v", ident t.strval, newEmptyNode())
+      ),
     newEmptyNode(),
     newEmptyNode())
 
@@ -102,6 +105,14 @@ macro makeStrProc*(t: typedesc): untyped =
   strproc.add(nnkStmtList.newTree(head, fields, tail))
   #echo strproc.repr
   strproc
+
+
+makeStrProc(UEMetadata)
+makeStrProc(UEField)
+makeStrProc(UEType)
+makeStrProc(UEImportRule)
+makeStrProc(UEModule)
+
 
 #example usage with the VM
 

@@ -14,7 +14,7 @@ import std/[typetraits, strutils, sequtils, sugar]
 #This file contains logic on top of ue types that it isnt necessarily bind 
 
 #not sure if I should make a specific file for object extensions that are outside of the bindings
-proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr = getClassByName(clsName).getDefaultObject()
+proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr {.exportcpp.} = getClassByName(clsName).getDefaultObject()
 
 proc removeFunctionFromClass*(cls:UClassPtr, fn:UFunctionPtr) =
     cls.removeFunctionFromFunctionMap(fn)

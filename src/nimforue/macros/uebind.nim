@@ -91,17 +91,24 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
     let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)) 
 
     # debugEcho treeRepr typeNodeAsReturnValue
+    #Notice we generate two set properties one for nim and the other for code gen due to cpp
+    #not liking the equal in the ident name
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
-            proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue =
+            proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {.exportcpp.} =
                 let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
                 getPropertyValuePtr[typeNode](prop, obj)[]
             
-            proc `propIdent=`* (obj {.inject.} : ptrName, val {.inject.} :typeNode) = 
+            proc `propIdent=`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  = 
                 var value {.inject.} : typeNode = val
                 let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
-   
+
+            # proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode) {.exportcpp.} = 
+            #     var value {.inject.} : typeNode = val
+            #     let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
+            #     setPropertyValuePtr[typeNode](prop, obj, value.addr)
+    
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
         let reservedKeywords = ["object", "method", "type"] 

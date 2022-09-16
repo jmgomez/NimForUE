@@ -19,6 +19,7 @@ type
         ueType* {.importcpp: "ueType".} : FString
         newNimScriptStruct* {.importcpp: "NewNimScriptStruct".} : ptr UNimScriptStruct
 
+
     UNimScriptStructPtr* = ptr UNimScriptStruct
 
     UNimEnum* {.importcpp.} = object of UEnum
@@ -34,6 +35,9 @@ type
         ueType* {.importcpp: "ueType".} : FString
         
     UNimDelegateFunctionPtr* = ptr UNimDelegateFunction
+
+    UReflectionHelpers* {.importcpp.} = object of UObject
+    UReflectionHelpersPtr* = ptr UReflectionHelpers
 
 proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
 
@@ -102,7 +106,7 @@ proc newObjectFromClass(params:FStaticConstructObjectParameters) : UObjectPtr {.
 #1. Define package when possible, 
 #2. Do not pass copy of FStrings around.
 #3. Cache
-proc getClassByName*(className:FString) : UClassPtr = getUTypeByName[UClass](className)
+proc getClassByName*(className:FString) : UClassPtr {.exportcpp.} = getUTypeByName[UClass](className)
 proc tryGetClassByName*(className:FString) : Option[UClassPtr] = someNil(getClassByName(className))
 
 proc getScriptStructByName*(structName:FString) : UScriptStructPtr = getUTypeByName[UScriptStruct](structName)
