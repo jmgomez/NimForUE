@@ -32,10 +32,11 @@ uClass AActorCodegen of AActor:
 
         let codegenPath = reflectionDataPath / moduleName.toLower() & ".nim"
         let bindingsPath = bindingsDir / moduleName.toLower() & ".nim"
+        let cppBindingsPath = bindingsDir / moduleName.toLower() & "cpp.nim"
         UE_Log &"-= The codegen module path is {codegenPath} =-"
 
         try:
-          let codegenTemplate = codegenNimTemplate % [$module, escape(bindingsPath)]
+          let codegenTemplate = codegenNimTemplate % [$module, escape(bindingsPath), escape(cppBindingsPath)]
           #UE_Warn &"{codegenTemplate}"
           writeFile(codegenPath, codegenTemplate)
           let nueCmd = config.pluginDir/"nue.exe codegen --module:\"" & codegenPath & "\""
@@ -45,6 +46,7 @@ uClass AActorCodegen of AActor:
           UE_Log &"-= Bindings for {moduleName} generated in {bindingsPath} =- "
 
           doAssert(fileExists(bindingsPath))
+          doAssert(fileExists(cppBindingsPath))
         except:
           let e : ref Exception = getCurrentException()
 

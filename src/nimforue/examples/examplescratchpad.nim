@@ -7,6 +7,7 @@ import ../macros/makestrproc
 import ../../codegen/codegentemplate
 
 # import ../unreal/bindings/[nimforuebindings, testimport]
+import ../unreal/bindings/[nimforuebindingscpp]
 
 # {.experimental: "codeReordering".}
 
@@ -14,22 +15,26 @@ import ../../codegen/codegentemplate
 
 
 
-#gen this
-type
-  UMyClassToTest {.importcpp, header:"UEGenBindings.h".} = object of UObject
-  UMyClassToTestPtr = ptr UMyClassToTest
-proc getHelloWorld(obj : UMyClassToTestPtr) : FString {. importcpp:"$1(#)", header:"UEGenBindings.h" .}
+# #gen this
+# type
+#   UMyClassToTest {.importcpp, header:"UEGenBindings.h".} = object of UObject
+#   UMyClassToTestPtr = ptr UMyClassToTest
+# proc getHelloWorld(obj : UMyClassToTestPtr) : FString {. importcpp:"$1(#)", header:"UEGenBindings.h" .}
+
+# proc nameProperty*(obj : UMyClassToTestPtr): FName {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
+
+# # proc `nameProperty=`*(obj : UMyClassToTestPtr; val : FName) {. importcpp:"set$1(@)", header:"UEGenBindings.h" .}
+# proc setnameProperty*(obj : UMyClassToTestPtr; val : FName) {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
+# proc `nameProperty=`*(obj : UMyClassToTestPtr; val : FName) {.inline.} = setnameProperty(obj, val)
 
 
-
-proc nameProperty*(obj : UMyClassToTestPtr): FName {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
-
-proc `nameProperty=`*(obj : UMyClassToTestPtr; val : FName) {. importcpp:"set$1(@)", header:"UEGenBindings.h" .}
+# proc getHelloWorldStatic*(): FString {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
 
 
-proc getHelloWorldStatic*(): FString {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
+#For now the layout will be as above, but the header name may vary if we dont include them in the pch. 
 
 #We should try first interop with a property (getter and setter)
+
 
 #Also test static functions
 
@@ -81,11 +86,13 @@ uClass AActorScratchpad of AActor:
   ufuncs(CallInEditor):
     proc testHelloWorld() =
       let obj = newUObject[UMyClassToTest]()
-      UE_Log "testHelloWorld: " & obj.getHelloWorld()
+      UE_Warn "testHelloWorld: " & obj.getHelloWorld()
+
 
     proc testUProp() =
       let obj = newUObject[UMyClassToTest]()
-      obj.nameProperty=n"NameProperty"
+      obj.nameProperty = "NameProperty".n()
+      # obj.setnameProperty(n"NameProperty")
       UE_Log nameProperty(obj).toFString()
 
     proc testStaticFunction() =

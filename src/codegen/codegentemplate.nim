@@ -5,7 +5,8 @@ import ../nimforue/typegen/models
 import ../nimforue/macros/uebind
 
 const module* = $1
-const bindingsPath = $2
+const bindingsPath = $2 
+const cppBindingsPath = $3
 
 macro genCode(module:static UEModule) =
   let code = repr(genModuleDecl(module))
@@ -19,5 +20,20 @@ macro genCode(module:static UEModule) =
   #It will require prelude 
   writeFile(bindingsPath, "include ../prelude\n{.experimental:\"codereordering\".}\n" & code)
 
+macro genImportCCode(module:static UEModule) =
+  let code = repr(genImportCModuleDecl(module))
+              .multiReplace(
+    ("{.inject.}", ""),
+    ("{.inject, ", "{."),
+     ("::", "."), #Enum namespace
+    ("__DelegateSignature", "")
+  )
+  #It will require prelude 
+  writeFile(cppBindingsPath, "include ../prelude\n{.experimental:\"codereordering\".}\n" & code)
+
+
+
+
 genCode(module)
+genImportCCode(module)
 """

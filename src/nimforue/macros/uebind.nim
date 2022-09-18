@@ -389,11 +389,6 @@ func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode =
                         ])
 
 
-
-# proc nameProperty*(obj : UMyClassToTestPtr): FName {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
-
-# proc `nameProperty=`*(obj : UMyClassToTestPtr; val : FName) {. importcpp:"set$1(@)", header:"UEGenBindings.h" .}
-
 func genImportCProp(typeDef : UEType, prop : UEField) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
   
@@ -413,8 +408,8 @@ func genImportCProp(typeDef : UEType, prop : UEField) : NimNode =
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
             proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
-            proc `set nameProperty`(obj : UMyClassToTestPtr; val : FName) {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
-            proc `propIdent=`*(obj : UMyClassToTestPtr; val : FName) {.inline.} = `set nameProperty`(obj, val)
+            proc `set propIdent`(obj {.inject.} : ptrName, val {.inject.} : typeNodeAsReturnValue) : void {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
+            proc `propIdent=`*(obj {.inject.} : ptrName, val {.inject.} : typeNodeAsReturnValue) : void {.inline.} = `set propIdent`(obj, val)
           
     
     
@@ -446,20 +441,18 @@ func genUClassImportCTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNod
 
 
 proc genImportCTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode =
-    # echo &"Will generate ImportCTypeDecl for {typeDef}"
     case typeDef.kind:
         of uetClass: 
             genUClassImportCTypeDef(typeDef, rule)
         of uetStruct:
             genUStructTypeDef(typeDef, importcpp=true)
         of uetEnum:
-            genUStructTypeDef(typeDef, importcpp=true)
+            genUEnumTypeDef(typeDef, importcpp=true)
         of uetDelegate: #No exporting dynamic delegates. Not sure if they make sense at all. 
-            newEmptyNode()
+            genDelType(typeDef)
 
 
 proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode = 
-    echo repr genImportCTypeDecl(typeDef, rule) #TEMP this is just to preview the macro
     case typeDef.kind:
         of uetClass:
             genUClassTypeDef(typeDef, rule)
@@ -478,6 +471,11 @@ proc genModuleDecl*(moduleDef:UEModule) : NimNode =
         let rules = moduleDef.getAllMatchingRulesForType(typeDef)
         result.add genTypeDecl(typeDef, rules)
         
+proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
+    result = nnkStmtList.newTree()
+    for typeDef in moduleDef.types:
+        let rules = moduleDef.getAllMatchingRulesForType(typeDef)
+        result.add genImportCTypeDecl(typeDef, rules)
 
 
     
