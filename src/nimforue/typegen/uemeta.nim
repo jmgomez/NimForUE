@@ -103,7 +103,11 @@ func isBPExposed(str:UFieldPtr) : bool = true #str.hasMetadata("BlueprintType")
 #Function that receives a FProperty and returns a Type as string
 func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UEField] = #The expected type is something that UEField can understand
     let name = prop.getName()
-    let nimType = prop.getNimTypeAsStr(outer)
+
+    var nimType = prop.getNimTypeAsStr(outer)
+    if "TEnumAsByte" in nimType:   
+        nimType = nimType.extractTypeFromGenericInNimFormat("TEnumAsByte")
+
     for rule in rules:
         if name in rule.affectedTypes and rule.target == uerTField and rule.rule == uerIgnore: #TODO extract
             return none(UEField)
@@ -199,6 +203,7 @@ func toUEType*(del:UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]) : Optio
     if storedUEType.isSome(): return storedUEType
 
     let name = del.getPrefixCpp() & del.getName()
+
 
     let fields = getFPropsFromUStruct(del)
                     .map(x=>toUEField(x, del))

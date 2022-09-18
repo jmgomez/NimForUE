@@ -7,6 +7,7 @@ import ../macros/makestrproc
 import ../../codegen/codegentemplate
 
 # import ../unreal/bindings/[nimforuebindings, testimport]
+# import ../unreal/bindings/[nimforuebindings]
 import ../unreal/bindings/[nimforuebindingscpp]
 
 # {.experimental: "codeReordering".}
@@ -92,6 +93,8 @@ uClass AActorScratchpad of AActor:
     proc testUProp() =
       let obj = newUObject[UMyClassToTest]()
       obj.nameProperty = "NameProperty".n()
+      obj.enumProperty=EMyTestEnum.TestValue
+      UE_Log $obj.enumProperty
       # obj.setnameProperty(n"NameProperty")
       UE_Log nameProperty(obj).toFString()
 

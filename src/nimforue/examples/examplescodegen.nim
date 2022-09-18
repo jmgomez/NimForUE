@@ -21,7 +21,7 @@ uClass AActorCodegen of AActor:
       let moduleNames = @["NimForUEBindings"]
       let moduleRules = @[
           makeImportedRuleType(uerCodeGenOnlyFields, @["AActor", "UReflectionHelpers"]), 
-          makeImportedRuleField(uerIgnore, @["PerInstanceSMCustomData", "PerInstanceSMData", "EnumProperty" ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
+          makeImportedRuleField(uerIgnore, @["PerInstanceSMCustomData", "PerInstanceSMData" ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
 
         ]
       # let moduleNames = @["NimForUEBindings"]

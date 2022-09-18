@@ -64,6 +64,12 @@ func identWithInjectPublic*(name:string) : NimNode =
     nnkPragmaExpr.newTree([
         nnkPostfix.newTree([ident "*", ident name]),
         nnkPragma.newTree(ident "inject")])
+func identWithInjectPublicAnd*(name, anotherPragma:string) : NimNode = 
+    nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident name]),
+        nnkPragma.newTree(ident "inject", ident anotherPragma)
+        
+        ])
 
 func identWithInject*(name:string) : NimNode = 
     nnkPragmaExpr.newTree([
@@ -292,9 +298,11 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNode =
     #if result.repr.contains("UMyClassToTest"):
     #    debugEcho result.repr
 
+
+
 func genUStructTypeDef(typeDef: UEType, importcpp=false) : NimNode = 
-    
-    let typeName = identWithInjectPublic typeDef.name
+    let cppPragma = if importcpp: "importcpp" else: "exportcpp"
+    let typeName = identWithInjectPublicAnd(typeDef.name, cppPragma)
     #TODO Needs to handle TArray/Etc. like it does above with classes
     let fields = typeDef.fields
                         .map(prop => nnkIdentDefs.newTree(
@@ -303,12 +311,8 @@ func genUStructTypeDef(typeDef: UEType, importcpp=false) : NimNode =
                         .foldl(a.add b, nnkRecList.newTree)
 
 
-    result = if importcpp:
-                genAst(typeName, fields):
-                    type typeName {.importcpp.} = object
-            else:
-                genAst(typeName, fields):
-                    type typeName = object
+    result = genAst(typeName, fields):
+                type typeName = object
     
     result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])
     # debugEcho result.repr
@@ -327,11 +331,10 @@ func genUEnumTypeDef(typeDef:UEType, importcpp=false) : NimNode =
                         fields
             else:
                 genAst(typeName, fields):
-                    type typeName* {.inject, size:sizeof(uint8), pure.} = enum         
+                    type typeName* {.inject, size:sizeof(uint8), pure, exportcpp.} = enum         
                         fields
     
     result[0][^1] = fields #replaces enum 
-
 
 proc genDelType(delType:UEType) : NimNode = 
     #NOTE delegates are always passed around as reference
