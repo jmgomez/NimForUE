@@ -18,7 +18,9 @@ func f*(str :string) : FString {.inline.} =
   {.cast(noSideEffect).}:
     makeFString(newWideCString(str))
 
-func `$`*(fstr: FString): string {.inline.} = $cast[WideCString](fstr.getCharArray().getData())
+func `$`*(fstr: FString): string {.inline.} = 
+  if fstr.getCharArray().num() == 0: ""
+  else: $cast[WideCString](fstr.getCharArray().getData())
 
 func append*(a, b: FString): FString {.importcpp: "#.Append(#)".}
 
