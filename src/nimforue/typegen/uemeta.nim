@@ -162,8 +162,10 @@ func toUEType*(cls:UClassPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
                     .map(x=>toUEField(x, cls, rules))
                     .sequence()
     let name = cls.getPrefixCpp() & cls.getName()
-    let parent = cls.getSuperClass()
-    let parentName = parent.getPrefixCpp() & parent.getName()
+    let parent = someNil cls.getSuperClass()
+
+    
+    let parentName = parent.map(p=>p.getPrefixCpp() & p.getName()).get("")
     if cls.isBpExposed():
         some UEType(name:name, kind:uetClass, parent:parentName, fields:fields.reversed())
     else:
@@ -259,7 +261,19 @@ func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule]) : Option[UEModule] =
                 # .filter((x:UEType)=>x.kind != uetDelegate)
                
 
-  some makeUEModule(pkg.getName().split("/")[^1], types, rules)
+  some makeUEModule(pkg.getShortName(), types, rules)
+
+#returns all modules neccesary to reference the UEType 
+func getModuleNames*(ueType:UEType) : seq[string] = 
+    #only uStructs based for now
+    let outer : UStructPtr = getUTypeByName[UStruct](ueType.name.removeFirstLetter())
+    let modName = outer.getModuleName()
+    let fprops = outer.getFPropsFromUStruct()
+    #Print them for now but eventually I will need to get the Cls/ScriptStruct name.
+    @[$modName] & fprops.mapIt(&"{it.getName()}: {it.getCppType()}")
+
+# func getAllModuleDependentNames(module:UEModule) : seq[string] =
+#     #Iterate over all fields of uclass
   
   
 
@@ -432,8 +446,6 @@ proc emitUStruct*[T](ueType : UEType, package:UPackagePtr) : UFieldPtr =
     scriptStruct.staticLink(true)
     scriptStruct.ueType =  $ueType.toJson() 
     scriptStruct
-
-
 
 
 proc emitUStruct*[T](ueType : UEType, package:string) : UFieldPtr =

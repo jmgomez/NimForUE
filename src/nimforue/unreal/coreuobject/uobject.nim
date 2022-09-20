@@ -10,7 +10,6 @@ import sugar
 export uobjectflags
 
 
-
 type 
     
     FField* {. importcpp, inheritable, pure .} = object 
@@ -221,6 +220,8 @@ proc addToRoot*(obj:UObjectPtr) : void {. importcpp: "#->AddToRoot()" .}
 
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
 proc getOuter*(obj : UObjectPtr) : UObjectPtr {. importcpp: "#->GetOuter()" .}
+
+
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
 proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
 proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}

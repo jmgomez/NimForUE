@@ -64,6 +64,8 @@ import ../unreal/bindings/[nimforuebindingscpp]
 #A can holds B and B holds C and C holds A
 
 
+proc `donProperty=`*(obj : UMyClassToTestPtr; val : FName) {. importcpp:"setnameProperty(@)", header:"UEGenBindings.h" .}
+
 
 #-------
 #withEditor
@@ -94,6 +96,7 @@ uClass AActorScratchpad of AActor:
       let obj = newUObject[UMyClassToTest]()
       obj.nameProperty = "NameProperty".n()
       obj.enumProperty=EMyTestEnum.TestValue
+      obj.donProperty= n"MyProperty"
       UE_Log $obj.enumProperty
       # obj.setnameProperty(n"NameProperty")
       UE_Log nameProperty(obj).toFString()

@@ -450,7 +450,7 @@ proc genImportCTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode =
         of uetStruct:
             genUStructTypeDef(typeDef, importcpp=true)
         of uetEnum:
-            genUEnumTypeDef(typeDef, importcpp=true)
+            genUEnumTypeDef(typeDef, importcpp=false)
         of uetDelegate: #No exporting dynamic delegates. Not sure if they make sense at all. 
             genDelType(typeDef)
 

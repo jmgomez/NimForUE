@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[strformat, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
+import std/[strformat, strutils, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../typegen/uemeta
 import ../../buildscripts/nimforueconfig
 import ../macros/makestrproc
@@ -55,5 +55,46 @@ uClass AActorCodegen of AActor:
           UE_Log &"Failed to generate {codegenPath} nim binding"
 
 
+    proc showEngineClass() = 
+      let moduleNames = @["Engine"]
+      let moduleRules = @[
+          makeImportedRuleType(uerCodeGenOnlyFields, @["AActor", "UReflectionHelpers"]), 
+          makeImportedRuleField(uerIgnore, @["PerInstanceSMCustomData", "PerInstanceSMData" ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
 
+        ]
+      for moduleName in moduleNames:
+        var module = tryGetPackageByName(moduleName)
+                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
+                      .get()
+
+        UE_Log $module 
+
+    proc showCoreUObjectClasses() = 
+      let moduleNames = @["CoreUObject"]
+      let moduleRules = @[
+          makeImportedRuleType(uerCodeGenOnlyFields, @["AActor", "UReflectionHelpers"]), 
+          makeImportedRuleField(uerIgnore, @["PerInstanceSMCustomData", "PerInstanceSMData" ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
+
+        ]
+      for moduleName in moduleNames:
+        var module = tryGetPackageByName(moduleName)
+                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
+                      .get()
+
+        UE_Log $module      
+
+
+    proc experiments() = 
+      let clsName = "Actor"
+      let cls = getClassByName(clsName)
+      let ueType = cls.toUEType().get()
+      # for f in ueType.fields:
+      #   if f.kind == uefFunction: continue
+      #   else:   
+      #     UE_Log &"The {f.name} module is {f.getModuleName()}"
+      
+      UE_Log $cls
+      UE_Log $cls.getModuleName()
+
+      UE_Warn &"UEType dependencies: {ueType.getModuleNames()}"
 
