@@ -100,6 +100,8 @@ func countSubStr*(str:string, subStr:string): int =
       inc i
   count
 
+  
+
 #OPTION
 func getOrCompute*[T, U](opt: Option[T], fn: ()->T): T =
   if opt.isSome(): opt.get() else: fn()

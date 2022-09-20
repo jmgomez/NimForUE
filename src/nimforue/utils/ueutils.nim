@@ -1,5 +1,5 @@
 import ../unreal/coreuobject/[uobject]
-import std/[options, strutils, sequtils, sugar]
+import std/[options, strutils, sequtils, sugar, strscans]
 import utils
 
 const DelegateFuncSuffix* = "__DelegateSignature"
@@ -11,6 +11,13 @@ proc extractTypeFromGenericInNimFormat*(str, genericType :string) : string =
 
 proc extractTypeFromGenericInNimFormat*(str, outerGeneric, innerGeneric :string) : string = 
     str.replace(outerGeneric, "").replace(innerGeneric, "").replace("[").replace("]", "")
+
+func getInnerCppGenericType*(cppType:string) : string = 
+    var generic, inner : string
+    if scanf(cppType, "$*<$*>", generic, inner): inner
+    else: cppType
+
+func getNameOfUENamespacedEnum*(namespacedEnum:string) : string = namespacedEnum.replace("::Type", "")
 
 proc extractKeyValueFromMapProp*(str:string) : seq[string] = 
     str.extractTypeFromGenericInNimFormat("TMap").split(",")

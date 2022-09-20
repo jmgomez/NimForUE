@@ -67,7 +67,15 @@ uClass AActorCodegen of AActor:
                       .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
                       .get()
 
-        UE_Log $module 
+        let deps = module.types
+                        .filterIt(it.kind == uetClass)
+                        .mapIt(it.getModuleNames())
+                        .foldl(a & b, newSeq[string]())
+                        .deduplicate()
+
+        UE_Warn &"{module.name} Deps: {deps}"
+
+
 
     proc showCoreUObjectClasses() = 
       let moduleNames = @["CoreUObject"]
@@ -88,10 +96,6 @@ uClass AActorCodegen of AActor:
       let clsName = "Actor"
       let cls = getClassByName(clsName)
       let ueType = cls.toUEType().get()
-      # for f in ueType.fields:
-      #   if f.kind == uefFunction: continue
-      #   else:   
-      #     UE_Log &"The {f.name} module is {f.getModuleName()}"
       
       UE_Log $cls
       UE_Log $cls.getModuleName()

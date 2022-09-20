@@ -263,14 +263,57 @@ func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule]) : Option[UEModule] =
 
   some makeUEModule(pkg.getShortName(), types, rules)
 
+
+func getUnrealTypeFromName[T](name:FString) : Option[UObjectPtr] = 
+    #ScriptStruct, Classes
+    tryUECast[UObject](getUTypeByName[T](name))
+
+
+
 #returns all modules neccesary to reference the UEType 
 func getModuleNames*(ueType:UEType) : seq[string] = 
     #only uStructs based for now
-    let outer : UStructPtr = getUTypeByName[UStruct](ueType.name.removeFirstLetter())
+    let outer : UClassPtr = getUTypeByName[UClass](ueType.name.removeFirstLetter())
+    if outer.isNil():
+        UE_Error &"The {ueType.name} couldnt be find as a UClass"
+        return @[]
     let modName = outer.getModuleName()
-    let fprops = outer.getFPropsFromUStruct()
+    let typesToSkip = @["uint8", "uint16", "uint32", "uint64", 
+                        "int", "int8", "int16", "int32", "int64", 
+                        "float", "float32","double",
+                        "bool", "FString", "TArray"
+                        ]
+    func filterType(typeName:string) : bool = typeName notin typesToSkip 
+    let fprops = outer.getFPropsFromUStruct() &
+                 outer.getFuncsFromClass()
+                      .mapIt(it.getFPropsFromUStruct())
+                      .foldl(a & b, newSeq[FPropertyPtr]())
     #Print them for now but eventually I will need to get the Cls/ScriptStruct name.
-    @[$modName] & fprops.mapIt(&"{it.getName()}: {it.getCppType()}")
+    fprops
+        .mapIt(getInnerCppGenericType($it.getCppType()))
+        .filter(filterType)
+        .map(getNameOfUENamespacedEnum)
+        .map(func(propType:string):Option[string] = 
+            getUnrealTypeFromName[UStruct](propType.removeFirstLetter())
+                .chainNone(()=>getUnrealTypeFromName[UEnum](propType))
+                .chainNone(()=>getUnrealTypeFromName[UStruct](propType&DelegateFuncSuffix))
+                .map((obj:UObjectPtr)=> $obj.getModuleName())
+            )
+        .sequence()
+        .deduplicate()
+
+
+
+    
+    # for propType in propTypeNames:
+    #     let propType = propType
+    #     let prop = getUnrealTypeFromName[UStruct](propType.removeFirstLetter())
+    #                     .chainNone(()=>getUnrealTypeFromName[UEnum](propType))
+    #                     .chainNone(()=>getUnrealTypeFromName[UStruct](propType&DelegateFuncSuffix))
+    #     if prop.isSome():
+    #         UE_Warn &"{prop.get().getName()} Module: {prop.get().getModuleName()}"
+    
+
 
 # func getAllModuleDependentNames(module:UEModule) : seq[string] =
 #     #Iterate over all fields of uclass
