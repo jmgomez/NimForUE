@@ -64,7 +64,8 @@ import ../unreal/bindings/[nimforuebindingscpp]
 #A can holds B and B holds C and C holds A
 
 
-proc `donProperty=`*(obj : UMyClassToTestPtr; val : FName) {. importcpp:"setnameProperty(@)", header:"UEGenBindings.h" .}
+# proc `donProperty=`*(obj : UMyClassToTestPtr; val : FName) {. importcpp:"setnameProperty(@)", header:"UEGenBindings.h" .}
+# proc `donProperty`*(obj : UMyClassToTestPtr;) : FName{. importcpp:"$1(@)", header:"UEGenBindings.h" .}
 
 
 #-------
@@ -95,11 +96,8 @@ uClass AActorScratchpad of AActor:
     proc testUProp() =
       let obj = newUObject[UMyClassToTest]()
       obj.nameProperty = "NameProperty".n()
-      obj.enumProperty=EMyTestEnum.TestValue
-      obj.donProperty= n"MyProperty"
-      UE_Log $obj.enumProperty
-      # obj.setnameProperty(n"NameProperty")
-      UE_Log nameProperty(obj).toFString()
+      # obj.enumProperty=EMyTestEnum.TestValue
+     
 
     proc testStaticFunction() =
       UE_Warn getHelloWorldStatic() 

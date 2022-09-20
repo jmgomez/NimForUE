@@ -407,12 +407,11 @@ func genImportCProp(typeDef : UEType, prop : UEField) : NimNode =
     
     let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)) 
 
-    
+    let setPropertyName = newStrLitNode(&"set{prop.name.firstToLow()}(@)")
     result = 
-        genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
+        genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, setPropertyName, typeNodeAsReturnValue):
             proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
-            proc `set propIdent`(obj {.inject.} : ptrName, val {.inject.} : typeNodeAsReturnValue) : void {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
-            proc `propIdent=`*(obj {.inject.} : ptrName, val {.inject.} : typeNodeAsReturnValue) : void {.inline.} = `set propIdent`(obj, val)
+            proc `propIdent=`*(obj {.inject.} : ptrName, val {.inject.} : typeNodeAsReturnValue) : void {. importcpp: setPropertyName, header:"UEGenBindings.h" .}
           
     
     
@@ -450,7 +449,7 @@ proc genImportCTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode =
         of uetStruct:
             genUStructTypeDef(typeDef, importcpp=true)
         of uetEnum:
-            genUEnumTypeDef(typeDef, importcpp=false)
+            genUEnumTypeDef(typeDef)
         of uetDelegate: #No exporting dynamic delegates. Not sure if they make sense at all. 
             genDelType(typeDef)
 
