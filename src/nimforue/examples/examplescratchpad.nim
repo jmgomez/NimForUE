@@ -96,7 +96,7 @@ uClass AActorScratchpad of AActor:
     proc testUProp() =
       let obj = newUObject[UMyClassToTest]()
       obj.nameProperty = "NameProperty".n()
-      # obj.enumProperty=EMyTestEnum.TestValue
+      obj.enumProperty=EMyTestEnum.TestValue
      
 
     proc testStaticFunction() =

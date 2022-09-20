@@ -318,21 +318,16 @@ func genUStructTypeDef(typeDef: UEType, importcpp=false) : NimNode =
     # debugEcho result.repr
     # debugEcho result.treeRepr
 
-func genUEnumTypeDef(typeDef:UEType, importcpp=false) : NimNode = 
+func genUEnumTypeDef(typeDef:UEType) : NimNode = 
     let typeName = ident(typeDef.name)
     let fields = typeDef.fields
                         .map(f => ident f.name)
                         .foldl(a.add b, nnkEnumTy.newTree)
     fields.insert(0, newEmptyNode()) #required empty node in enums
 
-    result= if importcpp:
-                genAst(typeName, fields):
-                    type typeName* {.inject, size:sizeof(uint8), pure, importcpp.} = enum         
-                        fields
-            else:
-                genAst(typeName, fields):
-                    type typeName* {.inject, size:sizeof(uint8), pure, exportcpp.} = enum         
-                        fields
+    result= genAst(typeName, fields):
+                type typeName* {.inject, size:sizeof(uint8), pure.} = enum         
+                    fields
     
     result[0][^1] = fields #replaces enum 
 
