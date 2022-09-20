@@ -67,7 +67,7 @@ proc usesPCHFile(path: string): bool =
 # TODO?: get the flags from the PCH response file in Intermediate instead of hardcoding
 let compileFlags = [
 "/c",
-(if isDebug: "/Od /Z7" else: "/O2"),
+(if isDebug: "/Od /Z7" else: "/O2"), # To support hot reloading while debugging, we use /Z7 and regenerate the pdb each time from the guest pch objs. Using /Zi produces an LNK4204 error due to a mismatch between the winpch pdb and guestpch objs pdb.
 "--platform:amd64",
 "/nologo",
 "/EHsc",
