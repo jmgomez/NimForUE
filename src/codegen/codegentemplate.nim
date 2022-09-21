@@ -25,7 +25,8 @@ macro genImportCCode(module:static UEModule) =
               .multiReplace(
     ("{.inject.}", ""),
     ("{.inject, ", "{."),
-     ("::", "."), #Enum namespace
+    ("::Type", ""), #Enum namespaces EEnumName::Type
+    ("::", "."), #Enum namespace
     ("__DelegateSignature", "")
   )
   #It will require prelude 

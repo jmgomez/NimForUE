@@ -6,3 +6,4 @@ import objectexample
 import examplescratchpad
 
 import examplescodegen
+import examplecoreuobject

@@ -49,18 +49,37 @@ uClass AActorCodegen of AActor:
     proc generateUETypes() = 
       # let a = ETest.testB
       let moduleRules = @[
-        makeImportedRuleType(uerCodeGenOnlyFields, @["AActor", "UReflectionHelpers"]), 
-        makeImportedRuleField(uerIgnore, @["PerInstanceSMCustomData", "PerInstanceSMData" ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
+        makeImportedRuleType(uerCodeGenOnlyFields, 
+          @[
+            "AActor", "UReflectionHelpers", "UObject",
+            "UField", "UStruct", "UScriptStruct", "UPackage",
+            "UClass", "UFunction", "UDelegateFunction",
+            "UEnum", 
+          
+          ]), 
+          makeImportedRuleType(uerIgnore, @[
+          "FVector"
+          
+          ]), 
+          
+        makeImportedRuleField(uerIgnore, @[
+          "PerInstanceSMCustomData", 
+          "PerInstanceSMData",
+          
+          
+          
+           ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
 
       ] 
       let moduleNames = @["Engine"]
-      for moduleName in moduleNames:
-        var engineModule = tryGetPackageByName(moduleName)
-                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
-                      .get()
+      # for moduleName in moduleNames:
+      #   var engineModule = tryGetPackageByName(moduleName)
+      #                 .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
+      #                 .get()
         
-        for moduleName in engineModule.dependencies:
-          genBindings(moduleName, moduleRules)
+      #   for moduleName in engineModule.dependencies:
+      genBindings("CoreUObject", moduleRules)
+          # genBindings(moduleName, moduleRules)
 
         
 

@@ -69,6 +69,9 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         # UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()} and outer {outer.getName()}"
 
         let cppType = prop.getCPPType() #TODO review this. Hiphothesis it should not reach this point in the hotreload if the struct has the pointer to the prev ue type and therefore it shouldnt crash
+        
+        if cppType == "double": return "float64"
+        if cppType == "float": return "float32"
 
         if prop.isTEnum(): #Not sure if it would be better to just support it on the macro
             return cppType.replace("TEnumAsByte<","")
@@ -182,9 +185,15 @@ func toUEType*(str:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
 
     let name = str.getPrefixCpp() & str.getName()
 
+    
+    
     let fields = getFPropsFromUStruct(str)
                     .map(x=>toUEField(x, str))
                     .sequence()
+
+    for rule in rules:
+        if name in rule.affectedTypes and rule.rule == uerIgnore:
+            return none(UEType)
 
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
@@ -229,6 +238,10 @@ func toUEType*(uenum:UEnumPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
     let name = uenum.getName()
     var fields = newSeq[UEField]()
     for fieldName in uenum.getEnums():
+        if fieldName.toLowerAscii() in fields.mapIt(it.name.toLowerAscii()): 
+            UE_Warn &"Skipping enum value {fieldName} in {name} because it collides with another field."
+            continue
+        
         fields.add(makeFieldASUEnum(fieldName))
 
 

@@ -7,16 +7,7 @@ import ../containers/unrealstring
 #TODO now vectors are defined as TVector[T] and there are FVector3f (this) and FVector3d 
 #Not sure if it will be better to just do an alias 
 
-type FColor*{.importcpp, bycopy } = object
-type FLinearColor*{.importcpp, bycopy } = object
-type FRotator*{.importcpp, bycopy } = object
-type FTransform*{.importcpp, bycopy } = object
-type FMatrix*{.importcpp, bycopy } = object
-type FBox2D*{.importcpp, bycopy } = object
-type FIntPoint*{.importcpp, bycopy } = object
-type FVector2D*{.importcpp, bycopy } = object
-type FVector4*{.importcpp, bycopy } = object
-type FVector*{.importcpp, bycopy } = object
+type FVector*{.importcpp } = object
   x*: float32
   y*: float32
   z*: float32

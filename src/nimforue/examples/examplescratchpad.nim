@@ -83,7 +83,7 @@ uClass AActorScratchpad of AActor:
     # objTestInArray : TArray[TObjectPtr[AActor] g.packed[module].module
     # beatiful: EComponentMobility
 
-    testColor : FLinearColor
+    # testColor : FLinearColor
   
     # intProp2 : int32
   

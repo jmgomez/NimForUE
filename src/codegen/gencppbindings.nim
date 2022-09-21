@@ -3,6 +3,7 @@ import ../nimforue/typegen/[models, uemeta]
 import ../nimforue/macros/uebind
 
 import ../nimforue/unreal/bindings/exported/nimforuebindings
+import ../nimforue/unreal/bindings/exported/coreuobject
 # import ../nimforue/unreal/bindings/exported/engine
 export nimforuebindings
 
@@ -17,7 +18,8 @@ export nimforuebindings
   Gather all cpp files and copy them over to guestpch
 
   Set the dependencies of the module in the include for the nim files (imported and exported)
-  Tackle Delegate imports
+  
+  x Tackle Delegate imports
 
   Revisit the HEADERS once we have the engine working
 
