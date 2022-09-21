@@ -94,7 +94,7 @@ type
         name* : string
         types* : seq[UEType]
         rules* : seq[UEImportRule]
-        dependencies* : seq[UEModule]   
+        dependencies* : seq[string]   
 
 
 

@@ -39,7 +39,7 @@ func makeUEMulDelegate*(name:string, fields:seq[UEField]) : UEType =
 func makeUEEnum*(name:string, fields:seq[UEField], metadata : seq[UEMetadata] = @[]) : UEType = 
     UEType(kind:uetEnum, name:name, fields:fields, metadata: metadata)
 
-func makeUEModule*(name:string, types:seq[UEType], rules: seq[UEImportRule] = @[], dependencies:seq[UEModule]= @[]) : UEModule = 
+func makeUEModule*(name:string, types:seq[UEType], rules: seq[UEImportRule] = @[], dependencies:seq[string]= @[]) : UEModule = 
     UEModule(name: name, types: types, dependencies: dependencies, rules: rules)
 
 
@@ -253,25 +253,11 @@ func getUETypeFrom(obj:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UETy
     .chainNone(()=>convertToUEType[UEnum](obj, rules))
     .chainNone(()=>convertToUEType[UDelegateFunction](obj, rules))
   
-func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule]) : Option[UEModule] = 
-  let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
-  let types = allObjs.toSeq()
-                .map((obj:UObjectPtr) => getUETypeFrom(obj, rules))
-                .sequence()
-                # .filter((x:UEType)=>x.kind != uetDelegate)
-               
-
-  some makeUEModule(pkg.getShortName(), types, rules)
-
-
 func getUnrealTypeFromName[T](name:FString) : Option[UObjectPtr] = 
     #ScriptStruct, Classes
     tryUECast[UObject](getUTypeByName[T](name))
 
 
-#extract uclass behaviour
-#do the same for ustructs
-#do uDelegates
 func getFPropertiesFrom*(ueType:UEType) : seq[FPropertyPtr] = 
     case ueType.kind:
     of uetClass:
@@ -315,21 +301,24 @@ func getModuleNames*(ueType:UEType) : seq[string] =
 
 
 
-    
-    # for propType in propTypeNames:
-    #     let propType = propType
-    #     let prop = getUnrealTypeFromName[UStruct](propType.removeFirstLetter())
-    #                     .chainNone(()=>getUnrealTypeFromName[UEnum](propType))
-    #                     .chainNone(()=>getUnrealTypeFromName[UStruct](propType&DelegateFuncSuffix))
-    #     if prop.isSome():
-    #         UE_Warn &"{prop.get().getName()} Module: {prop.get().getModuleName()}"
-    
+func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule]) : Option[UEModule] = 
+  let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
+  let name = pkg.getShortName()
+  let types = allObjs.toSeq()
+                .map((obj:UObjectPtr) => getUETypeFrom(obj, rules))
+                .sequence()
+             
+               
+  let deps =  types
+                .mapIt(it.getModuleNames())
+                .foldl(a & b, newSeq[string]())
+                .deduplicate()
+                .filterIt(it != name)
+
+  some makeUEModule(name, types, rules, deps)
 
 
-# func getAllModuleDependentNames(module:UEModule) : seq[string] =
-#     #Iterate over all fields of uclass
-  
-  
+
 
 
 proc emitFProperty*(propField:UEField, outer : UStructPtr) : FPropertyPtr = 
