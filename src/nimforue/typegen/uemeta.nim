@@ -269,34 +269,45 @@ func getUnrealTypeFromName[T](name:FString) : Option[UObjectPtr] =
     tryUECast[UObject](getUTypeByName[T](name))
 
 
+#extract uclass behaviour
+#do the same for ustructs
+#do uDelegates
+func getFPropertiesFrom*(ueType:UEType) : seq[FPropertyPtr] = 
+    case ueType.kind:
+    of uetClass:
+        let outer = getUTypeByName[UClass](ueType.name.removeFirstLetter())
+        if outer.isNil(): return @[] #Deprecated classes are the only thing that can return nil. 
+        outer.getFPropsFromUStruct() &
+            outer.getFuncsFromClass()
+            .mapIt(it.getFPropsFromUStruct())
+            .foldl(a & b, newSeq[FPropertyPtr]())
+       
+    of uetStruct, uetDelegate:
+        tryGetUTypeByName[UStruct](ueType.name.removeFirstLetter())
+            .map((str:UStructPtr)=>str.getFPropsFromUStruct())
+            .get(@[])
+       
+    of uetEnum: @[]
+    
 
 #returns all modules neccesary to reference the UEType 
 func getModuleNames*(ueType:UEType) : seq[string] = 
     #only uStructs based for now
-    let outer : UClassPtr = getUTypeByName[UClass](ueType.name.removeFirstLetter())
-    if outer.isNil():
-        UE_Error &"The {ueType.name} couldnt be find as a UClass"
-        return @[]
-    let modName = outer.getModuleName()
     let typesToSkip = @["uint8", "uint16", "uint32", "uint64", 
                         "int", "int8", "int16", "int32", "int64", 
                         "float", "float32","double",
                         "bool", "FString", "TArray"
                         ]
     func filterType(typeName:string) : bool = typeName notin typesToSkip 
-    let fprops = outer.getFPropsFromUStruct() &
-                 outer.getFuncsFromClass()
-                      .mapIt(it.getFPropsFromUStruct())
-                      .foldl(a & b, newSeq[FPropertyPtr]())
-    #Print them for now but eventually I will need to get the Cls/ScriptStruct name.
-    fprops
+    ueType
+        .getFPropertiesFrom()
         .mapIt(getInnerCppGenericType($it.getCppType()))
         .filter(filterType)
         .map(getNameOfUENamespacedEnum)
         .map(func(propType:string):Option[string] = 
             getUnrealTypeFromName[UStruct](propType.removeFirstLetter())
                 .chainNone(()=>getUnrealTypeFromName[UEnum](propType))
-                .chainNone(()=>getUnrealTypeFromName[UStruct](propType&DelegateFuncSuffix))
+                .chainNone(()=>getUnrealTypeFromName[UStruct](propType))
                 .map((obj:UObjectPtr)=> $obj.getModuleName())
             )
         .sequence()

@@ -55,7 +55,7 @@ uClass AActorCodegen of AActor:
           UE_Log &"Failed to generate {codegenPath} nim binding"
 
 
-    proc showEngineClass() = 
+    proc showEngineDependencies() = 
       let moduleNames = @["Engine"]
       let moduleRules = @[
           makeImportedRuleType(uerCodeGenOnlyFields, @["AActor", "UReflectionHelpers"]), 
@@ -68,7 +68,6 @@ uClass AActorCodegen of AActor:
                       .get()
 
         let deps = module.types
-                        .filterIt(it.kind == uetClass)
                         .mapIt(it.getModuleNames())
                         .foldl(a & b, newSeq[string]())
                         .deduplicate()

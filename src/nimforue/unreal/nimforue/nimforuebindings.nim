@@ -92,6 +92,7 @@ proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr {.i
 proc getFPropertiesFrom*(struct:UStructPtr) : TArray[FPropertyPtr] {.importcpp: "UReflectionHelpers::GetFPropertiesFrom(@)"}
 
 proc getUTypeByName*[T :UField](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
+proc tryGetUTypeByName*[T :UField](typeName:FString) : Option[ptr T] = someNil getUTypeByName[T](typeName)
 
 proc getAllClassesFromModule*(moduleName:FString) : TArray[UClassPtr] {.importcpp:"UReflectionHelpers::GetAllClassesFromModule(@)" .}
 

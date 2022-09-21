@@ -3,6 +3,7 @@ import std/[options, strutils, sequtils, sugar, strscans]
 import utils
 
 const DelegateFuncSuffix* = "__DelegateSignature"
+const DelegateFuncSuffixLength* = DelegateFuncSuffix.len()
 #utils specifics to unreal used accross the project
 
 #use multireplace
