@@ -381,9 +381,14 @@ task gencppbindings, "Generates the cpp bindings":
   doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --noMain --compileOnly --header:UEGenBindings.h --nimcache:.nimcache/gencppbindings src/codegen/maingencppbindings.nim") == 0)
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")
   createDir("./.nimcache/guestpch")
-  copyFile("./.nimcache/gencppbindings/@mgencppbindings.nim.cpp", "./.nimcache/guestpch/@mgencppbindings.nim.cpp")
-  copyFile("./.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@snimforuebindings.nim.cpp", "./.nimcache/guestpch/@m..@snimforue@sunreal@sbindings@snimforuebindings.nim.cpp")
+  let exportedPattern = ".nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@"
 
+  for path in walkPattern(exportedPattern&"*.cpp"):
+    let fileName = path[exportedPattern.len .. ^1]
+    log(fileName, lgWarning)
+    log(path, lgError)
+    copyFile(path, "./.nimcache/guestpch/"&fileName)
+  log("*************************************************************************")
   guestpch(taskOptions)
 # --- End Tasks ---
 
