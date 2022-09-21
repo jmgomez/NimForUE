@@ -8,7 +8,7 @@ import ../../codegen/codegentemplate
 
 # import ../unreal/bindings/[nimforuebindings, testimport]
 # import ../unreal/bindings/[nimforuebindings]
-import ../unreal/bindings/[nimforuebindingscpp]
+import ../unreal/bindings/[nimforuebindings]
 
 # {.experimental: "codeReordering".}
 

@@ -18,7 +18,7 @@ macro genCode(module:static UEModule) =
     ("__DelegateSignature", "")
   )
   #It will require prelude 
-  writeFile(bindingsPath, "include ../prelude\n{.experimental:\"codereordering\".}\n" & code)
+  writeFile(bindingsPath, "include ../../prelude\n{.experimental:\"codereordering\".}\n" & code)
 
 macro genImportCCode(module:static UEModule) =
   let code = repr(genImportCModuleDecl(module))

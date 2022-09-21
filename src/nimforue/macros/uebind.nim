@@ -331,28 +331,7 @@ func genUEnumTypeDef(typeDef:UEType) : NimNode =
     
     result[0][^1] = fields #replaces enum 
 
-proc genDelType(delType:UEType) : NimNode = 
-    #NOTE delegates are always passed around as reference
-    #adds the delegate to the global list of available delegates so we can lookup it when emitting the UCLass
-    addDelegateToAvailableList(delType)
-    let typeName = identWithInjectPublic delType.name
-   
-    let delBaseType = 
-        case delType.delKind 
-        of uedelDynScriptDelegate: ident "FScriptDelegate"
-        of uedelMulticastDynScriptDelegate: ident "FMulticastScriptDelegate"
-    let broadcastFnName = 
-        case delType.delKind 
-        of uedelDynScriptDelegate: "execute"
-        of uedelMulticastDynScriptDelegate: "broadcast"
 
-    let typ = genAst(typeName, delBaseType):
-            type
-                typeName = object of delBaseType
-    let broadcastFunType = UEField(name:broadcastFnName, kind:uefFunction, signature: delType.fields)
-    let funcNode = genFunc(delType, broadcastFunType) 
-    result = nnkStmtList.newTree(typ, funcNode)
-   
     
     # debugEcho repr result
     # debugEcho treeRepr result
@@ -386,6 +365,38 @@ func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode =
                           
                         ])
 
+proc genDelType(delType:UEType, importcpp=false) : NimNode = 
+    #NOTE delegates are always passed around as reference
+    #adds the delegate to the global list of available delegates so we can lookup it when emitting the UCLass
+    addDelegateToAvailableList(delType)
+    let typeName = ident delType.name
+   
+    let delBaseType = 
+        case delType.delKind 
+        of uedelDynScriptDelegate: ident "FScriptDelegate"
+        of uedelMulticastDynScriptDelegate: ident "FMulticastScriptDelegate"
+    let broadcastFnName = 
+        case delType.delKind 
+        of uedelDynScriptDelegate: "execute"
+        of uedelMulticastDynScriptDelegate: "broadcast"
+
+    let typ = 
+        if importcpp:
+            genAst(typeName, delBaseType):
+                type
+                    typeName {. inject, importcpp, header:"UEGenBindings.h".} = object of delBaseType
+        else:
+            genAst(typeName, delBaseType):
+                type
+                    typeName {. inject, exportcpp.} = object of delBaseType
+
+
+    let broadcastFunType = UEField(name:broadcastFnName, kind:uefFunction, signature: delType.fields)
+    let funcNode = 
+        if importcpp: genImportCFunc(delType, broadcastFunType)
+        else: genFunc(delType, broadcastFunType) 
+
+    result = nnkStmtList.newTree(typ, funcNode)
 
 func genImportCProp(typeDef : UEType, prop : UEField) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
@@ -446,7 +457,7 @@ proc genImportCTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode =
         of uetEnum:
             genUEnumTypeDef(typeDef)
         of uetDelegate: #No exporting dynamic delegates. Not sure if they make sense at all. 
-            genDelType(typeDef)
+            genDelType(typeDef, importcpp=true)
 
 
 proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode = 
