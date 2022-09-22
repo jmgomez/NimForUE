@@ -366,6 +366,15 @@ task uetypetranspiler, "Transpiles UETypes to C++":
 
 
 task gencppbindings, "Generates the cpp bindings":
+  createDir("./.nimcache/guestpch")
+  removeDir("./.nimcache/gencppbindings") 
+  let importedBindingPrefix = "@@_binding_"
+  let guestPCHCleanPattern = &"./.nimcache/guestpch/{importedBindingPrefix}*"
+  
+  for path in walkPattern(guestPCHCleanPattern):
+    log(&"Deleting {path}", lgError)
+    removeFile path
+
   var force = ""
   if "f" in taskOptions:
     force = "-f"
@@ -380,14 +389,14 @@ task gencppbindings, "Generates the cpp bindings":
 
   doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --noMain --compileOnly --header:UEGenBindings.h --nimcache:.nimcache/gencppbindings src/codegen/maingencppbindings.nim") == 0)
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")
-  createDir("./.nimcache/guestpch")
+ 
   let exportedPattern = ".nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@"
 
   for path in walkPattern(exportedPattern&"*.cpp"):
     let fileName = path[exportedPattern.len .. ^1]
     log(fileName, lgWarning)
     log(path, lgError)
-    copyFile(path, "./.nimcache/guestpch/"&fileName)
+    copyFile(path, "./.nimcache/guestpch/"&importedBindingPrefix& fileName)
   log("*************************************************************************")
   guestpch(taskOptions)
 # --- End Tasks ---
