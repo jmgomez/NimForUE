@@ -96,8 +96,14 @@ uClass AActorScratchpad of AActor:
     proc testUProp() =
       let obj = newUObject[UMyClassToTest]()
       obj.nameProperty = "NameProperty".n()
-      obj.enumProperty=EMyTestEnum.TestValue
-     
+      obj.enumProperty=EMyTestEnum.TestValue2
+      UE_Log obj.nameProperty.toFString()
+      UE_Log $obj.enumProperty
+
+    proc testFStruct() = 
+      let str = FStructToUseAsVar(testProperty:"Test")
+
+      UE_Log $str
 
     proc testStaticFunction() =
       UE_Warn getHelloWorldStatic() 
