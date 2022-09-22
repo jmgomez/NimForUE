@@ -46,10 +46,10 @@ import ../unreal/bindings/[nimforuebindings]
 #Node interface -> 
 
 # GOALS Make the engine bindings
-  # Test the above manually
+  # Test the above manually x
   # Generate the above and make it work automatically for NimForUEBindings
-    # Generate the GenModule (UEType to Cpp) from Codegen
-    # Generate the Consumer from Codegen?
+    # Generate the GenModule (UEType to Cpp) from Codegen x
+    # Generate the Consumer from Codegen? x
   
   # We have to figure out the dependencies between types and modules. 
     # For each type that the module dont own:

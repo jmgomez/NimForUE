@@ -10,7 +10,8 @@ import ../typegen/uemeta
 uClass AActorCoreUObjectTest of AActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintType):
-    color : FColor = FColor(r:255, g:0, b:0, a:255)
+    color : FColor = FColor(r:0, g:0, b:100, a:255)
+    testTransform : FTransform
 
   ufuncs(CallInEditor):
     proc importCoreUObject() =

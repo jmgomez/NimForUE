@@ -79,7 +79,7 @@ uClass AActorCodegen of AActor:
       #                 .get()
         
       #   for moduleName in engineModule.dependencies:
-      genBindings("CoreUObject", moduleRules & @[makeImporedRuleForModule(uerImportStruct)])
+      # genBindings("CoreUObject", moduleRules & @[makeImportedRuleModule(uerImportStruct)])
           # genBindings(moduleName, moduleRules)
 
         
@@ -92,13 +92,20 @@ uClass AActorCodegen of AActor:
           makeImportedRuleField(uerIgnore, @["PerInstanceSMCustomData", "PerInstanceSMData" ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
 
         ]
-      for moduleName in moduleNames:
-        var module = tryGetPackageByName(moduleName)
-                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
-                      .get()
+      # for moduleName in moduleNames:
+      #   var module = tryGetPackageByName(moduleName)
+      #                 .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
+      #                 .get()
 
         
-        UE_Warn &"{module.name} Deps: {module.dependencies}"
+      #   UE_Warn &"{module.name} Deps: {module.dependencies}"
+      #   for dep in module.dependencies:
+      #     var depModule = tryGetPackageByName(dep)
+      #                 .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
+      #                 .get()
+          
+      #     UE_Warn &"{depModule.name} Deps: {depModule.dependencies}"
+
 
 
 

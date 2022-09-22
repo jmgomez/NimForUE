@@ -110,7 +110,7 @@ func makeImportedRuleField*(rule:UERule, affectedTypes:seq[string], ):UEImportRu
     result.rule = rule
     result.target = uertField
     
-func makeImporedRuleForModule*(rule:UERule) : UEImportRule = 
+func makeImportedRuleModule*(rule:UERule) : UEImportRule = 
     result.rule = rule
     result.target = uertModule
 
