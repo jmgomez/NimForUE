@@ -79,11 +79,13 @@ type
     UERule* = enum
         uerNone
         uerCodeGenOnlyFields #wont generate the type. Just its fields. Only make sense in uClass. Will affect code generation (we try to do it at the import time when possible) 
-        uerIgnore 
+        uerIgnore
+        uerImportStruct
     
     UERuleTarget* = enum 
         uertType
         uertField
+        uertModule
 
     UEImportRule* = object #used only to customize the codegen
         affectedTypes* : seq[string]
@@ -107,13 +109,19 @@ func makeImportedRuleField*(rule:UERule, affectedTypes:seq[string], ):UEImportRu
     result.affectedTypes = affectedTypes
     result.rule = rule
     result.target = uertField
+    
+func makeImporedRuleForModule*(rule:UERule) : UEImportRule = 
+    result.rule = rule
+    result.target = uertModule
 
 # func getAllMatchingTypes*(module:UEModule, rule:UERule) : seq[UEType] =
 #    module.types
 #          .filter(ueType:UEType => ueType in rule.affectedTypes)   
 func getAllMatchingRulesForType*(module:UEModule, ueType:UEType) : UERule =
     let rules = module.rules
-                .filter((rule:UEImportRule) => rule.affectedTypes.any(name=>name==ueType.name))
+                .filter(func (rule:UEImportRule):bool = 
+                        rule.affectedTypes.any(name=>name==ueType.name) or 
+                        rule.target == uertModule)
                 .map((rule:UEImportRule) => rule.rule)
     if rules.any(): rules[0]  #TODO fold the values instead of returning the first
     else: uerNone

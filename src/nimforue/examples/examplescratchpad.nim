@@ -80,6 +80,7 @@ uClass AActorScratchpad of AActor:
     intProp : int32#
     objTest : TObjectPtr[AActor]
     objTest2 : TObjectPtr[AActor]
+    testStr : FStructToUseAsVar
     # objTestInArray : TArray[TObjectPtr[AActor] g.packed[module].module
     # beatiful: EComponentMobility
 
@@ -101,9 +102,9 @@ uClass AActorScratchpad of AActor:
       UE_Log $obj.enumProperty
 
     proc testFStruct() = 
-      let str = FStructToUseAsVar(testProperty:"Test")
-
-      UE_Log $str
+      let str = FStructToUseAsVar(testProperty:"Test To Use it as Prop") 
+      self.testStr = str
+      UE_Log $self.testStr
 
     proc testStaticFunction() =
       UE_Warn getHelloWorldStatic() 

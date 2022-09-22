@@ -298,16 +298,29 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNode =
     #if result.repr.contains("UMyClassToTest"):
     #    debugEcho result.repr
 
+func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, importcpp=false) : NimNode = 
+    let cppPragma = if importcpp or rule == uerImportStruct: "importcpp" else: "exportcpp"
 
-
-func genUStructTypeDef(typeDef: UEType, importcpp=false) : NimNode = 
-    let cppPragma = if importcpp: "importcpp" else: "exportcpp"
     let typeName = identWithInjectPublicAnd(typeDef.name, cppPragma)
+    func getFieldIdent(prop:UEField) : NimNode = 
+        let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1))
+        case rule:
+        of uerImportStruct: 
+            nnkPragmaExpr.newTree(nnkPostfix.newTree(ident "*", ident fieldName),
+                nnkPragma.newTree(
+                        nnkExprColonExpr.newTree(
+                            ident "importcpp", 
+                            newStrLitNode(prop.name)))
+            )
+        else: 
+            identPublic fieldName
+
     #TODO Needs to handle TArray/Etc. like it does above with classes
     let fields = typeDef.fields
                         .map(prop => nnkIdentDefs.newTree(
-                            [identPublic ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)), 
-                             prop.getTypeNodeFromUProp(), newEmptyNode()]))
+                            [getFieldIdent(prop), 
+                            prop.getTypeNodeFromUProp(), newEmptyNode()]))
+
                         .foldl(a.add b, nnkRecList.newTree)
 
 
@@ -319,7 +332,7 @@ func genUStructTypeDef(typeDef: UEType, importcpp=false) : NimNode =
     if not importcpp: 
         #Generates a type so it's added to the header when using --header
         #TODO dont create them for UStructs
-        let exportFn = genAst(fnName= ident "fake"&typeDef.name, typeName=ident typeDef.name):
+        let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
             proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
         result = nnkStmtList.newTree(result, exportFn)
     # debugEcho result.repr
@@ -460,7 +473,7 @@ proc genImportCTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode =
         of uetClass: 
             genUClassImportCTypeDef(typeDef, rule)
         of uetStruct:
-            genUStructTypeDef(typeDef, importcpp=true)
+            genUStructTypeDef(typeDef, rule, importcpp=true)
         of uetEnum:
             genUEnumTypeDef(typeDef)
         of uetDelegate: #No exporting dynamic delegates. Not sure if they make sense at all. 
@@ -472,7 +485,7 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode =
         of uetClass:
             genUClassTypeDef(typeDef, rule)
         of uetStruct:
-            genUStructTypeDef(typeDef)
+            genUStructTypeDef(typeDef, rule)
         of uetEnum:
             genUEnumTypeDef(typeDef)
         of uetDelegate:

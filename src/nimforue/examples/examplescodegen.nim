@@ -79,7 +79,7 @@ uClass AActorCodegen of AActor:
       #                 .get()
         
       #   for moduleName in engineModule.dependencies:
-      genBindings("CoreUObject", moduleRules)
+      genBindings("CoreUObject", moduleRules & @[makeImporedRuleForModule(uerImportStruct)])
           # genBindings(moduleName, moduleRules)
 
         

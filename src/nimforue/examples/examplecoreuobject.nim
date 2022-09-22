@@ -3,7 +3,6 @@ import std/[strformat, options, sugar, json, osproc, strutils, jsonutils,  sequt
 import ../typegen/uemeta
 
 
-import ../unreal/bindings/coreuobject
 
 
 # proc makeColor() : FColor = 
@@ -11,10 +10,11 @@ import ../unreal/bindings/coreuobject
 uClass AActorCoreUObjectTest of AActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintType):
-    color : FColor 
+    color : FColor = FColor(r:255, g:0, b:0, a:255)
 
   ufuncs(CallInEditor):
     proc importCoreUObject() =
-      
+      let anotherColor = FColor()
+      UE_Log $anotherColor
       # let obj = newUObject[UObject]()
       discard
