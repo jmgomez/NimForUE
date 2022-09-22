@@ -13,7 +13,8 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
   createDir(reflectionDataPath)
   let bindingsDir = config.pluginDir / "src"/"nimforue"/"unreal"/"bindings"
   createDir(bindingsDir)
-  
+  createDir(bindingsDir / "exported")
+
   var module = tryGetPackageByName(moduleName)
                       .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules))
                       .get()
