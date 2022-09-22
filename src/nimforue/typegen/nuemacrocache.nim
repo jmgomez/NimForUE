@@ -31,22 +31,22 @@ func isMulticastDelegate*(typeName:string) : bool = newLit(typeName) in mcMulDel
 func isDelegate*(typeName:string) : bool = newLit(typeName) in mcDelegates
 
 
-const mcPropAssigmentsTable = CacheTable"propAssigmentsTable"
+const mcPropAssignmentsTable = CacheTable"propAssignmentsTable"
 
 #they are store as a StmTList of Assgn Nodes. 
 #with the left value as DotExpr which is not set at the time of creation
 #so it has to be set on the usage (the uClass constructor)
-func addPropAssigment*(typeName:string, assigmentNode:NimNode) = 
-    if mcPropAssigmentsTable.hasKey(typeName):
-        mcPropAssigmentsTable[typeName].add assigmentNode
+func addPropAssignment*(typeName:string, assignmentNode:NimNode) = 
+    if mcPropAssignmentsTable.hasKey(typeName):
+        mcPropAssignmentsTable[typeName].add assignmentNode
     else:
-        mcPropAssigmentsTable[typeName] = nnkStmtList.newTree assigmentNode
+        mcPropAssignmentsTable[typeName] = nnkStmtList.newTree assignmentNode
 
-func getPropAssigment*(typeName:string) : Option[NimNode] =
-    if mcPropAssigmentsTable.hasKey(typeName):
-        some mcPropAssigmentsTable[typeName]
+func getPropAssignment*(typeName:string) : Option[NimNode] =
+    if mcPropAssignmentsTable.hasKey(typeName):
+        some mcPropAssignmentsTable[typeName]
     else: none[NimNode]()
 
 
 func doesClassNeedsConstructor*(typeName:string) : bool = 
-    mcPropAssigmentsTable.hasKey(typeName)
+    mcPropAssignmentsTable.hasKey(typeName)

@@ -356,8 +356,8 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
     func nodeToUEField (n: NimNode)  : UEField = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
         let fieldName = n[0].repr
         
-        #stores the assigment but without the first ident on the dot expression as we dont know it yet
-        func prepareAssigmentForLaterUsage(propName:string, right:NimNode) : NimNode = #to show intent
+        #stores the assignment but without the first ident on the dot expression as we dont know it yet
+        func prepareAssignmentForLaterUsage(propName:string, right:NimNode) : NimNode = #to show intent
             nnkAsgn.newTree(
                 nnkDotExpr.newTree( #left
                     #here goes the var sets when generating the constructor, i.e. self, this what ever the user wants
@@ -365,12 +365,12 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
                 ), 
                 right
             )
-        let assigmentNode = n[1].children.toSeq()
+        let assignmentNode = n[1].children.toSeq()
                                   .first(n=>n.kind == nnkAsgn)
-                                  .map(n=>prepareAssigmentForLaterUsage(fieldName, n[^1]))
+                                  .map(n=>prepareAssignmentForLaterUsage(fieldName, n[^1]))
 
-        var propType = if assigmentNode.isSome(): n[1][0][0].repr else: n[1].repr.strip()
-        assigmentNode.run (n:NimNode)=> addPropAssigment(ueTypeName, n)
+        var propType = if assignmentNode.isSome(): n[1][0][0].repr else: n[1].repr.strip()
+        assignmentNode.run (n:NimNode)=> addPropAssignment(ueTypeName, n)
         if isMulticastDelegate propType:
             makeFieldAsUPropMulDel(fieldName, propType, metas[0], metas[1])
         elif isDelegate propType:
@@ -438,26 +438,26 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
     let initName = ident fnField.signature[1].name #there are always two params.a
     let fnName = ident fnField.name
 
-    #gets the UEType and expands the assigments for the nodes that has cachedNodes implemented
-    func insertReferenceToSelfInAssigmentNode(assgnNode:NimNode) : NimNode = 
+    #gets the UEType and expands the assignments for the nodes that has cachedNodes implemented
+    func insertReferenceToSelfInAssignmentNode(assgnNode:NimNode) : NimNode = 
         if assgnNode[0].len()==1: #if there is any insert it. Otherwise, replace the existing one (user has a defined a custom constructor)
             assgnNode[0].insert(0, selfIdent)
         else:
             assgnNode[0][0] = selfIdent
         assgnNode
 
-    var assigmentsNode = getPropAssigment(fnField.className).get(newEmptyNode()) #TODO error
-    let assigments = 
+    var assignmentsNode = getPropAssignment(fnField.className).get(newEmptyNode()) #TODO error
+    let assignments = 
             nnkStmtList.newTree(
-                assigmentsNode
+                assignmentsNode
                     .children
                     .toSeq()
-                    .map(insertReferenceToSelfInAssigmentNode)
+                    .map(insertReferenceToSelfInAssignmentNode)
             )
-    let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assigments, initName):
+    let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assignments, initName):
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
             var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
-            when not declared(self): #declares self and initializer so the default compiler compiles when using the assigments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
+            when not declared(self): #declares self and initializer so the default compiler compiles when using the assignments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
                 var self{.inject used .} = selfIdent
             
             when not declared(this): 
@@ -468,7 +468,7 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
 
             selfIdent.getClass().getFirstCppClass().classConstructor(initializer)
             #calls the cpp constructor first
-            assigments
+            assignments
             fnBody #user code
     
     let ctorRes = genAst(fnName, typeLiteral, hash=newStrLitNode($hash(repr(ctorImpl)))):
@@ -755,12 +755,6 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     # echo treeRepr uClassNode className`
     let fns = genUFuncsForUClass(body, className)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
-   
-    
-    
-
-
-
 
 
 #falta genererar el call
