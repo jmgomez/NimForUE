@@ -1,9 +1,8 @@
 #pragma once
 
 
-#include "CoreUObject.h"
-#include "Math/Vector.h"
 #include "CoreMinimal.h"
+#include "CoreUObject.h"
 
 #include "Containers/UnrealString.h"
 #include "Containers/Array.h"
