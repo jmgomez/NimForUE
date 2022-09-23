@@ -1,6 +1,6 @@
 # script to build the from .nimcache
 import std / [ 
-algorithm, os, osproc, sequtils, strformat, strscans, strutils, sugar, threadpool, times
+algorithm, json, os, osproc, sequtils, strformat, strscans, strutils, threadpool, times
 ]
 import buildcommon, nimforueconfig
 
@@ -10,7 +10,7 @@ const PCHFile = "UEDeps.h"
 
 let nueConfig = getNimForUEConfig()
 let pluginDir = nueConfig.pluginDir
-let cacheDir = pluginDir / ".nimcache"
+let nimcacheDir = pluginDir / ".nimcache"
 
 let isDebug = nueConfig.targetConfiguration in [Debug, Development]
 
@@ -190,6 +190,37 @@ proc winpch*(buildFlags: string) =
   discard execCmd(pchCmd)
   setCurrentDir(curDir)
 
+proc removeOrphans*(relCacheDir:string) =
+  let cacheDir = nimcacheDir/relCacheDir
+
+  # remove orphaned bindings objs
+  for bindingObjPath in walkPattern(cacheDir / importedBindingPrefix & "*.obj"):
+    var (dir, filename, _) = bindingObjPath.splitFile
+    let cppPath = dir / filename
+    if not fileExists(cppPath):
+      log(&"!! -- Removing orphaned {bindingObjPath}. Binding {cppPath} doesn't exist.", lgError)
+      removeFile(bindingObjPath)
+
+  # remove orphaned guest objs and their cpp
+  let jsonNode = parseJson(readFile(cacheDir / "nimforue.json"))
+  var validObjs: seq[string] = jsonNode["link"].getElems().mapit(it.getStr())
+  for objPath in walkPattern(cacheDir / "*.obj"):
+    var (dir, filename, _) = objPath.splitFile
+    if not filename.startsWith(importedBindingPrefix) and objPath notin validObjs:
+      log(&"Removing orphaned obj {objPath}", lgError)
+      removeFile(objPath)
+      let cppPath = dir / filename
+      if fileExists(cppPath):
+        log(&"Removing orphaned cpp {cppPath}", lgError)
+        removeFile(cppPath)
+
+  # remove orphaned nue.cpp files
+  for nueCppPath in walkPattern(cacheDir / "*.nue.cpp"):
+    let (dir, filename, _) = nueCppPath.splitFile
+    let cppPath = dir / filename[0 ..< ^(".nue".len)]
+    if not fileExists(cppPath):
+      log(&"Removing orphaned nue cpp {nueCppPath}", lgError)
+      removeFile(nueCppPath)
 
 proc compileThread(cmd: string):int {.thread.} =
   execCmd(cmd)
@@ -199,7 +230,7 @@ proc compileCpp(relCacheDir: string, dbgFlags: string): (BuildStatus, seq[string
   var compileCmds: seq[string]
   var objpaths: seq[string]
 
-  for kind, path in walkDir(cacheDir/relCacheDir):
+  for kind, path in walkDir(nimcacheDir/relCacheDir):
     var cpppath = path
     var objpath = path & ".obj"
     case kind:
@@ -237,6 +268,8 @@ proc nimcacheBuild*(buildFlags: string, relCacheDir:string, linkFileName: string
   if withPCH and defined(windows) and not fileExists(pchFilepath):
     echo("PCH file " & pchFilepath & " not found. Building...")
     winpch(buildFlags)
+
+  removeOrphans(relCacheDir)
 
   let dbgFlags = debugFlags()
   let (status, objpaths) = compileCpp(relCacheDir, dbgFlags)
