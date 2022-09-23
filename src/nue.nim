@@ -102,7 +102,7 @@ let targetSwitches: Switches =
         ts &= @[("debugger", "native"), ("stacktrace", "on")]
       ts
     of Shipping:
-      @[d("release")]
+      @[d("danger")]
 
 let platformSwitches: Switches =
   block:
@@ -286,6 +286,7 @@ task cleanh, "Clean the .nimcache/host folder":
   removeDir(".nimcache/host")
 
 task cleang, "Clean the .nimcache guestpch and winpch folder":
+  removeDir(".nimcache/gencppbindings")
   removeDir(".nimcache/winpch")
   removeDir(".nimcache/guestpch")
   removeDir(".nimcache/codegen")
@@ -327,21 +328,6 @@ task ubuild, "Calls Unreal Build Tool for your project":
     log("Could not find uproject here: " & walkPattern & "\n", lgError)
     quit(QuitFailure)
 
-task rebuild, "Cleans and rebuilds the host and guest":
-  var attempts = 0
-  while dirExists(".nimcache/guestpch"):
-    try:
-      clean(taskOptions)
-    except:
-      log("Could not clean nimCache. Retrying...\n", lgWarning)
-      inc attempts
-      if attempts > 5:
-        quit("Could not clean nimCache. Aborting.", QuitFailure)
-  ubuild(taskOptions)
-  winpch(taskOptions)
-  guestpch(taskOptions)
-  host(taskOptions)
-
 task dumpConfig, "Displays the config variables":
   dump config
 
@@ -368,9 +354,10 @@ task uetypetranspiler, "Transpiles UETypes to C++":
 task gencppbindings, "Generates the cpp bindings":
   createDir("./.nimcache/guestpch")
   removeDir("./.nimcache/gencppbindings") 
+  doAssert(not dirExists("./.nimcache/gencppbindings"))
   let importedBindingPrefix = "@@_binding_"
   let guestPCHCleanPattern = &"./.nimcache/guestpch/{importedBindingPrefix}*"
-  
+
   for path in walkPattern(guestPCHCleanPattern):
     log(&"Deleting {path}", lgError)
     removeFile path
@@ -390,15 +377,32 @@ task gencppbindings, "Generates the cpp bindings":
   doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --noMain --compileOnly --header:UEGenBindings.h --nimcache:.nimcache/gencppbindings src/codegen/maingencppbindings.nim") == 0)
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")
  
-  let exportedPattern = ".nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@"
+  let exportedPattern = ".nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
 
-  for path in walkPattern(exportedPattern&"*.cpp"):
-    let fileName = path[exportedPattern.len .. ^1]
-    log(fileName, lgWarning)
-    log(path, lgError)
-    copyFile(path, "./.nimcache/guestpch/"&importedBindingPrefix& fileName)
-  log("*************************************************************************")
+  log("***** Copying gencppbindings to guestpch *****")
+  for srcPath in walkPattern(exportedPattern&"*.cpp"):
+    let bindingsFilename = srcPath[exportedPattern.len .. ^1]
+    let destPath = "./.nimcache/guestpch/" & importedBindingPrefix & bindingsFilename
+    log(bindingsFilename[0..< ^(".nim.cpp".len)] & " -> " & destPath, lgWarning)
+    copyFile(srcPath, destPath)
+  log("*************************************************")
   guestpch(taskOptions)
+
+
+task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindings":
+  var attempts = 0
+  while dirExists(".nimcache/guestpch"):
+    try:
+      clean(taskOptions)
+    except:
+      log("Could not clean nimcache. Retrying...\n", lgWarning)
+      inc attempts
+      if attempts > 5:
+        quit("Could not clean nimcache. Aborting.", QuitFailure)
+  ubuild(taskOptions)
+  gencppbindings(taskOptions)
+  host(taskOptions)
+
 # --- End Tasks ---
 
 main()
