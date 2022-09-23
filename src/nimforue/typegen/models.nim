@@ -161,10 +161,11 @@ func getFieldByName*(ueTypes:seq[UEType], name:string) : Option[UEField] =
 
 func getUETypeByName*(ueTypes:seq[UEType], name:string) : Option[UEType] = ueTypes.first(ueType=>ueType.name)
 
-func shouldBeReturnedAsVar*(field:UEField) : bool = 
-    field.kind == uefProp or
-    field.isMulticastDelegate() or 
-    field.isDelegate()
+func shouldBeReturnedAsVar*(field:UEField) : bool =
+    let typesReturnedAsVar = ["TMap"]
+    field.kind == uefProp and typesReturnedAsVar.any(tp => tp in field.uePropType) or
+        field.isMulticastDelegate() or 
+        field.isDelegate()
  
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
 func `$`*(a : EPropertyFlagsVal) : string {.borrow.}

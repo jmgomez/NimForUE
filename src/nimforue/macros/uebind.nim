@@ -437,7 +437,7 @@ func genImportCProp(typeDef : UEType, prop : UEField) : NimNode =
     result = 
         genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, setPropertyName, typeNodeAsReturnValue):
             proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {. importcpp:"$1(@)", header:"UEGenBindings.h" .}
-            proc `propIdent=`*(obj {.inject.} : ptrName, val {.inject.} : typeNodeAsReturnValue) : void {. importcpp: setPropertyName, header:"UEGenBindings.h" .}
+            proc `propIdent=`*(obj {.inject.} : ptrName, val {.inject.} : typeNode) : void {. importcpp: setPropertyName, header:"UEGenBindings.h" .}
           
     
     
@@ -506,6 +506,21 @@ proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
         result.add genImportCTypeDecl(typeDef, rules)
 
 
+
+proc genModuleRepr*(moduleDef: UEModule, isImporting: bool): string =
+    let moduleNode = if isImporting: genImportCModuleDecl(moduleDef) else: genModuleDecl(moduleDef)
+    let preludePath = "include " & (if isImporting: "" else: "../") & "../prelude\n"
+
+    preludePath & 
+        "{.experimental:\"codereordering\".}\n" &
+        moduleDef.dependencies.mapIt("import " & it.toLower()).join("\n") &
+        repr(moduleNode)
+            .multiReplace(
+        ("{.inject.}", ""),
+        ("{.inject, ", "{."),
+        ("::Type", ""), #Enum namespaces EEnumName::Type
+        ("::", "."), #Enum namespace
+        ("__DelegateSignature", ""))
     
 #notice this is only for testing ATM the final shape probably wont be like this
 macro genUFun*(className : static string, funField : static UEField) : untyped =

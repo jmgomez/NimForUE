@@ -1,3 +1,22 @@
+import std/[strformat]
+
+const genCodeHeader = """
+include ../../prelude
+
+{.experimental:"codereordering".}
+import chaos
+import whatever
+
+"""
+
+const genImportCCodeHeader = """
+include ../prelude
+
+{.experimental:"codereordering".}
+
+"""
+
+
 # We only compile this code to run the Nim VM on the reflectiondata to generate the nim bindings.
 const codegenNimTemplate* = """
 import std/[os, strutils, strformat]
@@ -9,28 +28,17 @@ const bindingsPath = $2
 const cppBindingsPath = $3
 
 macro genCode(module:static UEModule) =
-  let code = repr(genModuleDecl(module))
-              .multiReplace(
-    ("{.inject.}", ""),
-    ("{.inject, ", "{."),
-    ("::Type", ""), #Enum namespaces EEnumName::Type
-    ("::", "."), #Enum namespace
-    ("__DelegateSignature", "")
-  )
+  let code = genModuleRepr(module, false)
+              
+  
   #It will require prelude 
-  writeFile(bindingsPath, "include ../../prelude\n{.experimental:\"codereordering\".}\n" & code)
+  writeFile(bindingsPath, code)
 
 macro genImportCCode(module:static UEModule) =
-  let code = repr(genImportCModuleDecl(module))
-              .multiReplace(
-    ("{.inject.}", ""),
-    ("{.inject, ", "{."),
-    ("::Type", ""), #Enum namespaces EEnumName::Type
-    ("::", "."), #Enum namespace
-    ("__DelegateSignature", "")
-  )
+  let code = genModuleRepr(module, true)
+             
   #It will require prelude 
-  writeFile(cppBindingsPath, "include ../prelude\n{.experimental:\"codereordering\".}\n" & code)
+  writeFile(cppBindingsPath, code)
 
 
 

@@ -314,7 +314,7 @@ func getModuleNames*(ueType:UEType) : seq[string] =
 
 
 
-func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule]) : Option[UEModule] = 
+func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[string]) : Option[UEModule] = 
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
   let types = allObjs.toSeq()
@@ -326,7 +326,7 @@ func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule]) : Option[UEModule] =
                 .mapIt(it.getModuleNames())
                 .foldl(a & b, newSeq[string]())
                 .deduplicate()
-                .filterIt(it != name)
+                .filterIt(it != name and it notin excludeDeps)
 
   some makeUEModule(name, types, rules, deps)
 
