@@ -45,6 +45,7 @@ func makeUEModule*(name:string, types:seq[UEType], rules: seq[UEImportRule] = @[
 
 func isTArray(prop:FPropertyPtr) : bool = not castField[FArrayProperty](prop).isNil()
 func isTMap(prop:FPropertyPtr) : bool = not castField[FMapProperty](prop).isNil()
+func isTSet(prop:FPropertyPtr) : bool = not castField[FSetProperty](prop).isNil()
 func isTEnum(prop:FPropertyPtr) : bool = "TEnumAsByte" in prop.getName()
 func isDynDel(prop:FPropertyPtr) : bool = not castField[FDelegateProperty](prop).isNil()
 func isMulticastDel(prop:FPropertyPtr) : bool = not castField[FMulticastDelegateProperty](prop).isNil()
@@ -58,6 +59,10 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
     if prop.isTArray(): 
         let innerType = castField[FArrayProperty](prop).getInnerProp().getCPPType()
         return fmt"TArray[{innerType.cleanCppType()}]"
+
+    if prop.isTSet():
+        let elementProp = castField[FSetProperty](prop).getElementProp().getCPPType()
+        return fmt"TSet[{elementProp.cleanCppType()}]"
 
     if prop.isTMap(): #better pattern here, i.e. option chain
         let mapProp = castField[FMapProperty](prop)
@@ -239,7 +244,7 @@ func toUEType*(uenum:UEnumPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
     var fields = newSeq[UEField]()
     for fieldName in uenum.getEnums():
         if fieldName.toLowerAscii() in fields.mapIt(it.name.toLowerAscii()): 
-            UE_Warn &"Skipping enum value {fieldName} in {name} because it collides with another field."
+            # UE_Warn &"Skipping enum value {fieldName} in {name} because it collides with another field."
             continue
         
         fields.add(makeFieldASUEnum(fieldName))

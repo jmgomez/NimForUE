@@ -95,15 +95,17 @@ uClass AActorScratchpad of AActor:
 
 
     proc testUProp() =
-      let obj = newUObject[UMyClassToTest]()
+      var obj = newUObject[UMyClassToTest]()
       obj.nameProperty = "NameProperty".n()
       obj.enumProperty=EMyTestEnum.TestValue2
       UE_Log obj.nameProperty.toFString()
       UE_Log $obj.enumProperty
 
+
     proc testFStruct() = 
       let str = FStructToUseAsVar(testProperty:"Test To Use it as Prop") 
       self.testStr = str
+      
       UE_Log $self.testStr
 
     proc testStaticFunction() =

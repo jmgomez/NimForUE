@@ -3,7 +3,7 @@ import actorexample
 import structexample
 import objectexample
 
-import examplescratchpad
+# import examplescratchpad
 
 import examplescodegen
 import examplecoreuobject

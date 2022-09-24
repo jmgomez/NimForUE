@@ -4,7 +4,7 @@ import ../nimforue/macros/uebind
 
 import ../nimforue/unreal/bindings/exported/nimforuebindings
 # import ../nimforue/unreal/bindings/exported/coreuobject
-# import ../nimforue/unreal/bindings/exported/engine
+import ../nimforue/unreal/bindings/exported/engine
 export nimforuebindings
 # export coreuobject
 

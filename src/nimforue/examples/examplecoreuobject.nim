@@ -12,6 +12,7 @@ uClass AActorCoreUObjectTest of AActor:
   uprops(EditAnywhere, BlueprintType):
     color : FColor = FColor(r:255, g:100, b:100, a:255)
     testTransform : FTransform
+    testSet : TSet[int]
 
   ufuncs(CallInEditor):
     proc importCoreUObject() =

@@ -142,7 +142,12 @@ func newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
             let inner = newFProperty(arrayProp, propField, optPropType=innerType, optName="Inner")
             arrayProp.addCppProperty(inner)
             arrayProp
-
+        elif propType.contains("TSet"):
+            let setProp = newFSetProperty(makeFieldVariant(outer), name, flags)
+            let elementPropType = propType.extractTypeFromGenericInNimFormat("TSet")
+            let elementProp = newFProperty(setProp, propField, optPropType=elementPropType, optName="ElementProp",  propFlags=CPF_HasGetValueTypeHash)
+            setProp.addCppProperty(elementProp)
+            setProp
         elif propType.contains("TMap"):
             let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
             let innerTypes = propType.extractKeyValueFromMapProp()

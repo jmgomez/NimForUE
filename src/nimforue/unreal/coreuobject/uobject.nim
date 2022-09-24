@@ -127,7 +127,7 @@ bindFProperty([
         "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
         "FArrayProperty", "FStructProperty", "FObjectProperty", "FClassProperty",
         "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty", 
-        "FMapProperty", "FDelegateProperty", 
+        "FMapProperty", "FDelegateProperty", "FSetProperty",
         "FMulticastDelegateProperty", #It seems to be abstract. Review Sparse vs Inline
         "FMulticastInlineDelegateProperty",
         
@@ -142,8 +142,12 @@ proc setPropertyClass*(prop:FObjectPropertyPtr | FSoftObjectPropertyPtr, propCla
 proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
 proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->SetEnum(#))".}
 
+proc getElementProp*(setProp:FSetPropertyPtr) : FPropertyPtr {.importcpp:"(#->ElementProp)".}
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
-proc addCppProperty*(arrProp:FArrayPropertyPtr | FMapPropertyPtr | FEnumPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
+
+proc addCppProperty*(arrProp:FArrayPropertyPtr | FSetPropertyPtr | FMapPropertyPtr | FEnumPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
+
+
 
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
 proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->ValueProp)".}

@@ -117,7 +117,7 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
     
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
-        let reservedKeywords = ["object", "method", "type"] 
+        let reservedKeywords = ["object", "method", "type", "interface", "var"] 
         if propName in reservedKeywords: 
             &"`{propName}`" 
         else: propName
@@ -518,6 +518,8 @@ proc genModuleRepr*(moduleDef: UEModule, isImporting: bool): string =
             .multiReplace(
         ("{.inject.}", ""),
         ("{.inject, ", "{."),
+        ("<", "["),
+        (">", "]"), #Changes Gen. Some types has two levels of inherantce in cpp, that we dont really need to support
         ("::Type", ""), #Enum namespaces EEnumName::Type
         ("::", "."), #Enum namespace
         ("__DelegateSignature", ""))
