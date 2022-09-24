@@ -69,6 +69,7 @@ func identWithInjectPublicAnd*(name, anotherPragma:string) : NimNode =
         nnkPostfix.newTree([ident "*", ident name]),
         nnkPragma.newTree(ident "inject", ident anotherPragma)
         
+
         ])
 
 func identWithInject*(name:string) : NimNode = 
@@ -522,6 +523,8 @@ proc genModuleRepr*(moduleDef: UEModule, isImporting: bool): string =
         (">", "]"), #Changes Gen. Some types has two levels of inherantce in cpp, that we dont really need to support
         ("::Type", ""), #Enum namespaces EEnumName::Type
         ("::", "."), #Enum namespace
+        ("UBlendProfile", "UObject"), #FIx this This if needed need to be a rule. Not a replace.
+        ("ABrush", "AActor"), #FIx this This if needed need to be a rule. Not a replace.
         ("__DelegateSignature", ""))
     
 #notice this is only for testing ATM the final shape probably wont be like this

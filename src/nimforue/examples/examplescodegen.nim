@@ -30,7 +30,7 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
     let nueCmd = config.pluginDir/"nue.exe codegen --module:\"" & codegenPath & "\""
     let result = execProcess(nueCmd, workingDir = config.pluginDir)
     # removeFile(codegenPath)
-    UE_Log &"The result is {result} "
+    # UE_Log &"The result is {result} "
     UE_Log &"-= Bindings for {moduleName} generated in {exportBindingsPath} =- "
 
     doAssert(fileExists(exportBindingsPath))
@@ -43,10 +43,31 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
     UE_Log &"Failed to generate {codegenPath} nim binding"
 
 
+#TODO dont regenerate already generated deps for this pass
+proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule]) =
+  var module = tryGetPackageByName(moduleName)
+                .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
+                .get()
+  if module.dependencies.any():
+    UE_Warn &"-= Generating dependencies for {moduleName} dependencies: {module.dependencies}=-"
+    for dep in module.dependencies:
+      genBindingsWithDeps(dep, moduleRules)
+  
+  genBindings(moduleName, moduleRules)
+
+
+
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
   ufuncs(CallInEditor):
+    proc printUDeveloperSettings() =
+      let cls = getClassByName("DeveloperSettings")
+      let metadata = cls.getMetaDataMap()
+      UE_Log $cls.classFlags
+      UE_Log $metadata
+
+
     proc generateUETypes() = 
       # let a = ETest.testB
       let moduleRules = @[
@@ -55,7 +76,12 @@ uClass AActorCodegen of AActor:
             "AActor", "UReflectionHelpers", "UObject",
             "UField", "UStruct", "UScriptStruct", "UPackage",
             "UClass", "UFunction", "UDelegateFunction",
-            "UEnum", 
+            "UEnum", "UActorComponent", "APawn",
+            "UPrimitiveComponent", "UPhysicalMaterial", "AController",
+            "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
+            "USkeletalMeshComponent", "UTexture2D", "FKey", "UInputComponent",
+            "ALevelScriptActor", "FFastArraySerializer", "UPhysicalMaterialMask",
+            "UHLODLayer"
           
           ]), 
           makeImportedRuleType(uerIgnore, @[
@@ -72,18 +98,23 @@ uClass AActorCodegen of AActor:
            ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
 
       ] 
+
+      # genBindings("CoreUObject", moduleRules)
+
       let moduleNames = @["Engine"]
 
-      for moduleName in moduleNames:
-        var engineModule = tryGetPackageByName(moduleName)
-                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
-                      .get()
+      # for moduleName in moduleNames:
+      #   var engineModule = tryGetPackageByName(moduleName)
+      #                 .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
+      #                 .get()
         
-        for moduleName in engineModule.dependencies:
-          genBindings(moduleName, moduleRules & @[makeImportedRuleModule(uerImportStruct)])
+      #   for moduleName in engineModule.dependencies:
+      #     genBindings(moduleName, moduleRules)
      
 
-        
+      # genBindings("Chaos", moduleRules)
+      genBindings("Engine", moduleRules)
+      # genBindingsWithDeps("Engine", moduleRules)
 
 
 

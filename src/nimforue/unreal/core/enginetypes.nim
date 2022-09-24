@@ -5,6 +5,11 @@ import ../coreuobject/[uobject]
 type 
   AActor* {.importcpp.}  = object of UObject
   AActorPtr* = ptr AActor
+  AController* {.importcpp.} = object of AActor
+  AControllerPtr* = ptr AController
+  APawn* {.importcpp.} = object of AActor
+  APawnPtr* = ptr APawn
+
   AInfo* = object of AActor
   AInfoPtr* = ptr AInfo
   AGameSession* = object of AInfo
@@ -61,7 +66,45 @@ type
   FHitResult* {.importc, bycopy} = object
     bBlockingHit: bool
 
-  FGuid* {. importcpp .} = object
+  UDeveloperSettings* {.importcpp .} = object of UObject
+  UEdGraphNode* {.importcpp .} = object of UObject
+
+  UStreamableRenderAsset* {.importcpp, inheritable, pure .} = object of UObject
+  UStreamableRenderAssetPtr* = ptr UStreamableRenderAsset
+
+#[
+  UActorComponent", "APawn",
+            "UPrimitiveComponent", "UPhysicalMaterial", "AController",
+            "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
+            "USkeletalMeshComponent", "UTexture2D", "FKey", "UInputComponent",
+            "ALevelScriptActor", "FFastArraySerializer", "UPhysicalMaterialMask",
+            "UHLODLayer"
+
+]#
+  UMeshComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
+  UMeshComponentPtr* = ptr UMeshComponent
+  UStaticMeshComponent* {.importcpp, inheritable, pure .} = object of UMeshComponent
+  UStaticMeshComponentPtr* = ptr UStaticMeshComponent
+  UStaticMesh* {.importcpp, inheritable, pure .} = object of UStreamableRenderAsset
+  UStaticMeshPtr* = ptr UStaticMesh
+  USkeletalMeshComponent* {.importcpp, inheritable, pure .} = object of UMeshComponent
+  USkeletalMeshComponentPtr* = ptr USkeletalMeshComponent
+  USkeletalMesh* {.importcpp, inheritable, pure .} = object of UStreamableRenderAsset
+  USkeletalMeshPtr* = ptr USkeletalMesh
+  UTexture2D* {.importcpp, inheritable, pure .} = object of UTexture
+  UTexture2DPtr* = ptr UTexture2D
+  UInputComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
+  UInputComponentPtr* = ptr UInputComponent
+  ALevelScriptActor* {.importcpp, inheritable, pure .} = object of AActor
+  ALevelScriptActorPtr* = ptr ALevelScriptActor
+  UPhysicalMaterial* {.importcpp, inheritable, pure .} = object of UObject
+  UPhysicalMaterialPtr* = ptr UPhysicalMaterial
+  UPhysicalMaterialMask* {.importcpp, inheritable, pure .} = object of UObject
+  UPhysicalMaterialMaskPtr* = ptr UPhysicalMaterialMask
+  UHLODLayer* {.importcpp, inheritable, pure .} = object of UObject
+  UHLODLayerPtr* = ptr UHLODLayer
+  
+
 
 proc makeFHitResult*(): FHitResult {.importcpp:"FHitResult()", constructor.}
 

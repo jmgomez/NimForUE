@@ -21,3 +21,5 @@ proc toFString*(name : FName) : FString {. importcpp: "#.ToString()".}
 
 converter ENameToFName*(ename:EName) : FName = makeFName ename       
 
+
+proc `$`*(name:FName) : string = $name.toFString()

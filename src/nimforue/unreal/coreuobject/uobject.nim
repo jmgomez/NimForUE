@@ -69,9 +69,8 @@ type
     TEnumAsByte*[T : enum] {.importcpp.} = object
 
     TWeakObjectPtr*[out T] {.importcpp.} = object
+    TScriptInterface*[T] {.importcpp.} = object
 
-    FSoftObjectPath* {.importcpp.} = object
-    FSoftClassPath* {.importcpp.} = object
 
 
 proc castField*[T : FField ](src:FFieldPtr) : ptr T {. importcpp:"CastField<'*0>(#)" .}
@@ -186,8 +185,10 @@ proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) : void {.impo
 proc findMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : ptr FString {.importcpp:"const_cast<FString*>(#->FindMetaData(*#))".}
 #notice it also checks for the ue value. It will return false on "false"
 func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool = 
-     let metadata = someNil(field.findMetaData("BlueprintType")).map(x=>x[])
-     return metadata.get("false") == "true"
+    someNil(field.findMetaData(key)).isSome()
+
+func getMetaDataMap*(field:FFieldPtr) : TMap[FName, FString] {.importcpp:"*(#->GetMetaDataMap())".}
+func getMetaDataMap*(field:UObjectPtr) : TMap[FName, FString] {.importcpp:"*(UMetaData::GetMapForObject(#))".}
 
 proc bindType*(field:UFieldPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
 proc getPrefixCpp*(str:UFieldPtr | UStructPtr) : FString {.importcpp:"FString(#->GetPrefixCPP())".}

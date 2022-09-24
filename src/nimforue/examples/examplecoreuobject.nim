@@ -13,10 +13,12 @@ uClass AActorCoreUObjectTest of AActor:
     color : FColor = FColor(r:255, g:100, b:100, a:255)
     testTransform : FTransform
     testSet : TSet[int]
-
+    
   ufuncs(CallInEditor):
     proc importCoreUObject() =
       let anotherColor = FColor()
       UE_Log $anotherColor
       # let obj = newUObject[UObject]()
+      # self.myActor.bReplicates = true
+      
       discard
