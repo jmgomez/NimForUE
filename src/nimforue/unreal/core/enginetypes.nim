@@ -7,6 +7,8 @@ type
   AActorPtr* = ptr AActor
   AController* {.importcpp.} = object of AActor
   AControllerPtr* = ptr AController
+  APlayerController* {.importcpp.} = object of AController
+  APlayerControllerPtr* = ptr APlayerController
   APawn* {.importcpp.} = object of AActor
   APawnPtr* = ptr APawn
 
@@ -23,6 +25,8 @@ type
   UPrimitiveComponentPtr* = ptr UPrimitiveComponent
   UShapeComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
   UShapeComponentPtr* = ptr UShapeComponent
+  UChildActorComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
+  UChildActorComponentPtr* = ptr UChildActorComponent
 
   UBlueprint* {.importcpp, inheritable, pure .} = object of UObject
   UBlueprintPtr* = ptr UBlueprint
@@ -87,7 +91,9 @@ type
   UStaticMeshComponentPtr* = ptr UStaticMeshComponent
   UStaticMesh* {.importcpp, inheritable, pure .} = object of UStreamableRenderAsset
   UStaticMeshPtr* = ptr UStaticMesh
-  USkeletalMeshComponent* {.importcpp, inheritable, pure .} = object of UMeshComponent
+  USkinnedMeshComponent* {.importcpp, inheritable, pure .} = object of UMeshComponent
+  USkinnedMeshComponentPtr* = ptr USkinnedMeshComponent
+  USkeletalMeshComponent* {.importcpp, inheritable, pure .} = object of USkinnedMeshComponent
   USkeletalMeshComponentPtr* = ptr USkeletalMeshComponent
   USkeletalMesh* {.importcpp, inheritable, pure .} = object of UStreamableRenderAsset
   USkeletalMeshPtr* = ptr USkeletalMesh
@@ -103,8 +109,27 @@ type
   UPhysicalMaterialMaskPtr* = ptr UPhysicalMaterialMask
   UHLODLayer* {.importcpp, inheritable, pure .} = object of UObject
   UHLODLayerPtr* = ptr UHLODLayer
+  USoundBase* {.importcpp, inheritable, pure .} = object of UObject
+  USoundBasePtr* = ptr USoundBase
+  UMaterialInterface* {.importcpp, inheritable, pure .} = object of UObject
+  UMaterialInterfacePtr* = ptr UMaterialInterface
+  USubsurfaceProfile* {.importcpp, inheritable, pure .} = object of UObject
+  USubsurfaceProfilePtr* = ptr USubsurfaceProfile
+  UParticleSystem* {.importcpp, inheritable, pure .} = object of UObject
+  UParticleSystemPtr* = ptr UParticleSystem
+  UBillboardComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
+  UBillboardComponentPtr* = ptr UBillboardComponent
+  UDamageType* {.importcpp, inheritable, pure .} = object of UObject
+  UDamageTypePtr* = ptr UDamageType
+  UDecalComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
+  UDecalComponentPtr* = ptr UDecalComponent
+  UWorld* {.importcpp, inheritable, pure .} = object of UObject
+  UWorldPtr* = ptr UWorld
+  UCanvas* {.importcpp, inheritable, pure .} = object of UObject
+  UCanvasPtr* = ptr UCanvas
+  UDataLayer* {.importcpp, inheritable, pure .} = object of UObject
+  UDataLayerPtr* = ptr UDataLayer
   
-
 
 proc makeFHitResult*(): FHitResult {.importcpp:"FHitResult()", constructor.}
 

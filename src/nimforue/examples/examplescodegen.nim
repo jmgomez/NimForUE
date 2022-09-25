@@ -82,9 +82,32 @@ uClass AActorCodegen of AActor:
             "UEnum", "UActorComponent", "APawn",
             "UPrimitiveComponent", "UPhysicalMaterial", "AController",
             "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
-            "USkeletalMeshComponent", "UTexture2D", "FKey", "UInputComponent",
-            "ALevelScriptActor", "FFastArraySerializer", "UPhysicalMaterialMask",
-            "UHLODLayer"
+            "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
+            "ALevelScriptActor",  "UPhysicalMaterialMask",
+            "UHLODLayer",
+            "USceneComponent",
+            "APlayerController",
+            "UTexture",
+            "USkinnedMeshComponent",
+            "USoundBase",
+            "USubsurfaceProfile",
+            "UMaterialInterface",
+            "UParticleSystem",
+            "UBillboardComponent",
+            "UChildActorComponent",
+            "UDamageType",
+            "UDecalComponent",
+            "UWorld",
+            "UCanvas",
+            "UDataLayer",
+            
+            
+
+            # "FConstraintBrokenSignature",
+            # "FPlasticDeformationEventSignature",
+            # "FTimerDynamicDelegate",
+            # "FKey",
+            # "FFastArraySerializer"
           
           ]), 
           makeImportedRuleType(uerIgnore, @[
@@ -95,6 +118,8 @@ uClass AActorCodegen of AActor:
         makeImportedRuleField(uerIgnore, @[
           "PerInstanceSMCustomData", 
           "PerInstanceSMData",
+          "ObjectTypes",
+          "EvaluatorMode"
           
           
           

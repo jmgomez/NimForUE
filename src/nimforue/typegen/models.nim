@@ -15,7 +15,9 @@ type
     EClassFlagsVal* = (uint32)
     EStructFlagsVal* = distinct(uint32)
     EClassCastFlagsVal* = distinct(uint64)
-
+    
+    UEExposure* = enum
+        uexDsl, uexImport, uexExport
 
     UETypeKind* = enum
         uetClass

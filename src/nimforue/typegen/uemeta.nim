@@ -124,8 +124,10 @@ func isBPExposed(cls:UClassPtr) : bool =
       
 
 func isBPExposed(prop:FPropertyPtr, outer:UObjectPtr) : bool = 
-    let typeName = prop.getNimTypeAsStr(outer).removeFirstLetter()
-
+    var typeName = prop.getNimTypeAsStr(outer)
+    if typeName.contains("TObjectPtr"):
+        typeName = typeName.extractTypeFromGenericInNimFormat("TObjectPtr")
+    typeName = typeName.removeFirstLetter()
     
     let isTypeExposed = tryGetUTypeByName[UClass](typeName).map(isBPExposed)
                             .chainNone(()=>tryGetUTypeByName[UScriptStruct](typeName).map(isBPExposed))
@@ -191,7 +193,8 @@ func toUEField*(ufun:UFunctionPtr, rules: seq[UEImportRule] = @[]) : Option[UEFi
     let fnNameNim = actualName.removePrefixes(fnPrefixes)
     var fnField = makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
     fnField.actualFunctionName = actualName
-    if ufun.isBpExposed() or uerImportBlueprintOnly notin rules:
+    let isStatic = (FUNC_Static in ufun.functionFlags) #Skips static functions for now so we can quickly iterate over compiling the engine types
+    if (ufun.isBpExposed() or uerImportBlueprintOnly notin rules) and not isStatic:
         some fnField
     else:
         none(UEField)
@@ -203,6 +206,13 @@ func tryParseJson[T](jsonStr : string) : Option[T] =
         except:
             UE_Error &"Crashed parsing json for with json {jsonStr}" 
             none[T]()
+
+
+func getFirstBpExposedParent(parent:UClassPtr) : UClassPtr = 
+    if parent.isBpExposed():
+        parent
+    else:
+        getFirstBpExposedParent(parent.getSuperClass())
 
 func toUEType*(cls:UClassPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
     #First it tries to see if it is a UNimClassBase and if it has a UEType stored.
@@ -222,7 +232,9 @@ func toUEType*(cls:UClassPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
     let parent = someNil cls.getSuperClass()
 
     
-    let parentName = parent.map(p=>p.getPrefixCpp() & p.getName()).get("")
+    let parentName = parent
+                        .map(p=> (if uerImportBlueprintOnly in rules: getFirstBpExposedParent(p) else: p))
+                        .map(p=>p.getPrefixCpp() & p.getName()).get("")
 
     if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
         some UEType(name:name, kind:uetClass, parent:parentName, fields:fields.reversed())
@@ -273,12 +285,12 @@ func toUEType*(del:UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]) : Optio
 
 
     let fields = getFPropsFromUStruct(del)
-                    .map(x=>toUEField(x, del))
+                    .map(x=>toUEField(x, del, rules))
                     .sequence()
     
     #TODO is defaulting to MulticastDelegate this may be wrong when trying to autogen the types 
-    
-    some UEType(name:name, kind:uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields:fields.reversed())
+    none(UEType)
+    # some UEType(name:name, kind:uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields:fields.reversed())
 
 
 
@@ -370,10 +382,10 @@ func getModuleNames*(ueType:UEType) : seq[string] =
 func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[string]) : Option[UEModule] = 
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
-  let types = allObjs.toSeq()
+  var types = allObjs.toSeq()
                 .map((obj:UObjectPtr) => getUETypeFrom(obj, rules))
                 .sequence()
-             
+ 
                
   let deps =  types
                 .mapIt(it.getModuleNames())

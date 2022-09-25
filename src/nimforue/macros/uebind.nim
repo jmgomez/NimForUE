@@ -299,21 +299,23 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNode =
     #if result.repr.contains("UMyClassToTest"):
     #    debugEcho result.repr
 
-func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, importcpp=false) : NimNode = 
-    let cppPragma = if importcpp or rule == uerImportStruct: "importcpp" else: "exportcpp"
+func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:UEExposure) : NimNode = 
+    let typeName = 
+        case typeExposure: 
+        of uexDsl: identWithInjectPublic typeDef.name
+        of uexImport, uexExport: identWithInjectPublicAnd(typeDef.name, "importcpp")
 
-    let typeName = identWithInjectPublicAnd(typeDef.name, cppPragma)
     func getFieldIdent(prop:UEField) : NimNode = 
         let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1))
-        case rule:
-        of uerImportStruct: 
+        case typeExposure:
+        of uexImport, uexExport: 
             nnkPragmaExpr.newTree(nnkPostfix.newTree(ident "*", ident fieldName),
                 nnkPragma.newTree(
                         nnkExprColonExpr.newTree(
                             ident "importcpp", 
                             newStrLitNode(prop.name)))
             )
-        else: 
+        of uexDsl: 
             identPublic fieldName
 
     #TODO Needs to handle TArray/Etc. like it does above with classes
@@ -330,12 +332,12 @@ func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, importcpp=fals
     
     result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])
 
-    if not importcpp: 
-        #Generates a type so it's added to the header when using --header
-        #TODO dont create them for UStructs
-        let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
-            proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
-        result = nnkStmtList.newTree(result, exportFn)
+    # if not importcpp: 
+    #     #Generates a type so it's added to the header when using --header
+    #     #TODO dont create them for UStructs
+    #     let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
+    #         proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
+    #     result = nnkStmtList.newTree(result, exportFn)
     # debugEcho result.repr
     # debugEcho result.treeRepr
 
@@ -386,7 +388,7 @@ func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode =
                           
                         ])
 
-proc genDelType(delType:UEType, importcpp=false) : NimNode = 
+proc genDelType(delType:UEType, exposure:UEExposure) : NimNode = 
     #NOTE delegates are always passed around as reference
     #adds the delegate to the global list of available delegates so we can lookup it when emitting the UCLass
     addDelegateToAvailableList(delType)
@@ -402,7 +404,7 @@ proc genDelType(delType:UEType, importcpp=false) : NimNode =
         of uedelMulticastDynScriptDelegate: "broadcast"
 
     let typ = 
-        if importcpp:
+        if exposure == uexImport:
             genAst(typeName, delBaseType):
                 type
                     typeName {. inject, importcpp, header:"UEGenBindings.h".} = object of delBaseType
@@ -414,7 +416,7 @@ proc genDelType(delType:UEType, importcpp=false) : NimNode =
 
     let broadcastFunType = UEField(name:broadcastFnName, kind:uefFunction, signature: delType.fields)
     let funcNode = 
-        if importcpp: genImportCFunc(delType, broadcastFunType)
+        if exposure == uexImport: genImportCFunc(delType, broadcastFunType)
         else: genFunc(delType, broadcastFunType) 
 
     result = nnkStmtList.newTree(typ, funcNode)
@@ -474,23 +476,23 @@ proc genImportCTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode =
         of uetClass: 
             genUClassImportCTypeDef(typeDef, rule)
         of uetStruct:
-            genUStructTypeDef(typeDef, rule, importcpp=true)
+            genUStructTypeDef(typeDef, rule, uexImport)
         of uetEnum:
             genUEnumTypeDef(typeDef)
         of uetDelegate: #No exporting dynamic delegates. Not sure if they make sense at all. 
-            genDelType(typeDef, importcpp=true)
+            genDelType(typeDef, uexImport)
 
 
-proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode = 
+proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexDsl) : NimNode = 
     case typeDef.kind:
         of uetClass:
             genUClassTypeDef(typeDef, rule)
         of uetStruct:
-            genUStructTypeDef(typeDef, rule)
+            genUStructTypeDef(typeDef, rule, typeExposure)
         of uetEnum:
             genUEnumTypeDef(typeDef)
         of uetDelegate:
-            genDelType(typeDef)
+            genDelType(typeDef, typeExposure)
 
 
 
@@ -498,7 +500,7 @@ proc genModuleDecl*(moduleDef:UEModule) : NimNode =
     result = nnkStmtList.newTree()
     for typeDef in moduleDef.types:
         let rules = moduleDef.getAllMatchingRulesForType(typeDef)
-        result.add genTypeDecl(typeDef, rules)
+        result.add genTypeDecl(typeDef, rules, uexExport)
         
 proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
     result = nnkStmtList.newTree()
@@ -522,9 +524,26 @@ proc genModuleRepr*(moduleDef: UEModule, isImporting: bool): string =
         ("<", "["),
         (">", "]"), #Changes Gen. Some types has two levels of inherantce in cpp, that we dont really need to support
         ("::Type", ""), #Enum namespaces EEnumName::Type
+        ("::Mode", ""), #Enum namespaces EEnumName::Type
         ("::", "."), #Enum namespace
-        ("UBlendProfile", "UObject"), #FIx this This if needed need to be a rule. Not a replace.
-        ("ABrush", "AActor"), #FIx this This if needed need to be a rule. Not a replace.
+
+        #TEMP HACKS
+        #Some needs a rule that checks for the first parent exposed to bp and replace it instead.
+        #Some I think are inside TObjectPtr and the type is not visible
+
+        # ("UBlendProfile", "UObject"), #FIx this This if needed need to be a rule. Not a replace.
+        # ("UInterpFilter", "UObject"), #FIx this This if needed need to be a rule. Not a replace.
+        # ("UNavigationSystemConfig", "UObject"), #FIx this This if needed need to be a rule. Not a replace.
+        # ("ABrush", "AActor"), #FIx this This if needed need to be a rule. Not a replace.
+        # ("APhysicsVolume", "AVolume"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
+        # ("UDistributionFloatConstant", "UDistributionFloat"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
+        # ("UDistributionVectorConstant", "UDistributionVector"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
+        # ("UInterpTrackInstProperty", "UInterpTrackInst"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
+        # # ("UMaterialExpressionTextureSample", "UMaterialExpression"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
+        # # ("UMaterialExpressionTextureSampleParameter2D", "UMaterialExpression"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
+        # # ("UMaterialExpressionRuntimeVirtualTextureSample", "UMaterialExpression"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
+        # # ("UMaterialExpressionTextureSampleParameter2D", "UMaterialExpression"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
+        # ("UVirtualTexture2D", "UTexture2D"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
         ("__DelegateSignature", ""))
     
 #notice this is only for testing ATM the final shape probably wont be like this
