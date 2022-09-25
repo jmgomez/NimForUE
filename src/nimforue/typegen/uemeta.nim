@@ -92,12 +92,20 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         raise newException(Exception, fmt"Unsupported type {prop.getName()}")
 
 
+func getUnrealTypeFromName[T](name:FString) : Option[UObjectPtr] = 
+    #ScriptStruct, Classes
+    tryUECast[UObject](getUTypeByName[T](name))
 
-func isBPExposed(prop:FPropertyPtr) : bool = CPF_BlueprintVisible in prop.getPropertyFlags() 
+func tryGetUTypeByName[T](name:FString) : Option[ptr T] = 
+    #ScriptStruct, Classes
+    tryUECast[T](getUTypeByName[T](name))
+
 
 func isBPExposed(ufun:UFunctionPtr) : bool = FUNC_BlueprintCallable in ufun.functionFlags
 
 func isBPExposed(str:UFieldPtr) : bool = str.hasMetadata("BlueprintType")
+
+func isBPExposed(str:UScriptStructPtr) : bool = str.hasMetadata("BlueprintType")
 
 func isBPExposed(cls:UClassPtr) : bool =
     if  (cast[uint32](CLASS_Abstract) and cast[uint32](cls.classFlags)) != 0:
@@ -114,7 +122,18 @@ func isBPExposed(cls:UClassPtr) : bool =
             .filter(isBPExposed)
             .any()
       
-     
+
+func isBPExposed(prop:FPropertyPtr, outer:UObjectPtr) : bool = 
+    let typeName = prop.getNimTypeAsStr(outer).removeFirstLetter()
+
+    
+    let isTypeExposed = tryGetUTypeByName[UClass](typeName).map(isBPExposed)
+                            .chainNone(()=>tryGetUTypeByName[UScriptStruct](typeName).map(isBPExposed))
+                            .chainNone(()=>tryGetUTypeByName[UFunction](prop.getNimTypeAsStr(outer)).map(isBPExposed))
+                            .get(true)#we assume it is by default 
+    
+    CPF_BlueprintVisible in prop.getPropertyFlags() and
+    isTypeExposed
         
 func isBPExposed(uenum:UEnumPtr) : bool = true
 #     # uenum.hasMetadata("BlueprintType")
@@ -148,7 +167,8 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = 
     for rule in rules:
         if name in rule.affectedTypes and rule.target == uerTField and rule.rule == uerIgnore: #TODO extract
             return none(UEField)
-    if prop.isBPExposed():
+
+    if prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules:
         some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
     else:
         none(UEField)
@@ -160,10 +180,10 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = 
 
 
 
-func toUEField*(ufun:UFunctionPtr) : Option[UEField] = 
+func toUEField*(ufun:UFunctionPtr, rules: seq[UEImportRule] = @[]) : Option[UEField] = 
     # let asDel = ueCast[UDelegateFunction](ufun)
     # if not asDel.isNil(): return toUEField asDel
-    let params = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun)).sequence()
+    let params = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun, rules)).sequence()
     # UE_Warn(fmt"{ufun.getName()}")
     let class = ueCast[UClass](ufun.getOuter())
     let className = class.getPrefixCpp() & class.getName()
@@ -171,7 +191,7 @@ func toUEField*(ufun:UFunctionPtr) : Option[UEField] =
     let fnNameNim = actualName.removePrefixes(fnPrefixes)
     var fnField = makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
     fnField.actualFunctionName = actualName
-    if ufun.isBPExposed():
+    if ufun.isBpExposed() or uerImportBlueprintOnly notin rules:
         some fnField
     else:
         none(UEField)
@@ -194,16 +214,17 @@ func toUEType*(cls:UClassPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
 
  
     let fields = getFuncsFromClass(cls)
-                    .map(toUEField).sequence() & 
+                    .map(fn=>toUEField(fn, rules)).sequence() & 
                  getFPropsFromUStruct(cls)
-                    .map(x=>toUEField(x, cls, rules))
+                    .map(prop=>toUEField(prop, cls, rules))
                     .sequence()
     let name = cls.getPrefixCpp() & cls.getName()
     let parent = someNil cls.getSuperClass()
 
     
     let parentName = parent.map(p=>p.getPrefixCpp() & p.getName()).get("")
-    if cls.isBpExposed():
+
+    if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
         some UEType(name:name, kind:uetClass, parent:parentName, fields:fields.reversed())
     else:
         # UE_Warn &"Class {name} is not exposed to BP"
@@ -222,16 +243,17 @@ func toUEType*(str:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
     
     
     let fields = getFPropsFromUStruct(str)
-                    .map(x=>toUEField(x, str))
+                    .map(x=>toUEField(x, str, rules))
                     .sequence()
 
+    
     for rule in rules:
         if name in rule.affectedTypes and rule.rule == uerIgnore:
             return none(UEType)
 
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
-    if str.isBpExposed():
+    if str.isBpExposed() or uerImportBlueprintOnly notin rules:
         some UEType(name:name, kind:uetStruct, fields:fields.reversed())
     else:
         # UE_Warn &"Struct {name} is not exposed to BP"
@@ -300,9 +322,6 @@ func getUETypeFrom(obj:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UETy
     .chainNone(()=>convertToUEType[UEnum](obj, rules))
     .chainNone(()=>convertToUEType[UDelegateFunction](obj, rules))
   
-func getUnrealTypeFromName[T](name:FString) : Option[UObjectPtr] = 
-    #ScriptStruct, Classes
-    tryUECast[UObject](getUTypeByName[T](name))
 
 
 func getFPropertiesFrom*(ueType:UEType) : seq[FPropertyPtr] = 

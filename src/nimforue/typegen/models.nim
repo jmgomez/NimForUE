@@ -81,6 +81,7 @@ type
         uerCodeGenOnlyFields #wont generate the type. Just its fields. Only make sense in uClass. Will affect code generation (we try to do it at the import time when possible) 
         uerIgnore
         uerImportStruct
+        uerImportBlueprintOnly #affects all types and all target. If set, it will only import the blueprint types.
     
     UERuleTarget* = enum 
         uertType
@@ -114,6 +115,9 @@ func makeImportedRuleModule*(rule:UERule) : UEImportRule =
     result.rule = rule
     result.target = uertModule
 
+func contains*(rules: seq[UEImportRule], rule:UERule): bool = 
+    rules.any((r:UEImportRule) => r.rule == rule)
+
 # func getAllMatchingTypes*(module:UEModule, rule:UERule) : seq[UEType] =
 #    module.types
 #          .filter(ueType:UEType => ueType in rule.affectedTypes)   
@@ -125,7 +129,8 @@ func getAllMatchingRulesForType*(module:UEModule, ueType:UEType) : UERule =
                 .map((rule:UEImportRule) => rule.rule)
     if rules.any(): rules[0]  #TODO fold the values instead of returning the first
     else: uerNone
-       
+
+
 
 #allocates a newUEType based on an UEType value.
 #the allocated version will be stored in the NimBase class/struct in UE so we can 

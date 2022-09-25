@@ -61,11 +61,14 @@ proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule]) =
 uClass AActorCodegen of AActor:
   (BlueprintType)
   ufuncs(CallInEditor):
-    proc printUDeveloperSettings() =
-      let cls = getClassByName("DeveloperSettings")
-      let metadata = cls.getMetaDataMap()
-      UE_Log $cls.classFlags
-      UE_Log $metadata
+    proc printFBodyInstance() =
+      let str = getUTypeByName[UScriptStruct]("BodyInstance")
+      let ueType = str.toUEType(@[makeImportedRuleModule(uerImportBlueprintOnly)])
+
+      UE_Log &"UEType: {ueType}"
+      # let metadata = cls.getMetaDataMap()
+      # UE_Log $cls.classFlags
+      # UE_Log $metadata
 
 
     proc generateUETypes() = 
@@ -113,11 +116,15 @@ uClass AActorCodegen of AActor:
      
 
       # genBindings("Chaos", moduleRules)
-      genBindings("Engine", moduleRules)
       # genBindingsWithDeps("Engine", moduleRules)
+      genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
 
+      #Engine can be splited in two modules one is BP based and the other dont
+      #All kismets would be in its own module -20k lines of code?
 
-
+      # Hand pick classes
+      # Static functions that collides can be virtual modules too. (We need to find the colliding functions)
+  
     proc experiments() = 
       let clsName = "Actor"
       let cls = getClassByName(clsName)
