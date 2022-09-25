@@ -187,6 +187,9 @@ proc findMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : ptr FString {.impor
 func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool = 
     someNil(field.findMetaData(key)).isSome()
 
+proc getMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : FString = 
+    findMetaData(field, key).map(x=>x[]).get("")
+
 func getMetaDataMap*(field:FFieldPtr) : TMap[FName, FString] {.importcpp:"*(#->GetMetaDataMap())".}
 func getMetaDataMap*(field:UObjectPtr) : TMap[FName, FString] {.importcpp:"*(UMetaData::GetMapForObject(#))".}
 

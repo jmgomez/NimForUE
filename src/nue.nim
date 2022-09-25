@@ -389,6 +389,7 @@ task gencppbindings, "Generates the cpp bindings":
   guestpch(taskOptions)
 
 
+
 task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindings":
   var attempts = 0
   while dirExists(".nimcache/guestpch"):

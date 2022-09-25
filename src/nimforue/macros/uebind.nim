@@ -303,7 +303,14 @@ func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:U
     let typeName = 
         case typeExposure: 
         of uexDsl: identWithInjectPublic typeDef.name
-        of uexImport, uexExport: identWithInjectPublicAnd(typeDef.name, "importcpp")
+        of uexImport, uexExport: 
+            nnkPragmaExpr.newTree([
+                nnkPostfix.newTree([ident "*", ident typeDef.name]),
+                nnkPragma.newTree(
+                    ident "inject", ident "importcpp",
+                    nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEModuleHeaders.h"))
+                )
+            ])
 
     func getFieldIdent(prop:UEField) : NimNode = 
         let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1))

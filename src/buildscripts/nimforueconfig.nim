@@ -80,7 +80,13 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     nimForUEEditorIntermediateHeaders,
 
     pluginDir / "NimHeaders",
-    #engine
+    engineDir / "Shaders",
+    engineDir / "Shaders/Shared",
+    engineDir / "Source",
+    engineDir / "Source/Runtime",
+    engineDir / "Source/Runtime/Engine",
+    engineDir / "Source/Runtime/Engine/Public",
+    engineDir / "Source/Runtime/Engine/Public/Rendering",
     engineDir / "Source/Runtime/Engine/Classes",
     engineDir / "Source/Runtime/Engine/Classes/Engine",
     engineDir / "Source/Runtime/Net/Core/Public",
@@ -88,23 +94,38 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     engineDir / "Source/Runtime/InputCore/Classes"
   ]
 
+  let editorHeaders = @[
+    engineDir / "Source/Editor",
+    engineDir / "Source/Editor/UnrealEd",
+    engineDir / "Source/Editor/UnrealEd/Classes",
+    engineDir / "Source/Editor/UnrealEd/Classes/Settings"
+    
+  ]
+
   proc getEngineRuntimeIncludePathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Public"
   proc getEngineIntermediateIncludePathFor(moduleName:string) : string = engineDir / "Intermediate/Build" / platformDir / "UnrealEditor/Inc" / moduleName
 
-  let runtimeModules = @["CoreUObject", "Core", "Engine", "TraceLog", "Launch", "ApplicationCore", 
-      "Projects", "Json", "PakFile", "RSA", "Engine", "RenderCore",
+  let runtimeModules = @["CoreUObject", "Core", "TraceLog", "Launch", "ApplicationCore", 
+      "Projects", "Json", "PakFile", "RSA", "RenderCore",
       "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
+      "SlateCore", "Slate", "TypedElementFramework", "Renderer", "AnimationCore",
+      "ClothingSystemRuntimeInterface",
       "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore", "AssetRegistry", "DeveloperSettings"]
 
   let developerModules = @["DesktopPlatform", "ToolMenus", "TargetPlatform", "SourceControl"]
-  let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry", "InputCore", "DeveloperSettings"]
+  let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry", 
+    "UnrealEd",
+    "TypedElementFramework","Chaos", "ChaosCore",
+    "InputCore", "DeveloperSettings", "SlateCore", "Slate", "ToolMenus"]
 
+  let editorModules = @["UnrealEd", "PropertyEditor", "EditorStyle"]
   let moduleHeaders = 
     runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
     developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
+    editorModules.map(module=>getEngineRuntimeIncludePathFor("Editor", module)) & 
     intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module))
 
-  (essentialHeaders & moduleHeaders).map(path => path.normalizedPath().normalizePathEnd())
+  (essentialHeaders & moduleHeaders & editorHeaders).map(path => path.normalizedPath().normalizePathEnd())
 
 
 

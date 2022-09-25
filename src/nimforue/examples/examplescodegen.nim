@@ -65,11 +65,18 @@ uClass AActorCodegen of AActor:
       let str = getUTypeByName[UScriptStruct]("BodyInstance")
       let ueType = str.toUEType(@[makeImportedRuleModule(uerImportBlueprintOnly)])
 
-      UE_Log &"UEType: {ueType}"
-      # let metadata = cls.getMetaDataMap()
+      # UE_Log &"UEType: {ueType}"
+      # let metadata = str.getMetaDataMap()
+      # let includePath = str.getMetaData("ModuleRelativePath")
       # UE_Log $cls.classFlags
+      # UE_Log $includePath
       # UE_Log $metadata
 
+    proc printModuleIncludes() = 
+      var module = tryGetPackageByName("Engine")
+                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(@[], excludeDeps= @["CoreUObject"]))
+                      .get()
+      UE_Warn module.getModuleHeader().join(" \n")
 
     proc generateUETypes() = 
       # let a = ETest.testB
@@ -141,7 +148,7 @@ uClass AActorCodegen of AActor:
      
 
       # genBindings("Chaos", moduleRules)
-      # genBindingsWithDeps("Engine", moduleRules)
+      genBindingsWithDeps("Engine", moduleRules)
       genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
 
       #Engine can be splited in two modules one is BP based and the other dont

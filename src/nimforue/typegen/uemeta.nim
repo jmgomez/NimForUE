@@ -258,7 +258,14 @@ func toUEType*(str:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
                     .map(x=>toUEField(x, str, rules))
                     .sequence()
 
+    let metadata = str.getMetaDataMap()
+        .toTable()
+        .pairs
+        .toSeq()
+        .mapIt(makeUEMetadata($it[0], it[1]))
+
     
+
     for rule in rules:
         if name in rule.affectedTypes and rule.rule == uerIgnore:
             return none(UEType)
@@ -266,7 +273,7 @@ func toUEType*(str:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
     if str.isBpExposed() or uerImportBlueprintOnly notin rules:
-        some UEType(name:name, kind:uetStruct, fields:fields.reversed())
+        some UEType(name:name, kind:uetStruct, fields:fields.reversed(), metadata:metadata)
     else:
         # UE_Warn &"Struct {name} is not exposed to BP"
         none(UEType)
@@ -377,7 +384,14 @@ func getModuleNames*(ueType:UEType) : seq[string] =
         .sequence()
         .deduplicate()
 
-
+func getModuleHeader*(module:UEModule) : seq[string] = 
+    module.types
+          .filterIt(it.kind == uetStruct)
+          .mapIt(it.metadata["ModuleRelativePath"])
+          .sequence()
+          .mapIt(&"""#include "{it}" """)
+          
+ 
 
 func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[string]) : Option[UEModule] = 
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
