@@ -300,30 +300,42 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNode =
     #    debugEcho result.repr
 
 func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:UEExposure) : NimNode = 
+    let suffix = "_"
     let typeName = 
         case typeExposure: 
         of uexDsl: identWithInjectPublic typeDef.name
-        of uexImport, uexExport: 
+        of uexImport: 
             nnkPragmaExpr.newTree([
                 nnkPostfix.newTree([ident "*", ident typeDef.name]),
                 nnkPragma.newTree(
-                    ident "inject", ident "importcpp",
-                    nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEModuleHeaders.h"))
+                    ident "inject",
+                    nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1" & suffix)),
+                    nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
+                )
+            ])
+        of uexExport:
+            nnkPragmaExpr.newTree([
+                nnkPostfix.newTree([ident "*", ident typeDef.name]),
+                nnkPragma.newTree(
+                    ident "inject",
+                    nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1" & suffix))
                 )
             ])
 
+
     func getFieldIdent(prop:UEField) : NimNode = 
         let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1))
-        case typeExposure:
-        of uexImport, uexExport: 
-            nnkPragmaExpr.newTree(nnkPostfix.newTree(ident "*", ident fieldName),
-                nnkPragma.newTree(
-                        nnkExprColonExpr.newTree(
-                            ident "importcpp", 
-                            newStrLitNode(prop.name)))
-            )
-        of uexDsl: 
-            identPublic fieldName
+        # case typeExposure:
+        # of uexImport, uexExport: 
+        #     nnkPragmaExpr.newTree(nnkPostfix.newTree(ident "*", ident fieldName),
+        #         nnkPragma.newTree(
+        #                 nnkExprColonExpr.newTree(
+        #                     ident "importcpp", 
+        #                     newStrLitNode(prop.name)))
+        #     )
+        # of uexDsl: 
+        #     identPublic fieldName
+        identPublic fieldName
 
     #TODO Needs to handle TArray/Etc. like it does above with classes
     let fields = typeDef.fields
