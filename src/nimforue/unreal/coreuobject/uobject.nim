@@ -54,6 +54,7 @@ type
     UInterfacePtr* = ptr UInterface
 
     UScriptStruct* {.importcpp, inheritable, pure .} = object of UStruct
+        structFlags* {.importcpp:"StructFlags".}: EStructFlags
     UScriptStructPtr* = ptr UScriptStruct
 
 
@@ -146,14 +147,10 @@ proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->In
 
 proc addCppProperty*(arrProp:FArrayPropertyPtr | FSetPropertyPtr | FMapPropertyPtr | FEnumPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
 
-
-
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
 proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->ValueProp)".}
 proc getSignatureFunction*(delProp:DelegateProp) : UFunctionPtr {.importcpp:"(#->SignatureFunction)".}
 proc setSignatureFunction*(delProp:DelegateProp, signature : UFunctionPtr) : void {.importcpp:"(#->SignatureFunction=#)".}
-
-
 
 
 type
@@ -217,6 +214,7 @@ proc assembleReferenceTokenStream*(cls:UClassPtr, bForce = false) : void {. impo
 #TObjectPtr
 
 converter toUObjectPtr*(obj:TObjectPtr) : UObjectPtr {.importcpp:"#.Get()".}
+converter fromObjectPtr*[T : UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
 
 #UOBJECT
 proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}

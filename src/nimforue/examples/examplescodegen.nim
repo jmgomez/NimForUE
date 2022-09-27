@@ -5,7 +5,59 @@ import ../../buildscripts/nimforueconfig
 import ../macros/makestrproc
 
 import ../../codegen/codegentemplate
+let moduleRules = @[
+        makeImportedRuleType(uerCodeGenOnlyFields, 
+          @[
+            "AActor", "UReflectionHelpers", "UObject",
+            "UField", "UStruct", "UScriptStruct", "UPackage",
+            "UClass", "UFunction", "UDelegateFunction",
+            "UEnum", "UActorComponent", "APawn",
+            "UPrimitiveComponent", "UPhysicalMaterial", "AController",
+            "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
+            "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
+            "ALevelScriptActor",  "UPhysicalMaterialMask",
+            "UHLODLayer",
+            "USceneComponent",
+            "APlayerController",
+            "UTexture",
+            "USkinnedMeshComponent",
+            "USoundBase",
+            "USubsurfaceProfile",
+            "UMaterialInterface",
+            "UParticleSystem",
+            "UBillboardComponent",
+            "UChildActorComponent",
+            "UDamageType",
+            "UDecalComponent",
+            "UWorld",
+            "UCanvas",
+            "UDataLayer",
+            
+            
 
+            # "FConstraintBrokenSignature",
+            # "FPlasticDeformationEventSignature",
+            # "FTimerDynamicDelegate",
+            # "FKey",
+            # "FFastArraySerializer"
+          
+          ]), 
+          makeImportedRuleType(uerIgnore, @[
+          "FVector"
+          
+          ]), 
+          
+        makeImportedRuleField(uerIgnore, @[
+          "PerInstanceSMCustomData", 
+          "PerInstanceSMData",
+          "ObjectTypes",
+          "EvaluatorMode"
+          
+          
+          
+           ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
+
+      ] 
 proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
   let config = getNimForUEConfig()
   let reflectionDataPath = config.pluginDir / "src" / ".reflectiondata" #temporary
@@ -80,59 +132,7 @@ uClass AActorCodegen of AActor:
 
     proc generateUETypes() = 
       # let a = ETest.testB
-      let moduleRules = @[
-        makeImportedRuleType(uerCodeGenOnlyFields, 
-          @[
-            "AActor", "UReflectionHelpers", "UObject",
-            "UField", "UStruct", "UScriptStruct", "UPackage",
-            "UClass", "UFunction", "UDelegateFunction",
-            "UEnum", "UActorComponent", "APawn",
-            "UPrimitiveComponent", "UPhysicalMaterial", "AController",
-            "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
-            "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
-            "ALevelScriptActor",  "UPhysicalMaterialMask",
-            "UHLODLayer",
-            "USceneComponent",
-            "APlayerController",
-            "UTexture",
-            "USkinnedMeshComponent",
-            "USoundBase",
-            "USubsurfaceProfile",
-            "UMaterialInterface",
-            "UParticleSystem",
-            "UBillboardComponent",
-            "UChildActorComponent",
-            "UDamageType",
-            "UDecalComponent",
-            "UWorld",
-            "UCanvas",
-            "UDataLayer",
-            
-            
-
-            # "FConstraintBrokenSignature",
-            # "FPlasticDeformationEventSignature",
-            # "FTimerDynamicDelegate",
-            # "FKey",
-            # "FFastArraySerializer"
-          
-          ]), 
-          makeImportedRuleType(uerIgnore, @[
-          "FVector"
-          
-          ]), 
-          
-        makeImportedRuleField(uerIgnore, @[
-          "PerInstanceSMCustomData", 
-          "PerInstanceSMData",
-          "ObjectTypes",
-          "EvaluatorMode"
-          
-          
-          
-           ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
-
-      ] 
+      
 
       # genBindings("CoreUObject", moduleRules)
 
@@ -157,13 +157,6 @@ uClass AActorCodegen of AActor:
       # Hand pick classes
       # Static functions that collides can be virtual modules too. (We need to find the colliding functions)
   
-    proc experiments() = 
-      let clsName = "Actor"
-      let cls = getClassByName(clsName)
-      let ueType = cls.toUEType().get()
-      
-      UE_Log $cls
-      UE_Log $cls.getModuleName()
-
-      UE_Warn &"UEType dependencies: {ueType.getModuleNames()}"
+    proc generateSlateCore() = 
+      genBindings("SlateCore", moduleRules)
 

@@ -154,7 +154,7 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
 
     @[libPath, libPathEditor]
 
-  let modules = @["Core", "CoreUObject", "Engine"]
+  let modules = @["Core", "CoreUObject", "Engine", "SlateCore"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName))
 
   (engineSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
