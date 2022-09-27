@@ -1,6 +1,6 @@
 include ../definitions
 import math/vector
-import ../coreuobject/[uobject]
+import ../coreuobject/[uobject, coreuobject]
 
 type 
   AActor* {.importcpp.}  = object of UObject
@@ -142,3 +142,20 @@ proc makeFHitResult*(): FHitResult {.importcpp:"FHitResult()", constructor.}
 #         None,
 #         TeleportPhysics,
 #         ResetPhysic
+
+
+type
+  # FSlateBrush*  = object
+  FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
+    # bIsDynamicallyLoaded*: uint8
+    # imageType*: ESlateBrushImageType
+    # mirroring*: ESlateBrushMirrorType
+    # tiling*: ESlateBrushTileType
+    # drawAs*: ESlateBrushDrawType
+    # uVRegion*: FBox2f
+    # resourceName*: FName
+    # resourceObject*: TObjectPtr[UObject]
+    # outlineSettings*: FSlateBrushOutlineSettings
+    # tintColor*: FSlateColor
+    # margin*: FMargin
+    ImageSize*: FVector2D

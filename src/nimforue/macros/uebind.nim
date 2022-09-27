@@ -351,12 +351,12 @@ func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:U
     
     result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])
 
-    # if not importcpp: 
-    #     #Generates a type so it's added to the header when using --header
-    #     #TODO dont create them for UStructs
-    #     let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
-    #         proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
-    #     result = nnkStmtList.newTree(result, exportFn)
+    if typeExposure == uexExport: 
+        #Generates a type so it's added to the header when using --header
+        #TODO dont create them for UStructs
+        let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
+            proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
+        result = nnkStmtList.newTree(result, exportFn)
     # debugEcho result.repr
     # debugEcho result.treeRepr
 
