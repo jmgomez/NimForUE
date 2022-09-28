@@ -272,7 +272,9 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkgName:FString = "Nim") : FNimHo
 
 
 proc emitUStruct(typeDef:UEType) : NimNode =
-    let typeDecl = genTypeDecl(typeDef)
+    var ueType = typeDef #the generated type must be reversed to match declaration order because the props where picked in the reversed order
+    ueType.fields = ueType.fields.reversed()
+    let typeDecl = genTypeDecl(ueType)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, structName=newStrLitNode(typeDef.name)): #defers the execution
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUStruct[name](typeDefAsNode, package))

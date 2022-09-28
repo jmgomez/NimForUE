@@ -210,6 +210,16 @@ proc getCDO*[T:UObjectPtr](cls:UClassPtr) : T = ueCast[T](cls.getDefaultObject()
 proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()" .}
 proc assembleReferenceTokenStream*(cls:UClassPtr, bForce = false) : void {. importcpp:"#->AssembleReferenceTokenStream(@)" .}
 
+#ScriptStruct
+type 
+    ICppStructOps* {.importcpp.} = object
+    ICppStructOpsPtr* = ptr ICppStructOps
+
+proc getAlignment*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->GetAlignment()".}
+proc getSize*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->GetSize()".}
+proc hasAddStructReferencedObjects*(str:UScriptStructPtr) : bool {.importcpp:"#->GetCppStructOps()->HasAddStructReferencedObjects()".}
+
+# proc getCppStructOps*(str:UScriptStructPtr) : ICppStructOpsPtr {. importcpp:"#->GetCppStructOps()" .}
 
 #TObjectPtr
 
