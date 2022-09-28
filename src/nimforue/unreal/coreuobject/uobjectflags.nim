@@ -337,7 +337,6 @@ macro genEnumOperators(enumName, enumType:static string, genValConverters : stat
         
     
     result = genAst(name, typ):
-        
         proc `or`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
 
         proc `||`*(a, b : name) : name {.importcpp:"#|#".}
@@ -371,12 +370,14 @@ macro genEnumOperators(enumName, enumType:static string, genValConverters : stat
         result.add converters
 
 
+{.push warning[HoleEnumConv]: off.}
 genEnumOperators("EPropertyFlags", "uint64")
 genEnumOperators("EObjectFlags", "uint32", false)
 genEnumOperators("EFunctionFlags", "uint32")
 genEnumOperators("EClassFlags", "uint32", false)
 genEnumOperators("EStructFlags", "uint32")
 genEnumOperators("EFieldIterationFlags", "uint8", false)
+{.pop.}
 
 
 

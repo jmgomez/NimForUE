@@ -108,11 +108,11 @@ func isBPExposed(str:UFieldPtr) : bool = str.hasMetadata("BlueprintType")
 func isBPExposed(str:UScriptStructPtr) : bool = str.hasMetadata("BlueprintType")
 
 func isBPExposed(cls:UClassPtr) : bool =
-    if  (cast[uint32](CLASS_Abstract) and cast[uint32](cls.classFlags)) != 0:
-        UE_Log &"Abstract class {cls.getName()}"
+    #if  (cast[uint32](CLASS_Abstract) and cast[uint32](cls.classFlags)) != 0:
+    #    UE_Log &"Abstract class {cls.getName()}"
 
-    if  (cast[uint32](ClASS_None) and cast[uint32](cls.classFlags)) != 0:
-        UE_Log &"Class None {cls.getName()}"
+    #if  (cast[uint32](ClASS_None) and cast[uint32](cls.classFlags)) != 0:
+    #    UE_Log &"Class None {cls.getName()}"
     
     cls.hasMetadata("BlueprintType") or 
     cls.hasMetadata("BlueprintSpawnableComponent") or 

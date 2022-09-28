@@ -82,7 +82,7 @@ macro makeStrProc*(t: typedesc): untyped =
     newEmptyNode(),
     newEmptyNode())
 
-  let output = genSym(nskVar, "output")
+  let output = ident "output"
   var head = genAst(output, typeName = t.strVal & "("):
     var output = typeName
 
