@@ -170,7 +170,7 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = 
         if name in rule.affectedTypes and rule.target == uerTField and rule.rule == uerIgnore: #TODO extract
             return none(UEField)
 
-    if prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules:
+    if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules):
         some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
     else:
         none(UEField)
@@ -185,7 +185,9 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = 
 func toUEField*(ufun:UFunctionPtr, rules: seq[UEImportRule] = @[]) : Option[UEField] = 
     # let asDel = ueCast[UDelegateFunction](ufun)
     # if not asDel.isNil(): return toUEField asDel
-    let params = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun, rules)).sequence()
+    let paramsMb = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun, rules))
+    let params = paramsMb.sequence()
+    let allParamsExposedToBp = len(params) == len(paramsMb)
     # UE_Warn(fmt"{ufun.getName()}")
     let class = ueCast[UClass](ufun.getOuter())
     let className = class.getPrefixCpp() & class.getName()
@@ -194,7 +196,7 @@ func toUEField*(ufun:UFunctionPtr, rules: seq[UEImportRule] = @[]) : Option[UEFi
     var fnField = makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
     fnField.actualFunctionName = actualName
     let isStatic = (FUNC_Static in ufun.functionFlags) #Skips static functions for now so we can quickly iterate over compiling the engine types
-    if (ufun.isBpExposed() or uerImportBlueprintOnly notin rules) and not isStatic:
+    if ((allParamsExposedToBp and ufun.isBpExposed()) or uerImportBlueprintOnly notin rules) and not isStatic:
         some fnField
     else:
         none(UEField)
