@@ -45,6 +45,8 @@ type
             of uefProp:
                 uePropType* : string #Do a close set of types? No, just do a close set on the MetaType. i.e Struct, TArray, Delegates (they complicate things)
                 propFlags*:EPropertyFlagsVal
+                size*: int32
+                offset*: int32
 
             of uefFunction:
                 className*:string
@@ -53,7 +55,7 @@ type
                 signature* : seq[UEField]
                 fnFlags* : EFunctionFlagsVal
                 sourceHash* : string 
-            
+
             of uefEnumVal:
                 discard
 
@@ -61,7 +63,7 @@ type
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
         metadata* : seq[UEMetadata]
-        
+
         case kind*: UETypeKind
             of uetClass:
                 parent* : string
@@ -70,6 +72,8 @@ type
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal
+                size*: int32
+                alignment*: int32
             of uetEnum:
                 discard
             of uetDelegate:

@@ -322,7 +322,6 @@ func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:U
                 )
             ])
 
-
     func getFieldIdent(prop:UEField) : NimNode = 
         let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1))
         # case typeExposure:
@@ -337,6 +336,7 @@ func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:U
         #     identPublic fieldName
         identPublic fieldName
 
+#[
     #TODO Needs to handle TArray/Etc. like it does above with classes
     let fields = typeDef.fields
                         .map(prop => nnkIdentDefs.newTree(
@@ -344,6 +344,26 @@ func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:U
                             prop.getTypeNodeFromUProp(), newEmptyNode()]))
 
                         .foldl(a.add b, nnkRecList.newTree)
+                        ]#
+
+    var fields = nnkRecList.newTree()
+    var size, offset, padId: int
+    for prop in typeDef.fields:
+        var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(), newEmptyNode())
+
+        let offsetDelta = prop.offset - offset
+        if offsetDelta > 0:
+            fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(offsetDelta), ident "byte"), newEmptyNode())
+            inc padId
+            offset += offsetDelta
+            size += offsetDelta
+
+        fields.add id
+        size = offset + prop.size
+        offset += prop.size
+
+    if size < typeDef.size:
+        fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(typeDef.size - size), ident "byte"), newEmptyNode())
 
 
     result = genAst(typeName, fields):

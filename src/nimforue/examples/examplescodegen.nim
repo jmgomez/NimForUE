@@ -157,6 +157,6 @@ uClass AActorCodegen of AActor:
       # Hand pick classes
       # Static functions that collides can be virtual modules too. (We need to find the colliding functions)
   
-    proc generateSlateCore() = 
+    proc generateSlate() = 
       genBindingsWithDeps("Slate", moduleRules)
 

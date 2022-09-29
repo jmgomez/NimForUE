@@ -91,7 +91,7 @@ proc getOffsetForUFunction*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffse
 proc initializeValueInContainer*(prop:FPropertyPtr, container:pointer) : void {. importcpp:"#->InitializeValue_InContainer(#)".}
 
 proc getSize*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetSize()".}
-proc getOffset*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffset_ForUFunction()".}
+proc getOffset*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffset_ForInternal()".}
 
 proc setPropertyFlags*(prop:FPropertyPtr, flags:EPropertyFlags) : void {. importcpp:"#->SetPropertyFlags(#)".}
 proc getPropertyFlags*(prop:FPropertyPtr) : EPropertyFlags {. importcpp:"#->GetPropertyFlags()".}

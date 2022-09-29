@@ -6,6 +6,6 @@ import objectexample
 # import examplescratchpad
 
 import examplescodegen
-import examplecoreuobject
-import engineexample
-import structexampleissue
+#import examplecoreuobject
+#import engineexample
+#import structexampleissue

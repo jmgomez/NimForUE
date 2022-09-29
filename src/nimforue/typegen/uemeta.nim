@@ -9,8 +9,8 @@ const fnPrefixes = @["", "Receive", "K2_"]
 
 
 #UE META CONSTRUCTORS. Noticuee they are here because they pull type definitions from Cpp which cant be loaded in the ScriptVM
-func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[]) : UEField = 
-    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata:metas)       
+func makeFieldAsUProp*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[], size: int32 = 0, offset: int32 = 0) : UEField = 
+    UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata:metas, size: size, offset: offset)
 
 func makeFieldAsUPropMulDel*(name, uPropType: string, flags=CPF_None, metas:seq[UEMetadata] = @[]) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags), metadata: @[makeUEMetadata(MulticastDelegateMetadataKey)]&metas)       
@@ -171,7 +171,7 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = 
             return none(UEField)
 
     if prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules:
-        some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags())
+        some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
     else:
         none(UEField)
 
@@ -237,12 +237,12 @@ func toUEType*(cls:UClassPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
                         .map(p=>p.getPrefixCpp() & p.getName()).get("")
 
     if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
-        some UEType(name:name, kind:uetClass, parent:parentName, fields:fields.reversed())
+        some UEType(name:name, kind:uetClass, parent:parentName, fields:fields)
     else:
         # UE_Warn &"Class {name} is not exposed to BP"
         none(UEType)
 
-func toUEType*(str:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
+func toUEType*(str:UScriptStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
     
     #same as above 
     let storedUEType = tryUECast[UNimScriptStruct](str)
@@ -252,8 +252,6 @@ func toUEType*(str:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
 
     let name = str.getPrefixCpp() & str.getName()
 
-    
-    
     let fields = getFPropsFromUStruct(str)
                     .map(x=>toUEField(x, str, rules))
                     .sequence()
@@ -273,7 +271,7 @@ func toUEType*(str:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
     if str.isBpExposed() or uerImportBlueprintOnly notin rules:
-        some UEType(name:name, kind:uetStruct, fields:fields.reversed(), metadata:metadata)
+        some UEType(name:name, kind:uetStruct, fields: fields, metadata: metadata, size: str.getSize(), alignment: str.getAlignment())
     else:
         # UE_Warn &"Struct {name} is not exposed to BP"
         none(UEType)
@@ -325,7 +323,6 @@ func toUEType*(uenum:UEnumPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
     else:
         UE_Warn &"Enum {name} is not exposed to BP"
         none(UEType)
-   
 
 
 func convertToUEType[T](obj:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] = 
