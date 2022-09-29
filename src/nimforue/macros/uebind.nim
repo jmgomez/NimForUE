@@ -345,26 +345,35 @@ func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:U
 
                         .foldl(a.add b, nnkRecList.newTree)
                         ]#
+    let fields =
+        case typeExposure:
+        of uexDsl, uexImport:
+            typeDef.fields
+                        .map(prop => nnkIdentDefs.newTree(
+                            [getFieldIdent(prop), 
+                            prop.getTypeNodeFromUProp(), newEmptyNode()]))
 
-    var fields = nnkRecList.newTree()
-    var size, offset, padId: int
-    for prop in typeDef.fields:
-        var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(), newEmptyNode())
+                        .foldl(a.add b, nnkRecList.newTree)
+        of uexExport:
+            var fields = nnkRecList.newTree()
+            var size, offset, padId: int
+            for prop in typeDef.fields:
+                var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(), newEmptyNode())
 
-        let offsetDelta = prop.offset - offset
-        if offsetDelta > 0:
-            fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(offsetDelta), ident "byte"), newEmptyNode())
-            inc padId
-            offset += offsetDelta
-            size += offsetDelta
+                let offsetDelta = prop.offset - offset
+                if offsetDelta > 0:
+                    fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(offsetDelta), ident "byte"), newEmptyNode())
+                    inc padId
+                    offset += offsetDelta
+                    size += offsetDelta
 
-        fields.add id
-        size = offset + prop.size
-        offset += prop.size
+                fields.add id
+                size = offset + prop.size
+                offset += prop.size
 
-    if size < typeDef.size:
-        fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(typeDef.size - size), ident "byte"), newEmptyNode())
-
+            if size < typeDef.size:
+                fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(typeDef.size - size), ident "byte"), newEmptyNode())
+            fields
 
     result = genAst(typeName, fields):
                 type typeName = object
