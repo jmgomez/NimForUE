@@ -271,7 +271,14 @@ func toUEType*(str:UScriptStructPtr, rules: seq[UEImportRule] = @[]) : Option[UE
     # let parent = str.getSuperClass()
     # let parentName = parent.getPrefixCpp() & parent.getName()
     if str.isBpExposed() or uerImportBlueprintOnly notin rules:
-        some UEType(name:name, kind:uetStruct, fields: fields, metadata: metadata, size: str.getSize(), alignment: str.getAlignment())
+        var size, alignment : int32
+        if str.hasStructOps():
+            size = str.getSize()
+            alignment = str.getAlignment()
+        else:
+            UE_Warn &"The struct {str} does not have StructOps therefore we cant calculate the size and alignment"
+
+        some UEType(name:name, kind:uetStruct, fields: fields, metadata: metadata, size: size, alignment: alignment )
     else:
         # UE_Warn &"Struct {name} is not exposed to BP"
         none(UEType)
