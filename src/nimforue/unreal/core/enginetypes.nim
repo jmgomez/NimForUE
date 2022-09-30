@@ -143,7 +143,7 @@ proc makeFHitResult*(): FHitResult {.importcpp:"FHitResult()", constructor.}
 #         TeleportPhysics,
 #         ResetPhysic
 
-#[
+
 type
   # FSlateBrush*  = object
   FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
@@ -159,4 +159,3 @@ type
     # tintColor*: FSlateColor
     # margin*: FMargin
     ImageSize*: FVector2D
-]#
