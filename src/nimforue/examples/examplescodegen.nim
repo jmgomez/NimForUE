@@ -97,15 +97,15 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
     UE_Log &"Failed to generate {codegenPath} nim binding"
 
 
-#TODO dont regenerate already generated deps for this pass
-proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule], skipRoot = false) =
+proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule], skipRoot = false, prevGeneratedMods : seq[string] = @[]) =
   var module = tryGetPackageByName(moduleName)
                 .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
                 .get()
-  if module.dependencies.any():
+
+  if module.dependencies.any() and moduleName notin prevGeneratedMods:
     UE_Warn &"-= Generating dependencies for {moduleName} dependencies: {module.dependencies}=-"
     for dep in module.dependencies:
-      genBindingsWithDeps(dep, moduleRules)
+      genBindingsWithDeps(dep, moduleRules, prevGeneratedMods=(prevGeneratedMods & @[dep]))
   if not skipRoot:
     genBindings(moduleName, moduleRules)
 
@@ -134,7 +134,9 @@ uClass AActorCodegen of AActor:
     ]#
 
     proc genEngineBindings() = 
-      let moduleNames = @["Engine"]
+      let config = getNimForUEConfig()
+      let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
+      discard tryRemoveFile(nimHeadersDir / "UEGenClassDefs.h")
       genBindingsWithDeps("Engine", moduleRules, skipRoot = true)
       genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
 
