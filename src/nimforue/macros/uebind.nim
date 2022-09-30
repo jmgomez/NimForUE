@@ -264,9 +264,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
 
 
 
-func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNode =
-    let ptrName = ident typeDef.name & "Ptr"
-    let parent = ident typeDef.parent
+func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =
     let props = nnkStmtList.newTree(
                 typeDef.fields
                     .filter(prop=>prop.kind==uefProp)
@@ -277,14 +275,28 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNode =
                        .filter(prop=>prop.kind==uefFunction)
                        .map(fun=>genFunc(typeDef, fun)))
     
-    let typeDecl = if rule == uerCodeGenOnlyFields: newEmptyNode()
-                   else: genAst(name = ident typeDef.name, ptrName, parent, props, funcs):
+    let typeDecl = 
+        if rule == uerCodeGenOnlyFields: 
+            newEmptyNode()
+        else: 
+            let ptrName = ident typeDef.name & "Ptr"
+            let parent = ident typeDef.parent
+            case typeExposure:
+            of uexDsl:
+                genAst(name = ident typeDef.name, ptrName, parent):
                     type 
                         name* {.inject, exportcpp.} = object of parent #TODO OF BASE CLASS 
                         ptrName* {.inject.} = ptr name
-    
+            of uexExport:
+                genAst(name = ident typeDef.name, ptrName, parent):
+                    type 
+                        name* {.importcpp.} = object of parent #TODO OF BASE CLASS 
+                        ptrName* = ptr name
+            of uexImport:
+                newEmptyNode()
+
     result = 
-        genAst(typeDecl, parent, props, funcs):
+        genAst(typeDecl, props, funcs):
                 typeDecl
                 props
                 funcs
@@ -508,7 +520,7 @@ func genUClassImportCTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNod
     let typeDecl = if rule == uerCodeGenOnlyFields: newEmptyNode()
                    else: genAst(name = ident typeDef.name, ptrName, parent, props, funcs):
                     type  #notice the header is temp.
-                        name* {.inject, importcpp, header:"UEGenBindings.h" .} = object of parent #TODO OF BASE CLASS 
+                        name* {.inject, importcpp.} = object of parent #TODO OF BASE CLASS 
                         ptrName* {.inject.} = ptr name
     
     result = 
@@ -534,7 +546,7 @@ proc genImportCTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode =
 proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexDsl) : NimNode = 
     case typeDef.kind:
         of uetClass:
-            genUClassTypeDef(typeDef, rule)
+            genUClassTypeDef(typeDef, rule, typeExposure)
         of uetStruct:
             genUStructTypeDef(typeDef, rule, typeExposure)
         of uetEnum:
@@ -546,12 +558,25 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexD
 
 proc genModuleDecl*(moduleDef:UEModule) : NimNode = 
     result = nnkStmtList.newTree()
+    var fwdDeclsNode = nnkTripleStrLit.newNimNode()
+    fwdDeclsNode.strVal = moduleDef.types
+        .filterIt(it.kind == uetClass)
+        .mapIt(&"class {it.name};")
+        .foldl(a & "\n" & b, """/*TYPESECTION*/""") & "\n"
+    result.add nnkPragma.newTree(nnkExprColonExpr.newTree(ident "emit", fwdDeclsNode))
+
     for typeDef in moduleDef.types:
         let rules = moduleDef.getAllMatchingRulesForType(typeDef)
         result.add genTypeDecl(typeDef, rules, uexExport)
         
 proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
     result = nnkStmtList.newTree()
+    var fwdDeclsNode = nnkTripleStrLit.newNimNode()
+    fwdDeclsNode.strVal = moduleDef.types
+        .filterIt(it.kind == uetClass)
+        .mapIt(&"class {it.name};")
+        .foldl(a & "\n" & b, """/*TYPESECTION*/""") & "\n"
+    result.add nnkPragma.newTree(nnkExprColonExpr.newTree(ident "emit", fwdDeclsNode))
     for typeDef in moduleDef.types:
         let rules = moduleDef.getAllMatchingRulesForType(typeDef)
         result.add genImportCTypeDecl(typeDef, rules)
