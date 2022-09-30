@@ -267,7 +267,36 @@ func genUClassTypeDefBinding(t: UEType, r: UERule = uerNone): seq[NimNode] =
             nnkTypeDef.newTree(
                 nnkPragmaExpr.newTree(
                     nnkPostFix.newTree(ident "*", ident t.name),
-                    nnkPragma.newTree(ident "importcpp")
+                    nnkPragma.newTree(ident "exportcpp")
+                ),
+                newEmptyNode(),
+                nnkObjectTy.newTree(
+                    newEmptyNode(), 
+                    nnkOfInherit.newTree(ident t.parent),
+                    newEmptyNode()
+                )
+            ),
+            # ptr type TypePtr* = ptr Type
+            nnkTypeDef.newTree(
+                nnkPostFix.newTree(ident "*", ident t.name & "Ptr"),
+                newEmptyNode(),
+                nnkPtrTy.newTree(ident t.name)
+            )
+        ]
+
+func genUClassImportTypeDefBinding(t: UEType, r: UERule = uerNone): seq[NimNode] =
+    if r == uerCodeGenOnlyFields: 
+        @[]
+    else:
+        @[
+            # type Type* {.importcpp.} = object of Parent
+            nnkTypeDef.newTree(
+                nnkPragmaExpr.newTree(
+                    nnkPostFix.newTree(ident "*", ident t.name),
+                    nnkPragma.newTree(
+                        ident "importcpp",
+                        nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
+                    )
                 ),
                 newEmptyNode(),
                 nnkObjectTy.newTree(
@@ -636,12 +665,6 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexD
 
 proc genModuleDecl*(moduleDef:UEModule) : NimNode = 
     result = nnkStmtList.newTree()
-    var fwdDeclsNode = nnkTripleStrLit.newNimNode()
-    fwdDeclsNode.strVal = moduleDef.types
-        .filterIt(it.kind == uetClass)
-        .mapIt(&"class {it.name};")
-        .foldl(a & "\n" & b, """/*TYPESECTION*/""") & "\n"
-    result.add nnkPragma.newTree(nnkExprColonExpr.newTree(ident "emit", fwdDeclsNode))
 
     var typeSection = nnkTypeSection.newTree()
     for typeDef in moduleDef.types:
@@ -665,19 +688,13 @@ proc genModuleDecl*(moduleDef:UEModule) : NimNode =
 
 proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
     result = nnkStmtList.newTree()
-    var fwdDeclsNode = nnkTripleStrLit.newNimNode()
-    fwdDeclsNode.strVal = moduleDef.types
-        .filterIt(it.kind == uetClass)
-        .mapIt(&"class {it.name};")
-        .foldl(a & "\n" & b, """/*TYPESECTION*/""") & "\n"
-    result.add nnkPragma.newTree(nnkExprColonExpr.newTree(ident "emit", fwdDeclsNode))
 
     var typeSection = nnkTypeSection.newTree()
     for typeDef in moduleDef.types:
         let rules = moduleDef.getAllMatchingRulesForType(typeDef)
         case typeDef.kind:
             of uetClass: 
-                typeSection.add genUClassTypeDefBinding(typeDef, rules)
+                typeSection.add genUClassImportTypeDefBinding(typeDef, rules)
             of uetStruct:
                 typeSection.add genUStructImportCTypeDefBinding(typedef)
             of uetEnum:
