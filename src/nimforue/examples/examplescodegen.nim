@@ -42,7 +42,7 @@ let moduleRules = @[
           
           ]), 
           makeImportedRuleType(uerIgnore, @[
-          "FVector"
+          "FVector", "FSlateBrush"
           
           ]), 
           
