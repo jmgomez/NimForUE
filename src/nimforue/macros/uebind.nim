@@ -53,7 +53,7 @@ func getTypeNodeForReturn(prop: UEField, typeNode : NimNode) : NimNode =
     typeNode
 
 
-func identWithInjectAnd(name:string, pragmas:seq[string]) : NimNode = 
+func identWithInjectAnd(name:string, pragmas:seq[string]) : NimNode {.used.} = 
     nnkPragmaExpr.newTree(
         [
             ident name, 
@@ -140,7 +140,6 @@ func signatureAsNode(funField:UEField, identFn : string->NimNode) : seq[NimNode]
 func genParamInFnBodyAsType(funField:UEField) : NimNode = 
     let returnProp = funField.signature.filter(isReturnParam).head()
     #make sure we remove the out flag so we dont emit var on type variables which is not allowed
-    var i = 0
     var funField = funField
 
     for s in funField.signature.mitems:
@@ -195,9 +194,7 @@ func genFormalParamsInFunctionSignature(typeDef : UEType, funField:UEField, firs
 #for the most part the same code is used for both
 #this is also used for native function implementation but the ast is changed afterwards
 func genFunc*(typeDef : UEType, funField : UEField) : NimNode = 
-    
 
-    let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
     let isStatic = FUNC_Static in funField.fnFlags
     let clsName = typeDef.name.substr(1)
 
@@ -261,8 +258,31 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
     # debugEcho repr result
     # debugEcho treeRepr result
 
-
-
+func genUClassTypeDefBinding(t: UEType, r: UERule = uerNone): seq[NimNode] =
+    if r == uerCodeGenOnlyFields: 
+        @[]
+    else:
+        @[
+            # type Type* {.importcpp.} = object of Parent
+            nnkTypeDef.newTree(
+                nnkPragmaExpr.newTree(
+                    nnkPostFix.newTree(ident "*", ident t.name),
+                    nnkPragma.newTree(ident "importcpp")
+                ),
+                newEmptyNode(),
+                nnkObjectTy.newTree(
+                    newEmptyNode(), 
+                    nnkOfInherit.newTree(ident t.parent),
+                    newEmptyNode()
+                )
+            ),
+            # ptr type TypePtr* = ptr Type
+            nnkTypeDef.newTree(
+                nnkPostFix.newTree(ident "*", ident t.name & "Ptr"),
+                newEmptyNode(),
+                nnkPtrTy.newTree(ident t.name)
+            )
+        ]
 
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =
     let props = nnkStmtList.newTree(
@@ -288,10 +308,13 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
                         name* {.inject, exportcpp.} = object of parent #TODO OF BASE CLASS 
                         ptrName* {.inject.} = ptr name
             of uexExport:
+                newEmptyNode()
+                #[
                 genAst(name = ident typeDef.name, ptrName, parent):
                     type 
                         name* {.importcpp.} = object of parent #TODO OF BASE CLASS 
                         ptrName* = ptr name
+                        ]#
             of uexImport:
                 newEmptyNode()
 
@@ -310,6 +333,68 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
 
     #if result.repr.contains("UMyClassToTest"):
     #    debugEcho result.repr
+
+func getFieldIdent(prop:UEField) : NimNode = 
+    let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1))
+    identPublic fieldName
+
+func genUStructTypeDefBinding(t: UEType, r: UERule = uerNone): NimNode =
+    var recList = nnkRecList.newTree()
+    var size, offset, padId: int
+    for prop in t.fields:
+        var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(), newEmptyNode())
+
+        let offsetDelta = prop.offset - offset
+        if offsetDelta > 0:
+            recList.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(offsetDelta), ident "byte"), newEmptyNode())
+            inc padId
+            offset += offsetDelta
+            size += offsetDelta
+
+        recList.add id
+        size = offset + prop.size
+        offset += prop.size
+
+    if size < t.size:
+        recList.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(t.size - size), ident "byte"), newEmptyNode())
+
+    nnkTypeDef.newTree(
+        nnkPragmaExpr.newTree([
+            nnkPostfix.newTree([ident "*", ident t.name]),
+            nnkPragma.newTree(
+                ident "inject",
+                nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
+            )
+        ]),
+        newEmptyNode(),
+        nnkObjectTy.newTree(
+            newEmptyNode(), newEmptyNode(), recList
+        )
+    )
+
+func genUStructImportCTypeDefBinding(t: UEType): NimNode =
+    var recList = t.fields
+        .map(prop => nnkIdentDefs.newTree(
+                getFieldIdent(prop), 
+                prop.getTypeNodeFromUProp(), 
+                newEmptyNode()
+            )
+        )
+        .foldl(a.add b, nnkRecList.newTree)
+    nnkTypeDef.newTree(
+        nnkPragmaExpr.newTree([
+            nnkPostfix.newTree([ident "*", ident t.name]),
+            nnkPragma.newTree(
+                ident "inject",
+                nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
+                nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
+            )
+        ]),
+        newEmptyNode(),
+        nnkObjectTy.newTree(
+            newEmptyNode(), newEmptyNode(), recList
+        )
+    )
 
 func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:UEExposure) : NimNode = 
     let suffix = "_"
@@ -334,19 +419,6 @@ func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:U
                 )
             ])
 
-    func getFieldIdent(prop:UEField) : NimNode = 
-        let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1))
-        # case typeExposure:
-        # of uexImport, uexExport: 
-        #     nnkPragmaExpr.newTree(nnkPostfix.newTree(ident "*", ident fieldName),
-        #         nnkPragma.newTree(
-        #                 nnkExprColonExpr.newTree(
-        #                     ident "importcpp", 
-        #                     newStrLitNode(prop.name)))
-        #     )
-        # of uexDsl: 
-        #     identPublic fieldName
-        identPublic fieldName
 
 #[
     #TODO Needs to handle TArray/Etc. like it does above with classes
@@ -397,9 +469,24 @@ func genUStructTypeDef(typeDef: UEType,  rule : UERule = uerNone, typeExposure:U
         #TODO dont create them for UStructs
         let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
             proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
-        result = nnkStmtList.newTree(result, exportFn)
+        result = nnkStmtList.newTree(exportFn)
     # debugEcho result.repr
     # debugEcho result.treeRepr
+
+
+func genUEnumTypeDefBinding(t: UEType): NimNode =
+    let enumTy = t.fields
+                        .map(f => ident f.name)
+                        .foldl(a.add b, nnkEnumTy.newTree)
+    enumTy.insert(0, newEmptyNode()) #required empty node in enums
+    nnkTypeDef.newTree(
+        nnkPragmaExpr.newTree(
+            nnkPostFix.newTree(ident "*", ident t.name),
+            nnkPragma.newTree(nnkExprColonExpr.newTree(ident "size", nnkCall.newTree(ident "sizeof", ident "uint8")), ident "pure")
+        ),
+        newEmptyNode(),
+        enumTy
+    )
 
 func genUEnumTypeDef(typeDef:UEType) : NimNode = 
     let typeName = ident(typeDef.name)
@@ -422,13 +509,7 @@ func genUEnumTypeDef(typeDef:UEType) : NimNode =
 #
 
 func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode = 
-    
-    let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
-    let isStatic = FUNC_Static in funField.fnFlags
-    let clsName = typeDef.name.substr(1)
-
     let formalParams = genFormalParamsInFunctionSignature(typeDef, funField, "obj")
-    
     var pragmas = nnkPragma.newTree(
                     nnkExprColonExpr.newTree(
                         ident("importcpp"),
@@ -439,13 +520,11 @@ func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode =
                         newStrLitNode("UEGenBindings.h")
                     )
                 )
-                    
     result = nnkProcDef.newTree([
                             identPublic funField.name.firstToLow(), 
                             newEmptyNode(), newEmptyNode(), 
                             formalParams, 
                             pragmas, newEmptyNode(), newEmptyNode()
-                          
                         ])
 
 proc genDelType(delType:UEType, exposure:UEExposure) : NimNode = 
@@ -503,7 +582,6 @@ func genImportCProp(typeDef : UEType, prop : UEField) : NimNode =
             proc `propIdent=`*(obj {.inject.} : ptrName, val {.inject.} : typeNode) : void {. importcpp: setPropertyName, header:"UEGenBindings.h" .}
           
     
-    
 func genUClassImportCTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
     let parent = ident typeDef.parent
@@ -517,17 +595,17 @@ func genUClassImportCTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNod
                        .filter(prop=>prop.kind==uefFunction)
                        .map(fun=>genImportCFunc(typeDef, fun)))
     
+    #[
     let typeDecl = if rule == uerCodeGenOnlyFields: newEmptyNode()
                    else: genAst(name = ident typeDef.name, ptrName, parent, props, funcs):
                     type  #notice the header is temp.
                         name* {.inject, importcpp.} = object of parent #TODO OF BASE CLASS 
                         ptrName* {.inject.} = ptr name
-    
+    ]# 
     result = 
-        genAst(typeDecl, parent, props, funcs):
-                typeDecl
-                props
-                funcs
+        genAst(props, funcs):
+            props
+            funcs
 
 
 
@@ -565,10 +643,26 @@ proc genModuleDecl*(moduleDef:UEModule) : NimNode =
         .foldl(a & "\n" & b, """/*TYPESECTION*/""") & "\n"
     result.add nnkPragma.newTree(nnkExprColonExpr.newTree(ident "emit", fwdDeclsNode))
 
+    var typeSection = nnkTypeSection.newTree()
     for typeDef in moduleDef.types:
         let rules = moduleDef.getAllMatchingRulesForType(typeDef)
-        result.add genTypeDecl(typeDef, rules, uexExport)
-        
+        case typeDef.kind:
+        of uetClass:
+            typeSection.add genUClassTypeDefBinding(typedef, rules)
+        of uetStruct:
+            typeSection.add genUStructTypeDefBinding(typedef, rules)
+        of uetEnum:
+            typeSection.add genUEnumTypeDefBinding(typedef)
+        else: continue
+    result.add typeSection
+
+    for typeDef in moduleDef.types:
+        let rules = moduleDef.getAllMatchingRulesForType(typeDef)
+        case typeDef.kind:
+        of uetClass, uetStruct:
+            result.add genTypeDecl(typeDef, rules, uexExport)
+        else: continue
+
 proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
     result = nnkStmtList.newTree()
     var fwdDeclsNode = nnkTripleStrLit.newNimNode()
@@ -577,9 +671,28 @@ proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
         .mapIt(&"class {it.name};")
         .foldl(a & "\n" & b, """/*TYPESECTION*/""") & "\n"
     result.add nnkPragma.newTree(nnkExprColonExpr.newTree(ident "emit", fwdDeclsNode))
+
+    var typeSection = nnkTypeSection.newTree()
     for typeDef in moduleDef.types:
         let rules = moduleDef.getAllMatchingRulesForType(typeDef)
-        result.add genImportCTypeDecl(typeDef, rules)
+        case typeDef.kind:
+            of uetClass: 
+                typeSection.add genUClassTypeDefBinding(typeDef, rules)
+            of uetStruct:
+                typeSection.add genUStructImportCTypeDefBinding(typedef)
+            of uetEnum:
+                typeSection.add genUEnumTypeDefBinding(typedef)
+            else:
+                continue
+    result.add typeSection
+
+    for typeDef in moduleDef.types:
+        let rules = moduleDef.getAllMatchingRulesForType(typeDef)
+        case typeDef.kind:
+        of uetClass:
+            result.add genImportCTypeDecl(typeDef, rules)
+        else:
+            continue
 
 
 
@@ -588,7 +701,7 @@ proc genModuleRepr*(moduleDef: UEModule, isImporting: bool): string =
     let preludePath = "include " & (if isImporting: "" else: "../") & "../prelude\n"
 
     preludePath & 
-        "{.experimental:\"codereordering\".}\n" &
+        #"{.experimental:\"codereordering\".}\n" &
         moduleDef.dependencies.mapIt("import " & it.toLower()).join("\n") &
         repr(moduleNode)
             .multiReplace(
@@ -625,5 +738,28 @@ macro genUFun*(className : static string, funField : static UEField) : untyped =
     genFunc(ueType, funField)
         
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
-    
 
+
+
+# generates the export and import bindings for nim that needs to be compiled
+macro genBindings*(moduleDef: static UEModule, exportPath: static string, importPath: static string, headersPath: static string) =
+    proc genCode(filePath: string, preludePath: string, moduleDef: UEModule, moduleNode: NimNode) =
+        let code = 
+            preludePath & 
+            #"{.experimental:\"codereordering\".}\n" &
+            moduleDef.dependencies.mapIt("import " & it.toLower()).join("\n") &
+            repr(moduleNode)
+                .multiReplace(
+            ("{.inject.}", ""),
+            ("{.inject, ", "{."),
+            ("<", "["),
+            (">", "]"), #Changes Gen. Some types has two levels of inherantce in cpp, that we dont really need to support
+            ("::Type", ""), #Enum namespaces EEnumName::Type
+            ("::Mode", ""), #Enum namespaces EEnumName::Type
+            ("::", "."), #Enum namespace
+
+            ("__DelegateSignature", ""))
+        writeFile(filePath, code)
+
+    genCode(exportPath, "include ../../prelude\n", moduleDef, genModuleDecl(moduleDef))
+    genCode(importPath, "include ../prelude\n", moduleDef, genImportCModuleDecl(moduleDef))

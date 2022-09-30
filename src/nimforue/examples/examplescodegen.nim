@@ -11,7 +11,7 @@ let moduleRules = @[
             "AActor", "UReflectionHelpers", "UObject",
             "UField", "UStruct", "UScriptStruct", "UPackage",
             "UClass", "UFunction", "UDelegateFunction",
-            "UEnum", "UActorComponent", "APawn",
+            "UEnum", "UActorComponent", 
             "UPrimitiveComponent", "UPhysicalMaterial", "AController",
             "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
             "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
@@ -33,8 +33,7 @@ let moduleRules = @[
             "UCanvas",
             "UDataLayer",
             
-            
-
+            #"APawn",
             # "FConstraintBrokenSignature",
             # "FPlasticDeformationEventSignature",
             # "FTimerDynamicDelegate",
@@ -43,7 +42,7 @@ let moduleRules = @[
           
           ]), 
           makeImportedRuleType(uerIgnore, @[
-          "FVector", "FSlateBrush"
+          "FVector"
           
           ]), 
           
@@ -66,6 +65,9 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
   createDir(bindingsDir)
   createDir(bindingsDir / "exported")
 
+  let genModulesHeadersDir = config.pluginDir / "NimHeaders" / "GenModuleHeaders" # need this to store forward decls of classes
+  createDir(genModulesHeadersDir)
+
   var module = tryGetPackageByName(moduleName)
                       .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
                       .get()
@@ -76,13 +78,13 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
 
   try:
     let codegenTemplate = codegenNimTemplate % [
-        $module, escape(exportBindingsPath), escape(importBindingsPath)]
+        $module, escape(exportBindingsPath), escape(importBindingsPath), escape(genModulesHeadersDir)]
     #UE_Warn &"{codegenTemplate}"
     writeFile(codegenPath, codegenTemplate)
     let nueCmd = config.pluginDir/"nue.exe codegen --module:\"" & codegenPath & "\""
     let result = execProcess(nueCmd, workingDir = config.pluginDir)
     # removeFile(codegenPath)
-    # UE_Log &"The result is {result} "
+    UE_Log &"The result is {result} "
     UE_Log &"-= Bindings for {moduleName} generated in {exportBindingsPath} =- "
 
     doAssert(fileExists(exportBindingsPath))
@@ -96,7 +98,7 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
 
 
 #TODO dont regenerate already generated deps for this pass
-proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule]) =
+proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule], skipRoot = false) =
   var module = tryGetPackageByName(moduleName)
                 .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
                 .get()
@@ -104,15 +106,15 @@ proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule]) =
     UE_Warn &"-= Generating dependencies for {moduleName} dependencies: {module.dependencies}=-"
     for dep in module.dependencies:
       genBindingsWithDeps(dep, moduleRules)
-  
-  genBindings(moduleName, moduleRules)
-
+  if not skipRoot:
+    genBindings(moduleName, moduleRules)
 
 
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
   ufuncs(CallInEditor):
+    #[
     proc printFBodyInstance() =
       let str = getUTypeByName[UScriptStruct]("BodyInstance")
       let ueType = str.toUEType(@[makeImportedRuleModule(uerImportBlueprintOnly)])
@@ -129,26 +131,11 @@ uClass AActorCodegen of AActor:
                       .flatmap((pkg:UPackagePtr) => pkg.toUEModule(@[], excludeDeps= @["CoreUObject"]))
                       .get()
       UE_Warn module.getModuleHeader().join(" \n")
+    ]#
 
-    proc generateUETypes() = 
-      # let a = ETest.testB
-      
-
-      # genBindings("CoreUObject", moduleRules)
-
+    proc genEngineBindings() = 
       let moduleNames = @["Engine"]
-
-      # for moduleName in moduleNames:
-      #   var engineModule = tryGetPackageByName(moduleName)
-      #                 .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
-      #                 .get()
-        
-      #   for moduleName in engineModule.dependencies:
-      #     genBindings(moduleName, moduleRules)
-     
-
-      # genBindings("Chaos", moduleRules)
-      genBindingsWithDeps("Engine", moduleRules)
+      genBindingsWithDeps("Engine", moduleRules, skipRoot = true)
       genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
 
       #Engine can be splited in two modules one is BP based and the other dont
@@ -157,6 +144,11 @@ uClass AActorCodegen of AActor:
       # Hand pick classes
       # Static functions that collides can be virtual modules too. (We need to find the colliding functions)
   
-    proc generateSlate() = 
+    proc genSlateBindings() = 
       genBindingsWithDeps("Slate", moduleRules)
 
+    proc genNimForUEBindings() = 
+      genBindings("NimForUEBindings", moduleRules)
+
+    proc genCoreUObjectBindings() = 
+      genBindings("CoreUObject", moduleRules)
