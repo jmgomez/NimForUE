@@ -7,6 +7,7 @@
 #include "Containers/UnrealString.h"
 #include "Containers/Array.h"
 #include "Engine/EngineTypes.h"
+#include "Engine/DeveloperSettings.h"
 #include "Misc/AutomationTest.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/UserDefinedEnum.h"

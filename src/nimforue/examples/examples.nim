@@ -8,4 +8,5 @@ import objectexample
 import examplescodegen
 #import examplecoreuobject
 import engineexample
+# import slateexamples
 #import structexampleissue

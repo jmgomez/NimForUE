@@ -53,9 +53,11 @@ class UFunctionCaller {
 public:
 
 	static void CallUFunctionOn(UObject* Executor, FString& FunctionName, void* InParams) {
+		if (UClass* Class = Executor->GetClass())
+			return CallUFunctionOnClass(Class, FunctionName, InParams);
 		UFunctionCaller(Executor->GetClass(), FunctionName, InParams).Invoke(Executor);
 	}
-	static void CallUFunctionOn(UClass* Class, FString& FunctionName, void* InParams) {
+	static void CallUFunctionOnClass(UClass* Class, FString& FunctionName, void* InParams) {
 		UFunctionCaller(Class, FunctionName, InParams).Invoke(Class->GetDefaultObject());
 	}
 	

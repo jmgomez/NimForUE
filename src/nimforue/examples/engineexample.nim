@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import ../unreal/bindings/[slate,slatecore]
+import ../unreal/bindings/[slate,slatecore, engine]
 # import ../unreal/bindings/exported/[slate, slatecore]
 # import ../unreal/bindings/exported/nimforue
 import ../typegen/[uemeta]
@@ -39,10 +39,26 @@ uClass AObjectEngineExample of AActor:
     stringProp : FString
     intProp : int32
     another : FTextBlockStyle
+    nimStaticMesh : UStaticMeshComponentPtr = initializer.createDefaultSubobject[:UStaticMeshComponent](n"NimTestComponent")
     c: FSlateColor
     lc: FLinearColor
 
+  ufuncs(BlueprintCallable):
+    proc userConstructionScript() =
+      UE_Log "This works"
+
+    # proc tick() = 
+    #   if self.isNil() or self.nimStaticMesh.isNil():
+    #     return
+    #   self.nimStaticMesh.relativeLocation = (self.nimStaticMesh.relativeLocation + makeFVector(0, 0, 1))
+
+
   ufuncs(CallInEditor):
+    proc resetRelativeLocation() = 
+      self.nimStaticMesh.relativeLocation =  makeFVector(0, 0, 100)
+    proc moveStaticMesh() = 
+      self.nimStaticMesh.relativeLocation =  makeFVector(0, 0, 100) +  self.nimStaticMesh.relativeLocation
+
     proc testTextBlockStyle() = 
       var testStr = self.another
       testStr.shadowOffset = FVector2D(x:100, y:12)

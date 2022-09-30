@@ -298,6 +298,7 @@ func genUClassImportTypeDefBinding(t: UEType, r: UERule = uerNone): seq[NimNode]
                     nnkPostFix.newTree(ident "*", ident t.name),
                     nnkPragma.newTree(
                         nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
+                        ident "inheritable",
                         nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
                     )
                 ),
@@ -775,7 +776,7 @@ macro genBindings*(moduleDef: static UEModule, exportPath: static string, import
             ("<", "["),
             (">", "]"), #Changes Gen. Some types has two levels of inherantce in cpp, that we dont really need to support
             ("::Type", ""), #Enum namespaces EEnumName::Type
-            ("::Mode", ""), #Enum namespaces EEnumName::Type
+            ("::Mode", ""), #Enum namespaces EEnumName::TypeB
             ("::", "."), #Enum namespace
 
             ("__DelegateSignature", ""))
@@ -785,10 +786,12 @@ macro genBindings*(moduleDef: static UEModule, exportPath: static string, import
     genCode(importPath, "include ../prelude\n", moduleDef, genImportCModuleDecl(moduleDef))
 
     # write headers here
+    #this should be returned as param
+    let validCppParents = ["UObject", "AActor", "UInterface", "UDeveloperSettings"]
     var header: string
     for typeDef in moduleDef.types:
         if typeDef.kind == uetClass:
-            let parent = typeDef.parent & (if typeDef.parent in ["UObject", "AActor", "UInterface"]: "" else: "_")
+            let parent = typeDef.parent & (if typeDef.parent in validCppParents: "" else: "_")
             header &= &"class {typeDef.name}_ : public {parent}{{}};\n"
     var classDefsPath = headersPath / "UEGenClassDefs.h"
     var headerContent = if fileExists(classDefsPath): readFile(classDefsPath) else: """
