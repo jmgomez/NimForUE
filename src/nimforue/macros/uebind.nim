@@ -1,4 +1,4 @@
-import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
+import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils, os]
 
 when defined codegen:
     type FString = string
@@ -267,7 +267,10 @@ func genUClassTypeDefBinding(t: UEType, r: UERule = uerNone): seq[NimNode] =
             nnkTypeDef.newTree(
                 nnkPragmaExpr.newTree(
                     nnkPostFix.newTree(ident "*", ident t.name),
-                    nnkPragma.newTree(ident "exportcpp")
+                    nnkPragma.newTree(
+                        nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
+                        nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
+                    )
                 ),
                 newEmptyNode(),
                 nnkObjectTy.newTree(
@@ -294,8 +297,8 @@ func genUClassImportTypeDefBinding(t: UEType, r: UERule = uerNone): seq[NimNode]
                 nnkPragmaExpr.newTree(
                     nnkPostFix.newTree(ident "*", ident t.name),
                     nnkPragma.newTree(
-                        ident "importcpp",
-                        nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
+                        nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
+                        nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
                     )
                 ),
                 newEmptyNode(),
@@ -353,12 +356,12 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
                 props
                 funcs
 
-        # genAst(name = ident typeDef.name, ptrName, parent, props, funcs):
-        #         type 
-        #             name* {.inject.} = object of parent #TODO OF BASE CLASS 
-        #             ptrName* {.inject.} = ptr name
-        #         props
-        #         funcss
+    if typeExposure == uexExport: 
+        #Generates a type so it's added to the header when using --header
+        #TODO dont create them for UStructs
+        let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
+            proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
+        result = nnkStmtList.newTree(result, exportFn)
 
     #if result.repr.contains("UMyClassToTest"):
     #    debugEcho result.repr
@@ -780,3 +783,16 @@ macro genBindings*(moduleDef: static UEModule, exportPath: static string, import
 
     genCode(exportPath, "include ../../prelude\n", moduleDef, genModuleDecl(moduleDef))
     genCode(importPath, "include ../prelude\n", moduleDef, genImportCModuleDecl(moduleDef))
+
+    # write headers here
+    var header: string
+    for typeDef in moduleDef.types:
+        if typeDef.kind == uetClass:
+            let parent = typeDef.parent & (if typeDef.parent in ["UObject", "AActor", "UInterface"]: "" else: "_")
+            header &= &"class {typeDef.name}_ : public {parent}{{}};\n"
+    var classDefsPath = headersPath / "UEGenClassDefs.h"
+    var headerContent = if fileExists(classDefsPath): readFile(classDefsPath) else: """
+#pragma once
+#include "UEDeps.h"
+"""
+    writeFile(classDefsPath, headerContent & header)

@@ -65,8 +65,7 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
   createDir(bindingsDir)
   createDir(bindingsDir / "exported")
 
-  let genModulesHeadersDir = config.pluginDir / "NimHeaders" / "GenModuleHeaders" # need this to store forward decls of classes
-  createDir(genModulesHeadersDir)
+  let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
 
   var module = tryGetPackageByName(moduleName)
                       .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
@@ -78,7 +77,8 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
 
   try:
     let codegenTemplate = codegenNimTemplate % [
-        $module, escape(exportBindingsPath), escape(importBindingsPath), escape(genModulesHeadersDir)]
+      $module, escape(exportBindingsPath), escape(importBindingsPath), escape(nimHeadersDir)
+    ]
     #UE_Warn &"{codegenTemplate}"
     writeFile(codegenPath, codegenTemplate)
     let nueCmd = config.pluginDir/"nue.exe codegen --module:\"" & codegenPath & "\""
@@ -145,6 +145,9 @@ uClass AActorCodegen of AActor:
       # Static functions that collides can be virtual modules too. (We need to find the colliding functions)
   
     proc genSlateBindings() = 
+      let config = getNimForUEConfig()
+      let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
+      discard tryRemoveFile(nimHeadersDir / "UEGenClassDefs.h")
       genBindingsWithDeps("Slate", moduleRules)
 
     proc genNimForUEBindings() = 

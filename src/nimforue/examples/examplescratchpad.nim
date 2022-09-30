@@ -8,7 +8,6 @@ import ../../codegen/codegentemplate
 
 # import ../unreal/bindings/[nimforuebindings, testimport]
 # import ../unreal/bindings/[nimforuebindings]
-import ../unreal/bindings/[nimforuebindings]
 
 # {.experimental: "codeReordering".}
 
@@ -72,6 +71,13 @@ import ../unreal/bindings/[nimforuebindings]
 #withEditor
 #Platforms
 #-------
+type
+  FTestAlignNotExposed* = object
+    intProp*: int32
+    pad_0: array[12, byte]
+    intProp2*: int32
+    pad_1: array[4, byte]
+
 uClass AActorScratchpad of AActor:
 # uClass AActorScratchpad of APlayerController:
   (BlueprintType)
@@ -80,7 +86,7 @@ uClass AActorScratchpad of AActor:
     intProp : int32#
     objTest : TObjectPtr[AActor]
     objTest2 : TObjectPtr[AActor]
-    testStr : FStructToUseAsVar
+    at: FTestAlignNotExposed
     # objTestInArray : TArray[TObjectPtr[AActor] g.packed[module].module
     # beatiful: EComponentMobility
 
@@ -89,24 +95,5 @@ uClass AActorScratchpad of AActor:
     # intProp2 : int32
   
   ufuncs(CallInEditor):
-    proc testHelloWorld() =
-      let obj = newUObject[UMyClassToTest]()
-      UE_Warn "testHelloWorld: " & obj.getHelloWorld()
-
-
-    proc testUProp() =
-      var obj = newUObject[UMyClassToTest]()
-      obj.nameProperty = "NameProperty".n()
-      obj.enumProperty=EMyTestEnum.TestValue2
-      UE_Log obj.nameProperty.toFString()
-      UE_Log $obj.enumProperty
-
-
-    proc testFStruct() = 
-      let str = FStructToUseAsVar(testProperty:"Test To Use it as Prop") 
-      self.testStr = str
-      
-      UE_Log $self.testStr
-
-    proc testStaticFunction() =
-      UE_Warn getHelloWorldStatic() 
+    proc testAlign() =
+      self.at = FTestAlignNotExposed(intProp2: 3234)
