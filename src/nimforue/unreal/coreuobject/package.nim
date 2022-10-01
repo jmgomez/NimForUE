@@ -10,7 +10,6 @@ type
     UPackage* {. importcpp, header: ueIncludes  } = object of UObject
     UPackagePtr* = ptr UPackage
 
-
 func anyPackage*() : UPackagePtr {.importcpp:"(ANY_PACKAGE)".}
 func getTransientPackage*() : UPackagePtr {.importcpp:"GetTransientPackage()".}
 

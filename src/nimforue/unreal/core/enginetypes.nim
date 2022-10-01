@@ -76,6 +76,19 @@ type
   UStreamableRenderAsset* {.importcpp, inheritable, pure .} = object of UObject
   UStreamableRenderAssetPtr* = ptr UStreamableRenderAsset
 
+  UHandlerComponentFactory* {.importcpp .} = object of UObject
+  UHandlerComponentFactoryPtr* = ptr UHandlerComponentFactory
+  #Is not the type above part of CoreUObject? 
+  UPackageMap* {.importcpp .} = object of UObject
+  UPackageMapPtr* = ptr UPackageMap
+  #Probably these are forward decls?
+  UMeshDescriptionBaseBulkData* {.importcpp .} = object of UObject
+  UMeshDescriptionBaseBulkDataPtr* = ptr UMeshDescriptionBaseBulkData
+  ULandscapeGrassType* {.importcpp .} = object of UObject
+  ULandscapeGrassTypePtr* = ptr ULandscapeGrassType
+
+
+  TFieldPath* {.importcpp .} = object
 #[
   UActorComponent", "APawn",
             "UPrimitiveComponent", "UPhysicalMaterial", "AController",

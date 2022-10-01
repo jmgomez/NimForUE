@@ -335,7 +335,7 @@ task codegen, "Runs the process that will automatically generate the API based o
   doAssert(taskOptions.hasKey("module"), "Missing module argument! Usage: nue codegen --module:codegenFilePath")
   let codegenFilePath = taskOptions["module"]
   
-  doAssert(execCmd(&"nim cpp --compileonly --nomain --maxLoopIterationsVM:20000000 --nimcache:.nimcache/codegen {codegenFilePath}") == 0)
+  doAssert(execCmd(&"nim cpp --compileonly --nomain --maxLoopIterationsVM:40000000 --nimcache:.nimcache/codegen {codegenFilePath}") == 0)
   log(&"!!>> Task: codegen complete! <<<<")
 
 

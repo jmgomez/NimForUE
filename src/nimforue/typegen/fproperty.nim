@@ -101,6 +101,14 @@ func newEnumBasedProperty(outer : UStructPtr, propType:string, name:FName) : Opt
                 enumProp
             )
 
+func isBasicProperty*(nimTypeName: string) : bool        
+    nimTypeName in [
+        "FString", "bool", "int8", "int16", "int32", "int64", "int", 
+        "byte", "uint16", "uint32", "uint64", "float32", "float", "float64", 
+        "FName"
+    ]
+
+       
 
 func newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr = 
     let 

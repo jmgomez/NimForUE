@@ -173,6 +173,8 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = 
     if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules):
         some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
     else:
+        # UE_Log &"Ignoring {prop.getName()} because it is not exposed to blueprint"
+        # UE_Log nimType
         none(UEField)
 
     
@@ -196,7 +198,7 @@ func toUEField*(ufun:UFunctionPtr, rules: seq[UEImportRule] = @[]) : Option[UEFi
     var fnField = makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
     fnField.actualFunctionName = actualName
     let isStatic = (FUNC_Static in ufun.functionFlags) #Skips static functions for now so we can quickly iterate over compiling the engine types
-    if ((allParamsExposedToBp and ufun.isBpExposed()) or uerImportBlueprintOnly notin rules) and not isStatic:
+    if ((ufun.isBpExposed()) or uerImportBlueprintOnly notin rules):
         some fnField
     else:
         none(UEField)

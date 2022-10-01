@@ -140,6 +140,7 @@ uClass AActorCodegen of AActor:
     proc genEngineBindings() = 
       # genBindingsWithDeps("Engine", moduleRules, skipRoot = true)
       genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
+      # genBindings("Engine", moduleRules )
 
       #Engine can be splited in two modules one is BP based and the other dont
       #All kismets would be in its own module -20k lines of code?
