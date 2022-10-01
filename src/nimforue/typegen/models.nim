@@ -4,7 +4,7 @@ else:
     include ../unreal/definitions
 
 import ../utils/utils
-import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
+import std/[times,strformat,json, strutils, options, sugar, sequtils, bitops, tables]
 
 # import ../unreal/coreuobject/uobjectflags
 
@@ -105,7 +105,7 @@ type
         rules* : seq[UEImportRule]
         dependencies* : seq[string]   
 
-
+# func `or`(a, b : UERule) : UERule = bitor(a.uint32, b.uint32).UERule
 
 func makeImportedRuleType*(rule:UERule, affectedTypes:seq[string], ):UEImportRule =
     result.affectedTypes = affectedTypes
@@ -133,7 +133,7 @@ func getAllMatchingRulesForType*(module:UEModule, ueType:UEType) : UERule =
                         rule.affectedTypes.any(name=>name==ueType.name) or 
                         rule.target == uertModule)
                 .map((rule:UEImportRule) => rule.rule)
-    if rules.any(): rules[0]  #TODO fold the values instead of returning the first
+    if rules.any(): rules[0]#.foldl(a or b)
     else: uerNone
 
 

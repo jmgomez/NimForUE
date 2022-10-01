@@ -138,11 +138,8 @@ uClass AActorCodegen of AActor:
     ]#
 
     proc genEngineBindings() = 
-      let config = getNimForUEConfig()
-      let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
-      discard tryRemoveFile(nimHeadersDir / "UEGenClassDefs.h")
-      genBindingsWithDeps("Engine", moduleRules)
-      # genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
+      # genBindingsWithDeps("Engine", moduleRules, skipRoot = true)
+      genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
 
       #Engine can be splited in two modules one is BP based and the other dont
       #All kismets would be in its own module -20k lines of code?
@@ -151,9 +148,6 @@ uClass AActorCodegen of AActor:
       # Static functions that collides can be virtual modules too. (We need to find the colliding functions)
   
     proc genSlateBindings() = 
-      let config = getNimForUEConfig()
-      let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
-      discard tryRemoveFile(nimHeadersDir / "UEGenClassDefs.h")
       genBindingsWithDeps("Slate", moduleRules)
 
     proc genNimForUEBindings() = 

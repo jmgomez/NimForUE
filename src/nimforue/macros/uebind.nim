@@ -80,7 +80,15 @@ func identWithInject*(name:string) : NimNode =
 func identWrapper*(name:string) : NimNode = ident(name) #cant use ident as argument
 func identPublic*(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
 
+func nimToCppConflictsFreeName(propName:string) : string = 
+    let reservedCppKeywords = ["template", "operator"]
+    if propName in reservedCppKeywords: propName.firstToUpper() else: propName
 
+func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
+        let reservedKeywords = ["object", "method", "type", "interface", "var"] 
+        if propName in reservedKeywords: 
+            &"`{propName}`" 
+        else: propName
 
 func genProp(typeDef : UEType, prop : UEField) : NimNode = 
     let ptrName = ident typeDef.name & "Ptr"
@@ -95,7 +103,7 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
                             else: newEmptyNode()#No Support as UProp getter/Seter
     
     
-    let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)) 
+    let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)).nimToCppConflictsFreeName()
 
     # debugEcho treeRepr typeNodeAsReturnValue
     #Notice we generate two set properties one for nim and the other for code gen due to cpp
@@ -117,11 +125,6 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
                 setPropertyValuePtr[typeNode](prop, obj, value.addr)
     
 
-func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
-        let reservedKeywords = ["object", "method", "type", "interface", "var"] 
-        if propName in reservedKeywords: 
-            &"`{propName}`" 
-        else: propName
 #helper func used in geneFunc and genParamsInsideFunc
 #returns for each param a type definition node
 #the functions that it receives as param is used with ident/identWithInject/ etc. to make fields public or injected
@@ -606,7 +609,7 @@ func genImportCProp(typeDef : UEType, prop : UEField) : NimNode =
                             else: newEmptyNode()#No Support as UProp getter/Seter
     
     
-    let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)) 
+    let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)).nimToCppConflictsFreeName()
 
     let setPropertyName = newStrLitNode(&"set{prop.name.firstToLow()}(@)")
     result = 
@@ -745,12 +748,14 @@ macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
 proc genHeaders*(moduleDef: UEModule,  headersPath: string) = 
     #There is one main header that pulls the rest.
     #Every other header is in the module paths
-    let validCppParents = ["UObject", "AActor", "UInterface", "UDeveloperSettings"]#TODO this should be introduced as param
+    let validCppParents = ["UObject", "AActor", "UInterface", "UActorComponent", "UDeveloperSettings"]#TODO this should be introduced as param
 
-    let getParentName = (parentName:string) => parentName & (if parentName in validCppParents: "" else: "_")
+    let getParentName = (uet:UEType) => uet.parent & 
+        (if uet.parent in validCppParents or uerCodeGenOnlyFields == getAllMatchingRulesForType(moduleDef, uet): "" else: "_")
+
     let classDefs = moduleDef.types
-                        .filterIt(it.kind == uetClass)
-                        .mapIt(&"class {it.name}_ : public {getParentName(it.parent)}{{}};\n")
+                        .filterIt(it.kind == uetClass and uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it))
+                        .mapIt(&"class {it.name}_ : public {getParentName(it)}{{}};\n")
                         .join()
    
     let headerName = (name:string) => &"{name.firstToUpper()}.h"
