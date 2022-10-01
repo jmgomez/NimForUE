@@ -57,6 +57,7 @@ let moduleRules = @[
           
           
           
+
            ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
 
       ] 
@@ -80,7 +81,7 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
 
   try:
     let codegenTemplate = codegenNimTemplate % [
-      $module, escape(exportBindingsPath), escape(importBindingsPath), escape(nimHeadersDir)
+      escape($module.toJson()), escape(exportBindingsPath), escape(importBindingsPath), escape(nimHeadersDir)
     ]
     #UE_Warn &"{codegenTemplate}"
     writeFile(codegenPath, codegenTemplate)
