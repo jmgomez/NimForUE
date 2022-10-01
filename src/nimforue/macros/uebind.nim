@@ -753,7 +753,6 @@ proc genHeaders*(moduleDef: UEModule,  headersPath: string) =
                         .mapIt(&"class {it.name}_ : public {getParentName(it.parent)}{{}};\n")
                         .join()
    
-    let mainHeaderPath = headersPath / "UEGenClassDefs.h"
     let headerName = (name:string) => &"{name.firstToUpper()}.h"
     let includeHeader = (name:string) => &"#include \"{headerName(name)}\" \n"
     let headerPath = headersPath / "Modules" / headerName(moduleDef.name)
@@ -768,14 +767,25 @@ proc genHeaders*(moduleDef: UEModule,  headersPath: string) =
 {classDefs}
 """
     writeFile(headerPath, headerContent)
+    #Main header
+    let headersAsDeps = 
+        walkDir( headersPath / "Modules")
+        .toSeq()
+        .filterIt(it[0] == pcFile and it[1].endsWith(".h"))
+        .mapIt(it[1].split("\\")[^1].replace(".h", ""))
+        .mapIt("Modules/" & it)
+        .map(includeHeader)
+        .join()
 
+    let mainHeaderPath = headersPath / "UEGenClassDefs.h"
     let headerAsDep = includeHeader(moduleDef.name)
-    let mainHeaderContent = if fileExists(mainHeaderPath): readFile(mainHeaderPath) else: """
+    let mainHeaderContent = &"""
 #pragma once
 #include "UEDeps.h"
+{headersAsDeps}
 """
-    if headerAsDep notin mainHeaderContent:
-        writeFile(mainHeaderPath, mainHeaderContent & headerAsDep)
+    # if headerAsDep notin mainHeaderContent:
+    writeFile(mainHeaderPath, mainHeaderContent)
     
 macro genBindings*(moduleDef: static UEModule, exportPath: static string, importPath: static string, headersPath: static string) =
     proc genCode(filePath: string, preludePath: string, moduleDef: UEModule, moduleNode: NimNode) =

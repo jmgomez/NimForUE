@@ -4,9 +4,11 @@ import std/[json, jsonutils]
 import ../nimforue/typegen/models
 import ../nimforue/macros/uebind
 
-const module* = $1
+const moduleAsJson* = $1
 const exportBindingsPath = $2
 const importBindingsPath = $3
 const genModuleHeadersDir = $4
-genBindings(parseJson(module).jsonTo(UEModule), exportBindingsPath, importBindingsPath, genModuleHeadersDir)
+
+const module = parseJson(moduleAsJson).jsonTo(UEModule)
+genBindings(module, exportBindingsPath, importBindingsPath, genModuleHeadersDir)
 """
