@@ -1,4 +1,4 @@
-import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils, os]
+import std/[options, osproc, strutils,sugar, sequtils,strformat,  genasts, macros, importutils, os]
 
 when defined codegen:
     type FString = string
@@ -733,24 +733,6 @@ proc genModuleRepr*(moduleDef: UEModule, isImporting: bool): string =
         ("::Type", ""), #Enum namespaces EEnumName::Type
         ("::Mode", ""), #Enum namespaces EEnumName::Type
         ("::", "."), #Enum namespace
-
-        #TEMP HACKS
-        #Some needs a rule that checks for the first parent exposed to bp and replace it instead.
-        #Some I think are inside TObjectPtr and the type is not visible
-
-        # ("UBlendProfile", "UObject"), #FIx this This if needed need to be a rule. Not a replace.
-        # ("UInterpFilter", "UObject"), #FIx this This if needed need to be a rule. Not a replace.
-        # ("UNavigationSystemConfig", "UObject"), #FIx this This if needed need to be a rule. Not a replace.
-        # ("ABrush", "AActor"), #FIx this This if needed need to be a rule. Not a replace.
-        # ("APhysicsVolume", "AVolume"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
-        # ("UDistributionFloatConstant", "UDistributionFloat"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
-        # ("UDistributionVectorConstant", "UDistributionVector"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
-        # ("UInterpTrackInstProperty", "UInterpTrackInst"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
-        # # ("UMaterialExpressionTextureSample", "UMaterialExpression"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
-        # # ("UMaterialExpressionTextureSampleParameter2D", "UMaterialExpression"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
-        # # ("UMaterialExpressionRuntimeVirtualTextureSample", "UMaterialExpression"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
-        # # ("UMaterialExpressionTextureSampleParameter2D", "UMaterialExpression"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
-        # ("UVirtualTexture2D", "UTexture2D"), #FIx this This if needed need to be a rule. Not a replace. The fix will be a replace name rule?
         ("__DelegateSignature", ""))
     
 #notice this is only for testing ATM the final shape probably wont be like this
@@ -760,9 +742,41 @@ macro genUFun*(className : static string, funField : static UEField) : untyped =
         
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
 
+proc genHeaders*(moduleDef: UEModule,  headersPath: string) = 
+    #There is one main header that pulls the rest.
+    #Every other header is in the module paths
+    let validCppParents = ["UObject", "AActor", "UInterface", "UDeveloperSettings"]#TODO this should be introduced as param
 
+    let getParentName = (parentName:string) => parentName & (if parentName in validCppParents: "" else: "_")
+    let classDefs = moduleDef.types
+                        .filterIt(it.kind == uetClass)
+                        .mapIt(&"class {it.name}_ : public {getParentName(it.parent)}{{}};\n")
+                        .join()
+   
+    let mainHeaderPath = headersPath / "UEGenClassDefs.h"
+    let headerName = (name:string) => &"{name.firstToUpper()}.h"
+    let includeHeader = (name:string) => &"#include \"{headerName(name)}\" \n"
+    let headerPath = headersPath / "Modules" / headerName(moduleDef.name)
+    let deps = moduleDef
+                .dependencies
+                .map(includeHeader)
+                .join()
+    let headerContent = &"""
+#pragma once
+#include "UEDeps.h"
+{deps}
+{classDefs}
+"""
+    writeFile(headerPath, headerContent)
 
-# generates the export and import bindings for nim that needs to be compiled
+    let headerAsDep = includeHeader(moduleDef.name)
+    let mainHeaderContent = if fileExists(mainHeaderPath): readFile(mainHeaderPath) else: """
+#pragma once
+#include "UEDeps.h"
+"""
+    if headerAsDep notin mainHeaderContent:
+        writeFile(mainHeaderPath, mainHeaderContent & headerAsDep)
+    
 macro genBindings*(moduleDef: static UEModule, exportPath: static string, importPath: static string, headersPath: static string) =
     proc genCode(filePath: string, preludePath: string, moduleDef: UEModule, moduleNode: NimNode) =
         let code = 
@@ -785,17 +799,4 @@ macro genBindings*(moduleDef: static UEModule, exportPath: static string, import
     genCode(exportPath, "include ../../prelude\n", moduleDef, genModuleDecl(moduleDef))
     genCode(importPath, "include ../prelude\n", moduleDef, genImportCModuleDecl(moduleDef))
 
-    # write headers here
-    #this should be returned as param
-    let validCppParents = ["UObject", "AActor", "UInterface", "UDeveloperSettings"]
-    var header: string
-    for typeDef in moduleDef.types:
-        if typeDef.kind == uetClass:
-            let parent = typeDef.parent & (if typeDef.parent in validCppParents: "" else: "_")
-            header &= &"class {typeDef.name}_ : public {parent}{{}};\n"
-    var classDefsPath = headersPath / "UEGenClassDefs.h"
-    var headerContent = if fileExists(classDefsPath): readFile(classDefsPath) else: """
-#pragma once
-#include "UEDeps.h"
-"""
-    writeFile(classDefsPath, headerContent & header)
+    genHeaders(moduleDef, headersPath)

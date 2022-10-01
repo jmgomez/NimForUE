@@ -334,6 +334,7 @@ task dumpConfig, "Displays the config variables":
 task codegen, "Runs the process that will automatically generate the API based on the reflection data.":
   doAssert(taskOptions.hasKey("module"), "Missing module argument! Usage: nue codegen --module:codegenFilePath")
   let codegenFilePath = taskOptions["module"]
+  
   doAssert(execCmd(&"nim cpp --compileonly --nomain --maxLoopIterationsVM:20000000 --nimcache:.nimcache/codegen {codegenFilePath}") == 0)
   log(&"!!>> Task: codegen complete! <<<<")
 
@@ -412,6 +413,7 @@ task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindin
   host(taskOptions)
 
 # --- End Tasks ---
+makeSureFolderStructureIsAsExpected()
 
 main()
 

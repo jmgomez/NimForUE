@@ -102,3 +102,9 @@ proc copyNimForUELibToUEDir*() =
       removeDir(debugFolder)
     except:
       discard #Debug folder was used. We just ignore it as it isnt critical to keep going
+
+
+
+proc makeSureFolderStructureIsAsExpected*() = 
+  createDir("./NimHeaders")
+  createDir("./NimHeaders"/"Modules")
