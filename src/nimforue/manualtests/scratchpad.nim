@@ -148,6 +148,7 @@ const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
                                 UEField(kind: uefEnumVal, name: "TestValue2")
     ]
 )
+
 genType(ueEnumType)
 
 

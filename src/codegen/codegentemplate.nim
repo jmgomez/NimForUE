@@ -2,7 +2,7 @@
 const codegenNimTemplate* = """
 import std/[json, jsonutils]
 import ../nimforue/typegen/models
-import ../nimforue/macros/uebind
+import ../nimforue/macros/genmodule
 
 const moduleAsJson* = $1
 const exportBindingsPath = $2
