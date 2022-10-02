@@ -244,7 +244,10 @@ proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
 proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
 proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
 
-proc `$`*(obj:UObjectPtr) : string = obj.getName()
+proc `$`*(obj:UObjectPtr) : string = 
+    if obj.isNil(): "nill"
+    else: $obj.getName()
+    
 
 #bool UClass::Rename( const TCHAR* InName, UObject* NewOuter, ERenameFlags Flags )
 #notice rename flags is not an enum in cpp we define it here adhoc

@@ -134,7 +134,8 @@ func isBPExposed(prop:FPropertyPtr, outer:UObjectPtr) : bool =
                             .chainNone(()=>tryGetUTypeByName[UFunction](prop.getNimTypeAsStr(outer)).map(isBPExposed))
                             .get(true)#we assume it is by default 
     
-    CPF_BlueprintVisible in prop.getPropertyFlags() and
+    let flags = prop.getPropertyFlags()
+    (CPF_BlueprintVisible in flags or CPF_Parm in flags) and
     isTypeExposed
         
 func isBPExposed(uenum:UEnumPtr) : bool = true
@@ -195,6 +196,13 @@ func toUEField*(ufun:UFunctionPtr, rules: seq[UEImportRule] = @[]) : Option[UEFi
     let className = class.getPrefixCpp() & class.getName()
     let actualName : string = uFun.getName()
     let fnNameNim = actualName.removePrefixes(fnPrefixes)
+
+    for rule in rules:
+        if actualName in rule.affectedTypes and rule.target == uerTField and rule.rule == uerIgnore: #TODO extract
+            UE_Log &"Ignoring {actualName} because it is in the ignore list"
+            return none(UEField)
+
+
     var fnField = makeFieldAsUFun(ufun.getName(), params, className, ufun.functionFlags)
     fnField.actualFunctionName = actualName
     let isStatic = (FUNC_Static in ufun.functionFlags) #Skips static functions for now so we can quickly iterate over compiling the engine types
@@ -305,8 +313,11 @@ func toUEType*(del:UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]) : Optio
                     .sequence()
     
     #TODO is defaulting to MulticastDelegate this may be wrong when trying to autogen the types 
-    none(UEType)
-    # some UEType(name:name, kind:uetDelegate, delKind:uedelMulticastDynScriptDelegate, fields:fields.reversed())
+    #Maybe I can just cast it?
+    # none(UEType)
+    let kind = if FUNC_MulticastDelegate in del.functionFlags: uedelMulticastDynScriptDelegate else: uedelDynScriptDelegate
+    # UE_Log &"Exporting {name} as {kind}"
+    some UEType(name:name, kind:uetDelegate, delKind:kind, fields:fields.reversed())
 
 
 
@@ -356,10 +367,17 @@ func getFPropertiesFrom*(ueType:UEType) : seq[FPropertyPtr] =
     of uetClass:
         let outer = getUTypeByName[UClass](ueType.name.removeFirstLetter())
         if outer.isNil(): return @[] #Deprecated classes are the only thing that can return nil. 
-        outer.getFPropsFromUStruct() &
-            outer.getFuncsFromClass()
-            .mapIt(it.getFPropsFromUStruct())
-            .foldl(a & b, newSeq[FPropertyPtr]())
+        
+        let props = outer.getFPropsFromUStruct() &
+                    outer.getFuncsParamsFromClass()
+
+        if "UUserWidget*" in props.mapIt(it.getCppType()):
+            UE_Error "Found UserWidget"
+
+        # for p in props:
+        #     UE_Log p.getCppType()
+
+        props
        
     of uetStruct, uetDelegate:
         tryGetUTypeByName[UStruct](ueType.name.removeFirstLetter())
@@ -380,11 +398,12 @@ func getModuleNames*(ueType:UEType) : seq[string] =
     func filterType(typeName:string) : bool = typeName notin typesToSkip 
     ueType
         .getFPropertiesFrom()
-        .mapIt(getInnerCppGenericType($it.getCppType()))
+        .mapIt(getNimTypeAsStr(it, nil))
+        # .mapIt(getInnerCppGenericType($it.getCppType()))
         .filter(filterType)
         .map(getNameOfUENamespacedEnum)
         .map(func(propType:string):Option[string] = 
-            getUnrealTypeFromName[UStruct](propType.removeFirstLetter())
+            getUnrealTypeFromName[UStruct](propType.removeFirstLetter().removeLastLettersIfPtr())
                 .chainNone(()=>getUnrealTypeFromName[UEnum](propType))
                 .chainNone(()=>getUnrealTypeFromName[UStruct](propType))
                 .map((obj:UObjectPtr)=> $obj.getModuleName())

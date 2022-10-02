@@ -37,6 +37,13 @@ proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UF
         xs.add fn
     xs
 
+proc getFuncsParamsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[FPropertyPtr] = 
+    cls
+    .getFuncsFromClass(flags)
+    .mapIt(it.getFPropsFromUStruct(flags))
+    .foldl(a & b, newSeq[FPropertyPtr]())
+        
+
 
 #it will call super until UObject is reached
 iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr = 

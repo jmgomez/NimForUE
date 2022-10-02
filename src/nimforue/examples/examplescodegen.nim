@@ -11,7 +11,7 @@ let moduleRules = @[
             "AActor", "UReflectionHelpers", "UObject",
             "UField", "UStruct", "UScriptStruct", "UPackage",
             "UClass", "UFunction", "UDelegateFunction",
-            "UEnum", "UActorComponent", 
+            "UEnum", "UActorComponent", "AVolume"
 
             # "UPrimitiveComponent", "UPhysicalMaterial", "AController",
             # "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
@@ -45,7 +45,9 @@ let moduleRules = @[
           makeImportedRuleType(uerIgnore, @[
           "FVector", "FSlateBrush",
           #issue with a field name 
-          "FTransformConstraint"
+          "FTransformConstraint", 
+
+        
           
           ]), 
           
@@ -53,7 +55,12 @@ let moduleRules = @[
           "PerInstanceSMCustomData", 
           "PerInstanceSMData",
           "ObjectTypes",
-          "EvaluatorMode"
+          "EvaluatorMode",
+
+#Functions that should not be exported (contains an UMG field)
+          "SetMouseCursorWidget", "PlayQuantized"
+
+
           
           
           
@@ -72,7 +79,7 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
   let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
 
   var module = tryGetPackageByName(moduleName)
-                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
+                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject", "UMG", "AudioMixer"])) #The last two are specifically for engine, pass them as a parameter
                       .get()
   let codegenPath = reflectionDataPath / moduleName.toLower() & ".nim"
   let exportBindingsPath = bindingsDir / "exported" / moduleName.toLower() & ".nim"
@@ -150,9 +157,27 @@ uClass AActorCodegen of AActor:
   
     proc genSlateBindings() = 
       genBindingsWithDeps("Slate", moduleRules)
+    
+    proc genMeshDescription() = 
+      genBindingsWithDeps("MeshDescription", moduleRules)
 
     proc genNimForUEBindings() = 
       genBindings("NimForUEBindings", moduleRules)
 
     proc genCoreUObjectBindings() = 
       genBindings("CoreUObject", moduleRules)
+
+    proc printEngineDeps() = 
+      var module = tryGetPackageByName("Engine")
+              .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
+              .get()
+      UE_Warn module.dependencies.join(" \n")
+
+    proc showModuleName() = 
+      let obj = getClassByName("UserWidget")
+      UE_Warn obj.getModuleName()
+
+    
+    proc showType() = 
+      let obj = getUTypeByName[UDelegateFunction]("OnAssetClassLoaded"&DelegateFuncSuffix)
+      UE_Warn $obj

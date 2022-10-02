@@ -3,19 +3,22 @@ import math/vector
 import ../coreuobject/[uobject, coreuobject]
 
 type 
-  AActor* {.importcpp.}  = object of UObject
+  AActor* {.importcpp, inheritable, pure .} = object of UObject
   AActorPtr* = ptr AActor
-  AController* {.importcpp.} = object of AActor
+  AController* {.importcpp, inheritable, pure .}= object of AActor
   AControllerPtr* = ptr AController
-  APlayerController* {.importcpp.} = object of AController
+  APlayerController* {.importcpp, inheritable, pure .}= object of AController
   APlayerControllerPtr* = ptr APlayerController
-  APawn* {.importcpp.} = object of AActor
+  APawn* {.importcpp, inheritable, pure .} = object of AActor
   APawnPtr* = ptr APawn
 
-  AInfo* = object of AActor
+  AInfo* {.importcpp, inheritable, pure .}= object of AActor
   AInfoPtr* = ptr AInfo
-  AGameSession* = object of AInfo
+  AGameSession* {.importcpp, inheritable, pure .}= object of AInfo
   AGameSessionPtr* = ptr AGameSession
+
+  AWorldSettings* {.importcpp, inheritable, pure .}= object of AInfo
+  AWorldSettingsPtr* = ptr AWorldSettings
 
   UActorComponent* {.importcpp, inheritable, pure .} = object of UObject
   UActorComponentPtr* = ptr UActorComponent
@@ -53,6 +56,8 @@ type
 
   AVolume* {.importcpp, inheritable, pure .} = object of UObject
   AVolumePtr* = ptr AVolume
+  APhysicsVolume* {.importcpp, inheritable, pure .} = object of AVolume
+  APhysicsVolumePtr* = ptr APhysicsVolume
 
   UGameInstanceSubsystem* {.importcpp, inheritable, pure .} = object of UObject
   UGameInstanceSubsystemPtr* = ptr UGameInstanceSubsystem
@@ -61,7 +66,8 @@ type
   UTickableWorldSubsystem* {.importcpp, inheritable, pure .} = object of UObject
   UTickableWorldSubsystemPtr* = ptr UTickableWorldSubsystem
 
-
+  UAudioLinkSettingsAbstract* {.importcpp, inheritable, pure .} = object of UObject
+  UAudioLinkSettingsAbstractPtr* = ptr UAudioLinkSettingsAbstract
 
   UVectorField* {.importcpp, inheritable, pure .} = object of UObject
   UVectorFieldPtr* = ptr UVectorField
@@ -86,6 +92,9 @@ type
   UMeshDescriptionBaseBulkDataPtr* = ptr UMeshDescriptionBaseBulkData
   ULandscapeGrassType* {.importcpp .} = object of UObject
   ULandscapeGrassTypePtr* = ptr ULandscapeGrassType
+
+  UBlendProfile* {.importcpp .} = object of UObject
+  UBlendProfilePtr* = ptr UBlendProfile
 
 
   TFieldPath* {.importcpp .} = object

@@ -85,9 +85,9 @@ func nimToCppConflictsFreeName(propName:string) : string =
     if propName in reservedCppKeywords: propName.firstToUpper() else: propName
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
-        let reservedKeywords = ["object", "method", "type", "interface", "var", "in", "out", "end", "bLock"] 
-        if propName in reservedKeywords: 
-            &"`{propName}`" 
+        let reservedKeywords = ["object", "method", "type", "interface", "var", "in", "out", "end", "bLock", "from", "enum"] 
+        if propName in reservedKeywords: &"`{propName}`" 
+        elif propName == "result": "Result"
         else: propName
 
 func genProp(typeDef : UEType, prop : UEField) : NimNode = 
@@ -691,6 +691,8 @@ proc genModuleDecl*(moduleDef:UEModule) : NimNode =
         case typeDef.kind:
         of uetClass, uetStruct:
             result.add genTypeDecl(typeDef, rules, uexExport)
+        of uetDelegate: 
+            result.add genDelType(typeDef, uexExport)
         else: continue
 
 proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
@@ -715,6 +717,8 @@ proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
         case typeDef.kind:
         of uetClass:
             result.add genImportCTypeDecl(typeDef, rules)
+        of uetDelegate: 
+            result.add genDelType(typeDef, uexImport)
         else:
             continue
 
