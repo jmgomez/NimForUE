@@ -164,30 +164,7 @@ func genUClassImportCTypeDef(typeDef : UEType, rule : UERule = uerNone) : NimNod
 
 
 
-proc genModuleDecl*(moduleDef:UEModule) : NimNode = 
-    result = nnkStmtList.newTree()
 
-    var typeSection = nnkTypeSection.newTree()
-    for typeDef in moduleDef.types:
-        let rules = moduleDef.getAllMatchingRulesForType(typeDef)
-        case typeDef.kind:
-        of uetClass:
-            typeSection.add genUClassTypeDefBinding(typedef, rules)
-        of uetStruct:
-            typeSection.add genUStructTypeDefBinding(typedef, rules)
-        of uetEnum:
-            typeSection.add genUEnumTypeDefBinding(typedef)
-        else: continue
-    result.add typeSection
-
-    for typeDef in moduleDef.types:
-        let rules = moduleDef.getAllMatchingRulesForType(typeDef)
-        case typeDef.kind:
-        of uetClass, uetStruct:
-            result.add genTypeDecl(typeDef, rules, uexExport)
-        of uetDelegate: 
-            result.add genDelType(typeDef, uexExport)
-        else: continue
 
 
 
@@ -203,6 +180,24 @@ proc genImportCTypeDecl*(typeDef : UEType, rule : UERule = uerNone) : NimNode =
             genDelType(typeDef, uexImport)
 
 
+
+proc genDelTypeDef*(delType:UEType, exposure:UEExposure) : NimNode = 
+    let typeName = ident delType.name
+    
+    let delBaseType = 
+        case delType.delKind 
+        of uedelDynScriptDelegate: ident "FScriptDelegate"
+        of uedelMulticastDynScriptDelegate: ident "FMulticastScriptDelegate"
+    
+    if exposure == uexImport:
+        genAst(typeName, delBaseType):
+                typeName {. inject, importcpp, header:"UEGenBindings.h".} = object of delBaseType
+    else:
+        genAst(typeName, delBaseType):
+                typeName {. inject, exportcpp.} = object of delBaseType
+
+
+
 proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
     result = nnkStmtList.newTree()
 
@@ -216,8 +211,9 @@ proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
                 typeSection.add genUStructImportCTypeDefBinding(typedef)
             of uetEnum:
                 typeSection.add genUEnumTypeDefBinding(typedef)
-            else:
-                continue
+            of uetDelegate:
+                typeSection.add genDelTypeDef(typeDef, uexImport)
+                
     result.add typeSection
 
     for typeDef in moduleDef.types:
@@ -225,15 +221,41 @@ proc genImportCModuleDecl*(moduleDef:UEModule) : NimNode =
         case typeDef.kind:
         of uetClass:
             result.add genImportCTypeDecl(typeDef, rules)
-        of uetDelegate: 
-            result.add genDelType(typeDef, uexImport)
+        # of uetDelegate: #TODO genDelFuncs
+        #     result.add genDelType(typeDef, uexImport)
         else:
             continue
 
+proc genExportModuleDecl*(moduleDef:UEModule) : NimNode = 
+    result = nnkStmtList.newTree()
 
+    var typeSection = nnkTypeSection.newTree()
+    for typeDef in moduleDef.types:
+        let rules = moduleDef.getAllMatchingRulesForType(typeDef)
+        case typeDef.kind:
+        of uetClass:
+            typeSection.add genUClassTypeDefBinding(typedef, rules)
+        of uetStruct:
+            typeSection.add genUStructTypeDefBinding(typedef, rules)
+        of uetEnum:
+            typeSection.add genUEnumTypeDefBinding(typedef)
+        of uetDelegate:
+            typeSection.add genDelTypeDef(typeDef, uexExport)
+        else: continue
+    result.add typeSection
+
+    for typeDef in moduleDef.types:
+        let rules = moduleDef.getAllMatchingRulesForType(typeDef)
+        case typeDef.kind:
+        of uetClass, uetStruct:
+            result.add genTypeDecl(typeDef, rules, uexExport)
+        #  of uetDelegate: #TODO genDelFuncs
+        #     result.add genDelType(typeDef, uexExport)
+        else: continue
 
 proc genModuleRepr*(moduleDef: UEModule, isImporting: bool): string =
-    let moduleNode = if isImporting: genImportCModuleDecl(moduleDef) else: genModuleDecl(moduleDef)
+    #TODO import/export should be local to add cohesion to the funcs
+    let moduleNode = if isImporting: genImportCModuleDecl(moduleDef) else: genExportModuleDecl(moduleDef)
     let preludePath = "include " & (if isImporting: "" else: "../") & "../prelude\n"
 
     preludePath & 
@@ -322,7 +344,7 @@ macro genBindings*(moduleDef: static UEModule, exportPath: static string, import
             ("__DelegateSignature", ""))
         writeFile(filePath, code)
 
-    genCode(exportPath, "include ../../prelude\n", moduleDef, genModuleDecl(moduleDef))
+    genCode(exportPath, "include ../../prelude\n", moduleDef, genExportModuleDecl(moduleDef))
     genCode(importPath, "include ../prelude\n", moduleDef, genImportCModuleDecl(moduleDef))
 
     genHeaders(moduleDef, headersPath)
