@@ -191,10 +191,10 @@ proc genDelTypeDef*(delType:UEType, exposure:UEExposure) : NimNode =
     
     if exposure == uexImport:
         genAst(typeName, delBaseType):
-                typeName {. inject, importcpp, header:"UEGenBindings.h".} = object of delBaseType
+                typeName {. inject, importcpp:"$1_", header:"UEGenBindings.h".} = object of delBaseType
     else:
         genAst(typeName, delBaseType):
-                typeName {. inject, exportcpp.} = object of delBaseType
+                typeName {. inject, exportcpp:"$1_".} = object of delBaseType
 
 
 
@@ -281,7 +281,11 @@ macro genUFun*(className : static string, funField : static UEField) : untyped =
 proc genHeaders*(moduleDef: UEModule,  headersPath: string) = 
     #There is one main header that pulls the rest.
     #Every other header is in the module paths
-    let validCppParents = ["UObject", "AActor", "UInterface", "UActorComponent", "UDeveloperSettings"]#TODO this should be introduced as param
+    let validCppParents = 
+      ["UObject", "AActor", "UInterface", 
+        "AVolume", "USoundWaveProcedural",
+    
+      "UActorComponent", "UDeveloperSettings"]#TODO this should be introduced as param
 
     let getParentName = (uet:UEType) => uet.parent & 
         (if uet.parent in validCppParents or uerCodeGenOnlyFields == getAllMatchingRulesForType(moduleDef, uet): "" else: "_")
