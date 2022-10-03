@@ -66,8 +66,8 @@ type
   UTickableWorldSubsystem* {.importcpp, inheritable, pure .} = object of UObject
   UTickableWorldSubsystemPtr* = ptr UTickableWorldSubsystem
 
-  UAudioLinkSettingsAbstract* {.importcpp, inheritable, pure .} = object of UObject
-  UAudioLinkSettingsAbstractPtr* = ptr UAudioLinkSettingsAbstract
+  # UAudioLinkSettingsAbstract* {.importcpp, inheritable, pure .} = object of UObject
+  # UAudioLinkSettingsAbstractPtr* = ptr UAudioLinkSettingsAbstract
 
   UVectorField* {.importcpp, inheritable, pure .} = object of UObject
   UVectorFieldPtr* = ptr UVectorField

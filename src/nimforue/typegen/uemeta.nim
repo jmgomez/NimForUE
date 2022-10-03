@@ -158,6 +158,18 @@ func isBPExposed(uenum:UEnumPtr) : bool = true
 #     # uenum.hasMetadata("BlueprintType")
   
 
+func isNimTypeInAffectedTypes(nimType:string, affectedTypes:seq[string]) : bool = 
+    let isAffected = 
+        affectedTypes
+        .any(typ=> 
+            typ.removeLastLettersIfPtr() == nimType.removeLastLettersIfPtr() or 
+            typ == nimType.extractTypeFromGenericInNimFormat("TObjectPtr") or 
+            typ == nimType.extractTypeFromGenericInNimFormat("TArray")
+            )
+    
+    # UE_Log &"Is affected {nimType} {isAffected}"
+    isAffected
+
 
 #Function that receives a FProperty and returns a Type as string
 func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UEField] = #The expected type is something that UEField can understand
@@ -167,8 +179,9 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = 
     if "TEnumAsByte" in nimType:   
         nimType = nimType.extractTypeFromGenericInNimFormat("TEnumAsByte")
 
-    for rule in rules:
-        if name in rule.affectedTypes and rule.target == uerTField and rule.rule == uerIgnore: #TODO extract
+    for rule in rules: 
+        if  rule.target == uerTField and rule.rule == uerIgnore and
+            (name in rule.affectedTypes or isNimTypeInAffectedTypes(nimType, rule.affectedTypes)):
             return none(UEField)
 
     if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules):
@@ -240,6 +253,8 @@ func toUEType*(cls:UClassPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
                  getFPropsFromUStruct(cls)
                     .map(prop=>toUEField(prop, cls, rules))
                     .sequence()
+
+
     let name = cls.getPrefixCpp() & cls.getName()
     let parent = someNil cls.getSuperClass()
 
@@ -247,6 +262,12 @@ func toUEType*(cls:UClassPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
     let parentName = parent
                         .map(p=> (if uerImportBlueprintOnly in rules: getFirstBpExposedParent(p) else: p))
                         .map(p=>p.getPrefixCpp() & p.getName()).get("")
+
+
+    for rule in rules:
+        if name in rule.affectedTypes and rule.target == uertType and rule.rule == uerIgnore: #TODO extract
+            UE_Log &"Ignoring {name} because it is in the ignore list"
+            return none(UEType)                    
 
     if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
         some UEType(name:name, kind:uetClass, parent:parentName, fields:fields)

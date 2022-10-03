@@ -46,6 +46,7 @@ let moduleRules = @[
           "FVector", "FSlateBrush",
           #issue with a field name 
           "FTransformConstraint", 
+          "UKismetMathLibrary" #issue with the funcs?
 
         
           
@@ -56,9 +57,16 @@ let moduleRules = @[
           "PerInstanceSMData",
           "ObjectTypes",
           "EvaluatorMode",
+          # "AudioLinkSettings" #I should instead not import property of certain type
+
+          #By type name
+          "UAudioLinkSettingsAbstract",
+          "TFieldPath",
+
 
 #Functions that should not be exported (contains an UMG field)
-          "SetMouseCursorWidget", "PlayQuantized"
+          "SetMouseCursorWidget", "PlayQuantized", "GetBlendProfile", "PolyglotDataToText", "IsPolyglotDataValid"
+          # "Tan"
 
 
           
