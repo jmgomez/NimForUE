@@ -6,34 +6,15 @@ import ../typegen/[uemeta]
 import std/random
 
 
-  
-# type
-#   FSlateBrush*  = object
-#   # FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
-#     # bIsDynamicallyLoaded*: uint8
-#     # imageType*: ESlateBrushImageType
-#     # mirroring*: ESlateBrushMirrorType
-#     # tiling*: ESlateBrushTileType
-#     # drawAs*: ESlateBrushDrawType
-#     # uVRegion*: FBox2f
-#     # resourceName*: FName
-#     # resourceObject*: TObjectPtr[UObject]
-#     # outlineSettings*: FSlateBrushOutlineSettings
-#     # tintColor*: FSlateColor
-#     # margin*: FMargin
-#     ImageSize*: FVector2D
-
-#[
-  The problem seems to be the inner UOBjects not being init. Maybe I can replicate that in NimForUEBindings?
-  If it can be replicated, we can see the default value from them?
-]#
-
-# type
-#   FTextBlockStyle*  = object
-#     strikeBrush*: FSlateBrush
+const testActorUEType = UEType(name: "ATestActor", parent: "AActor", kind: uetClass, 
+                  fields: @[
+                 
+                      ])
+genType(testActorUEType)
 
 
-uClass AObjectEngineExample of AActor:
+
+uClass AObjectEngineExample of ATestActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     stringProp : FString
@@ -42,6 +23,8 @@ uClass AObjectEngineExample of AActor:
     nimStaticMesh : UStaticMeshComponentPtr = initializer.createDefaultSubobject[:UStaticMeshComponent](n"NimTestComponent")
     c: FSlateColor
     lc: FLinearColor
+
+    childComp : UChildActorComponentPtr = initializer.createDefaultSubobject[:UChildActorComponent](n"ChildComp")
 
   ufuncs(BlueprintCallable):
     proc userConstructionScript() =
@@ -55,9 +38,29 @@ uClass AObjectEngineExample of AActor:
 
   ufuncs(CallInEditor):
     proc resetRelativeLocation() = 
-      self.nimStaticMesh.relativeLocation =  makeFVector(0, 0, 100)
+      let prev : FVector = self.k2_GetActorLocation()
+      try:
+        let actor : AActorPtr = self.childComp.childActor
+        var hit : FHitResult
+        discard self.k2_SetActorLocation(makeFVector(0, 0, 100), false, hit, true )
+      except:
+        UE_Error "A problem ocurred "
+
+        discard
+      
     proc moveStaticMesh() = 
       self.nimStaticMesh.relativeLocation =  makeFVector(0, 0, 100) +  self.nimStaticMesh.relativeLocation
+
+    proc getAllActors() = 
+      # let world = self.getWorld()
+      # if world.isNil():
+      #   UE_Error "World is nil"
+      #   return
+      
+      var actors : TArray[AActorPtr]
+      self.getAllActorsOfClass(makeTSubclassOf[AActor](getClassByName("Actor")), actors)
+      UE_Log $actors
+      # UE_Log $self.getWorld()
 
     proc testTextBlockStyle() = 
       var testStr = self.another

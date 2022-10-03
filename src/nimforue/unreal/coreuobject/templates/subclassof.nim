@@ -8,3 +8,5 @@ proc makeTSubclassOf*[T : UObject](cls:UClassPtr) : TSubclassOf[T] {. importcpp:
 
 proc get*(softObj : TSubclassOf) : UClassPtr {.importcpp:"#.Get()".}
 
+
+

@@ -47,6 +47,7 @@ func isTArray(prop:FPropertyPtr) : bool = not castField[FArrayProperty](prop).is
 func isTMap(prop:FPropertyPtr) : bool = not castField[FMapProperty](prop).isNil()
 func isTSet(prop:FPropertyPtr) : bool = not castField[FSetProperty](prop).isNil()
 func isTEnum(prop:FPropertyPtr) : bool = "TEnumAsByte" in prop.getName()
+func isTObjectPtr(prop:FPropertyPtr) : bool = return false # "TObjectPtr" in prop.getCPPType()
 func isDynDel(prop:FPropertyPtr) : bool = not castField[FDelegateProperty](prop).isNil()
 func isMulticastDel(prop:FPropertyPtr) : bool = not castField[FMulticastDelegateProperty](prop).isNil()
 #TODO Dels
@@ -54,20 +55,28 @@ func isMulticastDel(prop:FPropertyPtr) : bool = not castField[FMulticastDelegate
 
 func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expected type is something that UEField can understand
     func cleanCppType(cppType:string) : string = 
-         cppType.replace("<", "[").replace(">", "]").replace("*", "Ptr")
+        cppType.replace("<", "[").replace(">", "]").replace("*", "Ptr")
 
     if prop.isTArray(): 
-        let innerType = castField[FArrayProperty](prop).getInnerProp().getCPPType()
+        var innerType = castField[FArrayProperty](prop).getInnerProp().getCPPType()
+        if prop.isTObjectPtr():
+            innerType = innerType.getInnerCppGenericType()
         return fmt"TArray[{innerType.cleanCppType()}]"
 
     if prop.isTSet():
-        let elementProp = castField[FSetProperty](prop).getElementProp().getCPPType()
+        var elementProp = castField[FSetProperty](prop).getElementProp().getCPPType()
+        if prop.isTObjectPtr():
+           elementProp = elementProp.getInnerCppGenericType()
         return fmt"TSet[{elementProp.cleanCppType()}]"
 
     if prop.isTMap(): #better pattern here, i.e. option chain
         let mapProp = castField[FMapProperty](prop)
-        let keyType = mapProp.getKeyProp().getCPPType()
-        let valueType = mapProp.getValueProp().getCPPType()
+        var keyType = mapProp.getKeyProp().getCPPType()
+        var valueType = mapProp.getValueProp().getCPPType()
+       
+        if prop.isTObjectPtr():
+           valueType =  valueType.getInnerCppGenericType()
+
         return fmt"TMap[{keyType}, {valueType}]"
     
     try:
@@ -81,6 +90,13 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         if prop.isTEnum(): #Not sure if it would be better to just support it on the macro
             return cppType.replace("TEnumAsByte<","")
                         .replace(">", "")
+        
+        if prop.isTObjectPtr():
+            UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()}"
+            return cppType.replace("TObjectPtr<", "")
+                          .replace(">", "") & "Ptr"
+                        
+        
 
 
         let nimType = cppType.cleanCppType()
@@ -164,7 +180,8 @@ func isNimTypeInAffectedTypes(nimType:string, affectedTypes:seq[string]) : bool 
         .any(typ=> 
             typ.removeLastLettersIfPtr() == nimType.removeLastLettersIfPtr() or 
             typ == nimType.extractTypeFromGenericInNimFormat("TObjectPtr") or 
-            typ == nimType.extractTypeFromGenericInNimFormat("TArray")
+            typ == nimType.extractTypeFromGenericInNimFormat("TArray") 
+            
             )
     
     # UE_Log &"Is affected {nimType} {isAffected}"

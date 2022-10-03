@@ -66,12 +66,15 @@ type
     UDelegateFunction* {.importcpp, inheritable, pure .} = object of UFunction
     UDelegateFunctionPtr* = ptr UDelegateFunction
 
-    TObjectPtr*[out T ] {.importcpp.} = object 
+    TObjectPtr*[ out T ] {.importcpp.} = object 
     TLazyObjectPtr*[out T ] {.importcpp.} = object 
     TEnumAsByte*[T : enum] {.importcpp.} = object
 
     TWeakObjectPtr*[out T] {.importcpp.} = object
     TScriptInterface*[T] {.importcpp.} = object
+
+    UWorld* {.importcpp, pure .} = object of UObject
+    UWorldPtr* = ptr UWorld
 
 
 
@@ -225,8 +228,9 @@ proc hasAddStructReferencedObjects*(str:UScriptStructPtr) : bool {.importcpp:"#-
 
 #TObjectPtr
 
-converter toUObjectPtr*(obj:TObjectPtr) : UObjectPtr {.importcpp:"#.Get()".}
+converter toUObjectPtr*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 converter fromObjectPtr*[T : UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
+
 
 #UOBJECT
 proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
@@ -238,7 +242,7 @@ proc addToRoot*(obj:UObjectPtr) : void {. importcpp: "#->AddToRoot()" .}
 
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
 proc getOuter*(obj : UObjectPtr) : UObjectPtr {. importcpp: "#->GetOuter()" .}
-
+proc getWorld*(obj : UObjectPtr) : UWorldPtr {. importcpp: "#->GetWorld()" .}
 
 proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
 proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}

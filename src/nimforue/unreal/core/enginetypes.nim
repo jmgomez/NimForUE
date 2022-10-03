@@ -28,8 +28,8 @@ type
   UPrimitiveComponentPtr* = ptr UPrimitiveComponent
   UShapeComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
   UShapeComponentPtr* = ptr UShapeComponent
-  UChildActorComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
-  UChildActorComponentPtr* = ptr UChildActorComponent
+  # UChildActorComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
+  # UChildActorComponentPtr* = ptr UChildActorComponent
 
   UBlueprint* {.importcpp, inheritable, pure .} = object of UObject
   UBlueprintPtr* = ptr UBlueprint
@@ -73,6 +73,7 @@ type
   UVectorFieldPtr* = ptr UVectorField
 
 
+
   FHitResult* {.importc, bycopy} = object
     bBlockingHit: bool
 
@@ -93,7 +94,7 @@ type
   ULandscapeGrassType* {.importcpp .} = object of UObject
   ULandscapeGrassTypePtr* = ptr ULandscapeGrassType
 
-  UBlendProfile* {.importcpp .} = object of UObject
+  UBlendProfile* {.importcpp, pure .} = object of UObject
   UBlendProfilePtr* = ptr UBlendProfile
 
 

@@ -44,6 +44,7 @@ let moduleRules = @[
           ]), 
           makeImportedRuleType(uerIgnore, @[
           "FVector", "FSlateBrush",
+          "FHitResult",
           #issue with a field name 
           "FTransformConstraint", 
           "UKismetMathLibrary" #issue with the funcs?
