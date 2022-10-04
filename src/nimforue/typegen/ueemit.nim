@@ -685,7 +685,6 @@ macro uFunctions*(body : untyped) : untyped =
                     .first(n=>n.kind==nnkExprColonExpr)
                     .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip().addPtrToUObjectIfNotPresentAlready(), CPF_None)) #notice no generic/var allowed. Only UObjects
                     
-
     let allFuncs = body.children.toSeq()
         .filter(n=>n.kind==nnkProcDef)
         .map(procBody=>ufuncImpl(procBody, firstParam, metas))
@@ -744,7 +743,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
     
     var uClassNode = emitUClass(ueType)
-  
+    
     if doesClassNeedsConstructor(className):
         let typeParam = makeFieldAsUPropParam("self", className)
         let initParam = makeFieldAsUPropParam("initializer", "FObjectInitializer")

@@ -95,6 +95,9 @@ public:
 		
 	}
 
+	//For testing only
+	static UWorld* GetCurrentActiveWorld();
+
 	static void NimForUELog(FString Msg);
 	static void NimForUEWarn(FString Msg);
 	static void NimForUEError(FString Msg);

@@ -11,7 +11,7 @@ let moduleRules = @[
             "AActor", "UReflectionHelpers", "UObject",
             "UField", "UStruct", "UScriptStruct", "UPackage",
             "UClass", "UFunction", "UDelegateFunction",
-            "UEnum", "UActorComponent", "AVolume"
+            "UEnum", "UActorComponent", "AVolume",
 
             # "UPrimitiveComponent", "UPhysicalMaterial", "AController",
             # "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
@@ -63,6 +63,7 @@ let moduleRules = @[
           #By type name
           "UAudioLinkSettingsAbstract",
           "TFieldPath",
+          "UWorld", #cant be casted to UObject
 
 
 #Functions that should not be exported (contains an UMG field)
@@ -167,6 +168,9 @@ uClass AActorCodegen of AActor:
     proc genSlateBindings() = 
       genBindingsWithDeps("Slate", moduleRules)
     
+    proc genUnrealEdBindings() = 
+      genBindingsWithDeps("UnrealEd", moduleRules)
+    
     proc genMeshDescription() = 
       genBindingsWithDeps("MeshDescription", moduleRules)
 
@@ -177,7 +181,7 @@ uClass AActorCodegen of AActor:
       genBindings("CoreUObject", moduleRules)
 
     proc printEngineDeps() = 
-      var module = tryGetPackageByName("Engine")
+      var module = tryGetPackageByName("UnrealEd")
               .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
               .get()
       UE_Warn module.dependencies.join(" \n")
@@ -190,3 +194,4 @@ uClass AActorCodegen of AActor:
     proc showType() = 
       let obj = getUTypeByName[UDelegateFunction]("OnAssetClassLoaded"&DelegateFuncSuffix)
       UE_Warn $obj
+
