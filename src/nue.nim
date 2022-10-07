@@ -108,7 +108,8 @@ let platformSwitches: Switches =
   block:
     when defined windows:
       @[
-        ("cc", "vcc")
+        ("cc", "vcc"),
+        passC("/std:c++20")
       ]
     elif defined macosx:
       let platformDir = 
