@@ -26,7 +26,7 @@ proc setTestActorLocation*(obj : ATestActorPtr;
 
 
 #This is temp
-proc getCurrentActiveWorld() : UWorldPtr {.importcpp:"UReflectionHelpers::GetCurrentActiveWorld()", header:ueIncludes.}
+# proc getCurrentActiveWorld() : UWorldPtr {.importcpp:"UReflectionHelpers::GetCurrentActiveWorld()", header:ueIncludes.}
 
 proc getOwner2*(obj : UActorComponentPtr): AActorPtr {.importcpp: "#->GetOwner()", header: ueIncludes.}
 
@@ -48,8 +48,8 @@ uClass UNimActorComponentTest of UActorComponent:
       UE_Log $actor.isNil()
       UE_Log "Ends testfunc"
 
-      let world = getCurrentActiveWorld()
-      UE_Log $world
+      # let world = getCurrentActiveWorld()
+      # UE_Log $world
       # UE_Log $world.isNil()
 
 
@@ -79,22 +79,22 @@ uClass AObjectEngineExample of ATestActor:
 
   ufuncs(CallInEditor):
     proc resetRelativeLocation() = 
-      let prev : FVector = self.k2_GetActorLocation()
+      let prev : FVector = self.getActorLocation()
       try:
         let actor : AActorPtr = self.childComp.getOwner2()
         var hit : FHitResult
-        discard actor.k2_SetActorLocation(makeFVector(0, 0, 100), false, hit, true )
+        discard actor.setActorLocation(makeFVector(0, 0, 100), false, hit, true )
       except:
         UE_Error "A problem ocurred "
 
         discard
 
     proc moveAddLocation() = 
-      let prev : FVector = self.k2_GetActorLocation()
+      let prev : FVector = self.getActorLocation()
       try:
         let actor : AActorPtr = self.childComp.getOwner2()
         var hit : FHitResult
-        actor.k2_AddActorLocalOffset(makeFVector(0, 0, 100), false, hit, true )
+        actor.addActorLocalOffset(makeFVector(0, 0, 100), false, hit, true )
         UE_Log "add localoffset called"
       except:
         UE_Error "A problem ocurred "
@@ -105,15 +105,6 @@ uClass AObjectEngineExample of ATestActor:
       UE_Log $self.getClass()
       setTestActorLocation(self, makeFVector(0, 0, 1000))
 
-
-
-proc nimResetLocationOutside(self: AObjectEngineExamplePtr) {. ufunc, BlueprintCallable, CallInEditor .} = 
-    UE_Log "nimResetLocationOutside called"
-    self.setTestActorLocation(makeFVector(0, 0, 2000))
-
-    
-  #   proc moveStaticMesh() = 
-  #     self.nimStaticMesh.relativeLocation =  makeFVector(0, 0, 100) +  self.nimStaticMesh.relativeLocation
 
   #   proc getAllActors() = 
   #     # let world = self.getWorld()

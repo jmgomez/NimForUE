@@ -183,7 +183,7 @@ uClass AActorCodegen of AActor:
       genBindings("CoreUObject", moduleRules)
 
     proc printEngineDeps() = 
-      var module = tryGetPackageByName("UnrealEd")
+      var module = tryGetPackageByName("Engine")
               .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
               .get()
       UE_Warn module.dependencies.join(" \n")

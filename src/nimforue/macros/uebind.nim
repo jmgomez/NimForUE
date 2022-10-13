@@ -230,7 +230,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
                             )
     let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
 
-    var fnBody = genAst(uFnName=newStrLitNode(funField.name), paramInsideBodyAsType, paramDeclaration, generateObjForStaticFunCalls, callUFuncOn, returnCall):
+    var fnBody = genAst(uFnName=newStrLitNode(funField.actualFunctionName), paramInsideBodyAsType, paramDeclaration, generateObjForStaticFunCalls, callUFuncOn, returnCall):
         paramInsideBodyAsType
         paramDeclaration
         var fnName {.inject, used .} : FString = uFnName
