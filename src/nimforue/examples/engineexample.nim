@@ -8,10 +8,21 @@ import std/random
 
 const testActorUEType = UEType(name: "ATestActor", parent: "AActor", kind: uetClass, 
                   fields: @[
-                 
+                         
                       ])
 genType(testActorUEType)
 
+
+proc setTestActorLocation*(obj : ATestActorPtr;
+                           newLocation : FVector): void {.exportcpp,
+    thiscall.} =
+  type
+    Params  = object
+      newLocation: FVector
+
+  var param  = Params(newLocation: newLocation)
+  var fnName {.used.}: FString = "SetTestActorLocation"
+  callUFuncOn(obj, fnName, param.addr)
 
 
 #This is temp
@@ -41,33 +52,6 @@ uClass UNimActorComponentTest of UActorComponent:
       UE_Log $world
       # UE_Log $world.isNil()
 
-
-# Begin Map
-#    Begin Level
-#       Begin Actor Class=/Game/LevelPrototyping/BP_StaticMeshActor.BP_StaticMeshActor_C Name=BP_StaticMeshActor_C_1 Archetype=/Game/LevelPrototyping/BP_StaticMeshActor.BP_StaticMeshActor_C'/Game/LevelPrototyping/BP_StaticMeshActor.Default__BP_StaticMeshActor_C'
-#          Begin Object Class=/Script/Engine.StaticMeshComponent Name="StaticMeshComponent0" Archetype=StaticMeshComponent'/Game/LevelPrototyping/BP_StaticMeshActor.Default__BP_StaticMeshActor_C:StaticMeshComponent0'
-#          End Object
-#          Begin Object Class=/Game/LevelPrototyping/BP_NimActorComponent.BP_NimActorComponent_C Name="BP_NimActorComponent" Archetype=BP_NimActorComponent_C'/Game/LevelPrototyping/BP_StaticMeshActor.BP_StaticMeshActor_C:BP_NimActorComponent_GEN_VARIABLE'
-#          End Object
-#          Begin Object Name="StaticMeshComponent0"
-#             StaticMeshImportVersion=1
-#             RelativeLocation=(X=-760.000000,Y=-900.000000,Z=1000.000000)
-#          End Object
-#          Begin Object Name="BP_NimActorComponent"
-#             UCSSerializationIndex=0
-#             bNetAddressable=True
-#             CreationMethod=SimpleConstructionScript
-#          End Object
-#          BP_NimActorComponent="BP_NimActorComponent"
-#          StaticMeshComponent="StaticMeshComponent0"
-#          bCanBeInCluster=False
-#          RootComponent="StaticMeshComponent0"
-#          ActorLabel="BP_StaticMeshActor"
-#       End Actor
-#    End Level
-# Begin Surface
-# End Surface
-# End Map
 
 
 
@@ -104,7 +88,30 @@ uClass AObjectEngineExample of ATestActor:
         UE_Error "A problem ocurred "
 
         discard
-      
+
+    proc moveAddLocation() = 
+      let prev : FVector = self.k2_GetActorLocation()
+      try:
+        let actor : AActorPtr = self.childComp.getOwner2()
+        var hit : FHitResult
+        actor.k2_AddActorLocalOffset(makeFVector(0, 0, 100), false, hit, true )
+        UE_Log "add localoffset called"
+      except:
+        UE_Error "A problem ocurred "
+
+        discard
+    proc nimResetLocation() = 
+      UE_Log $self
+      UE_Log $self.getClass()
+      setTestActorLocation(self, makeFVector(0, 0, 1000))
+
+
+
+proc nimResetLocationOutside(self: AObjectEngineExamplePtr) {. ufunc, BlueprintCallable, CallInEditor .} = 
+    UE_Log "nimResetLocationOutside called"
+    self.setTestActorLocation(makeFVector(0, 0, 2000))
+
+    
   #   proc moveStaticMesh() = 
   #     self.nimStaticMesh.relativeLocation =  makeFVector(0, 0, 100) +  self.nimStaticMesh.relativeLocation
 

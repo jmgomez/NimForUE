@@ -65,5 +65,16 @@ void ATestActor::SetColorByStringInMesh(FString ColorStr) {
 	}
 }
 
+void ATestActor::SetTestActorLocation(FVector NewLocation)
+{
+	this->SetActorLocation(NewLocation);
+	UE_LOG(LogTemp, Log, TEXT("Test Actor Location called. The name is %s and the new loc is %s"), *GetName(), *NewLocation.ToCompactString());
+}
+
+void ATestActor::ResetActorLocation()
+{
+	this->SetTestActorLocation(FVector(0, 0, 100));
+}
+
 
 

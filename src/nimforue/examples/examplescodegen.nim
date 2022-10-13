@@ -176,6 +176,8 @@ uClass AActorCodegen of AActor:
 
     proc genNimForUEBindings() = 
       genBindings("NimForUEBindings", moduleRules)
+    proc genNimForUE() = 
+      genBindings("NimForUE", moduleRules)
 
     proc genCoreUObjectBindings() = 
       genBindings("CoreUObject", moduleRules)

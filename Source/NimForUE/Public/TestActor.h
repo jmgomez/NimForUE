@@ -72,4 +72,11 @@ public:
 
 	UFUNCTION()
 	void SetColorByStringInMesh(FString Color);
+
+	UFUNCTION(BlueprintCallable)
+	void SetTestActorLocation(FVector NewLocation);
+
+	UFUNCTION(CallInEditor)
+	void ResetActorLocation();
+
 };

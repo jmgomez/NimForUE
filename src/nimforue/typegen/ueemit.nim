@@ -581,7 +581,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                 genParmas
                 # var stackCopy {.inject.} = stack This would allow to create a super function to call the impl but not sure if it worth the trouble   
                 stack.increaseStack()
-                let selfName {.inject used.} = ueCast[className](context) 
+                let selfName {.inject, used.} = ueCast[className](context) 
                 innerFunction
                 setOutParams
 
