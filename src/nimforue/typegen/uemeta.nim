@@ -20,7 +20,7 @@ func makeFieldAsUPropDel*(name, uPropType: string, flags=CPF_None, metas:seq[UEM
 
 
 func makeFieldAsUFun*(name:string, signature:seq[UEField], className:string, flags=FUNC_None, metadata: seq[UEMetadata] = @[]) : UEField = 
-    UEField(kind:uefFunction, name:name, signature:signature, className:className, fnFlags:EFunctionFlagsVal(flags), metadata:metadata)
+    UEField(kind:uefFunction, name:name, signature:signature, className:className, fnFlags:EFunctionFlagsVal(flags), metadata:metadata, actualFunctionName:name)
 
 func makeFieldAsUPropParam*(name, uPropType: string, flags=CPF_Parm) : UEField = 
     UEField(kind:uefProp, name: name, uePropType: uPropType, propFlags:EPropertyFlagsVal(flags))       
@@ -237,8 +237,6 @@ func toUEField*(ufun:UFunctionPtr, rules: seq[UEImportRule] = @[]) : Option[UEFi
     fnField.actualFunctionName = actualName
     let isStatic = (FUNC_Static in ufun.functionFlags) #Skips static functions for now so we can quickly iterate over compiling the engine types
     if ((ufun.isBpExposed()) or uerImportBlueprintOnly notin rules):
-        UE_Log &"FN: {ufun.getName()}"
-        UE_Log $fnField
         some fnField
     else:
         none(UEField)

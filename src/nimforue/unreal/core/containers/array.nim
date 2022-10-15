@@ -7,6 +7,7 @@ func num*[T](arr:TArray[T]): int32 {.importcpp: "#.Num()" noSideEffect}
 proc remove*[T](arr:TArray[T], value:T) {.importcpp: "#.Remove(#)".}
 proc removeAt*[T](arr:TArray[T], idx:int32) {.importcpp: "#.RemoveAt(#)".}
 proc add*[T](arr:TArray[T], value:T) {.importcpp: "#.Add(#)".}
+proc append*[T](a, b:TArray[T]) {.importcpp: "#.Append(#)".}
 func reserve*[T](arr:TArray[T], value:int32) {.importcpp: "#.Reserve(#)".}
 
 proc `[]`*[T](arr:TArray[T], i: int32): var T {. importcpp: "#[#]",  noSideEffect.}
@@ -18,6 +19,12 @@ proc `[]=`*[T](arr:TArray[T], i: int32, val : T)  {. importcpp: "#[#]=#",  }
 
 
 func makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
+func makeTArray*[T](a : T, args:varargs[T]): TArray[T] = 
+  result = makeTArray[T]()
+  result.add a
+  for arg in args:
+    result.add arg
+
 # proc makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
 
 # proc makeTArray*[T](values:openarray[T]): TArray[T] {.importcpp: "'0({@})", constructor, nodecl.} #TODO
@@ -51,7 +58,12 @@ func toSeq*[T](arr:TArray[T]) : seq[T] =
     xs.add x
   xs
 
+
+
 func `$`*[T](arr:TArray[T]) : string = $toSeq(arr)
+func `&`*[T](a, b:TArray[T]) : TArray[T] = 
+  a.append(b)
+  a
 
 func toTArray*[T](arr:seq[T]) : TArray[T] = 
   var xs = makeTArray[T]()

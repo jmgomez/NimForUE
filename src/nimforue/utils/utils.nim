@@ -16,6 +16,7 @@ func tail*[T](xs: seq[T]): seq[T] =
   else: xs[1..^1]
 
 func any*[T](xs: seq[T]): bool = len(xs) != 0
+func any*[T](xs: seq[T], fn: T->bool): bool = xs.filter(fn).any()
 
 func firstIndexOf*[T](xs: seq[T], fn: T->bool): int =
   var i = 0

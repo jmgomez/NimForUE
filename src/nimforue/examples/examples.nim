@@ -8,6 +8,7 @@ import objectexample
 import examplescodegen
 #import examplecoreuobject
 import engineexample
-import editorexample
-import slateexamples
+# import editorexample
+# import slateexamples
+import nimconfexample
 #import structexampleissue

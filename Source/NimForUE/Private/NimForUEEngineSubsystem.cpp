@@ -28,7 +28,7 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 		return;
 		
 	}
-	if (NimHotReload->bShouldHotReload) {
+	if (NimHotReload->bShouldHotReload && !bIsFirstLoad) {
 	// if (!bIsFirstLoad) {
 		NimForUESubsystem->EditorUtils = NewObject<UEditorUtils>();\
 		NimForUESubsystem->EditorUtils->HotReload(NimHotReload, UnrealReload);

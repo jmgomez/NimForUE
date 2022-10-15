@@ -51,8 +51,10 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
         let isComponent = isChildOf[UActorComponent](cls)
         let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
         objProp.setPropertyClass(cls)
-        if isComponent:
+        if isComponent: 
             objProp.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
+
+
         objProp
     of emTSoftObjectPtr:
         let softObjProp = newFSoftObjectProperty(makeFieldVariant(outer), name, flags)
@@ -108,6 +110,7 @@ func isBasicProperty*(nimTypeName: string) : bool =
         "FName"
     ]
 
+
        
 
 func newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr = 
@@ -147,7 +150,15 @@ func newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
         elif propType.contains("TArray"):
             let arrayProp = newFArrayProperty(makeFieldVariant(outer), name, flags)
             let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-            let inner = newFProperty(arrayProp, propField, optPropType=innerType, optName="Inner")
+            let inner = newFProperty(outer, propField, optPropType=innerType, optName="Inner")
+            #TODO extract this so it can be easily apply to all instanced
+            let isObjProp = not castField[FObjectProperty](inner).isNil() 
+            if isObjProp: 
+                discard
+                # arrayProp.setPropertyFlags(CPF_UObjectWrapper)
+                # arrayProp.setPropertyFlags(CPF_ContainsInstancedReference)
+                # inner.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
+
             arrayProp.addCppProperty(inner)
             arrayProp
         elif propType.contains("TSet"):

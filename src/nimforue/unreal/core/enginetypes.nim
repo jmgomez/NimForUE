@@ -9,8 +9,8 @@ type
   AControllerPtr* = ptr AController
   APlayerController* {.importcpp, inheritable, pure .}= object of AController
   APlayerControllerPtr* = ptr APlayerController
-  APawn* {.importcpp, inheritable, pure .} = object of AActor
-  APawnPtr* = ptr APawn
+  # APawn* {.importcpp, inheritable, pure .} = object of AActor
+  # APawnPtr* = ptr APawn
 
   AInfo* {.importcpp, inheritable, pure .}= object of AActor
   AInfoPtr* = ptr AInfo
@@ -41,10 +41,10 @@ type
   UAnimBlueprintGeneratedClassPtr* = ptr UAnimBlueprintGeneratedClass
 
 
-  UTexture* {.importcpp, inheritable, pure .} = object of UObject
-  UTexturePtr* = ptr UTexture
-  UTextureRenderTarget2D* {.importcpp, inheritable, pure .} = object of UTexture
-  UTextureRenderTarget2DPtr* = ptr UTextureRenderTarget2D
+  # UTexture* {.importcpp, inheritable, pure .} = object of UObject
+  # UTexturePtr* = ptr UTexture
+  # UTextureRenderTarget2D* {.importcpp, inheritable, pure .} = object of UTexture
+  # UTextureRenderTarget2DPtr* = ptr UTextureRenderTarget2D
 
   UAsyncActionLoadPrimaryAssetBase* {.importcpp, inheritable, pure .} = object of UObject
 
