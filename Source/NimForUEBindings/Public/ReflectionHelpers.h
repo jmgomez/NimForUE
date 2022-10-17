@@ -103,4 +103,6 @@ public:
 	static void NimForUEError(FString Msg);
 	
 	static TArray<FString> GetEnums(UEnum* Enum);
+
+	static TArray<FString> GetAllModuleDepsForPlugin(FString PluginName);
 };

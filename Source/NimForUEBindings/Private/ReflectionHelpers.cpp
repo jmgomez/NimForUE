@@ -4,6 +4,7 @@
 #include "ReflectionHelpers.h"
 
 #include "NimForUEBindings.h"
+#include "Interfaces/IPluginManager.h"
 
 
 UClass* UReflectionHelpers::GetClassByName(FString ClassName) {
@@ -153,6 +154,18 @@ TArray<FString> UReflectionHelpers::GetEnums(UEnum* Enum)
 	}
 	return Names;
 	
+}
+
+TArray<FString> UReflectionHelpers::GetAllModuleDepsForPlugin(FString PluginName) {
+	//Not sure if this would work when not building against the editor
+	auto Plugin = IPluginManager::Get().FindPlugin(PluginName);
+	TArray<FString> Modules = {};
+	if (Plugin.IsValid()) {
+		for(FModuleDescriptor ModuleDescriptor : Plugin->GetDescriptor().Modules) {
+			Modules.Add(ModuleDescriptor.Name.ToString());
+		}
+	}
+	return Modules;
 }
 
 

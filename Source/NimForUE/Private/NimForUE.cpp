@@ -22,6 +22,7 @@ void FNimForUEModule::LoadNimForUEHost() {
 	//The gues library, it's loaded in the EngineSubsystem
 #if PLATFORM_WINDOWS
 	FString PluginPath =  IPluginManager::Get().FindPlugin("NimForUE")->GetBaseDir();
+	
 	FString DllPath = FPaths::Combine(PluginPath, "\\Binaries\\nim\\ue\\hostnimforue.dll");
 	//Ideally it will be set through a Deinition to keep one source of truth
 	//FString DllPath = NIM_FOR_UE_LIB_PATH;

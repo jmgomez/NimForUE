@@ -7,10 +7,11 @@ public class NimForUEBindings : ModuleRules
 			"Core", 
 			"CoreUObject", 
 			"Engine",
-			
+			"Projects",
 			//"UnrealEd"
 			
 		});
+		
 
 
 		if (Target.bBuildEditor) {

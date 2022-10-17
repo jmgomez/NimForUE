@@ -3,6 +3,13 @@ import ../unreal/bindings/[engine]
 import std/[strformat, sugar, options]
 
 
+
+
+uClass UNimAnimBlueprint of UAnimInstance:
+  (BlueprintType, Blueprintable)
+  uprops(EditAnywhere, BlueprintReadWrite):
+    bTestNim:bool
+
 uClass UItem of UDataAsset:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite):

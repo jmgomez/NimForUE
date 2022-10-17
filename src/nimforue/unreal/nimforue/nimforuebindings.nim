@@ -103,6 +103,10 @@ proc newObjectFromClass*(cls:UClassPtr) : UObjectPtr = newObjectFromClass(nil, c
 proc newObjectFromClass(params:FStaticConstructObjectParameters) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
 
 
+ 
+proc getAllModuleDepsForPlugin*(pluginName:FString) : TArray[FString] {.importcpp:"UReflectionHelpers::GetAllModuleDepsForPlugin(@)".}
+
+
 #TODO This can be (and should be optmized in multiple ways. 
 #1. Define package when possible, 
 #2. Do not pass copy of FStrings around.
