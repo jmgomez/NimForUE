@@ -51,8 +51,8 @@ type
   ASceneCapture* {.importcpp, inheritable, pure .} = object of AActor
   ASceneCapturePtr* = ptr ASceneCapture
 
-  UDataAsset* {.importcpp, inheritable, pure .} = object of UObject
-  UDataAssetPtr* = ptr UDataAsset
+  # UDataAsset* {.importcpp, inheritable, pure .} = object of UObject
+  # UDataAssetPtr* = ptr UDataAsset
 
   AVolume* {.importcpp, inheritable, pure .} = object of UObject
   AVolumePtr* = ptr AVolume

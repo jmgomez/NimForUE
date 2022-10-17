@@ -154,3 +154,6 @@ func tryParseInt*(s: string): Option[int] =
 proc tryGet*[K, V](self: Table[K, V], key: K): Option[V] {.inline.} =
   if self.contains(key): some(self[key])
   else: none[V]()
+
+#pointers
+proc isNotNil*[T](v : ptr T) : bool = not v.isNil()
