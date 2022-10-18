@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[strformat, strutils, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
+import std/[strformat, tables, strutils, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../typegen/uemeta
 import ../../buildscripts/nimforueconfig
 import ../macros/makestrproc
@@ -131,6 +131,24 @@ proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule], skipR
     genBindings(moduleName, moduleRules)
 
 
+proc getAllInstalledPlugins() : seq[string] =
+  let config = getNimForUEConfig()
+  try:        
+    let projectJson = readFile(config.gamePath).parseJson()
+    let plugins = projectJson["Plugins"]                      
+                    .filterIt(it["Enabled"].jsonTo(bool))
+                    .mapIt(it["Name"].jsonTo(string))
+    return plugins
+  except:
+    let e : ref Exception = getCurrentException()
+    UE_Error &"Error: {e.msg}"
+    UE_Error &"Error: {e.getStackTrace()}"
+    UE_Error &"Failed to parse project json"
+    return @[]
+  
+
+
+
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
@@ -192,7 +210,48 @@ uClass AActorCodegen of AActor:
       let obj = getClassByName("UserWidget")
       UE_Warn obj.getModuleName()
 
-    
+    proc showPluginDeps() = 
+      
+      let plugins = getAllInstalledPlugins()
+
+
+
+      let deps = plugins 
+                  .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
+                  .foldl(a & b, newSeq[string]()) & "NimForUEDemo"
+
+      proc getUEModuleFromModule(module:string) : UEModule =
+          tryGetPackageByName(module)
+            .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject", "Engine"]))
+            .get()
+      
+      var modCache = newTable[string, UEModule]()
+      proc getDepsFromModule(modName:string) : seq[string] = 
+        UE_Log &"Getting deps for {modName}"
+        let deps =
+          if modName in modCache:
+            modCache[modName].dependencies
+          else:
+            let module = getUEModuleFromModule(modName)
+            modCache[modName] = module
+            module.dependencies
+
+        deps & 
+          deps         
+            .map(getDepsFromModule)
+            .foldl(a & b, newSeq[string]())
+            .deduplicate()
+
+      let starts = now()
+      let modules = deps.map(getDepsFromModule)
+                        .foldl(a & b, newSeq[string]()) & deps
+                        .deduplicate()
+
+      let ends = now() - starts
+      UE_Log &"It took {ends} to get all deps"
+      UE_Warn $deps
+      UE_Warn $modules
+
     proc showType() = 
       let obj = getUTypeByName[UDelegateFunction]("OnAssetClassLoaded"&DelegateFuncSuffix)
       UE_Warn $obj
