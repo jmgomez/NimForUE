@@ -61,6 +61,8 @@ let moduleRules = @[
           # "AudioLinkSettings" #I should instead not import property of certain type
 
           #By type name
+          # "UClothingSimulationInteractor",
+          # "UClothingAssetBasePtr",
           "UAudioLinkSettingsAbstract",
           "TFieldPath",
           "UWorld", #cant be casted to UObject
@@ -118,6 +120,8 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
     UE_Log &"Failed to generate {codegenPath} nim binding"
 
 
+
+
 proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule], skipRoot = false, prevGeneratedMods : seq[string] = @[]) =
   var module = tryGetPackageByName(moduleName)
                 .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
@@ -173,7 +177,7 @@ uClass AActorCodegen of AActor:
     ]#
 
     proc genEngineBindings() = 
-      # genBindingsWithDeps("Engine", moduleRules, skipRoot = true)
+      genBindingsWithDeps("Engine", moduleRules, skipRoot = true)
       genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
       # genBindings("Engine", moduleRules )
 
@@ -210,7 +214,7 @@ uClass AActorCodegen of AActor:
       let obj = getClassByName("UserWidget")
       UE_Warn obj.getModuleName()
 
-    proc showPluginDeps() = 
+    proc showPluginDep2() = 
       
       let plugins = getAllInstalledPlugins()
 
@@ -218,11 +222,11 @@ uClass AActorCodegen of AActor:
 
       let deps = plugins 
                   .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-                  .foldl(a & b, newSeq[string]()) & "NimForUEDemo"
-
+                  .foldl(a & b, newSeq[string]()) & "NimForUEDemo" & "Engine"
+      UE_Log &"Plugins: {plugins}"
       proc getUEModuleFromModule(module:string) : UEModule =
           tryGetPackageByName(module)
-            .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject", "Engine"]))
+            .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject", "UMG", "AudioMixer", "UnrealEd", "EditorSubsystem"]))
             .get()
       
       var modCache = newTable[string, UEModule]()
@@ -243,12 +247,22 @@ uClass AActorCodegen of AActor:
             .deduplicate()
 
       let starts = now()
-      let modules = deps.map(getDepsFromModule)
-                        .foldl(a & b, newSeq[string]()) & deps
+      let modules = (deps.map(getDepsFromModule)
+                        .foldl(a & b, newSeq[string]()) & deps)
                         .deduplicate()
 
-      let ends = now() - starts
+      var ends = now() - starts
       UE_Log &"It took {ends} to get all deps"
+      let blueprintOnly = ["Engine"]
+      for m in modules:
+        let rules =  moduleRules & 
+          (if m in blueprintOnly: @[makeImportedRuleModule(uerImportBlueprintOnly)]
+          else: @[])
+        genBindings(m, rules)#TOOD dont do this. The module is already parsed. GenBindings should just return the parameter
+        UE_Log m
+      ends = now() - starts
+      UE_Log &"It took {ends} to gen all deps"
+
       UE_Warn $deps
       UE_Warn $modules
 

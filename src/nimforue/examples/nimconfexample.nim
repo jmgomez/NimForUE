@@ -64,8 +64,13 @@ uClass ANimConfCharacter of ACharacter:
   (BlueprintType, Blueprintable)
   uprops(EditAnywhere, BlueprintReadWrite):
     inventory : UInventoryComponentPtr = initializer.createDefaultSubobject[:UInventoryComponent](n"InventoryComponent")
-    
+    initialItems : TArray[UItemPtr] = makeTArray[UItemPtr]()
+
   ufuncs():  
+    proc beginPlay() = 
+      for item in self.initialItems:
+        self.inventory.addItem(item)
+
     proc tick(deltaTime:float32) = 
       printString(self, &"Items: {self.inventory.items}", true, false, FLinearColor(r:1.0, g:0.0, b:0.0, a:1.0), 0.0, n"")
 

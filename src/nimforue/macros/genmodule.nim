@@ -1,4 +1,4 @@
-import std/[options, osproc, strutils,sugar, sequtils,strformat,  genasts, macros, importutils, os]
+import std/[options, osproc, strutils,sugar, sequtils,strformat, strutils,  genasts, macros, importutils, os]
 
 include ../unreal/definitions
 import ../utils/ueutils
@@ -241,7 +241,7 @@ proc genExportModuleDecl*(moduleDef:UEModule) : NimNode =
             typeSection.add genUEnumTypeDefBinding(typedef)
         of uetDelegate:
             typeSection.add genDelTypeDef(typeDef, uexExport)
-        else: continue
+       
     result.add typeSection
 
     for typeDef in moduleDef.types:
@@ -295,7 +295,11 @@ proc genHeaders*(moduleDef: UEModule,  headersPath: string) =
                         .mapIt(&"class {it.name}_ : public {getParentName(it)}{{}};\n")
                         .join()
    
-    let headerName = (name:string) => &"{name.firstToUpper()}.h"
+    func headerName (name:string) : string =
+        const bindSuffix = "_NimBinding.h"
+        let name = &"{name.firstToUpper()}"
+        if name.endsWith(bindSuffix): name else: name & bindSuffix
+
     let includeHeader = (name:string) => &"#include \"{headerName(name)}\" \n"
     let headerPath = headersPath / "Modules" / headerName(moduleDef.name)
     let deps = moduleDef
@@ -314,11 +318,10 @@ proc genHeaders*(moduleDef: UEModule,  headersPath: string) =
         walkDir( headersPath / "Modules")
         .toSeq()
         .filterIt(it[0] == pcFile and it[1].endsWith(".h"))
-        .mapIt(it[1].split("\\")[^1].replace(".h", ""))
-        .mapIt("Modules/" & it)
-        .map(includeHeader)
-        .join()
-
+        .mapIt(it[1].split("\\")[^1])#replace(".h", ""))
+        .mapIt("#include \"Modules/" & it & "\"")
+        # .map(includeHeader)
+        .join("\n ") #&"#include \"{headerName(name)}\" \n"
     let mainHeaderPath = headersPath / "UEGenClassDefs.h"
     let headerAsDep = includeHeader(moduleDef.name)
     let mainHeaderContent = &"""

@@ -104,25 +104,35 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   ]
 
   proc getEngineRuntimeIncludePathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Public"
+  proc getEngineRuntimeIncludeClassesPathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Classes"
   proc getEngineIntermediateIncludePathFor(moduleName:string) : string = engineDir / "Intermediate/Build" / platformDir / "UnrealEditor/Inc" / moduleName
 
   let runtimeModules = @["CoreUObject", "Core", "TraceLog", "Launch", "ApplicationCore", 
       "Projects", "Json", "PakFile", "RSA", "RenderCore",
       "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
       "SlateCore", "Slate", "TypedElementFramework", "Renderer", "AnimationCore",
-      "ClothingSystemRuntimeInterface",
+      "ClothingSystemRuntimeInterface", "SandboxFile", "NetworkFileSystem",
+      "Experimental/Interchange/Core",
       "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore", "AssetRegistry", "DeveloperSettings"]
 
-  let developerModules = @["DesktopPlatform", "ToolMenus", "TargetPlatform", "SourceControl"]
+  let developerModules = @["DesktopPlatform", 
+  "ToolMenus", "TargetPlatform", "SourceControl", 
+  "DeveloperToolSettings",
+  "Localization"]
   let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry", 
-    "UnrealEd",
-    "TypedElementFramework","Chaos", "ChaosCore",
+    "UnrealEd", "ClothingSystemRuntimeInterface",  "EditorSubsystem", "InterchangeCore",
+    "TypedElementFramework","Chaos", "ChaosCore", "EditorStyle", "EditorFramework",
+    "Localization", "DeveloperToolSettings",
     "InputCore", "DeveloperSettings", "SlateCore", "Slate", "ToolMenus"]
 
-  let editorModules = @["UnrealEd", "PropertyEditor", "EditorStyle"]
+  let editorModules = @["UnrealEd", "PropertyEditor", 
+  "EditorStyle", "EditorSubsystem","EditorFramework",
+  
+  ]
   let moduleHeaders = 
     runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
     developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
+    developerModules.map(module=>getEngineRuntimeIncludeClassesPathFor("Developer", module)) & #if it starts to complain about the lengh of the cmd line. Optimize here
     editorModules.map(module=>getEngineRuntimeIncludePathFor("Editor", module)) & 
     intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module))
 
