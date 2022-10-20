@@ -358,6 +358,16 @@ task gencppbindings, "Generates the cpp bindings":
   removeDir("./.nimcache/gencppbindings") 
   doAssert(not dirExists("./.nimcache/gencppbindings"))
 
+  #runs the codegen
+  # gathers the module from the file
+  let reflectionDataPath = "./src/.reflectiondata/"
+  let genCodeCmds = walkPattern(reflectionDataPath&"*.nim")
+                      .toSeq()
+                      .mapIt(&"nue.exe codegen --module:\"" & it & "\"")
+
+  doAssert(execProcesses(genCodeCmds)==0)
+
+
   # remove bindings from guestpch and recopy any generated when compiling gencppbindings
   let guestPCHCleanPattern = &"./.nimcache/guestpch/{importedBindingPrefix}*"
   for path in walkPattern(guestPCHCleanPattern):
