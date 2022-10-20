@@ -143,7 +143,6 @@ proc genReflectionData(module:UEModule) =
 
 
 
-
 proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule], skipRoot = false, prevGeneratedMods : seq[string] = @[]) =
   var module = tryGetPackageByName(moduleName)
                 .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))

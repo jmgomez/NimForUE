@@ -471,7 +471,7 @@ func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[strin
                 .foldl(a & b, newSeq[string]())
                 .deduplicate()
                 .filterIt(it != name and it notin excludeDeps)
-
+  UE_Log &"Deps for {name}: {deps}"
   some makeUEModule(name, types, rules, deps)
 
 

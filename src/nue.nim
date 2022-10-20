@@ -365,7 +365,10 @@ task gencppbindings, "Generates the cpp bindings":
                       .toSeq()
                       .mapIt(&"nue.exe codegen --module:\"" & it & "\"")
 
-  doAssert(execProcesses(genCodeCmds)==0)
+  # doAssert(execProcesses(genCodeCmds)==0)
+  for cmd in genCodeCmds:
+    log "Running: " & cmd
+    doAssert(execCmd(cmd) == 0)
 
 
   # remove bindings from guestpch and recopy any generated when compiling gencppbindings
