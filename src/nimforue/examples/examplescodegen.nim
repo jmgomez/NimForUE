@@ -120,6 +120,28 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
     UE_Log &"Failed to generate {codegenPath} nim binding"
 
 
+proc genReflectionData(module:UEModule) = 
+  let moduleName = module.name
+  let config = getNimForUEConfig()
+  let reflectionDataPath = config.pluginDir / "src" / ".reflectiondata" #temporary
+  createDir(reflectionDataPath)
+  let bindingsDir = config.pluginDir / "src"/"nimforue"/"unreal"/"bindings"
+  createDir(bindingsDir)
+  createDir(bindingsDir / "exported")
+
+  let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
+  let codegenPath = reflectionDataPath / moduleName.toLower() & ".nim"
+  let exportBindingsPath = bindingsDir / "exported" / moduleName.toLower() & ".nim"
+  let importBindingsPath = bindingsDir / moduleName.toLower() & ".nim"
+  UE_Log &"-= The codegen module path is {codegenPath} =-"
+  let codegenTemplate = codegenNimTemplate % [
+      escape($module.toJson()), escape(exportBindingsPath), escape(importBindingsPath), escape(nimHeadersDir)
+    ]
+  writeFile(codegenPath, codegenTemplate)
+
+
+
+
 
 
 proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule], skipRoot = false, prevGeneratedMods : seq[string] = @[]) =
@@ -214,7 +236,9 @@ uClass AActorCodegen of AActor:
       let obj = getClassByName("UserWidget")
       UE_Warn obj.getModuleName()
 
-    proc showPluginDep2() = 
+
+
+    proc genReflectionData() = 
       
       let plugins = getAllInstalledPlugins()
 
@@ -225,9 +249,13 @@ uClass AActorCodegen of AActor:
                   .foldl(a & b, newSeq[string]()) & "NimForUEDemo" & "Engine"
       UE_Log &"Plugins: {plugins}"
       proc getUEModuleFromModule(module:string) : UEModule =
-          tryGetPackageByName(module)
-            .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject", "UMG", "AudioMixer", "UnrealEd", "EditorSubsystem"]))
-            .get()
+        let blueprintOnly = ["Engine"]
+        let rules =  moduleRules & 
+          (if module in blueprintOnly: @[makeImportedRuleModule(uerImportBlueprintOnly)]
+          else: @[])
+        tryGetPackageByName(module)
+          .flatmap((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps= @["CoreUObject", "UMG", "AudioMixer", "UnrealEd", "EditorSubsystem"]))
+          .get()
       
       var modCache = newTable[string, UEModule]()
       proc getDepsFromModule(modName:string) : seq[string] = 
@@ -239,12 +267,12 @@ uClass AActorCodegen of AActor:
             let module = getUEModuleFromModule(modName)
             modCache[modName] = module
             module.dependencies
-
         deps & 
           deps         
             .map(getDepsFromModule)
             .foldl(a & b, newSeq[string]())
             .deduplicate()
+
 
       let starts = now()
       let modules = (deps.map(getDepsFromModule)
@@ -253,13 +281,10 @@ uClass AActorCodegen of AActor:
 
       var ends = now() - starts
       UE_Log &"It took {ends} to get all deps"
-      let blueprintOnly = ["Engine"]
-      for m in modules:
-        let rules =  moduleRules & 
-          (if m in blueprintOnly: @[makeImportedRuleModule(uerImportBlueprintOnly)]
-          else: @[])
-        genBindings(m, rules)#TOOD dont do this. The module is already parsed. GenBindings should just return the parameter
-        UE_Log m
+     
+      for module in modCache.values:
+        genReflectionData(module)
+        
       ends = now() - starts
       UE_Log &"It took {ends} to gen all deps"
 
