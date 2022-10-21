@@ -171,7 +171,65 @@ proc getAllInstalledPlugins() : seq[string] =
     UE_Error &"Failed to parse project json"
     return @[]
   
+proc genReflectionData() = 
+      let plugins = getAllInstalledPlugins()
 
+      let deps = plugins 
+                  .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
+                  .foldl(a & b, newSeq[string]()) & "NimForUEDemo" & "Engine"
+      UE_Log &"Plugins: {plugins}"
+      proc getUEModuleFromModule(module:string) : UEModule =
+        let blueprintOnly = ["Engine", "UMG"]
+        var excludeDeps = @["CoreUObject", "UMG", "AudioMixer", "UnrealEd", "EditorSubsystem"]
+        if module == "Engine":
+          excludeDeps = excludeDeps & "UMG"
+        
+        let rules =  moduleRules & 
+          (if module in blueprintOnly: @[makeImportedRuleModule(uerImportBlueprintOnly)]
+          else: @[])
+        tryGetPackageByName(module)
+          .flatmap((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps))
+          .get()
+      
+      var modCache = newTable[string, UEModule]()
+      proc getDepsFromModule(modName:string, currentLevel=0) : seq[string] = 
+        if currentLevel > 5: 
+          UE_Warn &"Reached max level for {modName}. Breaking the cycle"
+          return @[]
+        UE_Log &"Getting deps for {modName}"
+        let deps =
+          if modName in modCache:
+            modCache[modName].dependencies
+          else:
+            let module = getUEModuleFromModule(modName)
+            modCache[modName] = module
+            module.dependencies
+        deps & 
+          deps         
+            .mapIt(getDepsFromModule(it, currentLevel+1))
+            .foldl(a & b, newSeq[string]())
+            .deduplicate()
+
+
+      let starts = now()
+      let modules = (deps.mapIt(getDepsFromModule(it))
+                        .foldl(a & b, newSeq[string]()) & deps)
+                        .deduplicate()
+
+      var ends = now() - starts
+
+      let config = getNimForUEConfig()
+
+      let ueProject = UEProject(modules: modCache.values.toSeq())
+      let ueProjectAsJson = ueProject.toJson().pretty()
+      let ueProjectFilePath = config.pluginDir / ".reflectiondata" / "ueproject.json"
+      writeFile(ueProjectFilePath, ueProjectAsJson)
+        
+      ends = now() - starts
+      UE_Log &"It took {ends} to gen all deps"
+
+      UE_Warn $deps
+      UE_Warn $modules
 
 
 #This is just for testing/exploring, it wont be an actor
@@ -208,87 +266,15 @@ uClass AActorCodegen of AActor:
       # Hand pick classes
       # Static functions that collides can be virtual modules too. (We need to find the colliding functions)
   
-    proc genSlateBindings() = 
-      genBindingsWithDeps("Slate", moduleRules)
-    
-    proc genUnrealEdBindings() = 
-      genBindingsWithDeps("UnrealEd", moduleRules)
-    
-    proc genMeshDescription() = 
-      genBindingsWithDeps("MeshDescription", moduleRules)
-
-    proc genNimForUEBindings() = 
-      genBindings("NimForUEBindings", moduleRules)
-    proc genNimForUE() = 
-      genBindings("NimForUE", moduleRules)
-
-    proc genCoreUObjectBindings() = 
-      genBindings("CoreUObject", moduleRules)
-
-    proc printEngineDeps() = 
-      var module = tryGetPackageByName("Engine")
-              .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
-              .get()
-      UE_Warn module.dependencies.join(" \n")
-
-    proc showModuleName() = 
-      let obj = getClassByName("UserWidget")
-      UE_Warn obj.getModuleName()
-
-
-
     proc genReflectionData() = 
-      
-      let plugins = getAllInstalledPlugins()
-
-
-
-      let deps = plugins 
-                  .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-                  .foldl(a & b, newSeq[string]()) & "NimForUEDemo" & "Engine"
-      UE_Log &"Plugins: {plugins}"
-      proc getUEModuleFromModule(module:string) : UEModule =
-        let blueprintOnly = ["Engine"]
-        let rules =  moduleRules & 
-          (if module in blueprintOnly: @[makeImportedRuleModule(uerImportBlueprintOnly)]
-          else: @[])
-        tryGetPackageByName(module)
-          .flatmap((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps= @["CoreUObject", "UMG", "AudioMixer", "UnrealEd", "EditorSubsystem"]))
-          .get()
-      
-      var modCache = newTable[string, UEModule]()
-      proc getDepsFromModule(modName:string) : seq[string] = 
-        UE_Log &"Getting deps for {modName}"
-        let deps =
-          if modName in modCache:
-            modCache[modName].dependencies
-          else:
-            let module = getUEModuleFromModule(modName)
-            modCache[modName] = module
-            module.dependencies
-        deps & 
-          deps         
-            .map(getDepsFromModule)
-            .foldl(a & b, newSeq[string]())
-            .deduplicate()
-
-
-      let starts = now()
-      let modules = (deps.map(getDepsFromModule)
-                        .foldl(a & b, newSeq[string]()) & deps)
-                        .deduplicate()
-
-      var ends = now() - starts
-      UE_Log &"It took {ends} to get all deps"
-     
-      for module in modCache.values:
-        genReflectionData(module)
-        
-      ends = now() - starts
-      UE_Log &"It took {ends} to gen all deps"
-
-      UE_Warn $deps
-      UE_Warn $modules
+      try:
+        genReflectionData()
+      except:
+        let e : ref Exception = getCurrentException()
+        UE_Error &"Error: {e.msg}"
+        UE_Error &"Error: {e.getStackTrace()}"
+        UE_Error &"Failed to generate reflection data"
+    
 
     proc showType() = 
       let obj = getUTypeByName[UDelegateFunction]("OnAssetClassLoaded"&DelegateFuncSuffix)

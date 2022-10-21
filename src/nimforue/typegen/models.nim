@@ -88,7 +88,7 @@ type
         uerIgnore
         uerImportStruct
         uerImportBlueprintOnly #affects all types and all target. If set, it will only import the blueprint types.
-    
+
     UERuleTarget* = enum 
         uertType
         uertField
@@ -104,6 +104,10 @@ type
         types* : seq[UEType]
         rules* : seq[UEImportRule]
         dependencies* : seq[string]   
+        hash* : string
+        
+    UEProject* = object
+        modules* : seq[UEModule]
 
 # func `or`(a, b : UERule) : UERule = bitor(a.uint32, b.uint32).UERule
 

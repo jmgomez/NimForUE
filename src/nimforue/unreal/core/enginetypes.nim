@@ -34,7 +34,7 @@ type
   UBlueprint* {.importcpp, inheritable, pure .} = object of UObject
   UBlueprintPtr* = ptr UBlueprint
 
-  UBlueprintFunctionLibrary* {.importcpp, inheritable, pure .} = object of UObject
+  # UBlueprintFunctionLibrary* {.importcpp, inheritable, pure .} = object of UObject
   UBlueprintGeneratedClass* {.importcpp, inheritable, pure .} = object of UClass
   UBlueprintGeneratedClassPtr* = ptr UBlueprintGeneratedClass
   UAnimBlueprintGeneratedClass* {.importcpp, inheritable, pure .} = object of UBlueprintGeneratedClass

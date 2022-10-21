@@ -331,12 +331,12 @@ task ubuild, "Calls Unreal Build Tool for your project":
 task dumpConfig, "Displays the config variables":
   dump config
 
-task codegen, "Runs the process that will automatically generate the API based on the reflection data.":
-  doAssert(taskOptions.hasKey("module"), "Missing module argument! Usage: nue codegen --module:codegenFilePath")
-  let codegenFilePath = taskOptions["module"]
+# task codegen, "Runs the process that will automatically generate the API based on the reflection data.":
+#   doAssert(taskOptions.hasKey("module"), "Missing module argument! Usage: nue codegen --module:codegenFilePath")
+#   let codegenFilePath = taskOptions["module"]
   
-  doAssert(execCmd(&"nim cpp --compileonly --nomain --maxLoopIterationsVM:40000000 --nimcache:.nimcache/codegen {codegenFilePath}") == 0)
-  log(&"!!>> Task: codegen complete! <<<<")
+#   doAssert(execCmd(&"nim cpp --compileonly --nomain --maxLoopIterationsVM:40000000 --nimcache:.nimcache/codegen {codegenFilePath}") == 0)
+#   log(&"!!>> Task: codegen complete! <<<<")
 
 
 task uetypetranspiler, "Transpiles UETypes to C++":
@@ -352,12 +352,7 @@ task uetypetranspiler, "Transpiles UETypes to C++":
   log(&"!!>> Task: UEType transpiler complete! <<<<")
 
 
-task gencppbindings, "Generates the cpp bindings":
-
-  createDir("./.nimcache/guestpch")
-  removeDir("./.nimcache/gencppbindings") 
-  doAssert(not dirExists("./.nimcache/gencppbindings"))
-
+task gencodeforbindings, "Generate the import/export bindings. Temporal ":
   #runs the codegen
   # gathers the module from the file
   let reflectionDataPath = "./src/.reflectiondata/"
@@ -366,9 +361,21 @@ task gencppbindings, "Generates the cpp bindings":
                       .mapIt(&"nue.exe codegen --module:\"" & it & "\"")
 
   # doAssert(execProcesses(genCodeCmds)==0)
+  #For debugging is better the code below. For the speed, the above. 
   for cmd in genCodeCmds:
     log "Running: " & cmd
     doAssert(execCmd(cmd) == 0)
+
+task codegen, "Generate the bindings structure from the persisted json (TEMPORAL until we have it incremental)":
+  doAssert(execCmd(&"nim cpp --compileonly -f --nomain --maxLoopIterationsVM:40000000 --nimcache:.nimcache/projectbindings src/codegen/genprojectbindings.nim") == 0)
+
+
+task gencppbindings, "Generates the cpp bindings":
+  
+  createDir("./.nimcache/guestpch")
+  removeDir("./.nimcache/gencppbindings") 
+  doAssert(not dirExists("./.nimcache/gencppbindings"))
+
 
 
   # remove bindings from guestpch and recopy any generated when compiling gencppbindings

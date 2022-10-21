@@ -471,8 +471,11 @@ func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[strin
                 .foldl(a & b, newSeq[string]())
                 .deduplicate()
                 .filterIt(it != name and it notin excludeDeps)
-  UE_Log &"Deps for {name}: {deps}"
-  some makeUEModule(name, types, rules, deps)
+#   UE_Log &"Deps for {name}: {deps}"
+  var module = makeUEModule(name, types, rules, deps)
+  module.hash = $hash($module.toJson())
+  some module
+
 
 
 

@@ -10,5 +10,5 @@ import examplescodegen
 # import engineexample
 # import editorexample
 # import slateexamples
-import nimconfexample
+# import nimconfexample
 #import structexampleissue
