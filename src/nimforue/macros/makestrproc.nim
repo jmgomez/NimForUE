@@ -112,6 +112,7 @@ makeStrProc(UEField)
 makeStrProc(UEType)
 makeStrProc(UEImportRule)
 makeStrProc(UEModule)
+makeStrProc(UEProject)
 
 
 #example usage with the VM

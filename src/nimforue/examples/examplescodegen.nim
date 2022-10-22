@@ -176,7 +176,7 @@ proc genReflectionData() =
 
       let deps = plugins 
                   .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-                  .foldl(a & b, newSeq[string]()) & "NimForUEDemo" & "Engine"
+                  .foldl(a & b, newSeq[string]()) & "NimForUEDemo"
       UE_Log &"Plugins: {plugins}"
       proc getUEModuleFromModule(module:string) : UEModule =
         let blueprintOnly = ["Engine", "UMG"]
@@ -224,6 +224,15 @@ proc genReflectionData() =
       let ueProjectAsJson = ueProject.toJson().pretty()
       let ueProjectFilePath = config.pluginDir / ".reflectiondata" / "ueproject.json"
       writeFile(ueProjectFilePath, ueProjectAsJson)
+
+      let ueProjectAsStr = $ueProject
+      let codeTemplate = """
+import ../nimforue/typegen/models
+const project* = $1
+"""
+      writeFile( config.pluginDir / "src" / ".reflectiondata" / "ueproject.nim", codeTemplate % [ueProjectAsStr])
+
+
         
       ends = now() - starts
       UE_Log &"It took {ends} to gen all deps"
