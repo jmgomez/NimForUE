@@ -95,7 +95,7 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         if prop.isInterface(): 
             let class = castField[FInterfaceProperty](prop).getInterfaceClass()
             # UE_Warn &"Interface The cpp type is {cppType} and the inner class is {class}"
-            return fmt"TScriptInterface[I{class.getName()}]"
+            return fmt"TScriptInterface[U{class.getName()}]"
 
         if prop.isTObjectPtr():
             UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()}"
@@ -255,7 +255,6 @@ func tryParseJson[T](jsonStr : string) : Option[T] =
             UE_Error &"Crashed parsing json for with json {jsonStr}" 
             none[T]()
 
-
 func getFirstBpExposedParent(parent:UClassPtr) : UClassPtr = 
     if parent.isBpExposed():
         parent
@@ -286,9 +285,10 @@ func toUEType*(cls:UClassPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] =
                         .map(p=> (if uerImportBlueprintOnly in rules: getFirstBpExposedParent(p) else: p))
                         .map(p=>p.getPrefixCpp() & p.getName()).get("")
 
-
+    let namePrefixed = cls.getPrefixCpp() & cls.getName()
+    let shouldBeIgnored = (name:string, rule:UEImportRule) => name in rule.affectedTypes and rule.target == uertType and rule.rule == uerIgnore
     for rule in rules:
-        if name in rule.affectedTypes and rule.target == uertType and rule.rule == uerIgnore: #TODO extract
+        if shouldBeIgnored(name, rule) or (parentName != "" and shouldBeIgnored(parentName, rule)):
             UE_Log &"Ignoring {name} because it is in the ignore list"
             return none(UEType)                    
 
@@ -361,7 +361,12 @@ func toUEType*(del:UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]) : Optio
     # none(UEType)
     let kind = if FUNC_MulticastDelegate in del.functionFlags: uedelMulticastDynScriptDelegate else: uedelDynScriptDelegate
     # UE_Log &"Exporting {name} as {kind}"
-    some UEType(name:name, kind:uetDelegate, delKind:kind, fields:fields.reversed())
+    #We support all engine delegates
+    if del.getModuleName() == "Engine" or del.isBpExposed() or uerImportBlueprintOnly notin rules:
+        some UEType(name:name, kind:uetDelegate, delKind:kind, fields:fields.reversed())
+    else:
+        UE_Log &"Delegate {name} is not exposed to BP"
+        none(UEType)
 
 
 

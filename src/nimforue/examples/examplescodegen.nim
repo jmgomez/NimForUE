@@ -5,7 +5,11 @@ import ../../buildscripts/nimforueconfig
 import ../macros/makestrproc
 
 import ../../codegen/codegentemplate
-let moduleRules = @[
+
+let moduleRules = newTable[string, seq[UEImportRule]]()
+
+
+moduleRules["Engine"] = @[
         makeImportedRuleType(uerCodeGenOnlyFields, 
           @[
             "AActor", "UReflectionHelpers", "UObject",
@@ -13,13 +17,17 @@ let moduleRules = @[
             "UClass", "UFunction", "UDelegateFunction",
             "UEnum", "UActorComponent", "AVolume",
 
+            #UMG Created more than once.
+            "FOnOpeningEvent__DelegateSignature",
+
+
             # "UPrimitiveComponent", "UPhysicalMaterial", "AController",
             # "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
             # "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
             # "ALevelScriptActor",  "UPhysicalMaterialMask",
             # "UHLODLayer",
             "USceneComponent",
-            # "APlayerController",
+            "APlayerController",
             # "UTexture",
             # "USkinnedMeshComponent",
             # "USoundBase",
@@ -48,9 +56,6 @@ let moduleRules = @[
           #issue with a field name 
           "FTransformConstraint", 
           "UKismetMathLibrary" #issue with the funcs?
-
-        
-          
           ]), 
           
         makeImportedRuleField(uerIgnore, @[
@@ -60,6 +65,10 @@ let moduleRules = @[
           "EvaluatorMode",
           # "AudioLinkSettings" #I should instead not import property of certain type
 
+          
+          #Engine external deps
+          "SetMouseCursorWidget",
+          "PlayQuantized",
           #By type name
           # "UClothingSimulationInteractor",
           # "UClothingAssetBasePtr",
@@ -67,95 +76,29 @@ let moduleRules = @[
           "TFieldPath",
           "UWorld", #cant be casted to UObject
 
+        ]),
+        makeImportedRuleModule(uerImportBlueprintOnly)
+]
+moduleRules["UMG"] = @[ 
+        makeImportedRuleType(uerIgnore, @[ #MovieScene was removed as dependency for now
+           "UMovieSceneSection", "UMovieScenePropertyTrack", "UMovieSceneNameableTrack",
+           "UMovieSceneSequence", "UMovieSceneSection"
+          ]), 
+        makeImportedRuleField(uerIgnore, @[
+          "GetText", #Lots of Types use this functions. In the futuure it should be bound manually?
 
-#Functions that should not be exported (contains an UMG field)
-          "SetMouseCursorWidget", "PlayQuantized", "GetBlendProfile", "PolyglotDataToText", "IsPolyglotDataValid"
-          # "Tan"
+          #Due to not bound delegates
+          "SetNavigationRuleCustomBoundary",
+          "SetNavigationRuleCustom"
+        ]),
+        # makeImportedRuleModule(uerImportBlueprintOnly)
+]
 
-
-          
-          
-          
-
-           ]) #Enum not working because of the TEnum constructor being redefined by nim and it was already defined in UE. The solution would be to just dont work with TEnumAsByte but with the Enum itself which is more convenient. 
-
-      ] 
-proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
-  let config = getNimForUEConfig()
-  let reflectionDataPath = config.pluginDir / "src" / ".reflectiondata" #temporary
-  createDir(reflectionDataPath)
-  let bindingsDir = config.pluginDir / "src"/"nimforue"/"unreal"/"bindings"
-  createDir(bindingsDir)
-  createDir(bindingsDir / "exported")
-
-  let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
-
-  var module = tryGetPackageByName(moduleName)
-                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject", "UMG", "AudioMixer"], @[])) #The last two are specifically for engine, pass them as a parameter
-                      .get()
-  let codegenPath = reflectionDataPath / moduleName.toLower() & ".nim"
-  let exportBindingsPath = bindingsDir / "exported" / moduleName.toLower() & ".nim"
-  let importBindingsPath = bindingsDir / moduleName.toLower() & ".nim"
-  UE_Log &"-= The codegen module path is {codegenPath} =-"
-
-  try:
-    let codegenTemplate = codegenNimTemplate % [
-      escape($module.toJson()), escape(exportBindingsPath), escape(importBindingsPath), escape(nimHeadersDir)
-    ]
-    #UE_Warn &"{codegenTemplate}"
-    writeFile(codegenPath, codegenTemplate)
-    let nueCmd = config.pluginDir/"nue.exe codegen --module:\"" & codegenPath & "\""
-    let result = execProcess(nueCmd, workingDir = config.pluginDir)
-    # removeFile(codegenPath)
-    UE_Log &"The result is {result} "
-    UE_Log &"-= Bindings for {moduleName} generated in {exportBindingsPath} =- "
-
-    doAssert(fileExists(exportBindingsPath))
-    doAssert(fileExists(importBindingsPath))
-  except:
-    let e : ref Exception = getCurrentException()
-
-    UE_Log &"Error: {e.msg}"
-    UE_Log &"Error: {e.getStackTrace()}"
-    UE_Log &"Failed to generate {codegenPath} nim binding"
-
-
-proc genReflectionData(module:UEModule) = 
-  let moduleName = module.name
-  let config = getNimForUEConfig()
-  let reflectionDataPath = config.pluginDir / "src" / ".reflectiondata" #temporary
-  createDir(reflectionDataPath)
-  let bindingsDir = config.pluginDir / "src"/"nimforue"/"unreal"/"bindings"
-  createDir(bindingsDir)
-  createDir(bindingsDir / "exported")
-
-  let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
-  let codegenPath = reflectionDataPath / moduleName.toLower() & ".nim"
-  let exportBindingsPath = bindingsDir / "exported" / moduleName.toLower() & ".nim"
-  let importBindingsPath = bindingsDir / moduleName.toLower() & ".nim"
-  UE_Log &"-= The codegen module path is {codegenPath} =-"
-  let codegenTemplate = codegenNimTemplate % [
-      escape($module.toJson()), escape(exportBindingsPath), escape(importBindingsPath), escape(nimHeadersDir)
-    ]
-  writeFile(codegenPath, codegenTemplate)
-
-
-
-
-
-proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule], skipRoot = false, prevGeneratedMods : seq[string] = @[]) =
-  var module = tryGetPackageByName(moduleName)
-                .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"], @[]))
-                .get()
-
-  if module.dependencies.any() and moduleName notin prevGeneratedMods:
-    UE_Warn &"-= Generating dependencies for {moduleName} dependencies: {module.dependencies}=-"
-    for dep in module.dependencies:
-      genBindingsWithDeps(dep, moduleRules, prevGeneratedMods=(prevGeneratedMods & @[dep]))
-  if not skipRoot:
-    genBindings(moduleName, moduleRules)
-
-
+moduleRules["SlateCore"] = @[        
+          makeImportedRuleType(uerIgnore, @[
+            "FSlateBrush",
+          ])
+]
 proc getAllInstalledPlugins() : seq[string] =
   let config = getNimForUEConfig()
   try:        
@@ -180,17 +123,18 @@ proc genReflectionData() =
       UE_Log &"Plugins: {plugins}"
       proc getUEModuleFromModule(module:string) : UEModule =
         let blueprintOnly = ["Engine", "UMG"]
-        var excludeDeps = @["CoreUObject", "AudioMixer", "UnrealEd", "EditorSubsystem"]
+        var excludeDeps = @["CoreUObject", "AudioMixer", "MovieScene", "UnrealEd", "EditorSubsystem"]
         if module == "Engine":
           excludeDeps.add "UMG"
         
-        var includeDeps = newSeq[string]()
+        if module == "UMG":
+          excludeDeps.add "MovieScene"
+        
+        var includeDeps = newSeq[string]() #MovieScene doesnt need to be bound
         if module == "MovieScene":
           includeDeps.add "Engine"
-
-        let rules =  moduleRules & 
-          (if module in blueprintOnly: @[makeImportedRuleModule(uerImportBlueprintOnly)]
-          else: @[])
+        
+        let rules = if module in moduleRules: moduleRules[module] else: @[]
         tryGetPackageByName(module)
           .flatmap((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps))
           .get()

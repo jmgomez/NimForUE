@@ -113,4 +113,4 @@ proc makeSureFolderStructureIsAsExpected*() =
   createDir(bindingsDir)
   createDir(bindingsDir / "exported")
 
-  createDir("./.reflectiondata")
+  createDir("./src/.reflectiondata")

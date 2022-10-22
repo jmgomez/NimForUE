@@ -99,6 +99,16 @@ type
 
 
   TFieldPath* {.importcpp .} = object
+
+
+
+  UPlayer* {.importcpp, pure, inheritable .} = object of UObject
+  UPlayerPtr* = ptr UPlayer
+  ULocalPlayer* {.importcpp, pure, inheritable .} = object of UPlayer
+  ULocalPlayerPtr* = ptr ULocalPlayer
+
+#   IBlendableInterface* {.importcpp .} = object
+#   IAnimationDataController* {.importcpp .} = object
 #[
   UActorComponent", "APawn",
             "UPrimitiveComponent", "UPhysicalMaterial", "AController",
