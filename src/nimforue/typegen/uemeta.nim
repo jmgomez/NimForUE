@@ -46,6 +46,7 @@ func makeUEModule*(name:string, types:seq[UEType], rules: seq[UEImportRule] = @[
 func isTArray(prop:FPropertyPtr) : bool = not castField[FArrayProperty](prop).isNil()
 func isTMap(prop:FPropertyPtr) : bool = not castField[FMapProperty](prop).isNil()
 func isTSet(prop:FPropertyPtr) : bool = not castField[FSetProperty](prop).isNil()
+func isInterface(prop:FPropertyPtr) : bool = not castField[FInterfaceProperty](prop).isNil()
 func isTEnum(prop:FPropertyPtr) : bool = "TEnumAsByte" in prop.getName()
 func isTObjectPtr(prop:FPropertyPtr) : bool = return false # "TObjectPtr" in prop.getCPPType()
 func isDynDel(prop:FPropertyPtr) : bool = not castField[FDelegateProperty](prop).isNil()
@@ -62,7 +63,8 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         if prop.isTObjectPtr():
             innerType = innerType.getInnerCppGenericType()
         return fmt"TArray[{innerType.cleanCppType()}]"
-
+    
+ 
     if prop.isTSet():
         var elementProp = castField[FSetProperty](prop).getElementProp().getCPPType()
         if prop.isTObjectPtr():
@@ -90,12 +92,16 @@ func getNimTypeAsStr(prop:FPropertyPtr, outer:UObjectPtr) : string = #The expect
         if prop.isTEnum(): #Not sure if it would be better to just support it on the macro
             return cppType.replace("TEnumAsByte<","")
                         .replace(">", "")
-        
+        if prop.isInterface(): 
+            let class = castField[FInterfaceProperty](prop).getInterfaceClass()
+            # UE_Warn &"Interface The cpp type is {cppType} and the inner class is {class}"
+            return fmt"TScriptInterface[I{class.getName()}]"
+
         if prop.isTObjectPtr():
             UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()}"
             return cppType.replace("TObjectPtr<", "")
                           .replace(">", "") & "Ptr"
-                        
+                  
         
 
 
@@ -458,7 +464,7 @@ func getModuleHeader*(module:UEModule) : seq[string] =
           
  
 
-func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[string]) : Option[UEModule] = 
+func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[string], includeDeps:seq[string]) : Option[UEModule] = 
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
   var types = allObjs.toSeq()
@@ -466,11 +472,12 @@ func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[strin
                 .sequence()
  
                
-  let deps =  types
+  let deps =  (types
                 .mapIt(it.getModuleNames())
-                .foldl(a & b, newSeq[string]())
+                .foldl(a & b, newSeq[string]()) & includeDeps)
                 .deduplicate()
                 .filterIt(it != name and it notin excludeDeps)
+                
 #   UE_Log &"Deps for {name}: {deps}"
   var module = makeUEModule(name, types, rules, deps)
   module.hash = $hash($module.toJson())

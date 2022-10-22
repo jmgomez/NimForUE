@@ -18,7 +18,7 @@ let moduleRules = @[
             # "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
             # "ALevelScriptActor",  "UPhysicalMaterialMask",
             # "UHLODLayer",
-            # "USceneComponent",
+            "USceneComponent",
             # "APlayerController",
             # "UTexture",
             # "USkinnedMeshComponent",
@@ -91,7 +91,7 @@ proc genBindings(moduleName:string, moduleRules:seq[UEImportRule]) =
   let nimHeadersDir = config.pluginDir / "NimHeaders" # need this to store forward decls of classes
 
   var module = tryGetPackageByName(moduleName)
-                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject", "UMG", "AudioMixer"])) #The last two are specifically for engine, pass them as a parameter
+                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject", "UMG", "AudioMixer"], @[])) #The last two are specifically for engine, pass them as a parameter
                       .get()
   let codegenPath = reflectionDataPath / moduleName.toLower() & ".nim"
   let exportBindingsPath = bindingsDir / "exported" / moduleName.toLower() & ".nim"
@@ -145,7 +145,7 @@ proc genReflectionData(module:UEModule) =
 
 proc genBindingsWithDeps(moduleName:string, moduleRules:seq[UEImportRule], skipRoot = false, prevGeneratedMods : seq[string] = @[]) =
   var module = tryGetPackageByName(moduleName)
-                .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"]))
+                .flatmap((pkg:UPackagePtr) => pkg.toUEModule(moduleRules, excludeDeps= @["CoreUObject"], @[]))
                 .get()
 
   if module.dependencies.any() and moduleName notin prevGeneratedMods:
@@ -176,19 +176,23 @@ proc genReflectionData() =
 
       let deps = plugins 
                   .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-                  .foldl(a & b, newSeq[string]()) & "NimForUEDemo"
+                  .foldl(a & b, newSeq[string]()) & @["NimForUEDemo", "Engine", "UMG"]
       UE_Log &"Plugins: {plugins}"
       proc getUEModuleFromModule(module:string) : UEModule =
         let blueprintOnly = ["Engine", "UMG"]
-        var excludeDeps = @["CoreUObject", "UMG", "AudioMixer", "UnrealEd", "EditorSubsystem"]
+        var excludeDeps = @["CoreUObject", "AudioMixer", "UnrealEd", "EditorSubsystem"]
         if module == "Engine":
-          excludeDeps = excludeDeps & "UMG"
+          excludeDeps.add "UMG"
         
+        var includeDeps = newSeq[string]()
+        if module == "MovieScene":
+          includeDeps.add "Engine"
+
         let rules =  moduleRules & 
           (if module in blueprintOnly: @[makeImportedRuleModule(uerImportBlueprintOnly)]
           else: @[])
         tryGetPackageByName(module)
-          .flatmap((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps))
+          .flatmap((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps))
           .get()
       
       var modCache = newTable[string, UEModule]()
@@ -264,9 +268,9 @@ uClass AActorCodegen of AActor:
       UE_Warn module.getModuleHeader().join(" \n")
     ]#
 
-    proc genEngineBindings() = 
-      genBindingsWithDeps("Engine", moduleRules, skipRoot = true)
-      genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
+    # proc genEngineBindings() = 
+    #   genBindingsWithDeps("Engine", moduleRules, skipRoot = true)
+    #   genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
       # genBindings("Engine", moduleRules )
 
       #Engine can be splited in two modules one is BP based and the other dont

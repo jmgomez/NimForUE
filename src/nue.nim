@@ -371,7 +371,7 @@ task codegen, "Generate the bindings structure from the persisted json (TEMPORAL
   copyFile("src/.reflectiondata/ueproject.nim", "src/.reflectiondata/prevueproject.nim")
 
 task gencppbindings, "Generates the cpp bindings":
-  
+  codegen(taskOptions)
   createDir("./.nimcache/guestpch")
   removeDir("./.nimcache/gencppbindings") 
   doAssert(not dirExists("./.nimcache/gencppbindings"))

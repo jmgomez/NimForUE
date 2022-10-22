@@ -71,7 +71,7 @@ type
     TEnumAsByte*[T : enum] {.importcpp.} = object
 
     TWeakObjectPtr*[out T] {.importcpp.} = object
-    TScriptInterface*[T] {.importcpp.} = object
+    TScriptInterface*[out T] {.importcpp.} = object
 
     UWorld* {.importcpp, pure, header:ueIncludes .} = object of UObject
     UWorldPtr* = ptr UWorld
@@ -136,7 +136,7 @@ bindFProperty([
         "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
         "FArrayProperty", "FStructProperty", "FObjectProperty", "FClassProperty",
         "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty", 
-        "FMapProperty", "FDelegateProperty", "FSetProperty",
+        "FMapProperty", "FDelegateProperty", "FSetProperty", "FInterfaceProperty",
         "FMulticastDelegateProperty", #It seems to be abstract. Review Sparse vs Inline
         "FMulticastInlineDelegateProperty",
         
@@ -154,6 +154,7 @@ proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->S
 
 proc getElementProp*(setProp:FSetPropertyPtr) : FPropertyPtr {.importcpp:"(#->ElementProp)".}
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
+proc getInterfaceClass*(interfaceProp:FInterfacePropertyPtr) : UClassPtr {.importcpp:"(#->InterfaceClass)".}
 
 proc addCppProperty*(arrProp:FArrayPropertyPtr | FSetPropertyPtr | FMapPropertyPtr | FEnumPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
 
