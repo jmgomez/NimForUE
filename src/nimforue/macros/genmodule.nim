@@ -365,13 +365,15 @@ macro genProjectBindings*(prevProject :static Option[UEProject], project :static
 
   for module in project.modules:
     let module = module
-    if prevProject.isSome() and prevProject.get().modules.any(m=>m.name == module.name and m.hash == module.hash):
+    let exportBindingsPath = bindingsDir / "exported" / module.name.toLower() & ".nim"
+    let importBindingsPath = bindingsDir / module.name.toLower() & ".nim"
+    let fileExists = fileExists(exportBindingsPath) or fileExists(importBindingsPath)
+    if fileExists and prevProject.isSome() and prevProject.get().modules.any(m=>m.name == module.name and m.hash == module.hash):
         echo "Skipping module: " & module.name & " as it has not changed"
         continue
 
     echo &"Generating bindings for {module.name}"
-    let exportBindingsPath = bindingsDir / "exported" / module.name.toLower() & ".nim"
-    let importBindingsPath = bindingsDir / module.name.toLower() & ".nim"
+   
     genCode(exportBindingsPath, "include ../../prelude\n", module, genExportModuleDecl(module))
     genCode(importBindingsPath, "include ../prelude\n", module, genImportCModuleDecl(module))
 

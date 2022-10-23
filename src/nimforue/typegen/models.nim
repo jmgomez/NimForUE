@@ -80,6 +80,7 @@ type
                 #the signature is just the fields
                 # delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
                 delKind*: UEDelegateKind
+                outerClassName*: string #the name of the class that contains the delegate (if any)
 
     #Rules applies to UERuleTarget
     UERule* = enum
@@ -88,6 +89,7 @@ type
         uerIgnore
         uerImportStruct
         uerImportBlueprintOnly #affects all types and all target. If set, it will only import the blueprint types.
+        uerVirtualModule
 
     UERuleTarget* = enum 
         uertType
@@ -96,8 +98,22 @@ type
 
     UEImportRule* = object #used only to customize the codegen
         affectedTypes* : seq[string]
-        rule* : UERule
         target* : UERuleTarget
+        case  rule* : UERule
+        of uerVirtualModule:
+            moduleName* : string
+        of uerNone: #Notice this will be else:discard. MakeStrProc needs to be updated to support it
+            test* : string
+        of uerCodeGenOnlyFields: 
+            test2* : string
+        of uerIgnore: 
+            test3* : string
+        of uerImportStruct: 
+            test4* : string
+        of uerImportBlueprintOnly: 
+            test6* : string
+        
+
 
     UEModule* = object
         name* : string
@@ -105,9 +121,22 @@ type
         rules* : seq[UEImportRule]
         dependencies* : seq[string]   
         hash* : string
+        isVirtual* : bool #A fake module that's only a module in the Nim side of things. It basically means that a set of classes get included into its own file to avoid name collisions and also to speed up compilation times.
         
     UEProject* = object
         modules* : seq[UEModule]
+
+# #ONLY FOR Delagates that matches the rule innerClassDelegate
+# func getFuncDelegateNimName*(name, outerClassName:string) : string = 
+#     if outerClassName == "": name
+#     else: &"{outerClassName}_{name}"
+
+# func getFuncDelegateNimName*(ueType:UEType) : string = 
+#     assert ueType.kind == uetDelegate
+#     getFuncDelegateNimName(ueType.name, ueType.outerClassName)
+
+
+
 
 # func `or`(a, b : UERule) : UERule = bitor(a.uint32, b.uint32).UERule
 
@@ -124,6 +153,13 @@ func makeImportedRuleField*(rule:UERule, affectedTypes:seq[string], ):UEImportRu
 func makeImportedRuleModule*(rule:UERule) : UEImportRule = 
     result.rule = rule
     result.target = uertModule
+
+#It's processed after the module deps are calculated
+func makeVirtualModuleRule*(moduleName:string, affectedTypes:seq[string]) : UEImportRule = 
+    result.rule = uerVirtualModule
+    result.target = uertModule
+    result.affectedTypes = affectedTypes
+    result.moduleName = moduleName
 
 func contains*(rules: seq[UEImportRule], rule:UERule): bool = 
     rules.any((r:UEImportRule) => r.rule == rule)

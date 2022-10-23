@@ -33,8 +33,13 @@ proc getField(f: NimNode, output:NimNode): NimNode =
       var oStmts = nnkStmtList.newTree()
       var ofBranch = nnkOfBranch.newTree(o[0], oStmts)
       caseStmt.add ofBranch
-      if o[1].len > 0:
-        for i in o[1]: #RecList of IdentDefs
+      # echo treeRepr o
+      let recListNode = if o.kind == nnkElse: o[0] else: o[1]
+      # echo treeRepr recListNode
+      if recListNode.len > 0:
+        for i in recListNode: #RecList of IdentDefs
+      # if o[1].len > 0:
+      #   for i in o[1]: #RecList of IdentDefs
           case i[1].kind:
           of nnkSym:
             let ftypeStr = i[1].strval()

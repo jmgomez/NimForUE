@@ -187,7 +187,7 @@ func isNimTypeInAffectedTypes(nimType:string, affectedTypes:seq[string]) : bool 
             typ.removeLastLettersIfPtr() == nimType.removeLastLettersIfPtr() or 
             typ == nimType.extractTypeFromGenericInNimFormat("TObjectPtr") or 
             typ == nimType.extractTypeFromGenericInNimFormat("TArray") 
-            
+
             )
     
     # UE_Log &"Is affected {nimType} {isAffected}"
@@ -349,24 +349,33 @@ func toUEType*(del:UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]) : Optio
 
     if storedUEType.isSome(): return storedUEType
 
-    let name = del.getPrefixCpp() & del.getName()
+    var name = del.getPrefixCpp() & del.getName()
 
 
     let fields = getFPropsFromUStruct(del)
                     .map(x=>toUEField(x, del, rules))
                     .sequence()
     
+    let nameWithoutSuffix = name.replace(DelegateFuncSuffix, "")
+    for rule in rules:
+        if nameWithoutSuffix in rule.affectedTypes and rule.rule == uerIgnore:
+            UE_Warn &"Ignoring {name} because it is in the ignore list"
+            return none(UEType)
+
     #TODO is defaulting to MulticastDelegate this may be wrong when trying to autogen the types 
     #Maybe I can just cast it?
     # none(UEType)
     let kind = if FUNC_MulticastDelegate in del.functionFlags: uedelMulticastDynScriptDelegate else: uedelDynScriptDelegate
     # UE_Log &"Exporting {name} as {kind}"
     #We support all engine delegates
-    if del.getModuleName() == "Engine" or del.isBpExposed() or uerImportBlueprintOnly notin rules:
-        some UEType(name:name, kind:uetDelegate, delKind:kind, fields:fields.reversed())
-    else:
-        UE_Log &"Delegate {name} is not exposed to BP"
-        none(UEType)
+    let outer = tryUECast[UClass](del.getOuter())
+    let outerName = outer.map(cls => $cls.getName()).get("")
+    #i.e. FWidget_FGetText -> When searching in the reflection system it will be Widget:GetText
+     
+    some UEType(name:name, kind:uetDelegate, delKind:kind, fields:fields.reversed(), outerClassName: outerName)
+    # else:
+    #     UE_Log &"Delegate {name} is not exposed to BP"
+    #     none(UEType)
 
 
 
@@ -469,7 +478,7 @@ func getModuleHeader*(module:UEModule) : seq[string] =
           
  
 
-func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[string], includeDeps:seq[string]) : Option[UEModule] = 
+func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[string], includeDeps:seq[string]) : seq[UEModule] = 
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
   var types = allObjs.toSeq()
@@ -482,11 +491,20 @@ func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[strin
                 .foldl(a & b, newSeq[string]()) & includeDeps)
                 .deduplicate()
                 .filterIt(it != name and it notin excludeDeps)
-                
+
+#Virtual modules
+  var virtModules = newSeq[UEModule]()
+  for r in rules:
+    if r.rule == uerVirtualModule:
+      let r = r
+      let (virtualModuleTypes, types) = types.partition(x => x.name in r.affectedTypes)
+      virtModules.add UEModule(name:r.moduleName, types:virtualModuleTypes, isVirtual: true, dependencies: deps & name) 
+
+
 #   UE_Log &"Deps for {name}: {deps}"
   var module = makeUEModule(name, types, rules, deps)
   module.hash = $hash($module.toJson())
-  some module
+  module & virtModules
 
 
 

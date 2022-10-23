@@ -18,13 +18,12 @@ moduleRules["Engine"] = @[
             "UEnum", "UActorComponent", "AVolume",
 
             #UMG Created more than once.
-            "FOnOpeningEvent__DelegateSignature",
 
 
-            # "UPrimitiveComponent", "UPhysicalMaterial", "AController",
+            "UPrimitiveComponent", "UPhysicalMaterial", "AController",
             # "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
             # "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
-            # "ALevelScriptActor",  "UPhysicalMaterialMask",
+            # # "ALevelScriptActor",  "UPhysicalMaterialMask",
             # "UHLODLayer",
             "USceneComponent",
             "APlayerController",
@@ -38,7 +37,7 @@ moduleRules["Engine"] = @[
             # "UChildActorComponent",
             # "UDamageType",
             # "UDecalComponent",
-            # "UWorld",
+            "UWorld",
             # "UCanvas",
             # "UDataLayer",
             
@@ -77,21 +76,33 @@ moduleRules["Engine"] = @[
           "UWorld", #cant be casted to UObject
 
         ]),
-        makeImportedRuleModule(uerImportBlueprintOnly)
+        makeImportedRuleModule(uerImportBlueprintOnly),
+        makeVirtualModuleRule("gameplaystatics", @["UGameplayStatics"])
 ]
 moduleRules["UMG"] = @[ 
         makeImportedRuleType(uerIgnore, @[ #MovieScene was removed as dependency for now
-           "UMovieSceneSection", "UMovieScenePropertyTrack", "UMovieSceneNameableTrack",
-           "UMovieSceneSequence", "UMovieSceneSection"
+          #  "UMovieSceneSection", 
+          #  "UMovieSceneSequence", "UMovieSceneSection", 
+          "UMovieScenePropertyTrack", "UMovieSceneNameableTrack",
+          "UMovieScenePropertySystem", "UMovieScene2DTransformPropertySystem",
+          "UMovieSceneMaterialTrack",
+          
+          #Repeted delegates
+          #  "FOnOpeningEvent", "FOnSelectionChangedEvent", 
+           
+           
+          #  "FGetText"
           ]), 
         makeImportedRuleField(uerIgnore, @[
-          "GetText", #Lots of Types use this functions. In the futuure it should be bound manually?
+          # "FGetText",
+
+          # "GetText", #Lots of Types use this functions. In the futuure it should be bound manually?
 
           #Due to not bound delegates
           "SetNavigationRuleCustomBoundary",
           "SetNavigationRuleCustom"
         ]),
-        # makeImportedRuleModule(uerImportBlueprintOnly)
+        makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
 moduleRules["SlateCore"] = @[        
@@ -99,6 +110,8 @@ moduleRules["SlateCore"] = @[
             "FSlateBrush",
           ])
 ]
+#TODO Deps module needs to pull parents!!!
+
 proc getAllInstalledPlugins() : seq[string] =
   let config = getNimForUEConfig()
   try:        
@@ -121,14 +134,14 @@ proc genReflectionData() =
                   .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
                   .foldl(a & b, newSeq[string]()) & @["NimForUEDemo", "Engine", "UMG"]
       UE_Log &"Plugins: {plugins}"
-      proc getUEModuleFromModule(module:string) : UEModule =
+      proc getUEModuleFromModule(module:string) : seq[UEModule] =
         let blueprintOnly = ["Engine", "UMG"]
-        var excludeDeps = @["CoreUObject", "AudioMixer", "MovieScene", "UnrealEd", "EditorSubsystem"]
+        var excludeDeps = @["CoreUObject", "AudioMixer", "UnrealEd", "EditorSubsystem"]
         if module == "Engine":
           excludeDeps.add "UMG"
         
-        if module == "UMG":
-          excludeDeps.add "MovieScene"
+        # if module == "UMG":
+        #   excludeDeps.add "MovieScene"
         
         var includeDeps = newSeq[string]() #MovieScene doesnt need to be bound
         if module == "MovieScene":
@@ -136,8 +149,9 @@ proc genReflectionData() =
         
         let rules = if module in moduleRules: moduleRules[module] else: @[]
         tryGetPackageByName(module)
-          .flatmap((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps))
-          .get()
+          .map((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps))
+          .get(newSeq[UEModule]())
+          
       
       var modCache = newTable[string, UEModule]()
       proc getDepsFromModule(modName:string, currentLevel=0) : seq[string] = 
@@ -149,9 +163,11 @@ proc genReflectionData() =
           if modName in modCache:
             modCache[modName].dependencies
           else:
-            let module = getUEModuleFromModule(modName)
-            modCache[modName] = module
-            module.dependencies
+            let modules = getUEModuleFromModule(modName)
+            for m in modules:
+              modCache[m.name] = m
+            
+            modules[0].dependencies #Notice No need to return virtual module dependencies.
         deps & 
           deps         
             .mapIt(getDepsFromModule(it, currentLevel+1))
@@ -192,37 +208,10 @@ const project* = $1
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
+  uprops(EditAnywhere, BlueprintReadWrite):
+    delTypeName : FString = "OnOpeningEvent"
   ufuncs(CallInEditor):
-    #[
-    proc printFBodyInstance() =
-      let str = getUTypeByName[UScriptStruct]("BodyInstance")
-      let ueType = str.toUEType(@[makeImportedRuleModule(uerImportBlueprintOnly)])
 
-      # UE_Log &"UEType: {ueType}"
-      # let metadata = str.getMetaDataMap()
-      # let includePath = str.getMetaData("ModuleRelativePath")
-      # UE_Log $cls.classFlags
-      # UE_Log $includePath
-      # UE_Log $metadata
-
-    proc printModuleIncludes() = 
-      var module = tryGetPackageByName("Engine")
-                      .flatmap((pkg:UPackagePtr) => pkg.toUEModule(@[], excludeDeps= @["CoreUObject"]))
-                      .get()
-      UE_Warn module.getModuleHeader().join(" \n")
-    ]#
-
-    # proc genEngineBindings() = 
-    #   genBindingsWithDeps("Engine", moduleRules, skipRoot = true)
-    #   genBindings("Engine", moduleRules & @[makeImportedRuleModule(uerImportBlueprintOnly)])
-      # genBindings("Engine", moduleRules )
-
-      #Engine can be splited in two modules one is BP based and the other dont
-      #All kismets would be in its own module -20k lines of code?
-
-      # Hand pick classes
-      # Static functions that collides can be virtual modules too. (We need to find the colliding functions)
-  
     proc genReflectionData() = 
       try:
         genReflectionData()
@@ -234,6 +223,17 @@ uClass AActorCodegen of AActor:
     
 
     proc showType() = 
-      let obj = getUTypeByName[UDelegateFunction]("OnAssetClassLoaded"&DelegateFuncSuffix)
+      let obj = getUTypeByName[UDelegateFunction]("UMG.ComboBoxKey:OnOpeningEvent"&DelegateFuncSuffix)
+      let obj2 = getUTypeByName[UDelegateFunction]("OnOpeningEvent"&DelegateFuncSuffix)
       UE_Warn $obj
+      UE_Warn $obj2
+
+    proc searchDelByName() = 
+      let obj = getUTypeByName[UDelegateFunction](self.delTypeName&DelegateFuncSuffix)
+      if obj.isNil(): 
+        UE_Error &"Error del is null"
+        return
+
+      UE_Warn $obj
+      UE_Warn $obj.getOuter()
 

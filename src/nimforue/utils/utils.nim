@@ -51,6 +51,18 @@ func tap*[T](xs: seq[T], fn: (x: T)->void): seq[T] =
 func sequence*[T](xs : seq[Option[T]]) : seq[T] = 
   xs.filter((x:Option[T])=>x.isSome()).map((x:Option[T])=>x.get())
 
+
+func partition*[T](xs: seq[T], fn: T->bool): (seq[T], seq[T]) =
+  var left: seq[T] = @[]
+  var right: seq[T] = @[]
+  for x in xs:
+    if fn(x):
+      left.add(x)
+    else:
+      right.add(x)
+  (left, right)
+
+
 ##GENERAL
 func nonDefaultOr*[T](value, orValue: T): T =
   # let default = T()
