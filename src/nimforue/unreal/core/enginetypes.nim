@@ -22,12 +22,12 @@ type
 
   UActorComponent* {.importcpp, inheritable, pure .} = object of UObject
   UActorComponentPtr* = ptr UActorComponent
-  USceneComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
-  USceneComponentPtr* = ptr USceneComponent
-  UPrimitiveComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
-  UPrimitiveComponentPtr* = ptr UPrimitiveComponent
-  UShapeComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
-  UShapeComponentPtr* = ptr UShapeComponent
+  # USceneComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
+  # USceneComponentPtr* = ptr USceneComponent
+  # UPrimitiveComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
+  # UPrimitiveComponentPtr* = ptr UPrimitiveComponent
+  # UShapeComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
+  # UShapeComponentPtr* = ptr UShapeComponent
   # UChildActorComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
   # UChildActorComponentPtr* = ptr UChildActorComponent
 

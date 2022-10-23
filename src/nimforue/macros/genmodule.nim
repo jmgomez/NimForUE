@@ -284,8 +284,10 @@ proc genHeaders*(moduleDef: UEModule,  headersPath: string) =
     let validCppParents = 
       ["UObject", "AActor", "UInterface", 
         "AVolume", "USoundWaveProcedural",
-    
-      "UActorComponent", "UDeveloperSettings"]#TODO this should be introduced as param
+        "AController",
+        "UActorComponent",
+        "APlayerController",
+        "UDeveloperSettings"]#TODO this should be introduced as param
 
     let getParentName = (uet:UEType) => uet.parent & 
         (if uet.parent in validCppParents or uerCodeGenOnlyFields == getAllMatchingRulesForType(moduleDef, uet): "" else: "_")

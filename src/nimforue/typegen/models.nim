@@ -90,18 +90,21 @@ type
         uerImportStruct
         uerImportBlueprintOnly #affects all types and all target. If set, it will only import the blueprint types.
         uerVirtualModule
+        uerInnerClassDelegate #Some delegates are declared withit a class and can collide. This rule is for when both are true
 
     UERuleTarget* = enum 
         uertType
         uertField
         uertModule
-
+    #TODO Rename to UEBindRule
     UEImportRule* = object #used only to customize the codegen
         affectedTypes* : seq[string]
         target* : UERuleTarget
         case  rule* : UERule
         of uerVirtualModule:
             moduleName* : string
+        of uerInnerClassDelegate: 
+            onlyFor* : seq[string] #Constraints the types that the rule applies to. If empty, it applies to all types.  
         of uerNone: #Notice this will be else:discard. MakeStrProc needs to be updated to support it
             test* : string
         of uerCodeGenOnlyFields: 
@@ -127,13 +130,13 @@ type
         modules* : seq[UEModule]
 
 # #ONLY FOR Delagates that matches the rule innerClassDelegate
-# func getFuncDelegateNimName*(name, outerClassName:string) : string = 
-#     if outerClassName == "": name
-#     else: &"{outerClassName}_{name}"
+func getFuncDelegateNimName*(name, outerClassName:string) : string = 
+    if outerClassName == "": name
+    else: &"{outerClassName}_{name}"
 
-# func getFuncDelegateNimName*(ueType:UEType) : string = 
-#     assert ueType.kind == uetDelegate
-#     getFuncDelegateNimName(ueType.name, ueType.outerClassName)
+func getFuncDelegateNimName*(ueType:UEType) : string = 
+    assert ueType.kind == uetDelegate
+    getFuncDelegateNimName(ueType.name, ueType.outerClassName)
 
 
 
@@ -154,6 +157,19 @@ func makeImportedRuleModule*(rule:UERule) : UEImportRule =
     result.rule = rule
     result.target = uertModule
 
+
+#Notice the param restrictions on the functions below. Either you apply the rule to multiple types or you chose what types to apply in a single rule
+func makeImportedDelegateRule*(affectedTypes:seq[string]) : UEImportRule = 
+    result.affectedTypes = affectedTypes
+    result.rule = uerInnerClassDelegate
+    result.target = uertType
+
+func makeImportedDelegateRule*(affectedType:string, onlyFor:seq[string]) : UEImportRule = 
+    result.affectedTypes = @[affectedType]
+    result.rule = uerInnerClassDelegate
+    result.target = uertType
+    result.onlyFor = onlyFor
+
 #It's processed after the module deps are calculated
 func makeVirtualModuleRule*(moduleName:string, affectedTypes:seq[string]) : UEImportRule = 
     result.rule = uerVirtualModule
@@ -163,6 +179,11 @@ func makeVirtualModuleRule*(moduleName:string, affectedTypes:seq[string]) : UEIm
 
 func contains*(rules: seq[UEImportRule], rule:UERule): bool = 
     rules.any((r:UEImportRule) => r.rule == rule)
+
+func isTypeAffectedByRule*(rules:seq[UEImportRule], name:string, rule:UERule): bool = 
+    rules.any((r:UEImportRule) => r.target == uertType and r.rule == rule and r.affectedTypes.contains(name))
+func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): Option[UEImportRule] = 
+    rules.first((r:UEImportRule) => r.target == uertType and r.rule == rule and r.affectedTypes.contains(name))
 
 # func getAllMatchingTypes*(module:UEModule, rule:UERule) : seq[UEType] =
 #    module.types

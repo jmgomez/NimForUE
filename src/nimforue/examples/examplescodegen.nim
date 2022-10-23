@@ -15,17 +15,17 @@ moduleRules["Engine"] = @[
             "AActor", "UReflectionHelpers", "UObject",
             "UField", "UStruct", "UScriptStruct", "UPackage",
             "UClass", "UFunction", "UDelegateFunction",
-            "UEnum", "UActorComponent", "AVolume",
-
+            "UEnum", "AVolume",
+             "UActorComponent",
             #UMG Created more than once.
 
 
-            "UPrimitiveComponent", "UPhysicalMaterial", "AController",
+            # "UPrimitiveComponent", "UPhysicalMaterial", "AController",
             # "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
             # "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
             # # "ALevelScriptActor",  "UPhysicalMaterialMask",
             # "UHLODLayer",
-            "USceneComponent",
+            # "USceneComponent",
             "APlayerController",
             # "UTexture",
             # "USkinnedMeshComponent",
@@ -76,33 +76,27 @@ moduleRules["Engine"] = @[
           "UWorld", #cant be casted to UObject
 
         ]),
-        makeImportedRuleModule(uerImportBlueprintOnly),
-        makeVirtualModuleRule("gameplaystatics", @["UGameplayStatics"])
+        makeImportedRuleModule(uerImportBlueprintOnly)#,
+        # makeVirtualModuleRule("gameplaystatics", @["UGameplayStatics"])
 ]
 moduleRules["UMG"] = @[ 
-        makeImportedRuleType(uerIgnore, @[ #MovieScene was removed as dependency for now
-          #  "UMovieSceneSection", 
-          #  "UMovieSceneSequence", "UMovieSceneSection", 
+        makeImportedRuleType(uerIgnore, @[ #MovieScene was removed as dependency for now          
           "UMovieScenePropertyTrack", "UMovieSceneNameableTrack",
           "UMovieScenePropertySystem", "UMovieScene2DTransformPropertySystem",
-          "UMovieSceneMaterialTrack",
-          
-          #Repeted delegates
-          #  "FOnOpeningEvent", "FOnSelectionChangedEvent", 
+          "UMovieSceneMaterialTrack",          
            
-           
-          #  "FGetText"
           ]), 
+        makeImportedDelegateRule(@[
+          "FOnOpeningEvent", "FOnOpeningEvent", "FOnSelectionChangedEvent"
+
+          ]),
+        makeImportedDelegateRule("FGetText", @["USlateAccessibleWidgetData"]),
         makeImportedRuleField(uerIgnore, @[
-          # "FGetText",
-
-          # "GetText", #Lots of Types use this functions. In the futuure it should be bound manually?
-
-          #Due to not bound delegates
+         
           "SetNavigationRuleCustomBoundary",
           "SetNavigationRuleCustom"
-        ]),
-        makeImportedRuleModule(uerImportBlueprintOnly)
+        ])
+        # makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
 moduleRules["SlateCore"] = @[        
@@ -185,9 +179,10 @@ proc genReflectionData() =
       let config = getNimForUEConfig()
 
       let ueProject = UEProject(modules: modCache.values.toSeq())
-      let ueProjectAsJson = ueProject.toJson().pretty()
-      let ueProjectFilePath = config.pluginDir / ".reflectiondata" / "ueproject.json"
-      writeFile(ueProjectFilePath, ueProjectAsJson)
+      
+      # let ueProjectAsJson = ueProject.toJson().pretty()
+      # let ueProjectFilePath = config.pluginDir / ".reflectiondata" / "ueproject.json"
+      # writeFile(ueProjectFilePath, ueProjectAsJson)
 
       let ueProjectAsStr = $ueProject
       let codeTemplate = """
@@ -211,7 +206,6 @@ uClass AActorCodegen of AActor:
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "OnOpeningEvent"
   ufuncs(CallInEditor):
-
     proc genReflectionData() = 
       try:
         genReflectionData()
@@ -221,6 +215,17 @@ uClass AActorCodegen of AActor:
         UE_Error &"Error: {e.getStackTrace()}"
         UE_Error &"Failed to generate reflection data"
     
+    proc genReflectionDataAndCodeGen() = 
+      try:
+        genReflectionData()
+        let config = getNimForUEConfig()
+        let cmd = &"{config.pluginDir}\\nue.exe gencppbindings"
+        discard execCmd(cmd)
+      except:
+        let e : ref Exception = getCurrentException()
+        UE_Error &"Error: {e.msg}"
+        UE_Error &"Error: {e.getStackTrace()}"
+        UE_Error &"Failed to generate reflection data"
 
     proc showType() = 
       let obj = getUTypeByName[UDelegateFunction]("UMG.ComboBoxKey:OnOpeningEvent"&DelegateFuncSuffix)

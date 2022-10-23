@@ -195,7 +195,7 @@ func isNimTypeInAffectedTypes(nimType:string, affectedTypes:seq[string]) : bool 
 
 
 #Function that receives a FProperty and returns a Type as string
-func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UEField] = #The expected type is something that UEField can understand
+func toUEField*(prop:FPropertyPtr, outer:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEField] = #The expected type is something that UEField can understand
     let name = prop.getName()
 
     var nimType = prop.getNimTypeAsStr(outer)
@@ -206,9 +206,20 @@ func toUEField*(prop:FPropertyPtr, outer:UObjectPtr, rules: seq[UEImportRule] = 
         if  rule.target == uerTField and rule.rule == uerIgnore and
             (name in rule.affectedTypes or isNimTypeInAffectedTypes(nimType, rule.affectedTypes)):
             return none(UEField)
+    
+    let importRule = rules.getRuleAffectingType(nimType, uerInnerClassDelegate)
+    if importRule.isSome():
+        # UE_Error &"Delegate {nimType} is affected by uerInnedClassDelegate"
+        #the outer of this delegate should be the same outer as the property
+        #notice these delegates are not ment to be used in your our type (the name wouldnt match, it can be fixed but doesnt make sense)        
+        let outerName =  outer.getPrefixCpp() & outer.getName()
+        let isEmpty = not importRule.get().onlyFor.any()
+        if isEmpty or outerName in importRule.get().onlyFor:
+            nimType = getFuncDelegateNimName(nimType, outerName)
+       
 
     if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules):
-        some makeFieldAsUProp(prop.getName(), nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
+        some makeFieldAsUProp(name, nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
     else:
         # UE_Log &"Ignoring {prop.getName()} because it is not exposed to blueprint"
         # UE_Log nimType
@@ -366,11 +377,14 @@ func toUEType*(del:UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]) : Optio
     #Maybe I can just cast it?
     # none(UEType)
     let kind = if FUNC_MulticastDelegate in del.functionFlags: uedelMulticastDynScriptDelegate else: uedelDynScriptDelegate
-    # UE_Log &"Exporting {name} as {kind}"
-    #We support all engine delegates
+    #Handle class inner delegates:
     let outer = tryUECast[UClass](del.getOuter())
-    let outerName = outer.map(cls => $cls.getName()).get("")
-    #i.e. FWidget_FGetText -> When searching in the reflection system it will be Widget:GetText
+    let outerName = outer.map(cls => $(cls.getPrefixCpp() & cls.getName())).get("")
+    let importRule = rules.getRuleAffectingType(nameWithoutSuffix, uerInnerClassDelegate)
+    if importRule.isSome():
+        let isEmpty = not importRule.get().onlyFor.any()
+        if isEmpty or outerName in importRule.get().onlyFor:
+            name = getFuncDelegateNimName(name, outerName)
      
     some UEType(name:name, kind:uetDelegate, delKind:kind, fields:fields.reversed(), outerClassName: outerName)
     # else:
