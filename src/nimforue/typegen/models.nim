@@ -105,17 +105,8 @@ type
             moduleName* : string
         of uerInnerClassDelegate: 
             onlyFor* : seq[string] #Constraints the types that the rule applies to. If empty, it applies to all types.  
-        of uerNone: #Notice this will be else:discard. MakeStrProc needs to be updated to support it
-            test* : string
-        of uerCodeGenOnlyFields: 
-            test2* : string
-        of uerIgnore: 
-            test3* : string
-        of uerImportStruct: 
-            test4* : string
-        of uerImportBlueprintOnly: 
-            test6* : string
-        
+        else:
+            discard
 
 
     UEModule* = object

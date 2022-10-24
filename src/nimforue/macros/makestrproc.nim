@@ -7,6 +7,33 @@ import ../typegen/models
 # This macro makes a proc(v: T): string for use with emitting to the VM
 #macro makeStrProc*(t: typedesc): untyped
 
+template processRecList(recList: NimNode, oStmts: NimNode) =
+  if recList.len > 0:
+    for i in recList: #RecList of IdentDefs
+      case i[1].kind:
+      of nnkSym:
+        let ftypeStr = i[1].strval()
+        let headStmt = genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval):
+          output.add fname
+          output.addQuoted v.fident
+        oStmts.add headStmt
+        if ftypeStr != "string": # convert value to type for integers/enum while avoiding strings
+          let convStmt = genAst(output, ftypeStr):
+            output.add "."&ftypeStr
+          oStmts.add convStmt
+      else:
+        let oStmt = genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval):
+          output.add fname
+          output.addQuoted v.fident
+        oStmts.add oStmt
+
+      if i != recList[^1]:
+        let tailStmt = genAst(output):
+          output.add ", "
+        oStmts.add tailStmt
+  else:
+    oStmts.add nnkDiscardStmt.newTree(newEmptyNode())
+
 proc getField(f: NimNode, output:NimNode): NimNode =
   #echo f.treeRepr
   case f.kind:
@@ -15,7 +42,6 @@ proc getField(f: NimNode, output:NimNode): NimNode =
     genAst(output, fname = f[0].strval & ": ", fident = ident f[0].strval):
       output.add fname
       output.addQuoted v.fident
-      output.add ", "
     
   of nnkRecCase:
     var stmts = nnkStmtList.newTree()
@@ -29,41 +55,26 @@ proc getField(f: NimNode, output:NimNode): NimNode =
     stmts.add kindStmt
 
     var caseStmt = nnkCaseStmt.newTree(nnkDotExpr.newTree(ident("v"), kindIdent))
-    for o in f[1 .. ^1]:
+    var lastOfBranchIndex = f.len - 1
+    if f[^1].kind == nnkElse:
+      dec lastOfBranchIndex
+    for o in f[1 .. lastOfBranchIndex]:
       var oStmts = nnkStmtList.newTree()
       var ofBranch = nnkOfBranch.newTree(o[0], oStmts)
       caseStmt.add ofBranch
-      # echo treeRepr o
-      let recListNode = if o.kind == nnkElse: o[0] else: o[1]
-      # echo treeRepr recListNode
-      if recListNode.len > 0:
-        for i in recListNode: #RecList of IdentDefs
-      # if o[1].len > 0:
-      #   for i in o[1]: #RecList of IdentDefs
-          case i[1].kind:
-          of nnkSym:
-            let ftypeStr = i[1].strval()
-            let headStmt = genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval):
-              output.add fname
-              output.addQuoted v.fident
-            oStmts.add headStmt
-            if ftypeStr != "string":
-              let convStmt = genAst(output, ftypeStr):
-                output.add "."&ftypeStr
-              oStmts.add convStmt
-            let tailStmt = genAst(output):
-              output.add ", "
-            oStmts.add tailStmt
-          else:
-            let oStmt = genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval):
-              output.add fname
-              output.addQuoted v.fident
-              output.add ", "
-            oStmts.add oStmt
-      else:
-        oStmts.add nnkDiscardStmt.newTree(newEmptyNode())
-    stmts.add caseStmt
+      processRecList(o[1], oStmts)
 
+    if f[^1].kind == nnkElse:
+      var oStmts = nnkStmtList.newTree()
+      var elseBranch = nnkElse.newTree(oStmts)
+      caseStmt.add elseBranch
+      for i in f[^1]: # is it a RecList?
+        if i.kind == nnkRecList:
+          processRecList(i, oStmts)
+        else:
+          discard
+
+    stmts.add caseStmt
     stmts
   else:
     error("Unknown field kind: " & f.kind.repr)
@@ -98,6 +109,9 @@ macro makeStrProc*(t: typedesc): untyped =
       var stmts = nnkStmtList.newTree
       for f in tfields:
         stmts.add getField(f, output)
+        if f != tfields[^1]:
+          stmts.add genAst(output) do:
+            output.add ", "
       stmts
     else:
       error("unsupported " & $timpl.kind)
