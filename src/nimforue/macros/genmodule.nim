@@ -86,8 +86,8 @@ func genUEnumTypeDefBinding(t: UEType): NimNode =
     )
 
 
-func genUStructImportCTypeDefBinding(t: UEType): NimNode =
-    var recList = t.fields
+func genUStructImportCTypeDefBinding(ueType: UEType): NimNode =
+    var recList = ueType.fields
         .map(prop => nnkIdentDefs.newTree(
                 getFieldIdent(prop), 
                 prop.getTypeNodeFromUProp(), 
@@ -97,7 +97,7 @@ func genUStructImportCTypeDefBinding(t: UEType): NimNode =
         .foldl(a.add b, nnkRecList.newTree)
     nnkTypeDef.newTree(
         nnkPragmaExpr.newTree([
-            nnkPostfix.newTree([ident "*", ident t.name]),
+            nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
             nnkPragma.newTree(
                 ident "inject",
                 nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
@@ -284,9 +284,12 @@ proc genHeaders*(moduleDef: UEModule,  headersPath: string) =
     let validCppParents = 
       ["UObject", "AActor", "UInterface", 
         "AVolume", "USoundWaveProcedural",
-        "AController",
+        # "AController",
         "UActorComponent",
-        "APlayerController",
+        "UBlueprint",
+        # "UBlueprintFunctionLibrary",
+        "UBlueprintGeneratedClass",
+        # "APlayerController",
         "UDeveloperSettings"]#TODO this should be introduced as param
 
     let getParentName = (uet:UEType) => uet.parent & 

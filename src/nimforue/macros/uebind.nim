@@ -75,7 +75,7 @@ func identWrapper*(name:string) : NimNode = ident(name) #cant use ident as argum
 func identPublic*(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
 
 func nimToCppConflictsFreeName*(propName:string) : string = 
-    let reservedCppKeywords = ["template", "operator"]
+    let reservedCppKeywords = ["template", "operator", "enum"]
     if propName in reservedCppKeywords: propName.firstToUpper() else: propName
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
@@ -454,10 +454,10 @@ func genUEnumTypeDef*(typeDef:UEType) : NimNode =
     # debugEcho treeRepr result
 
 
-func genUStructTypeDefBinding*(t: UEType, r: UERule = uerNone): NimNode =
+func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode =
     var recList = nnkRecList.newTree()
     var size, offset, padId: int
-    for prop in t.fields:
+    for prop in ueType.fields:
         var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(), newEmptyNode())
 
         let offsetDelta = prop.offset - offset
@@ -471,12 +471,12 @@ func genUStructTypeDefBinding*(t: UEType, r: UERule = uerNone): NimNode =
         size = offset + prop.size
         offset += prop.size
 
-    if size < t.size:
-        recList.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(t.size - size), ident "byte"), newEmptyNode())
+    if size < ueType.size:
+        recList.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(ueType.size - size), ident "byte"), newEmptyNode())
 
     nnkTypeDef.newTree(
         nnkPragmaExpr.newTree([
-            nnkPostfix.newTree([ident "*", ident t.name]),
+            nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
             nnkPragma.newTree(
                 ident "inject",
                 nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))

@@ -5,10 +5,10 @@ import ../coreuobject/[uobject, coreuobject]
 type 
   AActor* {.importcpp, inheritable, pure .} = object of UObject
   AActorPtr* = ptr AActor
-  AController* {.importcpp, inheritable, pure .}= object of AActor
-  AControllerPtr* = ptr AController
-  APlayerController* {.importcpp, inheritable, pure .}= object of AController
-  APlayerControllerPtr* = ptr APlayerController
+  # AController* {.importcpp, inheritable, pure .}= object of AActor
+  # AControllerPtr* = ptr AController
+  # APlayerController* {.importcpp, inheritable, pure .}= object of AController
+  # APlayerControllerPtr* = ptr APlayerController
   # APawn* {.importcpp, inheritable, pure .} = object of AActor
   # APawnPtr* = ptr APawn
 
@@ -30,7 +30,6 @@ type
   # UShapeComponentPtr* = ptr UShapeComponent
   # UChildActorComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
   # UChildActorComponentPtr* = ptr UChildActorComponent
-
   UBlueprint* {.importcpp, inheritable, pure .} = object of UObject
   UBlueprintPtr* = ptr UBlueprint
 

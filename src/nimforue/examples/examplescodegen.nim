@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[strformat, tables, strutils, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
+import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../typegen/uemeta
 import ../../buildscripts/nimforueconfig
 import ../macros/makestrproc
@@ -17,6 +17,7 @@ moduleRules["Engine"] = @[
             "UClass", "UFunction", "UDelegateFunction",
             "UEnum", "AVolume",
              "UActorComponent",
+             "UBlueprint",
             #UMG Created more than once.
 
 
@@ -26,7 +27,7 @@ moduleRules["Engine"] = @[
             # # "ALevelScriptActor",  "UPhysicalMaterialMask",
             # "UHLODLayer",
             # "USceneComponent",
-            "APlayerController",
+            # "APlayerController",
             # "UTexture",
             # "USkinnedMeshComponent",
             # "USoundBase",
@@ -64,7 +65,9 @@ moduleRules["Engine"] = @[
           "EvaluatorMode",
           # "AudioLinkSettings" #I should instead not import property of certain type
 
-          
+          "GetBlendProfile",
+          "IsPolyglotDataValid",
+          "PolyglotDataToText",
           #Engine external deps
           "SetMouseCursorWidget",
           "PlayQuantized",
@@ -79,11 +82,20 @@ moduleRules["Engine"] = @[
         makeImportedRuleModule(uerImportBlueprintOnly)#,
         # makeVirtualModuleRule("gameplaystatics", @["UGameplayStatics"])
 ]
+moduleRules["MovieScene"] = @[
+  makeImportedRuleType(uerIgnore, @[
+    "FMovieSceneByteChannel"        
+
+  ]),
+  makeImportedRuleModule(uerImportBlueprintOnly)
+
+]
 moduleRules["UMG"] = @[ 
         makeImportedRuleType(uerIgnore, @[ #MovieScene was removed as dependency for now          
           "UMovieScenePropertyTrack", "UMovieSceneNameableTrack",
           "UMovieScenePropertySystem", "UMovieScene2DTransformPropertySystem",
           "UMovieSceneMaterialTrack",          
+
            
           ]), 
         makeImportedDelegateRule(@[
@@ -92,11 +104,13 @@ moduleRules["UMG"] = @[
           ]),
         makeImportedDelegateRule("FGetText", @["USlateAccessibleWidgetData"]),
         makeImportedRuleField(uerIgnore, @[
-         
+          "OnIsSelectingKeyChanged",
+          "SlotAsSafeBoxSlot",
+
           "SetNavigationRuleCustomBoundary",
           "SetNavigationRuleCustom"
-        ])
-        # makeImportedRuleModule(uerImportBlueprintOnly)
+        ]),
+        makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
 moduleRules["SlateCore"] = @[        
@@ -209,6 +223,8 @@ uClass AActorCodegen of AActor:
     proc genReflectionData() = 
       try:
         genReflectionData()
+        let rulesASJson = moduleRules.toJson().pretty()
+        UE_Log rulesASJson
       except:
         let e : ref Exception = getCurrentException()
         UE_Error &"Error: {e.msg}"
