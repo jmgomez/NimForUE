@@ -409,7 +409,7 @@ func toUEType*(uenum:UEnumPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] 
             # UE_Warn &"Skipping enum value {fieldName} in {name} because it collides with another field."
             continue
         
-        fields.add(makeFieldASUEnum(fieldName))
+        fields.add(makeFieldASUEnum(fieldName.removePref("_")))
 
 
     if uenum.isBpExposed():
@@ -443,8 +443,7 @@ func getFPropertiesFrom*(ueType:UEType) : seq[FPropertyPtr] =
         let props = outer.getFPropsFromUStruct() &
                     outer.getFuncsParamsFromClass()
 
-        if "UUserWidget*" in props.mapIt(it.getCppType()):
-            UE_Error "Found UserWidget"
+       
 
         # for p in props:
         #     UE_Log p.getCppType()
@@ -454,7 +453,8 @@ func getFPropertiesFrom*(ueType:UEType) : seq[FPropertyPtr] =
     of uetStruct, uetDelegate:
         tryGetUTypeByName[UStruct](ueType.name.removeFirstLetter())
             .map((str:UStructPtr)=>str.getFPropsFromUStruct())
-            .get(@[])
+            .get(@[]) 
+        
        
     of uetEnum: @[]
     
@@ -468,18 +468,31 @@ func getModuleNames*(ueType:UEType) : seq[string] =
                         "bool", "FString", "TArray"
                         ]
     func filterType(typeName:string) : bool = typeName notin typesToSkip 
-    ueType
-        .getFPropertiesFrom()
-        .mapIt(getNimTypeAsStr(it, nil))
-        # .mapIt(getInnerCppGenericType($it.getCppType()))
-        .filter(filterType)
-        .map(getNameOfUENamespacedEnum)
-        .map(func(propType:string):Option[string] = 
+    func typeToModule(propType:string):Option[string] = 
             getUnrealTypeFromName[UStruct](propType.removeFirstLetter().removeLastLettersIfPtr())
                 .chainNone(()=>getUnrealTypeFromName[UEnum](propType))
                 .chainNone(()=>getUnrealTypeFromName[UStruct](propType))
                 .map((obj:UObjectPtr)=> $obj.getModuleName())
-            )
+
+    let depsFromProps = 
+        ueType
+            .getFPropertiesFrom()
+            .mapIt(getNimTypeAsStr(it, nil))
+
+    let otherDeps = 
+        case ueType.kind:
+        of uetClass: ueType.parent
+        else: ueType.name
+    let fieldsMissedProps = 
+        ueType
+            .fields
+            .filterIt(it.kind == uefProp and it.uePropType notin depsFromProps)
+            .mapIt(it.uePropType)
+    (depsFromProps & otherDeps & fieldsMissedProps)
+        # .mapIt(getInnerCppGenericType($it.getCppType()))
+        .filter(filterType)
+        .map(getNameOfUENamespacedEnum)
+        .map(typeToModule)
         .sequence()
         .deduplicate()
 

@@ -19,7 +19,7 @@ moduleRules["Engine"] = @[
              "UActorComponent",
              "UBlueprint",
             #UMG Created more than once.
-
+           
 
             # "UPrimitiveComponent", "UPhysicalMaterial", "AController",
             # "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
@@ -115,10 +115,27 @@ moduleRules["UMG"] = @[
 
 moduleRules["SlateCore"] = @[        
           makeImportedRuleType(uerIgnore, @[
-            "FSlateBrush",
+            "FSlateBrush"
           ])
 ]
-#TODO Deps module needs to pull parents!!!
+moduleRules["DeveloperSettings"] = @[        
+          makeImportedRuleType(uerCodeGenOnlyFields, @[
+            "UDeveloperSettings",
+          ])
+]
+
+moduleRules["UnrealEd"] = @[
+  makeImportedRuleModule(uerImportBlueprintOnly),
+  makeImportedRuleField(uerIgnore, @[
+          "ScriptReimportHelper"
+  ])
+]
+moduleRules["EditorSubsystem"] = @[
+  makeImportedRuleModule(uerImportBlueprintOnly)
+]
+
+#TODO Deps module needs to pull parents !!!
+#Enums too?
 
 proc getAllInstalledPlugins() : seq[string] =
   let config = getNimForUEConfig()
@@ -140,11 +157,10 @@ proc genReflectionData() =
 
       let deps = plugins 
                   .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-                  .foldl(a & b, newSeq[string]()) & @["NimForUEDemo", "Engine", "UMG"]
+                  .foldl(a & b, newSeq[string]()) & @["NimForUEDemo", "Engine", "UMG", "UnrealEd"]
       UE_Log &"Plugins: {plugins}"
       proc getUEModuleFromModule(module:string) : seq[UEModule] =
-        let blueprintOnly = ["Engine", "UMG"]
-        var excludeDeps = @["CoreUObject", "AudioMixer", "UnrealEd", "EditorSubsystem"]
+        var excludeDeps = @["CoreUObject", "AudioMixer", "MegascansPlugin"]
         if module == "Engine":
           excludeDeps.add "UMG"
         
@@ -197,6 +213,10 @@ proc genReflectionData() =
       # let ueProjectAsJson = ueProject.toJson().pretty()
       # let ueProjectFilePath = config.pluginDir / ".reflectiondata" / "ueproject.json"
       # writeFile(ueProjectFilePath, ueProjectAsJson)
+      #Show all deps for testing purposes
+      UE_Log "All module deps:"
+      for m in ueProject.modules:
+        UE_Log &"{m.name}: {m.dependencies}"
 
       let ueProjectAsStr = $ueProject
       let codeTemplate = """
@@ -223,8 +243,8 @@ uClass AActorCodegen of AActor:
     proc genReflectionData() = 
       try:
         genReflectionData()
-        let rulesASJson = moduleRules.toJson().pretty()
-        UE_Log rulesASJson
+        # let rulesASJson = moduleRules.toJson().pretty()
+        # UE_Log rulesASJson
       except:
         let e : ref Exception = getCurrentException()
         UE_Error &"Error: {e.msg}"
@@ -257,4 +277,3 @@ uClass AActorCodegen of AActor:
 
       UE_Warn $obj
       UE_Warn $obj.getOuter()
-

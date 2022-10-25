@@ -48,3 +48,7 @@ NimForUE.*.json
 
 nueMac.sh
 .vscode/
+
+NimHeaders/Modules
+NimHeaders/UEGenBindings.h
+NimHeaders/UEGenClassDefs.h

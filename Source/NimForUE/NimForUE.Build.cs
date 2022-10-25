@@ -13,6 +13,7 @@ public class NimForUE : ModuleRules
 	
 	public NimForUE(ReadOnlyTargetRules Target) : base(Target) {
 	    PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+	    CppStandard = CppStandardVersion.Cpp17;
 	    PrivatePCHHeaderFile = "../../NimHeaders/UEDeps.h";
 	    OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 		PublicIncludePaths.AddRange(   

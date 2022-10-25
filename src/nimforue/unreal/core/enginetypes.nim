@@ -106,6 +106,10 @@ type
   ULocalPlayer* {.importcpp, pure, inheritable .} = object of UPlayer
   ULocalPlayerPtr* = ptr ULocalPlayer
 
+  #This is just part of the non blueprint exposed api
+  ULayer* {.importcpp, pure, inheritable .} = object of UObject
+  ULayerPtr* = ptr ULayer
+
 #   IBlendableInterface* {.importcpp .} = object
 #   IAnimationDataController* {.importcpp .} = object
 #[

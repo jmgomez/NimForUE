@@ -5,9 +5,13 @@ import array
 
 type
   TChar {.importcpp: "TCHAR", nodecl .} = object
-  FString* {. exportc, importcpp, header: ueIncludes, bycopy.} = object
+  FString* {. exportc, importcpp, nodecl, header: ueIncludes, bycopy.} = object
 
-#proc `=destroy`(dst: var FString) = discard
+# when defined(macosx):
+#   proc `=destroy`(dst: var FString) = discard
+#   type Test = openArray[FString]
+#   proc `=destroy`(dst: var Test) = discard
+
 func getCharArray(fstr : FString) : TArray[TChar] {. importcpp: "#.GetCharArray()" .}
 
 func makeFString*(fstr : FString) : FString {.importcpp: "'0'(#)", constructor .}
