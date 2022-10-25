@@ -9,6 +9,9 @@ import ../typegen/models
 
 template processRecList(recList: NimNode) =
   if recList.len > 0:
+    # add comma after kind for non empty branches
+    oStmts.add genAst(output) do:
+      output.add ", "
     for i in recList: #RecList of IdentDefs
       case i[1].kind:
       of nnkSym:
