@@ -7,7 +7,7 @@ import ../typegen/models
 # This macro makes a proc(v: T): string for use with emitting to the VM
 #macro makeStrProc*(t: typedesc): untyped
 
-template processRecList(recList: NimNode, oStmts: NimNode) =
+template processRecList(recList: NimNode) =
   if recList.len > 0:
     for i in recList: #RecList of IdentDefs
       case i[1].kind:
@@ -38,11 +38,9 @@ proc getField(f: NimNode, output:NimNode): NimNode =
   #echo f.treeRepr
   case f.kind:
   of nnkIdentDefs:
-    let fname = f[0].strval
     genAst(output, fname = f[0].strval & ": ", fident = ident f[0].strval):
       output.add fname
       output.addQuoted v.fident
-    
   of nnkRecCase:
     var stmts = nnkStmtList.newTree()
     let kindName = f[0][0].repr
@@ -51,7 +49,6 @@ proc getField(f: NimNode, output:NimNode): NimNode =
     let kindStmt = genAst(output, kindName = kindName & ": ", kindIdent):
         output.add kindName
         output.addQuoted v.kindIdent
-        output.add ", "
     stmts.add kindStmt
 
     var caseStmt = nnkCaseStmt.newTree(nnkDotExpr.newTree(ident("v"), kindIdent))
@@ -62,15 +59,15 @@ proc getField(f: NimNode, output:NimNode): NimNode =
       var oStmts = nnkStmtList.newTree()
       var ofBranch = nnkOfBranch.newTree(o[0], oStmts)
       caseStmt.add ofBranch
-      processRecList(o[1], oStmts)
+      processRecList(o[1])
 
     if f[^1].kind == nnkElse:
-      var oStmts = nnkStmtList.newTree()
+      var oStmts = nnkStmtList.newTree(nnkDiscardStmt.newTree(newEmptyNode()))
       var elseBranch = nnkElse.newTree(oStmts)
       caseStmt.add elseBranch
       for i in f[^1]: # is it a RecList?
         if i.kind == nnkRecList:
-          processRecList(i, oStmts)
+          processRecList(i)
         else:
           discard
 
@@ -98,10 +95,10 @@ macro makeStrProc*(t: typedesc): untyped =
     newEmptyNode(),
     newEmptyNode())
 
+  let tname = t.strVal & "("
+  #var tname = nnkStrLit.newNimNode() # why doesn't this work?!
+  #tname.strVal = t.strVal & "("
   let output = ident "output"
-  var head = genAst(output, typeName = t.strVal & "("):
-    var output = typeName
-
   let fields = case timpl.kind:
     of nnkObjectTy:
       let tfields = timpl[2]
@@ -116,13 +113,14 @@ macro makeStrProc*(t: typedesc): untyped =
     else:
       error("unsupported " & $timpl.kind)
       newEmptyNode()
+  var body = quote do:
+    var `output` = `tname`
+    `fields`
+    `output`.add ")"
+    `output`
+  strproc.add body
 
-  var tail = genAst(output):
-    output.add(")")
-    output
-
-  strproc.add(nnkStmtList.newTree(head, fields, tail))
-  #echo strproc.repr
+  #echo strproc.treerepr
   strproc
 
 
