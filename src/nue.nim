@@ -368,7 +368,7 @@ task gencodeforbindings, "Generate the import/export bindings. Temporal ":
 
 task codegen, "Generate the bindings structure from the persisted json (TEMPORAL until we have it incremental)":
   doAssert(execCmd(&"nim cpp --compileonly -f --nomain --maxLoopIterationsVM:40000000 --nimcache:.nimcache/projectbindings src/codegen/genprojectbindings.nim") == 0)
-  copyFile("src/.reflectiondata/ueproject.nim", "src/.reflectiondata/prevueproject.nim")
+  # copyFile("src/.reflectiondata/ueproject.nim", "src/.reflectiondata/prevueproject.nim")
 
 task gencppbindings, "Generates the cpp bindings":
   codegen(taskOptions)
