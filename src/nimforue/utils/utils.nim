@@ -2,7 +2,7 @@ import std/[options, strutils, sequtils, sugar, tables]
 #NOTE Do not include UE Types here
 
 type Criteria[T] = proc (t:T) : bool {.noSideEffect.}
-
+const PathSeparator* = when defined(windows): "\\" else: "/"
 #seq
 
 func isEmpty*[T](s: seq[T]): bool = s.len == 0

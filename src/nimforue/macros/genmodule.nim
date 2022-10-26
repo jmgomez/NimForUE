@@ -323,7 +323,7 @@ proc genHeaders*(moduleDef: UEModule,  headersPath: string) =
         walkDir( headersPath / "Modules")
         .toSeq()
         .filterIt(it[0] == pcFile and it[1].endsWith(".h"))
-        .mapIt(it[1].split("\\")[^1])#replace(".h", ""))
+        .mapIt(it[1].split(PathSeparator)[^1])#replace(".h", ""))
         .mapIt("#include \"Modules/" & it & "\"")
         # .map(includeHeader)
         .join("\n ") #&"#include \"{headerName(name)}\" \n"
@@ -367,7 +367,6 @@ macro genProjectBindings*(prevProject :static Option[UEProject], project :static
 
   let nimHeadersDir = pluginDir / "NimHeaders" # need this to store forward decls of classes
   
-
   for module in project.modules:
     let module = module
     let exportBindingsPath = bindingsDir / "exported" / module.name.toLower() & ".nim"

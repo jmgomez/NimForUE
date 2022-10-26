@@ -11,7 +11,7 @@ macro importAllBindings() : untyped =
         walkDir(exportBindingsPath)
         .toSeq()
         .filterIt(it[0] == pcFile and it[1].endsWith(".nim"))
-        .mapIt(it[1].split("\\")[^1].replace(".nim", ""))
+        .mapIt(it[1].split(PathSeparator)[^1].replace(".nim", ""))
               
   func importStmts(modName:string) : NimNode =
     genAst(module=ident modName):

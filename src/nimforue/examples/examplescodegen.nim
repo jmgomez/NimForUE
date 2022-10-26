@@ -157,10 +157,11 @@ proc genReflectionData() =
 
       let deps = plugins 
                   .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-                  .foldl(a & b, newSeq[string]()) & @["NimForUEDemo", "Engine", "UMG", "UnrealEd"]
+                  # .foldl(a & b, newSeq[string]()) & @["NimForUEDemo"] #, "Engine", "UMG", "UnrealEd"]
+                  .foldl(a & b, newSeq[string]()) & @["Slate"] #, "Engine", "UMG", "UnrealEd"]
       UE_Log &"Plugins: {plugins}"
       proc getUEModuleFromModule(module:string) : seq[UEModule] =
-        var excludeDeps = @["CoreUObject", "AudioMixer", "MegascansPlugin"]
+        var excludeDeps = @["CoreUObject", "AudioMixer", "MegascansPlugin", "Engine"]
         if module == "Engine":
           excludeDeps.add "UMG"
         

@@ -370,6 +370,13 @@ task codegen, "Generate the bindings structure from the persisted json (TEMPORAL
   doAssert(execCmd(&"nim cpp --compileonly -f --nomain --maxLoopIterationsVM:40000000 --nimcache:.nimcache/projectbindings src/codegen/genprojectbindings.nim") == 0)
   # copyFile("src/.reflectiondata/ueproject.nim", "src/.reflectiondata/prevueproject.nim")
 
+task gencppbindingsmacos, "Generates the cpp bindings for MacOs":
+  codegen(taskOptions)
+  let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
+  doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindingsmacos src/codegen/maingencppbindings.nim") == 0)
+  copyFile("./.nimcache/gencppbindingsmacos/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")
+
+
 task gencppbindings, "Generates the cpp bindings":
   codegen(taskOptions)
   createDir("./.nimcache/guestpch")
