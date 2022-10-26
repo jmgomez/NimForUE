@@ -145,7 +145,7 @@ func isBPExposed(cls:UClassPtr) : bool =
             .any()
       
 
-func isBPExposed(prop:FPropertyPtr, outer:UObjectPtr) : bool = 
+proc isBPExposed(prop:FPropertyPtr, outer:UObjectPtr) : bool = 
     var typeName = prop.getNimTypeAsStr(outer)
     if typeName.contains("TObjectPtr"):
         typeName = typeName.extractTypeFromGenericInNimFormat("TObjectPtr")
@@ -195,7 +195,7 @@ func isNimTypeInAffectedTypes(nimType:string, affectedTypes:seq[string]) : bool 
 
 
 #Function that receives a FProperty and returns a Type as string
-func toUEField*(prop:FPropertyPtr, outer:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEField] = #The expected type is something that UEField can understand
+proc toUEField*(prop:FPropertyPtr, outer:UStructPtr, rules: seq[UEImportRule] = @[]) : Option[UEField] = #The expected type is something that UEField can understand
     let name = prop.getName()
 
     var nimType = prop.getNimTypeAsStr(outer)
@@ -423,7 +423,7 @@ func convertToUEType[T](obj:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option
   tryUECast[T](obj).flatMap((val:ptr T)=>toUEType(val, rules))
 
 
-func getUETypeFrom(obj:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] = 
+proc getUETypeFrom(obj:UObjectPtr, rules: seq[UEImportRule] = @[]) : Option[UEType] = 
   if obj.getFlags() & RF_ClassDefaultObject == RF_ClassDefaultObject: 
     return none[UEType]()
   
@@ -468,7 +468,7 @@ func getModuleNames*(ueType:UEType) : seq[string] =
                         "bool", "FString", "TArray"
                         ]
     func filterType(typeName:string) : bool = typeName notin typesToSkip 
-    func typeToModule(propType:string):Option[string] = 
+    proc typeToModule(propType:string):Option[string] = 
             getUnrealTypeFromName[UStruct](propType.removeFirstLetter().removeLastLettersIfPtr())
                 .chainNone(()=>getUnrealTypeFromName[UEnum](propType))
                 .chainNone(()=>getUnrealTypeFromName[UStruct](propType))
@@ -505,7 +505,7 @@ func getModuleHeader*(module:UEModule) : seq[string] =
           
  
 
-func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[string], includeDeps:seq[string]) : seq[UEModule] = 
+proc toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[string], includeDeps:seq[string]) : seq[UEModule] = 
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
   var types = allObjs.toSeq()
@@ -524,7 +524,7 @@ func toUEModule*(pkg:UPackagePtr, rules:seq[UEImportRule], excludeDeps:seq[strin
   for r in rules:
     if r.rule == uerVirtualModule:
       let r = r
-      let (virtualModuleTypes, types) = types.partition(x => x.name in r.affectedTypes)
+      let (virtualModuleTypes, types) = types.partition((x:UEType) => x.name in r.affectedTypes)
       virtModules.add UEModule(name:r.moduleName, types:virtualModuleTypes, isVirtual: true, dependencies: deps & name) 
 
 

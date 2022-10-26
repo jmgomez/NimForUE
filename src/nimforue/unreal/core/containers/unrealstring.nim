@@ -1,6 +1,12 @@
 include ../../definitions
 
-import system/[widestrs]
+
+when (NimMajor, NimMinor, NimPatch) >= (1, 7, 3):
+  import std/[widestrs]
+else:
+  import system/[widestrs]
+
+  
 import array
 
 type

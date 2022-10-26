@@ -44,7 +44,7 @@ func map*[T, U](xs:TArray[T], fn : T -> U) : TArray[U] =
     arr.add(fn(x))
   arr
 
-func filter*[T](xs:TArray[T], fn : T -> bool) : TArray[T] =
+proc filter*[T](xs:TArray[T], fn : T -> bool) : TArray[T] =
   var arr = makeTArray[T]()
   arr.reserve(xs.num())
   for x in xs:

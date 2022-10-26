@@ -53,7 +53,7 @@ proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor, ha
     #update type information in the constructor
     var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == clsName).get()
     emitter.ueType.ctorSourceHash = hash
-    ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == clsName, emitter)
+    ueEmitter.emitters = ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == clsName, emitter)
 
 
 # proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
@@ -68,7 +68,7 @@ proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) :
     emitter.ueType.fields.add ueField
     ueEmitter.fnTable[ueField.name] = fnImpl
 
-    ueEmitter.emitters = ueEmitter.emitters.replaceFirst(e=>e.ueType.name == ueField.className, emitter)
+    ueEmitter.emitters = ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == ueField.className, emitter)
 
 
 proc getEmmitedTypes() : seq[UEType] = 
@@ -355,7 +355,7 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
                     .map(n=>n.strVal())
                     .fromStringAsMetaToFlag()
 
-    func nodeToUEField (n: NimNode)  : UEField = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
+    proc nodeToUEField (n: NimNode)  : UEField = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
         let fieldName = n[0].repr
         
         #stores the assignment but without the first ident on the dot expression as we dont know it yet
@@ -621,7 +621,7 @@ func getFunctionFlags(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFunctio
 
 #first is the param specify on ufunctions when specified one. Otherwise it will use the first
 #parameter of the function
-func ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[UEMetadata] = @[]) : NimNode = 
+proc ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[UEMetadata] = @[]) : NimNode = 
  #this will generate a UEField for the function 
     #and then call genNativeFunction passing the body
 

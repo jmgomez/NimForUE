@@ -1,6 +1,7 @@
 import std/[options, strutils, sequtils, sugar, tables]
 #NOTE Do not include UE Types here
 
+type Criteria[T] = proc (t:T) : bool {.noSideEffect.}
 
 #seq
 
@@ -18,7 +19,7 @@ func tail*[T](xs: seq[T]): seq[T] =
 func any*[T](xs: seq[T]): bool = len(xs) != 0
 func any*[T](xs: seq[T], fn: T->bool): bool = xs.filter(fn).any()
 
-func firstIndexOf*[T](xs: seq[T], fn: T->bool): int =
+func firstIndexOf*[T](xs: seq[T], fn: Criteria[T]): int =
   var i = 0
   while i < len(xs):
     if fn(xs[i]):
@@ -29,7 +30,7 @@ func firstIndexOf*[T](xs: seq[T], fn: T->bool): int =
 func first*[T](xs: seq[T], fn: T->bool): Option[T] = xs.filter(fn).head()
 
 
-func replaceFirst*[T](xs: var seq[T], fnCriteria: T -> bool, newValue: T): seq[T] =
+func replaceFirst*[T](xs: var seq[T], fnCriteria: Criteria[T], newValue: T): seq[T] =
   let idx = firstIndexOf(xs, fnCriteria)
   xs[idx] = newValue #throw on purpose if there is no value. Handle it with types?
   xs
@@ -52,7 +53,7 @@ func sequence*[T](xs : seq[Option[T]]) : seq[T] =
   xs.filter((x:Option[T])=>x.isSome()).map((x:Option[T])=>x.get())
 
 
-func partition*[T](xs: seq[T], fn: T->bool): (seq[T], seq[T]) =
+func partition*[T](xs: seq[T], fn: Criteria): (seq[T], seq[T]) =
   var left: seq[T] = @[]
   var right: seq[T] = @[]
   for x in xs:
@@ -125,11 +126,11 @@ proc getOrRaise*[T](self: Option[T], msg: string, exceptn: typedesc = Exception)
   else: raise newException(exceptn, msg)
 
 
-func chainNone*[T](opt: Option[T], fn: ()->Option[T]): Option[T] =
+proc chainNone*[T](opt: Option[T], fn: ()->Option[T]): Option[T] =
   if opt.isSome(): opt
   else: fn()
 
-func run*[T](opt: Option[T], fn: (x: T)->void): void =
+proc run*[T](opt: Option[T], fn: (x: T)->void): void =
   if opt.isSome: fn(opt.get())
 
 func disc*[T](opt: Option[T]): void = discard

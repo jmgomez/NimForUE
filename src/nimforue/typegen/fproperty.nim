@@ -113,7 +113,7 @@ func isBasicProperty*(nimTypeName: string) : bool =
 
        
 
-func newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr = 
+proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr = 
     let 
         propType = optPropType.nonEmptyOr(propField.uePropType)
         name = optName.nonEmptyOr(propField.name).makeFName()
