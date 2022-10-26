@@ -337,9 +337,9 @@ proc genHeaders*(moduleDef: UEModule,  headersPath: string) =
     # if headerAsDep notin mainHeaderContent:
     writeFile(mainHeaderPath, mainHeaderContent)
 
-proc genCode(filePath: string, preludePath: string, moduleDef: UEModule, moduleNode: NimNode) =
+proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, moduleNode: NimNode) =
         let code = 
-            preludePath & 
+            moduleStrTemplate & 
             #"{.experimental:\"codereordering\".}\n" &
             moduleDef.dependencies.mapIt("import " & it.toLower()).join("\n") &
             repr(moduleNode)
@@ -356,8 +356,17 @@ proc genCode(filePath: string, preludePath: string, moduleDef: UEModule, moduleN
         writeFile(filePath, code)
 
 macro genBindings*(moduleDef: static UEModule, exportPath: static string, importPath: static string, headersPath: static string) =
+    let moduleStrTemplate = &"""
+include ../../prelude
+when defined(macosx):
+  const BindingPrefix {{.strdefine.}} = ""
+  {{.compile: BindingPrefix&"{moduleDef.name.tolower()}.nim.cpp".}}
+
+"""
+
     genCode(exportPath, "include ../../prelude\n", moduleDef, genExportModuleDecl(moduleDef))
-    genCode(importPath, "include ../prelude\n", moduleDef, genImportCModuleDecl(moduleDef))
+
+    genCode(importPath, moduleStrTemplate, moduleDef, genImportCModuleDecl(moduleDef))
 
     genHeaders(moduleDef, headersPath)
 
@@ -375,10 +384,15 @@ macro genProjectBindings*(prevProject :static Option[UEProject], project :static
     if fileExists and prevProject.isSome() and prevProject.get().modules.any(m=>m.name == module.name and m.hash == module.hash):
         echo "Skipping module: " & module.name & " as it has not changed"
         continue
+    let moduleStrTemplate = &"""
+include ../prelude
+when defined(macosx):
+  const BindingPrefix {{.strdefine.}} = ""
+  {{.compile: BindingPrefix&"{module.name.tolower()}.nim.cpp".}}
 
+"""
     echo &"Generating bindings for {module.name}"
-   
     genCode(exportBindingsPath, "include ../../prelude\n", module, genExportModuleDecl(module))
-    genCode(importBindingsPath, "include ../prelude\n", module, genImportCModuleDecl(module))
+    genCode(importBindingsPath, moduleStrTemplate, module, genImportCModuleDecl(module))
 
     genHeaders(module, nimHeadersDir)

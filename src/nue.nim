@@ -201,10 +201,13 @@ task w, "Alias for watch":
 
 task guest, "Builds the main lib. The one that makes sense to hot reload.":
   generateFFIGenFile(config)
+  let bindingPrefix =
+    "-d:BindingPrefix=.nimcache/gencppbindingsmacos/@m..@snimforue@sunreal@sbindings@sexported@s"
+  
   let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
 
   # doAssert(execCmd(&"nim  cpp {buildFlags} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim") == 0)
-  doAssert(execCmd(&"nim cpp {buildFlags} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim") == 0)
+  doAssert(execCmd(&"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim") == 0)
   echo "NUE_TEMP"
   copyNimForUELibToUEDir()
 
@@ -221,7 +224,11 @@ task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nog
     lineDir = "off"
     curTargetSwitches = targetSwitches.filterIt(it[0] != "debugger" and it[0] != "stacktrace")
 
-  let buildFlags = @[buildSwitches, curTargetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
+  let buildFlags = @[
+      buildSwitches, curTargetSwitches, platformSwitches, 
+      ueincludes, uesymbols
+      
+    ].foldl(a & " " & fold(b), "")
 
   if not noGen:
     # doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0)
