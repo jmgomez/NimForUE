@@ -201,16 +201,7 @@ task w, "Alias for watch":
   watch(taskOptions)
 
 task guest, "Builds the main lib. The one that makes sense to hot reload.":
-  generateFFIGenFile(config)
-  let bindingPrefix =
-    "-d:BindingPrefix=.nimcache/gencppbindingsmacos/@m..@snimforue@sunreal@sbindings@sexported@s"
-  
-  let buildFlags = @[buildSwitches, targetSwitches, platformSwitches, ueincludes, uesymbols].foldl(a & " " & fold(b), "")
-
-  # doAssert(execCmd(&"nim  cpp {buildFlags} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim") == 0)
-  doAssert(execCmd(&"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim") == 0)
-  echo "NUE_TEMP"
-  copyNimForUELibToUEDir()
+  compilePlugin()
 
 task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nogen to compile from nimcache cpp sources without generating, --nolinedir turns off #line directives in cpp output.":
   generateFFIGenFile(config)
