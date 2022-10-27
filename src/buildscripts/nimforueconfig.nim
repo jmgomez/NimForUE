@@ -122,9 +122,8 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry", 
     "UnrealEd", "ClothingSystemRuntimeInterface",  "EditorSubsystem", "InterchangeCore",
     "TypedElementFramework","Chaos", "ChaosCore", "EditorStyle", "EditorFramework",
-    "Localization", "DeveloperToolSettings",
-    "InputCore", "DeveloperSettings", "SlateCore", "Slate", "ToolMenus"]
-
+    "Localization", "DeveloperToolSettings", "Slate",
+    "InputCore", "DeveloperSettings", "SlateCore", "ToolMenus"]
   let editorModules = @["UnrealEd", "PropertyEditor", 
   "EditorStyle", "EditorSubsystem","EditorFramework",
   
@@ -134,7 +133,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
     developerModules.map(module=>getEngineRuntimeIncludeClassesPathFor("Developer", module)) & #if it starts to complain about the lengh of the cmd line. Optimize here
     editorModules.map(module=>getEngineRuntimeIncludePathFor("Editor", module)) & 
-    intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module))
+    intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module)) 
 
   (essentialHeaders & moduleHeaders & editorHeaders).map(path => path.normalizedPath().normalizePathEnd())
 

@@ -62,8 +62,8 @@ proc main() =
 
 
 # --- Compile flags ---
-const withPCH {.used.} = true
-const withDebug = true
+const withPCH {.used.} = false
+const withDebug = false
 
 template d(def: string): untyped =
   ("define", def)

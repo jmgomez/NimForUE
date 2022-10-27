@@ -8,7 +8,7 @@ when not defined ueIncludes:
 #include "nimbase.h"
     """
 
-{.emit: "/*INCLUDESECTION*/" & ueIncludes.}
+#{.emit: "/*INCLUDESECTION*/" & ueIncludes.}
 
 
 
