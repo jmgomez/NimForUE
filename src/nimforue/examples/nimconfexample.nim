@@ -57,6 +57,7 @@ uClass APickUp of AStaticMeshActor:
     
     proc pickUpItem(inventory: UInventoryComponentPtr) {.BlueprintCallable.} =
       inventory.addItem(self.item)
+      
       self.destroyActor()
 
 

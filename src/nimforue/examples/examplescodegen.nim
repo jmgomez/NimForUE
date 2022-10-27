@@ -55,7 +55,8 @@ moduleRules["Engine"] = @[
           "FHitResult",
           #issue with a field name 
           "FTransformConstraint", 
-          "UKismetMathLibrary" #issue with the funcs?
+          "UKismetMathLibrary", #issue with the funcs?,
+          "FOnTemperatureChangeDelegate" #Mac gets stuck here?
           ]), 
           
         makeImportedRuleField(uerIgnore, @[
@@ -71,6 +72,8 @@ moduleRules["Engine"] = @[
           #Engine external deps
           "SetMouseCursorWidget",
           "PlayQuantized",
+
+          "Cancel", #name collision on mac (it can be avoided by adding it as an exception on the codegen)
           #By type name
           # "UClothingSimulationInteractor",
           # "UClothingAssetBasePtr",
@@ -157,11 +160,11 @@ proc genReflectionData() =
 
       let deps = plugins 
                   .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-                  # .foldl(a & b, newSeq[string]()) & @["NimForUEDemo"] #, "Engine", "UMG", "UnrealEd"]
-                  .foldl(a & b, newSeq[string]()) & @["Slate"] #, "Engine", "UMG", "UnrealEd"]
+                  .foldl(a & b, newSeq[string]()) & @["NimForUEDemo", "Engine", "UMG", "UnrealEd"]
+                  
       UE_Log &"Plugins: {plugins}"
       proc getUEModuleFromModule(module:string) : seq[UEModule] =
-        var excludeDeps = @["CoreUObject", "AudioMixer", "MegascansPlugin", "Engine"]
+        var excludeDeps = @["CoreUObject", "AudioMixer", "MegascansPlugin"]
         if module == "Engine":
           excludeDeps.add "UMG"
         
