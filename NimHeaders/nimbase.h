@@ -20,6 +20,9 @@ __clang__
 __AVR__
 */
 
+#pragma once
+#include "Definitions.NimForUEBindings.h"
+#include "UEDeps.h"
 
 #ifndef NIMBASE_H
 #define NIMBASE_H
