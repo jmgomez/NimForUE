@@ -58,3 +58,9 @@ proc compilePlugin*() =
   doAssert(execCmd(compCmd)==0)
   
   copyNimForUELibToUEDir()
+
+
+proc compileGenerateBindings*() = 
+  let buildFlags = @[buildSwitches, targetSwitches, pluginPlatformSwitches, ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
+  doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindingsmacos src/codegen/maingencppbindings.nim") == 0)
+  copyFile("./.nimcache/gencppbindingsmacos/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")
