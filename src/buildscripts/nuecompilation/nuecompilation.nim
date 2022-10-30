@@ -3,7 +3,7 @@
 
 import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
 import buildscripts/[buildcommon, buildscripts, nimforueconfig, nimcachebuild]
-import switches 
+import ../switches/switches
 let config = getNimForUEConfig()
 
 
@@ -54,8 +54,7 @@ proc compilePlugin*() =
     "-d:BindingPrefix=.nimcache/gencppbindingsmacos/@m..@snimforue@sunreal@sbindings@sexported@s"
   
   let buildFlags = @[buildSwitches, targetSwitches, pluginPlatformSwitches, ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
-
-  # doAssert(execCmd(&"nim  cpp {buildFlags} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim") == 0)
-  doAssert(execCmd(&"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim") == 0)
-  echo "NUE_TEMP"
+  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim"
+  doAssert(execCmd(compCmd)==0)
+  
   copyNimForUELibToUEDir()

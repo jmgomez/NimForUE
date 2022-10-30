@@ -53,7 +53,7 @@ uClass APickUp of AStaticMeshActor:
       if self.item.isNotNil() and self.item.mesh.isNotNil():
         discard self.staticMeshComponent.setStaticMesh(self.item.mesh)
       else:
-        UE_Warn "No mesh set for pickup"
+        UE_Warn "No mesh set for pickup, whatever bro! This is sooo"
     
     proc pickUpItem(inventory: UInventoryComponentPtr) {.BlueprintCallable.} =
       inventory.addItem(self.item)

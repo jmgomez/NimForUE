@@ -20,9 +20,14 @@ __clang__
 __AVR__
 */
 
-#pragma once
-#include "Definitions.NimForUEBindings.h"
 #include "UEDeps.h"
+//NimForUE specific conflicts
+#if defined(WIN32) 
+  #undef _wenviron
+
+  #   pragma warning ( disable : 4018 4244 4547 4800 4804 4805 4913 4133)
+#endif
+//NimForUE EndPatch
 
 #ifndef NIMBASE_H
 #define NIMBASE_H
@@ -604,4 +609,7 @@ NIM_STATIC_ASSERT(sizeof(NI) == sizeof(void*) && NIM_INTBITS == sizeof(NI)*8, ""
 #define NIM_NOALIAS __restrict
 /* __restrict is said to work for all the C(++) compilers out there that we support */
 
+
 #endif /* NIMBASE_H */
+
+

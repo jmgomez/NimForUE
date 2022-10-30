@@ -1,4 +1,4 @@
-import std/[options, osproc, strutils,sugar, sequtils,strformat,  genasts, macros, importutils, os]
+import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
 
 include ../unreal/definitions
 import ../utils/ueutils
