@@ -386,9 +386,9 @@ macro genProjectBindings*(prevProject :static Option[UEProject], project :static
         continue
     let moduleStrTemplate = &"""
 include ../prelude
-when defined(macosx):
-  const BindingPrefix {{.strdefine.}} = ""
-  {{.compile: BindingPrefix&"{module.name.tolower()}.nim.cpp".}}
+
+const BindingPrefix {{.strdefine.}} = ""
+{{.compile: BindingPrefix&"{module.name.tolower()}.nim.cpp".}}
 
 """
     echo &"Generating bindings for {module.name}"

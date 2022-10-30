@@ -5,11 +5,10 @@ The file that mixes them is prelude which is not used inside the unreal director
 
 when not defined ueIncludes:
     const ueIncludes* = """
-#include "Definitions.NimForUEBindings.h"
-#include "UEDeps.h"
+#include "nimbase.h"
     """
 
-{.emit: "/*INCLUDESECTION*/" & ueIncludes.}
+#{.emit: "/*INCLUDESECTION*/" & ueIncludes.}
 
 
 

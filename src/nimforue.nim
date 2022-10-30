@@ -15,3 +15,6 @@ import nimforue/examples/examples
 
 
 #echo $module
+
+
+echo "arranca"

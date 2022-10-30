@@ -282,3 +282,6 @@ uClass AActorCodegen of AActor:
       
       UE_Warn $obj
       UE_Warn $obj.getOuter()
+
+    proc testWorks() = 
+      UE_Warn "It works"
