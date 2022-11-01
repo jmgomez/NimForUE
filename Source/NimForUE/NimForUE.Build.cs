@@ -26,6 +26,9 @@ public class NimForUE : ModuleRules
         PublicDefinitions.Add("NIM_INTBITS=64");
 	    PrivatePCHHeaderFile = "../../NimHeaders/nimbase.h";
 	    OptimizeCode = CodeOptimization.InShippingBuildsOnly;
+	    Console.WriteLine("Linker arguments:");
+		
+	    Console.WriteLine(Target.AdditionalLinkerArguments);
 		PublicIncludePaths.AddRange(   
 			new string[] {
 				// ... add public include paths required here ...

@@ -46,10 +46,12 @@ let targetSwitches* =
   case config.targetConfiguration:
     of Debug, Development:
       var ts = @["--opt:none"]
-      if withDebug:
+      if withDebug:# and not defined(windows):
         ts &= @["--stacktrace:on"]
-        if not defined(windows):
-          ts &= @["--debugger:native"]
+        # if not defined(windows):
+        # ts &= @["--debugger:native"]
+        ts &= @["--linedir:on"]#, "--debugInfo"]
+        
       ts
     of Shipping: @["--danger"]
       

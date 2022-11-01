@@ -1,6 +1,8 @@
 #pragma once
 
-
+#ifndef WITH_ENGINE //Only include definitions is not coming from UBT
+  #include "Definitions.NimForUEBindings.h"
+#endif
 
 #include "CoreMinimal.h"
 #include "CoreUObject.h"

@@ -6,7 +6,8 @@ import buildcommon, nimforueconfig
 
 const withPCH = true
 const parallelBuild = true # for debugging purposes, normally we want to execute in parallel
-const PCHFile = "UEDeps.h"
+# const PCHFile = "UEDeps.h"
+const PCHFile = "nimbase.h"
 
 let nueConfig = getNimForUEConfig()
 let pluginDir = nueConfig.pluginDir
@@ -37,7 +38,7 @@ proc debugFlags():string =
       if versions.len > 0:
         "-" & $(versions[0]+1)
       else: ""
-
+    
     let pdbFile = pdbFolder / "nimforue" & version & ".pdb"
     &"/Fd{pdbFile} /link /ASSEMBLYDEBUG /DEBUG /PDB:{pdbFile}"
   else:

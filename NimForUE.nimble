@@ -13,4 +13,4 @@ backend = "cpp"
 #bin = @["nue"]
 
 task nue, "Build the NimForUE tool":
-  exec "nim c -p:./ -d:danger src/nue.nim" # see src/nue.nims for conf
+  exec "nim c -p:./ -d:danger --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf

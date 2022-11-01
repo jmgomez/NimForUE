@@ -65,9 +65,54 @@ proc main() =
 
 # --- Define Tasks ---
 
+# task guestpch, "Builds the hot reloading lib. Options -f to force rebuild, --nogen to compile from nimcache cpp sources without generating, --nolinedir turns off #line directives in cpp output.": 
+#   generateFFIGenFile(config) 
+ 
+#   var force = "" 
+#   if "f" in taskOptions: 
+#     force = "-f" 
+#   var noGen = "nogen" in taskOptions 
+#   var lineDir = "on" 
+#   var curTargetSwitches = targetSwitches 
+#   if "nolinedir" in taskOptions:  
+#     lineDir = "off" 
+#     curTargetSwitches = targetSwitches.filterIt(it[0] != "debugger" and it[0] != "stacktrace") 
+ 
+#   let buildFlags = @[ 
+#       buildSwitches, curTargetSwitches, platformSwitches,  
+#       ueincludes, uesymbols 
+       
+#     ].foldl(a & " " & fold(b), "") 
+ 
+#   if not noGen: 
+#     # doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0) 
+#     doAssert(execCmd(&"nim cpp {force} --lineDir:{lineDir} {buildFlags} --genscript --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guestpch src/nimforue.nim") == 0) 
+ 
+#   if nimcacheBuild(buildFlags, "guestpch", "nimforue") == Success: 
+#     copyNimForUELibToUEDir() 
+#   else: 
+#     log("!!>> Task: guestpch failed to build. <<<<", lgError) 
+#     quit(QuitFailure) 
+ 
+# task g, "Alias to guestpch": 
+#   guestpch(taskOptions) 
+ 
+task winpch, "For Windows, Builds the pch file for Unreal Engine via nim": 
+  compileWinPCH()
+ 
 
 
 task guest, "Builds the main lib. The one that makes sense to hot reload.":
+  # var force = "" 
+  # if "f" in taskOptions: 
+  #   force = "-f" 
+  # var noGen = "nogen" in taskOptions 
+  # var lineDir = "on" 
+  # var curTargetSwitches = targetSwitches 
+  # if "nolinedir" in taskOptions:  
+  #   lineDir = "off" 
+  #   curTargetSwitches = targetSwitches.filterIt(it[0] != "debugger" and it[0] != "stacktrace")
+  #TODO pass the above
   compilePlugin()
 
 task host, "Builds the host that's hooked to unreal":

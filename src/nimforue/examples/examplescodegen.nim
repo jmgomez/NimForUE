@@ -272,6 +272,7 @@ uClass AActorCodegen of AActor:
       let obj2 = getUTypeByName[UDelegateFunction]("OnOpeningEvent"&DelegateFuncSuffix)
       UE_Warn $obj
       UE_Warn $obj2
+      UE_Warn $obj2
 
     proc searchDelByName() = 
       let obj = getUTypeByName[UDelegateFunction](self.delTypeName&DelegateFuncSuffix)

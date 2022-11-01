@@ -20,7 +20,12 @@ __clang__
 __AVR__
 */
 
+
+
 #include "UEDeps.h"
+
+
+
 //NimForUE specific conflicts
 #if defined(WIN32) 
   #undef _wenviron

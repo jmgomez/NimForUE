@@ -48,12 +48,41 @@ proc compileHost*() =
 
 
 
+
+proc compileWinPCH*() = 
+  let buildFlags = @[buildSwitches, targetSwitches, ueincludes, uesymbols, getPlatformSwitches(true, true)].foldl(a & " " & b.join(" "), "")
+  #TODO Create a single cpp. No need to create a Nim program for this
+  
+  let iTest = "-I" & quotes(config.pluginDir / "NimHeaders")
+  if execCmd(&"nim cpp {buildFlags} --genscript  --app:lib --nomain --nimcache:.nimcache/winpch src/nimforue/unreal/winpch.nim") != 0:
+    quit("! Error: Could not compile winpch.")
+
+  var pchCmd = r"vccexe.exe /c --platform:amd64 /nologo " & iTest & " " &
+    vccPchCompileFlags(withDebug, withPch = true, createPch = true).join(" ") & " " & 
+    getUEHeadersIncludePaths(config).foldl(a & " -I" & quotes(b), " ")
+
+  let definitionsCppPath = config.pluginDir / ".nimcache/winpch/@mdefinitions.nim.cpp"
+  # let definitionsCppPath = config.pluginDir / ".nimcache/winpch/tocompile.cpp"
+  if fileExists(definitionsCppPath):
+    pchCmd &= " " & definitionsCppPath
+  else:
+    quit("!Error: " & definitionsCppPath & " not found!")
+
+  let curDir = getCurrentDir()
+  pchCmd &= " " & debugFlags() #NEXT
+  #echo pchCmd
+  setCurrentDir(".nimcache/winpch")
+  discard execCmd(pchCmd)
+  setCurrentDir(curDir)
+
+
 proc compilePlugin*() =
   generateFFIGenFile(config)
   let bindingPrefix =
     "-d:BindingPrefix=.nimcache/gencppbindingsmacos/@m..@snimforue@sunreal@sbindings@sexported@s"
   
-  let buildFlags = @[buildSwitches, targetSwitches, pluginPlatformSwitches, ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches, ueincludes, uesymbols, pluginPlatformSwitches].foldl(a & " " & b.join(" "), "")
+  echo pluginPlatformSwitches
   let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim"
   doAssert(execCmd(compCmd)==0)
   
