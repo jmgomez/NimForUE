@@ -17,13 +17,18 @@ type
         generator* : UPackagePtr->UFieldPtr
         
     
-    UEEmitter* = ref object 
+    UEEmitterRaw* = object 
         emitters* : seq[EmitterInfo]
         # types* : seq[UEType]
         fnTable* : Table[string, Option[UFunctionNativeSignature]]
         clsConstructorTable* : Table[string, CtorInfo]
         setStructOpsWrapperTable* : Table[string, UNimScriptStructPtr->void]
+    UEEmitter* = ref UEEmitterRaw
+    UEEmitterPtr* = ptr UEEmitterRaw
 
+
+proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string = 
+    result = $emitter.emitters
 var ueEmitter* = UEEmitter() 
 
 #rename these to register

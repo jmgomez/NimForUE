@@ -72,41 +72,42 @@ proc vccPchCompileFlags*(withDebug, withPch:bool) : seq[string] =
     (if withDebug: @["/Od", "/Z7"] else: @["/O2"])
 
 
-proc getPdbFilePath*(folder="guest"): string =
+#nimforue or game are the target, the folder and the base name must match
+proc getPdbFilePath*(targetName:static string): string =
  # This has some hardcoded paths for guestpch!
-  let pdbFolder = pluginDir / ".nimcache" / folder / "pdbs"
+  let pdbFolder = pluginDir / ".nimcache" / targetName / "pdbs"
   createDir(pdbFolder)
 
   # clean up pdbs
-  for pdbPath in walkFiles(pdbFolder/"nimforue*.pdb"):
+  for pdbPath in walkFiles(pdbFolder/ (targetName) & "*.pdb"):
     discard tryRemoveFile(pdbPath) # ignore if the pdb is locked by the debugger
 
   proc toVersion(s: string):int =
     let (_, f, _) = s.splitFile
     var n : int
-    discard f.scanf("nimforue-$i", n)
+    discard f.scanf(targetName & "-$i", n)
     n
 
   # generate a new pdb name
   # get the version numbers and inc the highest to get the next
-  let versions : seq[int] = walkFiles(pdbFolder/"nimforue*.pdb").toSeq.map(toVersion).sorted(Descending)
+  let versions : seq[int] = walkFiles(pdbFolder/(targetName) & ".pdb").toSeq.map(toVersion).sorted(Descending)
   let version : string =
     if versions.len > 0:
       "-" & $(versions[0]+1)
     else: ""
     
   
-  let pdbFile = pdbFolder / "nimforue" & version & ".pdb"
+  let pdbFile = pdbFolder / targetName & version & ".pdb"
   pdbFile
 
-proc vccPchCompileSwitches*(withDebug : bool, debugFolder:string) : seq[string]= 
+proc vccPchCompileSwitches*(withDebug : bool, debugFolder:static string) : seq[string]= 
   let switches = vccPchCompileFlags(withDebug, withPch = true).filterIt(len(it)>1).mapIt("-t:" & it) & @[&"--cc:vcc", "-l:" & pchObjPath]
   if withDebug: 
-      let debugSwitches = (&"-l:/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath(debugFolder)}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
+      let debugSwitches = (&"/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath(debugFolder)}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
       switches & debugSwitches
   else: switches & @["-l:/INCREMENTAL"]
 
 
 
-proc getPlatformSwitches*(withPch, withDebug : bool, debugFolder:string) : seq[string] = 
+proc getPlatformSwitches*(withPch, withDebug : bool, debugFolder:static string) : seq[string] = 
   result = vccPchCompileSwitches(withDebug, debugFolder) 

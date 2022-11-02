@@ -12,3 +12,6 @@ import ../unreal/runtime/[assetregistry]
 import ../utils/[utils, ueutils]
 
 import engine
+
+when not defined(getUEEmitter):
+    proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   ueEmitter

@@ -5,6 +5,7 @@ import std/[os, dynlib, strformat, options]
 
 type 
   GameExposedFn = proc (): cint {.gcsafe, stdcall.}
+  GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, stdcall.}
 
 let config = getNimForUEConfig()
 let dllDir = config.pluginDir / "Binaries" / "nim" / "ue"
@@ -23,10 +24,13 @@ uClass AGameDllTest of AActor:
         UE_Log &"does the lib exists {fileExists(gameDllPath)}"
         UE_Log gameDllPath
         let lib = loadLib gameDllPath
-        let gameExposedFn = cast[GameExposedFn](lib.symAddr("gameExposeFn"))
-        if not gameExposedFn.isNil():
-          let result = gameExposedFn()
-          UE_Log &"result {result}"
+        let getUEEmitter = cast[GetUEEmitterFn](lib.symAddr("getUEEmitter"))
+        if not getUEEmitter.isNil():
+          let result = getUEEmitter()
+          if not result.isNil():
+            UE_Log &"UEEmitter: {result}"
+          else:
+            UE_Log "UEEmitter is nil"
         else:
           UE_Log "gameExposedFn is nil"
       except:

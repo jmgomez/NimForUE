@@ -30,14 +30,3 @@ proc getPlatformSwitches*(withPch, withDebug : bool) : seq[string] =
     macSwitches & @["-t:"&escape("-include-pch " & pchPath)]
   else: macSwitches
 
-
-elif defined(windows):
-  let pluginPlatformSwitches* = 
-    # vccCompileFlags.mapIt("-t:" & (it)) & hostPlatformSwitches
-    vccCompileFlags.mapIt("-t:" & (it)) & hostPlatformSwitches &
-    (if withPCH:
-      hostPlatformSwitches & @["-l:" & pchObjPath]
-    else: @[])
-        
-
-else: discard
