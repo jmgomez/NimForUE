@@ -42,8 +42,8 @@ func getNextFileName*(currentFilename : string) : string =
     &"{filename}{splitter}1{extension}"
 
 
-proc getAllLibsFromPath*(libPath:string) : seq[string] =
-  let libName = getFullLibName("nimforue")
+proc getAllLibsFromPath*(libPath, libName:string) : seq[string] =
+  let libName = getFullLibName(libName)
   let libDir = libPath.replace(libName, "")
   let walkPattern = libDir / libName.replace(".", "*.")
   var libs = toSeq(walkFiles(walkPattern))
@@ -51,14 +51,14 @@ proc getAllLibsFromPath*(libPath:string) : seq[string] =
   libs.sorted(orderByRecent, Descending)
 
 
-proc getLastLibPath*(libPath:string): Option[string] =
-  let libs = getAllLibsFromPath(libPath)
+proc getLastLibPath*(libPath, libName:string): Option[string] =
+  let libs = getAllLibsFromPath(libPath, libName)
   if libs.len == 0:
     return none[string]()
   some libs[0]
 
 
-proc copyNimForUELibToUEDir*() = 
+proc copyNimForUELibToUEDir*(libName="nimforue") = 
   var conf = getNimForUEConfig()
   let libDir = conf.pluginDir/"Binaries/nim"
   let libDirUE = libDir / "ue"   
@@ -66,10 +66,10 @@ proc copyNimForUELibToUEDir*() =
 
   when defined(windows):
     # #deletes previous used ones
-    for libPath in getAllLibsFromPath(libDirUE):
+    for libPath in getAllLibsFromPath(libDirUE, libName):
       discard tryRemoveFile(libPath) #We just ignore if it fails as it isnt critical to keep going
 
-  let libsCandidates = getAllLibsFromPath(libDirUE)
+  let libsCandidates = getAllLibsFromPath(libDirUE, libName)
 
   proc extractNumber(path: string): int = 
     var ignore : string
@@ -83,8 +83,8 @@ proc copyNimForUELibToUEDir*() =
                       else:
                         0
 
-  let baseLibName = getFullLibName("nimforue")
-  let nextFileName = getFullLibName("nimforue-" & $(nextLibNumber))
+  let baseLibName = getFullLibName(libName)
+  let nextFileName = getFullLibName(&"{libname}-{nextLibNumber}")
 
   let fileFullSrc = libDir/baseLibName
   let fileFullDst: string =
@@ -96,12 +96,7 @@ proc copyNimForUELibToUEDir*() =
   copyFile(fileFullSrc, fileFullDst)
   log "Copied " & fileFullSrc & " to " & fileFullDst
 
-  when defined windows:
-    let debugFolder = conf.pluginDir / ".nimcache/guestpch/debug"
-    try:
-      removeDir(debugFolder)
-    except:
-      discard #Debug folder was used. We just ignore it as it isnt critical to keep going
+ 
 
 
 

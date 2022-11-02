@@ -286,3 +286,6 @@ uClass AActorCodegen of AActor:
 
     proc testWorks() = 
       UE_Warn "It works"
+
+
+    

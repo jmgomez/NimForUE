@@ -58,7 +58,7 @@ proc compilePlugin*(extraSwitches:seq[string]) =
   let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim"
   doAssert(execCmd(compCmd)==0)
   
-  copyNimForUELibToUEDir()
+  copyNimForUELibToUEDir("nimforue")
 
 
 proc compileGame*(extraSwitches:seq[string]) = 
@@ -78,6 +78,7 @@ proc compileGame*(extraSwitches:seq[string]) =
   let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain -d:withPCH --nimcache:.nimcache/game src/game/game.nim"
   doAssert(execCmd(compCmd)==0)
   
+  copyNimForUELibToUEDir("game")
 
 
 
