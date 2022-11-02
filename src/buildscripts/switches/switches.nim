@@ -1,6 +1,6 @@
 
 import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
-import buildscripts/[buildcommon, buildscripts, nimforueconfig, nimcachebuild]
+import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 when defined(macosx):
   import macswitches
   export macswitches

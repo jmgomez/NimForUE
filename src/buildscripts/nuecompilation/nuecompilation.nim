@@ -2,7 +2,7 @@
 #We may extrac the compilation option to another file since there are a lot of platforms. 
 
 import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
-import buildscripts/[buildcommon, buildscripts, nimforueconfig, nimcachebuild]
+import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 import ../switches/switches
 let config = getNimForUEConfig()
 
@@ -59,6 +59,17 @@ proc compilePlugin*(extraSwitches:seq[string]) =
   doAssert(execCmd(compCmd)==0)
   
   copyNimForUELibToUEDir()
+
+
+proc compileGame*(extraSwitches:seq[string]) = 
+  let bindingPrefix =
+    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
+  
+  let buildFlags = @[buildSwitches, targetSwitches, ueincludes, uesymbols, pluginPlatformSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
+  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/game src/game/game.nim"
+  doAssert(execCmd(compCmd)==0)
+  
+
 
 
 proc compileGenerateBindings*() = 

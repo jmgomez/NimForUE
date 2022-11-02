@@ -1,6 +1,6 @@
 
 import std / [ options, strscans, algorithm, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
-import buildscripts/[buildcommon, buildscripts, nimforueconfig, nimcachebuild]
+import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 
 
 let config = getNimForUEConfig()
