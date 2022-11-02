@@ -96,24 +96,16 @@ proc main() =
  
 # task g, "Alias to guestpch": 
 #   guestpch(taskOptions) 
- 
-task winpch, "For Windows, Builds the pch file for Unreal Engine via nim": 
-  compileWinPCH()
- 
 
 
 task guest, "Builds the main lib. The one that makes sense to hot reload.":
-  # var force = "" 
-  # if "f" in taskOptions: 
-  #   force = "-f" 
-  # var noGen = "nogen" in taskOptions 
-  # var lineDir = "on" 
-  # var curTargetSwitches = targetSwitches 
-  # if "nolinedir" in taskOptions:  
-  #   lineDir = "off" 
-  #   curTargetSwitches = targetSwitches.filterIt(it[0] != "debugger" and it[0] != "stacktrace")
-  #TODO pass the above
-  compilePlugin()
+  var extraSwitches = newSeq[string]()
+  if "f" in taskOptions: 
+    extraSwitches.add "-f" #force 
+  if "nolinedir" in taskOptions:  
+    extraSwitches.add "--linedir:off"
+     
+  compilePlugin(extraSwitches)
 
 task host, "Builds the host that's hooked to unreal":
   compileHost()

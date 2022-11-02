@@ -41,16 +41,18 @@ let buildSwitches* = @[
 
 ]
 
-
+#Probably this needs to be platform specific as well
 let targetSwitches* =
   case config.targetConfiguration:
     of Debug, Development:
       var ts = @["--opt:none"]
-      if withDebug:# and not defined(windows):
+      if withDebug:
         ts &= @["--stacktrace:on"]
-        # if not defined(windows):
-        # ts &= @["--debugger:native"]
-        ts &= @["--linedir:on"]#, "--debugInfo"]
+        if not defined(windows):
+          ts &= @["--debugger:native"]
+        else: #"--debugger:native" == --lineDir:on + --debugInfo
+        #in windows they use -Zi and we manually pass over Z7 (because of UE PCH) so we only set --lineDir:on
+          ts &= @["--linedir:on"]#, "--debugInfo"]
         
       ts
     of Shipping: @["--danger"]

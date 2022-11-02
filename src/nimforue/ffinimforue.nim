@@ -45,7 +45,7 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
     
   
         # printAllClassAndProps("PRE", pkg)
-ou        let isFirstLoad = n == 0
+        let isFirstLoad = n == 0
         let nimHotReload = emitUStructsForPackage(isFirstLoad)
         
     
