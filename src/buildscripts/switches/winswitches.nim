@@ -72,9 +72,9 @@ proc vccPchCompileFlags*(withDebug, withPch:bool) : seq[string] =
     (if withDebug: @["/Od", "/Z7"] else: @["/O2"])
 
 
-proc getPdbFilePath*(): string =
+proc getPdbFilePath*(folder="guest"): string =
  # This has some hardcoded paths for guestpch!
-  let pdbFolder = pluginDir / ".nimcache/guest/pdbs"
+  let pdbFolder = pluginDir / ".nimcache" / folder / "pdbs"
   createDir(pdbFolder)
 
   # clean up pdbs
@@ -99,14 +99,14 @@ proc getPdbFilePath*(): string =
   let pdbFile = pdbFolder / "nimforue" & version & ".pdb"
   pdbFile
 
-proc vccPchCompileSwitches*(withDebug : bool) : seq[string]= 
+proc vccPchCompileSwitches*(withDebug : bool, debugFolder:string) : seq[string]= 
   let switches = vccPchCompileFlags(withDebug, withPch = true).filterIt(len(it)>1).mapIt("-t:" & it) & @[&"--cc:vcc", "-l:" & pchObjPath]
   if withDebug: 
-      let debugSwitches = (&"-l:/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath()}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
+      let debugSwitches = (&"-l:/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath(debugFolder)}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
       switches & debugSwitches
   else: switches & @["-l:/INCREMENTAL"]
 
 
 
-proc getPlatformSwitches*(withPch, withDebug : bool) : seq[string] = 
-  result = vccPchCompileSwitches(withDebug) 
+proc getPlatformSwitches*(withPch, withDebug : bool, debugFolder:string) : seq[string] = 
+  result = vccPchCompileSwitches(withDebug, debugFolder) 

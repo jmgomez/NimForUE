@@ -75,13 +75,13 @@ proc compileGame*(extraSwitches:seq[string]) =
     "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
   
   let buildFlags = @[buildSwitches, targetSwitches, ueincludes, uesymbols, pluginPlatformSwitches, gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/game src/game/game.nim"
+  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain -d:withPCH --nimcache:.nimcache/game src/game/game.nim"
   doAssert(execCmd(compCmd)==0)
   
 
 
 
 proc compileGenerateBindings*() = 
-  let buildFlags = @[buildSwitches, targetSwitches, pluginPlatformSwitches, ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches, gamePlatformSwitches, ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/codegen/maingencppbindings.nim") == 0)
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")

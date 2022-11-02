@@ -58,5 +58,6 @@ let targetSwitches* =
     of Shipping: @["--danger"]
       
 
-let hostPlatformSwitches* = getPlatformSwitches(false, false)
-let pluginPlatformSwitches* = getPlatformSwitches(withPch, withDebug) 
+let hostPlatformSwitches* = getPlatformSwitches(false, false, "")
+let pluginPlatformSwitches* = getPlatformSwitches(withPch, withDebug, "guest") 
+let gamePlatformSwitches* = getPlatformSwitches(withPch, withDebug, "game") 
