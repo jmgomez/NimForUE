@@ -18,10 +18,9 @@ let pchCompileFlags = @[
 ]
 
 
-proc vccPchCompileFlags*(withDebug, withPch, createPch : bool) : seq[string] = 
+proc vccPchCompileFlags*(withDebug, withPch:bool) : seq[string] = 
   @[
-    (if withDebug: "/Od" else: "/O2"),
-    (if withDebug: "/Z7" else: ""),
+    
     "/Zc:inline", #Remove unreferenced functions or data if they're COMDAT or have internal linkage only (off by default).
     "/nologo",
     "/Oi",
@@ -64,13 +63,13 @@ proc vccPchCompileFlags*(withDebug, withPch, createPch : bool) : seq[string] =
     #extras:
     "/Zc:strictStrings-", # need this for converting const char []  to NCString since it loses const, for std:c++20
     #
-    
-
     "/Zf", #faster pdb gen
     "/MP",
   
     "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
-  ] & (if withPch:pchCompileFlags else: @[])
+  ] & 
+    (if withPch:pchCompileFlags else: @[]) & 
+    (if withDebug: @["/Od", "/Z7"] else: @["/O2"])
 
 
 proc getPdbFilePath*(): string =
@@ -101,13 +100,12 @@ proc getPdbFilePath*(): string =
   pdbFile
 
 proc vccPchCompileSwitches*(withDebug : bool) : seq[string]= 
-  let switches = vccPchCompileFlags(withDebug, withPch = true, createPch = false).mapIt("-t:" & it) & @[&"--cc:vcc", "-l:" & pchObjPath]
+  let switches = vccPchCompileFlags(withDebug, withPch = true).filterIt(len(it)>1).mapIt("-t:" & it) & @[&"--cc:vcc", "-l:" & pchObjPath]
   if withDebug: 
       let debugSwitches = (&"-l:/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath()}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
       switches & debugSwitches
-  else: switches
+  else: switches & @["-l:/INCREMENTAL"]
 
-let vccCompilerSwitchesNoPch* = vccPchCompileFlags(false, false, false).mapIt("-t:" & it) & @[&"--cc:vcc"]
 
 
 proc getPlatformSwitches*(withPch, withDebug : bool) : seq[string] = 
