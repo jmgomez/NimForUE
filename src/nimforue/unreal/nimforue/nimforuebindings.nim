@@ -174,7 +174,7 @@ proc stepCompiledIn*[T : FProperty](frame:var FFrame, result:pointer, prop:ptr T
  
 #UPACKAGE
 func getAllObjectsFromPackage*[T](package:UPackagePtr) : TArray[ptr T] {.importcpp:"UReflectionHelpers::GetAllObjectsFromPackage<'**0>(@)".}
-
+proc createNimPackage*(packageShortName:FString) : UPackagePtr {.importcpp:"UReflectionHelpers::CreateNimPackage(@)".}
 
 ##EDITOR
 proc broadcastAsset*(asset:UObjectPtr) : void {.importcpp: "UFakeFactory::BroadcastAsset(#)" .}
@@ -223,3 +223,5 @@ proc `$`*(hr:FNimHotReloadPtr) : string =
         bShouldHotReload: {hr.bShouldHotReload} 
     
     """
+
+

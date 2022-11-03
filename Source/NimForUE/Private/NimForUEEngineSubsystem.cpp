@@ -46,18 +46,11 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
 	NimForUESubsystem->ReloadTimes++;
 }
 
-void UNimForUEEngineSubsystem::CreateNimPackage() {
-	NimForUEPackage = CreatePackage(TEXT("/Script/Nim"));
-	NimForUEPackage->SetPackageFlags(PKG_CompiledIn);
-	NimForUEPackage->SetFlags(RF_Standalone);
-	NimForUEPackage->AddToRoot();
 
-}
 
 void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	initializeHost();
-	CreateNimPackage();
 	auto onPreReload = [](NCSTRING msg) {
 		// subscribeToReloadWorkaround until we have a proper HotReload Load/Unload mechanism
 		// FNimTestBase::UnregisterAll();

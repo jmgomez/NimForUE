@@ -105,4 +105,7 @@ public:
 	static TArray<FString> GetEnums(UEnum* Enum);
 
 	static TArray<FString> GetAllModuleDepsForPlugin(FString PluginName);
+
+	static UPackage* CreateNimPackage(FString PackageShortName);
+	
 };

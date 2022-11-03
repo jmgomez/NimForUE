@@ -2,7 +2,7 @@
 
 include unreal/prelude
 import macros/[ffi]
-import strformat
+import std/[options, strformat]
 
 const genFilePath* {.strdefine.} : string = ""
 
@@ -23,9 +23,10 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
     try:
     
   
-        # printAllClassAndProps("PRE", pkg)
+        let nimPackage = tryGetPackageByName("Nim").get(createNimPackage("Nim"))
+        UE_Log &"Nim Package {nimPackage}"
         let isFirstLoad = n == 0
-        let nimHotReload = emitUStructsForPackage(isFirstLoad)
+        let nimHotReload = emitUStructsForPackage(isFirstLoad, nimPackage)
         
     
         # printAllClassAndProps("POST", pkg)

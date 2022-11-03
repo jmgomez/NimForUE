@@ -18,13 +18,13 @@ func getTransientPackage*() : UPackagePtr {.importcpp:"GetTransientPackage()".}
 proc convertToLongScriptPackageName*(inShortName:FString) : FString {.importcpp:"FPackageName::ConvertToLongScriptPackageName(*#)".}
 
 
-func getPackageByName*(packageName:FString) : UPackagePtr = 
-        findObject[UPackage](nil, convertToLongScriptPackageName(packageName))
+func getPackageByName*(packageShortName:FString) : UPackagePtr = 
+        findObject[UPackage](nil, convertToLongScriptPackageName(packageShortName))
 
 func tryGetPackageByName*(packageName:FString) : Option[UPackagePtr] = 
     someNil(getPackageByName(packageName))
 
-let nimPackage* = getPackageByName("Nim")
+# let nimPackage* = getPackageByName("Nim")
 
 
 func getShortName*(pkg:UPackagePtr) : FString = pkg.getName().split("/")[^1]

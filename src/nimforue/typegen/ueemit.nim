@@ -137,8 +137,8 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo,
 
 
 
-template registerDeleteUType(T : typedesc, executeAfterDelete:untyped) = 
-     for instance {.inject.} in getAllObjectsFromPackage[T](nimPackage):
+template registerDeleteUType(T : typedesc, package:UPackagePtr, executeAfterDelete:untyped) = 
+     for instance {.inject.} in getAllObjectsFromPackage[T](package):
         if ReinstSuffix in instance.getName(): continue
         let clsName {.inject.} = 
             when T is UNimEnum: instance.getName() 
@@ -150,16 +150,16 @@ template registerDeleteUType(T : typedesc, executeAfterDelete:untyped) =
             executeAfterDelete
 
 
-proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr)  =    
+proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, package :UPackagePtr)  =    
     #iterate all UNimClasses, if they arent not reintanced already (name) and they dont exists in the type emitted this round, they must be deleted
     let getEmitterByName = (name:FString) => ueEmitter.emitters.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
-    registerDeleteUType(UNimClassBase):
+    registerDeleteUType(UNimClassBase, package):
         hotReloadInfo.deletedClasses.add(instance)
-    registerDeleteUType(UNimScriptStruct):
+    registerDeleteUType(UNimScriptStruct, package):
         hotReloadInfo.deletedStructs.add(instance)
-    registerDeleteUType(UNimDelegateFunction):
+    registerDeleteUType(UNimDelegateFunction, package):
         hotReloadInfo.deletedDelegatesFunctions.add(instance)
-    registerDeleteUType(UNimEnum):
+    registerDeleteUType(UNimEnum, package):
         hotReloadInfo.deletedEnums.add(instance)
 
         
@@ -180,7 +180,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
                     hotReloadInfo.newStructs.add(newStructPtr.get())
                 if prevStructPtr.isSome() and newStructPtr.isSome():
                     #Updates all prev emitted structs to point to the recently created.
-                    for prevInstance in getAllObjectsFromPackage[UNimScriptStruct](nimPackage):
+                    for prevInstance in getAllObjectsFromPackage[UNimScriptStruct](pkg):
                         if structName in prevInstance.getName() and ReinstSuffix in prevInstance.getName():
                             UE_Warn &"Updating NewNimScriptStruct {prevInstance} to {newStructPtr}"
                             prevInstance.newNimScriptStruct = newStructPtr.get()
@@ -201,7 +201,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
                    
                     prevClassPtr.get().prepareNimClass()
                     #update each properties for the cdo. 
-                    for prevInstance in getAllObjectsFromPackage[UNimClassBase](nimPackage):
+                    for prevInstance in getAllObjectsFromPackage[UNimClassBase](pkg):
                         if clsName in prevInstance.getName() and ReinstSuffix in prevInstance.getName():
                             prevInstance.newNimClass = newClassPtr.get()
 
@@ -257,7 +257,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
  
      
    
-    registerDeletedTypesToHotReload(hotReloadInfo)
+    registerDeletedTypesToHotReload(hotReloadInfo, pkg)
 
     
     hotReloadInfo.setShouldHotReload()
@@ -266,14 +266,6 @@ proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReload
 
     hotReloadInfo
 
-
-#By default ue types are emitted in the /Script/Nim package. But we can use another for the tests. 
-#This emit block below can be moved to the macro cache. And then have another macro that generates the registration of the types. 
-#That would allow for intecepting the constructor, but would it worth the extra complexity?
-
-proc emitUStructsForPackage*(isFirstLoad:bool, pkgName:FString = "Nim") : FNimHotReloadPtr = 
-    let pkg = findObject[UPackage](nil, convertToLongScriptPackageName("Nim"))
-    emitUStructsForPackage(isFirstLoad, pkg)
 
 
 proc emitUStruct(typeDef:UEType) : NimNode =
