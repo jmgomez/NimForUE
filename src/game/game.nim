@@ -2,7 +2,7 @@ include nue
 
 
   
-uClass UTestGameCompilation of UObject:
+uClass ATestGameCompilation of AActor:
     (BlueprintType, Blueprintable)
     uprop(EditAnywhere, BlueprintReadWrite):
       test232 : FString

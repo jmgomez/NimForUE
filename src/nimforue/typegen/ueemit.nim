@@ -31,6 +31,9 @@ proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string =
     result = $emitter.emitters
 var ueEmitter* = UEEmitter() 
 
+proc getGlobalEmitter*() : UEEmitter = 
+    result = ueEmitter
+
 #rename these to register
 proc getFnGetForUClass(ueType:UEType) : UPackagePtr->UFieldPtr = 
 #    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
@@ -163,7 +166,7 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, package :UP
         hotReloadInfo.deletedEnums.add(instance)
 
         
-proc emitUStructsForPackage*(isFirstLoad:bool, pkg: UPackagePtr) : FNimHotReloadPtr = 
+proc emitUStructsForPackage*(isFirstLoad:bool, ueEmitter : UEEmitterRaw, pkg: UPackagePtr) : FNimHotReloadPtr = 
     var hotReloadInfo = newNimHotReload()
     for emitter in ueEmitter.emitters:
             case emitter.ueType.kind:

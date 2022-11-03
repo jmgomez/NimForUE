@@ -13,26 +13,27 @@ let dllDir = config.pluginDir / "Binaries" / "nim" / "ue"
 #Need to add the dir to the library
 
 
+proc emitTypesInGame(emitter: UEEmitterPtr) =
+  let gamePackage = tryGetPackageByName("GameNim").get(createNimPackage("GameNim"))
+  UE_Log &"GameNim {gamePackage}"
+  let gameNimHotReload = emitUStructsForPackage(true, emitter[], gamePackage)
+  UE_Log &"GameNim HotReload {gameNimHotReload}" #Notice hot reload wont work because the types doenst exists.
+
+proc getEmitterFromGame() : UEEmitterPtr = 
+  let gameDllPath = getLastLibPath(dllDir, "game").get()
+  let lib = loadLib(gameDllPath)
+  let getEmitter = cast[GetUEEmitterFn](lib.symAddr("getUEEmitter"))
+  UE_Log "The emitter is " & $getEmitter()
+  getEmitter()
+
+
 uClass AGameDllTest of AActor:
   (BlueprintType)
   ufuncs(CallInEditor):
     proc loadGameDll() = 
       try:
-        let gameDllPath = getLastLibPath(dllDir, "game").get()
-        UE_Log &"config: {config}"
-        UE_Log &"Loading game dll: {dllDir}"
-        UE_Log &"does the lib exists {fileExists(gameDllPath)}"
-        UE_Log gameDllPath
-        let lib = loadLib gameDllPath
-        let getUEEmitter = cast[GetUEEmitterFn](lib.symAddr("getUEEmitter"))
-        if not getUEEmitter.isNil():
-          let result = getUEEmitter()
-          if not result.isNil():
-            UE_Log &"UEEmitter: {result}"
-          else:
-            UE_Log "UEEmitter is nil"
-        else:
-          UE_Log "gameExposedFn is nil"
+        let emitter = getEmitterFromGame()
+        emitTypesInGame(emitter)
       except:
         UE_Error getCurrentExceptionMsg()
 
