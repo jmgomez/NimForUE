@@ -21,11 +21,7 @@ proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} =
 
   
     try:
-    
-        let nimPackage = tryGetPackageByName("Nim").get(createNimPackage("Nim"))
-        UE_Log &"Nim Package {nimPackage}"
-        let isFirstLoad = n == 0
-        let nimHotReload = emitUStructsForPackage(isFirstLoad, getGlobalEmitter()[], nimPackage)
+        let nimHotReload = emitUStructsForPackage(getGlobalEmitter()[], "Nim")
         
     
         # printAllClassAndProps("POST", pkg)

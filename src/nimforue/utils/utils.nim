@@ -162,6 +162,10 @@ func tryParseInt*(s: string): Option[int] =
   except:
     return none(int)
 
+func getWithResult*[T](opt: Option[T], default:T): (T, bool) =
+  if opt.isSome(): (opt.get(), true)
+  else: (default, false)
+
 #tables
 
 proc tryGet*[K, V](self: Table[K, V], key: K): Option[V] {.inline.} =

@@ -165,15 +165,18 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, package :UP
     registerDeleteUType(UNimEnum, package):
         hotReloadInfo.deletedEnums.add(instance)
 
-        
-proc emitUStructsForPackage*(isFirstLoad:bool, ueEmitter : UEEmitterRaw, pkg: UPackagePtr) : FNimHotReloadPtr = 
+
+
+proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimHotReloadPtr = 
+    let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
+
     var hotReloadInfo = newNimHotReload()
     for emitter in ueEmitter.emitters:
             case emitter.ueType.kind:
             of uetStruct:
                 let structName = emitter.ueType.name.removeFirstLetter()
                 let prevStructPtr = someNil getUTypeByName[UNimScriptStruct] structName
-                let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr, isFirstLoad)
+                let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr, not wasAlreadyLoaded)
 
                 if prevStructPtr.isSome():
                    #updates the structOps wrapper with the current type information 
@@ -196,7 +199,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, ueEmitter : UEEmitterRaw, pkg: UP
                 let clsName = emitter.ueType.name.removeFirstLetter()
 
                 let prevClassPtr = someNil getUTypeByName[UNimClassBase](clsName)
-                let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr, isFirstLoad)
+                let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr, not wasAlreadyLoaded)
 
                 if prevClassPtr.isNone() and newClassPtr.isSome():
                     hotReloadInfo.newClasses.add(newClassPtr.get())
@@ -220,7 +223,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, ueEmitter : UEEmitterRaw, pkg: UP
 
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
-                let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr, isFirstLoad)
+                let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr, not wasAlreadyLoaded)
 
                 if prevEnumPtr.isNone() and newEnumPtr.isSome():
                     hotReloadInfo.newEnums.add(newEnumPtr.get())
@@ -230,7 +233,7 @@ proc emitUStructsForPackage*(isFirstLoad:bool, ueEmitter : UEEmitterRaw, pkg: UP
 
             of uetDelegate:
                 let prevDelPtr = someNil getUTypeByName[UNimDelegateFunction](emitter.ueType.name.removeFirstLetter() & DelegateFuncSuffix)
-                let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr, isFirstLoad)
+                let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr, not wasAlreadyLoaded)
                 UE_Warn &"Prev Delegate is {prevDelPtr.isSome()}"
                 UE_Warn &"New Delegate is {newDelPtr.isSome()}"
                 if prevDelPtr.isNone() and newDelPtr.isSome():
