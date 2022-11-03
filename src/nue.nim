@@ -71,8 +71,10 @@ task guest, "Builds the main lib. The one that makes sense to hot reload.":
     extraSwitches.add "-f" #force 
   if "nolinedir" in taskOptions:  
     extraSwitches.add "--linedir:off"
+  
+  let debug = "debug" in taskOptions
 
-  compilePlugin(extraSwitches)
+  compilePlugin(extraSwitches, debug)
 
 task game, "Builds the game lib":
   var extraSwitches = newSeq[string]()
@@ -80,8 +82,10 @@ task game, "Builds the game lib":
     extraSwitches.add "-f" #force 
   if "nolinedir" in taskOptions:  
     extraSwitches.add "--linedir:off"
+ 
+  let debug = "debug" in taskOptions
 
-  compileGame(extraSwitches)
+  compileGame(extraSwitches, debug)
 
 
 task host, "Builds the host that's hooked to unreal":

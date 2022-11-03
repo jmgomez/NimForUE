@@ -12,7 +12,6 @@ else:
 
 
 let config = getNimForUEConfig()
-const withDebug* = true
 const withPCH* = true 
 #TODO Only PCH works in windows. 
 #Regular builds need to be fixed
@@ -42,7 +41,7 @@ let buildSwitches* = @[
 ]
 
 #Probably this needs to be platform specific as well
-let targetSwitches* =
+proc targetSwitches*(withDebug:bool) : seq[string] =
   case config.targetConfiguration:
     of Debug, Development:
       var ts = @["--opt:none"]
@@ -59,5 +58,7 @@ let targetSwitches* =
       
 
 let hostPlatformSwitches* = getPlatformSwitches(false, false, "")
-let pluginPlatformSwitches* = getPlatformSwitches(withPch, withDebug, "guest") 
-let gamePlatformSwitches* = getPlatformSwitches(withPch, withDebug, "game") 
+
+proc pluginPlatformSwitches*(withDebug:bool) : seq[string] = getPlatformSwitches(withPch, withDebug, "guest") 
+proc gamePlatformSwitches*(withDebug:bool) : seq[string] = getPlatformSwitches(withPch, withDebug, "game") 
+
