@@ -275,11 +275,10 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
 
 
 
-proc reloadNueTypesFor*(emitter: UEEmitterRaw, packageName:string) = 
+proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) = 
     try:
         #TODO this doesnt really need to be a poitner anymore
         let nimHotReload = emitUStructsForPackage(emitter, packageName)
-        raise newException(Exception, "Hot reload failed")
         reinstanceNueTypes(packageName, nimHotReload, "")
         #Deallocate the pointer or just dont use one
         #return nimHotReload #The pointer is not used anymore on the side.

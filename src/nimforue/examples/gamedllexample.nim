@@ -14,9 +14,7 @@ let dllDir = config.pluginDir / "Binaries" / "nim" / "ue"
 
 
 proc emitTypesInGame(emitter: UEEmitterPtr) =
-  
-  let gameNimHotReload = emitUStructsForPackage(emitter[], "GameNim")
-  UE_Log &"GameNim HotReload {gameNimHotReload}" #Notice hot reload wont work because the types doenst exists.
+  emitNueTypes(emitter[], "GameNim")
 
 proc getEmitterFromGame() : UEEmitterPtr = 
   let gameDllPath = getLastLibPath(dllDir, "game").get()

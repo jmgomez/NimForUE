@@ -21,7 +21,7 @@ proc printAllClassAndProps*(prefix:string, package:UPackagePtr) =
 
 proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} = 
     UE_Log(fmt "Nim loaded for {n} times")
-    reloadNueTypesFor(getGlobalEmitter()[], "Nim")
+    emitNueTypes(getGlobalEmitter()[], "Nim")
     return nil #No need for pointers
   
     # scratchpadEditor()

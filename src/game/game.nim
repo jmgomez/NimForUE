@@ -9,4 +9,5 @@ uClass ATestGameCompilation of AActor:
       test100 : FString
       test101 : FString
       test12 : FString
+      test15 : FString
 
