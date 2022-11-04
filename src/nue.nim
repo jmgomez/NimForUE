@@ -142,7 +142,7 @@ task dumpConfig, "Displays the config variables":
   dump config
 
 task codegen, "Generate the bindings structure from the persisted json (TEMPORAL until we have it incremental)":
-  doAssert(execCmd(&"nim cpp --compileonly -f --nomain --maxLoopIterationsVM:400000000 --nimcache:.nimcache/projectbindings src/codegen/genprojectbindings.nim") == 0)
+  doAssert(execCmd(&"nim cpp --mm:orc --compileonly -f --nomain --maxLoopIterationsVM:400000000 --nimcache:.nimcache/projectbindings src/codegen/genprojectbindings.nim") == 0)
 
 task gencppbindings, "Generates the cpp bindings":
   codegen(taskOptions)

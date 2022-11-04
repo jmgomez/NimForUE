@@ -16,22 +16,14 @@ proc printAllClassAndProps*(prefix:string, package:UPackagePtr) =
         for p in getFPropsFromUStruct(c):
             UE_Log "Prop " & p.getName()
 
+
+
+
 proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} = 
     UE_Log(fmt "Nim loaded for {n} times")
-
+    reloadNueTypesFor(getGlobalEmitter()[], "Nim")
+    return nil #No need for pointers
   
-    try:
-        let nimHotReload = emitUStructsForPackage(getGlobalEmitter()[], "Nim")
-        
-    
-        # printAllClassAndProps("POST", pkg)
-
-        # scratchpadEditor()
-        return nimHotReload
-    except Exception as e:
-        UE_Error "Nim CRASHED "
-        UE_Error e.msg
-        UE_Error e.getStackTrace()
     # scratchpadEditor()
 
 

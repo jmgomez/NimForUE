@@ -20,11 +20,10 @@ public class NimForUE : ModuleRules
 		}
 		//Console.WriteLine((Path.GetFullPath(PluginDirectory + "NimForUE\\..\\NimHeaders")));
 	    //PublicIncludePaths.Add(Path.GetFullPath(PluginDirectory + "NimForUE\\..\\NimHeaders"));
-	    PublicIncludePaths.Add("../../NimHeaders/");
-	    
 	    //PublicIncludePaths.Add("../../Intermediate\Build\Mac\x86_64\UnrealEditor\DebugGame\NimForUEBindings");
         PublicDefinitions.Add("NIM_INTBITS=64");
 	    PrivatePCHHeaderFile = "../../NimHeaders/nimbase.h";
+	    
 	    OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 	    Console.WriteLine("Linker arguments:");
 		
@@ -125,6 +124,8 @@ public class NimForUE : ModuleRules
 			PublicAdditionalLibraries.Add(dynLibPath);
 		}
 		PublicIncludePaths.Add(nimHeadersPath);
+		
+		
 		//PublicDefinitions.Add($"NIM_FOR_UE_LIB_PATH  \"{dynLibPath}\"");
 		//TRY?
 		try {

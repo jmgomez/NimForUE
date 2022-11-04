@@ -274,6 +274,21 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
 
 
 
+
+proc reloadNueTypesFor*(emitter: UEEmitterRaw, packageName:string) = 
+    try:
+        #TODO this doesnt really need to be a poitner anymore
+        let nimHotReload = emitUStructsForPackage(emitter, packageName)
+        raise newException(Exception, "Hot reload failed")
+        reinstanceNueTypes(packageName, nimHotReload, "")
+        #Deallocate the pointer or just dont use one
+        #return nimHotReload #The pointer is not used anymore on the side.
+    except Exception as e:
+        #TODO here we could send a message to the user
+        UE_Error "Nim CRASHED "
+        UE_Error e.msg
+        UE_Error e.getStackTrace()
+
 proc emitUStruct(typeDef:UEType) : NimNode =
     var ueType = typeDef #the generated type must be reversed to match declaration order because the props where picked in the reversed order
     ueType.fields = ueType.fields.reversed()

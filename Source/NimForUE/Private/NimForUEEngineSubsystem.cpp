@@ -7,44 +7,20 @@
 #include "EditorUtils.h"
 #include "FNimReload.h"
 #include "NimForUEFFI.h"
+#include "ReinstanceBindings.h"
 
-DEFINE_LOG_CATEGORY(NimForUEEngineSubsystem);
 
-void UNimForUEEngineSubsystem::LoadNimGuest(FString Msg) {
+void UNimForUEEngineSubsystem::LoadNimGuest(FString NimError) {
 	//Notice this function is static because it needs to be used in a FFI function.
-	UNimForUEEngineSubsystem* NimForUESubsystem = GEngine->GetEngineSubsystem<UNimForUEEngineSubsystem>();
-	bool bIsFirstLoad = NimForUESubsystem->ReloadTimes == 0;
-	FReload* UnrealReload = nullptr;
-	if(!bIsFirstLoad) //We need to instanciate the unreal reloader because it's used across the engine when reloading
-		UnrealReload = new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog);
-
-	FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(NimForUESubsystem->ReloadTimes));
-	if(bIsFirstLoad) {//Only crash on first load
-		checkf(NimHotReload, TEXT("NimHotReload is null. Probably nim crashed on startup. See the log for a stacktrace."));
-	}
-	if(NimHotReload == nullptr){
-		UE_LOG(LogTemp, Error, TEXT("NimForUE just crashed. Review the log"), *Msg);
-		delete UnrealReload;
-		return;
-		
-	}
-	if (NimHotReload->bShouldHotReload && !bIsFirstLoad) {
-	// if (!bIsFirstLoad) {
-		NimForUESubsystem->EditorUtils = NewObject<UEditorUtils>();\
-		NimForUESubsystem->EditorUtils->HotReload(NimHotReload, UnrealReload);
-	
-	}
-	if (UnrealReload != nullptr)
-		delete UnrealReload;
-		// delete NimHotReload;
-
-	// FCoreUObjectDelegates::ReloadCompleteDelegate.Broadcast(EReloadCompleteReason::HotReloadManual);
-
-	
-	UEditorUtils::ShowLoadNotification(bIsFirstLoad);
-	UE_LOG(LogTemp, Log, TEXT("NimForUE just hot reloaded!! %s"), *Msg);
-	NimForUESubsystem->ReloadTimes++;
+	UNimForUEEngineSubsystem* THIS = GEngine->GetEngineSubsystem<UNimForUEEngineSubsystem>();
+	onNimForUELoaded(THIS->GetReloadTimesFor(THIS->NimPluginModule));
+	// 	//The return value is not longer needed since the reinstance call now happens on nim
+	// return;
+	// // FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(THIS->GetReloadTimesFor(THIS->NimPluginModule)));
+	// ReinstanceBindings::ReinstanceNueTypes(THIS->NimPluginModule, NimHotReload, NimError);
 }
+
+
 
 
 
@@ -69,6 +45,13 @@ void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 void UNimForUEEngineSubsystem::Deinitialize()
 {
 	FTSTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
+}
+
+int UNimForUEEngineSubsystem::GetReloadTimesFor(FString ModuleName) {
+	if(ReloadCounter.Contains(ModuleName)) {
+		return ReloadCounter[ModuleName];
+	}
+	return 0;
 }
 
 bool UNimForUEEngineSubsystem::Tick(float DeltaTime)

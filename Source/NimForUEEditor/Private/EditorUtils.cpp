@@ -12,7 +12,7 @@
 #include "K2Node_Event.h"
 #include "K2Node_MacroInstance.h"
 #include "KismetCompilerMisc.h"
-#include "UPropertyCaller.h"
+// #include "UPropertyCaller.h"
 #include "ActorFactories/ActorFactoryVolume.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Async/Async.h"

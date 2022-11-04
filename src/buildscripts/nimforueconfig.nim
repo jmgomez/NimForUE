@@ -155,14 +155,16 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
 
   proc getNimForUESymbols(): seq[string] = 
     when defined macosx:
-      let libpath  = pluginDir / "Binaries" / $conf.targetPlatform / "UnrealEditor-NimForUEBindings.dylib"
+      let libpath = pluginDir / "Binaries" / $conf.targetPlatform / "UnrealEditor-NimForUE.dylib"
+      let libpathBindings  = pluginDir / "Binaries" / $conf.targetPlatform / "UnrealEditor-NimForUEBindings.dylib"
       #notice this shouldnt be included when target <> Editor
       let libPathEditor  = pluginDir / "Binaries" / $conf.targetPlatform / "UnrealEditor-NimForUEEditor.dylib"
     elif defined windows:
-      let libPath = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
+      let libPath = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / &"NimForUE/UnrealEditor-NimForUE{suffix}.lib"
+      let libPathBindings = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
       let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / &"NimForUEEditor/UnrealEditor-NimForUEEditor{suffix}.lib"
 
-    @[libPath, libPathEditor]
+    @[libPath,libpathBindings, libPathEditor]
 
   let modules = @["Core", "CoreUObject", "Engine", "SlateCore"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName))

@@ -35,5 +35,6 @@ uClass AGameDllTest of AActor:
         emitTypesInGame(emitter)
       except:
         UE_Error getCurrentExceptionMsg()
-
+    proc justAnotherTest2() = 
+      UE_Log "Just another test"
         

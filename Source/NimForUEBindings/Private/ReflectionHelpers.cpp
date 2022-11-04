@@ -3,7 +3,9 @@
 
 #include "ReflectionHelpers.h"
 
+
 #include "NimForUEBindings.h"
+
 #include "Interfaces/IPluginManager.h"
 
 
@@ -175,5 +177,4 @@ UPackage* UReflectionHelpers::CreateNimPackage(FString PackageShortName) {
 	NimForUEPackage->AddToRoot();
 	return NimForUEPackage;
 }
-
-
+//

@@ -225,3 +225,8 @@ proc `$`*(hr:FNimHotReloadPtr) : string =
     """
 
 
+
+
+
+#ReinstanceNueTypes(FString NueModule, FNimHotReload* NimHotReload, FString NimError);
+proc reinstanceNueTypes*(nueModule:FString, nimHotReload:FNimHotReloadPtr, nimError:FString) : void {.importcpp: "ReinstanceBindings::ReinstanceNueTypes(@)".}

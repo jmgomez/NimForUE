@@ -22,5 +22,6 @@
 
 //NimForUEBindingsHeaders.h
 #include "NimForUEBindingsHeaders.h"
+#include "../Source/NimForUE/Public/NimForUEHeaders.h"
 //Editor only
 //#include "FakeFactory.h"

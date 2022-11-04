@@ -7,7 +7,7 @@
 #include "ReflectionHelpers.generated.h"
 
 
-
+struct FNimHotReload;
 /**
  * 
  */
@@ -107,5 +107,5 @@ public:
 	static TArray<FString> GetAllModuleDepsForPlugin(FString PluginName);
 
 	static UPackage* CreateNimPackage(FString PackageShortName);
-	
+	// 
 };

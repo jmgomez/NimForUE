@@ -7,7 +7,6 @@
 #include "Containers/Ticker.h"
 #include "NimForUEEngineSubsystem.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(NimForUEEngineSubsystem, Log, All);
 
 /**
  * 
@@ -16,15 +15,18 @@ UCLASS()
 class NIMFORUE_API UNimForUEEngineSubsystem : public UEngineSubsystem {
 	GENERATED_BODY()
 	
-	UPROPERTY()
-	class UEditorUtils* EditorUtils;
+	
 	bool Tick(float DeltaTime);
 	FTSTicker::FDelegateHandle TickDelegateHandle;
-	static void LoadNimGuest(FString Msg);
+	static void LoadNimGuest(FString NimError);
 public:
-	int ReloadTimes;
+	UPROPERTY()
+	class UEditorUtils* EditorUtils;
+	const FString NimPluginModule = "Nim";
+	//Holds the number of reload per module. i.e. NimPlugin -> 1, NimGame -> 2
+	TMap<FString, int> ReloadCounter = {};
 	// USubsystem methods //
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
-
+	int GetReloadTimesFor(FString ModuleName);
 };
