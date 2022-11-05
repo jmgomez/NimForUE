@@ -13,7 +13,7 @@ proc compileHost*() =
   doAssert(fileExists("./src/hostnimforue/ffigen.nim"), "Please run: nue g")
 
   let buildFlags = @[buildSwitches, targetSwitches(false), hostPlatformSwitches].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"nim cpp {buildFlags} --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --nomain --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
+  doAssert(execCmd(&"nim cpp {buildFlags} --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   # copy header
   let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
   let ffiHeaderDest = "NimHeaders/NimForUEFFI.h"

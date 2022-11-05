@@ -26,17 +26,11 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString NimError) {
 
 void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	initializeHost();
 
-	auto onPostReload = [](NCSTRING msg) {
-		LoadNimGuest(FString(msg));
-	};
 	auto logger = [](NCSTRING msg) {
 		UE_LOG(LogTemp, Log, TEXT("From NimForUEHost: %s"), *FString(msg));
 	};
 	registerLogger(logger);
-	// subscribeToReload(onPreReload, onPostReload);
-	
 	checkReload();
 
 	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick), 0.1);
