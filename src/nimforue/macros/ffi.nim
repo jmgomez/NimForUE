@@ -41,7 +41,7 @@ macro ffi* (pathToGenFile: static string, fn : typed) : untyped =
     let procFFIBody = genAst(fnSymbolName = $fn.name, procSign, callNode):
         type ProcType {. inject .} = procSign 
         withLock libLock:
-            let fun {. inject .} = cast[ProcType](lib.symAddr(fnSymbolName))
+            let fun {. inject .} = cast[ProcType](lib().symAddr(fnSymbolName))
             callNode
 
     result = fn.copy()

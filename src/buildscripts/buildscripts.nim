@@ -58,7 +58,7 @@ proc getLastLibPath*(libPath, libName:string): Option[string] =
   some libs[0]
 
 
-proc copyNimForUELibToUEDir*(libName="nimforue") = 
+proc copyNimForUELibToUEDir*(libName:string) = 
   var conf = getNimForUEConfig()
   let libDir = conf.pluginDir/"Binaries/nim"
   let libDirUE = libDir / "ue"   

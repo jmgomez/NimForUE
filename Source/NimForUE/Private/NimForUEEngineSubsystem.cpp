@@ -13,7 +13,7 @@
 void UNimForUEEngineSubsystem::LoadNimGuest(FString NimError) {
 	//Notice this function is static because it needs to be used in a FFI function.
 	UNimForUEEngineSubsystem* THIS = GEngine->GetEngineSubsystem<UNimForUEEngineSubsystem>();
-	onNimForUELoaded(THIS->GetReloadTimesFor(THIS->NimPluginModule));
+	// onNimForUELoaded(THIS->GetReloadTimesFor(THIS->NimPluginModule));
 	// 	//The return value is not longer needed since the reinstance call now happens on nim
 	// return;
 	// // FNimHotReload* NimHotReload = static_cast<FNimHotReload*>(onNimForUELoaded(THIS->GetReloadTimesFor(THIS->NimPluginModule)));
@@ -27,15 +27,15 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString NimError) {
 void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	initializeHost();
-	auto onPreReload = [](NCSTRING msg) {
-		// subscribeToReloadWorkaround until we have a proper HotReload Load/Unload mechanism
-		// FNimTestBase::UnregisterAll();
-	};
+
 	auto onPostReload = [](NCSTRING msg) {
 		LoadNimGuest(FString(msg));
 	};
-	
-	subscribeToReload(onPreReload, onPostReload);
+	auto logger = [](NCSTRING msg) {
+		UE_LOG(LogTemp, Log, TEXT("From NimForUEHost: %s"), *FString(msg));
+	};
+	registerLogger(logger);
+	// subscribeToReload(onPreReload, onPostReload);
 	
 	checkReload();
 

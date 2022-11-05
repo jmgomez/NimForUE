@@ -13,7 +13,7 @@ proc compileHost*() =
   doAssert(fileExists("./src/hostnimforue/ffigen.nim"), "Please run: nue g")
 
   let buildFlags = @[buildSwitches, targetSwitches(false), hostPlatformSwitches].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"nim cpp {buildFlags} --header:NimForUEFFI.h --threads --tlsEmulation:off --app:lib --nomain --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
+  doAssert(execCmd(&"nim cpp {buildFlags} --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --nomain --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   # copy header
   let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
   let ffiHeaderDest = "NimHeaders/NimForUEFFI.h"
@@ -55,7 +55,7 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
     "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
   
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --nomain --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim"
+  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim"
   doAssert(execCmd(compCmd)==0)
   
   copyNimForUELibToUEDir("nimforue")

@@ -100,8 +100,10 @@ proc getPdbFilePath*(targetName:static string): string =
   let pdbFile = pdbFolder / targetName & version & ".pdb"
   pdbFile
 
-proc vccPchCompileSwitches*(withDebug : bool, debugFolder:static string) : seq[string]= 
-  let switches = vccPchCompileFlags(withDebug, withPch = true).filterIt(len(it)>1).mapIt("-t:" & it) & @[&"--cc:vcc", "-l:" & pchObjPath]
+proc vccCompileSwitches*(withDebug, withPch : bool, debugFolder:static string) : seq[string]= 
+  var switches = vccPchCompileFlags(withDebug, withPch).filterIt(len(it)>1).mapIt("-t:" & it) & @[&"--cc:vcc"]
+  if withPch:
+    switches.add "-l:" & pchObjPath
   if withDebug: 
       let debugSwitches = (&"/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath(debugFolder)}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
       switches & debugSwitches
@@ -110,4 +112,4 @@ proc vccPchCompileSwitches*(withDebug : bool, debugFolder:static string) : seq[s
 
 
 proc getPlatformSwitches*(withPch, withDebug : bool, debugFolder:static string) : seq[string] = 
-  result = vccPchCompileSwitches(withDebug, debugFolder) 
+  result = vccCompileSwitches(withDebug, withPch, debugFolder) 

@@ -1,4 +1,4 @@
-import std/[times, os, dynlib, strutils, sequtils, algorithm, locks, sugar, options]
+import std/[times, os, dynlib, tables, strutils, sequtils, algorithm, locks, sugar, options]
 import pure/asyncdispatch
 import ../buildscripts/[buildscripts]
 import ffigen
@@ -14,8 +14,8 @@ type
 
 const pluginDir* {.strdefine.} : string = ""
 
-var libPath:string
-var lastLoaded : string
+
+
 
 var onPreReload : ReloadCallback; #callback called to notify UE when NimForUE changed
 var onPostReload : ReloadCallback; #callback called to notify UE when NimForUE changed
@@ -37,25 +37,31 @@ proc NimMain() {.importc.} # needed to initialize the gc
 proc initializeHost() {.ex.} =
     once:
         NimMain()
-        libPath = getNimForUEConfig(pluginDir).nimForUELibPath
 
-proc checkReload*() {.ex.} =
-    let mbNext = getLastLibPath(libPath)
-    if mbNext.isSome() and mbNext.get() != lastLoaded:
-        let nextLibName = mbNext.get()
-        lastLoaded = nextLibName
-        if lib != nil:
-            onNimForUEUnloaded()
-            # unloadLib(lib) 
 
-        if not onPreReload.isnil():
-            onPreReload(nextLibName)
 
-        lib = loadLib(nextLibName)
-        doAssert(not lib.isNil())
-        # call to initialize gc for guest dll, or Nim will crash on memory (re)alloc
-        # must be called on the game thread which is calling guest dll functions
-        (cast[proc(){.cdecl.}](lib.symAddr("NimMain")))()
+proc loadNueLib*(libName, nextPath: string) =
+  var nueLib = libMap[libName]
+  if nueLib.lastLoadedPath != nextPath or not nueLib.isInit:
+    nueLib.lib = loadLib(nextPath)
+    nueLib.isInit = true
+    nueLib.lastLoadedPath = nextPath
+    libMap[libName] = nueLib
+    onLibLoaded(libName.cstring, nextPath.cstring)
 
-        if not onPostReload.isnil():
-            onPostReload(nextLibName)
+
+proc checkReload*() {.ex.} = #only for nimforue (plugin)
+    let plugin = "nimforue"
+    for currentLib in libMap.keys:
+        let isPlugin = plugin == currentLib
+        let mbNext = getLastLibPath(libDir, currentLib)
+        if mbNext.isSome():
+            let nextLibName = mbNext.get()
+            try:
+                loadNueLib(currentLib, nextLibName)
+                
+            except:
+                logger("There was a problem trying to load the library: " & nextLibName)
+                logger(getCurrentExceptionMsg())
+            
+           

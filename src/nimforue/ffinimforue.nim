@@ -2,38 +2,33 @@
 
 include unreal/prelude
 import macros/[ffi]
-import std/[options, strformat]
+import std/[options, strformat, dynlib]
+import ../buildscripts/[nimforueconfig, buildscripts]
 
 const genFilePath* {.strdefine.} : string = ""
 
 
-proc printAllClassAndProps*(prefix:string, package:UPackagePtr) =
-    let classes = getAllObjectsFromPackage[UNimClassBase](package)
-
-    UE_Error prefix & " len classes: " & $classes.len()
-    for c in classes:
-        UE_Warn " Class " & c.getName()
-        for p in getFPropsFromUStruct(c):
-            UE_Log "Prop " & p.getName()
 
 
+proc getEmitterFromGame(libPath:string) : UEEmitterPtr = 
+  type 
+    GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, stdcall.}
 
-
-proc onNimForUELoaded(n:int32) : pointer {.ffi:genFilePath} = 
-    UE_Log(fmt "Nim loaded for {n} times")
-    emitNueTypes(getGlobalEmitter()[], "Nim")
-    return nil #No need for pointers
-  
-    # scratchpadEditor()
+  let lib = loadLib(libPath)
+  let getEmitter = cast[GetUEEmitterFn](lib.symAddr("getUEEmitter"))
+  UE_Log "The emitter is " & $getEmitter()
+  getEmitter()
 
 
 
-#called right before it is unloaded
-#called from the host library
+#entry point for the game. but it will also be for other libs in the future
+#even the next guest/nimforue?
+proc onLibLoaded(libName:cstring, libPath:cstring) : void {.ffi:genFilePath} = 
+    case $libName:
+    of "nimforue": 
+        emitNueTypes(getGlobalEmitter()[], "Nim")
+    of "game":
+        emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
+    
+    UE_Log &"lib loaded: {libName}"
 
-#returns a TMap<UClassPtr, UClassPtr> with the classes that needs to be hotreloaded
-proc onNimForUEUnloaded() : void {.ffi:genFilePath}  = 
-    UE_Log("Nim for UE unloaded")
-   
-
-    discard

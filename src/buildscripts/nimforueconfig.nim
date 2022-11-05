@@ -7,8 +7,8 @@ Since UBT has to set some values on it, it does so through the FFI
 and then Saves it back to the json file. That's why we try to load it first before creating it.
 ]#
 type NimForUEConfig* = object 
-  genFilePath* : string
-  nimForUELibPath* : string #due to how hot reloading on mac this now sets the last compiled filed.
+  genFilePath* : string #rename to Dir
+  nimForUELibDir* : string #due to how hot reloading on mac this now sets the last compiled filed.
   hostLibPath* : string
   engineDir* : string #Sets by UBT
   pluginDir* : string
@@ -47,7 +47,7 @@ proc getNimForUEConfig*(pluginDirPath="") : NimForUEConfig =
   #CREATE AND SAVE BEFORE RETURNING
   let genFilePath = pluginDir / "src" / "hostnimforue"/"ffigen.nim"
   var config = getOrCreateNUEConfig(pluginDirPath)
-  config.nimForUELibPath = ueLibsDir / getFullLibName("nimforue")
+  config.nimForUELibDir = ueLibsDir.normalizedPath().normalizePathEnd()
   config.hostLibPath =  ueLibsDir / getFullLibName("hostnimforue")
   config.genFilePath = genFilePath
   config.engineDir = config.engineDir.normalizedPath().normalizePathEnd()
