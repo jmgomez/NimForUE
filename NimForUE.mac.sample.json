@@ -1,9 +1,10 @@
 {
   "genFilePath": "",
-  "nimForUELibPath": "",
+  "nimForUELibDir": "",
   "hostLibPath": "",
   "engineDir": "/UE_5.0/Engine",
   "pluginDir": "/NimForUEDemo/Plugins/NimForUE",
+  "nimGameDir": "/NimForUEDemo/Plugins/NimForUE",
   "gamePath": "/NimForUEDemo/NimForUEDemo.uproject",
   "targetConfiguration": "Development",
   "targetPlatform": "Mac"

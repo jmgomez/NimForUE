@@ -13,6 +13,7 @@ type NimForUEConfig* = object
   engineDir* : string #Sets by UBT
   pluginDir* : string
   gamePath* : string
+  nimGameDir* : string #directory of the gamelib sources
   targetConfiguration* : TargetConfiguration #Sets by UBT (Development, Build)
   targetPlatform* : TargetPlatform #Sets by UBT
   # currentCompilation* : int 

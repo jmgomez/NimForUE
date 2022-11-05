@@ -66,6 +66,7 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
     "-d:game",
     "-p:src/game/",
     "-p:src/nimforue/",
+    "-p:src/nimforue/game",
     "-p:src/nimforue/unreal",
     "-p:src/nimforue/unreal/bindings",
     # "--include:../game/nueprelude"
@@ -73,9 +74,11 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
 
   let bindingPrefix =
     "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
-  
+  let gameFolder = config.nimGameDir
+
+
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib  -d:withPCH --nimcache:.nimcache/game src/game/game.nim"
+  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib  -d:withPCH --nimcache:.nimcache/game {gameFolder}/game.nim"
   doAssert(execCmd(compCmd)==0)
   
   copyNimForUELibToUEDir("game")
