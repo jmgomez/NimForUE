@@ -16,14 +16,17 @@ template processRecList(recList: NimNode) =
       case i[1].kind:
       of nnkSym:
         let ftypeStr = i[1].strval()
-        let headStmt = genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval):
-          output.add fname
-          output.addQuoted v.fident
-        oStmts.add headStmt
-        if ftypeStr != "string": # convert value to type for integers/enum while avoiding strings
-          let convStmt = genAst(output, ftypeStr):
-            output.add "."&ftypeStr
-          oStmts.add convStmt
+        let s = 
+          if ftypeStr == "string":
+            genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval):
+              output.add fname
+              output.addQuoted v.fident
+          else: # convert value to type for integers/enum, need to explicitly call `$` on enums or it'll be empty
+            genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval, ftypeStr):
+              output.add fname
+              output.add $v.fident
+              output.add "."&ftypeStr
+        oStmts.add s
       else:
         let oStmt = genAst(output, fname = i[0].strVal & ": ", fident = ident i[0].strval):
           output.add fname
@@ -123,7 +126,7 @@ macro makeStrProc*(t: typedesc): untyped =
     `output`
   strproc.add body
 
-  #echo strproc.treerepr
+  echo strproc.repr
   strproc
 
 
