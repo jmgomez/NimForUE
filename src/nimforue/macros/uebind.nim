@@ -304,7 +304,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
             proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
         result = nnkStmtList.newTree(result, exportFn)
 
-    #if result.repr.contains("UMyClassToTest"):
+    # if result.repr.contains("UObjectScratchpad"):
     #    debugEcho result.repr
 
 func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode = 
