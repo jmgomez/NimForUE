@@ -6,8 +6,7 @@ else:
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, bitops, tables]
 
-# import ../unreal/coreuobject/uobjectflags
-
+import ../macros/makestrproc
 
 type
     EPropertyFlagsVal* = distinct(uint64)
@@ -119,6 +118,18 @@ type
         
     UEProject* = object
         modules* : seq[UEModule]
+
+func `$`*(a : EPropertyFlagsVal) : string {.borrow.}
+func `$`*(a : EFunctionFlagsVal) : string {.borrow.}
+func `$`*(a : EStructFlagsVal) : string {.borrow.}
+
+makeStrProc(UEMetadata)
+makeStrProc(UEField)
+makeStrProc(UEType)
+makeStrProc(UEImportRule)
+makeStrProc(UEModule)
+makeStrProc(UEProject)
+
 
 # #ONLY FOR Delagates that matches the rule innerClassDelegate
 func getFuncDelegateNimName*(name, outerClassName:string) : string = 
@@ -234,14 +245,9 @@ func shouldBeReturnedAsVar*(field:UEField) : bool =
         field.uePropType.startsWith("F") #FStruct always starts with F. We need to enforce it in our types too.
  
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
-func `$`*(a : EPropertyFlagsVal) : string {.borrow.}
-func `$`*(a : EFunctionFlagsVal) : string {.borrow.}
-func `$`*(a : EStructFlagsVal) : string {.borrow.}
-
 func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
 # func `==`*(a, b : EClassFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EStructFlagsVal) : bool {.borrow.}
-
 
 
 func compareUEPropTypes(a, b:string) : bool = 
@@ -265,7 +271,6 @@ func compareUEPropTypes(a, b:string) : bool =
     result = a == b
   
 
-
 func `==`*(a, b : UEField) : bool = 
     result = a.name == b.name and
         # a.metadata == b.metadata and
@@ -278,7 +283,6 @@ func `==`*(a, b : UEField) : bool =
             a.signature == b.signature  and  #two functions from the point of view of a class are equals if they have the same signature 
             a.fnFlags == b.fnFlags
         of uefEnumVal: true)
-  
 
 func `==`*(a, b:UEType) : bool = 
     # UE_Error2 $a
@@ -300,5 +304,3 @@ func `==`*(a, b:UEType) : bool =
             # a.structFlags == b.structFlags
         of uetEnum: true
         of uetDelegate: true))
-    
-   

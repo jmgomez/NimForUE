@@ -1,5 +1,4 @@
 include ../unreal/prelude
-import ../macros/makestrproc
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../typegen/uemeta
 import ../../buildscripts/nimforueconfig
@@ -221,13 +220,6 @@ proc genReflectionData() =
       UE_Log "All module deps:"
       for m in ueProject.modules:
         UE_Log &"{m.name}: {m.dependencies}"
-
-      let m = ueProject.modules[0]
-      let t = m.types[0]
-      let f = t.fields[0]
-      let s = makestrproc.`$`(f)
-      UE_Log &"{f = }"
-      UE_Log &"{f.signature = }"
 
       let ueProjectAsStr = $ueProject
       let codeTemplate = """
