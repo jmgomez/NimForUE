@@ -371,7 +371,15 @@ when defined(macosx):
     genHeaders(moduleDef, headersPath)
 
 
-macro genProjectBindings*(prevProject :static Option[UEProject], project :static UEProject, pluginDir:static string) = 
+
+proc getModuleHashFromFile(filePath:string) : Option[string] = 
+    if not fileExists(filePath): return none[string]()
+    readLines(filePath, 1)
+      .head()
+      .map(line => line.split(":")[^1].strip())
+
+
+macro genProjectBindings*(project :static UEProject, pluginDir:static string) = 
   let bindingsDir = pluginDir / "src"/"nimforue"/"unreal"/"bindings"
 
   let nimHeadersDir = pluginDir / "NimHeaders" # need this to store forward decls of classes
@@ -380,11 +388,12 @@ macro genProjectBindings*(prevProject :static Option[UEProject], project :static
     let module = module
     let exportBindingsPath = bindingsDir / "exported" / module.name.toLower() & ".nim"
     let importBindingsPath = bindingsDir / module.name.toLower() & ".nim"
-    let fileExists = fileExists(exportBindingsPath) or fileExists(importBindingsPath)
-    if fileExists and prevProject.isSome() and prevProject.get().modules.any(m=>m.name == module.name and m.hash == module.hash):
+    let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
+    if prevModHash == module.hash:
         echo "Skipping module: " & module.name & " as it has not changed"
         continue
     let moduleStrTemplate = &"""
+#hash:{module.hash}
 include ../prelude
 
 const BindingPrefix {{.strdefine.}} = ""
