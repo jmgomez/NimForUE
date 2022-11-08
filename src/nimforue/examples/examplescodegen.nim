@@ -2,8 +2,8 @@ include ../unreal/prelude
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../typegen/uemeta
 import ../../buildscripts/nimforueconfig
-
 import ../../codegen/codegentemplate
+import ../macros/genmodule #not sure if it's worth to process this file just for one function? 
 
 let moduleRules = newTable[string, seq[UEImportRule]]()
 
@@ -208,10 +208,16 @@ proc genReflectionData() =
                         .deduplicate()
 
       var ends = now() - starts
-
       let config = getNimForUEConfig()
+      let bindingsPath = (modName:string) => config.pluginDir / "src" / "nimforue" / "unreal" / "bindings" / modName.toLower() & ".nim"
 
-      let ueProject = UEProject(modules: modCache.values.toSeq())
+      let modulesToGen = modCache
+                          .values
+                          .toSeq()
+                          .filterIt(it.hash != getModuleHashFromFile(bindingsPath(it.name)).get("_"))
+      UE_Log &"Modules to gen: {modulesToGen.len}"
+      UE_Log &"Modules in cache {modCache.len}"
+      let ueProject = UEProject(modules:modulesToGen)
       
       # let ueProjectAsJson = ueProject.toJson().pretty()
       # let ueProjectFilePath = config.pluginDir / ".reflectiondata" / "ueproject.json"
@@ -234,7 +240,7 @@ const project* = $1
       UE_Log &"It took {ends} to gen all deps"
 
       UE_Warn $deps
-      UE_Warn $modules
+      UE_Warn $ueProject
 
 
 #This is just for testing/exploring, it wont be an actor

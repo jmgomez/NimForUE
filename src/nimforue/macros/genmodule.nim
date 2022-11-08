@@ -372,7 +372,7 @@ when defined(macosx):
 
 
 
-proc getModuleHashFromFile(filePath:string) : Option[string] = 
+proc getModuleHashFromFile*(filePath:string) : Option[string] = 
     if not fileExists(filePath): return none[string]()
     readLines(filePath, 1)
       .head()
