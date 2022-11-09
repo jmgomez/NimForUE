@@ -4,6 +4,7 @@ include unreal/prelude
 import macros/[ffi]
 import std/[options, strformat, dynlib]
 import ../buildscripts/[nimforueconfig, buildscripts]
+import ../codegen/genreflectiondata
 
 const genFilePath* {.strdefine.} : string = ""
 
@@ -27,6 +28,7 @@ proc onLibLoaded(libName:cstring, libPath:cstring) : void {.ffi:genFilePath} =
     case $libName:
     of "nimforue": 
         emitNueTypes(getGlobalEmitter()[], "Nim")
+        execBindingsGenerationInAnotherThread()
     of "game":
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
     

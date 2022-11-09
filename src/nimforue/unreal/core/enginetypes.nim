@@ -58,8 +58,8 @@ type
   APhysicsVolume* {.importcpp, inheritable, pure .} = object of AVolume
   APhysicsVolumePtr* = ptr APhysicsVolume
 
-  UGameInstanceSubsystem* {.importcpp, inheritable, pure .} = object of UObject
-  UGameInstanceSubsystemPtr* = ptr UGameInstanceSubsystem
+  # UGameInstanceSubsystem* {.importcpp, inheritable, pure .} = object of UObject
+  # UGameInstanceSubsystemPtr* = ptr UGameInstanceSubsystem
   UWorldSubsystem* {.importcpp, inheritable, pure .} = object of UObject
   UWorldSubsystemPtr* = ptr UWorldSubsystem
   UTickableWorldSubsystem* {.importcpp, inheritable, pure .} = object of UObject
