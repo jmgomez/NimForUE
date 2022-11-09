@@ -159,10 +159,13 @@ proc genReflectionData() =
 
       let deps = plugins 
                   .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-                  .foldl(a & b, newSeq[string]()) & @["NimForUEDemo", "Engine", "UMG", "UnrealEd"]
+                  .foldl(a & b, newSeq[string]()) & @["NimForUEDemo"] #, "Engine", "UMG", "UnrealEd"]
                   
       UE_Log &"Plugins: {plugins}"
-      proc getUEModuleFromModule(module:string) : seq[UEModule] =
+      #Cache with all modules so we dont have to collect the UETypes again per deps
+      var modCache = newTable[string, UEModule]()
+
+      proc getUEModuleFromModule(module:string) : Option[UEModule] =
         var excludeDeps = @["CoreUObject", "AudioMixer", "MegascansPlugin"]
         if module == "Engine":
           excludeDeps.add "UMG"
@@ -174,31 +177,38 @@ proc genReflectionData() =
         if module == "MovieScene":
           includeDeps.add "Engine"
         
-        let rules = if module in moduleRules: moduleRules[module] else: @[]
-        tryGetPackageByName(module)
-          .map((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps))
-          .get(newSeq[UEModule]())
+        #By default all modules that are not in the list above will only export BlueprintTypes
+        let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
+        let rules = if module in moduleRules: moduleRules[module] else: @[bpOnlyRules]
+       
+        UE_Log &"getUEModuleFromModule {module}"
+
+        if module notin modCache: #if it's in the cache the virtual modules are too.
+          let ueMods = tryGetPackageByName(module)
+                .map((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps))
+                .get(newSeq[UEModule]())
+
+          if ueMods.isEmpty():
+            UE_Error &"Failed to get module {module}. Did you restart the editor already?"
+            return none[UEModule]()
+
+          for ueMod in ueMods:
+            UE_Log &"Caching {ueMod.name}"
+            modCache.add(ueMod.name, ueMod)            
+        
+        some modCache[module] #we only return the actual uemod
           
       
-      var modCache = newTable[string, UEModule]()
       proc getDepsFromModule(modName:string, currentLevel=0) : seq[string] = 
         if currentLevel > 5: 
           UE_Warn &"Reached max level for {modName}. Breaking the cycle"
           return @[]
         UE_Log &"Getting deps for {modName}"
-        let deps =
-          if modName in modCache:
-            modCache[modName].dependencies
-          else:
-            let modules = getUEModuleFromModule(modName)
-            for m in modules:
-              modCache[m.name] = m
-            
-            modules[0].dependencies #Notice No need to return virtual module dependencies.
+        let deps = getUEModuleFromModule(modName).map(x=>x.dependencies).get(newSeq[string]())
         deps & 
           deps         
             .mapIt(getDepsFromModule(it, currentLevel+1))
-            .foldl(a & b, newSeq[string]())
+            .foldl(a & b, newSeq[string]()) 
             .deduplicate()
 
 
@@ -206,7 +216,7 @@ proc genReflectionData() =
       let modules = (deps.mapIt(getDepsFromModule(it))
                         .foldl(a & b, newSeq[string]()) & deps)
                         .deduplicate()
-
+      
       var ends = now() - starts
       let config = getNimForUEConfig()
       let bindingsPath = (modName:string) => config.pluginDir / "src" / "nimforue" / "unreal" / "bindings" / modName.toLower() & ".nim"
@@ -214,9 +224,11 @@ proc genReflectionData() =
       let modulesToGen = modCache
                           .values
                           .toSeq()
-                          .filterIt(it.hash != getModuleHashFromFile(bindingsPath(it.name)).get("_"))
+                          # .filterIt(it.hash != getModuleHashFromFile(bindingsPath(it.name)).get("_"))
+
       UE_Log &"Modules to gen: {modulesToGen.len}"
       UE_Log &"Modules in cache {modCache.len}"
+      UE_Warn &"Modules to gen {modulesToGen.mapIt(it.name)}"
       let ueProject = UEProject(modules:modulesToGen)
       
       # let ueProjectAsJson = ueProject.toJson().pretty()
@@ -224,8 +236,8 @@ proc genReflectionData() =
       # writeFile(ueProjectFilePath, ueProjectAsJson)
       #Show all deps for testing purposes
       UE_Log "All module deps:"
-      for m in ueProject.modules:
-        UE_Log &"{m.name}: {m.dependencies}"
+      # for m in ueProject.modules:
+      #   UE_Log &"{m.name}: {m.dependencies}"
 
       let ueProjectAsStr = $ueProject
       let codeTemplate = """
@@ -239,8 +251,8 @@ const project* = $1
       ends = now() - starts
       UE_Log &"It took {ends} to gen all deps"
 
-      UE_Warn $deps
-      UE_Warn $ueProject
+      # UE_Warn $deps
+      # UE_Warn $ueProject
 
 
 #This is just for testing/exploring, it wont be an actor
