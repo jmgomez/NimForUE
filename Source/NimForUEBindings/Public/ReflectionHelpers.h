@@ -107,5 +107,6 @@ public:
 	static TArray<FString> GetAllModuleDepsForPlugin(FString PluginName);
 
 	static UPackage* CreateNimPackage(FString PackageShortName);
-	// 
+	static void ExecuteTaskInTaskGraph(void (*taskFn)());
+
 };

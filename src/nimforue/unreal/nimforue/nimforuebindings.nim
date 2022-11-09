@@ -228,5 +228,8 @@ proc `$`*(hr:FNimHotReloadPtr) : string =
 
 
 
+proc executeTaskInTaskGraph*(taskFn: proc(){.cdecl.}) {.importcpp: "UReflectionHelpers::ExecuteTaskInTaskGraph(@)".}
+
+
 #ReinstanceNueTypes(FString NueModule, FNimHotReload* NimHotReload, FString NimError);
 proc reinstanceNueTypes*(nueModule:FString, nimHotReload:FNimHotReloadPtr, nimError:FString) : void {.importcpp: "ReinstanceBindings::ReinstanceNueTypes(@)".}

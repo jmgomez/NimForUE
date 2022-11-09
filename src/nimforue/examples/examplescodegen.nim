@@ -301,8 +301,12 @@ uClass AActorCodegen of AActor:
       UE_Warn $obj
       UE_Warn $obj.getOuter()
 
-    proc testWorks() = 
-      UE_Warn "It works"
+    proc testRunInAnotherThreadWorks() = 
+      proc hello() {.cdecl.}= 
+        genReflectionData()
+
+        UE_Warn "Hello from another thread"
+      executeTaskInTaskGraph(hello)
 
 
     

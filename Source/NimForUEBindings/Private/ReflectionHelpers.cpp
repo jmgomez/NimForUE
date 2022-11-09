@@ -5,6 +5,7 @@
 
 
 #include "NimForUEBindings.h"
+#include "Async/Async.h"
 
 #include "Interfaces/IPluginManager.h"
 
@@ -177,4 +178,13 @@ UPackage* UReflectionHelpers::CreateNimPackage(FString PackageShortName) {
 	NimForUEPackage->AddToRoot();
 	return NimForUEPackage;
 }
+
+
+
+void UReflectionHelpers::ExecuteTaskInTaskGraph(void (*taskFn)()) {
+	Async(EAsyncExecution::LargeThreadPool, [taskFn]{taskFn();});
+
+	// AsyncTask(ENamedThreads::NormalTaskPriority, [taskFn]{taskFn();});
+}
+
 //
