@@ -152,7 +152,7 @@ proc getAllInstalledPlugins() : seq[string] =
     UE_Error &"Failed to parse project json"
     return @[]
   
-proc genReflectionData*() = 
+proc genReflectionData*() : UEProject = 
       let plugins = getAllInstalledPlugins()
 
       let deps = plugins 
@@ -222,7 +222,7 @@ proc genReflectionData*() =
       let modulesToGen = modCache
                           .values
                           .toSeq()
-                          # .filterIt(it.hash != getModuleHashFromFile(bindingsPath(it.name)).get("_"))
+                          .filterIt(it.hash != getModuleHashFromFile(bindingsPath(it.name)).get("_"))
 
       UE_Log &"Modules to gen: {modulesToGen.len}"
       UE_Log &"Modules in cache {modCache.len}"
@@ -248,18 +248,38 @@ const project* = $1
         
       ends = now() - starts
       UE_Log &"It took {ends} to gen all deps"
-
+      return ueProject
       # UE_Warn $deps
       # UE_Warn $ueProject
 
 
 proc genUnrealBindings*() = 
   try:
-    genReflectionData()
+    # return
+    let ueProject = genReflectionData()
+    UE_Log $ueProject
+    if ueProject.modules.isEmpty():
+      UE_Log "No modules to generate"
+      return
+
     let config = getNimForUEConfig()
-    let cmd = &"{config.pluginDir}\\nue.exe gencppbindings"
-    let str = execProcess(cmd, workingDir=config.pluginDir)#, options={poDaemon})
-    UE_Log str
+    # let cmd = &"{config.pluginDir}\\nue.exe gencppbindings"
+
+    var
+      cmd = f &"{config.pluginDir}\\nue.exe"
+      args = f"gencppbindings"
+      dir = f config.pluginDir
+      stdOut : FString
+      stdErr : FString
+    let code = executeCmd(cmd, args, dir, stdOut, stdErr)
+
+    # let str = execProcess(cmd, 
+    #       workingDir=config.pluginDir, 
+    #     #  options={poEvalCommand, poDaemon}
+    # )
+    UE_Log $code
+    UE_Warn "output" & stdOut
+    # UE_Error "error" & stdErr
   except:
     let e : ref Exception = getCurrentException()
     UE_Error &"Error: {e.msg}"

@@ -13,7 +13,7 @@ uClass AActorCodegen of AActor:
   ufuncs(CallInEditor):
     proc genReflectionData() = 
       try:
-        genReflectionData()
+        discard genReflectionData()
         # let rulesASJson = moduleRules.toJson().pretty()
         # UE_Log rulesASJson
       except:
@@ -41,17 +41,3 @@ uClass AActorCodegen of AActor:
       
       UE_Warn $obj
       UE_Warn $obj.getOuter()
-
-    proc testRunInAnotherThreadWorks() = 
-      proc hello() {.cdecl.}= 
-        genReflectionData()
-
-        UE_Warn "Hello from another thread"
-      executeTaskInTaskGraph(hello)
-
-
-    proc testRunGenCppBindingsInAnotherThreadWorks() = 
-      proc hello() {.cdecl.}= 
-        genUnrealBindings()
-        UE_Warn "Hello from another thread"
-      executeTaskInTaskGraph(hello)

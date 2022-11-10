@@ -109,4 +109,6 @@ public:
 	static UPackage* CreateNimPackage(FString PackageShortName);
 	static void ExecuteTaskInTaskGraph(void (*taskFn)());
 
+	static int ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOut, FString& StdError);
+
 };

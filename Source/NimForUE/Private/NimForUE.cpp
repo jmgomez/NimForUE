@@ -27,7 +27,14 @@ void FNimForUEModule::LoadNimForUEHost() {
 	//Ideally it will be set through a Deinition to keep one source of truth
 	//FString DllPath = NIM_FOR_UE_LIB_PATH;
 	NimForUEHandle = FPlatformProcess::GetDllHandle(*DllPath);
+	FString Cmd = FString::Printf(TEXT("nue.exe"));
+	int ReturnCode;
+	FString StdOutput;
+	FString StdError;
+	//FPlatformProcess::ExecProcess(*Cmd, TEXT("gencppbindings"), &ReturnCode, &StdOutput, &StdError, *PluginPath);
 	UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib loaded %s"), *DllPath);
+	UE_LOG(NimForUE, Warning, TEXT("NimForUE Out %s"), *StdOutput);
+	UE_LOG(NimForUE, Error, TEXT("NimForUE Error %s"), *StdError);
 #endif
 }
 

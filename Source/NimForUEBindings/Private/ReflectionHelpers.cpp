@@ -187,4 +187,12 @@ void UReflectionHelpers::ExecuteTaskInTaskGraph(void (*taskFn)()) {
 	// AsyncTask(ENamedThreads::NormalTaskPriority, [taskFn]{taskFn();});
 }
 
+int UReflectionHelpers::ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOutput,
+	FString& StdError)
+{
+	int ReturnCode;
+	FPlatformProcess::ExecProcess(*Cmd, *Args, &ReturnCode, &StdOutput, &StdError, *WorkingDir);
+	return ReturnCode;
+}
+
 //
