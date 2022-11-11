@@ -136,9 +136,10 @@ moduleRules["EditorSubsystem"] = @[
 
 #TODO Deps module needs to pull parents !!!
 #Enums too?
+const pluginDir {.strdefine.} : string = ""
 
 proc getAllInstalledPlugins() : seq[string] =
-  let config = getNimForUEConfig()
+  let config = getNimForUEConfig(pluginDir)
   try:        
     let projectJson = readFile(config.gamePath).parseJson()
     let plugins = projectJson["Plugins"]                      
@@ -255,20 +256,21 @@ const project* = $1
 
 proc genUnrealBindings*() = 
   try:
-    # return
     let ueProject = genReflectionData()
+    # return
+
     UE_Log $ueProject
     if ueProject.modules.isEmpty():
       UE_Log "No modules to generate"
       return
 
-    let config = getNimForUEConfig()
+    # let config = getNimForUEConfig()
     # let cmd = &"{config.pluginDir}\\nue.exe gencppbindings"
-
+    
     var
-      cmd = f &"{config.pluginDir}\\nue.exe"
+      cmd = f &"{pluginDir}\\nue.exe"
       args = f"gencppbindings"
-      dir = f config.pluginDir
+      dir = f pluginDir
       stdOut : FString
       stdErr : FString
     let code = executeCmd(cmd, args, dir, stdOut, stdErr)
@@ -287,8 +289,13 @@ proc genUnrealBindings*() =
     UE_Error &"Failed to generate reflection data"
 
 
+proc NimMain() {.importc.}
 proc execBindingsGenerationInAnotherThread*() {.cdecl.}= 
       # genUnrealBindings()
       # UE_Warn "Hello from another thread"
-    proc ffiWraper() {.cdecl.} = genUnrealBindings()
-    executeTaskInTaskGraph(ffiWraper)
+    proc ffiWraper() {.cdecl.} = 
+      # NimMain()   
+      genUnrealBindings()
+
+    # executeTaskInTaskGraph(ffiWraper)
+    genUnrealBindings()

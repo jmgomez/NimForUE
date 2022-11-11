@@ -182,17 +182,27 @@ UPackage* UReflectionHelpers::CreateNimPackage(FString PackageShortName) {
 
 
 void UReflectionHelpers::ExecuteTaskInTaskGraph(void (*taskFn)()) {
-	Async(EAsyncExecution::LargeThreadPool, [taskFn]{taskFn();});
+	Async(EAsyncExecution::Thread, [taskFn]{taskFn();});
 
 	// AsyncTask(ENamedThreads::NormalTaskPriority, [taskFn]{taskFn();});
 }
 
-int UReflectionHelpers::ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOutput,
-	FString& StdError)
+int UReflectionHelpers::ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOutput, FString& StdError)
 {
-	int ReturnCode;
-	FPlatformProcess::ExecProcess(*Cmd, *Args, &ReturnCode, &StdOutput, &StdError, *WorkingDir);
-	return ReturnCode;
+	uint32 ProcessId;
+	// int ReturnCode;
+
+	void* ReadPipe = nullptr;
+	void* WritePipe = nullptr;
+	//verify(FPlatformProcess::CreatePipe(ReadPipe, WritePipe));
+
+	FProcHandle Proc = FPlatformProcess::CreateProc(*Cmd, *Args, false, true, true, &ProcessId, 0, *WorkingDir, WritePipe, ReadPipe);
+
+	// FPlatformProcess::ExecProcess(*Cmd, *Args, &ReturnCode, &StdOutput, &StdError, *WorkingDir);
+	// return ReturnCode;
+	FPlatformProcess::ClosePipe(ReadPipe, WritePipe);
+	StdOutput = FPlatformProcess::ReadPipe(ReadPipe);
+	return 0;
 }
 
 //
