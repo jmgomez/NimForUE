@@ -43,6 +43,10 @@ uClass AActorScratchpad of AActor:
     mapTestStr : TMap[FString, FString] #= makeTArray[int](2, 1)
 
   ufuncs(CallInEditor):
+    proc garbageCollect() = 
+      let engine = getEngine()
+      engine.forceGarbageCollection(true)
+
     proc testModifyStructProp() =
       self.structProp.stringProp = "World yes!"
       # UE_Warn $self.structProp.stringProp

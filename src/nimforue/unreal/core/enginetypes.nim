@@ -3,6 +3,8 @@ import math/vector
 import ../coreuobject/[uobject, coreuobject]
 
 type 
+  UEngine* {.importcpp, importcpp, pure .} = object of UObject
+  UEnginePtr* {.importcpp, pure .} = ptr UEngine
   AActor* {.importcpp, inheritable, pure .} = object of UObject
   AActorPtr* = ptr AActor
   # AController* {.importcpp, inheritable, pure .}= object of AActor
@@ -195,3 +197,9 @@ type
     # tintColor*: FSlateColor
     # margin*: FMargin
     ImageSize*: FVector2D
+
+
+proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)".} 
+
+#	void ForceGarbageCollection(bool bFullPurge = false);
+proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.importcpp: "#->ForceGarbageCollection(#)".}

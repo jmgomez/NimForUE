@@ -14,6 +14,7 @@
 #include "Engine/Classes/GameFramework/Volume.h"
 #include "Engine/Classes/GameFramework/GameSession.h"
 #include "Engine/Classes/Engine/World.h"
+#include "Engine/Classes/Engine/Engine.h"
 #include "Misc/AutomationTest.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/UserDefinedEnum.h"
