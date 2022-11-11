@@ -228,7 +228,7 @@ proc `$`*(hr:FNimHotReloadPtr) : string =
 
 
 
-proc executeTaskInTaskGraph*(taskFn: proc(){.cdecl.}) {.importcpp: "UReflectionHelpers::ExecuteTaskInTaskGraph(@)".}
+proc executeTaskInTaskGraph*[T](param: T, taskFn: proc(param:T){.cdecl.}) {.importcpp: "UReflectionHelpers::ExecuteTaskInTaskGraph<'1>(#, #)".}
 
 #static int ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOut, FString& StdError);
 proc executeCmd*(cmd, args, workingDir, stdOut, stdError: var FString) : int {.importcpp: "UReflectionHelpers::ExecuteCmd(@)".}

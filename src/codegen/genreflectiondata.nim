@@ -138,8 +138,7 @@ moduleRules["EditorSubsystem"] = @[
 #Enums too?
 const pluginDir {.strdefine.} : string = ""
 
-proc getAllInstalledPlugins() : seq[string] =
-  let config = getNimForUEConfig(pluginDir)
+proc getAllInstalledPlugins*(config:NimForUEConfig) : seq[string] =
   try:        
     let projectJson = readFile(config.gamePath).parseJson()
     let plugins = projectJson["Plugins"]                      
@@ -153,8 +152,7 @@ proc getAllInstalledPlugins() : seq[string] =
     UE_Error &"Failed to parse project json"
     return @[]
   
-proc genReflectionData*() : UEProject = 
-      let plugins = getAllInstalledPlugins()
+proc genReflectionData*(plugins:seq[string]) : UEProject = 
 
       let deps = plugins 
                   .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
@@ -254,9 +252,9 @@ const project* = $1
       # UE_Warn $ueProject
 
 
-proc genUnrealBindings*() = 
+proc genUnrealBindings*(plugins:seq[string]) = 
   try:
-    let ueProject = genReflectionData()
+    let ueProject = genReflectionData(plugins)
     # return
 
     UE_Log $ueProject
@@ -289,13 +287,21 @@ proc genUnrealBindings*() =
     UE_Error &"Failed to generate reflection data"
 
 
+
+
+
 proc NimMain() {.importc.}
 proc execBindingsGenerationInAnotherThread*() {.cdecl.}= 
       # genUnrealBindings()
       # UE_Warn "Hello from another thread"
-    proc ffiWraper() {.cdecl.} = 
+    proc ffiWraper(config:ptr NimForUEConfig) {.cdecl.} = 
       # NimMain()   
-      genUnrealBindings()
+      UE_Log "Hello from another thread"
+      UE_Log $config[]
+      # genUnrealBindings(plugins)
+      discard
+    let config = getNimForUEConfig(pluginDir)
 
-    # executeTaskInTaskGraph(ffiWraper)
-    genUnrealBindings()
+    let plugins = getAllInstalledPlugins(config)
+    # executeTaskInTaskGraph[ptr NimForUEConfig](config.unsafeAddr, ffiWraper)
+    genUnrealBindings(plugins)

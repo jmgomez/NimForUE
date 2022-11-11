@@ -24,11 +24,12 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
 
 #entry point for the game. but it will also be for other libs in the future
 #even the next guest/nimforue?
-proc onLibLoaded(libName:cstring, libPath:cstring) : void {.ffi:genFilePath} = 
+proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.ffi:genFilePath} = 
     case $libName:
     of "nimforue": 
         emitNueTypes(getGlobalEmitter()[], "Nim")
-        execBindingsGenerationInAnotherThread()
+        if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
+          execBindingsGenerationInAnotherThread()
     of "game":
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
     

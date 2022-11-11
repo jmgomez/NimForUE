@@ -180,18 +180,18 @@ UPackage* UReflectionHelpers::CreateNimPackage(FString PackageShortName) {
 }
 
 
-
-void UReflectionHelpers::ExecuteTaskInTaskGraph(void (*taskFn)()) {
-	Async(EAsyncExecution::Thread, [taskFn]{taskFn();});
-
-	// AsyncTask(ENamedThreads::NormalTaskPriority, [taskFn]{taskFn();});
-}
+//
+// void UReflectionHelpers::ExecuteTaskInTaskGraph(void (*taskFn)()) {
+// 	Async(EAsyncExecution::Thread, [taskFn]{taskFn();});
+//
+// 	// AsyncTask(ENamedThreads::NormalTaskPriority, [taskFn]{taskFn();});
+// }
 
 int UReflectionHelpers::ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOutput, FString& StdError)
 {
 	uint32 ProcessId;
 	// int ReturnCode;
-
+	
 	void* ReadPipe = nullptr;
 	void* WritePipe = nullptr;
 	//verify(FPlatformProcess::CreatePipe(ReadPipe, WritePipe));

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Async/Async.h"
 #include "UObject/Object.h"
 #include "ReflectionHelpers.generated.h"
 
@@ -107,8 +108,13 @@ public:
 	static TArray<FString> GetAllModuleDepsForPlugin(FString PluginName);
 
 	static UPackage* CreateNimPackage(FString PackageShortName);
-	static void ExecuteTaskInTaskGraph(void (*taskFn)());
+
+	template<typename T>
+	static void ExecuteTaskInTaskGraph(T Param, void (*taskFn)(T)) {
+		Async(EAsyncExecution::ThreadPool, [&] {taskFn(Param); });
+	}
 
 	static int ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOut, FString& StdError);
 
 };
+

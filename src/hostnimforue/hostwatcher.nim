@@ -23,10 +23,10 @@ proc loadNueLib*(libName, nextPath: string) =
   var nueLib = libMap[libName]
   if nueLib.lastLoadedPath != nextPath or not nueLib.isInit:
     nueLib.lib = loadLib(nextPath)
-    nueLib.isInit = true
+    inc nueLib.timesReloaded
     nueLib.lastLoadedPath = nextPath
     libMap[libName] = nueLib
-    onLibLoaded(libName.cstring, nextPath.cstring)
+    onLibLoaded(libName.cstring, nextPath.cstring, (nueLib.timesReloaded - 1).cint)
 
 
 proc checkReload*() {.ex.} = #only for nimforue (plugin)

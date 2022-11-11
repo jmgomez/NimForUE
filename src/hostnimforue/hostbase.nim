@@ -13,9 +13,9 @@ type
   NueLib* = object
     lastLoadedPath* : string
     lib* : LibHandle
-    isInit* : bool
+    timesReloaded* : int
 
-
+func isInit*(lib : NueLib) : bool = lib.lib != nil
 
 var libMap* : Table[string, NueLib] = {
   "nimforue" : NueLib(lastLoadedPath: getLastLibPath(libDir, "nimforue").get()),
