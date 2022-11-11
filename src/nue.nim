@@ -130,12 +130,12 @@ task ubuild, "Calls Unreal Build Tool for your project":
       )
 
     doAssert(execCmd(buildCmd & " NimForUEDemoEditor " &
-      $config.targetPlatform & " " &
-      $config.targetConfiguration & " " &
-      uprojectFile & " -waitmutex") == 0)
+                    $config.targetPlatform & " " &
+                    $config.targetConfiguration & " " &
+                    uprojectFile & " -waitmutex") == 0)
     setCurrentDir(curDir)
   except:
-    log("Could not find uproject here: " & walkPattern & "\n", lgError)
+    log getCurrentExceptionMsg()
     quit(QuitFailure)
 
 task dumpConfig, "Displays the config variables":
