@@ -53,6 +53,13 @@ proc getNimForUEConfig*(pluginDirPath="") : NimForUEConfig =
   config.genFilePath = genFilePath
   config.engineDir = config.engineDir.normalizedPath().normalizePathEnd()
   config.pluginDir = config.pluginDir.normalizedPath().normalizePathEnd()
+
+  let configErrMsg = "Please check " & getConfigFileName() & " for missing: "
+  doAssert(config.engineDir.dirExists(), configErrMsg & " engineDir")
+  doAssert(config.pluginDir.dirExists(), configErrMsg & " pluginDir")
+  doAssert(config.gamePath.fileExists(), configErrMsg & " gamePath")
+  doAssert(config.nimGameDir.dirExists(), configErrMsg & " nimGameDir")
+
   #Rest of the fields are sets by UBT
   config.saveConfig()
   config
