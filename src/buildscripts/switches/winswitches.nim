@@ -18,9 +18,8 @@ let pchCompileFlags = @[
 ]
 
 
-proc vccPchCompileFlags*(withDebug, withPch:bool) : seq[string] = 
-  @[
-    
+proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string] = 
+  result = @[
     "/Zc:inline", #Remove unreferenced functions or data if they're COMDAT or have internal linkage only (off by default).
     "/nologo",
     "/Oi",
@@ -37,7 +36,6 @@ proc vccPchCompileFlags*(withDebug, withPch:bool) : seq[string] =
     "/source-charset:utf-8",
     "/execution-charset:utf-8",
     "/Ob2",
-    "/Od",
     "/errorReport:prompt",
     "/EHsc",
     "/DPLATFORM_EXCEPTIONS_DISABLED=0",
@@ -65,11 +63,14 @@ proc vccPchCompileFlags*(withDebug, withPch:bool) : seq[string] =
     #
     "/Zf", #faster pdb gen
     "/MP",
-  
     "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
-  ] & 
-    (if withPch:pchCompileFlags else: @[]) & 
-    (if withDebug: @["/Od", "/Z7"] else: @["/O2"])
+  ]
+  result &= (if withDebug: 
+              @["/Od", if withIncremental: "/Zi" else: "/Z7"] 
+            else: 
+              @["/O2"])
+  if withPch: 
+    result &= pchCompileFlags
 
 
 #nimforue or game are the target, the folder and the base name must match
@@ -100,16 +101,16 @@ proc getPdbFilePath*(targetName:static string): string =
   let pdbFile = pdbFolder / targetName & version & ".pdb"
   pdbFile
 
-proc vccCompileSwitches*(withDebug, withPch : bool, debugFolder:static string) : seq[string]= 
-  var switches = vccPchCompileFlags(withDebug, withPch).filterIt(len(it)>1).mapIt("-t:" & it) & @[&"--cc:vcc"]
+proc vccCompileSwitches*(withDebug, withIncremental, withPch : bool, debugFolder:static string) : seq[string]= 
+  var switches = vccPchCompileFlags(withDebug, withIncremental, withPch).mapIt("-t:" & it) & @[&"--cc:vcc"]
   if withPch:
     switches.add "-l:" & pchObjPath
   if withDebug: 
-      let debugSwitches = (&"/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath(debugFolder)}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
+      let debugSwitches = "-l:\"/INCREMENTAL /DEBUG\"" & &"-l:/PDB:\"{getPdbFilePath(debugFolder)}\""
       switches & debugSwitches
   else: switches & @["-l:/INCREMENTAL"]
 
 
 
-proc getPlatformSwitches*(withPch, withDebug : bool, debugFolder:static string) : seq[string] = 
-  result = vccCompileSwitches(withDebug, withPch, debugFolder) 
+proc getPlatformSwitches*(withPch, withIncremental, withDebug : bool, debugFolder:static string) : seq[string] = 
+  result = vccCompileSwitches(withDebug, withIncremental, withPch, debugFolder) 

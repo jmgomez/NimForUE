@@ -2,7 +2,6 @@ include ../nimforue/unreal/prelude
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../nimforue/typegen/uemeta
 import ../buildscripts/nimforueconfig
-import codegentemplate
 import ../nimforue/macros/genmodule #not sure if it's worth to process this file just for one function? 
 
 let moduleRules = newTable[string, seq[UEImportRule]]()

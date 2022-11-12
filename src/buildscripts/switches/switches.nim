@@ -17,7 +17,7 @@ const withPCH* = true
 #Regular builds need to be fixed
 #but since we are using unreal PCH it shouldnt be a big deal
 
-let ueincludes* = getUEHeadersIncludePaths(config).map(headerPath => "--t:-I" & escape(quotes(headerPath)))
+let ueincludes* = getUEHeadersIncludePaths(config).map(headerPath => "-t:-I" & escape(quotes(headerPath)))
 let uesymbols* = getUESymbols(config).map(symbolPath => "-l:" & escape(quotes(symbolPath)))
 
 let buildSwitches* = @[
@@ -41,7 +41,7 @@ let buildSwitches* = @[
 ]
 
 #Probably this needs to be platform specific as well
-proc targetSwitches*(withDebug:bool) : seq[string] =
+proc targetSwitches*(withDebug: bool): seq[string] =
   case config.targetConfiguration:
     of Debug, Development:
       var ts = @["--opt:none"]
@@ -57,8 +57,7 @@ proc targetSwitches*(withDebug:bool) : seq[string] =
     of Shipping: @["--danger"]
       
 
-let hostPlatformSwitches* = getPlatformSwitches(false, false, "")
-
-proc pluginPlatformSwitches*(withDebug:bool) : seq[string] = getPlatformSwitches(withPch, withDebug, "guest") 
-proc gamePlatformSwitches*(withDebug:bool) : seq[string] = getPlatformSwitches(withPch, withDebug, "game") 
+proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, withDebug, true, "")
+proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, false, "guest") 
+proc gamePlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, false, "game") 
 
