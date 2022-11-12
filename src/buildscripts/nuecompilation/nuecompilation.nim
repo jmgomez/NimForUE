@@ -15,7 +15,7 @@ proc compileHost*() =
   doAssert(execCmd(&"nim cpp {buildFlags} --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   # copy header
   let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
-  let ffiHeaderDest = "NimHeaders/NimForUEFFI.h"
+  let ffiHeaderDest = config.nimHeadersDir / "NimForUEFFI.h"
   copyFile(ffiHeaderSrc, ffiHeaderDest)
   log("Copied " & ffiHeaderSrc & " to " & ffiHeaderDest)
 
@@ -85,4 +85,4 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
 proc compileGenerateBindings*() = 
   let buildFlags = @[buildSwitches, targetSwitches(false), pluginPlatformSwitches(false), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/codegen/maingencppbindings.nim") == 0)
-  copyFile("./.nimcache/gencppbindings/UEGenBindings.h", "./NimHeaders/UEGenBindings.h")
+  copyFile("./.nimcache/gencppbindings/UEGenBindings.h", config.nimHeadersDir / "UEGenBindings.h")

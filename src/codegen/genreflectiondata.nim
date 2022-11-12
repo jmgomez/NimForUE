@@ -1,7 +1,7 @@
 include ../nimforue/unreal/prelude
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../nimforue/typegen/uemeta
-import ../buildscripts/nimforueconfig
+import ../buildscripts/[nimforueconfig, buildscripts]
 import ../nimforue/macros/genmodule #not sure if it's worth to process this file just for one function? 
 
 let moduleRules = newTable[string, seq[UEImportRule]]()
@@ -212,7 +212,8 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
 
   var ends = now() - starts
   let config = getNimForUEConfig()
-  let bindingsPath = (modName:string) => config.pluginDir / "src" / "nimforue" / "unreal" / "bindings" / modName.toLower() & ".nim"
+  createDir(config.bindingsDir)
+  let bindingsPath = (modName:string) => config.bindingsDir / modName.toLower() & ".nim"
 
   let modulesToGen = modCache
                       .values
@@ -224,9 +225,6 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
   UE_Warn &"Modules to gen {modulesToGen.mapIt(it.name)}"
   let ueProject = UEProject(modules:modulesToGen)
   
-  # let ueProjectAsJson = ueProject.toJson().pretty()
-  # let ueProjectFilePath = config.pluginDir / ".reflectiondata" / "ueproject.json"
-  # writeFile(ueProjectFilePath, ueProjectAsJson)
   #Show all deps for testing purposes
   UE_Log "All module deps:"
   # for m in ueProject.modules:
@@ -237,7 +235,10 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
 import ../nimforue/typegen/models
 const project* = $1
 """
-  writeFile( config.pluginDir / "src" / ".reflectiondata" / "ueproject.nim", codeTemplate % [ueProjectAsStr])
+
+  createDir(config.reflectionDataDir)
+  writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
+
   ends = now() - starts
   UE_Log &"It took {ends} to gen all deps"
   return ueProject

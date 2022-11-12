@@ -95,17 +95,3 @@ proc copyNimForUELibToUEDir*(libName:string) =
 
   copyFile(fileFullSrc, fileFullDst)
   log "Copied " & fileFullSrc & " to " & fileFullDst
-
- 
-
-
-
-proc makeSureFolderStructureIsAsExpected*() = 
-  createDir("./NimHeaders")
-  createDir("./NimHeaders"/"Modules")
-  
-  let bindingsDir = "src"/"nimforue"/"unreal"/"bindings"
-  createDir(bindingsDir)
-  createDir(bindingsDir / "exported")
-
-  createDir("./src/.reflectiondata")

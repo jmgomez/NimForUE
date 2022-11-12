@@ -1,6 +1,14 @@
 import std/[json, jsonutils, os, sequtils, strformat, sugar]
 import buildcommon
 
+# codegen paths
+const NimHeadersDir* = "NimHeaders"
+const NimHeadersModulesDir* = NimHeadersDir / "Modules"
+const BindingsDir* = "src"/"nimforue"/"unreal"/"bindings"
+const BindingsExportedDir* = "src"/"nimforue"/"unreal"/"bindings"/"exported"
+const ReflectionDataDir* = "src" / ".reflectiondata"
+const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
+
 #[
 The file is created for first time in from this file during compilation
 Since UBT has to set some values on it, it does so through the FFI 
@@ -19,6 +27,19 @@ type NimForUEConfig* = object
   # currentCompilation* : int 
   #WithEditor? 
   #DEBUG?
+
+
+template codegenDir(fname, constName: untyped): untyped =
+  func fname*(config: NimForUEConfig): string =
+    config.pluginDir / constName
+
+codegenDir(nimHeadersDir, NimHeadersDir)
+codegenDir(nimHeadersModulesDir, NimHeadersModulesDir)
+codegenDir(bindingsDir, BindingsDir)
+codegenDir(bindingsExportedDir, BindingsExportedDir)
+codegenDir(reflectionDataDir, ReflectionDataDir)
+codegenDir(reflectionDataFilePath, ReflectionDataFilePath)
+
 
 func getConfigFileName() : string = 
   when defined macosx:

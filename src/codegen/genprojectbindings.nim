@@ -5,7 +5,5 @@ import ../nimforue/macros/[genmodule, makestrproc]
 import ../buildscripts/nimforueconfig
 import ../.reflectiondata/ueproject
 
-
-const reflectionDataDir = "./src/.reflectiondata"
 genProjectBindings(project, "./")
 

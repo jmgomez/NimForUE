@@ -6,7 +6,7 @@ import ../utils/ueutils
 import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
 import ../typegen/[nuemacrocache, models]
-
+import ../../buildscripts/nimforueconfig
 import uebind
 
 func genUClassTypeDefBinding(t: UEType, r: UERule = uerNone): seq[NimNode] =
@@ -360,9 +360,9 @@ proc getModuleHashFromFile*(filePath: string): Option[string] =
 
 
 macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
-  let bindingsDir = pluginDir / "src"/"nimforue"/"unreal"/"bindings"
+  let bindingsDir = pluginDir / BindingsDir
 
-  let nimHeadersDir = pluginDir / "NimHeaders" # need this to store forward decls of classes
+  let nimHeadersDir = pluginDir / NimHeadersDir # need this to store forward decls of classes
 
   for module in project.modules:
     let module = module
