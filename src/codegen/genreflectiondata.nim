@@ -258,13 +258,16 @@ proc genUnrealBindings*(plugins: seq[string]) =
 
     # let config = getNimForUEConfig()
     # let cmd = &"{config.pluginDir}\\nue.exe gencppbindings"
-    
+    when defined(windows):
+      var cmd = f &"{pluginDir}\\nue.exe"    
+    else:
+      var cmd = f &"{pluginDir}/nue"
     var
-      cmd = f &"{pluginDir}\\nue.exe"
       args = f"gencppbindings"
       dir = f pluginDir
       stdOut : FString
       stdErr : FString
+
     let code = executeCmd(cmd, args, dir, stdOut, stdErr)
 
     # let str = execProcess(cmd, 
