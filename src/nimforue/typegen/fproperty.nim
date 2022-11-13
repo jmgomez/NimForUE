@@ -164,14 +164,16 @@ proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
         elif propType.contains("TSet"):
             let setProp = newFSetProperty(makeFieldVariant(outer), name, flags)
             let elementPropType = propType.extractTypeFromGenericInNimFormat("TSet")
-            let elementProp = newFProperty(setProp, propField, optPropType=elementPropType, optName="ElementProp",  propFlags=CPF_HasGetValueTypeHash)
+            let elementProp = newFProperty(outer, propField, optPropType=elementPropType, optName="ElementProp",  propFlags=CPF_HasGetValueTypeHash)
             setProp.addCppProperty(elementProp)
             setProp
+            
         elif propType.contains("TMap"):
             let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
             let innerTypes = propType.extractKeyValueFromMapProp()
-            let key = newFProperty(mapProp, propField, optPropType=innerTypes[0], optName="Key", propFlags=CPF_HasGetValueTypeHash) 
-            let value = newFProperty(mapProp, propField, optPropType=innerTypes[1], optName="Value")
+            let key = newFProperty(outer, propField, optPropType=innerTypes[0], optName="Key", propFlags=CPF_HasGetValueTypeHash) 
+            let value = newFProperty(outer, propField, optPropType=innerTypes[1], optName="Value")
+            
 
             mapProp.addCppProperty(key)
             mapProp.addCppProperty(value)
