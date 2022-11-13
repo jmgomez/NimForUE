@@ -1,5 +1,5 @@
 import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
-import buildscripts/[buildcommon, buildscripts, nimforueconfig, nimcachebuild]
+import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 
 let config = getNimForUEConfig()
 
@@ -23,7 +23,7 @@ let macSwitches = @[
 ]
 
 
-proc getPlatformSwitches*(withPch, withDebug : bool) : seq[string] = 
+proc getPlatformSwitches*(withPch, withIncremental, withDebug : bool, target:string) : seq[string] = 
   let platformDir =  "Mac/x86_64" 
   let pchPath = config.pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / $config.targetConfiguration / "NimForUE" / "PCH.NimForUE.h.gch"
   if withPch:
