@@ -7,7 +7,7 @@ let config = getNimForUEConfig()
 
 
 let pluginDir = config.pluginDir
-let pchDir = pluginDir / "Intermediate\\Build\\Win64\\UnrealEditor\\Development\\NimForUE"
+let pchDir = pluginDir / "Intermediate\\Build\\Win64\\UnrealEditor" / $config.targetConfiguration / "NimForUE"
 let pchObjPath = pchDir / "PCH.NimForUE.h.obj"
 
 let pchCompileFlags = @[
