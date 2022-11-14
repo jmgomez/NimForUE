@@ -93,11 +93,13 @@ proc createDefaultSubobjectNim*[T:UObject](outer:UObjectPtr, name:FName) : ptr T
 
 proc getName*(prop:FFieldPtr) : FString {. importcpp:"#->GetName()" .}
 
+proc initializeValue*(prop:FPropertyPtr, dest: pointer) {. importcpp:"#->InitializeValue(#)" .}
 
 proc getOffsetForUFunction*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffset_ForUFunction()".}
 proc initializeValueInContainer*(prop:FPropertyPtr, container:pointer) : void {. importcpp:"#->InitializeValue_InContainer(#)".}
 
 proc getSize*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetSize()".}
+proc getMinAlignment*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetMinAlignment()".}
 proc getOffset*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffset_ForInternal()".}
 
 proc setPropertyFlags*(prop:FPropertyPtr, flags:EPropertyFlags) : void {. importcpp:"#->SetPropertyFlags(#)".}
@@ -116,15 +118,18 @@ proc makeFieldVariant*(obj:UObjectPtr | FFieldPtr) : FFieldVariant {. importcpp:
 macro bindFProperty(propNames : static openarray[string] ) : untyped = 
     proc bindProp(name:string) : NimNode = 
         let constructorName = ident "new"&name
+        let constructorNameWithEqualityAndSerializer = ident "new"&name & "WithEqualityAndSerializer"
         let ptrName = ident name&"Ptr"
 
-        genAst(name=ident name, ptrName, constructorName):
+        genAst(name=ident name, ptrName, constructorName, constructorNameWithEqualityAndSerializer):
             type 
                 name* {.inject, importcpp.} = object of FProperty
                 ptrName* {.inject.} = ptr name
 
             proc constructorName*(fieldVariant:FFieldVariant, propName:FName, objFlags:EObjectFlags) : ptrName {. importcpp: "new '*0(@)", inject.}
             proc constructorName*(fieldVariant:FFieldVariant, propName:FName, objFlags:EObjectFlags, offset:int32, propFlags:EPropertyFlags) : ptrName {. importcpp: "new '*0(@)", inject.}
+            proc constructorNameWithEqualityAndSerializer*(fieldVariant:FFieldVariant, propName:FName, objFlags:EObjectFlags) : ptrName {. importcpp: "new '*0(@)", inject.}
+            proc constructorNameWithEqualityAndSerializer*(fieldVariant:FFieldVariant, propName:FName, objFlags:EObjectFlags, offset:int32, propFlags:EPropertyFlags) : ptrName {. importcpp: "new '*0(@)", inject.}
 
     
     nnkStmtList.newTree(propNames.map(bindProp))

@@ -7,3 +7,5 @@
 
 
 proc memcpy*(dest, src : pointer, count : int32) : pointer {. importcpp:"FMemory::Memcpy(@)" .}
+#void* FMemory::Malloc(SIZE_T Count, uint32 Alignment)
+proc malloc*(count : int32, alignment : uint32) : pointer {. importcpp:"FMemory::Malloc(@)" .}

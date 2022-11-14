@@ -48,10 +48,11 @@ uClass AActorScratchpad of ATestActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     structProp : FTestStruct = FTestStruct()
-    testA : int32 = 5
+    testA : int32 = 7
     obj : UObjectScratchpadPtr
     arr : TArray[int32] #= makeTArray[int](2, 1)
     arrStrs : TArray[FString] #= makeTArray[int](2, 1)
+    arrObjs : TArray[UObjectPtr] #= makeTArray[int](2, 1)
     mapTest : TMap[int32, int32] #= makeTArray[int](2, 1)
     mapTestStr : TMap[FString, FString] #= makeTArray[int](2, 1)
     mapTestObj : TMap[FString, UObjectPtr] = makeTMap[FString, UObjectPtr]()

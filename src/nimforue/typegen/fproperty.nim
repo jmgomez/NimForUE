@@ -150,6 +150,8 @@ proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
         elif propType.contains("TArray"):
             let arrayProp = newFArrayProperty(makeFieldVariant(outer), name, flags)
             arrayProp.setPropertyFlags(CPF_ZeroConstructor)
+
+
             let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
             let inner = newFProperty(outer, propField, optPropType=innerType, optName= $name & "_Inner")
             #TODO extract this so it can be easily apply to all instanced
@@ -161,6 +163,12 @@ proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
                 # inner.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
 
             arrayProp.addCppProperty(inner)
+            #Pywrapperfixed array
+            
+            let arrayValue = malloc(arrayProp.getSize(), arrayProp.getMinAlignment().uint32)
+            arrayProp.initializeValue(arrayValue)
+
+
             arrayProp
         elif propType.contains("TSet"):
             let setProp = newFSetProperty(makeFieldVariant(outer), name, flags)
@@ -178,6 +186,9 @@ proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
 
             mapProp.addCppProperty(key)
             mapProp.addCppProperty(value)
+
+            let mapValue = malloc(mapProp.getSize(), mapProp.getMinAlignment().uint32)
+            mapProp.initializeValue(mapValue)
             mapProp
         else: #ustruct based?
             newUStructBasedFProperty(cast[UStructPtr](outer), propType, name, propFlags)
