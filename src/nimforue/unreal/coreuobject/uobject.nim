@@ -241,7 +241,7 @@ converter fromObjectPtr*[T : UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TO
 
 #UOBJECT
 proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
-proc getFlags*(obj:UObjectPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
+proc getFlags*(obj:UObjectPtr|FFieldPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
 proc setFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->SetFlags(#)" .}
 proc clearFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->ClearFlags(#)" .}
 
