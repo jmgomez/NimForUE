@@ -2,13 +2,11 @@ import bitops
 import ../../typegen/models
 import std/[genasts, macros, sugar, json, sequtils]
 
-
 {.pragma: importflag, importcpp, nodecl, header: ueincludes.}
-  
 
-type
 
-    EPropertyFlags* {. importflag, size:sizeof(uint64).} = enum
+
+type EPropertyFlags* {. importflag, size:sizeof(uint64).} = enum
         CPF_None = 0,
         CPF_Edit              = 0x0000000000000001,  #< Property is user-settable in the editor.
         CPF_ConstParm            = 0x0000000000000002,  #< This is a constant function parameter
@@ -67,8 +65,12 @@ type
         CPF_NativeAccessSpecifierPrivate  = 0x0040000000000000,  #< Private native access specifier
         CPF_SkipSerialization        = 0x0080000000000000,  
 
+
+
+type 
     EObjectFlagsVal* = distinct(uint32)
 
+type 
     EObjectFlags* {.importflag, size:sizeof(uint32).} = enum
         # if you change any the bit of any of the RF_Load flags, then you will need legacy serialization
         RF_NoFlags = 0x00000000, #< No flags, used to avoid a cast=
@@ -121,6 +123,7 @@ type
         RF_AllocatedInSharedPage  =0x80000000,  #< Allocated from a ref-counted page shared with other UObjects
 
 
+type 
     EFunctionFlags* {.importflag, size:sizeof(uint32).} = enum 
         # Function flags.
         FUNC_None = 0x00000000,
@@ -162,7 +165,7 @@ type
 
 
 
-    EClassFlags* {.importflag, size:sizeof(uint32).} = enum #TODO Test sizeof in cpp to see if they are uint32
+type EClassFlags* {.importflag, size:sizeof(uint32).} = enum #TODO Test sizeof in cpp to see if they are uint32
         #* No Flags */
         CLASS_None      =  0x00000000,
         #* Class is abstract and can't be instantiated directly. */
@@ -238,11 +241,11 @@ type
         #* Class has been consigned to oblivion as part of a blueprint recompile, and a newer version currently exists. */
         CLASS_NewerVersionExists  = 0x80000000
 
-    EClassCastFlags* {.importflag, size:sizeof(uint64).} = enum #Dont think we will ever need the values imported
+type EClassCastFlags* {.importflag, size:sizeof(uint64).} = enum #Dont think we will ever need the values imported
         CASTCLASS_None = 0x0000000000000000
     
 
-    EStructFlags* {.importflag, size:sizeof(uint32).} = enum
+type EStructFlags* {.importflag, size:sizeof(uint32).} = enum
         # State flags.
         STRUCT_NoFlags        = 0x00000000,  
         STRUCT_Native        = 0x00000001,
@@ -316,13 +319,34 @@ type
 
 
     
-    EFieldIterationFlags* {.importflag, size:sizeof(uint8).} = enum 
+type EFieldIterationFlags* {.importflag, size:sizeof(uint8).} = enum 
         None = 0
         IncludeSuper = rotateLeftBits(1.uint8, 0)#1<<0       # Include super class
         IncludeDeprecated = rotateLeftBits(1.uint8, 1.int32)#1<<1  # Include deprecated properties
         IncludeInterfaces = rotateLeftBits(1.uint8, 2.int32)#1<<2  # Include interfaces
 
 
+
+  
+
+macro genFields(e : typedesc) : untyped = 
+    let enu = e.getImpl()
+    let enumFields = enu[^1].children.toSeq().filterIt(it.kind == nnkEnumFieldDef)
+    func fieldToTuple(field : NimNode) : (string, uint64) = 
+        (field[0].strVal, field[1].intVal().uint64) #int64? what about uint64?
+    let content = newLit(enumFields.map(fieldToTuple))
+   
+    let fieldsFn = genAst(content): 
+        proc fields*(eProp : typedesc[EPropertyFlags]) : seq[(string, uint64)] = 
+            content
+    
+    # result = nnkStmtListExpr.newTree(nnkTypeSection.newTree(enu))
+    # result = (nnkTypeSection.newTree(enu))
+    result = fieldsFn
+    # echo treeRepr(result)
+
+
+genFields(EPropertyFlags)
 
 macro genEnumOperators(enumName, enumType:static string, genValConverters : static bool = true) : untyped = 
     let name = ident enumName

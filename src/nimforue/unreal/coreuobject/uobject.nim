@@ -160,6 +160,9 @@ proc addCppProperty*(arrProp:FArrayPropertyPtr | FSetPropertyPtr | FMapPropertyP
 
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
 proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->ValueProp)".}
+
+
+
 proc getSignatureFunction*(delProp:DelegateProp) : UFunctionPtr {.importcpp:"(#->SignatureFunction)".}
 proc setSignatureFunction*(delProp:DelegateProp, signature : UFunctionPtr) : void {.importcpp:"(#->SignatureFunction=#)".}
 

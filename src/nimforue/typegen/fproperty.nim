@@ -150,7 +150,7 @@ proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
         elif propType.contains("TArray"):
             let arrayProp = newFArrayProperty(makeFieldVariant(outer), name, flags)
             let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-            let inner = newFProperty(outer, propField, optPropType=innerType, optName="Inner")
+            let inner = newFProperty(outer, propField, optPropType=innerType, optName= $name & "_Inner", propFlags=CPF_ZeroConstructor)
             #TODO extract this so it can be easily apply to all instanced
             let isObjProp = not castField[FObjectProperty](inner).isNil() 
             if isObjProp: 
@@ -171,8 +171,8 @@ proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
         elif propType.contains("TMap"):
             let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
             let innerTypes = propType.extractKeyValueFromMapProp()
-            let key = newFProperty(outer, propField, optPropType=innerTypes[0], optName="Key", propFlags=CPF_HasGetValueTypeHash) 
-            let value = newFProperty(outer, propField, optPropType=innerTypes[1], optName="Value")
+            let key = newFProperty(outer, propField, optPropType=innerTypes[0], optName= $name&"_Key", propFlags=CPF_HasGetValueTypeHash) 
+            let value = newFProperty(outer, propField, optPropType=innerTypes[1], optName= $name&"_Value")
             
 
             mapProp.addCppProperty(key)

@@ -11,15 +11,15 @@ import ../../codegen/codegentemplate
 uStruct FAnotherStruct:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite):
-    stringProp : FString
+    stringProp : FString = "whatever"
    
 
 
 uStruct FTestStruct:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite):
-    stringProp : FString
-    intProp : int
+    stringProp : FString = "whatever 1"
+    intProp : int = 2
     anotherStruct : FAnotherStruct
 
 uClass UObjectScratchpad of UObject:
@@ -28,24 +28,45 @@ uClass UObjectScratchpad of UObject:
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     testA : int
     testB : FTestStruct
+    testArray : TArray[UObjectPtr]
+  ufuncs(BlueprintCallable, BlueprintPure):
+    proc testFunc(a : int, b : int) : int =
+      return a + b
 
+type ATestActor = object of AActor
+type ATestActorPtr = ptr ATestActor
 
+uClass AActorSoftTest of ATestActor:
+  (BlueprintType)
+  uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
+    testA : int
+    arrayTest : TArray[int32]
+ 
 
-uClass AActorScratchpad of AActor:
+uClass AActorScratchpad of ATestActor:
 # uClass AActorScratchpad of APlayerController:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-    structProp : FTestStruct
+    structProp : FTestStruct = FTestStruct()
+    testA : int32 = 5
     obj : UObjectScratchpadPtr
     arr : TArray[int] #= makeTArray[int](2, 1)
     arrStrs : TArray[FString] #= makeTArray[int](2, 1)
     mapTest : TMap[int32, int32] #= makeTArray[int](2, 1)
     mapTestStr : TMap[FString, FString] #= makeTArray[int](2, 1)
+    mapTestObj : TMap[FString, UObjectPtr] = makeTMap[FString, UObjectPtr]()
 
   ufuncs(CallInEditor):
     proc garbageCollect() = 
       let engine = getEngine()
       engine.forceGarbageCollection(true)
+    proc createArrayIssue() = 
+      let obj = newUObject[UObjectScratchpad]()
+      obj.testArray = makeTArray[UObjectPtr]()
+      for i in countup(0, 100):
+        obj.testArray.add(newUObject[UObjectScratchpad]())
+      obj.conditionalBeginDestroy()
+
 
     proc testModifyStructProp() =
       self.structProp.stringProp = "World yes!"
@@ -65,12 +86,6 @@ uClass AActorScratchpad of AActor:
       UE_LOG $self.obj.testB
 
     proc playWithArray() =
-      
-      let arrLocal = makeTArray[int](1, 2, 3)
-      arrLocal.add 2
-      arrLocal[0] = 2
-      UE_LOG $arrLocal #This works just fine
-
       self.arr = makeTArray[int](1, 2, 3)
       self.arr.add 2
       self.arr[0] = 2
@@ -92,7 +107,10 @@ uClass AActorScratchpad of AActor:
       # self.arrStrs.add "2"
       # self.arrStrs[0] = "2"
       UE_LOG $self.arrStrs
-
+    proc updateA() = 
+      self.testA = 2
+      UE_LOG $self.testA
+      
     proc playWithMap() =
         self.mapTest = makeTMap[int32, int32]()
         self.mapTest.add(1, 2)
@@ -103,9 +121,31 @@ uClass AActorScratchpad of AActor:
         self.mapTestStr.add(f"1", f"2bla")
         self.mapTestStr.add(f"5a", f"2")
         UE_LOG $self.mapTestStr
+    proc playWithMapObj() =
+        self.mapTestObj = makeTMap[FString, UObjectPtr]()
+        self.mapTestObj.add(f"1", newUObject[UObjectScratchpad]())
+        self.mapTestObj.add(f"5a", newUObject[UObjectScratchpad]())
+        UE_LOG $self.mapTestObj
+    # proc playWithMapObj() =
+    #     let mapTestObj = makeTMap[FString, UObjectScratchpadPtr]()
+    #     mapTestObj.add(f"1", newUObject[UObjectScratchpad]())
+    #     mapTestObj.add(f"5a", newUObject[UObjectScratchpad]())
+    #     UE_LOG $mapTestObj
+    proc showClassPropFlags() = 
+      let cls = self.getClass()
+      
+      let prop = cls.getFPropsFromUStruct().filterIt(it.getName() == "arr").head().get()
+      let a = EPropertyFlags.fields()
+      UE_Log $a
+      UE_Log &"Props: arr {prop.getPropertyFlags()}"
+      UE_Log &"Props Num: {prop.getPropertyFlags().uint64}"
+      UE_Log &"Class flags {cls.classFlags}"
 
-proc myExampleActorCostructor(self: AActorScratchpadPtr, initializer: FObjectInitializer) {.uConstructor.} =
-  self.arr = makeTArray[int](1, 2, 3)
-  self.arr.add 2
-  self.arr[0] = 2
-  UE_LOG $self.arr
+
+# proc myExampleActorCostructor(self: AActorScratchpadPtr, initializer: FObjectInitializer) {.uConstructor.} =
+#   self.arr = makeTArray[int](1, 2, 3)
+#   self.arr.add 2
+#   self.arr[0] = 2
+#   UE_LOG $self.arr
+#   self.mapTest = makeTMap[int32, int32]()
+#   self.mapTest.add(1.int32, 2.int32)
