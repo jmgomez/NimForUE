@@ -133,10 +133,17 @@ uClass AActorScratchpad of ATestActor:
     #     UE_LOG $mapTestObj
     proc showClassPropFlags() = 
       let cls = self.getClass()
-      
-      let props = cls.getFPropsFromUStruct(IncludeSuper).filterIt(it.getName() in ["arr", "RegularArray"])
+      let propName = ["arr", "RegularArray", "ObjMap", "mapTestObj"]
+      let props = cls.getFPropsFromUStruct(IncludeSuper).filterIt(it.getName() in propName)
       for p in props:
         UE_Log &"Prop: {p.getName()} Flags: {p.getPropertyFlags()}"
+      try:
+        UE_Log $cls.classFlags
+      except:
+        let e : ref Exception = getCurrentException()
+        UE_Error &"Error: {e.msg}"
+        UE_Error &"Error: {e.getStackTrace()}"
+      
       # let a = EPropertyFlags.fields()
       # # UE_Log $a
 

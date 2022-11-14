@@ -329,36 +329,30 @@ type EFieldIterationFlags* {.importflag, size:sizeof(uint8).} = enum
 
   
 
-macro genFields(e : typedesc) : untyped = 
-    let enu = e.getImpl()
-    let enumFields = enu[^1].children.toSeq().filterIt(it.kind == nnkEnumFieldDef)
-    func fieldToTuple(field : NimNode) : (string, uint64) = 
-        (field[0].strVal, field[1].intVal().uint64) #int64? what about uint64?
-    let content = newLit(enumFields.map(fieldToTuple))
-   
-    let fieldsFn = genAst(content): 
-        proc fields*(eProp : typedesc[EPropertyFlags]) : seq[(string, uint64)] = 
-            content
-    
-    # result = nnkStmtListExpr.newTree(nnkTypeSection.newTree(enu))
-    # result = (nnkTypeSection.newTree(enu))
-    result = fieldsFn
-    # echo treeRepr(result)
-genFields(EPropertyFlags)
+# proc genFields(e : typedesc) : untyped = 
 
-macro genEnumOperators(enumName, enumType:static string, genValConverters : static bool = true) : untyped = 
-    let name = ident enumName
-    let typ = ident enumType
-    # let fnName = ident "or2"
-    # result = quote do:
-    #     when nimvm:
-    #         proc `fnName`*(a, b :int):int = 1
-    #         # proc `or`*(a, b : `name`) : `name` =  `name`(`typ`(ord(a)) or `typ`(ord(b)))
-    #     else:
-    #         proc `fnName`*(a, b : `name`) : `name` {.importcpp:"#|#".}
+#     let fieldsFn = genAst(content): 
         
     
-    result = genAst(name, typ):
+#     # result = nnkStmtListExpr.newTree(nnkTypeSection.newTree(enu))
+#     # result = (nnkTypeSection.newTree(enu))
+#     result = fieldsFn
+#     # echo treeRepr(result)
+
+macro genEnumOperators(eSym, typSym:typed, genValConverters : static bool = true) : untyped = 
+    let enumName = eSym.strVal()
+    let enumType = typSym.strVal()
+    let name = ident enumName
+    let typ = ident enumType
+    let enu = eSym.getImpl()
+    
+    let enumFields = enu[^1].children.toSeq().filterIt(it.kind == nnkEnumFieldDef)
+    # func fieldToTuple(field : NimNode) : (string, typ) = 
+        
+
+    let content = newLit(enumFields.mapIt((it[0].strVal, uint64(it[1].intVal()))))
+   
+    result = genAst(name, eSym, typ, content):
         proc `or`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
 
         proc `||`*(a, b : name) : name {.importcpp:"#|#".}
@@ -380,6 +374,14 @@ macro genEnumOperators(enumName, enumType:static string, genValConverters : stat
 
         proc toJsonHook*(self:name) : JsonNode = newJInt(int(self))
 
+        proc fields*(eProp : typedesc[name]) : seq[(string, uint64)] = 
+            content#.mapIt((it[0], it[1])))
+                
+        proc `$`*(e : name) : string = 
+            let fields = eSym.fields()
+            let flagNames = fields.filterIt(bitand(e.uint64, it[1]) != 0).mapIt(it[0])
+            flagNames.join(", ")
+
     let converters = genAst(name, valName=ident enumName&"Val", typ):
         converter toValName*(a:name) : valName = valName(typ(ord(a)))
         converter toName*(a:valName) : name = 
@@ -393,19 +395,15 @@ macro genEnumOperators(enumName, enumType:static string, genValConverters : stat
 
 
 {.push warning[HoleEnumConv]: off.}
-genEnumOperators("EPropertyFlags", "uint64")
-genEnumOperators("EObjectFlags", "uint32", false)
-genEnumOperators("EFunctionFlags", "uint32")
-genEnumOperators("EClassFlags", "uint32", false)
-genEnumOperators("EStructFlags", "uint32")
-genEnumOperators("EFieldIterationFlags", "uint8", false)
+genEnumOperators(EPropertyFlags, uint64)
+genEnumOperators(EObjectFlags, uint32, false)
+genEnumOperators(EFunctionFlags, uint32)
+genEnumOperators(EClassFlags, uint32, false)
+genEnumOperators(EStructFlags, uint32)
+genEnumOperators(EFieldIterationFlags, uint8, false)
 {.pop.}
 
 
-proc `$`*(e : EPropertyFlags) : string = 
-    let fields = EPropertyFlags.fields()
-    let flagNames = fields.filterIt((e and it[1].EPropertyFlags) != 0.EPropertyFlags).mapIt(it[0])
-    result = flagNames.join(", ")
   
 
 

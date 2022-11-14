@@ -47,6 +47,7 @@ uClass UNimActorComponentTest of UActorComponent:
       UE_Log $actor
       UE_Log $actor.isNil()
       UE_Log "Ends testfunc"
+      
 
       # let world = getCurrentActiveWorld()
       # UE_Log $world

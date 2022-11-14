@@ -19,7 +19,7 @@ func isInit*(lib : NueLib) : bool = lib.lib != nil
 
 var libMap* : Table[string, NueLib] = {
   "nimforue" : NueLib(lastLoadedPath: getLastLibPath(libDir, "nimforue").get()),
-  "game" : NueLib(lastLoadedPath: getLastLibPath(libDir, "game").get()),
+  # "game" : NueLib(lastLoadedPath: getLastLibPath(libDir, "game").get()),
 }.toTable()
 
 
