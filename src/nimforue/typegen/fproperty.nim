@@ -149,8 +149,9 @@ proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
             newFNameProperty(makeFieldVariant(outer), name, flags)
         elif propType.contains("TArray"):
             let arrayProp = newFArrayProperty(makeFieldVariant(outer), name, flags)
+            arrayProp.setPropertyFlags(CPF_ZeroConstructor)
             let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-            let inner = newFProperty(outer, propField, optPropType=innerType, optName= $name & "_Inner", propFlags=CPF_ZeroConstructor)
+            let inner = newFProperty(outer, propField, optPropType=innerType, optName= $name & "_Inner")
             #TODO extract this so it can be easily apply to all instanced
             let isObjProp = not castField[FObjectProperty](inner).isNil() 
             if isObjProp: 

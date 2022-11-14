@@ -1,6 +1,6 @@
 import bitops
 import ../../typegen/models
-import std/[genasts, macros, sugar, json, sequtils]
+import std/[genasts, macros, strutils, sugar, json, sequtils]
 
 {.pragma: importflag, importcpp, nodecl, header: ueincludes.}
 
@@ -344,8 +344,6 @@ macro genFields(e : typedesc) : untyped =
     # result = (nnkTypeSection.newTree(enu))
     result = fieldsFn
     # echo treeRepr(result)
-
-
 genFields(EPropertyFlags)
 
 macro genEnumOperators(enumName, enumType:static string, genValConverters : static bool = true) : untyped = 
@@ -402,6 +400,14 @@ genEnumOperators("EClassFlags", "uint32", false)
 genEnumOperators("EStructFlags", "uint32")
 genEnumOperators("EFieldIterationFlags", "uint8", false)
 {.pop.}
+
+
+proc `$`*(e : EPropertyFlags) : string = 
+    let fields = EPropertyFlags.fields()
+    let flagNames = fields.filterIt((e and it[1].EPropertyFlags) != 0.EPropertyFlags).mapIt(it[0])
+    result = flagNames.join(", ")
+  
+
 
 
 

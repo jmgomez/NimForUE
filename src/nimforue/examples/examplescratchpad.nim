@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[strformat, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
+import std/[strformat, enumutils, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../typegen/uemeta
 import ../../buildscripts/nimforueconfig
 import ../macros/makestrproc
@@ -50,7 +50,7 @@ uClass AActorScratchpad of ATestActor:
     structProp : FTestStruct = FTestStruct()
     testA : int32 = 5
     obj : UObjectScratchpadPtr
-    arr : TArray[int] #= makeTArray[int](2, 1)
+    arr : TArray[int32] #= makeTArray[int](2, 1)
     arrStrs : TArray[FString] #= makeTArray[int](2, 1)
     mapTest : TMap[int32, int32] #= makeTArray[int](2, 1)
     mapTestStr : TMap[FString, FString] #= makeTArray[int](2, 1)
@@ -86,14 +86,14 @@ uClass AActorScratchpad of ATestActor:
       UE_LOG $self.obj.testB
 
     proc playWithArray() =
-      self.arr = makeTArray[int](1, 2, 3)
-      self.arr.add 2
-      self.arr[0] = 2
+      self.arr = makeTArray[int32](1.int32, 2.int32, 3.int32)
+      self.arr.add 2.int32
+      self.arr[0] = 2.int32
       UE_LOG $self.arr
 
     proc playWithArraySetLocal() =
       
-      let arrLocal = makeTArray[int](1, 2, 3)
+      let arrLocal = makeTArray[int32](1, 2, 3)
       arrLocal.add 2
       arrLocal[0] = 2
       UE_LOG $arrLocal #This works just fine
@@ -121,11 +121,11 @@ uClass AActorScratchpad of ATestActor:
         self.mapTestStr.add(f"1", f"2bla")
         self.mapTestStr.add(f"5a", f"2")
         UE_LOG $self.mapTestStr
-    proc playWithMapObj() =
-        self.mapTestObj = makeTMap[FString, UObjectPtr]()
-        self.mapTestObj.add(f"1", newUObject[UObjectScratchpad]())
-        self.mapTestObj.add(f"5a", newUObject[UObjectScratchpad]())
-        UE_LOG $self.mapTestObj
+    # proc playWithMapObj() =
+    #     self.mapTestObj = makeTMap[FString, UObjectPtr]()
+    #     self.mapTestObj.add(f"1", newUObject[UObjectScratchpad]())
+    #     self.mapTestObj.add(f"5a", newUObject[UObjectScratchpad]())
+    #     UE_LOG $self.mapTestObj
     # proc playWithMapObj() =
     #     let mapTestObj = makeTMap[FString, UObjectScratchpadPtr]()
     #     mapTestObj.add(f"1", newUObject[UObjectScratchpad]())
@@ -134,12 +134,15 @@ uClass AActorScratchpad of ATestActor:
     proc showClassPropFlags() = 
       let cls = self.getClass()
       
-      let prop = cls.getFPropsFromUStruct().filterIt(it.getName() == "arr").head().get()
-      let a = EPropertyFlags.fields()
-      UE_Log $a
-      UE_Log &"Props: arr {prop.getPropertyFlags()}"
-      UE_Log &"Props Num: {prop.getPropertyFlags().uint64}"
-      UE_Log &"Class flags {cls.classFlags}"
+      let props = cls.getFPropsFromUStruct(IncludeSuper).filterIt(it.getName() in ["arr", "RegularArray"])
+      for p in props:
+        UE_Log &"Prop: {p.getName()} Flags: {p.getPropertyFlags()}"
+      # let a = EPropertyFlags.fields()
+      # # UE_Log $a
+
+      # UE_Log &"Props: arr {prop.getPropertyFlags()}"
+      # UE_Log &"Props Num: {prop.getPropertyFlags().uint64}"
+      # UE_Log &"Class flags {cls.classFlags}"
 
 
 # proc myExampleActorCostructor(self: AActorScratchpadPtr, initializer: FObjectInitializer) {.uConstructor.} =
@@ -149,3 +152,4 @@ uClass AActorScratchpad of ATestActor:
 #   UE_LOG $self.arr
 #   self.mapTest = makeTMap[int32, int32]()
 #   self.mapTest.add(1.int32, 2.int32)
+
