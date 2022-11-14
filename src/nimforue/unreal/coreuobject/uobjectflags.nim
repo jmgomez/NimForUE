@@ -327,17 +327,7 @@ type EFieldIterationFlags* {.importflag, size:sizeof(uint8).} = enum
 
 
 
-  
 
-# proc genFields(e : typedesc) : untyped = 
-
-#     let fieldsFn = genAst(content): 
-        
-    
-#     # result = nnkStmtListExpr.newTree(nnkTypeSection.newTree(enu))
-#     # result = (nnkTypeSection.newTree(enu))
-#     result = fieldsFn
-#     # echo treeRepr(result)
 
 macro genEnumOperators(eSym, typSym:typed, genValConverters : static bool = true) : untyped = 
     let enumName = eSym.strVal()
@@ -346,9 +336,7 @@ macro genEnumOperators(eSym, typSym:typed, genValConverters : static bool = true
     let typ = ident enumType
     let enu = eSym.getImpl()
     
-    let enumFields = enu[^1].children.toSeq().filterIt(it.kind == nnkEnumFieldDef)
-    # func fieldToTuple(field : NimNode) : (string, typ) = 
-        
+    let enumFields = enu[^1].children.toSeq().filterIt(it.kind == nnkEnumFieldDef)        
 
     let content = newLit(enumFields.mapIt((it[0].strVal, uint64(it[1].intVal()))))
    
@@ -375,7 +363,7 @@ macro genEnumOperators(eSym, typSym:typed, genValConverters : static bool = true
         proc toJsonHook*(self:name) : JsonNode = newJInt(int(self))
 
         proc fields*(eProp : typedesc[name]) : seq[(string, uint64)] = 
-            content#.mapIt((it[0], it[1])))
+            content
                 
         proc `$`*(e : name) : string = 
             let fields = eSym.fields()
