@@ -564,6 +564,11 @@ type CtorInfo* = object #stores the constuctor information for a class.
   hash*: string
   className*: string
 
+
+# GIsUCCMakeStandaloneHeaderGenerator
+
+proc setGIsUCCMakeStandaloneHeaderGenerator*(value: bool) {.importcpp: "(GIsUCCMakeStandaloneHeaderGenerator =#)".}
+
 proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Option[UFunctionNativeSignature]], clsConstructor: Option[CtorInfo]): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Transient | RF_Transactional | RF_WasLoaded | RF_MarkAsNative)
 
@@ -601,20 +606,24 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
     else:
       UE_Error("Unsupported field kind: " & $field.kind)
     #should gather the functions here?
-
-  # newCls.bindType()
   newCls.staticLink(true)
-  newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultClassConstructor))
+
+  # newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultClassConstructor))
   clsConstructor.run(proc (cons: CtorInfo) =
     newCls.constructorSourceHash = cons.hash
   )
+  #Gets around an assert
+  setGIsUCCMakeStandaloneHeaderGenerator(true)
+  newCls.bindType()
+  setGIsUCCMakeStandaloneHeaderGenerator(false)
+
   # assert not parent.addReferencedObjects.isNil()
   # newCls.addReferencedObjects = parent.addReferencedObjects
-  newCls.setAddClassReferencedObjectFn(parent.addReferencedObjects)
+  # newCls.setAddClassReferencedObjectFn(parent.addReferencedObjects)
 
   # newCls.addConstructorToActor()
 
-  newCls.assembleReferenceTokenStream()
+  newCls.assembleReferenceTokenStream(true)
   newCls.ueType = $ueType.toJson()
 
   discard newCls.getDefaultObject() #forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out

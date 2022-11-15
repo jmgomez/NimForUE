@@ -28,7 +28,7 @@ uClass UObjectScratchpad of UObject:
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     testA : int
     testB : FTestStruct
-    testArray : TArray[UObjectPtr]
+    # testArray : TArray[UObjectPtr]
   ufuncs(BlueprintCallable, BlueprintPure):
     proc testFunc(a : int, b : int) : int =
       return a + b
@@ -48,7 +48,7 @@ uClass AActorScratchpad of ATestActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     structProp : FTestStruct = FTestStruct()
-    testA : int32 = 7
+    testA : int32 = 8
     obj : UObjectScratchpadPtr
     arr : TArray[int32] #= makeTArray[int](2, 1)
     arrStrs : TArray[FString] #= makeTArray[int](2, 1)
@@ -61,12 +61,12 @@ uClass AActorScratchpad of ATestActor:
     proc garbageCollect() = 
       let engine = getEngine()
       engine.forceGarbageCollection(true)
-    proc createArrayIssue() = 
-      let obj = newUObject[UObjectScratchpad]()
-      obj.testArray = makeTArray[UObjectPtr]()
-      for i in countup(0, 100):
-        obj.testArray.add(newUObject[UObjectScratchpad]())
-      obj.conditionalBeginDestroy()
+    # proc createArrayIssue() = 
+    #   let obj = newUObject[UObjectScratchpad]()
+    #   obj.testArray = makeTArray[UObjectPtr]()
+    #   for i in countup(0, 100):
+    #     obj.testArray.add(newUObject[UObjectScratchpad]())
+    #   obj.conditionalBeginDestroy()
 
 
     proc testModifyStructProp() =
@@ -136,10 +136,17 @@ uClass AActorScratchpad of ATestActor:
       try:
           
         let cls = self.getClass()
-        let propName = ["arr", "RegularArray", "ObjMap", "mapTestObj"]
+        let propName = ["arr", "RegularArray", "ObjArray", "ObjMap", "mapTestObj"]
         let props = cls.getFPropsFromUStruct(IncludeSuper).filterIt(it.getName() in propName)
         for p in props:
           UE_Log &"Prop: {p.getName()} Flags: {p.getPropertyFlags()} obj flags: {p.getFlags()}"
+          let arrProp = castField[FArrayProperty](p)
+          if arrProp != nil:
+            let inner = arrProp.getInnerProp()
+            UE_Log &"Inner: {inner.getName()} Flags: {inner.getPropertyFlags()} obj flags: {inner.getFlags()}"
+
+          let hasRef = p.containsStrongReference()
+          UE_Log &"Has ref: {hasRef}"
       
         UE_Log $cls.classFlags
         UE_Log $cls.getFlags()

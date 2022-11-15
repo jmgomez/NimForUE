@@ -153,20 +153,27 @@ proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
 
 
             let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-            let inner = newFProperty(outer, propField, optPropType=innerType, optName= $name & "_Inner")
+            let innerProp = newFProperty(outer, propField, optPropType=innerType, optName= $name & "_Inner")
+            UE_Error "Created inner prop " & innerType & " for " & $name & "And the prop name is " & innerProp.getName()
             #TODO extract this so it can be easily apply to all instanced
-            let isObjProp = not castField[FObjectProperty](inner).isNil() 
+            let isObjProp = not castField[FObjectProperty](innerProp).isNil() 
             if isObjProp: 
-                discard
+                UE_Log "Es object propertY!!!"
+            else: 
+                UE_Log "No es object propertY!!!"
                 # arrayProp.setPropertyFlags(CPF_UObjectWrapper)
                 # arrayProp.setPropertyFlags(CPF_ContainsInstancedReference)
                 # inner.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
 
-            arrayProp.addCppProperty(inner)
+            arrayProp.setInnerProp(innerProp)
+
+            let hasRef = arrayProp.containsStrongReference()
+            UE_Log &"Has ref: {hasRef}"
+            # arrayProp.addCppProperty(inner)
             #Pywrapperfixed array
             
-            let arrayValue = malloc(arrayProp.getSize(), arrayProp.getMinAlignment().uint32)
-            arrayProp.initializeValue(arrayValue)
+            # let arrayValue = malloc(arrayProp.getSize(), arrayProp.getMinAlignment().uint32)
+            # arrayProp.initializeValue(arrayValue)
 
 
             arrayProp

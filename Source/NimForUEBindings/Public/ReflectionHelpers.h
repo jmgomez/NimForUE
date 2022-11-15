@@ -95,7 +95,7 @@ public:
 		Struct->StructFlags = static_cast<EStructFlags>(Struct->StructFlags | FlagsToAdd);
 		
 	}
-
+	
 	//For testing only
 	static UWorld* GetCurrentActiveWorld();
 
@@ -116,5 +116,6 @@ public:
 
 	static int ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOut, FString& StdError);
 
+	static bool ContainsStrongReference(FProperty* Property);
 };
 

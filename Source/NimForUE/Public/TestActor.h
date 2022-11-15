@@ -49,7 +49,20 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	UPROPERTY(EditAnywhere)
 	class AStaticMeshActor* MeshActor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<int32, FString> RegularMap;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<int32> RegularArray;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FString> StrArray;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<UObject*> ObjArray;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<FString, UObject*> ObjMap;
+
+
 	
 
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = TestActor)

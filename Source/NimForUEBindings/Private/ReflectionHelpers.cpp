@@ -205,4 +205,9 @@ int UReflectionHelpers::ExecuteCmd(FString& Cmd, FString& Args, FString& Working
 	return 0;
 }
 
+bool UReflectionHelpers::ContainsStrongReference(FProperty* Property) {
+	TArray<const FStructProperty*> EncounteredStructProps;
+	return Property->ContainsObjectReference(EncounteredStructProps, EPropertyObjectReferenceType::Strong);
+}
+
 //

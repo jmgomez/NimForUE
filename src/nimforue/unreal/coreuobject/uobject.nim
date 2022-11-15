@@ -159,7 +159,10 @@ proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->S
 
 proc getElementProp*(setProp:FSetPropertyPtr) : FPropertyPtr {.importcpp:"(#->ElementProp)".}
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
+proc setInnerProp*(arrProp:FArrayPropertyPtr, innerProp:FPropertyPtr) : void {.importcpp:"(#->Inner=#)".}
 proc getInterfaceClass*(interfaceProp:FInterfacePropertyPtr) : UClassPtr {.importcpp:"(#->InterfaceClass)".}
+
+
 
 proc addCppProperty*(arrProp:FArrayPropertyPtr | FSetPropertyPtr | FMapPropertyPtr | FEnumPropertyPtr, cppProp:FPropertyPtr) : void {. importcpp:"(#->AddCppProperty(#))".}
 
