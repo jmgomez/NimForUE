@@ -139,7 +139,7 @@ bindFProperty([
         "FInt8Property", "FInt16Property","FIntProperty", "FInt64Property",
         "FByteProperty", "FUInt16Property","FUInt32Property", "FUInt64Property",
         "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
-        "FArrayProperty", "FStructProperty", "FObjectProperty", "FClassProperty",
+        "FArrayProperty", "FStructProperty", "FObjectPtrProperty", "FClassProperty",
         "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty", 
         "FMapProperty", "FDelegateProperty", "FSetProperty", "FInterfaceProperty",
         "FMulticastDelegateProperty", #It seems to be abstract. Review Sparse vs Inline
@@ -153,7 +153,7 @@ type DelegateProp* = FDelegatePropertyPtr | FMulticastInlineDelegatePropertyPtr 
 
 #Concrete methods
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
-proc setPropertyClass*(prop:FObjectPropertyPtr | FSoftObjectPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
+proc setPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
 proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
 proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->SetEnum(#))".}
 

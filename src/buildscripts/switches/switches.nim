@@ -57,7 +57,7 @@ proc targetSwitches*(withDebug: bool): seq[string] =
     of Shipping: @["--danger"]
       
 
-proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, withDebug, true, "")
-proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, false, "guest") 
-proc gamePlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, false, "game") 
+proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, true, "")
+proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "guest") 
+proc gamePlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "game") 
 

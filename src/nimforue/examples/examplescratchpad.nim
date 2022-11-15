@@ -21,6 +21,7 @@ uStruct FTestStruct:
     stringProp : FString = "whatever 1"
     intProp : int = 2
     anotherStruct : FAnotherStruct
+    # arrObjs : TArray[UObjectPtr]
 
 uClass UObjectScratchpad of UObject:
 # uClass AActorScratchpad of APlayerController:
@@ -48,7 +49,7 @@ uClass AActorScratchpad of ATestActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     structProp : FTestStruct = FTestStruct()
-    testA : int32 = 8
+    testA : int32 = 9                                                                                           
     obj : UObjectScratchpadPtr
     arr : TArray[int32] #= makeTArray[int](2, 1)
     arrStrs : TArray[FString] #= makeTArray[int](2, 1)

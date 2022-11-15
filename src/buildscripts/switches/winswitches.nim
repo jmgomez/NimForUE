@@ -112,5 +112,5 @@ proc vccCompileSwitches*(withDebug, withIncremental, withPch : bool, debugFolder
 
 
 
-proc getPlatformSwitches*(withPch, withIncremental, withDebug : bool, debugFolder:static string) : seq[string] = 
-  result = vccCompileSwitches(withDebug, withIncremental, withPch, debugFolder) 
+proc getPlatformSwitches*(withPch, withDebug : bool, debugFolder:static string) : seq[string] = 
+  result = vccCompileSwitches(withDebug, not withDebug, withPch, debugFolder) 

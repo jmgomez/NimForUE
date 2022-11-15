@@ -626,7 +626,7 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
   newCls.assembleReferenceTokenStream(true)
   newCls.ueType = $ueType.toJson()
 
-  discard newCls.getDefaultObject() #forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
+  # discard newCls.getDefaultObject() #forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
   newCls
 

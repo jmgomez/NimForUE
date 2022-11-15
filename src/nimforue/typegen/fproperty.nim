@@ -3,7 +3,7 @@ include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
 import models
 
-const propObjFlags = RF_Public | RF_Transient | RF_MarkAsNative
+const propObjFlags = RF_Public # | RF_Transient | RF_MarkAsNative
 
 func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
     const flags = propObjFlags
@@ -49,7 +49,7 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
         clsProp
     of emObjPtr, emTObjectPtr:
         let isComponent = isChildOf[UActorComponent](cls)
-        let objProp = newFObjectProperty(makeFieldVariant(outer), name, flags)
+        let objProp = newFObjectPtrProperty(makeFieldVariant(outer), name, flags)
         objProp.setPropertyClass(cls)
         if isComponent: 
             objProp.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
@@ -153,19 +153,16 @@ proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropTyp
 
 
             let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-            let innerProp = newFProperty(outer, propField, optPropType=innerType, optName= $name & "_Inner")
+            let innerProp = newFProperty(arrayProp, propField, optPropType=innerType, optName= $name & "_Inner")
             UE_Error "Created inner prop " & innerType & " for " & $name & "And the prop name is " & innerProp.getName()
             #TODO extract this so it can be easily apply to all instanced
-            let isObjProp = not castField[FObjectProperty](innerProp).isNil() 
-            if isObjProp: 
-                UE_Log "Es object propertY!!!"
-            else: 
-                UE_Log "No es object propertY!!!"
+           
+            arrayProp.setInnerProp(innerProp)
                 # arrayProp.setPropertyFlags(CPF_UObjectWrapper)
                 # arrayProp.setPropertyFlags(CPF_ContainsInstancedReference)
                 # inner.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
 
-            arrayProp.setInnerProp(innerProp)
+           
 
             let hasRef = arrayProp.containsStrongReference()
             UE_Log &"Has ref: {hasRef}"
