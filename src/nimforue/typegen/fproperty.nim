@@ -115,12 +115,7 @@ proc newContainerProperty(owner : FFieldVariant, propField:UEField, propType:str
         arrayProp.setPropertyFlags(CPF_ZeroConstructor)
 
         let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-        let innerProp = 
-            # if name == n"arrObjs":
-            #     UE_Log "Found TArray of UObject"
-            #     newFObjectPtrProperty(makeFieldVariant(arrayProp), n"InnerProp", propObjFlags)
-            # else:
-                newFProperty(makeFieldVariant(arrayProp), propField, optPropType=innerType, optName= $name & "_Inner")
+        let innerProp = newFProperty(makeFieldVariant(arrayProp), propField, optPropType=innerType, optName= $name & "_Inner")
         
         arrayProp.setInnerProp(innerProp)
         return someFProp(arrayProp)

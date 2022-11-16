@@ -21,7 +21,7 @@ moduleRules["Engine"] = @[
       # "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
       # # "ALevelScriptActor",  "UPhysicalMaterialMask",
       # "UHLODLayer",
-      # "USceneComponent",
+      "USceneComponent",
       # "APlayerController",
       # "UTexture",
       # "USkinnedMeshComponent",
@@ -59,6 +59,7 @@ moduleRules["Engine"] = @[
     "PerInstanceSMData",
     "ObjectTypes",
     "EvaluatorMode",
+    "RootComponent", #Manually imported
     # "AudioLinkSettings" #I should instead not import property of certain type
 
     "GetBlendProfile",

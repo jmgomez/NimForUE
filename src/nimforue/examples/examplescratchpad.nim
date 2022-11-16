@@ -161,11 +161,5 @@ uClass AActorScratchpad of ATestActor:
       # UE_Log &"Class flags {cls.classFlags}"
 
 
-# proc myExampleActorCostructor(self: AActorScratchpadPtr, initializer: FObjectInitializer) {.uConstructor.} =
-#   self.arr = makeTArray[int](1, 2, 3)
-#   self.arr.add 2
-#   self.arr[0] = 2
-#   UE_LOG $self.arr
-#   self.mapTest = makeTMap[int32, int32]()
-#   self.mapTest.add(1.int32, 2.int32)
-
+proc myExampleActorCostructor(self: AActorScratchpadPtr, initializer: FObjectInitializer) {.uConstructor.} =
+    self.rootComponent = initializer.createDefaultSubobject[:USceneComponent](n"NimTestComponent")

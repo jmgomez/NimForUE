@@ -5,15 +5,17 @@ import ../../buildscripts/nimforueconfig
 import ../../codegen/[codegentemplate,genreflectiondata]
 import ../macros/genmodule #not sure if it's worth to process this file just for one function? 
 
+
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite):
-    delTypeName : FString = "OnOpeningEvent"
+    delTypeName : FString = "test"
   ufuncs(CallInEditor):
     proc genReflectionData() = 
       try:
-        discard genReflectionData(getAllInstalledPlugins(getNimForUEConfig()))
+        execBindingsGenerationInAnotherThread()
+        # discard genReflectionData(getAllInstalledPlugins(getNimForUEConfig()))
         # let rulesASJson = moduleRules.toJson().pretty()
         # UE_Log rulesASJson
       except:

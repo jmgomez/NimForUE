@@ -487,7 +487,7 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             when not declared(initializer):
                 var initializer{.inject.} = initName
 
-            selfIdent.getClass().getFirstCppClass().classConstructor(initializer)
+            defaultClassConstructor(initializer)
             #calls the cpp constructor first
             assignments
             fnBody #user code

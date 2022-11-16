@@ -556,7 +556,10 @@ proc isNimClassBase(cls: UClassPtr): bool = ueCast[UNimClassBase](cls) != nil
 proc defaultClassConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   var obj = initializer.getObj()
   obj.getClass().getFirstCppClass().classConstructor(initializer)
-  UE_Warn "Class Default Constructor Called from Nim!!" & obj.getName()
+  let actor = tryUECast[AActor](obj)
+  if actor.isSome():
+    if actor.get().rootComponent.isnil():
+        actor.get().rootComponent = initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot")
 
 
 type CtorInfo* = object #stores the constuctor information for a class.

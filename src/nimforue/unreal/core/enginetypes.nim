@@ -1,11 +1,13 @@
 include ../definitions
 import math/vector
 import ../coreuobject/[uobject, coreuobject]
+import ../nimforue/nimforuebindings
 
 type 
   UEngine* {.importcpp, importcpp, pure .} = object of UObject
   UEnginePtr* {.importcpp, pure .} = ptr UEngine
   AActor* {.importcpp, inheritable, pure .} = object of UObject
+  
   AActorPtr* = ptr AActor
   # AController* {.importcpp, inheritable, pure .}= object of AActor
   # AControllerPtr* = ptr AController
@@ -24,8 +26,8 @@ type
 
   UActorComponent* {.importcpp, inheritable, pure .} = object of UObject
   UActorComponentPtr* = ptr UActorComponent
-  # USceneComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
-  # USceneComponentPtr* = ptr USceneComponent
+  USceneComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
+  USceneComponentPtr* = ptr USceneComponent
   # UPrimitiveComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
   # UPrimitiveComponentPtr* = ptr UPrimitiveComponent
   # UShapeComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
@@ -201,3 +203,20 @@ proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)".}
 
 #	void ForceGarbageCollection(bool bFullPurge = false);
 proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.importcpp: "#->ForceGarbageCollection(#)".}
+
+
+
+
+proc `rootComponent=`*(obj : AActorPtr;
+                       val : TObjectPtr[USceneComponent]) =
+  var value : TObjectPtr[USceneComponent] = val
+  let prop  = getClassByName("Actor").getFPropertyByName(
+      "RootComponent")
+  setPropertyValuePtr[TObjectPtr[USceneComponent]](prop, obj, value.addr)
+
+
+proc `rootComponent`*(obj : AActorPtr): TObjectPtr[USceneComponent] {.
+    exportcpp.} =
+  let prop  = getClassByName("Actor").getFPropertyByName(
+      "RootComponent")
+  getPropertyValuePtr[TObjectPtr[USceneComponent]](prop, obj)[]
