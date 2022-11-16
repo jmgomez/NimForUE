@@ -266,6 +266,7 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
     ["UObject", "AActor", "UInterface",
       "AVolume", "USoundWaveProcedural",
       # "AController",
+      "USceneComponent",
       "UActorComponent",
       "UBlueprint",
       # "UBlueprintFunctionLibrary",
