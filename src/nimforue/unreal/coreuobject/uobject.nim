@@ -113,7 +113,9 @@ proc getOwnerStruct*(str:FPropertyPtr) : UStructPtr {.importcpp:"#->GetOwnerStru
 type FFieldVariant* {.importcpp.} = object
 # proc makeFieldVariant*(field:FFieldPtr) : FFieldVariant {. importcpp: "'0(#)", constructor.}
 proc makeFieldVariant*(obj:UObjectPtr | FFieldPtr) : FFieldVariant {. importcpp: "'0(#)", constructor.}
-
+proc toUObject*(field:FFieldVariant) : UObjectPtr {. importcpp: "#.ToUObject()".}
+proc toField*(field:FFieldVariant) : FFieldPtr {. importcpp: "#.ToField()".}
+proc isUObject*(field:FFieldVariant) : bool {. importcpp: "#.IsUObject()".}
 
 macro bindFProperty(propNames : static openarray[string] ) : untyped = 
     proc bindProp(name:string) : NimNode = 

@@ -49,7 +49,8 @@ uClass AActorScratchpad of ATestActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     structProp : FTestStruct = FTestStruct()
-    testA : int32 = 9                                                                                           
+    testA : int32 = 1                                                                                       
+    testB : int32 = 5                                                                        
     obj : UObjectScratchpadPtr
     arr : TArray[int32] #= makeTArray[int](2, 1)
     arrStrs : TArray[FString] #= makeTArray[int](2, 1)
@@ -123,16 +124,12 @@ uClass AActorScratchpad of ATestActor:
         self.mapTestStr.add(f"1", f"2bla")
         self.mapTestStr.add(f"5a", f"2")
         UE_LOG $self.mapTestStr
-    # proc playWithMapObj() =
-    #     self.mapTestObj = makeTMap[FString, UObjectPtr]()
-    #     self.mapTestObj.add(f"1", newUObject[UObjectScratchpad]())
-    #     self.mapTestObj.add(f"5a", newUObject[UObjectScratchpad]())
-    #     UE_LOG $self.mapTestObj
-    # proc playWithMapObj() =
-    #     let mapTestObj = makeTMap[FString, UObjectScratchpadPtr]()
-    #     mapTestObj.add(f"1", newUObject[UObjectScratchpad]())
-    #     mapTestObj.add(f"5a", newUObject[UObjectScratchpad]())
-    #     UE_LOG $mapTestObj
+    proc playWithMapObj() =
+        self.mapTestObj = makeTMap[FString, UObjectPtr]()
+        self.mapTestObj.add(f"1", newUObject[UObjectScratchpad]())
+        self.mapTestObj.add(f"5a", newUObject[UObjectScratchpad]())
+        UE_LOG $self.mapTestObj
+    
     proc showClassPropFlags() =
       try:
           

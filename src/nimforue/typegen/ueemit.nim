@@ -283,10 +283,12 @@ proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) =
         #Deallocate the pointer or just dont use one
         #return nimHotReload #The pointer is not used anymore on the side.
     except Exception as e:
+
         #TODO here we could send a message to the user
         UE_Error "Nim CRASHED "
         UE_Error e.msg
         UE_Error e.getStackTrace()
+        # raise newException(Exception, "Nim CRASHED " & e.msg & e.getStackTrace())
 
 proc emitUStruct(typeDef:UEType) : NimNode =
     var ueType = typeDef #the generated type must be reversed to match declaration order because the props where picked in the reversed order

@@ -91,7 +91,7 @@ proc getPdbFilePath*(targetName:static string): string =
 
   # generate a new pdb name
   # get the version numbers and inc the highest to get the next
-  let versions : seq[int] = walkFiles(pdbFolder/(targetName) & ".pdb").toSeq.map(toVersion).sorted(Descending)
+  let versions : seq[int] = walkFiles(pdbFolder/(targetName) & "*.pdb").toSeq.map(toVersion).sorted(Descending)
   let version : string =
     if versions.len > 0:
       "-" & $(versions[0]+1)

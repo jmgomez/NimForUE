@@ -3,9 +3,12 @@ include ../unreal/prelude
 import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
 import models
 
-const propObjFlags = RF_Public # | RF_Transient | RF_MarkAsNative
+const propObjFlags = RF_Public | RF_Transient | RF_MarkAsNative
 
-func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
+#Forward declare
+proc newFProperty*(owner : FFieldVariant, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr 
+
+func newUStructBasedFProperty(owner : FFieldVariant, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
     const flags = propObjFlags
          #It holds a complex type, like a struct or a class
     type EObjectMetaProp = enum
@@ -40,16 +43,16 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
     some case eMeta:
     of emClass, emTSubclassOf:
         #check if it's a component here
-        let clsProp = newFClassProperty(makeFieldVariant(outer), name, flags)
+        let clsProp = newFClassProperty(owner, name, flags)
         clsProp.setPropertyMetaClass(cls)
         clsProp
     of emTSoftClassPtr:
-        let clsProp = newFSoftClassProperty(makeFieldVariant(outer), name, flags)
+        let clsProp = newFSoftClassProperty(owner, name, flags)
         clsProp.setPropertyMetaClass(cls)
         clsProp
     of emObjPtr, emTObjectPtr:
         let isComponent = isChildOf[UActorComponent](cls)
-        let objProp = newFObjectPtrProperty(makeFieldVariant(outer), name, flags)
+        let objProp = newFObjectPtrProperty(owner, name, flags)
         objProp.setPropertyClass(cls)
         if isComponent: 
             objProp.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
@@ -57,16 +60,16 @@ func newUStructBasedFProperty(outer : UStructPtr, propType:string, name:FName, p
 
         objProp
     of emTSoftObjectPtr:
-        let softObjProp = newFSoftObjectProperty(makeFieldVariant(outer), name, flags)
+        let softObjProp = newFSoftObjectProperty(owner, name, flags)
         softObjProp.setPropertyClass(cls)
         softObjProp
     of emScriptStruct:
-        let structProp = newFStructProperty(makeFieldVariant(outer), name, flags)
+        let structProp = newFStructProperty(owner, name, flags)
         structProp.setScriptStruct(scriptStruct)
         structProp
 
 
-func newDelegateBasedProperty(outer : UStructPtr, propType:string, name:FName) : Option[FPropertyPtr] = 
+func newDelegateBasedProperty(owner : FFieldVariant, propType:string, name:FName) : Option[FPropertyPtr] = 
     #Try to find it as Delegate
     const flags = propObjFlags
     UE_Log "Not a struct based prorperty. Trying as delegate.." & propType
@@ -77,17 +80,17 @@ func newDelegateBasedProperty(outer : UStructPtr, propType:string, name:FName) :
                 let isMulticast = FUNC_MulticastDelegate in delegate.functionFlags
                 if isMulticast:
                     UE_Log fmt("Found {propType}  as  MulticastDelegate. Creating prop")
-                    let delegateProp = newFMulticastInlineDelegateProperty(makeFieldVariant(outer), name, flags)
+                    let delegateProp = newFMulticastInlineDelegateProperty(owner, name, flags)
                     delegateProp.setSignatureFunction(delegate)
                     delegateProp
                 else:
                     UE_Log fmt("Found {propType}  as  Delegate. Creating prop")
-                    let delegateProp = newFDelegateProperty(makeFieldVariant(outer), name, flags)
+                    let delegateProp = newFDelegateProperty(owner, name, flags)
                     delegateProp.setSignatureFunction(delegate)
                     delegateProp
             )
     
-func newEnumBasedProperty(outer : UStructPtr, propType:string, name:FName) : Option[FPropertyPtr] = 
+func newEnumBasedProperty(owner : FFieldVariant, propType:string, name:FName) : Option[FPropertyPtr] = 
     #Try to find it as Enum
     const flags = propObjFlags
     UE_Log "Not a delegate based prorperty. Trying as enum.." & propType
@@ -95,13 +98,81 @@ func newEnumBasedProperty(outer : UStructPtr, propType:string, name:FName) : Opt
     someNil(getUTypeByName[UEnum](enumProp))
         .map(func (ueEnum:UEnumPtr) : FPropertyPtr = 
                 UE_Log "Found " & enumProp & " as Enum. Creating prop"
-                let enumProp = newFEnumProperty(makeFieldVariant(outer), name, flags)
+                let enumProp = newFEnumProperty(owner, name, flags)
                 enumProp.setEnum(ueEnum)
                 #Assuming that Enums are exposed via TEnumAsByte or they are uint8. Revisit in the future (only bp exposed enums meets that)
                 let underlayingProp : FPropertyPtr = newFByteProperty(makeFieldVariant(enumProp), n"UnderlayingEnumProp", flags)
                 enumProp.addCppProperty(underlayingProp)
                 enumProp
             )
+
+#Not sure why this is needed but you cant return some derivedPtr and expect an Option?
+func someFProp(prop : FPropertyPtr) : Option[FPropertyPtr] = some prop
+
+proc newContainerProperty(owner : FFieldVariant, propField:UEField, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
+    if propType.contains("TArray"):
+        let arrayProp = newFArrayProperty(owner, name, propObjFlags)
+        arrayProp.setPropertyFlags(CPF_ZeroConstructor)
+
+        let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
+        let innerProp = 
+            # if name == n"arrObjs":
+            #     UE_Log "Found TArray of UObject"
+            #     newFObjectPtrProperty(makeFieldVariant(arrayProp), n"InnerProp", propObjFlags)
+            # else:
+                newFProperty(makeFieldVariant(arrayProp), propField, optPropType=innerType, optName= $name & "_Inner")
+        
+        arrayProp.setInnerProp(innerProp)
+        return someFProp(arrayProp)
+
+    if propType.contains("TSet"):
+        let setProp = newFSetProperty(owner, name, propObjFlags)
+        let elementPropType = propType.extractTypeFromGenericInNimFormat("TSet")
+        let elementProp = newFProperty(makeFieldVariant(setProp), propField, optPropType=elementPropType, optName="ElementProp",  propFlags=CPF_HasGetValueTypeHash)
+        setProp.addCppProperty(elementProp)
+        return someFProp setProp
+            
+    if propType.contains("TMap"):
+        let mapProp = newFMapProperty(owner, name, propObjFlags)
+        let innerTypes = propType.extractKeyValueFromMapProp()
+        let key = newFProperty(makeFieldVariant(mapProp), propField, optPropType=innerTypes[0], optName= $name&"_Key", propFlags=CPF_HasGetValueTypeHash) 
+        let value = newFProperty(makeFieldVariant(mapProp), propField, optPropType=innerTypes[1], optName= $name&"_Value")
+
+        mapProp.addCppProperty(key)
+        mapProp.addCppProperty(value)
+        return someFProp mapProp
+
+    return none[FPropertyPtr]()
+    
+proc newBasicProperty(owner : FFieldVariant, propField:UEField, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
+    if propType == "FString": 
+        someFProp newFStrProperty(owner, name, propObjFlags)
+    elif propType == "bool": 
+        someFProp newFBoolProperty(owner, name, propObjFlags)
+    elif propType == "int8": 
+        someFProp newFInt8Property(owner, name, propObjFlags)
+    elif propType == "int16": 
+        someFProp newFInt16Property(owner, name, propObjFlags)
+    elif propType == "int32": 
+        someFProp newFIntProperty(owner, name, propObjFlags)
+    elif propType in ["int64", "int"]: 
+        someFProp newFInt64Property(owner, name, propObjFlags)
+    elif propType == "byte": 
+        someFProp newFByteProperty(owner, name, propObjFlags)
+    elif propType == "uint16": 
+        someFProp newFUInt16Property(owner, name, propObjFlags)
+    elif propType == "uint32": 
+        someFProp newFUInt32Property(owner, name, propObjFlags)
+    elif propType == "uint64": 
+        someFProp newFUint64Property(owner, name, propObjFlags)
+    elif propType == "float32": 
+        someFProp newFFloatProperty(owner, name, propObjFlags)
+    elif propType in ["float", "float64"]: 
+        someFProp newFDoubleProperty(owner, name, propObjFlags)
+    elif propType == "FName": 
+        someFProp newFNameProperty(owner, name, propObjFlags)
+    else:
+        none[FPropertyPtr]()
 
 func isBasicProperty*(nimTypeName: string) : bool =      
     nimTypeName in [
@@ -111,93 +182,28 @@ func isBasicProperty*(nimTypeName: string) : bool =
     ]
 
 
-       
 
-proc newFProperty*(outer : UStructPtr | FFieldPtr, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr = 
+func isContainer(nimTypeName:string) : bool = 
+    let containers = @["TArray", "TSet", "TMap"]
+    containers.any(c=>c in nimTypeName)
+
+
+
+proc newFProperty*(owner : FFieldVariant, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr = 
     let 
+        #is optX is passed, priotize it since it comes from newContainerProperty
         propType = optPropType.nonEmptyOr(propField.uePropType)
         name = optName.nonEmptyOr(propField.name).makeFName()
 
     const flags = propObjFlags
-
+    UE_Log "Creating new property: " & $name & " of type: " & propType
     let prop : FPropertyPtr = 
-        if propType == "FString": 
-            newFStrProperty(makeFieldVariant(outer), name, flags)
-        elif propType == "bool": 
-            newFBoolProperty(makeFieldVariant(outer), name, flags)
-        elif propType == "int8": 
-            newFInt8Property(makeFieldVariant(outer), name, flags)
-        elif propType == "int16": 
-            newFInt16Property(makeFieldVariant(outer), name, flags)
-        elif propType == "int32": 
-            newFIntProperty(makeFieldVariant(outer), name, flags)
-        elif propType in ["int64", "int"]: 
-            newFInt64Property(makeFieldVariant(outer), name, flags)
-        elif propType == "byte": 
-            newFByteProperty(makeFieldVariant(outer), name, flags)
-        elif propType == "uint16": 
-            newFUInt16Property(makeFieldVariant(outer), name, flags)
-        elif propType == "uint32": 
-            newFUInt32Property(makeFieldVariant(outer), name, flags)
-        elif propType == "uint64": 
-            newFUint64Property(makeFieldVariant(outer), name, flags)
-        elif propType == "float32": 
-            newFFloatProperty(makeFieldVariant(outer), name, flags)
-        elif propType in ["float", "float64"]: 
-            newFDoubleProperty(makeFieldVariant(outer), name, flags)
-        elif propType == "FName": 
-            newFNameProperty(makeFieldVariant(outer), name, flags)
-        elif propType.contains("TArray"):
-            let arrayProp = newFArrayProperty(makeFieldVariant(outer), name, flags)
-            arrayProp.setPropertyFlags(CPF_ZeroConstructor)
-
-
-            let innerType = propType.extractTypeFromGenericInNimFormat("TArray")
-            let innerProp = newFProperty(arrayProp, propField, optPropType=innerType, optName= $name & "_Inner")
-            UE_Error "Created inner prop " & innerType & " for " & $name & "And the prop name is " & innerProp.getName()
-            #TODO extract this so it can be easily apply to all instanced
-           
-            arrayProp.setInnerProp(innerProp)
-                # arrayProp.setPropertyFlags(CPF_UObjectWrapper)
-                # arrayProp.setPropertyFlags(CPF_ContainsInstancedReference)
-                # inner.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
-
-           
-
-            let hasRef = arrayProp.containsStrongReference()
-            UE_Log &"Has ref: {hasRef}"
-            # arrayProp.addCppProperty(inner)
-            #Pywrapperfixed array
-            
-            # let arrayValue = malloc(arrayProp.getSize(), arrayProp.getMinAlignment().uint32)
-            # arrayProp.initializeValue(arrayValue)
-
-
-            arrayProp
-        elif propType.contains("TSet"):
-            let setProp = newFSetProperty(makeFieldVariant(outer), name, flags)
-            let elementPropType = propType.extractTypeFromGenericInNimFormat("TSet")
-            let elementProp = newFProperty(outer, propField, optPropType=elementPropType, optName="ElementProp",  propFlags=CPF_HasGetValueTypeHash)
-            setProp.addCppProperty(elementProp)
-            setProp
-            
-        elif propType.contains("TMap"):
-            let mapProp = newFMapProperty(makeFieldVariant(outer), name, flags)
-            let innerTypes = propType.extractKeyValueFromMapProp()
-            let key = newFProperty(outer, propField, optPropType=innerTypes[0], optName= $name&"_Key", propFlags=CPF_HasGetValueTypeHash) 
-            let value = newFProperty(outer, propField, optPropType=innerTypes[1], optName= $name&"_Value")
-            
-
-            mapProp.addCppProperty(key)
-            mapProp.addCppProperty(value)
-
-            let mapValue = malloc(mapProp.getSize(), mapProp.getMinAlignment().uint32)
-            mapProp.initializeValue(mapValue)
-            mapProp
+        if isBasicProperty(propType): newBasicProperty(owner, propField, propType, name).get()
+        elif isContainer(propType) and owner.isUObject() : newContainerProperty(owner, propField, propType, name).get()
         else: #ustruct based?
-            newUStructBasedFProperty(cast[UStructPtr](outer), propType, name, propFlags)
-                .chainNone(()=>newDelegateBasedProperty(cast[UStructPtr](outer), propType, name))
-                .chainNone(()=>newEnumBasedProperty(cast[UStructPtr](outer), propType, name))
+            newUStructBasedFProperty(owner, propType, name, propFlags)
+                .chainNone(()=>newDelegateBasedProperty(owner, propType, name))
+                .chainNone(()=>newEnumBasedProperty(owner, propType, name))
                 .getOrRaise("FProperty not covered in the types for " & propType, Exception)
                     
         

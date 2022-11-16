@@ -487,7 +487,7 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
 proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
   assert propField.kind == uefProp
 
-  let prop: FPropertyPtr = newFProperty(outer, propField)
+  let prop: FPropertyPtr = newFProperty(makeFieldVariant outer, propField)
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
   for metadata in propField.metadata:
     prop.setMetadata(metadata.name, $metadata.value)
@@ -563,10 +563,6 @@ type CtorInfo* = object #stores the constuctor information for a class.
   fn*: UClassConstructor
   hash*: string
   className*: string
-
-
-# GIsUCCMakeStandaloneHeaderGenerator
-
 proc setGIsUCCMakeStandaloneHeaderGenerator*(value: bool) {.importcpp: "(GIsUCCMakeStandaloneHeaderGenerator =#)".}
 
 proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Option[UFunctionNativeSignature]], clsConstructor: Option[CtorInfo]): UFieldPtr =
@@ -606,27 +602,28 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
     else:
       UE_Error("Unsupported field kind: " & $field.kind)
     #should gather the functions here?
-  newCls.staticLink(true)
 
-  # newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultClassConstructor))
+  # newCls.bindType()
+  newCls.staticLink(true)
+  newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultClassConstructor))
   clsConstructor.run(proc (cons: CtorInfo) =
     newCls.constructorSourceHash = cons.hash
   )
-  #Gets around an assert
-  setGIsUCCMakeStandaloneHeaderGenerator(true)
-  newCls.bindType()
-  setGIsUCCMakeStandaloneHeaderGenerator(false)
-
   # assert not parent.addReferencedObjects.isNil()
   # newCls.addReferencedObjects = parent.addReferencedObjects
-  # newCls.setAddClassReferencedObjectFn(parent.addReferencedObjects)
+  newCls.setAddClassReferencedObjectFn(parent.addReferencedObjects)
 
   # newCls.addConstructorToActor()
 
-  newCls.assembleReferenceTokenStream(true)
+  #Gets around an assert. Ideally we would see rather than the below. But first we need to clean a few things, so do not edit. 
+  
+  # setGIsUCCMakeStandaloneHeaderGenerator(true)
+  # newCls.bindType()
+  # setGIsUCCMakeStandaloneHeaderGenerator(false)
+  newCls.assembleReferenceTokenStream()
   newCls.ueType = $ueType.toJson()
 
-  # discard newCls.getDefaultObject() #forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
+  discard newCls.getDefaultObject() #forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
   newCls
 
