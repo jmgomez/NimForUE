@@ -66,7 +66,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
   ]
   result &= (if withDebug: 
-              @["/Od", if withIncremental: "/Zi" else: "/Z7"] 
+              @["/Od", "/Z7"] 
             else: 
               @["/O2"])
   if withPch: 
@@ -106,7 +106,9 @@ proc vccCompileSwitches*(withDebug, withIncremental, withPch : bool, debugFolder
   if withPch:
     switches.add "-l:" & pchObjPath
   if withDebug: 
-      let debugSwitches = "-l:\"/INCREMENTAL /DEBUG\"" & &"-l:/PDB:\"{getPdbFilePath(debugFolder)}\""
+      let debugSwitches = (&"/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath(debugFolder)}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
+
+      # let debugSwitches = "-l:\"/INCREMENTAL /DEBUG\"" & &"-l:/PDB:\"{getPdbFilePath(debugFolder)}\""
       switches & debugSwitches
   else: switches & @["-l:/INCREMENTAL"]
 
