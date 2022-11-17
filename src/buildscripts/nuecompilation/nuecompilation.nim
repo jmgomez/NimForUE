@@ -85,4 +85,8 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
 proc compileGenerateBindings*() = 
   let buildFlags = @[buildSwitches, targetSwitches(false), pluginPlatformSwitches(false), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/codegen/maingencppbindings.nim") == 0)
-  copyFile("./.nimcache/gencppbindings/UEGenBindings.h", config.nimHeadersDir / "UEGenBindings.h")
+  let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
+  copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
+  #It still generates NimMain in the header. So we need to get rid of it:
+  let nimMain = "N_CDECL(void, NimMain)(void);"
+  writeFile(ueGenBindingsPath, readFile(ueGenBindingsPath).replace(nimMain, ""))

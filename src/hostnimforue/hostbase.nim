@@ -18,11 +18,13 @@ type
 func isInit*(lib : NueLib) : bool = lib.lib != nil
 
 var libMap* : Table[string, NueLib] = {
-  "nimforue" : NueLib(lastLoadedPath: getLastLibPath(libDir, "nimforue").get()),
-  "game" : NueLib(lastLoadedPath: getLastLibPath(libDir, "game").get()),
+  "nimforue" : NueLib(lastLoadedPath: getLastLibPath(libDir, "nimforue").get())
 }.toTable()
 
-
+#Game must be compiled at least once. 
+let gameLibPath = getLastLibPath(libDir, "game")
+if gameLibPath.isSome():
+  libMap["game"] = NueLib(lastLoadedPath: gameLibPath.get())
 
 
 
