@@ -3,7 +3,7 @@ include ../definitions
 import ../Core/Containers/[unrealstring, array, map]
 import ../Core/ftext
 import nametypes
-import std/[genasts, strformat, macros, sequtils]
+import std/[genasts, options, strformat, macros, sequtils]
 import ../../utils/utils
 import uobjectflags
 import sugar
@@ -208,12 +208,19 @@ proc findMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : ptr FString {.impor
 func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool = 
     someNil(field.findMetaData(key)).isSome()
 
-proc getMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : FString = 
-    findMetaData(field, key).map(x=>x[]).get("")
+
 
 func getMetaDataMap*(field:FFieldPtr) : TMap[FName, FString] {.importcpp:"*(#->GetMetaDataMap())".}
 func getMetaDataMap*(field:UObjectPtr) : TMap[FName, FString] {.importcpp:"*(UMetaData::GetMapForObject(#))".}
 
+func getMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] = 
+    let map = field.getMetadataMap()
+    let nKey = n key
+    if nkey in map:
+        some map[nkey]
+    else:
+        none[FString]()
+        
 proc bindType*(field:UFieldPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
 proc getPrefixCpp*(str:UFieldPtr | UStructPtr) : FString {.importcpp:"FString(#->GetPrefixCPP())".}
 

@@ -221,6 +221,8 @@ func makeUEMetadata*(name:string) : UEMetadata =
 func makeUEMetadata*(name:string, value:string) : UEMetadata = 
     UEMetadata(name:name, value:value ) #todo check if the name is valid. Also they can be more than simple names
 
+
+
 func hasUEMetadata*[T:UEField|UEType](val:T, name:string) : bool = val.metadata.any(m => m.name == name)
 
 func isMulticastDelegate*(field:UEField) : bool = hasUEMetadata(field, MulticastDelegateMetadataKey)

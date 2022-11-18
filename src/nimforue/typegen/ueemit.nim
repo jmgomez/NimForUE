@@ -335,10 +335,43 @@ func childrenAsSeq*(node:NimNode) : seq[NimNode] =
         nodes.add n
     nodes
     
-func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]) = 
+ 
+
+
+func fromNinNodeToMetadata(node : NimNode) : UEMetadata =
+    debugEcho "Metadata  " & node.treeRepr
+
+    case node.kind:
+    of nnkIdent:
+        makeUEMetadata node.strVal()
+    of nnkExprEqExpr:
+        makeUEMetadata node[0].strVal(), node[1].strVal()
+    else:
+        error("Invalid metadata node " & repr node)
+        UEMetadata()
+
+func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} = 
+    body.toSeq()
+        .filterIt(it.kind==nnkPar or it.kind == nnkTupleConstr)
+        .mapIt(it.children.toSeq())
+        .foldl( a & b, newSeq[NimNode]())
+        .filterIt(it.kind!=nnkExprColonExpr)
+        .map(fromNinNodeToMetadata)
+
+#some metas (so far only uprops)
+#we need to remove some metas that may be incorrectly added as flags
+#The issue is that some flags require some metas to be set as well
+#so this is were they are synced
+func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeName:string) : (EPropertyFlags, seq[UEMetadata]) = 
+    debugEcho "meta is "& $meta
+    
+   
+
     # var flags : EPropertyFlags = CPF_SkipSerialization
     var flags : EPropertyFlags = CPF_NativeAccessSpecifierPublic
-    var metadata : seq[UEMetadata] = @[]
+    var metadata : seq[UEMetadata] = preMetas
+    
+
     #TODO THROW ERROR WHEN NON MULTICAST AND USE MC ONLY
     # var flags : EPropertyFlags = CPF_None
     #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
@@ -351,7 +384,6 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
             flags = flags | CPF_Edit
         if m == "ExposeOnSpawn":
                 flags = flags | CPF_ExposeOnSpawn
-                metadata.add makeUEMetadata "ExposeOnSpawn"
         if m == "VisibleAnywhere":
                 flags = flags | CPF_SimpleDisplay
         if m == "Transient":
@@ -362,17 +394,30 @@ func fromStringAsMetaToFlag(meta:seq[string]) : (EPropertyFlags, seq[UEMetadata]
                 flags = flags | CPF_BlueprintCallable
             #Notice this is only required in the unlikely case that the user wants to use a delegate that is not exposed to Blueprint in any way
         #TODO CPF_BlueprintAuthorityOnly is only for MC
-        
+    
+    let flagsThatShouldNotBeMeta = ["BlueprintReadOnly", "BlueprintWriteOnly", "BlueprintReadWrite", "EditAnywhere", "VisibleAnywhere", "Transient", "BlueprintAssignable", "BlueprintCallable"]
+    for f in flagsThatShouldNotBeMeta:
+        metadata = metadata.filterIt(it.name != f)
+
+    debugEcho "hola " & $metadata
+    if not metadata.any(m => m.name == "Category"):
+       metadata.add(makeUEMetadata("Category", ueTypeName.removeFirstLetter()))
+
 
     (flags, metadata)
-   
 
+const ValidUprops = ["uprop", "uprops", "uproperty", "uproperties"]
 
 func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] = 
-    let metas = node.childrenAsSeq()
-                    .filter(n=>n.kind==nnkIdent and n.strVal().toLower() != "uprop")
-                    .map(n=>n.strVal())
-                    .fromStringAsMetaToFlag()
+    let validNodesForMetas = [nnkIdent, nnkExprEqExpr]
+    let metasAsNodes = node.childrenAsSeq()
+                    .filterIt(it.kind in validNodesForMetas or (it.kind == nnkIdent and it.strVal().toLower() notin ValidUprops))
+    let ueMetas = metasAsNodes.map(fromNinNodeToMetadata)
+    let metas = metasAsNodes
+                    .filterIt(it.kind == nnkIdent)
+                    .mapIt(it.strVal())
+                    .fromStringAsMetaToFlag(ueMetas, ueTypeName)
+
 
     proc nodeToUEField (n: NimNode)  : UEField = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
         let fieldName = n[0].repr
@@ -409,19 +454,9 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
     ueFields
 
 
-
-func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} = 
-    body.toSeq()
-        .filter(n=>n.kind==nnkPar or n.kind == nnkTupleConstr)
-        .map(n => n.children.toSeq())
-        .foldl( a & b, newSeq[NimNode]())
-        .filter(n=>n.kind!=nnkExprColonExpr and n.kind!=nnkExprEqExpr) #ignore : and =. The later will be used for category and probably meta, etc. The former is rerserved for specifying types in uFunctions
-        .map(n=>n.strVal().strip())
-        .map(makeUEMetadata)
-
 func getUPropsAsFieldsForType(body:NimNode, ueTypeName:string) : seq[UEField]  = 
     body.toSeq()
-        .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ["uprop", "uprops", "uproperty", "uproperties"])
+        .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ValidUProps)
         .map(n=>fromUPropNodeToField(n, ueTypeName))
         .foldl(a & b, newSeq[UEField]())
         .reversed()
