@@ -78,7 +78,7 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
     if prop.isTObjectPtr():
       valueType = valueType.getInnerCppGenericType()
 
-    return fmt"TMap[{keyType}, {valueType}]"
+    return fmt"TMap[{keyType.cleanCppType()}, {valueType.cleanCppType()}]"
 
   try:
     # UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()} and outer {outer.getName()}"

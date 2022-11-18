@@ -777,8 +777,3 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
 
 
-#falta genererar el call
-#void vs no void
-#return type
-#param
-

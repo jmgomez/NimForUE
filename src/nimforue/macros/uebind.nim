@@ -14,22 +14,29 @@ func isOutParam*(field:UEField) : bool =
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 func getTypeNodeFromUProp*(prop : UEField) : NimNode = 
-    #naive check on generic types:
+
+    func fromGenericStringToNode(generic:string) : NimNode = 
+        let genericType = generic.extractOuterGenericInNimFormat()
+         
+        let innerTypesStr = 
+            if genericType.contains("TMap"): generic.extractKeyValueFromMapProp().join(",")
+            else: generic.extractTypeFromGenericInNimFormat()
+        let innerTypes = 
+            innerTypesStr
+                .split(",")
+              
+                .mapIt(
+                    (if it.isGeneric(): it.fromGenericStringToNode() 
+                    else: ident(it.strip())))
+                
+        result = nnkBracketExpr.newTree((ident genericType) & innerTypes)
+
     case prop.kind:
         of uefProp:
-            let typeNode =  if not prop.isGeneric: ident prop.uePropType
-                elif prop.uePropType.countSubStr("[") == 2:
-                    let outerGeneric = prop.uePropType.split("[")[0]
-                    let innerGeneric = prop.uePropType.split("[")[1].split("[")[0]
-                    let innerTypesStr = prop.uePropType.extractTypeFromGenericInNimFormat(outerGeneric, innerGeneric)
-                    let innerTypes = innerTypesStr.split(",").map(innerType => ident(innerType.strip()))
-                    nnkBracketExpr.newTree(ident outerGeneric, 
-                                nnkBracketExpr.newTree((ident innerGeneric) & innerTypes))
-                else:
-                    let genericType = prop.uePropType.split("[")[0]
-                    let innerTypesStr =  prop.uePropType.extractTypeFromGenericInNimFormat(genericType)
-                    let innerTypes = innerTypesStr.split(",").map(innerType => ident(innerType.strip()))
-                    nnkBracketExpr.newTree((ident genericType) & innerTypes)
+            let typeNode =  
+                if not prop.isGeneric: ident prop.uePropType
+                else: fromGenericStringToNode(prop.uePropType)
+                   
             if prop.isOutParam:
                 nnkVarTy.newTree typeNode
             else:
@@ -192,7 +199,6 @@ func genFormalParamsInFunctionSignature(typeDef : UEType, funField:UEField, firs
 #for the most part the same code is used for both
 #this is also used for native function implementation but the ast is changed afterwards
 func genFunc*(typeDef : UEType, funField : UEField) : NimNode = 
-
     let isStatic = FUNC_Static in funField.fnFlags
     let clsName = typeDef.name.substr(1)
 
@@ -258,6 +264,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
 
 
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =
+
     let props = nnkStmtList.newTree(
                 typeDef.fields
                     .filter(prop=>prop.kind==uefProp)
@@ -502,3 +509,6 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexD
             genDelType(typeDef, typeExposure)
 
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
+
+
+

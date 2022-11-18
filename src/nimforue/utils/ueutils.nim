@@ -6,9 +6,21 @@ const DelegateFuncSuffix* = "__DelegateSignature"
 const DelegateFuncSuffixLength* = DelegateFuncSuffix.len()
 #utils specifics to unreal used accross the project
 
+func isGeneric*(str: string): bool = "[" in str and "]" in str
+func appendCloseGenIfOpen*(str: string) : string =
+  if "[" in str and "]" notin str: str & "]"
+  else: str
 #use multireplace
-proc extractTypeFromGenericInNimFormat*(str, genericType :string) : string = 
-    str.replace(genericType, "").replace("[").replace("]", "")
+proc extractTypeFromGenericInNimFormat*(str :string, ignore="") : string = 
+    var generic, inner : string
+    if scanf(str, "$*[$*]", generic, inner): appendCloseGenIfOpen(inner)
+    else: str
+
+
+proc extractOuterGenericInNimFormat*(str :string) : string = 
+    var generic, inner : string
+    if scanf(str, "$*[$*]", generic, inner): generic
+    else: str
 
 proc extractTypeFromGenericInNimFormat*(str, outerGeneric, innerGeneric :string) : string = 
     str.replace(outerGeneric, "").replace(innerGeneric, "").replace("[").replace("]", "")
@@ -21,8 +33,11 @@ func getInnerCppGenericType*(cppType:string) : string =
 func getNameOfUENamespacedEnum*(namespacedEnum:string) : string = namespacedEnum.replace("::Type", "")
 
 proc extractKeyValueFromMapProp*(str:string) : seq[string] = 
-    str.extractTypeFromGenericInNimFormat("TMap").split(",")
-       .map(s=>strip(s))
+    var key, value : string
+    if scanf(str, "TMap[$*, $*]", key, value): 
+        @[appendCloseGenIfOpen(key), appendCloseGenIfOpen(value)]
+    else: @[]
+
 
 
 proc removeLastLettersIfPtr*(str:string) : string = 

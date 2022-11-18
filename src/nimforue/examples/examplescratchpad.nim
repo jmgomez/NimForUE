@@ -42,7 +42,7 @@ uClass AActorSoftTest of ATestActor:
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     testA : int
     arrayTest : TArray[int32]
- 
+
 
 uClass AActorScratchpad of ATestActor:
 # uClass AActorScratchpad of APlayerController:
