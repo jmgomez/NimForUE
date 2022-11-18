@@ -3,7 +3,7 @@ include ../definitions
 import ../Core/Containers/[unrealstring, array, map]
 import ../Core/ftext
 import nametypes
-import std/[genasts, macros, sequtils]
+import std/[genasts, strformat, macros, sequtils]
 import ../../utils/utils
 import uobjectflags
 import sugar
@@ -216,6 +216,11 @@ func getMetaDataMap*(field:UObjectPtr) : TMap[FName, FString] {.importcpp:"*(UMe
 
 proc bindType*(field:UFieldPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
 proc getPrefixCpp*(str:UFieldPtr | UStructPtr) : FString {.importcpp:"FString(#->GetPrefixCPP())".}
+
+
+func `$`*(prop:FPropertyPtr):string=
+  &"Prop: {prop.getName()} CppType: {prop.getCppType()} Flags: {prop.getPropertyFlags()} Metadata: {prop.getMetadataMap()}"
+
 
 #USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}

@@ -11,7 +11,7 @@ uClass AActorCodegen of AActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "test"
-    structPtr : FString 
+    structPtrName : FString 
   ufuncs(CallInEditor):
     proc genReflectionData() = 
       try:
@@ -39,18 +39,7 @@ uClass AActorCodegen of AActor:
         UE_Error &"Error del is null"
         return
 
-      
       UE_Warn $obj
       UE_Warn $obj.getOuter()
     
-    proc searchStructPtr() = 
-      let obj = getUTypeByName[UClass](self.structPtr)
-      if obj.isNil(): 
-        UE_Error &"Error struct is null"
-        return
-      
-      let ueType = obj.toUEType()
-      UE_Log $ueType
-      
-      UE_Warn $obj
-      
+    
