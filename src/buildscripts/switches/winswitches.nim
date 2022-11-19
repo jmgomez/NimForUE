@@ -55,7 +55,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "/TP",
     "/GR-", # /GR[-]	Enables run-time type information (RTTI).
     "/W4",
-    "/std:c++latest",
+    "/std:c++20",
     "/wd5054",
     # "/FS", #syn writes
     #extras:

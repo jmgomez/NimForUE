@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-
+#include "CoreUObject/Public/UObject/Class.h"
 #include "NimClassBase.generated.h"
 
 /**
@@ -21,7 +21,7 @@ GENERATED_BODY()
 public:
 	UNimClassBase* NewNimClass;
 
-	ClassAddReferencedObjectsType ParentClassReferencedObject; //Workaround to being able to call the parent function set in Nim
+	// ClassAddReferencedObjectsType ParentClassReferencedObject; //Workaround to being able to call the parent function set in Nim
 
 	FString ueType;
 	//Stores a hash of the implementation of a function in nim that acts as constructor so in the next compilation we can see if they are different so we can swap the fn pointer if they arent
@@ -56,7 +56,8 @@ public:
 };
 
 UCLASS()
-class NIMFORUEBINDINGS_API UNimDelegateFunction : public UDelegateFunction {
+// class NIMFORUEBINDINGS_API UNimDelegateFunction : public UDelegateFunction {
+class NIMFORUEBINDINGS_API UNimDelegateFunction : public UFunction {
 	GENERATED_BODY()
 public:
 	FString ueType;

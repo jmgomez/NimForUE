@@ -322,10 +322,11 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[]): Option[UE
 
 func toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
   #same as above
-  let storedUEType = tryUECast[UNimDelegateFunction](del)
-    .flatMap((del: UNimDelegateFunctionPtr)=>tryParseJson[UEType](del.ueType))
+  #5.1 Try to store the info in the meta
+  # let storedUEType = tryUECast[UNimDelegateFunction](del)
+  #   .flatMap((del: UNimDelegateFunctionPtr)=>tryParseJson[UEType](del.ueType))
 
-  if storedUEType.isSome(): return storedUEType
+  # if storedUEType.isSome(): return storedUEType
 
   var name = del.getPrefixCpp() & del.getName()
 
@@ -608,22 +609,25 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
 
   # newCls.bindType()
   newCls.staticLink(true)
-  newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultClassConstructor))
-  clsConstructor.run(proc (cons: CtorInfo) =
-    newCls.constructorSourceHash = cons.hash
-  )
+ 
   # assert not parent.addReferencedObjects.isNil()
   # newCls.addReferencedObjects = parent.addReferencedObjects
-  newCls.setAddClassReferencedObjectFn(parent.addReferencedObjects)
+  # newCls.setAddClassReferencedObjectFn(parent.addReferencedObjects)
 
   # newCls.addConstructorToActor()
 
   #Gets around an assert. Ideally we would see rather than the below. But first we need to clean a few things, so do not edit. 
   
-  # setGIsUCCMakeStandaloneHeaderGenerator(true)
-  # newCls.bindType()
-  # setGIsUCCMakeStandaloneHeaderGenerator(false)
+  setGIsUCCMakeStandaloneHeaderGenerator(true)
+  newCls.bindType()
+  setGIsUCCMakeStandaloneHeaderGenerator(false)
   newCls.assembleReferenceTokenStream()
+
+  newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultClassConstructor))
+  clsConstructor.run(proc (cons: CtorInfo) =
+    newCls.constructorSourceHash = cons.hash
+  )
+
   newCls.ueType = $ueType.toJson()
 
   discard newCls.getDefaultObject() #forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
@@ -681,7 +685,7 @@ proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
     # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
 
   fn.staticLink(true)
-  fn.ueType = $delType.toJson()
+  # fn.ueType = $delType.toJson()
   fn
 
 proc createUFunctionInClass*(cls: UClassPtr, fnField: UEField, fnImpl: UFunctionNativeSignature): UFunctionPtr {.deprecated: "use emitUFunction instead".} =

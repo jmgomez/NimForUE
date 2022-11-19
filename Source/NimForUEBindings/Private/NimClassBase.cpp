@@ -13,11 +13,11 @@ void UNimClassBase::SetClassConstructor(void(* NimClassConstructor)(FObjectIniti
 
 void UNimClassBase::SetAddClassReferencedObjectType(void(* ClassAddReferencedObjectsFn)(UObject*, FReferenceCollector&)) {
 	// this->ClassAddReferencedObjects = ClassAddReferencedObjectsFn;
-	this->ParentClassReferencedObject = ClassAddReferencedObjectsFn;
-	this->ClassAddReferencedObjects = [](UObject* InThis, FReferenceCollector& Collector) {
-		if (InThis->HasAnyFlags(RF_ClassDefaultObject))
-			return;
-	};
+	// this->ParentClassReferencedObject = ClassAddReferencedObjectsFn;
+	// this->ClassAddReferencedObjects = [](UObject* InThis, FReferenceCollector& Collector) {
+	// 	if (InThis->HasAnyFlags(RF_ClassDefaultObject))
+	// 		return;
+	// };
 }
 
 void UNimClassBase::PrepareNimClass()

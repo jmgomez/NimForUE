@@ -9,8 +9,8 @@
 
 void UNimScriptStruct::RegisterStructInDeferredList(ICppStructOps* StructOps)
 {
-
-	DeferCppStructOps(this->GetFName(), StructOps);
+	FName Name = this->GetFName();
+	DeferCppStructOps(FTopLevelAssetPath(Name), StructOps);
 
 }
 //
