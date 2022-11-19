@@ -339,7 +339,6 @@ func childrenAsSeq*(node:NimNode) : seq[NimNode] =
 
 
 func fromNinNodeToMetadata(node : NimNode) : UEMetadata =
-    debugEcho "Metadata  " & node.treeRepr
 
     case node.kind:
     of nnkIdent:
@@ -363,11 +362,6 @@ func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} =
 #The issue is that some flags require some metas to be set as well
 #so this is were they are synced
 func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeName:string) : (EPropertyFlags, seq[UEMetadata]) = 
-    debugEcho "meta is "& $meta
-    
-   
-
-    # var flags : EPropertyFlags = CPF_SkipSerialization
     var flags : EPropertyFlags = CPF_NativeAccessSpecifierPublic
     var metadata : seq[UEMetadata] = preMetas
     
@@ -399,7 +393,6 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
     for f in flagsThatShouldNotBeMeta:
         metadata = metadata.filterIt(it.name != f)
 
-    debugEcho "hola " & $metadata
     if not metadata.any(m => m.name == "Category"):
        metadata.add(makeUEMetadata("Category", ueTypeName.removeFirstLetter()))
 
@@ -719,9 +712,7 @@ proc ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
     
     let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
 
-    # echo fnImplNode.repr
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
-    # debugEcho result.repr
 
 macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField]())
 
