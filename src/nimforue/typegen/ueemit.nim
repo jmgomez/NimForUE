@@ -103,7 +103,7 @@ proc prepareForReinst(prevScriptStruct : UNimScriptStructPtr) =
     prevScriptStruct.addScriptStructFlag(STRUCT_NewerVersionExists)
     prepReinst(prevScriptStruct)
 
-proc prepareForReinst(prevDel : UNimDelegateFunctionPtr) = 
+proc prepareForReinst(prevDel : UDelegateFunctionPtr) = 
     prepReinst(prevDel)
 proc prepareForReinst(prevUEnum : UNimEnumPtr) =  
     # prevUEnum.markNewVersionExists()
@@ -145,7 +145,7 @@ template registerDeleteUType(T : typedesc, package:UPackagePtr, executeAfterDele
         if ReinstSuffix in instance.getName(): continue
         let clsName {.inject.} = 
             when T is UNimEnum: instance.getName() 
-            elif T is UNimDelegateFunction:  "F" & instance.getName().replace(DelegateFuncSuffix, "")
+            elif T is UDelegateFunction:  "F" & instance.getName().replace(DelegateFuncSuffix, "")
             else: instance.getPrefixCpp() & instance.getName()
 
         if getEmitterByName(clsName).isNone():
@@ -160,7 +160,7 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, package :UP
         hotReloadInfo.deletedClasses.add(instance)
     registerDeleteUType(UNimScriptStruct, package):
         hotReloadInfo.deletedStructs.add(instance)
-    registerDeleteUType(UNimDelegateFunction, package):
+    registerDeleteUType(UDelegateFunction, package):
         hotReloadInfo.deletedDelegatesFunctions.add(instance)
     registerDeleteUType(UNimEnum, package):
         hotReloadInfo.deletedEnums.add(instance)
@@ -232,7 +232,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
 
 
             of uetDelegate:
-                let prevDelPtr = someNil getUTypeByName[UNimDelegateFunction](emitter.ueType.name.removeFirstLetter() & DelegateFuncSuffix)
+                let prevDelPtr = someNil getUTypeByName[UDelegateFunction](emitter.ueType.name.removeFirstLetter() & DelegateFuncSuffix)
                 let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr, not wasAlreadyLoaded)
                 UE_Warn &"Prev Delegate is {prevDelPtr.isSome()}"
                 UE_Warn &"New Delegate is {newDelPtr.isSome()}"

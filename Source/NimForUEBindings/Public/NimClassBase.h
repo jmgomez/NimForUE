@@ -55,12 +55,3 @@ public:
 	FString SourceHash; 
 };
 
-UCLASS()
-// class NIMFORUEBINDINGS_API UNimDelegateFunction : public UDelegateFunction {
-class NIMFORUEBINDINGS_API UNimDelegateFunction : public UFunction {
-	GENERATED_BODY()
-public:
-	FString ueType;
-
-};
-

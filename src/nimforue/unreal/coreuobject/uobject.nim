@@ -213,7 +213,7 @@ func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool =
 func getMetaDataMap*(field:FFieldPtr) : TMap[FName, FString] {.importcpp:"*(#->GetMetaDataMap())".}
 func getMetaDataMap*(field:UObjectPtr) : TMap[FName, FString] {.importcpp:"*(UMetaData::GetMapForObject(#))".}
 
-func getMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] = 
+func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] = 
     let map = field.getMetadataMap()
     let nKey = n key
     if nkey in map:

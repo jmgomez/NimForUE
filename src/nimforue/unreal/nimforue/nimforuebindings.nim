@@ -31,10 +31,8 @@ type
         sourceHash* {.importcpp: "SourceHash".} : FString
     UNimFunctionPtr* = ptr UNimFunction
 
-    UNimDelegateFunction* = UDelegateFunction
-        # ueType* {.importcpp: "ueType".} : FString
+
         
-    UNimDelegateFunctionPtr* = ptr UNimDelegateFunction
 
     UReflectionHelpers* {.importcpp.} = object of UObject
     UReflectionHelpersPtr* = ptr UReflectionHelpers

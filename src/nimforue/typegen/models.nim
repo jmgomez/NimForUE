@@ -8,6 +8,9 @@ import std/[times,strformat,json, strutils, options, sugar, sequtils, bitops, ta
 
 import ../macros/makestrproc
 
+
+const UETypeMetadataKey* = "UEType"
+
 type
     EPropertyFlagsVal* = distinct(uint64)
     EFunctionFlagsVal* = distinct(uint32)

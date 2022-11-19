@@ -41,9 +41,9 @@ void UNimReferenceReplacementHelper::AddReferencedObjects(UObject* InThis, FRefe
 	if (InThis->HasAnyFlags(RF_ClassDefaultObject))
 		return;
 	UAssetEditorSubsystem* SubSystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-
-	TArray<UObject*> OpenAssets = SubSystem->GetAllEditedAssets();
-	Collector.AddReferencedObjects(OpenAssets);
+	//
+	// TArray<UObject*> OpenAssets = SubSystem->GetAllEditedAssets();
+	// Collector.AddReferencedObjects(OpenAssets);
 }
 
 void UNimReferenceReplacementHelper::Serialize(FStructuredArchive::FRecord Record)

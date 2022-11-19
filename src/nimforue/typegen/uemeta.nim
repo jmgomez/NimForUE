@@ -322,11 +322,11 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[]): Option[UE
 
 func toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
   #same as above
-  #5.1 Try to store the info in the meta
-  # let storedUEType = tryUECast[UNimDelegateFunction](del)
-  #   .flatMap((del: UNimDelegateFunctionPtr)=>tryParseJson[UEType](del.ueType))
+  let storedUEType = 
+    del.getMetadata(UETypeMetadataKey)
+       .flatMap((x:FString)=>tryParseJson[UEType](x))
 
-  # if storedUEType.isSome(): return storedUEType
+  if storedUEType.isSome(): return storedUEType
 
   var name = del.getPrefixCpp() & del.getName()
 
@@ -678,14 +678,14 @@ proc emitUEnum*(enumType: UEType, package: UPackagePtr): UFieldPtr =
 proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
   let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
   const objFlags = RF_Public | RF_Transient | RF_MarkAsNative
-  var fn = newUObject[UNimDelegateFunction](package, fnName, objFlags)
+  var fn = newUObject[UDelegateFunction](package, fnName, objFlags)
   fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
   for field in delType.fields.reversed():
     let fprop = field.emitFProperty(fn)
     # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
 
   fn.staticLink(true)
-  # fn.ueType = $delType.toJson()
+  fn.setMetadata(UETypeMetadataKey, $delType.toJson())
   fn
 
 proc createUFunctionInClass*(cls: UClassPtr, fnField: UEField, fnImpl: UFunctionNativeSignature): UFunctionPtr {.deprecated: "use emitUFunction instead".} =
