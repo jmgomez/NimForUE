@@ -211,7 +211,12 @@ func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool =
 
 
 func getMetaDataMap*(field:FFieldPtr) : TMap[FName, FString] {.importcpp:"*(#->GetMetaDataMap())".}
-func getMetaDataMap*(field:UObjectPtr) : TMap[FName, FString] {.importcpp:"*(UMetaData::GetMapForObject(#))".}
+func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
+
+func getMetadataMap*(field:UObjectPtr) : TMap[FName, FString] =
+    let metadataMap = getMetadataMapPtr(field)
+    if metadataMap.isNil: makeTMap[FName, FString]()
+    else: metadataMap[]
 
 func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] = 
     let map = field.getMetadataMap()
