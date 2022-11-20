@@ -55,7 +55,15 @@ func isMulticastDel(prop: FPropertyPtr): bool = not castField[FMulticastDelegate
 
 func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expected type is something that UEField can understand
   func cleanCppType(cppType: string): string =
-    cppType.replace("<", "[").replace(">", "]").replace("*", "Ptr")
+    #Do multireplacehere
+    let cppType =
+      cppType.replace("<", "[")
+              .replace(">", "]")
+              .replace("*", "Ptr")
+    if cppType == "float": return "float32"
+    if cppType == "double": return "float64"
+    return cppType
+    
 
   if prop.isTArray():
     var innerType = castField[FArrayProperty](prop).getInnerProp().getCPPType()

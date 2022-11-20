@@ -114,6 +114,16 @@ type
   ULayer* {.importcpp, pure, inheritable .} = object of UObject
   ULayerPtr* = ptr ULayer
 
+
+  FPlatformUserId* {.importc .} = object
+  FInputDeviceId* {.importc .} = object
+  FTopLevelAssetPath* {.importc .} = object
+  FARFilter* {.importc .} = object
+  EFieldVectorType* {.importc .} = enum
+  
+    
+    
+
 #   IBlendableInterface* {.importcpp .} = object
 #   IAnimationDataController* {.importcpp .} = object
 #[
@@ -220,3 +230,6 @@ proc `rootComponent`*(obj : AActorPtr): TObjectPtr[USceneComponent] {.
   let prop  = getClassByName("Actor").getFPropertyByName(
       "RootComponent")
   getPropertyValuePtr[TObjectPtr[USceneComponent]](prop, obj)[]
+
+
+

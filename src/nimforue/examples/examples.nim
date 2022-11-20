@@ -5,7 +5,7 @@ import structexample
 
 import examplescratchpad
 
-# import examplescodegen
+import examplescodegen
 #import examplecoreuobject
 # import engineexample
 # import editorexample
