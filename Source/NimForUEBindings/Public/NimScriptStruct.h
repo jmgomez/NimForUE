@@ -13,17 +13,20 @@ UCLASS()
 class NIMFORUEBINDINGS_API UNimScriptStruct : public UScriptStruct {
 	GENERATED_BODY()
 
+	ICppStructOps* OriginalStructOps;//To be used as fallback for prepareStruct
 public:
 	template<typename T>
 	void SetCppStructOpFor(T* FakeObject) {
 		// Now is final. If using it right away doesnt work or we find a missmatch (which we will probably do) we could reimplement it
 		//Notice, since UE 5.1, we could even pass what we need from Nim directly alongside T or maybe even without it
+		this->ClearCppStructOps();
 		this->CppStructOps = new TCppStructOps<T>();
-		this->bPrepareCppStructOpsCompleted = false;
+		this->OriginalStructOps = new TCppStructOps<T>();
 		this->PrepareCppStructOps();
 	}
-
-
+	//We need to override this because the FReload reinstancer will
+	//check for the ops of the previus struct and it wont be here because
+	void PrepareCppStructOps() override;
 
 	
 };
