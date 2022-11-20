@@ -1,6 +1,6 @@
 # import testactorexample
 # import actorexample
-# import structexample
+import structexample
 # import objectexample
 
 import examplescratchpad

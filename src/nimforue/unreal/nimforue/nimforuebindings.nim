@@ -16,14 +16,11 @@ type
     UNimClassBasePtr* = ptr UNimClassBase
 
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
-        ueType* {.importcpp: "ueType".} : FString
-        newNimScriptStruct* {.importcpp: "NewNimScriptStruct".} : ptr UNimScriptStruct
-
+        
 
     UNimScriptStructPtr* = ptr UNimScriptStruct
 
     UNimEnum* {.importcpp.} = object of UEnum
-        ueType* {.importcpp: "ueType".} : FString
 
     UNimEnumPtr* = ptr UNimEnum
 

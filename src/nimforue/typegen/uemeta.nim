@@ -286,6 +286,8 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[]): Option[UE
   let storedUEType = 
     str.getMetadata(UETypeMetadataKey)
        .flatMap((x:FString)=>tryParseJson[UEType](x))
+  
+  UE_Log &"toUEType {storedUEType}"
 
   if storedUEType.isSome(): return storedUEType
 
@@ -644,7 +646,7 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   setCppStructOpFor[T](scriptStruct, nil)
   scriptStruct.bindType()
   scriptStruct.staticLink(true)
-  scriptStruct.setMetadata(UETypeMetadataKey, $scriptStruct.toJson())
+  scriptStruct.setMetadata(UETypeMetadataKey, $ueType.toJson())
   scriptStruct
 
 proc emitUStruct*[T](ueType: UEType, package: string): UFieldPtr =

@@ -12,10 +12,14 @@ import ../../codegen/codegentemplate
 #   B
 #   C
 
-# uStruct FMyStructTest:
-#   uprops(EditAnywhere, BlueprintReadWrite):
-#     a: int
-#     b: float
+uStruct FMyStructTest:
+  (BlueprintType)
+  uprops(EditAnywhere, BlueprintReadWrite):
+    a: int
+    b: float
+    c : bool
+    e: float32
+    f: float32
 
 uClass AActorScratchpad of AActor:
 # uClass AActorScratchpad of APlayerController:
@@ -23,7 +27,7 @@ uClass AActorScratchpad of AActor:
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     testA : int32 = 1     
     # myEnum : EMyEnum
-    # myStruct : FMyStructTest
+    myStruct : FMyStructTest
     structPtrName : FString 
   uprops(EditAnywhere, BlueprintReadWrite, Category=Whatever):
     testB : int32 = 5  
@@ -33,6 +37,8 @@ uClass AActorScratchpad of AActor:
                                                                                  
  
   ufuncs(CallInEditor):
+    proc modifyStruct() = 
+      self.myStruct.a = 10
     proc searchStructPtr() = 
       let obj = getUTypeByName[UClass]("ActorScratchpad")
       if obj.isNil(): 
