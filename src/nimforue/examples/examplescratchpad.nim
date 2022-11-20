@@ -7,12 +7,23 @@ import ../../codegen/codegentemplate
 
 
 
+# uEnum EMyEnum:
+#   A
+#   B
+#   C
+
+# uStruct FMyStructTest:
+#   uprops(EditAnywhere, BlueprintReadWrite):
+#     a: int
+#     b: float
 
 uClass AActorScratchpad of AActor:
 # uClass AActorScratchpad of APlayerController:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
     testA : int32 = 1     
+    # myEnum : EMyEnum
+    # myStruct : FMyStructTest
     structPtrName : FString 
   uprops(EditAnywhere, BlueprintReadWrite, Category=Whatever):
     testB : int32 = 5  

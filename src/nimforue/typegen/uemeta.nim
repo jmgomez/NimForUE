@@ -245,10 +245,10 @@ func getFirstBpExposedParent(parent: UClassPtr): UClassPtr =
     getFirstBpExposedParent(parent.getSuperClass())
 
 func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
-  #First it tries to see if it is a UNimClassBase and if it has a UEType stored.
-  #Otherwise tries to parse the UEType from the Runtime information.
-  let storedUEType = tryUECast[UNimClassBase](cls)
-    .flatMap((cls: UNimClassBasePtr)=>tryParseJson[UEType](cls.ueType))
+  
+  let storedUEType = 
+    cls.getMetadata(UETypeMetadataKey)
+       .flatMap((x:FString)=>tryParseJson[UEType](x))
 
   if storedUEType.isSome(): return storedUEType
 
@@ -283,8 +283,9 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
 
 func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
   #same as above
-  let storedUEType = tryUECast[UNimScriptStruct](str)
-    .flatMap((str: UNimScriptStructPtr)=>tryParseJson[UEType](str.ueType))
+  let storedUEType = 
+    str.getMetadata(UETypeMetadataKey)
+       .flatMap((x:FString)=>tryParseJson[UEType](x))
 
   if storedUEType.isSome(): return storedUEType
 
@@ -321,7 +322,6 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[]): Option[UE
 
 
 func toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
-  #same as above
   let storedUEType = 
     del.getMetadata(UETypeMetadataKey)
        .flatMap((x:FString)=>tryParseJson[UEType](x))
@@ -360,8 +360,9 @@ func toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]): Optio
 
 func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[]): Option[UEType] = #notice we have to specify the type because we use specific functions here. All types are Nim base types
     # let fields = getFPropsFromUStruct(enum).map(toUEField)
-  let storedUEType = tryUECast[UNimEnum](uenum)
-    .flatMap((uenum: UNimEnumPtr)=>tryParseJson[UEType](uenum.ueType))
+  let storedUEType = 
+    uenum.getMetadata(UETypeMetadataKey)
+       .flatMap((x:FString)=>tryParseJson[UEType](x))
 
   if storedUEType.isSome(): return storedUEType
 
@@ -607,17 +608,8 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
       UE_Error("Unsupported field kind: " & $field.kind)
     #should gather the functions here?
 
-  # newCls.bindType()
   newCls.staticLink(true)
  
-  # assert not parent.addReferencedObjects.isNil()
-  # newCls.addReferencedObjects = parent.addReferencedObjects
-  # newCls.setAddClassReferencedObjectFn(parent.addReferencedObjects)
-
-  # newCls.addConstructorToActor()
-
-  #Gets around an assert. Ideally we would see rather than the below. But first we need to clean a few things, so do not edit. 
-  
   setGIsUCCMakeStandaloneHeaderGenerator(true)
   newCls.bindType()
   setGIsUCCMakeStandaloneHeaderGenerator(false)
@@ -628,7 +620,8 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
     newCls.constructorSourceHash = cons.hash
   )
 
-  newCls.ueType = $ueType.toJson()
+  newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())
+
 
   discard newCls.getDefaultObject() #forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
@@ -651,7 +644,7 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   setCppStructOpFor[T](scriptStruct, nil)
   scriptStruct.bindType()
   scriptStruct.staticLink(true)
-  scriptStruct.ueType = $ueType.toJson()
+  scriptStruct.setMetadata(UETypeMetadataKey, $scriptStruct.toJson())
   scriptStruct
 
 proc emitUStruct*[T](ueType: UEType, package: string): UFieldPtr =
@@ -672,7 +665,8 @@ proc emitUEnum*(enumType: UEType, package: UPackagePtr): UFieldPtr =
     enumFields.add(makeTPair(fieldName, field.key.int64))
     # uenum.setMetadata("DisplayName", "Whatever"&field.val.name)) TODO the display name seems to be stored into a metadata prop that isnt the one we usually use
   discard uenum.setEnums(enumFields)
-  uenum.ueType = $enumType.toJson()
+  uenum.setMetadata(UETypeMetadataKey, $enumType.toJson())
+
   uenum
 
 proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
