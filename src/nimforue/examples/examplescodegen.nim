@@ -13,12 +13,20 @@ uClass AActorCodegen of AActor:
     delTypeName : FString = "test"
     structPtrName : FString 
   ufuncs(CallInEditor):
-    proc genReflectionData() = 
+    proc genReflectionDataOnly() = 
+      try:
+        let ueProject =  genReflectionData(getAllInstalledPlugins(getNimForUEConfig()))
+       
+      except:
+        let e : ref Exception = getCurrentException()
+        UE_Error &"Error: {e.msg}"
+        UE_Error &"Error: {e.getStackTrace()}"
+        UE_Error &"Failed to generate reflection data"
+    
+    proc genReflectionDataAndBindings() = 
       try:
         execBindingsGenerationInAnotherThread()
-        # discard genReflectionData(getAllInstalledPlugins(getNimForUEConfig()))
-        # let rulesASJson = moduleRules.toJson().pretty()
-        # UE_Log rulesASJson
+       
       except:
         let e : ref Exception = getCurrentException()
         UE_Error &"Error: {e.msg}"
@@ -32,6 +40,12 @@ uClass AActorCodegen of AActor:
       UE_Warn $obj2
       UE_Warn $obj2
 
+    proc showTypeModule() = 
+      let obj = getUTypeByName[UField]("EFieldVectorType")
+
+      UE_Log $obj
+      if not obj.isNil():
+        UE_Log $obj.getModuleName()
 
     proc searchDelByName() = 
       let obj = getUTypeByName[UDelegateFunction](self.delTypeName&DelegateFuncSuffix)

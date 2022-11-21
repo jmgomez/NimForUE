@@ -20,6 +20,10 @@ uStruct FMyStructTest:
     c : bool
     e: float32
     f: float32
+    g: bool
+    g4: TArray[int]
+    g5 : UObjectPtr
+    g6 : FString
 
 uClass AActorScratchpad of AActor:
 # uClass AActorScratchpad of APlayerController:
@@ -30,7 +34,7 @@ uClass AActorScratchpad of AActor:
     myStruct : FMyStructTest
     structPtrName : FString 
   uprops(EditAnywhere, BlueprintReadWrite, Category=Whatever):
-    testB : int32 = 5  
+    testB : int32 = 9
                                                                                  
   uprops(EditAnywhere, BlueprintReadWrite):
     testC : int32 = 2     

@@ -6,6 +6,10 @@ import ../nimforue/nimforuebindings
 type 
   UEngine* {.importcpp, importcpp, pure .} = object of UObject
   UEnginePtr* {.importcpp, pure .} = ptr UEngine
+
+  USubsystem* {.importcpp, pure .} = object of UObject
+  USubsystemPtr* {.importcpp, pure .} = ptr USubsystem
+
   AActor* {.importcpp, inheritable, pure .} = object of UObject
   
   AActorPtr* = ptr AActor
@@ -119,8 +123,11 @@ type
   FInputDeviceId* {.importc .} = object
   FTopLevelAssetPath* {.importc .} = object
   FARFilter* {.importc .} = object
-  EFieldVectorType* {.importc .} = enum
-  
+
+  # UNetObjectPrioritizerConfig* {.importcpp .} = object of UObject
+  # UReplicationBridge* {.importcpp .} = object of UObject
+  # UNetBlobHandler* {.importcpp .} = object of UObject
+  # UPlatformSettings* {.importcpp .} = object of UObject
     
     
 
@@ -194,6 +201,8 @@ proc makeFHitResult*(): FHitResult {.importcpp:"FHitResult()", constructor.}
 
 type
   # FSlateBrush*  = object
+  FSlateColor* {.importcpp .} = object
+    
   FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
     # bIsDynamicallyLoaded*: uint8
     # imageType*: ESlateBrushImageType

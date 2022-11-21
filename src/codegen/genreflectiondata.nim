@@ -113,8 +113,14 @@ moduleRules["UMG"] = @[
 moduleRules["SlateCore"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FSlateBrush"
-  ])
+  ]),
+   makeImportedRuleField(uerIgnore, @[
+    "FComboButtonStyle",
+    "FFontOutlineSettings",
+    "FTextBlockStyle"
+  ]),
 ]
+
 moduleRules["DeveloperSettings"] = @[
   makeImportedRuleType(uerCodeGenOnlyFields, @[
     "UDeveloperSettings",
@@ -155,16 +161,20 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
               .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
               .foldl(a & b, newSeq[string]()) & @["NimForUEDemo"] #, "Engine", "UMG", "UnrealEd"]
 
-  UE_Log &"Plugins: {plugins}"
+  # UE_Log &"Plugins: {plugins}"
   #Cache with all modules so we dont have to collect the UETypes again per deps
   var modCache = newTable[string, UEModule]()
 
   proc getUEModuleFromModule(module: string): Option[UEModule] =
+    #TODO adds exclude deps as a rule per module
     var excludeDeps = @["CoreUObject", "AudioMixer", "MegascansPlugin"]
     if module == "Engine":
       excludeDeps.add "UMG"
+      excludeDeps.add "Chaos"
 
-    # if module == "UMG":
+    # if module == "SlateCore":
+    #   excludeDeps.add "Slate"
+    # # if module == "UMG":
     #   excludeDeps.add "MovieScene"
 
     var includeDeps = newSeq[string]() #MovieScene doesnt need to be bound
@@ -175,7 +185,7 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
     let rules = if module in moduleRules: moduleRules[module] else: @[bpOnlyRules]
 
-    UE_Log &"getUEModuleFromModule {module}"
+    
 
     if module notin modCache: #if it's in the cache the virtual modules are too.
       let ueMods = tryGetPackageByName(module)
@@ -252,7 +262,7 @@ proc genUnrealBindings*(plugins: seq[string]) =
     let ueProject = genReflectionData(plugins)
     # return
 
-    UE_Log $ueProject
+    # UE_Log $ueProject
     if ueProject.modules.isEmpty():
       UE_Log "No modules to generate"
       return

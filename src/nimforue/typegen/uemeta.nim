@@ -119,7 +119,9 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
 
 func getUnrealTypeFromName[T](name: FString): Option[UObjectPtr] =
   #ScriptStruct, Classes
-  tryUECast[UObject](getUTypeByName[T](name))
+  result = tryUECast[UObject](getUTypeByName[T](name))
+  if T is UEnum:
+    UE_Log &"Name: {name} result: {result}"
 
 func tryGetUTypeByName[T](name: FString): Option[ptr T] =
   #ScriptStruct, Classes
@@ -248,6 +250,7 @@ func tryParseJson[T](jsonStr: string): Option[T] =
 
 func getFirstBpExposedParent(parent: UClassPtr): UClassPtr =
   if parent.isBpExposed():
+    UE_Log &"Parent {parent.getName()} is exposed"
     parent
   else:
     getFirstBpExposedParent(parent.getSuperClass())
@@ -435,7 +438,7 @@ func getModuleNames*(ueType: UEType): seq[string] =
   func filterType(typeName: string): bool = typeName notin typesToSkip
   proc typeToModule(propType: string): Option[string] =
     getUnrealTypeFromName[UStruct](propType.removeFirstLetter().removeLastLettersIfPtr())
-      .chainNone(()=>getUnrealTypeFromName[UEnum](propType))
+      .chainNone(()=>getUnrealTypeFromName[UEnum](propType.extractTypeFromGenericInNimFormat("TEnumAsByte")))
       .chainNone(()=>getUnrealTypeFromName[UStruct](propType))
       .map((obj: UObjectPtr) => $obj.getModuleName())
 
@@ -482,6 +485,9 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     .deduplicate()
     .filterIt(it != name and it notin excludeDeps)
 
+  #TODO Per module add them to a virtual module
+  let excludedTypes = types.filterIt(it.getModuleNames().any(modName => modName in excludeDeps))
+  types = types.filterIt(it notin excludedTypes)
   #Virtual modules
   var virtModules = newSeq[UEModule]()
   for r in rules:
