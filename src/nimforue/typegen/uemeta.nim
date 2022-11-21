@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[times, strformat, tables, json, jsonUtils, strutils, options, sugar, algorithm, sequtils, hashes]
+import std/[times, strformat, tables, json, bitops, jsonUtils, strutils, options, sugar, algorithm, sequtils, hashes]
 import fproperty
 import models
 export models
@@ -120,8 +120,7 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
 func getUnrealTypeFromName[T](name: FString): Option[UObjectPtr] =
   #ScriptStruct, Classes
   result = tryUECast[UObject](getUTypeByName[T](name))
-  if T is UEnum:
-    UE_Log &"Name: {name} result: {result}"
+  UE_Log &"Name: {name} result: {result}"
 
 func tryGetUTypeByName[T](name: FString): Option[ptr T] =
   #ScriptStruct, Classes
@@ -135,11 +134,6 @@ func isBPExposed(str: UFieldPtr): bool = str.hasMetadata("BlueprintType")
 func isBPExposed(str: UScriptStructPtr): bool = str.hasMetadata("BlueprintType")
 
 func isBPExposed(cls: UClassPtr): bool =
-  #if  (cast[uint32](CLASS_Abstract) and cast[uint32](cls.classFlags)) != 0:
-  #    UE_Log &"Abstract class {cls.getName()}"
-
-  #if  (cast[uint32](ClASS_None) and cast[uint32](cls.classFlags)) != 0:
-  #    UE_Log &"Class None {cls.getName()}"
 
   cls.hasMetadata("BlueprintType") or
   cls.hasMetadata("BlueprintSpawnableComponent") or
@@ -252,7 +246,9 @@ func getFirstBpExposedParent(parent: UClassPtr): UClassPtr =
   if parent.isBpExposed():
     UE_Log &"Parent {parent.getName()} is exposed"
     parent
-  else:
+  else:    
+    UE_Log &"Parent {parent} is NOT exposed"
+
     getFirstBpExposedParent(parent.getSuperClass())
 
 func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
@@ -428,7 +424,7 @@ func getFPropertiesFrom*(ueType: UEType): seq[FPropertyPtr] =
 
 
 #returns all modules neccesary to reference the UEType
-func getModuleNames*(ueType: UEType): seq[string] =
+func getModuleNames*(ueType: UEType, excludeMods:seq[string]= @[]): seq[string] =
   #only uStructs based for now
   let typesToSkip = @["uint8", "uint16", "uint32", "uint64",
                       "int", "int8", "int16", "int32", "int64",
@@ -463,6 +459,7 @@ func getModuleNames*(ueType: UEType): seq[string] =
     .map(typeToModule)
     .sequence()
     .deduplicate()
+    .filterIt(it notin excludeMods)
 
 func getModuleHeader*(module: UEModule): seq[string] =
   module.types
@@ -479,14 +476,18 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules))
     .sequence()
 
+  let excludeFromModuleNames = @["CoreUObject", name]
   let deps = (types
-    .mapIt(it.getModuleNames())
+    .mapIt(it.getModuleNames(excludeFromModuleNames))
     .foldl(a & b, newSeq[string]()) & includeDeps)
     .deduplicate()
     .filterIt(it != name and it notin excludeDeps)
 
   #TODO Per module add them to a virtual module
-  let excludedTypes = types.filterIt(it.getModuleNames().any(modName => modName in excludeDeps))
+  let excludedTypes = types.filterIt(it.getModuleNames(excludeFromModuleNames).any(modName => modName in excludeDeps))
+  for t in excludedTypes:
+    UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(excludeFromModuleNames)}"
+
   types = types.filterIt(it notin excludedTypes)
   #Virtual modules
   var virtModules = newSeq[UEModule]()
@@ -495,6 +496,9 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
       let r = r
       let (virtualModuleTypes, types) = types.partition((x: UEType) => x.name in r.affectedTypes)
       virtModules.add UEModule(name: r.moduleName, types: virtualModuleTypes, isVirtual: true, dependencies: deps & name)
+
+  UE_Log &"Module: + {name} Types: {types.mapIt(it.name)} Excluded types: {excludedTypes.mapIt(it.name)}"
+  UE_Warn &"Module: + {name} excluded deps: {excludeDeps}"
 
   # UE_Log &"Deps for {name}: {deps}"
   var module = makeUEModule(name, types, rules, deps)

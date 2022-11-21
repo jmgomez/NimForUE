@@ -12,6 +12,9 @@ uClass AActorCodegen of AActor:
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "test"
     structPtrName : FString 
+    moduleName : FString
+    bOnlyBlueprint : bool 
+
   ufuncs(CallInEditor):
     proc genReflectionDataOnly() = 
       try:
@@ -57,3 +60,16 @@ uClass AActorCodegen of AActor:
       UE_Warn $obj.getOuter()
     
     
+    proc showUEModule() = 
+      let pkg = tryGetPackageByName(self.moduleName)
+      let rules = 
+        if self.bOnlyBlueprint:  
+          @[makeImportedRuleModule(uerImportBlueprintOnly)]
+        else: 
+          @[]
+
+      let modules = pkg.map((pkg:UPackagePtr) => pkg.toUEModule(rules, @[], @[])).get(@[])
+      UE_Log $modules.head().map(x=>x.types.mapIt(it.name))
+      UE_Log "Len " & $modules.len
+      UE_Log "Types " & $modules.head().map(x=>x.types).get(@[]).len
+        

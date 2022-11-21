@@ -13,10 +13,10 @@ type
   AActor* {.importcpp, inheritable, pure .} = object of UObject
   
   AActorPtr* = ptr AActor
-  # AController* {.importcpp, inheritable, pure .}= object of AActor
-  # AControllerPtr* = ptr AController
-  # APlayerController* {.importcpp, inheritable, pure .}= object of AController
-  # APlayerControllerPtr* = ptr APlayerController
+  AController* {.importcpp, inheritable, pure .}= object of AActor
+  AControllerPtr* = ptr AController
+  APlayerController* {.importcpp, inheritable, pure .}= object of AController
+  APlayerControllerPtr* = ptr APlayerController
   # APawn* {.importcpp, inheritable, pure .} = object of AActor
   # APawnPtr* = ptr APawn
 
@@ -65,7 +65,9 @@ type
   AVolumePtr* = ptr AVolume
   APhysicsVolume* {.importcpp, inheritable, pure .} = object of AVolume
   APhysicsVolumePtr* = ptr APhysicsVolume
-
+  
+  UAudioComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
+  UAudioComponentPtr* = ptr UAudioComponent
   # UGameInstanceSubsystem* {.importcpp, inheritable, pure .} = object of UObject
   # UGameInstanceSubsystemPtr* = ptr UGameInstanceSubsystem
   UWorldSubsystem* {.importcpp, inheritable, pure .} = object of UObject
@@ -84,7 +86,7 @@ type
   FHitResult* {.importc, bycopy} = object
     bBlockingHit: bool
 
-  UDeveloperSettings* {.importcpp .} = object of UObject
+  # UDeveloperSettings* {.importcpp .} = object of UObject
   UEdGraphNode* {.importcpp .} = object of UObject
 
   UStreamableRenderAsset* {.importcpp, inheritable, pure .} = object of UObject
@@ -124,6 +126,9 @@ type
   FTopLevelAssetPath* {.importc .} = object
   FARFilter* {.importc .} = object
 
+
+  EInputDeviceConnectionState* {.importc .} = enum
+    Connected, Disconnected, Unknown  
   # UNetObjectPrioritizerConfig* {.importcpp .} = object of UObject
   # UReplicationBridge* {.importcpp .} = object of UObject
   # UNetBlobHandler* {.importcpp .} = object of UObject
@@ -201,7 +206,6 @@ proc makeFHitResult*(): FHitResult {.importcpp:"FHitResult()", constructor.}
 
 type
   # FSlateBrush*  = object
-  FSlateColor* {.importcpp .} = object
     
   FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
     # bIsDynamicallyLoaded*: uint8

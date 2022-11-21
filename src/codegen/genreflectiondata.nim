@@ -4,6 +4,12 @@ import ../nimforue/typegen/uemeta
 import ../buildscripts/[nimforueconfig, buildscripts]
 import ../nimforue/macros/genmodule #not sure if it's worth to process this file just for one function? 
 
+
+
+#By default modules import only bp symbols because it's the safest option
+#The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
+let extraNonBpModules = ["DeveloperSettings"]
+
 let moduleRules = newTable[string, seq[UEImportRule]]()
 moduleRules["Engine"] = @[
   makeImportedRuleType(uerCodeGenOnlyFields, 
@@ -103,9 +109,12 @@ moduleRules["UMG"] = @[
   makeImportedRuleField(uerIgnore, @[
     "OnIsSelectingKeyChanged",
     "SlotAsSafeBoxSlot",
-
+    "UStackBoxSlot",
     "SetNavigationRuleCustomBoundary",
-    "SetNavigationRuleCustom"
+    "SetNavigationRuleCustom",
+
+    "FTextBlockStyle"
+
   ]),
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
@@ -120,12 +129,19 @@ moduleRules["SlateCore"] = @[
     "FTextBlockStyle"
   ]),
 ]
+moduleRules["Slate"] = @[
 
-moduleRules["DeveloperSettings"] = @[
-  makeImportedRuleType(uerCodeGenOnlyFields, @[
-    "UDeveloperSettings",
-  ])
+   makeImportedRuleField(uerIgnore, @[
+    "FComboButtonStyle",
+    "FTextBlockStyle"
+  ]),
 ]
+
+# moduleRules["DeveloperSettings"] = @[
+#   makeImportedRuleType(uerCodeGenOnlyFields, @[
+#     "UDeveloperSettings",
+#   ])
+# ]
 
 moduleRules["UnrealEd"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
@@ -167,10 +183,11 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
 
   proc getUEModuleFromModule(module: string): Option[UEModule] =
     #TODO adds exclude deps as a rule per module
-    var excludeDeps = @["CoreUObject", "AudioMixer", "MegascansPlugin"]
+    var excludeDeps = @["CoreUObject"]
     if module == "Engine":
       excludeDeps.add "UMG"
       excludeDeps.add "Chaos"
+      excludeDeps.add "AudioMixer"
 
     # if module == "SlateCore":
     #   excludeDeps.add "Slate"
@@ -183,9 +200,15 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
 
     #By default all modules that are not in the list above will only export BlueprintTypes
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
-    let rules = if module in moduleRules: moduleRules[module] else: @[bpOnlyRules]
-
     
+    let rules = 
+      if module in moduleRules: 
+        moduleRules[module] 
+      elif module in extraNonBpModules: 
+        @[]
+      else: 
+        @[bpOnlyRules]
+
 
     if module notin modCache: #if it's in the cache the virtual modules are too.
       let ueMods = tryGetPackageByName(module)
