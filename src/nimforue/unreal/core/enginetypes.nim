@@ -41,13 +41,14 @@ type
   UBlueprint* {.importcpp, inheritable, pure .} = object of UObject
   UBlueprintPtr* = ptr UBlueprint
 
+
   # UBlueprintFunctionLibrary* {.importcpp, inheritable, pure .} = object of UObject
   UBlueprintGeneratedClass* {.importcpp, inheritable, pure .} = object of UClass
   UBlueprintGeneratedClassPtr* = ptr UBlueprintGeneratedClass
   UAnimBlueprintGeneratedClass* {.importcpp, inheritable, pure .} = object of UBlueprintGeneratedClass
   UAnimBlueprintGeneratedClassPtr* = ptr UAnimBlueprintGeneratedClass
 
-
+  
   # UTexture* {.importcpp, inheritable, pure .} = object of UObject
   # UTexturePtr* = ptr UTexture
   # UTextureRenderTarget2D* {.importcpp, inheritable, pure .} = object of UTexture

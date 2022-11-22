@@ -9,17 +9,31 @@ import ../nimforue/macros/genmodule #not sure if it's worth to process this file
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
 let extraNonBpModules = ["DeveloperSettings"]
+#CodegenOnly directly affects the Engine module but needs to be passed around
+#for all modules because the one classes listed here are importc one so we dont mangle them 
 
-let moduleRules = newTable[string, seq[UEImportRule]]()
-moduleRules["Engine"] = @[
-  makeImportedRuleType(uerCodeGenOnlyFields, 
+  #There is one main header that pulls the rest.
+  #Every other header is in the module paths
+  # let validCppParents = []
+    # ["UObject", "AActor", "UInterface",
+    #   "AVolume", "USoundWaveProcedural",
+    #   # "AController",
+    #   "USceneComponent",
+    #   "UActorComponent",
+    #   "UBlueprint",
+    #   # "UBlueprintFunctionLibrary",
+    #   "UBlueprintGeneratedClass",
+    #   # "APlayerController",
+    #   ] #TODO this should be introduced as param
+let codeGenOnly = makeImportedRuleType(uerCodeGenOnlyFields, 
     @[
       "AActor", "UReflectionHelpers", "UObject",
       "UField", "UStruct", "UScriptStruct", "UPackage",
       "UClass", "UFunction", "UDelegateFunction",
-      "UEnum", "AVolume",
-      "UActorComponent",
-      "UBlueprint",
+      "UEnum", "AVolume", "UInterface", "USoundWaveProcedural",
+      "UActorComponent","AController",
+      "UBlueprint", "UBlueprintGeneratedClass",
+      "APlayerController", 
       #UMG Created more than once.
 
       # "UPrimitiveComponent", "UPhysicalMaterial", "AController",
@@ -50,7 +64,11 @@ moduleRules["Engine"] = @[
       # "FKey",
       # "FFastArraySerializer"
     
-    ]), 
+    ])
+
+let moduleRules = newTable[string, seq[UEImportRule]]()
+moduleRules["Engine"] = @[
+    codegenOnly, 
     makeImportedRuleType(uerIgnore, @[
     "FVector", "FSlateBrush",
     "FHitResult",
@@ -150,6 +168,13 @@ moduleRules["UnrealEd"] = @[
   ])
 ]
 
+moduleRules["MegascansPlugin"] = @[
+  makeImportedRuleModule(uerImportBlueprintOnly),
+  makeImportedRuleField(uerIgnore, @[
+      "Get"
+  ])
+]
+
 moduleRules["EditorSubsystem"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
@@ -203,11 +228,11 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
     
     let rules = 
       if module in moduleRules: 
-        moduleRules[module] 
+        moduleRules[module] & codeGenOnly
       elif module in extraNonBpModules: 
-        @[]
+        @[codeGenOnly]
       else: 
-        @[bpOnlyRules]
+        @[bpOnlyRules, codeGenOnly]
 
 
     if module notin modCache: #if it's in the cache the virtual modules are too.

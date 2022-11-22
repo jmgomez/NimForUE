@@ -235,22 +235,17 @@ macro genUFun*(className: static string, funField: static UEField): untyped =
 
 
 proc genHeaders*(moduleDef: UEModule, headersPath: string) =
-  #There is one main header that pulls the rest.
-  #Every other header is in the module paths
-  let validCppParents =
-    ["UObject", "AActor", "UInterface",
-      "AVolume", "USoundWaveProcedural",
-      # "AController",
-      "USceneComponent",
-      "UActorComponent",
-      "UBlueprint",
-      # "UBlueprintFunctionLibrary",
-      "UBlueprintGeneratedClass",
-      # "APlayerController",
-      "UDeveloperSettings"] #TODO this should be introduced as param
 
-  let getParentName = (uet: UEType) => uet.parent &
-      (if uet.parent in validCppParents or uerCodeGenOnlyFields == getAllMatchingRulesForType(moduleDef, uet): "" else: "_")
+  let validCppParents = moduleDef
+                        .rules
+                        .filter(rule=>rule.rule == uerCodeGenOnlyFields)
+                        .mapIt(it.affectedTypes)
+                        .head()
+                        .get(@[])
+  
+  func getParentName(uet: UEType) : string =
+    uet.parent & (if uet.parent in validCppParents: "" else: "_")
+
 
   let classDefs = moduleDef.types
     .filterIt(it.kind == uetClass and uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it))

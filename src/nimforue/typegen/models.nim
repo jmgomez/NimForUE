@@ -93,7 +93,7 @@ type
         uerImportBlueprintOnly #affects all types and all target. If set, it will only import the blueprint types.
         uerVirtualModule
         uerInnerClassDelegate #Some delegates are declared withit a class and can collide. This rule is for when both are true
-
+    
     UERuleTarget* = enum 
         uertType
         uertField
@@ -132,6 +132,7 @@ makeStrProc(UEType)
 makeStrProc(UEImportRule)
 makeStrProc(UEModule)
 makeStrProc(UEProject)
+
 
 
 # #ONLY FOR Delagates that matches the rule innerClassDelegate
@@ -199,7 +200,7 @@ func getAllMatchingRulesForType*(module:UEModule, ueType:UEType) : UERule =
                         rule.affectedTypes.any(name=>name==ueType.name) or 
                         rule.target == uertModule)
                 .map((rule:UEImportRule) => rule.rule)
-    if rules.any(): rules[0]#.foldl(a or b)
+    if rules.any(): rules[0]#.foldl(a or b, uerNone)
     else: uerNone
 
 

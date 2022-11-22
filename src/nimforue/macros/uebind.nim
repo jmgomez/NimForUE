@@ -81,7 +81,7 @@ func identWrapper*(name:string) : NimNode = ident(name) #cant use ident as argum
 func identPublic*(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
 
 func nimToCppConflictsFreeName*(propName:string) : string = 
-  let reservedCppKeywords = ["template", "operator", "enum"]
+  let reservedCppKeywords = ["template", "operator", "enum", "class"]
   if propName in reservedCppKeywords: propName.firstToUpper() else: propName
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
@@ -368,7 +368,7 @@ proc genDelType*(delType:UEType, exposure:UEExposure) : NimNode =
 
 
 func getFieldIdent*(prop:UEField) : NimNode = 
-  let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1))
+  let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()
   identPublic fieldName
 
 #TODO rename this dont use single letter variables
