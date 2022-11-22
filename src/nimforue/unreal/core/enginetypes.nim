@@ -223,7 +223,6 @@ type
     ImageSize*: FVector2D
 
 
-proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)".} 
 
 #	void ForceGarbageCollection(bool bFullPurge = false);
 proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.importcpp: "#->ForceGarbageCollection(#)".}
@@ -247,3 +246,14 @@ proc `rootComponent`*(obj : AActorPtr): TObjectPtr[USceneComponent] {.
 
 
 
+
+type EGetWorldErrorMode* {.importcpp, size: sizeof(uint8).} = enum
+  ReturnNull,
+  LogAndReturnNull,
+  Assert
+  
+##ENGINE
+#UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const
+proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)".} 
+
+proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGetWorldErrorMode) : UWorldPtr  {.importcpp: "#->GetWorldFromContextObject(#, #)".}
