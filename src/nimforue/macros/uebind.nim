@@ -5,7 +5,7 @@ import ../utils/ueutils
 
 import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
-import ../typegen/[nuemacrocache, models]
+import ../typegen/[nuemacrocache, models, modelconstructor]
 
 func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
 func isOutParam*(field:UEField) : bool = 
@@ -260,6 +260,85 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
 
   # debugEcho repr result
   # debugEcho treeRepr result
+
+
+func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFunctionFlags, seq[UEMetadata]) = 
+    var flags = FUNC_Native or FUNC_Public
+    var metas : seq[UEMetadata]
+    func hasMeta(meta:string) : bool = fn.pragma.children.toSeq().any(n=> repr(n).toLower()==meta.toLower()) or 
+                                        functionsMetadata.any(metadata=>metadata.name.toLower()==meta.toLower())
+
+    if hasMeta("BlueprintPure"):
+        flags = flags | FUNC_BlueprintPure | FUNC_BlueprintCallable
+    if hasMeta("BlueprintCallable"):
+        flags = flags | FUNC_BlueprintCallable
+    if hasMeta("BlueprintImplementableEvent"):
+        flags = flags | FUNC_BlueprintEvent | FUNC_BlueprintCallable
+    if hasMeta("Static"):
+        flags = flags | FUNC_Static
+    if hasMeta("CallInEditor"):
+        metas.add(makeUEMetadata("CallInEditor"))
+        
+    (flags, metas)
+
+func makeUEFieldFromNimParamNode*(n:NimNode) : UEField = 
+    #make sure there is no var at this point, but CPF_Out
+
+    var nimType = n[1].repr.strip()
+    let paramName = n[0].strVal()
+    var paramFlags = CPF_Parm
+    if nimType.split(" ")[0] == "var":
+        paramFlags = paramFlags | CPF_OutParm
+        nimType = nimType.split(" ")[1]
+    makeFieldAsUPropParam(paramName, nimType, paramFlags)
+
+
+
+
+#converts a NimNode (proc) in to a UField of type Func
+#first is the param specify on ufunctions when specified one. Otherwise it will use the first
+#parameter of the function
+#returns Fn and the FirstParam (which is the class)
+proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[UEMetadata] = @[]) : (UEField,UEField) =  
+    #this will generate a UEField for the function 
+    #and then call genNativeFunction passing the body
+
+    #converts the params to fields (notice returns is not included)
+    let fnName = fn[0].strVal().firstToUpper()
+    let formalParamsNode = fn.children.toSeq() #TODO this can be handle in a way so multiple args can be defined as the smae type
+                             .filter(n=>n.kind==nnkFormalParams)
+                             .head()
+                             .get(newEmptyNode()) #throw error?
+                             .children
+                             .toSeq()
+
+    let fields = formalParamsNode
+                    .filter(n=>n.kind==nnkIdentDefs)
+                    .map(makeUEFieldFromNimParamNode)
+
+
+    #For statics funcs this is also true becase they are only allow
+    #in ufunctions macro with the parma.
+    let firstParam = classParam.chainNone(()=>fields.head()).getOrRaise("Class not found. Please use the ufunctions macr and specify the type there if you are trying to define a static function. Otherwise, you can also set the type as first argument")
+    let className = firstParam.uePropType.removeLastLettersIfPtr()
+    
+
+    let returnParam = formalParamsNode #for being void it can be empty or void
+                        .first(n=>n.kind==nnkIdent)
+                        .flatMap((n:NimNode)=>(if n.strVal()=="void": none[NimNode]() else: some(n)))
+                        .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
+
+    let actualParams = classParam.map(n=>fields) #if there is class param, first param would be use as actual param
+                                 .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
+    
+    
+    var flagMetas = getFunctionFlags(fn, functionsMetadata)
+    if actualParams.any(isOutParam):
+        flagMetas[0] = flagMetas[0] or FUNC_HasOutParms
+
+
+    let fnField = makeFieldAsUFun(fnName, actualParams, className, flagMetas[0], flagMetas[1])
+    (fnField, firstParam)
 
 
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =

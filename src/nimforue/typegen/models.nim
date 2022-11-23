@@ -310,3 +310,6 @@ func `==`*(a, b:UEType) : bool =
             # a.structFlags == b.structFlags
         of uetEnum: true
         of uetDelegate: true))
+
+
+
