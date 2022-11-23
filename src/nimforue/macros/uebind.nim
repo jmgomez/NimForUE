@@ -341,6 +341,9 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
     (fnField, firstParam)
 
 
+
+
+
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =
 
   let props = nnkStmtList.newTree(
@@ -588,5 +591,20 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexD
 
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
 
+macro uebind*(clsName : static string = "", fn:untyped) : untyped = 
+  let clsFieldMb = 
+    if clsName!="": some makeFieldAsUProp("obj", clsName) 
+    else: none[UEField]()
 
+  var (fnField, firstParam) = uFuncFieldFromNimNode(fn, clsFieldMb, @[])
+  if clsFieldMb.isSome:
+    fnField.fnFlags = FUNC_Static
+  #Generates a fake class form the classField. 
+  let typeDefFn = makeUEClass(firstParam.uePropType, parent="", CLASS_None, @[fnField])
+  result = genFunc(typeDefFn, fnField)
+  # echo repr result
+  # echo treeRepr fn
+  # echo $fnField
+  # echo $firstParam
 
+  # newEmptyNode()
