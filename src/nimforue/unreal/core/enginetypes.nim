@@ -10,6 +10,12 @@ type
   USubsystem* {.importcpp, pure .} = object of UObject
   USubsystemPtr* {.importcpp, pure .} = ptr USubsystem
 
+  UDynamicSubsystem* {.importcpp, pure .} = object of USubsystem
+  UDynamicSubsystemPtr* {.importcpp, pure .} = ptr UDynamicSubsystem
+
+  UEngineSubsystem* {.importcpp, pure .} = object of UDynamicSubsystem
+  UEngineSubsystemPtr* {.importcpp, pure .} = ptr UEngineSubsystem
+
   AActor* {.importcpp, inheritable, pure .} = object of UObject
   
   AActorPtr* = ptr AActor
@@ -71,7 +77,7 @@ type
   UAudioComponentPtr* = ptr UAudioComponent
   # UGameInstanceSubsystem* {.importcpp, inheritable, pure .} = object of UObject
   # UGameInstanceSubsystemPtr* = ptr UGameInstanceSubsystem
-  UWorldSubsystem* {.importcpp, inheritable, pure .} = object of UObject
+  UWorldSubsystem* {.importcpp, inheritable, pure .} = object of USubsystem
   UWorldSubsystemPtr* = ptr UWorldSubsystem
   UTickableWorldSubsystem* {.importcpp, inheritable, pure .} = object of UObject
   UTickableWorldSubsystemPtr* = ptr UTickableWorldSubsystem

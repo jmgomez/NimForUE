@@ -53,7 +53,7 @@ uClass AActorCodegen of AActor:
     proc searchDelByName() = 
       let obj = getUTypeByName[UDelegateFunction](self.delTypeName&DelegateFuncSuffix)
       if obj.isNil(): 
-        UE_Error &"Error del is null"
+        UE_Error &"Error del is null. Provide a type name"
         return
 
       UE_Warn $obj

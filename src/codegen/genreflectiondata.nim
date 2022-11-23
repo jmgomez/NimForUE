@@ -34,6 +34,7 @@ let codeGenOnly = makeImportedRuleType(uerCodeGenOnlyFields,
       "UActorComponent","AController",
       "UBlueprint", "UBlueprintGeneratedClass",
       "APlayerController", 
+      "UEngineSubsystem", "USubsystem", "UDynamicSubsystem", "UWorldSubsystem",
       #UMG Created more than once.
 
       # "UPrimitiveComponent", "UPhysicalMaterial", "AController",

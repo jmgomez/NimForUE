@@ -2,12 +2,12 @@ include ../unreal/prelude
 import std/[times, strformat, tables, json, bitops, jsonUtils, strutils, options, sugar, algorithm, sequtils, hashes]
 import fproperty
 import models
-import modelconstructor
-export modelconstructor
+include modelconstructor #For some odd reason if this is not included but imported the make* arent visible here?
 export models
 
 
 const fnPrefixes = @["", "Receive", "K2_"]
+
 
 
 func isTArray(prop: FPropertyPtr): bool = not castField[FArrayProperty](prop).isNil()

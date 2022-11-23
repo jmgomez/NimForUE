@@ -148,6 +148,9 @@ proc isChildOf*[T:UObject](cls: UClassPtr) : bool =
     let someBase = staticClass[T]()
     isChildOf(cls, someBase)
 
+
+proc isChildOf*[C:UStruct, P:UStruct] : bool = isChildOf(staticClass[C](), staticClass[P]())
+
 proc getDefaultObject*[T:UObject]() : ptr T =
     let cls = staticClass[T]()
     ueCast[T](cls.getDefaultObject())

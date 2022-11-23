@@ -1,8 +1,7 @@
 ##This file is temp until we move the uobjectflags into models
 ##There is a cycle between uemeta (were it initialized lived) and uebind via nimforue.nim. 
 ##The solution is to allow uobjectflags in models but then we need to get rid of 
-include ../unreal/prelude
-
+import ../unreal/coreuobject/uobjectflags
 import models
 
 
