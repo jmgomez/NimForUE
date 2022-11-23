@@ -10,6 +10,8 @@ import ../macros/makestrproc
 
 
 const UETypeMetadataKey* = "UEType"
+const ClassConstructorMetadataKey* = "ClassConstructor"
+const NimClassMetadataKey* = "NimClass"
 
 type
     EPropertyFlagsVal* = distinct(uint64)

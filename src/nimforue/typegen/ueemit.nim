@@ -94,7 +94,7 @@ proc prepReinst(prev:UObjectPtr) =
     let oldClassName = makeUniqueObjectName(getTransientPackage(), prev.getClass(), makeFName(prevNameStr))
     discard prev.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
-proc prepareForReinst(prevClass : UNimClassBasePtr) = 
+proc prepareForReinst(prevClass : UClassPtr) = 
     # prevClass.classFlags = prevClass.classFlags | CLASS_NewerVersionExists
     prevClass.addClassFlag CLASS_NewerVersionExists
     prepReinst(prevClass)
@@ -110,7 +110,7 @@ proc prepareForReinst(prevUEnum : UNimEnumPtr) =
     prepReinst(prevUEnum)
 
 
-type UEmitable = UNimScriptStruct | UNimClassBase | UDelegateFunction | UEnum
+type UEmitable = UNimScriptStruct | UClass | UDelegateFunction | UEnum
         
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T], isFirstLoad:bool) : Option[ptr T]= 
@@ -156,7 +156,7 @@ template registerDeleteUType(T : typedesc, package:UPackagePtr, executeAfterDele
 proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, package :UPackagePtr)  =    
     #iterate all UNimClasses, if they arent not reintanced already (name) and they dont exists in the type emitted this round, they must be deleted
     let getEmitterByName = (name:FString) => ueEmitter.emitters.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
-    registerDeleteUType(UNimClassBase, package):
+    registerDeleteUType(UClass, package):
         hotReloadInfo.deletedClasses.add(instance)
     registerDeleteUType(UNimScriptStruct, package):
         hotReloadInfo.deletedStructs.add(instance)
@@ -191,27 +191,18 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
             of uetClass:                
                 let clsName = emitter.ueType.name.removeFirstLetter()
 
-                let prevClassPtr = someNil getUTypeByName[UNimClassBase](clsName)
+                let prevClassPtr = someNil getClassByName(clsName)
                 let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr, not wasAlreadyLoaded)
 
                 if prevClassPtr.isNone() and newClassPtr.isSome():
                     hotReloadInfo.newClasses.add(newClassPtr.get())
                 if prevClassPtr.isSome() and newClassPtr.isSome():
                    
-                    prevClassPtr.get().prepareNimClass()
-                    #update each properties for the cdo. 
-                    for prevInstance in getAllObjectsFromPackage[UNimClassBase](pkg):
-                        if clsName in prevInstance.getName() and ReinstSuffix in prevInstance.getName():
-                            prevInstance.newNimClass = newClassPtr.get()
-
-                            
-
-
+                    # prevClassPtr.get().prepareNimClass()
                     hotReloadInfo.classesToReinstance.add(prevClassPtr.get(), newClassPtr.get())
 
                 if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated
                     let ctor = ueEmitter.clsConstructorTable.tryGet(emitter.ueType.name)
-                    UE_Log &"Updating constructor for {emitter.ueType.name}"
                     prevClassPtr.get().setClassConstructor(ctor.map(ctor=>ctor.fn).get(defaultClassConstructor))
 
             of uetEnum:

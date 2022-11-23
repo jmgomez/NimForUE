@@ -10,7 +10,7 @@ import ../macros/genmodule #not sure if it's worth to process this file just for
 uClass AActorCodegen of AActor:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite):
-    delTypeName : FString = "test"
+    delTypeName : FString = "test5"
     structPtrName : FString 
     moduleName : FString
     bOnlyBlueprint : bool 

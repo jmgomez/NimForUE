@@ -540,7 +540,7 @@ proc emitUFunction*(fnField: UEField, cls: UClassPtr, fnImpl: Option[UFunctionNa
 
 
 proc isNotNil[T](x: ptr T): bool = not x.isNil()
-proc isNimClassBase(cls: UClassPtr): bool = ueCast[UNimClassBase](cls) != nil
+proc isNimClassBase(cls: UClassPtr): bool = cls.isNimClass()
 
 
 proc defaultClassConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
@@ -562,7 +562,7 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
   const objClsFlags = (RF_Public | RF_Transient | RF_Transactional | RF_WasLoaded | RF_MarkAsNative)
 
   let
-    newCls = newUObject[UNimClassBase](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
+    newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
     parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
 
   let parent = parentCls
@@ -583,6 +583,7 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
   copyMetadata(parent, newCls)
   newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType. BlueprintType should be producing this
   newCls.setMetadata("BlueprintType", "true") #todo move to ueType
+  newCls.markAsNimClass()
   for metadata in ueType.metadata:
     newCls.setMetadata(metadata.name, $metadata.value)
 
@@ -605,7 +606,7 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
 
   newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultClassConstructor))
   clsConstructor.run(proc (cons: CtorInfo) =
-    newCls.constructorSourceHash = cons.hash
+    newCls.setMetadata(ClassConstructorMetadataKey, cons.hash)
   )
 
   newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())

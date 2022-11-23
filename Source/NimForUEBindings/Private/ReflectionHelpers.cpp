@@ -210,4 +210,8 @@ bool UReflectionHelpers::ContainsStrongReference(FProperty* Property) {
 	return Property->ContainsObjectReference(EncounteredStructProps, EPropertyObjectReferenceType::Strong);
 }
 
+void UReflectionHelpers::SetClassConstructor(UClass* Class, void(* NimClassConstructor)(FObjectInitializer&)) {
+	Class->ClassConstructor = reinterpret_cast< void(*)(const FObjectInitializer&)>(NimClassConstructor);
+}
+
 //

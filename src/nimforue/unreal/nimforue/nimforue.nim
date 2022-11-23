@@ -55,7 +55,7 @@ iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr =
 
 func getFirstCppClass*(cls:UClassPtr) : UClassPtr =
     for super in getClassHierarchy(cls):
-        if tryUECast[UNimClassBase](super).isSome():
+        if super.isNimClass():
             continue
         return super
 

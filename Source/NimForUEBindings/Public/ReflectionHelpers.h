@@ -117,5 +117,10 @@ public:
 	static int ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOut, FString& StdError);
 
 	static bool ContainsStrongReference(FProperty* Property);
+	
+	static void SetClassConstructor(UClass* Class, void (*NimClassConstructor) (FObjectInitializer&));
+
+
+	
 };
 
