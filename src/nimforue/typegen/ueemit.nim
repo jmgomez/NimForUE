@@ -79,8 +79,8 @@ proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) :
     ueEmitter.emitters = ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == ueField.className, emitter)
 
 
-proc getEmmitedTypes() : seq[UEType] = 
-    ueEmitter.emitters.map(e=>e.ueType)
+proc getEmmitedTypes(emitter: UEEmitterRaw) : seq[UEType] = 
+    emitter.emitters.map(e=>e.ueType)
 
 const ReinstSuffix = "_Reinst"
 
@@ -238,7 +238,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
 
     #Updates function pointers (after a few reloads they got out scope)
     for fnName, fnPtr in ueEmitter.fnTable:
-        let funField = getFieldByName(getEmmitedTypes(), fnName)
+        let funField = getFieldByName(getEmmitedTypes(ueEmitter), fnName)
         let prevFn = funField
                         .flatmap((ff:UEField)=> 
                                 tryGetClassByName(ff.className.removeFirstLetter())
