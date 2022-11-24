@@ -214,12 +214,9 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
                 if prevEnumPtr.isSome() and newEnumPtr.isSome():
                     hotReloadInfo.enumsToReinstance.add(prevEnumPtr.get(), newEnumPtr.get())
 
-
             of uetDelegate:
                 let prevDelPtr = someNil getUTypeByName[UDelegateFunction](emitter.ueType.name.removeFirstLetter() & DelegateFuncSuffix)
                 let newDelPtr = emitUStructInPackage(pkg, emitter, prevDelPtr, not wasAlreadyLoaded)
-                UE_Warn &"Prev Delegate is {prevDelPtr.isSome()}"
-                UE_Warn &"New Delegate is {newDelPtr.isSome()}"
                 if prevDelPtr.isNone() and newDelPtr.isSome():
                     hotReloadInfo.newDelegatesFunctions.add(newDelPtr.get())
                 if prevDelPtr.isSome() and newDelPtr.isSome():

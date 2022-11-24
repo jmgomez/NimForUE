@@ -19,6 +19,7 @@ proc makeTMap*[K, V]() : TMap[K, V] = makeTMapPriv(K, V)
 
 proc add*[K, V](map : TMap[K, V], pair:TPair[K, V]) : void  {.importcpp: "#.Add(@)", .}
 proc add*[K, V](map : TMap[K, V], k:K, v:V) : void  {.importcpp: "#.Add(@)", .}
+proc remove*[K, V](map : TMap[K, V], k:K) : void  {.importcpp: "#.Remove(@)", .}
 
 proc num*[K, V](arr:TMap[K, V]): int32 {.importcpp: "#.Num()" noSideEffect}
 proc len*[K, V](arr:TMap[K, V]): int = arr.num()

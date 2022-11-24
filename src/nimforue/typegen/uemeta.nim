@@ -516,9 +516,12 @@ proc emitUFunction*(fnField: UEField, cls: UClassPtr, fnImpl: Option[UFunctionNa
 
   if superFn.isSome():
     let sFn = superFn.get()
-    fn.functionFlags = fn.functionFlags | (sFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms))
+    fn.functionFlags = (fn.functionFlags | (sFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms)))
+
     copyMetadata(sFn, fn)
+    fn.setMetadata("ToolTip", fn.getMetadata("ToolTip").get()&" vNim")
     setSuperStruct(fn, sFn)
+
 
   fn.Next = cls.Children
   cls.Children = fn
@@ -526,9 +529,9 @@ proc emitUFunction*(fnField: UEField, cls: UClassPtr, fnImpl: Option[UFunctionNa
   for field in fnField.signature.reversed():
     let fprop = field.emitFProperty(fn)
 
-  for metadata in fnField.metadata:
-    UE_Error metadata.name
-    fn.setMetadata(metadata.name, $metadata.value)
+  if superFn.isNone():
+    for metadata in fnField.metadata:
+      fn.setMetadata(metadata.name, $metadata.value)
 
   cls.addFunctionToFunctionMap(fn, fnName)
   if fnImpl.isSome(): #blueprint implementable events doesnt have a function implementation

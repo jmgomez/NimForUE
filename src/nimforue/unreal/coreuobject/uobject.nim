@@ -234,6 +234,7 @@ func `$`*(prop:FPropertyPtr):string=
   &"Prop: {prop.getName()} CppType: {prop.getCppType()} Flags: {prop.getPropertyFlags()} Metadata: {prop.getMetadataMap()}"
 
 
+
 #USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
 
@@ -287,6 +288,13 @@ proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. 
 proc `$`*(obj:UObjectPtr) : string = 
     if obj.isNil(): "nill"
     else: $obj.getName()
+
+func `$`*(fn:UFunctionPtr):string = 
+  let metadataMap = fn.getMetadataMap()
+  metadataMap.remove(n"Comment")
+  metadataMap.remove(n"ToolTip")
+    #PROPS?
+  &"""Func: {fn.getName()} Flags: {fn.functionFlags} Metadata: {metadataMap}"""
     
 
 #bool UClass::Rename( const TCHAR* InName, UObject* NewOuter, ERenameFlags Flags )
