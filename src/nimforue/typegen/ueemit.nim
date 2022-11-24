@@ -668,9 +668,9 @@ macro uConstructor*(fn:untyped) : untyped =
 
 func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) : NimNode = 
     let metas = funcBlock.childrenAsSeq()
-                    .filter(n=>n.kind==nnkIdent)
-                    .map(n=>n.strVal().strip())
-                    .map(makeUEMetadata)
+                    .tail() #skip ufunc and variations
+                    .filterIt(it.kind==nnkIdent or it.kind==nnkExprEqExpr)
+                    .map(fromNinNodeToMetadata)
     #TODO add first parameter
     let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), CPF_None) #notice no generic/var allowed. Only UObjects
    

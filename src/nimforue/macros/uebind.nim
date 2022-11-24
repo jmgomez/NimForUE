@@ -264,7 +264,6 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
 
 func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFunctionFlags, seq[UEMetadata]) = 
     var flags = FUNC_Native or FUNC_Public
-    var metas : seq[UEMetadata]
     func hasMeta(meta:string) : bool = fn.pragma.children.toSeq().any(n=> repr(n).toLower()==meta.toLower()) or 
                                         functionsMetadata.any(metadata=>metadata.name.toLower()==meta.toLower())
 
@@ -276,10 +275,8 @@ func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFuncti
         flags = flags | FUNC_BlueprintEvent | FUNC_BlueprintCallable
     if hasMeta("Static"):
         flags = flags | FUNC_Static
-    if hasMeta("CallInEditor"):
-        metas.add(makeUEMetadata("CallInEditor"))
-        
-    (flags, metas)
+    
+    (flags, functionsMetadata)
 
 func makeUEFieldFromNimParamNode*(n:NimNode) : UEField = 
     #make sure there is no var at this point, but CPF_Out

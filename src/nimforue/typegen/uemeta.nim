@@ -528,6 +528,8 @@ proc emitUFunction*(fnField: UEField, cls: UClassPtr, fnImpl: Option[UFunctionNa
 
   for field in fnField.signature.reversed():
     let fprop = field.emitFProperty(fn)
+  
+  UE_Log &"FNName: {fn.getName()} Metadata {fnField.metadata}"
 
   if superFn.isNone():
     for metadata in fnField.metadata:
