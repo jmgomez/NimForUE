@@ -151,6 +151,9 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
   var nimType = prop.getNimTypeAsStr(outer)
   if "TEnumAsByte" in nimType:
     nimType = nimType.extractTypeFromGenericInNimFormat("TEnumAsByte")
+  if "TObjectPtr" in nimType:
+    let objType = nimType.extractTypeFromGenericInNimFormat("TObjectPtr")
+    nimType = nimType.replace(&"TObjectPtr[{objType}]", objType & "Ptr")
 
   for rule in rules:
     if rule.target == uerTField and rule.rule == uerIgnore and
@@ -171,18 +174,14 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
   if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules):
     some makeFieldAsUProp(name, nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
   else:
-    # UE_Log &"Ignoring {prop.getName()} because it is not exposed to blueprint"
-    # UE_Log nimType
     none(UEField)
 
 
 func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): Option[UEField] =
-  # let asDel = ueCast[UDelegateFunction](ufun)
-  # if not asDel.isNil(): return toUEField asDel
+
   let paramsMb = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun, rules))
   let params = paramsMb.sequence()
   let allParamsExposedToBp = len(params) == len(paramsMb)
-  # UE_Warn(fmt"{ufun.getName()}")
   let class = ueCast[UClass](ufun.getOuter())
   let className = class.getPrefixCpp() & class.getName()
   let actualName: string = uFun.getName()
@@ -262,8 +261,6 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[]): Option[UE
     str.getMetadata(UETypeMetadataKey)
        .flatMap((x:FString)=>tryParseJson[UEType](x))
   
-  UE_Log &"toUEType {storedUEType}"
-
   if storedUEType.isSome(): return storedUEType
 
   let name = str.getPrefixCpp() & str.getName()

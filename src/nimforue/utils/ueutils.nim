@@ -11,10 +11,15 @@ func appendCloseGenIfOpen*(str: string) : string =
   if "[" in str and "]" notin str: str & "]"
   else: str
 #use multireplace
-proc extractTypeFromGenericInNimFormat*(str :string, ignore="") : string = 
-    var generic, inner : string
-    if scanf(str, "$*[$*]", generic, inner): appendCloseGenIfOpen(inner)
-    else: str
+proc extractTypeFromGenericInNimFormat*(str :string, genericType : static string="") : string = 
+    if genericType=="":
+        var generic, inner : string
+        if scanf(str, "$*[$*]", generic, inner): appendCloseGenIfOpen(inner)
+        else: str
+    else:
+        var inner : string
+        if scanf(str, genericType&"[$*]", inner): appendCloseGenIfOpen(inner)
+        else: str
 
 
 proc extractOuterGenericInNimFormat*(str :string) : string = 

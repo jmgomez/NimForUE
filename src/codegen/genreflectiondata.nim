@@ -76,7 +76,8 @@ moduleRules["Engine"] = @[
     #issue with a field name 
     "FTransformConstraint", 
     "UKismetMathLibrary", #issue with the funcs?,
-    "FOnTemperatureChangeDelegate" #Mac gets stuck here?
+    "FOnTemperatureChangeDelegate", #Mac gets stuck here?,
+    # "UParticleSystem", #collision with a function name and Cascade is deprecated, use Niagara instead.
     ]), 
     
   makeImportedRuleField(uerIgnore, @[
@@ -86,7 +87,7 @@ moduleRules["Engine"] = @[
     "EvaluatorMode",
     "RootComponent", #Manually imported
     # "AudioLinkSettings" #I should instead not import property of certain type
-
+    "SetTemplate",
     "GetBlendProfile",
     "IsPolyglotDataValid",
     "PolyglotDataToText",
