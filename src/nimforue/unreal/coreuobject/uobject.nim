@@ -66,7 +66,7 @@ type
     UDelegateFunction* {.importcpp, inheritable, pure .} = object of UFunction
     UDelegateFunctionPtr* = ptr UDelegateFunction
 
-    TObjectPtr*[ out T ] {.importcpp.} = object 
+    TObjectPtr*[out T ] {.importcpp.} = object 
     TLazyObjectPtr*[out T ] {.importcpp.} = object 
     TEnumAsByte*[T : enum] {.importcpp.} = object
 
@@ -262,6 +262,8 @@ proc hasAddStructReferencedObjects*(str:UScriptStructPtr) : bool {.importcpp:"#-
 
 #TObjectPtr
 
+
+proc get*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 converter toUObjectPtr*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 converter fromObjectPtr*[T : UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
 

@@ -16,8 +16,15 @@ type
   UEngineSubsystem* {.importcpp, pure .} = object of UDynamicSubsystem
   UEngineSubsystemPtr* {.importcpp, pure .} = ptr UEngineSubsystem
 
+  FTickFunction* {.importcpp, pure, inheritable .} = object
+    bCanEverTick*, bStartWithTickEnabled*: bool
+
+  FActorTickFunction* {.importcpp, pure, inheritable.} = object of FTickFunction
+
+
   AActor* {.importcpp, inheritable, pure .} = object of UObject
-  
+    primaryActorTick* {.importcpp:"PrimaryActorTick"}: FActorTickFunction
+
   AActorPtr* = ptr AActor
   AController* {.importcpp, inheritable, pure .}= object of AActor
   AControllerPtr* = ptr AController

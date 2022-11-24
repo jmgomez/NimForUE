@@ -153,9 +153,9 @@ template registerDeleteUType(T : typedesc, package:UPackagePtr, executeAfterDele
             executeAfterDelete
 
 
-proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, package :UPackagePtr)  =    
+proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEEmitterRaw, package :UPackagePtr)  =    
     #iterate all UNimClasses, if they arent not reintanced already (name) and they dont exists in the type emitted this round, they must be deleted
-    let getEmitterByName = (name:FString) => ueEmitter.emitters.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
+    let getEmitterByName = (name:FString) => emitter.emitters.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
     registerDeleteUType(UClass, package):
         hotReloadInfo.deletedClasses.add(instance)
     registerDeleteUType(UNimScriptStruct, package):
@@ -247,7 +247,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
  
      
    
-    registerDeletedTypesToHotReload(hotReloadInfo, pkg)
+    registerDeletedTypesToHotReload(hotReloadInfo,ueEmitter, pkg)
 
     
     hotReloadInfo.setShouldHotReload()
