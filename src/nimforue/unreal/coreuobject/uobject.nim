@@ -291,8 +291,8 @@ proc `$`*(obj:UObjectPtr) : string =
 
 func `$`*(fn:UFunctionPtr):string = 
   let metadataMap = fn.getMetadataMap()
-  metadataMap.remove(n"Comment")
-  metadataMap.remove(n"ToolTip")
+#   metadataMap.remove(n"Comment")
+#   metadataMap.remove(n"ToolTip")
     #PROPS?
   &"""Func: {fn.getName()} Flags: {fn.functionFlags} Metadata: {metadataMap}"""
     

@@ -23,22 +23,26 @@ uStruct FMyStructTest:
     g: bool
     g4: TArray[int]
     g5 : UObjectPtr
-    g6 : FString
+    g7 : FString
 
 uClass AActorScratchpad of AActor:
 # uClass AActorScratchpad of APlayerController:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite, ExposeOnSpawn):
-    testA : int32 = 1     
+    testw: int32 = 1     
     # myEnum : EMyEnum
     myStruct : FMyStructTest
     structPtrName : FString 
   uprops(EditAnywhere, BlueprintReadWrite, Category=Whatever):
-    testB : int32 = 9
+    testCV : int32 = 1
                                                                                  
   uprops(EditAnywhere, BlueprintReadWrite):
-    testC : int32 = 2     
-                                                                                 
+    testC4 : int32 = 2     
+
+  ufuncs():
+    proc beginPlay() = 
+      UE_Warn "Begin called in actor scratchpad"
+      discard                                                          
  
   ufuncs(CallInEditor):
     proc modifyStruct() = 
@@ -56,8 +60,8 @@ uClass AActorScratchpad of AActor:
         let category = p.getMetadata("Category")
         UE_Log $category
 
-      let ueType = obj.toUEType()
-      UE_Log $ueType
-      
-      UE_Warn $obj
+      let funcs = getFuncsFromClass(obj, EFieldIterationFlags.IncludeSuper)
+      for f in funcs:
+        UE_Log $f
+        
 

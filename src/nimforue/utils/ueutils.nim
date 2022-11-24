@@ -1,5 +1,8 @@
-import ../unreal/coreuobject/[uobject]
-import std/[options, strutils, sequtils, sugar, strscans]
+import ../unreal/coreuobject/[uobject, nametypes]
+import ../unreal/core/containers/[unrealstring, map, array]
+import ../typegen/models
+
+import std/[options, strutils, tables, sequtils, sugar, strscans]
 import utils
 
 const DelegateFuncSuffix* = "__DelegateSignature"
@@ -53,6 +56,12 @@ proc addPtrToUObjectIfNotPresentAlready*(str:string) : string =
 
 func tryUECast*[T : UObject](obj:UObjectPtr) : Option[ptr T] = someNil ueCast[T](obj)
     
+func ueMetaToNueMeta*(ueMeta : TMap[FName, FString]) : seq[UEMetadata] = 
+    var meta = newSeq[UEMetadata]()
+    for key in ueMeta.keys():
+        meta.add(makeUEMetadata($key, $ueMeta[key]))
+    meta
+        
 
 
 # func As*[T : UStruct](field:UFieldPtr) : ptr T =  tryUECast[T](field).getOrRaise("Field is not a struct")

@@ -219,6 +219,7 @@ proc newUETypeWith*(ueType:UEType) : ptr UEType =
 proc `[]`*(metadata:seq[UEMetadata], key:string) : Option[string] = 
     metadata.first(x=>x.name==key).map(x=>x.value)
 
+
 const MulticastDelegateMetadataKey* = "MulticastDelegate"
 const DelegateMetadataKey* = "Delegate"
     

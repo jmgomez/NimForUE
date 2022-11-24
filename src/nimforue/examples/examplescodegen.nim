@@ -15,7 +15,7 @@ uClass AActorCodegen of AActor:
     moduleName : FString
     bOnlyBlueprint : bool 
 
-  ufuncs(CallInEditor):
+  ufuncs(BlueprintCallable, CallInEditor, Category=ActorCodegen):
     proc genReflectionDataOnly() = 
       try:
         let ueProject =  genReflectionData(getAllInstalledPlugins(getNimForUEConfig()))

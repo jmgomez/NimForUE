@@ -265,6 +265,10 @@ type EGetWorldErrorMode* {.importcpp, size: sizeof(uint8).} = enum
   LogAndReturnNull,
   Assert
   
+
+
+#ACTOR CPP
+proc isTickFunctionRegistered*(self: FActorTickFunction): bool {.importcpp: "#.IsTickFunctionRegistered()".}  
 ##ENGINE
 #UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const
 proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)".} 

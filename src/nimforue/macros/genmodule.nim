@@ -303,7 +303,7 @@ proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, m
     ("::Type", ""), #Enum namespaces EEnumName::Type
     ("::Mode", ""), #Enum namespaces EEnumName::TypeB
     ("::", "."),    #Enum namespace
-
+    ("\"##", "  ##"),
     ("__DelegateSignature", ""))
   writeFile(filePath, code)
 

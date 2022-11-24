@@ -415,6 +415,9 @@ func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode =
               pragmas, newEmptyNode(), newEmptyNode()
             ])
 
+  if  funField.metadata.any(x=>x.name=="Comment"): 
+    result = newStmtList(result, newStrLitNode("##"&funField.metadata["Comment"].get()))
+
 proc genDelType*(delType:UEType, exposure:UEExposure) : NimNode = 
   #NOTE delegates are always passed around as reference
   #adds the delegate to the global list of available delegates so we can lookup it when emitting the UCLass
