@@ -68,7 +68,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
   ]
   result &= (if withDebug: 
-              @["/Od", if withIncremental: "/Zi" else: "/Z7"] 
+              @["/Od", "/Z7"] 
             else: 
               @["/O2"])
   if withPch: 
