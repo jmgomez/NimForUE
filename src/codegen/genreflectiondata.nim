@@ -257,7 +257,7 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
     if currentLevel > 5: 
       UE_Warn &"Reached max level for {modName}. Breaking the cycle"
       return @[]
-    UE_Log &"Getting deps for {modName}"
+    # UE_Log &"Getting deps for {modName}"
     let deps = getUEModuleFromModule(modName).map(x=>x.dependencies).get(newSeq[string]())
     deps &
       deps
@@ -283,7 +283,7 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
 
   UE_Log &"Modules to gen: {modulesToGen.len}"
   UE_Log &"Modules in cache {modCache.len}"
-  UE_Warn &"Modules to gen {modulesToGen.mapIt(it.name)}"
+  UE_Log &"Modules to gen {modulesToGen.mapIt(it.name)}"
   let ueProject = UEProject(modules:modulesToGen)
   
   #Show all deps for testing purposes

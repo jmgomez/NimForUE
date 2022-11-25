@@ -88,7 +88,7 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
 func getUnrealTypeFromName[T](name: FString): Option[UObjectPtr] =
   #ScriptStruct, Classes
   result = tryUECast[UObject](getUTypeByName[T](name))
-  UE_Log &"Name: {name} result: {result}"
+  # UE_Log &"Name: {name} result: {result}"
 
 func tryGetUTypeByName[T](name: FString): Option[ptr T] =
   #ScriptStruct, Classes

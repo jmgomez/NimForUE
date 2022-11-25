@@ -5,6 +5,7 @@ import ../../buildscripts/nimforueconfig
 import ../../codegen/[codegentemplate,genreflectiondata]
 import ../macros/genmodule #not sure if it's worth to process this file just for one function? 
 
+proc NimMain() {.importc.} 
 
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
@@ -59,6 +60,15 @@ uClass AActorCodegen of AActor:
       UE_Warn $obj
       UE_Warn $obj.getOuter()
     
+    proc runFnInAnotherThread() = 
+      proc ffiWraper(msg:int) {.cdecl.} = 
+        # NimMain()   
+        # UE_Log "Hello from another thread" & $msg #This cashes
+        # let s = "test string"
+        UE_Log "Hello from another thread" 
+     
+      executeTaskInTaskGraph(2, ffiWraper)   
+
     
     proc showUEModule() = 
       let pkg = tryGetPackageByName(self.moduleName)
