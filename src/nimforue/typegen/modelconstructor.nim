@@ -3,6 +3,7 @@
 ##The solution is to allow uobjectflags in models but then we need to get rid of 
 import ../unreal/coreuobject/uobjectflags
 import models
+import std/[sugar, tables, options, sequtils]
 
 
 
@@ -41,7 +42,6 @@ func makeUEEnum*(name: string, fields: seq[UEField], metadata: seq[UEMetadata] =
 
 func makeUEModule*(name: string, types: seq[UEType], rules: seq[UEImportRule] = @[], dependencies: seq[string] = @[]): UEModule =
   UEModule(name: name, types: types, dependencies: dependencies, rules: rules)
-
 
 
 

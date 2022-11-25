@@ -2,9 +2,9 @@ include ../unreal/prelude
 import std/[times, strformat, tables, json, bitops, jsonUtils, strutils, options, sugar, algorithm, sequtils, hashes]
 import fproperty
 import models
-include modelconstructor #For some odd reason if this is not included but imported the make* arent visible here?
+include modelconstructor #For some odd reason (a cycle in the mod probably) if this is not included but imported the make* arent visible here?
 export models
-
+import emitter
 
 const fnPrefixes = @["", "Receive", "K2_"]
 
@@ -556,13 +556,9 @@ proc defaultClassConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
         actor.get().rootComponent = initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot")
 
 
-type CtorInfo* = object #stores the constuctor information for a class.
-  fn*: UClassConstructor
-  hash*: string
-  className*: string
 proc setGIsUCCMakeStandaloneHeaderGenerator*(value: bool) {.importcpp: "(GIsUCCMakeStandaloneHeaderGenerator =#)".}
 
-proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Option[UFunctionNativeSignature]], clsConstructor: Option[CtorInfo]): UFieldPtr =
+proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: Option[CtorInfo]): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Transient | RF_Transactional | RF_WasLoaded | RF_MarkAsNative)
 
   let
@@ -595,8 +591,8 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: Table[string, Op
     case field.kind:
     of uefProp: discard field.emitFProperty(newCls)
     of uefFunction:
-      # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}"
-      discard emitUFunction(field, newCls, fnTable[field.name])
+      # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}" #notice each module emits its own functions  
+      discard emitUFunction(field, newCls, getNativeFuncImplPtrFromUEField(getGlobalEmitter(), field))
     else:
       UE_Error("Unsupported field kind: " & $field.kind)
     #should gather the functions here?

@@ -34,7 +34,7 @@ enum class EMyTestEnumClass
 UCLASS(BlueprintType, Blueprintable)
 class NIMFORUE_API ATestActor : public AActor {
 	GENERATED_BODY()
-
+	bool bTickCalled = false;
 public:
 	// Sets default values for this actor's properties
 	ATestActor();

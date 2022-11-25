@@ -5,6 +5,7 @@ import macros/[ffi]
 import std/[options, strformat, dynlib]
 import ../buildscripts/[nimforueconfig, buildscripts]
 import ../codegen/genreflectiondata
+import typegen/emitter
 
 const genFilePath* {.strdefine.} : string = ""
 
@@ -25,6 +26,7 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
 #entry point for the game. but it will also be for other libs in the future
 #even the next guest/nimforue?
 proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.ffi:genFilePath} = 
+  try:
     case $libName:
     of "nimforue": 
         emitNueTypes(getGlobalEmitter()[], "Nim")
@@ -34,4 +36,6 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
     
     UE_Log &"lib loaded: {libName}"
+  except:
+    UE_Error &"Error in onLibLoaded: {getCurrentExceptionMsg()}"
 

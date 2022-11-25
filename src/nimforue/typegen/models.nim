@@ -314,7 +314,3 @@ func `==`*(a, b:UEType) : bool =
         of uetEnum: true
         of uetDelegate: true))
 
-
-
-
-

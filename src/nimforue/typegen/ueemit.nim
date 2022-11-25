@@ -7,38 +7,14 @@ import ../utils/[utils, ueutils]
 import nuemacrocache
 import uemeta
 import ../macros/uebind
+import emitter
 
-
-
-type 
-    EmitterInfo* = object 
-        uStructPointer* : UFieldPtr
-        ueType : UEType
-        generator* : UPackagePtr->UFieldPtr
-        
-    
-    UEEmitterRaw* = object 
-        emitters* : seq[EmitterInfo]
-        # types* : seq[UEType]
-        fnTable* : Table[string, Option[UFunctionNativeSignature]]
-        clsConstructorTable* : Table[string, CtorInfo]
-        setStructOpsWrapperTable* : Table[string, UNimScriptStructPtr->void]
-    UEEmitter* = ref UEEmitterRaw
-    UEEmitterPtr* = ptr UEEmitterRaw
-
-
-proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string = 
-    result = $emitter.emitters
-var ueEmitter* = UEEmitter() 
-
-proc getGlobalEmitter*() : UEEmitter = 
-    result = ueEmitter
 
 #rename these to register
 proc getFnGetForUClass(ueType:UEType) : UPackagePtr->UFieldPtr = 
 #    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
     proc toReturn (pgk:UPackagePtr) : UFieldPtr = #the UEType changes when functions are added
-        var ueType = ueEmitter.emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
+        var ueType = getGlobalEmitter().emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
         ueType.emitUClass(pgk, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
     toReturn
     
@@ -62,25 +38,6 @@ proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor, ha
     var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == clsName).get()
     emitter.ueType.ctorSourceHash = hash
     ueEmitter.emitters = ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == clsName, emitter)
-
-
-# proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
-#     var ueClassType = ueEmitter.types.first(t=>t.name == ueField.className).get()
-#     ueClassType.fields.add ueField
-    
-#     ueEmitter.fnTable[ueField.name] = fnImpl
-#     ueEmitter.types = ueEmitter.types.replaceFirst(t=>t.name == ueField.className, ueClassType)
-
-proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
-    var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == ueField.className).get()
-    emitter.ueType.fields.add ueField
-    ueEmitter.fnTable[ueField.name] = fnImpl
-
-    ueEmitter.emitters = ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == ueField.className, emitter)
-
-
-proc getEmmitedTypes(emitter: UEEmitterRaw) : seq[UEType] = 
-    emitter.emitters.map(e=>e.ueType)
 
 const ReinstSuffix = "_Reinst"
 
@@ -225,20 +182,19 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
 
 
     #Updates function pointers (after a few reloads they got out scope)
-    for fnName, fnPtr in ueEmitter.fnTable:
-        let funField = getFieldByName(getEmmitedTypes(ueEmitter), fnName)
-        let prevFn = funField
-                        .flatmap((ff:UEField)=> 
-                                tryGetClassByName(ff.className.removeFirstLetter())
-                                .flatmap((cls:UClassPtr)=>cls.findFunctionByNameWithPrefixes(ff.name)))
+    for fnEmitter in ueEmitter.fnTable:
+        let funField = fnEmitter.ueField
+        let fnPtr = fnEmitter.fnPtr
+        let prevFn = tryGetClassByName(funField.className.removeFirstLetter())
+                        .flatmap((cls:UClassPtr)=>cls.findFunctionByNameWithPrefixes(funField.name))
                         .flatmap((fn:UFunctionPtr)=>tryUECast[UNimFunction](fn))
 
        
-        if prevFn.isSome() and funField.isSome():
+        if prevFn.isSome():
             let prev = prevFn.get()
-            let newHash = funField.get().sourceHash
+            let newHash = funField.sourceHash
             # if not prev.sourceHash.equals(newHash):
-            # UE_Warn fmt"A function changed {fnName} updating the pointer"
+            
             prev.setNativeFunc(cast[FNativeFuncPtr](fnPtr)) 
             prev.sourceHash = newHash
  
@@ -479,8 +435,6 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             when not declared(self): #declares self and initializer so the default compiler compiles when using the assignments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
                 var self{.inject used .} = selfIdent
             
-            when not declared(this): 
-                var this{.inject used .} = selfIdent
             
             when not declared(initializer):
                 var initializer{.inject.} = initName
@@ -716,5 +670,6 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     # echo treeRepr uClassNode className`
     let fns = genUFuncsForUClass(body, className)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
+    # echo result.repr
 
 

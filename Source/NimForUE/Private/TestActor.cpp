@@ -20,13 +20,17 @@ ATestActor::ATestActor() {
 // Called when the game starts or when spawned
 void ATestActor::BeginPlay() {
 	Super::BeginPlay();
-	// UE_LOG(LogTemp, Log, TEXT("BeginPlay Called on Cpp ATestActor"));
+	UE_LOG(LogTemp, Log, TEXT("BeginPlay Called on Cpp ATestActor"));
 }
 
 // Called every frame
 void ATestActor::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
-	// UE_LOG(LogTemp, Log, TEXT("Tick Called on Cpp ATestActor"));
+	if (!bTickCalled) {
+		UE_LOG(LogTemp, Log, TEXT("Tick Called on Cpp %s"), *this->GetClass()->GetName());
+		bTickCalled = true;
+	}
+	
 }
 
 static bool init = false;
