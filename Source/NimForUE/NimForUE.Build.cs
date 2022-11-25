@@ -22,7 +22,7 @@ public class NimForUE : ModuleRules
 	    //PublicIncludePaths.Add(Path.GetFullPath(PluginDirectory + "NimForUE\\..\\NimHeaders"));
 	    //PublicIncludePaths.Add("../../Intermediate\Build\Mac\x86_64\UnrealEditor\DebugGame\NimForUEBindings");
         PublicDefinitions.Add("NIM_INTBITS=64");
-	    PrivatePCHHeaderFile = "../../NimHeaders/nimbase.h";
+	    PrivatePCHHeaderFile = "../../NimHeaders/nimbase.h";	
 	    
 	    OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 	    Console.WriteLine("Linker arguments:");

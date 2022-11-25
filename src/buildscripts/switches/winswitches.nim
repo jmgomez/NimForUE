@@ -28,7 +28,6 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "/Gw", # Enables whole-program global data optimization.
     "/Gy", # Enables function-level linking.
     "/Zm1000", 
-    "/wd4819",
     "/D_CRT_STDIO_LEGACY_WIDE_SPECIFIERS=1",
     "/D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS=1",
     "/D_WINDLL",
@@ -44,19 +43,22 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "/fp:fast", # "fast" floating-point model; results are less predictable.
     "/Zp8",
     # /we<n>	Treat the specified warning as an error.
-
+    "/W4", #we need to be consistent with the PCH
     "/we4456", # // 4456 - declaration of 'LocalVariable' hides previous local declaration
     "/we4458",#  4458 - declaration of 'parameter' hides class member
     "/we4459",# 4459 - declaration of 'LocalVariable' hides global declaration
-    "/wd4463",#  4463 - overflow; assigning 1 to bit-field that can only hold values from -1 to 0
     "/we4668",
     "/wd4244",
     "/wd4838",
+    "/wd4996", #Disables deprecation warning (until we change the usage of ANY_PACKAGE)
+    "/wd4463",#  4463 - overflow; assigning 1 to bit-field that can only hold values from -1 to 0
+    "/wd5054",
+    "/wd4819",
+
     "/TP",
     "/GR-", # /GR[-]	Enables run-time type information (RTTI).
-    "/W4",
+  
     "/std:c++20",
-    "/wd5054",
     # "/FS", #syn writes
     #extras:
     "/Zc:strictStrings-", # need this for converting const char []  to NCString since it loses const, for std:c++20
@@ -66,7 +68,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
   ]
   result &= (if withDebug: 
-              @["/Od", "/Z7"] 
+              @["/Od", if withIncremental: "/Zi" else: "/Z7"] 
             else: 
               @["/O2"])
   if withPch: 
