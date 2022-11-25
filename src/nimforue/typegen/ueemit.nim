@@ -653,7 +653,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let className = name[1].strVal()
     let classMetas = getMetasForType(body)
     let ueProps = getUPropsAsFieldsForType(body, className)
-    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit | CLASS_Native) #| CLASS_CompiledFromBlueprint
+    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit )#| CLASS_Native ) #| CLASS_CompiledFromBlueprint
     let ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
     
     var uClassNode = emitUClass(ueType)

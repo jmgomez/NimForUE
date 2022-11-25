@@ -194,7 +194,6 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): Option[UEFi
 
   
   let funMetadata = ufun.getMetadataMap().ueMetaToNueMeta()
-  UE_Log &"UMETADATA " & $funMetadata
   var fnField = makeFieldAsUFun(fnNameNim, params, className, ufun.functionFlags, funMetadata)
   fnField.actualFunctionName = actualName
   let isStatic = (FUNC_Static in ufun.functionFlags) #Skips static functions for now so we can quickly iterate over compiling the engine types
