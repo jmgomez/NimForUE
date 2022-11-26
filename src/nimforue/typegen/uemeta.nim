@@ -547,13 +547,15 @@ proc isNimClassBase(cls: UClassPtr): bool = cls.isNimClass()
 
 
 proc defaultClassConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
-  var obj = initializer.getObj()
-  obj.getClass().getFirstCppClass().classConstructor(initializer)
+  let obj = initializer.getObj()
+  let cls = obj.getClass()
+  let cppCls = cls.getFirstCppClass()
+  cppCls.classConstructor(initializer)
   let actor = tryUECast[AActor](obj)
   if actor.isSome():
     if actor.get().rootComponent.isnil():
         actor.get().rootComponent = initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot")
-
+ 
 
 proc setGIsUCCMakeStandaloneHeaderGenerator*(value: bool) {.importcpp: "(GIsUCCMakeStandaloneHeaderGenerator =#)".}
 

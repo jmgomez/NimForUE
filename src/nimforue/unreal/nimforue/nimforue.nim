@@ -6,7 +6,7 @@ import std/[strformat, options]
 include ../definitions
 import ../../typegen/models
 import ../../utils/[utils, ueutils]
-
+import ../core/enginetypes
 import std/[typetraits, strutils, sequtils, sugar]
 
 
@@ -38,7 +38,7 @@ proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UF
     xs
 
 proc getFuncsParamsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[FPropertyPtr] = 
-    cls
+    cls 
     .getFuncsFromClass(flags)
     .mapIt(it.getFPropsFromUStruct(flags))
     .foldl(a & b, newSeq[FPropertyPtr]())
@@ -53,9 +53,13 @@ iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr =
         super = super.getSuperClass()
         yield super
 
+func isBPClass(cls:UClassPtr) : bool =
+    result = (CLASS_CompiledFromBlueprint.uint32 and cls.classFlags.uint32) != 0
+    
+
 func getFirstCppClass*(cls:UClassPtr) : UClassPtr =
     for super in getClassHierarchy(cls):
-        if super.isNimClass():
+        if super.isNimClass() or super.isBPClass():
             continue
         return super
 
