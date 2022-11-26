@@ -403,13 +403,13 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
 
 
 func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode = 
-
+    
     let typeParam = fnField.signature.head().get() #TODO errors
 
     #prepare for gen ast
     let typeIdent = ident fnField.className
     let typeLiteral = newStrLitNode fnField.className
-    let selfIdent = ident typeParam.name
+    let selfIdent = ident typeParam.name #TODO should we force to just use self?
     let initName = ident fnField.signature[1].name #there are always two params.a
     let fnName = ident fnField.name
 
@@ -434,15 +434,11 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
             when not declared(self): #declares self and initializer so the default compiler compiles when using the assignments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
                 var self{.inject used .} = selfIdent
-            
-            
-            when not declared(initializer):
-                var initializer{.inject.} = initName
-
-            defaultClassConstructor(initializer)
+          
             #calls the cpp constructor first
+            defaultClassConstructor(initName)
             assignments
-            fnBody #user code
+            fnBody
     
     let ctorRes = genAst(fnName, typeLiteral, hash=newStrLitNode($hash(repr(ctorImpl)))):
         #add constructor to constructor table
@@ -643,9 +639,39 @@ func genUFuncsForUClass(body:NimNode, ueTypeName:string) : seq[NimNode] =
                             n[0].strVal().toLower() in ["ufunc", "ufuncs", "ufunction", "ufunctions"])
 
     fnBlocks.map(fnBlock=>funcBlockToFunctionInUClass(fnBlock, ueTypeName))
-   
+
+
+func genConstructorForClass(uClassBody:NimNode, className:string, constructorBody:NimNode, initializerName:string="") : NimNode = 
+  var initializerName = if initializerName == "" : "initializer" else : initializerName
+  let typeParam = makeFieldAsUPropParam("self", className)
+  let initParam = makeFieldAsUPropParam(initializerName, "FObjectInitializer")
+  let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)
+  return constructorImpl(fnField, constructorBody)
+
+func genDeclaredConstructor(body:NimNode, className:string) : Option[NimNode] = 
+
+  let constructorBlock = 
+    body.toSeq()
+    .filterIt(it.kind == nnkProcDef and it[0].strVal().toLower() in ["constructor"])
+    .head()
+ 
+  if constructorBlock.isNone():
+    return none[NimNode]()
+  
+  let fn = constructorBlock.get()
+  let params = fn.params
+  assert params.len == 2, "Constructor must have only one parameter" #Notice first param is Empty
+  let param = params[1] #Check for FObjectInitializer
+
+
+  constructorBlock
+    .map(consBody => genConstructorForClass(body, className, consBody.body(), param[0].strVal()))
+    
+  
+
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
+
     if name.toSeq().len() < 3:
         error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
 
@@ -658,18 +684,17 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     
     var uClassNode = emitUClass(ueType)
     
-    if doesClassNeedsConstructor(className):
-        let typeParam = makeFieldAsUPropParam("self", className)
-        let initParam = makeFieldAsUPropParam("initializer", "FObjectInitializer")
-        let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)
-        
-        let constructor = constructorImpl(fnField, newEmptyNode())
-       
-        # echo repr constructor
-        uClassNode.add constructor
-    # echo treeRepr uClassNode className`
+    #returns empty if there is no block defined
+    let declaredConstructor = genDeclaredConstructor(body, className)
+    if declaredConstructor.isSome():
+        uClassNode.add declaredConstructor.get()
+    elif doesClassNeedsConstructor(className):
+        let defaultConstructor = genConstructorForClass(body, className, newEmptyNode())
+        uClassNode.add defaultConstructor
+
     let fns = genUFuncsForUClass(body, className)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
     # echo result.repr
+  
 
 

@@ -18,9 +18,12 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
 
   let lib = loadLib(libPath)
   let getEmitter = cast[GetUEEmitterFn](lib.symAddr("getUEEmitter"))
-  # UE_Log "The emitter is " & $getEmitter()
-  getEmitter()
+  
+  assert not getEmitter.isNil()
 
+  let emitterPtr = getEmitter()
+  assert not emitterPtr.isNil()
+  emitterPtr
 
 
 #entry point for the game. but it will also be for other libs in the future

@@ -244,18 +244,18 @@ proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.impo
 
 
 proc `rootComponent=`*(obj : AActorPtr;
-                       val : TObjectPtr[USceneComponent]) =
-  var value : TObjectPtr[USceneComponent] = val
+                       val : USceneComponentPtr) =
+  var value : USceneComponentPtr = val
   let prop  = getClassByName("Actor").getFPropertyByName(
       "RootComponent")
-  setPropertyValuePtr[TObjectPtr[USceneComponent]](prop, obj, value.addr)
+  setPropertyValuePtr[USceneComponentPtr](prop, obj, value.addr)
 
 
-proc `rootComponent`*(obj : AActorPtr): TObjectPtr[USceneComponent] {.
+proc `rootComponent`*(obj : AActorPtr): USceneComponentPtr {.
     exportcpp.} =
   let prop  = getClassByName("Actor").getFPropertyByName(
       "RootComponent")
-  getPropertyValuePtr[TObjectPtr[USceneComponent]](prop, obj)[]
+  getPropertyValuePtr[USceneComponentPtr](prop, obj)[]
 
 
 
