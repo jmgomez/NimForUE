@@ -1,6 +1,6 @@
 include ../definitions
 import math/vector
-import ../coreuobject/[uobject, coreuobject]
+import ../coreuobject/[uobject, coreuobject, nametypes]
 import ../nimforue/nimforuebindings
 
 type 
@@ -241,23 +241,19 @@ type
 proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.importcpp: "#->ForceGarbageCollection(#)".}
 
 
-
-
-proc `rootComponent=`*(obj : AActorPtr;
-                       val : USceneComponentPtr) =
+proc `rootComponent=`*(obj : AActorPtr; val : USceneComponentPtr) =
   var value : USceneComponentPtr = val
   let prop  = getClassByName("Actor").getFPropertyByName(
       "RootComponent")
   setPropertyValuePtr[USceneComponentPtr](prop, obj, value.addr)
 
 
-proc `rootComponent`*(obj : AActorPtr): USceneComponentPtr {.
-    exportcpp.} =
+proc `rootComponent`*(obj : AActorPtr): USceneComponentPtr  =
   let prop  = getClassByName("Actor").getFPropertyByName(
       "RootComponent")
   getPropertyValuePtr[USceneComponentPtr](prop, obj)[]
 
-
+proc setupAttachment*(obj, inParent : USceneComponentPtr, inSocketName : FName = ENone) {.importcpp: "#->SetupAttachment(@)".}
 
 
 type EGetWorldErrorMode* {.importcpp, size: sizeof(uint8).} = enum

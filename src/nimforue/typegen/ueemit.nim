@@ -160,7 +160,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
 
                 if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated
                     let ctor = ueEmitter.clsConstructorTable.tryGet(emitter.ueType.name)
-                    prevClassPtr.get().setClassConstructor(ctor.map(ctor=>ctor.fn).get(defaultClassConstructor))
+                    prevClassPtr.get().setClassConstructor(ctor.map(ctor=>ctor.fn).get(defaultConstructor))
 
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
@@ -436,9 +436,10 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
                 var self{.inject used .} = selfIdent
           
             #calls the cpp constructor first
-            defaultClassConstructor(initName)
+            callSuperConstructor(initName)
             assignments
             fnBody
+            postConstructor(initName) #inits any missing comp that the user hasnt set
     
     let ctorRes = genAst(fnName, typeLiteral, hash=newStrLitNode($hash(repr(ctorImpl)))):
         #add constructor to constructor table

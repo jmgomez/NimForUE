@@ -545,17 +545,24 @@ proc emitUFunction*(fnField: UEField, cls: UClassPtr, fnImpl: Option[UFunctionNa
 proc isNotNil[T](x: ptr T): bool = not x.isNil()
 proc isNimClassBase(cls: UClassPtr): bool = cls.isNimClass()
 
-
-proc defaultClassConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
+#This always be appened at the default constructor at the beggining
+proc callSuperConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   let obj = initializer.getObj()
   let cls = obj.getClass()
   let cppCls = cls.getFirstCppClass()
   cppCls.classConstructor(initializer)
+#This needs to be appended after the default constructor so comps can be init
+proc postConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
+  let obj = initializer.getObj()
   let actor = tryUECast[AActor](obj)
   if actor.isSome():
     if actor.get().rootComponent.isnil():
         actor.get().rootComponent = initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot")
- 
+  
+proc defaultConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
+  callSuperConstructor(initializer)
+  postConstructor(initializer)
+
 
 proc setGIsUCCMakeStandaloneHeaderGenerator*(value: bool) {.importcpp: "(GIsUCCMakeStandaloneHeaderGenerator =#)".}
 
@@ -582,8 +589,8 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
   newCls.classCastFlags = parent.classCastFlags
 
   copyMetadata(parent, newCls)
-  newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType. BlueprintType should be producing this
-  newCls.setMetadata("BlueprintType", "true") #todo move to ueType
+  # newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType. BlueprintType should be producing this
+  # newCls.setMetadata("BlueprintType", "true") #todo move to ueType
   newCls.markAsNimClass()
   for metadata in ueType.metadata:
     newCls.setMetadata(metadata.name, $metadata.value)
@@ -605,7 +612,7 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
   setGIsUCCMakeStandaloneHeaderGenerator(false)
   newCls.assembleReferenceTokenStream()
 
-  newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultClassConstructor))
+  newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultConstructor))
   clsConstructor.run(proc (cons: CtorInfo) =
     newCls.setMetadata(ClassConstructorMetadataKey, cons.hash)
   )
