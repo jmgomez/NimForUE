@@ -15,3 +15,12 @@ type FWeakObjectPtr* {.importcpp.} = object
 
 
 # proc broadcast*[T](del: TDynamicMulticastDelegateOneParam[T], val : T) {.importcpp: "#.Broadcast(@)"}
+
+
+#Delegates a variadic, for now we can just return the type adhoc
+
+#They can be generalized later but doing a macro or something.
+#This is just the minimum to get the event working
+# type TMulticastDelegateOneParam*[bool] {.importc:"TMulticastDelegate<void(bool)>", nodecl .} = object
+
+# proc addLambda*(del: TMulticastDelegateOneParam[bool], lambda : proc (val : bool)) {.importcpp: "#.AddLambda(@)"}

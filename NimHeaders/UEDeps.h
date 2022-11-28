@@ -7,6 +7,8 @@
 #include "CoreMinimal.h"
 #include "CoreUObject.h"
 
+#include "Delegates/Delegate.h"
+
 #include "Containers/UnrealString.h"
 #include "Containers/Array.h"
 #include "Engine/EngineTypes.h"
@@ -28,3 +30,9 @@
 #include "../Source/NimForUE/Public/NimForUEHeaders.h"
 //Editor only
 //#include "FakeFactory.h"
+
+
+#ifdef WITH_EDITOR
+  #include "Editor/UnrealEdEngine.h"
+  #include "Editor/UnrealEd/Public/Editor.h"
+#endif
