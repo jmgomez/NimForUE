@@ -551,13 +551,49 @@ proc callSuperConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   let cls = obj.getClass()
   let cppCls = cls.getFirstCppClass()
   cppCls.classConstructor(initializer)
+
+proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr) {.cdecl.} = 
+  # if RF_ClassDefaultObject in actor.getFlags():
+  #   return
+  # #Check defaults
+  for prop in actor.getClass().getFPropsFromUStruct():
+    let objProp = castField[FObjectPtrProperty](prop)
+    if objProp.isNotNil() and objProp.hasMetadata("DefaultComponent"):
+      UE_Log $objProp
+      let compCls = objProp.getPropertyClass()
+      var defaultComp = ueCast[UActorComponent](initializer.createDefaultSubobject(actor, objProp.getFName(), compCls, compCls, true, false))
+      setPropertyValuePtr[UActorComponentPtr](prop, actor, defaultComp.addr)
+  #Root component
+  for prop in actor.getClass().getFPropsFromUStruct():
+    let objProp = castField[FObjectPtrProperty](prop)
+    if objProp.isNotNil() and objProp.hasMetadata("RootComponent"):
+      let comp = getPropertyValuePtr[USceneComponentPtr](prop, actor)[]
+      if comp.isNotNil():
+        actor.rootComponent = comp
+
+  for prop in actor.getClass().getFPropsFromUStruct():
+    let objProp = castField[FObjectPtrProperty](prop)
+    if objProp.isNotNil(): 
+        let comp = getPropertyValuePtr[USceneComponentPtr](prop, actor)[]
+        if comp.isNotNil():
+          if objProp.hasMetadata("AttachTo"):
+              let attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata("AttachTo").get())
+              let attachToComp = getPropertyValuePtr[USceneComponentPtr](attachToCompProp, actor)[]
+              comp.setupAttachment(attachToComp)
+          else:
+              comp.setupAttachment(actor.rootComponent)
+
+
+    if actor.rootComponent.isnil():
+        actor.rootComponent = initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot")
 #This needs to be appended after the default constructor so comps can be init
 proc postConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   let obj = initializer.getObj()
+  let cls = obj.getClass()
   let actor = tryUECast[AActor](obj)
+
   if actor.isSome():
-    if actor.get().rootComponent.isnil():
-        actor.get().rootComponent = initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot")
+   initComponents(initializer, actor.get())
   
 proc defaultConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   callSuperConstructor(initializer)

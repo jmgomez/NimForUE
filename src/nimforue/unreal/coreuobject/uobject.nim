@@ -84,7 +84,7 @@ proc ueCast*[T : UObject ](src:UObjectPtr) : ptr T {. importcpp:"Cast<'*0>(#)" .
 
 
 proc createDefaultSubobject*[T : UObject ](obj:var FObjectInitializer, outer:UObjectPtr, subObjName:FName, bTransient=false) : ptr T {. importcpp:"#.CreateDefaultSubobject<'*0>(@)" .}
-proc createDefaultSubobject*(obj:var FObjectInitializer, outer:UObjectPtr, subObjName:FName, returnCls, defualtCls: UClassPtr, bIsRequired, bTransient:bool) : UObjectPtr {. importcpp:"#.CreateDefaultSubobject(@)" .}
+proc createDefaultSubobject*(obj:var FObjectInitializer, outer:UObjectPtr, subObjName:FName, returnCls, default: UClassPtr, bIsRequired, bTransient:bool) : UObjectPtr {. importcpp:"#.CreateDefaultSubobject(@)" .}
 
 #todo change this for ActorComponent?
 proc createDefaultSubobjectNim*[T:UObject](outer:UObjectPtr, name:FName) : ptr T {.importcpp:"UReflectionHelpers::CreateDefaultSubobjectNim<'*0>(@)" .}
@@ -156,6 +156,7 @@ type DelegateProp* = FDelegatePropertyPtr | FMulticastInlineDelegatePropertyPtr 
 #Concrete methods
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
 proc setPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
+proc getPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr) : UClassPtr {. importcpp: "(#->PropertyClass)".}
 proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
 proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->SetEnum(#))".}
 
@@ -270,7 +271,7 @@ converter fromObjectPtr*[T : UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TO
 
 
 #UOBJECT
-proc getFName*(obj:UObjectPtr) : FName {. importcpp: "#->GetFName()" .}
+proc getFName*(obj:UObjectPtr|FFieldPtr) : FName {. importcpp: "#->GetFName()" .}
 proc getFlags*(obj:UObjectPtr|FFieldPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
 proc setFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->SetFlags(#)" .}
 proc clearFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->ClearFlags(#)" .}
