@@ -177,6 +177,7 @@ UPackage* UReflectionHelpers::CreateNimPackage(FString PackageShortName) {
 	NimForUEPackage->SetFlags(RF_Standalone);
 	NimForUEPackage->AddToRoot();
 	return NimForUEPackage;
+	// FEditorDelegates::BeginPIE.()
 }
 
 

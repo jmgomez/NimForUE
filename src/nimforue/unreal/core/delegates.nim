@@ -17,10 +17,11 @@ type FWeakObjectPtr* {.importcpp.} = object
 # proc broadcast*[T](del: TDynamicMulticastDelegateOneParam[T], val : T) {.importcpp: "#.Broadcast(@)"}
 
 
+type FDelegateHandle* {.importcpp, pure, byref.} = object
+proc isValid*(del : FDelegateHandle) : bool {.importcpp: "#.IsValid()", discardable.}
+proc reset*(del : var FDelegateHandle) {.importcpp: "#.Reset()"}
+
 #Delegates a variadic, for now we can just return the type adhoc
-
-#They can be generalized later but doing a macro or something.
-#This is just the minimum to get the event working
-# type TMulticastDelegateOneParam*[bool] {.importc:"TMulticastDelegate<void(bool)>", nodecl .} = object
-
-# proc addLambda*(del: TMulticastDelegateOneParam[bool], lambda : proc (val : bool)) {.importcpp: "#.AddLambda(@)"}
+type TMulticastDelegateOneParam*[T] {.importc:"TMulticastDelegate<void('0)>", nodecl.} = object
+proc addStatic*[T](del: TMulticastDelegateOneParam[T], fn : proc(v:T) {.cdecl.}) : FDelegateHandle {.importcpp:"#.AddStatic(#)".}
+proc remove*[T](del: TMulticastDelegateOneParam[T], handle : FDelegateHandle) {.importcpp:"#.Remove(#)"}

@@ -27,13 +27,14 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
   emitterPtr
 
 
+var onBeginHandle, onEndHandle : FDelegateHandle
 
 proc onPIEStart(isSimulating:bool) {.cdecl.} = 
   UE_Warn "Heyyyy! PIE STARTED"
 
 proc onPIEEnd(isSimulating:bool) {.cdecl.} = 
-  UE_Warn "Goodbye! PIE End!"
-
+  UE_Warn "Goodbye! PIE End! adios updated. This wont appear more 2"
+  onEndPIEEvent.remove(onEndHandle)
 
 
 #entry point for the game. but it will also be for other libs in the future
@@ -42,8 +43,8 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
   try:
     case $libName:
     of "nimforue": 
-        onBeginPIEEvent.addLambda(onPIEStart)
-        onEndPIEEvent.addLambda(onPIEEnd)
+        onBeginHandle = onBeginPIEEvent.addStatic(onPIEStart)
+        onEndHandle = onEndPIEEvent.addStatic(onPIEEnd)
         
         # let v = onBeginPIEEvent()
         emitNueTypes(getGlobalEmitter()[], "Nim")
