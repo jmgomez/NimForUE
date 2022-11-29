@@ -17,11 +17,18 @@ type FWeakObjectPtr* {.importcpp.} = object
 # proc broadcast*[T](del: TDynamicMulticastDelegateOneParam[T], val : T) {.importcpp: "#.Broadcast(@)"}
 
 
-type FDelegateHandle* {.importcpp, pure, byref.} = object
+type 
+  FDelegateHandle* {.importcpp, pure.} = object
+  FDelegateHandlePtr* = ptr FDelegateHandle
 proc isValid*(del : FDelegateHandle) : bool {.importcpp: "#.IsValid()", discardable.}
 proc reset*(del : var FDelegateHandle) {.importcpp: "#.Reset()"}
 
 #Delegates a variadic, for now we can just return the type adhoc
 type TMulticastDelegateOneParam*[T] {.importc:"TMulticastDelegate<void('0)>", nodecl.} = object
-proc addStatic*[T](del: TMulticastDelegateOneParam[T], fn : proc(v:T) {.cdecl.}) : FDelegateHandle {.importcpp:"#.AddStatic(#)".}
+
+proc addStatic*[T](del: TMulticastDelegateOneParam[T], fn : proc(v:T) {.cdecl.}) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
+proc addStatic*[T, T2](del: TMulticastDelegateOneParam[T], fn : proc(v:T, v2:T2) {.cdecl.}, v2:T2) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
+proc addStatic*[T, T2, T3](del: TMulticastDelegateOneParam[T], fn : proc(v:T, v2:T2, v3:T3) {.cdecl.}, v2:T2, v3:T3) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
+proc addStatic*[T, T2, T3, T4](del: TMulticastDelegateOneParam[T], fn : proc(v:T, v2:T2, v3:T3, v4:T4) {.cdecl.}, v2:T2, v3:T3, v:T4) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
+
 proc remove*[T](del: TMulticastDelegateOneParam[T], handle : FDelegateHandle) {.importcpp:"#.Remove(#)"}

@@ -174,3 +174,11 @@ proc tryGet*[K, V](self: Table[K, V], key: K): Option[V] {.inline.} =
 
 #pointers
 proc isNotNil*[T](v : ptr T) : bool = not v.isNil()
+
+#allocations
+proc newCpp*[T]() :ptr T {.importcpp:"new '*0()".}
+proc deleteInteral[T](val : ptr T ) : void {.importcpp:"delete #".}
+proc deleteCpp*[T](val : ptr T ) : void  =
+  if val.isNotNil():
+    deleteInteral(val)
+    # val = nil

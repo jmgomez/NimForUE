@@ -27,14 +27,31 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
   emitterPtr
 
 
-var onBeginHandle, onEndHandle : FDelegateHandle
 
-proc onPIEStart(isSimulating:bool) {.cdecl.} = 
-  UE_Warn "Heyyyy! PIE STARTED" & $GEditor.isInPIE()
+proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) = 
+    try:
+        let nimHotReload = emitUStructsForPackage(emitter, packageName)
+        #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
+        if not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
+          reinstanceNueTypes(packageName, nimHotReload, "")
+          return;
+       
+        proc onPIEEndCallback(isSimulating:bool, packageName:string, hotReload:FNimHotReloadPtr, handle:FDelegateHandlePtr) {.cdecl.} = 
+          reinstanceNueTypes(packageName, hotReload, "")
+          onEndPIEEvent.remove(handle[])
+          deleteCpp(handle)
+          UE_LOG(&"NimUE: PIE ended, reinstanciated nue types {packageName}")
+          
+        let onPIEEndHandle = newCpp[FDelegateHandle]()
+        (onPIEEndHandle[]) = onEndPIEEvent.addStatic(onPIEEndCallback, packageName, nimHotReload, onPIEEndHandle)
+        UE_Log "Deffered reinstance of NueTypes for package: " & packageName & " after PIE ended"
 
-proc onPIEEnd(isSimulating:bool) {.cdecl.} = 
-  UE_Warn "Goodbye! PIE End! adios updated. This wont appear more 2" & $GEditor.isInPIE()
-  onEndPIEEvent.remove(onEndHandle)
+       
+    except Exception as e:
+        #TODO here we could send a message to the user
+        UE_Error "Nim CRASHED "
+        UE_Error e.msg
+        UE_Error e.getStackTrace()
 
 
 #entry point for the game. but it will also be for other libs in the future
@@ -43,10 +60,6 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
   try:
     case $libName:
     of "nimforue": 
-        onBeginHandle = onBeginPIEEvent.addStatic(onPIEStart)
-        onEndHandle = onEndPIEEvent.addStatic(onPIEEnd)
-        
-        # let v = onBeginPIEEvent()
         emitNueTypes(getGlobalEmitter()[], "Nim")
         if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
           execBindingsGenerationInAnotherThread()
