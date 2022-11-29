@@ -1,4 +1,5 @@
 include ../unreal/prelude
+import ../unreal/editor/editor
 import std/[strformat, enumutils, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../typegen/uemeta
 import ../../buildscripts/nimforueconfig
@@ -47,6 +48,8 @@ uClass AActorScratchpad of AActor:
   ufuncs(CallInEditor):
     proc modifyStruct() = 
       self.myStruct.a = 10
+    proc testEditorPIE() = 
+      UE_Log &"IsInPie {GEditor.isInPIE()}"
     proc searchStructPtr() = 
       let obj = getUTypeByName[UClass]("ActorScratchpad")
       if obj.isNil(): 

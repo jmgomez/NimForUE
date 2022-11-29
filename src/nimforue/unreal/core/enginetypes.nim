@@ -268,5 +268,5 @@ proc isTickFunctionRegistered*(self: FActorTickFunction): bool {.importcpp: "#.I
 ##ENGINE
 #UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const
 proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)".} 
-
+let GEngine* = getEngine()
 proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGetWorldErrorMode) : UWorldPtr  {.importcpp: "#->GetWorldFromContextObject(#, #)".}

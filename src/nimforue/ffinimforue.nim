@@ -30,10 +30,10 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
 var onBeginHandle, onEndHandle : FDelegateHandle
 
 proc onPIEStart(isSimulating:bool) {.cdecl.} = 
-  UE_Warn "Heyyyy! PIE STARTED"
+  UE_Warn "Heyyyy! PIE STARTED" & $GEditor.isInPIE()
 
 proc onPIEEnd(isSimulating:bool) {.cdecl.} = 
-  UE_Warn "Goodbye! PIE End! adios updated. This wont appear more 2"
+  UE_Warn "Goodbye! PIE End! adios updated. This wont appear more 2" & $GEditor.isInPIE()
   onEndPIEEvent.remove(onEndHandle)
 
 
