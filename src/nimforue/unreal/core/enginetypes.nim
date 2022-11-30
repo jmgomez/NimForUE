@@ -241,18 +241,22 @@ type
 proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.importcpp: "#->ForceGarbageCollection(#)".}
 
 
-proc `rootComponent=`*(obj : AActorPtr; val : USceneComponentPtr) =
-  var value : USceneComponentPtr = val
-  let prop  = getClassByName("Actor").getFPropertyByName(
-      "RootComponent")
-  setPropertyValuePtr[USceneComponentPtr](prop, obj, value.addr)
+# proc `rootComponent=`*(obj : AActorPtr; val : USceneComponentPtr) =
+#   var value : USceneComponentPtr = val
+#   let prop  = getClassByName("Actor").getFPropertyByName(
+#       "RootComponent")
+#   setPropertyValuePtr[USceneComponentPtr](prop, obj, value.addr)
 
 
-proc `rootComponent`*(obj : AActorPtr): USceneComponentPtr  =
-  let prop  = getClassByName("Actor").getFPropertyByName(
-      "RootComponent")
-  getPropertyValuePtr[USceneComponentPtr](prop, obj)[]
+# proc `rootComponent`*(obj : AActorPtr): USceneComponentPtr  =
+#   let prop  = getClassByName("Actor").getFPropertyByName(
+#       "RootComponent")
+#   getPropertyValuePtr[USceneComponentPtr](prop, obj)[]
 
+
+proc setRootComponent*(actor : AActorPtr, newRootComponent : USceneComponentPtr): bool {.importcpp: "#->SetRootComponent(#)".}
+proc getRootComponent*(actor : AActorPtr): USceneComponentPtr {.importcpp: "#->GetRootComponent()".}
+  # void SetActorHiddenInGame(bool bNewHidden);
 proc setupAttachment*(obj, inParent : USceneComponentPtr, inSocketName : FName = ENone) {.importcpp: "#->SetupAttachment(@)".}
 
 

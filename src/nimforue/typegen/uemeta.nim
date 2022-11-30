@@ -553,53 +553,45 @@ proc callSuperConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   cppCls.classConstructor(initializer)
 
 proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr) {.cdecl.} = 
-  # if RF_ClassDefaultObject in actor.getFlags():
-  #   return
+
   # #Check defaults
-  for prop in actor.getClass().getFPropsFromUStruct():
-    let objProp = castField[FObjectPtrProperty](prop)
-    if objProp.isNotNil() and objProp.hasMetadata("DefaultComponent"):
-      UE_Log $objProp
+  let actorCls = actor.getClass()
+  for objProp in getAllPropsWithMetaData[FObjectPtrProperty](actorCls, DefaultComponentMetadataKey):
       let compCls = objProp.getPropertyClass()
       var defaultComp = ueCast[UActorComponent](initializer.createDefaultSubobject(actor, objProp.getFName(), compCls, compCls, true, false))
-      setPropertyValuePtr[UActorComponentPtr](prop, actor, defaultComp.addr)
+      setPropertyValuePtr[UActorComponentPtr](objProp, actor, defaultComp.addr)
+ 
   #Root component
-  for prop in actor.getClass().getFPropsFromUStruct():
-    let objProp = castField[FObjectPtrProperty](prop)
-    if objProp.isNotNil() and objProp.hasMetadata("RootComponent"):
-      let comp = getPropertyValuePtr[USceneComponentPtr](prop, actor)[]
+  for objProp in actorCls.getAllPropsWithMetaData[:FObjectPtrProperty](RootComponentMetadataKey):
+      let comp = getPropertyValuePtr[USceneComponentPtr](objProp, actor)[]
       if comp.isNotNil():
-        actor.rootComponent = comp
-
-  for prop in actor.getClass().getFPropsFromUStruct():
-    let objProp = castField[FObjectPtrProperty](prop)
-    if objProp.isNotNil(): 
-        let comp = getPropertyValuePtr[USceneComponentPtr](prop, actor)[]
+        let prevRoot = actor.getRootComponent()
+        discard actor.setRootComponent(comp)
+        if prevRoot.isNotNil():
+          prevRoot.setupAttachment(comp)
+  #Handles attachments
+  for objProp in actorCls.getAllPropsOf[:FObjectPtrProperty]():
+        let comp = getPropertyValuePtr[USceneComponentPtr](objProp, actor)[]
         if comp.isNotNil():
-          if objProp.hasMetadata("Attatch"):
-
-              var attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata("Attatch").get())
+          if objProp.hasMetadata(AttachMetadataKey):
+              #Tries to find it both, camelCase and PascalCase. Probably we should push PascalCase to UE
+              var attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata(AttachMetadataKey).get())
               if attachToCompProp.isNil():
-                attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata("Attatch").get().capitalizeASCII)
-              
+                attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata(AttachMetadataKey).get().capitalizeASCII)
               
               let attachToComp = getPropertyValuePtr[USceneComponentPtr](attachToCompProp, actor)[]
-              
-              if objProp.hasMetadata("Socket"):
-                let socket =  makeFName(objProp.getMetadata("Socket").get())
-                comp.setupAttachment(attachToComp, socket)
-                UE_Warn &"Attaching {comp.getName()} to {attachToComp.getName()} with socket {socket}"
+              if objProp.hasMetadata(SocketMetadataKey):
+                comp.setupAttachment(attachToComp, n(objProp.getMetadata(SocketMetadataKey).get()))
               else:
                 comp.setupAttachment(attachToComp)
-                UE_Warn &"Attaching {comp.getName()} to {attachToComp.getName()}. No socket"
 
           else:
               UE_Warn &"No attach metadata for {comp.getName()}"
-              comp.setupAttachment(actor.rootComponent)
+              comp.setupAttachment(actor.getRootComponent())
 
 
-    if actor.rootComponent.isnil():
-        actor.rootComponent = initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot")
+  if actor.getRootComponent().isNil():
+      discard actor.setRootComponent(initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot"))
 #This needs to be appended after the default constructor so comps can be init
 proc postConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   let obj = initializer.getObj()

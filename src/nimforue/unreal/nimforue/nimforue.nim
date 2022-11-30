@@ -43,7 +43,15 @@ proc getFuncsParamsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : 
     .mapIt(it.getFPropsFromUStruct(flags))
     .foldl(a & b, newSeq[FPropertyPtr]())
         
+proc getAllPropsOf*[T : FProperty](ustr:UStructPtr) : seq[ptr T] = 
+    ustr.getFPropsFromUStruct()
+        .filterIt(castField[T](it).isNotNil())
+        .mapIt(castField[T](it))
 
+   
+proc getAllPropsWithMetaData*[T : FProperty](ustr:UStructPtr, metadataKey:string) : seq[ptr T] = 
+    ustr.getAllPropsOf[:T]()
+        .filterIt(it.hasMetaData(metadataKey))
 
 #it will call super until UObject is reached
 iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr = 

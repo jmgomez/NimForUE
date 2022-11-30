@@ -12,6 +12,11 @@ import ../macros/makestrproc
 const UETypeMetadataKey* = "UEType"
 const ClassConstructorMetadataKey* = "ClassConstructor"
 const NimClassMetadataKey* = "NimClass"
+const AttachMetadataKey* = "Attach"
+const SocketMetadataKey* = "Socket"
+const DefaultComponentMetadataKey* = "DefaultComponent"
+const RootComponentMetadataKey* = "RootComponent"
+
 
 type
     EPropertyFlagsVal* = distinct(uint64)
