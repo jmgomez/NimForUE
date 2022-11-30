@@ -338,6 +338,7 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
 const ValidUprops = ["uprop", "uprops", "uproperty", "uproperties"]
 
 func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] = 
+
     let validNodesForMetas = [nnkIdent, nnkExprEqExpr]
     let metasAsNodes = node.childrenAsSeq()
                     .filterIt(it.kind in validNodesForMetas or (it.kind == nnkIdent and it.strVal().toLower() notin ValidUprops))
@@ -348,31 +349,50 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
                     .fromStringAsMetaToFlag(ueMetas, ueTypeName)
 
 
-    proc nodeToUEField (n: NimNode)  : UEField = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
-        let fieldName = n[0].repr
+    proc nodeToUEField (n: NimNode)  : seq[UEField] = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
+        let fieldNames = 
+            case n[0].kind:
+            of nnkIdent:
+                @[n[0].strVal()]
+            of nnkTupleConstr:
+                n[0].children.toSeq().filterIt(it.kind == nnkIdent).mapIt(it.strVal())
+              
+            else:
+                error("Invalid node for field " & repr(n) & " " & $ n.kind)
+                @[]
+
+        proc makeUEFieldFromFieldName(fieldName:string) : UEField = 
+            #stores the assignment but without the first ident on the dot expression as we dont know it yet
+            func prepareAssignmentForLaterUsage(propName:string, right:NimNode) : NimNode = #to show intent
+                nnkAsgn.newTree(
+                    nnkDotExpr.newTree( #left
+                        #here goes the var sets when generating the constructor, i.e. self, this what ever the user wants
+                        ident propName
+                    ), 
+                    right
+                )
+            let assignmentNode = n[1].children.toSeq()
+                                    .first(n=>n.kind == nnkAsgn)
+                                    .map(n=>prepareAssignmentForLaterUsage(fieldName, n[^1]))
+
+            var propType = if assignmentNode.isSome(): n[1][0][0].repr 
+                        else: 
+                            case n.kind:
+                            of nnkIdent: n[1].repr.strip() #regular prop
+                            of nnkCall: n[^1][0].strVal() #(prop1,.., propn) : type
+                            else: 
+                                error("Invalid node for field " & repr(n) & " " & $ n.kind)
+                                ""
+            assignmentNode.run (n:NimNode)=> addPropAssignment(ueTypeName, n)
+            
+            if isMulticastDelegate propType:
+                makeFieldAsUPropMulDel(fieldName, propType, metas[0], metas[1])
+            elif isDelegate propType:
+                makeFieldAsUPropDel(fieldName, propType, metas[0], metas[1])
+            else:
+                makeFieldAsUProp(fieldName, propType, metas[0], metas[1])
         
-        #stores the assignment but without the first ident on the dot expression as we dont know it yet
-        func prepareAssignmentForLaterUsage(propName:string, right:NimNode) : NimNode = #to show intent
-            nnkAsgn.newTree(
-                nnkDotExpr.newTree( #left
-                    #here goes the var sets when generating the constructor, i.e. self, this what ever the user wants
-                    ident propName
-                ), 
-                right
-            )
-        let assignmentNode = n[1].children.toSeq()
-                                  .first(n=>n.kind == nnkAsgn)
-                                  .map(n=>prepareAssignmentForLaterUsage(fieldName, n[^1]))
-
-        var propType = if assignmentNode.isSome(): n[1][0][0].repr else: n[1].repr.strip()
-        assignmentNode.run (n:NimNode)=> addPropAssignment(ueTypeName, n)
-        if isMulticastDelegate propType:
-            makeFieldAsUPropMulDel(fieldName, propType, metas[0], metas[1])
-        elif isDelegate propType:
-            makeFieldAsUPropDel(fieldName, propType, metas[0], metas[1])
-        else:
-            makeFieldAsUProp(fieldName, propType, metas[0], metas[1])
-
+        fieldNames.map(makeUEFieldFromFieldName)
     #TODO Metas to flags
     let ueFields = node.childrenAsSeq()
                    .filter(n=>n.kind==nnkStmtList)
@@ -380,6 +400,7 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
                    .map(childrenAsSeq)
                    .get(@[])
                    .map(nodeToUEField)
+                   .flatten()
     ueFields
 
 
@@ -387,7 +408,7 @@ func getUPropsAsFieldsForType(body:NimNode, ueTypeName:string) : seq[UEField]  =
     body.toSeq()
         .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ValidUProps)
         .map(n=>fromUPropNodeToField(n, ueTypeName))
-        .foldl(a & b, newSeq[UEField]())
+        .flatten()
         .reversed()
     
 macro uStruct*(name:untyped, body : untyped) : untyped = 
