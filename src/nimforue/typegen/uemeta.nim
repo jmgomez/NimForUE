@@ -576,11 +576,25 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr) {.cde
     if objProp.isNotNil(): 
         let comp = getPropertyValuePtr[USceneComponentPtr](prop, actor)[]
         if comp.isNotNil():
-          if objProp.hasMetadata("AttachTo"):
-              let attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata("AttachTo").get())
+          if objProp.hasMetadata("Attatch"):
+
+              var attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata("Attatch").get())
+              if attachToCompProp.isNil():
+                attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata("Attatch").get().capitalizeASCII)
+              
+              
               let attachToComp = getPropertyValuePtr[USceneComponentPtr](attachToCompProp, actor)[]
-              comp.setupAttachment(attachToComp)
+              
+              if objProp.hasMetadata("Socket"):
+                let socket =  makeFName(objProp.getMetadata("Socket").get())
+                comp.setupAttachment(attachToComp, socket)
+                UE_Warn &"Attaching {comp.getName()} to {attachToComp.getName()} with socket {socket}"
+              else:
+                comp.setupAttachment(attachToComp)
+                UE_Warn &"Attaching {comp.getName()} to {attachToComp.getName()}. No socket"
+
           else:
+              UE_Warn &"No attach metadata for {comp.getName()}"
               comp.setupAttachment(actor.rootComponent)
 
 
