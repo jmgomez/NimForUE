@@ -12,6 +12,7 @@ import ../macros/makestrproc
 const UETypeMetadataKey* = "UEType"
 const ClassConstructorMetadataKey* = "ClassConstructor"
 const NimClassMetadataKey* = "NimClass"
+const CategoryMetadataKey* = "Category"
 const AttachMetadataKey* = "Attach"
 const SocketMetadataKey* = "Socket"
 const DefaultComponentMetadataKey* = "DefaultComponent"

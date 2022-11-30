@@ -47,6 +47,8 @@ func tap*[T](xs: seq[T], fn: (x: T)->void): seq[T] =
     fn(x)
   xs
 
+func flatten*[T](xs: seq[seq[T]]): seq[T] = xs.foldl(a & b, newSeq[T]())
+
 
 #TODO use concepts to make the general case
 func sequence*[T](xs : seq[Option[T]]) : seq[T] = 

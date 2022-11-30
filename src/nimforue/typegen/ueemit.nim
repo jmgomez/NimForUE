@@ -261,24 +261,33 @@ func childrenAsSeq*(node:NimNode) : seq[NimNode] =
  
 
 
-func fromNinNodeToMetadata(node : NimNode) : UEMetadata =
-
+func fromNinNodeToMetadata(node : NimNode) : seq[UEMetadata] =
     case node.kind:
     of nnkIdent:
-        makeUEMetadata node.strVal()
+        @[makeUEMetadata(node.strVal())]
     of nnkExprEqExpr:
-        makeUEMetadata node[0].strVal(), node[1].strVal()
+        let key = node[0].strVal()
+        case node[1].kind:
+        of nnkIdent, nnkStrLit:
+            @[makeUEMetadata(key, node[1].strVal())]
+        of nnkTupleConstr: #Meta=(MetaVal1, MetaVal2)
+            @[makeUEMetadata(key, node[1][0].strVal()),
+              makeUEMetadata(key, node[1][1].strVal())]
+        else:
+            error("Invalid metadata node " & repr node)
+            @[]
     else:
         error("Invalid metadata node " & repr node)
-        UEMetadata()
+        @[]
 
 func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} = 
     body.toSeq()
         .filterIt(it.kind==nnkPar or it.kind == nnkTupleConstr)
         .mapIt(it.children.toSeq())
-        .foldl( a & b, newSeq[NimNode]())
+        .flatten()
         .filterIt(it.kind!=nnkExprColonExpr)
         .map(fromNinNodeToMetadata)
+        .flatten()
 
 #some metas (so far only uprops)
 #we need to remove some metas that may be incorrectly added as flags
@@ -288,7 +297,6 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
     var flags : EPropertyFlags = CPF_NativeAccessSpecifierPublic
     var metadata : seq[UEMetadata] = preMetas
     
-
     #TODO THROW ERROR WHEN NON MULTICAST AND USE MC ONLY
     # var flags : EPropertyFlags = CPF_None
     #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
@@ -316,10 +324,15 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
     for f in flagsThatShouldNotBeMeta:
         metadata = metadata.filterIt(it.name != f)
 
-    if not metadata.any(m => m.name == "Category"):
-       metadata.add(makeUEMetadata("Category", ueTypeName.removeFirstLetter()))
+  
 
+    if not metadata.any(m => m.name == CategoryMetadataKey):
+       metadata.add(makeUEMetadata(CategoryMetadataKey, ueTypeName.removeFirstLetter()))
 
+      #Attach accepts a second parameter which is the socket
+    if metadata.filterIt(it.name == AttachMetadataKey).len > 1:
+        let (attachs, metas) = metadata.partition((m:UEMetadata) => m.name == AttachMetadataKey)
+        metadata = metas & @[attachs[0], makeUEMetadata(SocketMetadataKey, attachs[1].value)]
     (flags, metadata)
 
 const ValidUprops = ["uprop", "uprops", "uproperty", "uproperties"]
@@ -328,7 +341,7 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
     let validNodesForMetas = [nnkIdent, nnkExprEqExpr]
     let metasAsNodes = node.childrenAsSeq()
                     .filterIt(it.kind in validNodesForMetas or (it.kind == nnkIdent and it.strVal().toLower() notin ValidUprops))
-    let ueMetas = metasAsNodes.map(fromNinNodeToMetadata)
+    let ueMetas = metasAsNodes.map(fromNinNodeToMetadata).flatten().tail()
     let metas = metasAsNodes
                     .filterIt(it.kind == nnkIdent)
                     .mapIt(it.strVal())
@@ -608,6 +621,7 @@ func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) : NimNo
                     .tail() #skip ufunc and variations
                     .filterIt(it.kind==nnkIdent or it.kind==nnkExprEqExpr)
                     .map(fromNinNodeToMetadata)
+                    .flatten()
     #TODO add first parameter
     let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), CPF_None) #notice no generic/var allowed. Only UObjects
    
