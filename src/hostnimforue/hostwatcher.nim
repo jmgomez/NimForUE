@@ -8,7 +8,6 @@ import hostbase
 type LoggerSignature* = proc(msg:cstring) {.cdecl, gcsafe.}
     
 
-const pluginDir* {.strdefine.} : string = ""
 
 
 var logger : LoggerSignature
@@ -33,7 +32,7 @@ proc checkReload*() {.ex.} = #only for nimforue (plugin)
     let plugin = "nimforue"
     for currentLib in libMap.keys:
         let isPlugin = plugin == currentLib
-        let mbNext = getLastLibPath(libDir, currentLib)
+        let mbNext = getLastLibPath(NimForUELibDir, currentLib)
         if mbNext.isSome():
             let nextLibName = mbNext.get()
             try:

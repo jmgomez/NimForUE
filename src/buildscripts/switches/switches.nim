@@ -36,7 +36,7 @@ let buildSwitches* = @[
   "-d:useMalloc",
   "-d:withReinstantiation",
   "-d:genFilePath:" & quotes(GenFilePath),
-  "-d:pluginDir:" & quotes(config.pluginDir),
+  "-d:pluginDir:" & quotes(PluginDir),
 
 ]
 

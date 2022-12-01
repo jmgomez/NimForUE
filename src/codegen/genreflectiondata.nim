@@ -356,7 +356,7 @@ proc execBindingsGenerationInAnotherThread*() {.cdecl.}=
     UE_Log $config[]
     # genUnrealBindings(plugins)
     discard
-  let config = getNimForUEConfig(pluginDir)
+  let config = getNimForUEConfig()
 
   let plugins = getAllInstalledPlugins(config)
   # executeTaskInTaskGraph[ptr NimForUEConfig](config.unsafeAddr, ffiWraper)

@@ -4,9 +4,6 @@ import ../buildscripts/[buildscripts]
 var libLock* : Lock
 initLock(libLock)
 
-const pluginDir* {.strdefine.} : string = ""
-
-let libDir* = NimForUELibDir
 
 
 type 
@@ -18,11 +15,11 @@ type
 func isInit*(lib : NueLib) : bool = lib.lib != nil
 
 var libMap* : Table[string, NueLib] = {
-  "nimforue" : NueLib(lastLoadedPath: getLastLibPath(libDir, "nimforue").get())
+  "nimforue" : NueLib(lastLoadedPath: getLastLibPath(NimForUELibDir, "nimforue").get())
 }.toTable()
 
 #Game must be compiled at least once. 
-let gameLibPath = getLastLibPath(libDir, "game")
+let gameLibPath = getLastLibPath(NimForUELibDir, "game")
 if gameLibPath.isSome():
   libMap["game"] = NueLib(lastLoadedPath: gameLibPath.get())
 

@@ -1,4 +1,4 @@
-import std/[json, jsonutils, os, sequtils, strformat, sugar, options]
+import std/[json, jsonutils, os, strutils, genasts, sequtils, strformat, sugar, options]
 import ../nimforue/utils/utils
 import buildcommon
 
@@ -11,16 +11,25 @@ const ReflectionDataDir* = "src" / ".reflectiondata"
 const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
 
 
+
+
+when defined(nue) and compiles(gorgeEx("")):
+  const ex  = gorgeEx("powershell.exe pwd") 
+  const output = $ex[0]
+  const PluginDir* = output.split("----")[1].strip().replace("\\src\\buildscripts", "")
+else:
+  const PluginDir* {.strdefine.} = ""#Defined in switches. Available for all targets (Hots, Guest..)
+
 #[
 The file is created for first time in from this file during compilation
 Since UBT has to set some values on it, it does so through the FFI 
 and then Saves it back to the json file. That's why we try to load it first before creating it.
 ]#
+
+
 type NimForUEConfig* = object 
   engineDir* : string #Set by UBT
   gameDir* : string
-  pluginDir* : string
-
   targetConfiguration* : TargetConfiguration #Sets by UBT (Development, Build)
   targetPlatform* : TargetPlatform #Sets by UBT
   # currentCompilation* : int 
@@ -34,33 +43,30 @@ func getConfigFileName() : string =
     return "NimForUE.win.json"
 
 #when saving outside of nim set the path to the project
-proc saveConfig*(config:NimForUEConfig, pluginDirPath="") =
-  let pluginDir = if pluginDirPath == "": getCurrentDir() else: pluginDirPath
-  let ueConfigPath = pluginDir / getConfigFileName()
+proc saveConfig*(config:NimForUEConfig) =
+  let ueConfigPath = PluginDir / getConfigFileName()
   var json = toJson(config)
   writeFile(ueConfigPath, json.pretty())
 
-proc getOrCreateNUEConfig(pluginDirPath="") : NimForUEConfig = 
-  let pluginDir = if pluginDirPath == "": getCurrentDir() else: pluginDirPath
-  let ueConfigPath = pluginDir / getConfigFileName()
+
+
+proc getOrCreateNUEConfig() : NimForUEConfig = 
+  let ueConfigPath = PluginDir / getConfigFileName()
   if fileExists ueConfigPath:
-    let json = readFile(ueConfigPath).parseJson()
-    return jsonTo(json, NimForUEConfig)
-  NimForUEConfig(pluginDir:pluginDir)
+    let json = parseFile(ueConfigPath)
+    return json.to(NimForUEConfig)
+
+  NimForUEConfig()
 
 
-
-proc getNimForUEConfig*(pluginDirPath="") : NimForUEConfig = 
-  let pluginDir = if pluginDirPath == "": getCurrentDir() else: pluginDirPath
-  var config = getOrCreateNUEConfig(pluginDirPath)
+proc getNimForUEConfig*() : NimForUEConfig = 
+  var config = getOrCreateNUEConfig()
 
   let configErrMsg = "Please check " & getConfigFileName() & " for missing: "
   doAssert(config.engineDir.dirExists(), configErrMsg & " engineDir")
   doAssert(config.gameDir.dirExists(), configErrMsg & " gameDir")
-  doAssert(config.pluginDir.dirExists(), configErrMsg & " pluginDir")
   config.engineDir = config.engineDir.normalizedPath().normalizePathEnd()
   config.gameDir = config.gameDir.normalizedPath().normalizePathEnd()
-  config.pluginDir = config.pluginDir.normalizedPath().normalizePathEnd()
 
   #Rest of the fields are sets by UBT
   config.saveConfig()
@@ -70,24 +76,28 @@ proc getNimForUEConfig*(pluginDirPath="") : NimForUEConfig =
 #PATHS. The can be set at compile time
 
 #Make sure correct paths are set (Mac vs Wind)
-
-
 #CREATE AND SAVE BEFORE RETURNING
-let config = getOrCreateNUEConfig("")
-let 
-  ueLibsDir = config.pluginDir/"Binaries"/"nim"/"ue" #THIS WILL CHANGE BASED ON THE CURRENT CONF
-  NimForUELibDir* = ueLibsDir.normalizedPath().normalizePathEnd()
-  HostLibPath* =  ueLibsDir / getFullLibName("hostnimforue")
-  GenFilePath* = config.pluginDir / "src" / "hostnimforue"/"ffigen.nim"
-  NimGameDir* = config.gameDir / "NimForUE"
-  GamePath* =  (config.gameDir / "*.uproject").walkFiles.toSeq().head().get("Couldnt find the uproject file")
 
+# when defined(nue):
+  # let config = getOrCreateNUEConfig("G:\\NimForUEDemov2\\NimForUEDemov2\\Plugins\\NimForUE")
+# else:
+#   const PluginDir* {.strdefine.} = ""#Defined in switches. Available for all targets (Hots, Guest..)
+
+let config = getOrCreateNUEConfig()
+
+let 
+  ueLibsDir = PluginDir/"Binaries"/"nim"/"ue" #THIS WILL CHANGE BASED ON THE CURRENT CONF
+  NimForUELibDir* = ueLibsDir.normalizePathEnd()
+  HostLibPath* =  ueLibsDir / getFullLibName("hostnimforue")
+  GenFilePath* = PluginDir / "src" / "hostnimforue"/"ffigen.nim"
+  NimGameDir* = config.gameDir / "NimForUE"
+  GamePath* = (config.gameDir / "*.uproject").walkFiles.toSeq().head().get("Couldnt find the uproject file")
 
 
 
 template codegenDir(fname, constName: untyped): untyped =
-  func fname*(config: NimForUEConfig): string =
-    config.pluginDir / constName
+  proc fname*(config: NimForUEConfig): string =
+    PluginDir / constName
 
 codegenDir(nimHeadersDir, NimHeadersDir)
 codegenDir(nimHeadersModulesDir, NimHeadersModulesDir)
@@ -99,12 +109,11 @@ codegenDir(reflectionDataFilePath, ReflectionDataFilePath)
 
 
 
-
 proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   let platformDir = if conf.targetPlatform == Mac: "Mac/x86_64" else: $ conf.targetPlatform
   let confDir = $ conf.targetConfiguration
   let engineDir = conf.engineDir
-  let pluginDir = conf.pluginDir
+  let pluginDir = PluginDir
 
   let pluginDefinitionsPaths = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
   let nimForUEIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUE"
@@ -186,7 +195,7 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   let platformDir = if conf.targetPlatform == Mac: "Mac/x86_64" else: $conf.targetPlatform
   let confDir = $conf.targetConfiguration
   let engineDir = conf.engineDir
-  let pluginDir = conf.pluginDir
+  let pluginDir = PluginDir
   #We only support Debug and Development for now and Debug is Windows only
   let suffix = if conf.targetConfiguration == Debug : "-Win64-Debug" else: "" 
   proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string): string =  

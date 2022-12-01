@@ -69,7 +69,6 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
         .replace(">", "")
     if prop.isInterface():
       let class = castField[FInterfaceProperty](prop).getInterfaceClass()
-      # UE_Warn &"Interface The cpp type is {cppType} and the inner class is {class}"
       return fmt"TScriptInterface[U{class.getName()}]"
 
     if prop.isTObjectPtr():

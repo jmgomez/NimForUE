@@ -6,8 +6,7 @@ import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 let config = getNimForUEConfig()
 
 
-let pluginDir = config.pluginDir
-let pchDir = pluginDir / "Intermediate\\Build\\Win64\\UnrealEditor" / $config.targetConfiguration / "NimForUE"
+let pchDir = PluginDir / "Intermediate\\Build\\Win64\\UnrealEditor" / $config.targetConfiguration / "NimForUE"
 let pchObjPath = pchDir / "PCH.NimForUE.h.obj"
 
 let pchCompileFlags = @[
@@ -78,7 +77,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
 #nimforue or game are the target, the folder and the base name must match
 proc getPdbFilePath*(targetName:static string): string =
  # This has some hardcoded paths for guestpch!
-  let pdbFolder = pluginDir / ".nimcache" / targetName / "pdbs"
+  let pdbFolder = PluginDir / ".nimcache" / targetName / "pdbs"
   createDir(pdbFolder)
 
   # clean up pdbs

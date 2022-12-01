@@ -3,3 +3,7 @@ switch("mm", "arc")
 switch("threads", "on")
 switch("tlsEmulation", "off")
 --cc:vcc
+
+# switch("define:pluginDir", getCurrentDir())
+
+--d:nue
