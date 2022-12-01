@@ -34,7 +34,7 @@ let codeGenOnly = makeImportedRuleType(uerCodeGenOnlyFields,
       "UEnum", "AVolume", "UInterface", "USoundWaveProcedural",
       "UActorComponent","AController",
       "UBlueprint", "UBlueprintGeneratedClass",
-      "APlayerController", 
+      "APlayerController", "UAnimBlueprintGeneratedClass",
       "UEngineSubsystem", "USubsystem", "UDynamicSubsystem", "UWorldSubsystem",
       #UMG Created more than once.
 
@@ -95,6 +95,8 @@ moduleRules["Engine"] = @[
     #Engine external deps
     "SetMouseCursorWidget",
     "PlayQuantized",
+    "AnimBlueprintGeneratedClass",
+    "UVirtualTexture2D",
 
     "Cancel", #name collision on mac (it can be avoided by adding it as an exception on the codegen)
     #By type name
@@ -112,6 +114,13 @@ moduleRules["Engine"] = @[
 moduleRules["MovieScene"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FMovieSceneByteChannel"
+  ]),
+  makeImportedRuleModule(uerImportBlueprintOnly)
+]
+
+moduleRules["InputCore"] = @[
+  makeImportedRuleType(uerIgnore, @[
+    "FKey"
   ]),
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
@@ -134,7 +143,8 @@ moduleRules["UMG"] = @[
     "SetNavigationRuleCustomBoundary",
     "SetNavigationRuleCustom",
 
-    "FTextBlockStyle"
+    "FTextBlockStyle",
+    "UWidgetNavigation",
 
   ]),
   makeImportedRuleModule(uerImportBlueprintOnly)

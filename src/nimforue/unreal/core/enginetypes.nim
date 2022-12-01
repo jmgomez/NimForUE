@@ -122,7 +122,7 @@ type
 
 
   TFieldPath* {.importcpp .} = object
-
+  FKey* {.importcpp .} = object
 
 
   UPlayer* {.importcpp, pure, inheritable .} = object of UObject

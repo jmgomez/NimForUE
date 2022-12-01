@@ -15,11 +15,16 @@ func isTMap(prop: FPropertyPtr): bool = not castField[FMapProperty](prop).isNil(
 func isTSet(prop: FPropertyPtr): bool = not castField[FSetProperty](prop).isNil()
 func isInterface(prop: FPropertyPtr): bool = not castField[FInterfaceProperty](prop).isNil()
 func isTEnum(prop: FPropertyPtr): bool = "TEnumAsByte" in prop.getName()
-func isTObjectPtr(prop: FPropertyPtr): bool = return false # "TObjectPtr" in prop.getCPPType()
+func isTObjectPtr(prop: string): bool = return "TObjectPtr" in prop
+func isTObjectPtr(prop: FPropertyPtr): bool = return "TObjectPtr" in prop.getName()
 func isDynDel(prop: FPropertyPtr): bool = not castField[FDelegateProperty](prop).isNil()
 func isMulticastDel(prop: FPropertyPtr): bool = not castField[FMulticastDelegateProperty](prop).isNil()
 #TODO Dels
-
+func cleanTObjectPtr(prop:string) : string = 
+    if prop.extractOuterGenericInNimFormat() == "TObjectPtr":
+        return prop.extractInnerGenericInNimFormat() & "Ptr"
+    else:
+        return prop
 
 func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expected type is something that UEField can understand
   func cleanCppType(cppType: string): string =
@@ -30,20 +35,16 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
               .replace("*", "Ptr")
     if cppType == "float": return "float32"
     if cppType == "double": return "float64"
-    return cppType
+    return cppType.cleanTObjectPtr()
     
 
   if prop.isTArray():
     var innerType = castField[FArrayProperty](prop).getInnerProp().getCPPType()
-    if prop.isTObjectPtr():
-      innerType = innerType.getInnerCppGenericType()
     return fmt"TArray[{innerType.cleanCppType()}]"
 
 
   if prop.isTSet():
     var elementProp = castField[FSetProperty](prop).getElementProp().getCPPType()
-    if prop.isTObjectPtr():
-      elementProp = elementProp.getInnerCppGenericType()
     return fmt"TSet[{elementProp.cleanCppType()}]"
 
   if prop.isTMap(): #better pattern here, i.e. option chain
@@ -51,8 +52,6 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
     var keyType = mapProp.getKeyProp().getCPPType()
     var valueType = mapProp.getValueProp().getCPPType()
 
-    if prop.isTObjectPtr():
-      valueType = valueType.getInnerCppGenericType()
 
     return fmt"TMap[{keyType.cleanCppType()}, {valueType.cleanCppType()}]"
 
@@ -70,11 +69,9 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
     if prop.isInterface():
       let class = castField[FInterfaceProperty](prop).getInterfaceClass()
       return fmt"TScriptInterface[U{class.getName()}]"
-
-    if prop.isTObjectPtr():
-      UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()}"
-      return cppType.replace("TObjectPtr<", "")
-        .replace(">", "") & "Ptr"
+    
+    
+  
 
     let nimType = cppType.cleanCppType()
 

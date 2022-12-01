@@ -30,6 +30,11 @@ proc extractOuterGenericInNimFormat*(str :string) : string =
     if scanf(str, "$*[$*]", generic, inner): generic
     else: str
 
+proc extractInnerGenericInNimFormat*(str :string) : string =
+    var generic, inner : string
+    if scanf(str, "$*[$*]", generic, inner): inner
+    else: str
+
 proc extractTypeFromGenericInNimFormat*(str, outerGeneric, innerGeneric :string) : string = 
     str.replace(outerGeneric, "").replace(innerGeneric, "").replace("[").replace("]", "")
 
