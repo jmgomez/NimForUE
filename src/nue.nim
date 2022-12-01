@@ -115,12 +115,18 @@ task clean, "Clean the nimcache folder":
   cleang(taskOptions)
 
 task ubuild, "Calls Unreal Build Tool for your project":
-  let curDir = getCurrentDir()
-  let walkPattern = config.pluginDir & "/../../*.uproject"
-  let uprojectFiles = walkPattern.walkFiles.toSeq()
-  doAssert(uprojectFiles.len == 1, &"There should only be 1 uproject file. uprojectfiles: {uprojectFiles}")
+  #This logic is temporary. We are going to get of most of the config data
+  #and just define const globals for all the paths we can deduce. The moment to do that is when supporting Game builds
 
-  let uprojectFile = uprojectFiles[0]
+  let curDir = getCurrentDir()
+  let uprojectFile = GamePath
+  let walkPattern = config.gameDir & "/Source/*Editor.Target.cs"
+  let targetFiles = walkPattern.walkFiles.toSeq()
+
+  #For now only editor
+  let target = targetFiles[0].split(".")[0] #i.e " NimForUEDemoEditor "
+
+
   try:
     setCurrentDir(config.engineDir)
     let buildCmd = r"Build\BatchFiles\" & (
@@ -128,8 +134,8 @@ task ubuild, "Calls Unreal Build Tool for your project":
         of Win64: "Build.bat"
         of Mac: r"BatchFiles\Mac\Build.sh" # untested
       )
-
-    doAssert(execCmd(buildCmd & " NimForUEDemoEditor " &
+ 
+    doAssert(execCmd(buildCmd & target &
                     $config.targetPlatform & " " &
                     $config.targetConfiguration & " " &
                     uprojectFile & " -waitmutex") == 0)

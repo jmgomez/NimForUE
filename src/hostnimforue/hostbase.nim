@@ -6,7 +6,7 @@ initLock(libLock)
 
 const pluginDir* {.strdefine.} : string = ""
 
-let libDir* = getNimForUEConfig(pluginDir).nimForUELibDir
+let libDir* = NimForUELibDir
 
 
 type 

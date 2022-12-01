@@ -27,7 +27,7 @@ import hostbase
 
 """
 
-  writeFile(config.genFilePath, content)
+  writeFile(GenFilePath, content)
 
 
 func getNextFileName*(currentFilename : string) : string = 

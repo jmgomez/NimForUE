@@ -71,7 +71,7 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
 
   let bindingPrefix =
     "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
-  let gameFolder = config.nimGameDir
+  let gameFolder = NimGameDir
 
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")

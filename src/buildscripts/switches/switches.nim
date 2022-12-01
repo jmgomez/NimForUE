@@ -35,7 +35,7 @@ let buildSwitches* = @[
   "--hint:DuplicateModuleImport:off",
   "-d:useMalloc",
   "-d:withReinstantiation",
-  "-d:genFilePath:" & quotes(config.genFilePath),
+  "-d:genFilePath:" & quotes(GenFilePath),
   "-d:pluginDir:" & quotes(config.pluginDir),
 
 ]

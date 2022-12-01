@@ -1,4 +1,5 @@
-import std/[json, jsonutils, os, sequtils, strformat, sugar]
+import std/[json, jsonutils, os, sequtils, strformat, sugar, options]
+import ../nimforue/utils/utils
 import buildcommon
 
 # codegen paths
@@ -9,37 +10,22 @@ const BindingsExportedDir* = "src"/"nimforue"/"unreal"/"bindings"/"exported"
 const ReflectionDataDir* = "src" / ".reflectiondata"
 const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
 
+
 #[
 The file is created for first time in from this file during compilation
 Since UBT has to set some values on it, it does so through the FFI 
 and then Saves it back to the json file. That's why we try to load it first before creating it.
 ]#
 type NimForUEConfig* = object 
-  genFilePath* : string #rename to Dir
-  nimForUELibDir* : string #due to how hot reloading on mac this now sets the last compiled filed.
-  hostLibPath* : string
-  engineDir* : string #Sets by UBT
+  engineDir* : string #Set by UBT
+  gameDir* : string
   pluginDir* : string
-  gamePath* : string
-  nimGameDir* : string #directory of the gamelib sources
+
   targetConfiguration* : TargetConfiguration #Sets by UBT (Development, Build)
   targetPlatform* : TargetPlatform #Sets by UBT
   # currentCompilation* : int 
   #WithEditor? 
   #DEBUG?
-
-
-template codegenDir(fname, constName: untyped): untyped =
-  func fname*(config: NimForUEConfig): string =
-    config.pluginDir / constName
-
-codegenDir(nimHeadersDir, NimHeadersDir)
-codegenDir(nimHeadersModulesDir, NimHeadersModulesDir)
-codegenDir(bindingsDir, BindingsDir)
-codegenDir(bindingsExportedDir, BindingsExportedDir)
-codegenDir(reflectionDataDir, ReflectionDataDir)
-codegenDir(reflectionDataFilePath, ReflectionDataFilePath)
-
 
 func getConfigFileName() : string = 
   when defined macosx:
@@ -62,28 +48,56 @@ proc getOrCreateNUEConfig(pluginDirPath="") : NimForUEConfig =
     return jsonTo(json, NimForUEConfig)
   NimForUEConfig(pluginDir:pluginDir)
 
+
+
 proc getNimForUEConfig*(pluginDirPath="") : NimForUEConfig = 
   let pluginDir = if pluginDirPath == "": getCurrentDir() else: pluginDirPath
-  #Make sure correct paths are set (Mac vs Wind)
-  let ueLibsDir = pluginDir/"Binaries"/"nim"/"ue"
-  #CREATE AND SAVE BEFORE RETURNING
-  let genFilePath = pluginDir / "src" / "hostnimforue"/"ffigen.nim"
   var config = getOrCreateNUEConfig(pluginDirPath)
-  config.nimForUELibDir = ueLibsDir.normalizedPath().normalizePathEnd()
-  config.hostLibPath =  ueLibsDir / getFullLibName("hostnimforue")
-  config.genFilePath = genFilePath
-  config.engineDir = config.engineDir.normalizedPath().normalizePathEnd()
-  config.pluginDir = config.pluginDir.normalizedPath().normalizePathEnd()
 
   let configErrMsg = "Please check " & getConfigFileName() & " for missing: "
   doAssert(config.engineDir.dirExists(), configErrMsg & " engineDir")
+  doAssert(config.gameDir.dirExists(), configErrMsg & " gameDir")
   doAssert(config.pluginDir.dirExists(), configErrMsg & " pluginDir")
-  doAssert(config.gamePath.fileExists(), configErrMsg & " gamePath")
-  doAssert(config.nimGameDir.dirExists(), configErrMsg & " nimGameDir")
+  config.engineDir = config.engineDir.normalizedPath().normalizePathEnd()
+  config.gameDir = config.gameDir.normalizedPath().normalizePathEnd()
+  config.pluginDir = config.pluginDir.normalizedPath().normalizePathEnd()
 
   #Rest of the fields are sets by UBT
   config.saveConfig()
   config
+
+
+#PATHS. The can be set at compile time
+
+#Make sure correct paths are set (Mac vs Wind)
+
+
+#CREATE AND SAVE BEFORE RETURNING
+let config = getOrCreateNUEConfig("")
+let 
+  ueLibsDir = config.pluginDir/"Binaries"/"nim"/"ue" #THIS WILL CHANGE BASED ON THE CURRENT CONF
+  NimForUELibDir* = ueLibsDir.normalizedPath().normalizePathEnd()
+  HostLibPath* =  ueLibsDir / getFullLibName("hostnimforue")
+  GenFilePath* = config.pluginDir / "src" / "hostnimforue"/"ffigen.nim"
+  NimGameDir* = config.gameDir / "NimForUE"
+  GamePath* =  (config.gameDir / "*.uproject").walkFiles.toSeq().head().get("Couldnt find the uproject file")
+
+
+
+
+template codegenDir(fname, constName: untyped): untyped =
+  func fname*(config: NimForUEConfig): string =
+    config.pluginDir / constName
+
+codegenDir(nimHeadersDir, NimHeadersDir)
+codegenDir(nimHeadersModulesDir, NimHeadersModulesDir)
+codegenDir(bindingsDir, BindingsDir)
+codegenDir(bindingsExportedDir, BindingsExportedDir)
+codegenDir(reflectionDataDir, ReflectionDataDir)
+codegenDir(reflectionDataFilePath, ReflectionDataFilePath)
+
+
+
 
 
 proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =

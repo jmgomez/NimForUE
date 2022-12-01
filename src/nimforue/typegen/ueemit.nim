@@ -379,7 +379,8 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
                         else: 
                             case n.kind:
                             of nnkIdent: n[1].repr.strip() #regular prop
-                            of nnkCall: n[^1][0].strVal() #(prop1,.., propn) : type
+                            of nnkCall:          
+                                repr(n[^1][0]).strip() #(prop1,.., propn) : type
                             else: 
                                 error("Invalid node for field " & repr(n) & " " & $ n.kind)
                                 ""

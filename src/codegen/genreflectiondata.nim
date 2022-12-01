@@ -4,11 +4,12 @@ import ../nimforue/typegen/uemeta
 import ../buildscripts/[nimforueconfig, buildscripts]
 import ../nimforue/macros/genmodule #not sure if it's worth to process this file just for one function? 
 
-
-
+#Any module not picked by default.
+#This could be exposed to the json file 
+let extraModuleNames = @["EnhancedInput", "NimForUEDemo"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
-let extraNonBpModules = ["DeveloperSettings"]
+let extraNonBpModules = ["DeveloperSettings", "EnhancedInput"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
@@ -187,7 +188,7 @@ const pluginDir {.strdefine.}: string = ""
 
 proc getAllInstalledPlugins*(config: NimForUEConfig): seq[string] =
   try:        
-    let projectJson = readFile(config.gamePath).parseJson()
+    let projectJson = readFile(GamePath).parseJson()
     let plugins = projectJson["Plugins"]
                     .filterIt(it["Enabled"].jsonTo(bool))
                     .mapIt(it["Name"].jsonTo(string))
@@ -202,7 +203,7 @@ proc getAllInstalledPlugins*(config: NimForUEConfig): seq[string] =
 proc genReflectionData*(plugins: seq[string]): UEProject =
   let deps = plugins
               .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-              .foldl(a & b, newSeq[string]()) & @["NimForUEDemo"] #, "Engine", "UMG", "UnrealEd"]
+              .foldl(a & b, newSeq[string]()) & extraModuleNames#, "Engine", "UMG", "UnrealEd"]
 
   # UE_Log &"Plugins: {plugins}"
   #Cache with all modules so we dont have to collect the UETypes again per deps
