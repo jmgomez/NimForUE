@@ -2,6 +2,7 @@
 import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
 import buildscripts / [buildcommon, buildscripts, nimforueconfig]
 import buildscripts/nuecompilation/nuecompilation
+import nimforue/utils/utils
 
 var taskOptions: Table[string, string]
 let config = getNimForUEConfig()
@@ -124,9 +125,9 @@ task ubuild, "Calls Unreal Build Tool for your project":
   let targetFiles = walkPattern.walkFiles.toSeq()
 
   #For now only editor
-  let target = targetFiles[0].split(".")[0] #i.e " NimForUEDemoEditor "
+  let target = targetFiles[0].split(".")[0].split(PathSeparator)[^1] #i.e " NimForUEDemoEditor "
 
-
+  log target
   try:
     setCurrentDir(config.engineDir)
     let buildCmd = r"Build\BatchFiles\" & (
@@ -135,13 +136,13 @@ task ubuild, "Calls Unreal Build Tool for your project":
         of Mac: r"BatchFiles\Mac\Build.sh" # untested
       )
  
-    doAssert(execCmd(buildCmd & target &
-                    $config.targetPlatform & " " &
-                    $config.targetConfiguration & " " &
-                    uprojectFile & " -waitmutex") == 0)
+    let cmd = &"{buildCmd} {target} {config.targetPlatform} {config.targetConfiguration} {uprojectFile} -waitmutex"
+    log config.engineDir
+    doAssert(execCmd(cmd) == 0)
     setCurrentDir(curDir)
   except:
-    log getCurrentExceptionMsg()
+    log getCurrentExceptionMsg(), lgError
+    log getCurrentException().getStackTrace(), lgError
     quit(QuitFailure)
 
 task dumpConfig, "Displays the config variables":
