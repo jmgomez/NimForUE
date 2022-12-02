@@ -1,6 +1,6 @@
 include ../unreal/prelude
 
-import ../bindings/engine
+import ../bindings/[engine, enhancedinput]
 import std/[typetraits, options]
 
 proc getSubsystem*[T : UDynamicSubsystem]() : Option[ptr T] = 
@@ -16,3 +16,7 @@ proc getSubsystem*[T : USubsystem](objContext : UObjectPtr) : Option[ptr T] =
       tryUECast[T](getWorldSubsystem(objContext, makeTSubclassOf[UWorldSubsystem](cls)))
     else:
       none[ptr T]()
+
+
+# #enhanced input
+# proc bindAction*(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) : var FEnhancedInputActionEventBinding

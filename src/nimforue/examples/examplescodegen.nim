@@ -15,6 +15,7 @@ uClass AActorCodegen of AActor:
     structPtrName : FString 
     moduleName : FString
     bOnlyBlueprint : bool 
+    actorToInspect : AActorPtr
 
   ufuncs(BlueprintCallable, CallInEditor, Category=ActorCodegen):
     proc genReflectionDataOnly() = 
@@ -82,4 +83,22 @@ uClass AActorCodegen of AActor:
       UE_Log $modules.head().map(x=>x.types.mapIt(it.name))
       UE_Log "Len " & $modules.len
       UE_Log "Types " & $modules.head().map(x=>x.types).get(@[]).len
-        
+    
+    proc showClassPropsForSelectedActor() = 
+      if self.actorToInspect.isNil():
+        UE_Error "Actor is null"
+        return
+      let obj = self.actorToInspect.getClass()
+      let props = obj.getFPropsFromUStruct()
+      for p in props:
+        UE_Log $p
+      
+    proc showClassFuncsForSelectedActor() = 
+      if self.actorToInspect.isNil():
+        UE_Error "Actor is null"
+        return
+      let obj = self.actorToInspect.getClass()
+      let funcs = obj.getFuncsFromClass()
+      for f in funcs:
+        UE_Log $f
+      

@@ -9,9 +9,8 @@ public class NimForUEBindings : ModuleRules
 			"Engine",
 			"Projects",
 			//"UnrealEd"
-			
+			 "InputCore", "EnhancedInput"
 		});
-		
 		
 
 

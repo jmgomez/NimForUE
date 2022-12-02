@@ -274,3 +274,26 @@ proc isTickFunctionRegistered*(self: FActorTickFunction): bool {.importcpp: "#.I
 proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)".} 
 let GEngine* = getEngine()
 proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGetWorldErrorMode) : UWorldPtr  {.importcpp: "#->GetWorldFromContextObject(#, #)".}
+
+
+
+
+# INPUT ACTION. This should live in another place.
+type 
+  ETriggerEvent* {.importcpp, size: sizeof(uint8).} = enum
+    None, Triggered, Started, Ongoing, Canceled, Completed, ETriggerEvent_MAX
+
+  UInputComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
+  UInputComponentPtr* = ptr UInputComponent
+  UEnhancedInputComponent* {. importcpp, inheritable, pure.} = object of UInputComponent
+  UEnhancedInputComponentPtr* = ptr UEnhancedInputComponent
+  UInputAction* {.importcpp, inheritable, pure .} = object of UObject
+  UInputActionPtr* = ptr UInputAction
+  UPlayerInput* {.importcpp, inheritable, pure .} = object of UObject
+  UPlayerInputPtr* = ptr UPlayerInput
+  UEnhancedPlayerInput* {.importcpp, inheritable, pure .} = object of UPlayerInput
+  UEnhancedPlayerInputPtr* = ptr UEnhancedPlayerInput
+  FEnhancedInputActionEventBinding*  {. importcpp, inheritable, pure.} = object
+
+proc bindAction*(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) : var FEnhancedInputActionEventBinding {.importcpp:"#->BindAction(@)".}
+  

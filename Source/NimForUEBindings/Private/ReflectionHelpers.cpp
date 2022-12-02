@@ -9,6 +9,10 @@
 
 #include "Interfaces/IPluginManager.h"
 
+#include "InputAction.h"
+#include "InputActionValue.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 UClass* UReflectionHelpers::GetClassByName(FString ClassName) {
 	UObject* ClassPackage = ANY_PACKAGE;
@@ -215,4 +219,10 @@ void UReflectionHelpers::SetClassConstructor(UClass* Class, void(* NimClassConst
 	Class->ClassConstructor = reinterpret_cast< void(*)(const FObjectInitializer&)>(NimClassConstructor);
 }
 
+// void UReflectionHelpers::BindAction(UEnhancedInputComponent* InputComponent, UInputAction* Action, ETriggerEvent TriggerEvent, UObject* Object, FName FunctionName)
 //
+// {
+// 	InputComponent->BindAction(Action, TriggerEvent, Object, FunctionName);
+// }
+//
+// //

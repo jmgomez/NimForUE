@@ -30,7 +30,7 @@ public class NimForUE : ModuleRules
 	    Console.WriteLine(Target.AdditionalLinkerArguments);
 		PublicIncludePaths.AddRange(   
 			new string[] {
-				// ... add public include paths required here ...
+				
 			}
 			);
 				
@@ -42,14 +42,8 @@ public class NimForUE : ModuleRules
 			);
 			
 		
-		PublicDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"Core",
-				 //TODO either make it conditional or use it stuff from another module (it will depend on the amount of calls done to it)
-				// ... add other public dependencies that you statically link with here ...
-			}
-			);
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+
 
 		if (Target.bBuildEditor) {
 			PrivateDependencyModuleNames.AddRange(new string[]{
@@ -70,6 +64,7 @@ public class NimForUE : ModuleRules
 				"NimForUEBindings",
 				"EditorStyle",
 				"Projects",
+				"EnhancedInput"
 			
 			}
 			);

@@ -8,7 +8,10 @@
 #include "ReflectionHelpers.generated.h"
 
 
-struct FNimHotReload;
+// class UInputAction;
+// class UEnhancedInputComponent;
+// enum class ETriggerEvent : uint8;
+// struct FNimHotReload;
 /**
  * 
  */
@@ -120,7 +123,9 @@ public:
 	
 	static void SetClassConstructor(UClass* Class, void (*NimClassConstructor) (FObjectInitializer&));
 
-
-	
+	//
+	// //Input action
+	// UFUNCTION()
+	// static void BindAction(UEnhancedInputComponent* InputComponent,UInputAction* Action, ETriggerEvent TriggerEvent, UObject* Object, FName FunctionName);
 };
 

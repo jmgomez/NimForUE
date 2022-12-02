@@ -35,5 +35,11 @@
 			"Type": "Editor",
 			"LoadingPhase": "PostDefault"
 		}
+	],
+	"Plugins": [
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		}
 	]
 }

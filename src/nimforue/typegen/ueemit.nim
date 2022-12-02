@@ -305,12 +305,12 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
             flags = flags | CPF_BlueprintVisible | CPF_BlueprintReadOnly
         if m == "BlueprintReadWrite":
             flags = flags | CPF_BlueprintVisible
-        if m == "EditAnywhere":
+        if m in ["EditAnywhere", "VisibleAnywhere"]:
             flags = flags | CPF_Edit
         if m == "ExposeOnSpawn":
                 flags = flags | CPF_ExposeOnSpawn
-        if m == "VisibleAnywhere":
-                flags = flags | CPF_SimpleDisplay
+        if m == "VisibleAnywhere": 
+                flags = flags | CPF_DisableEditOnInstance
         if m == "Transient":
                 flags = flags | CPF_Transient
         if m == "BlueprintAssignable":

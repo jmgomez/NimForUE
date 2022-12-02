@@ -7,3 +7,11 @@
 #include "NimClassBase.h"
 #include "NimScriptStruct.h"
 #include "FNimHotReload.h"
+
+
+
+
+#include "InputAction.h"
+#include "InputActionValue.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"

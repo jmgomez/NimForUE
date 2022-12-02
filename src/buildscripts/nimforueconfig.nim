@@ -114,6 +114,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   let confDir = $ conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = PluginDir
+  let enginePluginDir = engineDir/"Plugins"#\EnhancedInput\Source\EnhancedInput\Public\EnhancedPlayerInput.h
 
   let pluginDefinitionsPaths = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
   let nimForUEIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUE"
@@ -158,6 +159,8 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   proc getEngineRuntimeIncludePathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Public"
   proc getEngineRuntimeIncludeClassesPathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Classes"
   proc getEngineIntermediateIncludePathFor(moduleName:string) : string = engineDir / "Intermediate/Build" / platformDir / "UnrealEditor/Inc" / moduleName
+  proc getEnginePluginModule(moduleName:string) : string = enginePluginDir / moduleName / "Source" / moduleName / "Public"
+
 
   let runtimeModules = @["CoreUObject", "Core", "TraceLog", "Launch", "ApplicationCore", 
       "Projects", "Json", "PakFile", "RSA", "RenderCore",
@@ -180,12 +183,15 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   "EditorStyle", "EditorSubsystem","EditorFramework",
   
   ]
+  let enginePlugins = @["EnhancedInput"]
+
   let moduleHeaders = 
     runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
     developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
     developerModules.map(module=>getEngineRuntimeIncludeClassesPathFor("Developer", module)) & #if it starts to complain about the lengh of the cmd line. Optimize here
     editorModules.map(module=>getEngineRuntimeIncludePathFor("Editor", module)) & 
-    intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module)) 
+    intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module)) &
+    enginePlugins.map(module=>getEnginePluginModule(module))
 
   (essentialHeaders & moduleHeaders & editorHeaders).map(path => path.normalizedPath().normalizePathEnd())
 
@@ -204,6 +210,14 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
     elif defined macosx:
       let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
       engineDir / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"
+#E:\unreal_sources\5.1Launcher\UE_5.1\Engine\Plugins\EnhancedInput\Intermediate\Build\Win64\UnrealEditor\Development\EnhancedInput
+  proc getEnginePluginSymbolsPathFor(prefix, moduleName:string): string =  
+    when defined windows:
+      engineDir / "Plugins" / moduleName / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / moduleName / &"{prefix}-{moduleName}{suffix}.lib"
+    elif defined macosx:
+      let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
+      engineDir / "Plugins" / moduleName / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"
+
 
   proc getNimForUESymbols(): seq[string] = 
     when defined macosx:
@@ -220,6 +234,7 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
 
   let modules = @["Core", "CoreUObject", "Engine", "SlateCore", "UnrealEd", "InputCore"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName))
+  let enginePluginSymbolsPaths = @["EnhancedInput"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName))
 
-  (engineSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
+  (engineSymbolsPaths & enginePluginSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
 

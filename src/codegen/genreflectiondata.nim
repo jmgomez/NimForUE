@@ -9,7 +9,7 @@ import ../nimforue/macros/genmodule #not sure if it's worth to process this file
 let extraModuleNames = @["EnhancedInput", "NimForUEDemo"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
-let extraNonBpModules = ["DeveloperSettings", "EnhancedInput"]
+let extraNonBpModules = ["DeveloperSettings"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
@@ -65,6 +65,13 @@ let codeGenOnly = makeImportedRuleType(uerCodeGenOnlyFields,
       # "FTimerDynamicDelegate",
       # "FKey",
       # "FFastArraySerializer"
+
+      
+      "UInputComponent",
+      "UEnhancedInputComponent",
+      "UInputAction",
+      "UPlayerInput",
+      "UEnhancedPlayerInput",
     
     ])
 
@@ -116,6 +123,12 @@ moduleRules["MovieScene"] = @[
     "FMovieSceneByteChannel"
   ]),
   makeImportedRuleModule(uerImportBlueprintOnly)
+]
+moduleRules["EnhancedInput"] = @[
+  codegenOnly,
+  makeImportedRuleType(uerIgnore, @[
+    "ETriggerEvent"
+  ]),
 ]
 
 moduleRules["InputCore"] = @[
