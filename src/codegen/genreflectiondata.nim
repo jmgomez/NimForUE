@@ -9,7 +9,7 @@ import ../nimforue/macros/genmodule #not sure if it's worth to process this file
 let extraModuleNames = @["EnhancedInput", "NimForUEDemo"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
-let extraNonBpModules = ["DeveloperSettings"]
+let extraNonBpModules = ["DeveloperSettings", "EnhancedInput"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
@@ -37,7 +37,7 @@ let codeGenOnly = makeImportedRuleType(uerCodeGenOnlyFields,
       "APlayerController", "UAnimBlueprintGeneratedClass",
       "UEngineSubsystem", "USubsystem", "UDynamicSubsystem", "UWorldSubsystem",
       #UMG Created more than once.
-
+      # "UKismetMathLibrary",
       # "UPrimitiveComponent", "UPhysicalMaterial", "AController",
       # "UStreamableRenderAsset", "UStaticMeshComponent", "UStaticMesh",
       # "USkeletalMeshComponent", "UTexture2D", "UInputComponent",
@@ -83,7 +83,7 @@ moduleRules["Engine"] = @[
     "FHitResult",
     #issue with a field name 
     "FTransformConstraint", 
-    "UKismetMathLibrary", #issue with the funcs?,
+    # "UKismetMathLibrary", #issue with the funcs?,
     "FOnTemperatureChangeDelegate", #Mac gets stuck here?,
     # "UParticleSystem", #collision with a function name and Cascade is deprecated, use Niagara instead.
     ]), 
@@ -113,9 +113,13 @@ moduleRules["Engine"] = @[
     "TFieldPath",
     "UWorld", #cant be casted to UObject
 
+    #KismetMathLibrary funcs:
+    
+
   ]),
-  makeImportedRuleModule(uerImportBlueprintOnly)#,
+  makeImportedRuleModule(uerImportBlueprintOnly),
   # makeVirtualModuleRule("gameplaystatics", @["UGameplayStatics"])
+  # makeVirtualModuleRule("mathlibrary", @["UKismetMathLibrary"])
 ]
 
 moduleRules["MovieScene"] = @[
@@ -127,7 +131,8 @@ moduleRules["MovieScene"] = @[
 moduleRules["EnhancedInput"] = @[
   codegenOnly,
   makeImportedRuleType(uerIgnore, @[
-    "ETriggerEvent"
+    "ETriggerEvent",
+    "FInputActionValue",
   ]),
 ]
 

@@ -193,7 +193,7 @@ func genFormalParamsInFunctionSignature(typeDef : UEType, funField:UEField, firs
           funField.signatureAsNode(identWithInject))
 
 
-
+func getGenFuncName(funField : UEField) : string = funField.name.firstToLow()
 #this is used for both, to generate regular function binds and delegate broadcast/execute functions
 #for the most part the same code is used for both
 #this is also used for native function implementation but the ast is changed afterwards
@@ -244,12 +244,16 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
     callUFuncOn
     returnCall
 
-  var pragmas = nnkPragma.newTree(ident("exportcpp")) # export the function as cpp
+  var pragmas = 
+    nnkPragma.newTree(
+      nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
+      ) #export the func with an underscore to avoid collisions
+
   when defined(windows):
     pragmas.add(ident("thiscall"))
 
   result = nnkProcDef.newTree([
-              identPublic funField.name.firstToLow(), 
+              identPublic funField.getGenFuncName(), 
               newEmptyNode(), newEmptyNode(), 
               formalParams, 
               pragmas, newEmptyNode(),
@@ -401,15 +405,15 @@ func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode =
   var pragmas = nnkPragma.newTree(
           nnkExprColonExpr.newTree(
             ident("importcpp"),
-            newStrLitNode("$1(@)")#Import the cpp func. Not sure if the value will work across all the signature combination
+            newStrLitNode("$1_(@)")#Import the cpp func. Not sure if the value will work across all the signature combination
           ),
           nnkExprColonExpr.newTree(
-            ident("header"),#notice the header is temp.
+            ident("header"),
             newStrLitNode("UEGenBindings.h")
           )
         )
   result = nnkProcDef.newTree([
-              identPublic funField.name.firstToLow(), 
+              identPublic funField.getGenFuncName(), 
               newEmptyNode(), newEmptyNode(), 
               formalParams, 
               pragmas, newEmptyNode(), newEmptyNode()

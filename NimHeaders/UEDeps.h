@@ -32,6 +32,12 @@
 //#include "FakeFactory.h"
 
 
+
+
+#include "InputAction.h"
+#include "InputActionValue.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #ifdef WITH_EDITOR
   #include "Editor/UnrealEdEngine.h"
   #include "Editor/UnrealEd/Public/Editor.h"
