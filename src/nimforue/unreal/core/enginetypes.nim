@@ -294,6 +294,15 @@ type
   UEnhancedPlayerInput* {.importcpp, inheritable, pure .} = object of UPlayerInput
   UEnhancedPlayerInputPtr* = ptr UEnhancedPlayerInput
   FEnhancedInputActionEventBinding*  {. importcpp, inheritable, pure.} = object
-
-proc bindAction*(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) : var FEnhancedInputActionEventBinding {.importcpp:"#->BindAction(@)".}
+  FInputActionValue* {.importcpp .} = object
   
+
+proc bindActionInteral(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) : var FEnhancedInputActionEventBinding {.importcpp:"#->BindAction(@)".}
+proc bindAction*(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) =
+  discard bindActionInteral(self, action, triggerEvent, obj, functionName)
+  
+
+func get*[T:float32 | FVector2D | FVector](input : FInputActionValue) {.importcpp: "#.Get<'0>()".}
+func axis1D*(input : FInputActionValue) : float32 {.importcpp: "#.Get<float>()".}
+func axis2D*(input : FInputActionValue) : FVector2D  {.importcpp: "#.Get<FVector2D>()".}
+func axis3D*(input : FInputActionValue) : FVector {.importcpp: "#.Get<FVector>()".}
