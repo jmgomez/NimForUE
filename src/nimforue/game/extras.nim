@@ -18,5 +18,7 @@ proc getSubsystem*[T : USubsystem](objContext : UObjectPtr) : Option[ptr T] =
       none[ptr T]()
 
 
-# #enhanced input
-# proc bindAction*(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) : var FEnhancedInputActionEventBinding
+
+
+converter boolToUInt8*(b: bool): uint8 = 
+  if b: 1 else: 0

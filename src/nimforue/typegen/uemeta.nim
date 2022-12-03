@@ -346,6 +346,9 @@ func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[]): Option[UEType] 
 
     fields.add(makeFieldASUEnum(fieldName.removePref("_")))
 
+  for rule in rules:
+    if name in rule.affectedTypes and rule.rule == uerIgnore:
+      return none(UEType)
 
   if uenum.isBpExposed():
     some UEType(name: name, kind: uetEnum, fields: fields)
@@ -541,12 +544,7 @@ proc emitUFunction*(fnField: UEField, cls: UClassPtr, fnImpl: Option[UFunctionNa
 proc isNotNil[T](x: ptr T): bool = not x.isNil()
 proc isNimClassBase(cls: UClassPtr): bool = cls.isNimClass()
 
-#This always be appened at the default constructor at the beggining
-proc callSuperConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
-  let obj = initializer.getObj()
-  let cls = obj.getClass()
-  let cppCls = cls.getFirstCppClass()
-  cppCls.classConstructor(initializer)
+
 
 proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr) {.cdecl.} = 
 
@@ -588,14 +586,22 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr) {.cde
 
   if actor.getRootComponent().isNil():
       discard actor.setRootComponent(initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot"))
+#This always be appened at the default constructor at the beggining
+proc callSuperConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
+  let obj = initializer.getObj()
+  let cls = obj.getClass()
+  let cppCls = cls.getFirstCppClass()
+  cppCls.classConstructor(initializer)
+  let actor = tryUECast[AActor](obj)
+  if actor.isSome():
+    initComponents(initializer, actor.get())
+
 #This needs to be appended after the default constructor so comps can be init
 proc postConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   let obj = initializer.getObj()
   let cls = obj.getClass()
-  let actor = tryUECast[AActor](obj)
-
-  if actor.isSome():
-   initComponents(initializer, actor.get())
+ 
+ 
   
 proc defaultConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   callSuperConstructor(initializer)

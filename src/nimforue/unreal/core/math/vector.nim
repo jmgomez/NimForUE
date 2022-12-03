@@ -7,12 +7,15 @@ import ../containers/unrealstring
 #TODO now vectors are defined as TVector[T] and there are FVector3f (this) and FVector3d 
 #Not sure if it will be better to just do an alias 
 
+#TODO need to handle float64 vs float32 not sure how ue exactly does it
 type FVector*{.importcpp } = object
-  x*: float32
-  y*: float32
-  z*: float32
+  x* {.importcpp:"X".} : float32
+  y* {.importcpp:"Y".} : float32
+  z* {.importcpp:"Z".} : float32
 
-proc makeFVector*(x, y, z: cfloat): FVector {.importcpp:"FVector(@)", constructor.}
+
+
+proc makeFVector*(x, y, z: float32): FVector {.importcpp:"FVector(@)", constructor.}
 
 proc toString*(v: FVector): FString {.importcpp:"#.ToString()"}
 
