@@ -2,7 +2,7 @@ switch("outdir", ".") #override config.nims, output to the plugin folder instead
 switch("mm", "arc")
 switch("threads", "on")
 switch("tlsEmulation", "off")
---cc:vcc
+# --cc:vcc
 
 # switch("define:pluginDir", getCurrentDir())
 

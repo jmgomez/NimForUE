@@ -14,11 +14,19 @@ const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
 
 
 when defined(nue) and compiles(gorgeEx("")):
-  const ex  = gorgeEx("powershell.exe pwd") 
-  const output = $ex[0]
-  const PluginDir* = output.split("----")[1].strip().replace("\\src\\buildscripts", "")
+
+  when defined(windows):
+    const ex  = gorgeEx("powershell.exe pwd") 
+    const output = $ex[0]
+    const PluginDir* = output.split("----")[1].strip().replace("\\src\\buildscripts", "")
+  else:
+    const ex  = gorgeEx("pwd") 
+    const output = $ex[0]
+    const PluginDir* = output.strip().replace("/src/buildscripts", "")
+
 else:
   const PluginDir* {.strdefine.} = ""#Defined in switches. Available for all targets (Hots, Guest..)
+
 
 #[
 The file is created for first time in from this file during compilation

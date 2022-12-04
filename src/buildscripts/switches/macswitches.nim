@@ -23,9 +23,9 @@ let macSwitches = @[
 ]
 
 
-proc getPlatformSwitches*(withPch, withIncremental, withDebug : bool, target:string) : seq[string] = 
+proc getPlatformSwitches*(withPch, withDebug : bool, target:string) : seq[string] = 
   let platformDir =  "Mac/x86_64" 
-  let pchPath = config.pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / $config.targetConfiguration / "NimForUE" / "PCH.NimForUE.h.gch"
+  let pchPath = PluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / $config.targetConfiguration / "NimForUE" / "PCH.NimForUE.h.gch"
   if withPch:
     macSwitches & @["-t:"&escape("-include-pch " & pchPath)]
   else: macSwitches
