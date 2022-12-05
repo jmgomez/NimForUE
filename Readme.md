@@ -13,9 +13,9 @@ The design philosophy is to not change any unreal conventions on the API side of
 
 
 
-### Hot reloading and debugging POC video:
+### Showcase at NimConf 2022:
 
-[![Hot reloading and debugging POC video](https://img.youtube.com/vi/4NBE9sEMn28/0.jpg)](https://www.youtube.com/watch?v=4NBE9sEMn28)
+[![Showcase at NimConf 2022](https://img.youtube.com/vi/0b3ixaz2uOg/0.jpg)](https://youtu.be/0b3ixaz2uOg)
 
 
 
