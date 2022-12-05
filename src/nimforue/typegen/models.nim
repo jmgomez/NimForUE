@@ -17,6 +17,7 @@ const AttachMetadataKey* = "Attach"
 const SocketMetadataKey* = "Socket"
 const DefaultComponentMetadataKey* = "DefaultComponent"
 const RootComponentMetadataKey* = "RootComponent"
+const CPP_Default_MetadataKeyPrefix* = "CPP_Default_"
 
 
 type
@@ -102,7 +103,7 @@ type
         uerVirtualModule
         uerInnerClassDelegate #Some delegates are declared withit a class and can collide. This rule is for when both are true
         uerIgnoreHash #ignore the hash when importing a module so always imports it. 
-        
+
     UERuleTarget* = enum 
         uertType
         uertField
@@ -192,6 +193,8 @@ func makeVirtualModuleRule*(moduleName:string, affectedTypes:seq[string]) : UEIm
     result.affectedTypes = affectedTypes
     result.moduleName = moduleName
 
+
+
 func contains*(rules: seq[UEImportRule], rule:UERule): bool = 
     rules.any((r:UEImportRule) => r.rule == rule)
 
@@ -238,6 +241,34 @@ func makeUEMetadata*(name:string, value:string) : UEMetadata =
 
 
 func hasUEMetadata*[T:UEField|UEType](val:T, name:string) : bool = val.metadata.any(m => m.name == name)
+
+func getAllParametersWithDefaultValuesFromFunc*(fnField:UEField) : seq[UEField] =
+    assert fnField.kind == uefFunction
+    let names = 
+      fnField
+        .metadata
+        .filterIt(it.name.contains(CPP_Default_MetadataKeyPrefix))
+        .mapIt(it.name.replace(CPP_Default_MetadataKeyPrefix, "").firstToLow())
+    fnField
+      .signature
+      .filterIt(it.name in names)
+
+ 
+#The name is in nim format. It's transformed here.
+func getMetadataValueFromFunc*[T](fnField : UEField, name:string) : T =
+    assert fnField.kind == uefFunction
+    var name = name
+    if name[0] != 'b':
+        name = name.firstToUpper()
+    let val = fnField.metadata[CPP_Default_MetadataKeyPrefix & name]
+    #TODO the val can come in a lot of different shapes. See PrintString
+    when T is bool:
+        return parseBool(val.get()) #TODO uint 
+    #Get the parameter with the name. 
+    #inspect the type of the parameter
+    #convert it to the type T which should be known before calling this function?
+    # return T()
+    
 
 func isMulticastDelegate*(field:UEField) : bool = hasUEMetadata(field, MulticastDelegateMetadataKey)
 func isDelegate*(field:UEField) : bool = hasUEMetadata(field, DelegateMetadataKey)

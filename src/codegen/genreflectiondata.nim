@@ -134,6 +134,8 @@ moduleRules["EnhancedInput"] = @[
     "ETriggerEvent",
     "FInputActionValue",
   ]),
+  makeImportedRuleModule(uerIgnoreHash)
+
 ]
 
 moduleRules["InputCore"] = @[
