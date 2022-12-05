@@ -2,6 +2,7 @@ import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, impor
 
 include ../unreal/definitions
 import ../utils/ueutils
+import ../unreal/core/containers/[unrealstring, array, map, set]
 
 import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
@@ -106,7 +107,6 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
   
   let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)).nimToCppConflictsFreeName()
 
-  # debugEcho treeRepr typeNodeAsReturnValue
   #Notice we generate two set properties one for nim and the other for code gen due to cpp
   #not liking the equal in the ident name
   result = 
@@ -159,7 +159,7 @@ func genParamInFnBodyAsType(funField:UEField) : NimNode =
                   funField.signatureAsNode(identWrapper) &
                   returnProp.map(prop=>
                     @[nnkIdentDefs.newTree([ident("returnValue"), 
-                              ident prop.uePropType, 
+                              getTypeNodeFromUProp(prop),# prop.uePropType, 
                               newEmptyNode()])]).get(@[])
                 )])
             ])])
@@ -176,11 +176,22 @@ func genFormalParamsInFunctionSignature(typeDef : UEType, funField:UEField, firs
 #notice the first part has to be introduced. see the final part of genFunc
   let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
 
-  let returnType =  if funField.doesReturn():
-              ident funField.getReturnProp().get().uePropType
-            else:
-              ident "void"
+  let returnType =  
+    if funField.doesReturn(): getTypeNodeFromUProp(funField.getReturnProp().get())
+            # funField.getReturnProp()
+            #         .map(p=>
+            #           ( if p.uePropType.isGeneric():
+            #               nnkBracketExpr.newTree(
+            #                 ident p.uePropType.extractOuterGenericInNimFormat(), 
+            #                 ident p.uePropType.extractInnerGenericInNimFormat()
+            #               )                   
+            #             else:ident p.uePropType
+            #           )
+            #         ).get
+    else:
+      ident "void"
 
+  
 
   let objType = if typeDef.kind == uetDelegate:
             nnkVarTy.newTree(ptrName)
@@ -249,8 +260,8 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
       nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
       ) #export the func with an underscore to avoid collisions
 
-  when defined(windows):
-    pragmas.add(ident("thiscall"))
+  # when defined(windows):
+  #   pragmas.add(ident("thiscall")) #I Dont think this is necessary
 
   result = nnkProcDef.newTree([
               identPublic funField.getGenFuncName(), 
@@ -259,11 +270,8 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
               pragmas, newEmptyNode(),
               fnBody
             ])
-
   
-
-  # debugEcho repr result
-  # debugEcho treeRepr result
+  
 
 
 func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFunctionFlags, seq[UEMetadata]) = 
@@ -327,12 +335,11 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
     let firstParam = classParam.chainNone(()=>fields.head()).getOrRaise("Class not found. Please use the ufunctions macr and specify the type there if you are trying to define a static function. Otherwise, you can also set the type as first argument")
     let className = firstParam.uePropType.removeLastLettersIfPtr()
     
-
+    # debugEcho treeRepr formalParamsNode.head().get(newEmptyNode())
     let returnParam = formalParamsNode #for being void it can be empty or void
-                        .first(n=>n.kind==nnkIdent)
-                        .flatMap((n:NimNode)=>(if n.strVal()=="void": none[NimNode]() else: some(n)))
+                        .first(n=>n.kind in [nnkIdent, nnkBracketExpr])
+                        .flatMap((n:NimNode)=>(if n.kind==nnkIdent and n.strVal()=="void": none[NimNode]() else: some(n)))
                         .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
-
     let actualParams = classParam.map(n=>fields) #if there is class param, first param would be use as actual param
                                  .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
     
@@ -397,8 +404,6 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
       proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
     result = nnkStmtList.newTree(result, exportFn)
 
-  # if result.repr.contains("UObjectScratchpad"):
-  #  debugEcho result.repr
 
 func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode = 
   let formalParams = genFormalParamsInFunctionSignature(typeDef, funField, "obj")
