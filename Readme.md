@@ -1,6 +1,5 @@
 
-![This is an image](./logo.png)
-
+<img src="./logo.png" width="360"  align="right">
 
 ### DISCLAIMER ###
 This is not meant to be used yet. There is no instructions available, but there will be instructions once it's in a better state.  
