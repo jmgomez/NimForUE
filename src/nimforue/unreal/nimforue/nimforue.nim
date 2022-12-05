@@ -1,5 +1,5 @@
 import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes]
-import ../core/containers/[unrealstring, array]
+import ../core/containers/[unrealstring, map, array]
 import nimforuebindings
 import ../../macros/uebind
 import std/[strformat, options]
@@ -8,7 +8,6 @@ import ../../typegen/models
 import ../../utils/[utils, ueutils]
 import ../core/enginetypes
 import std/[typetraits, strutils, sequtils, sugar]
-
 
 
 #This file contains logic on top of ue types that it isnt necessarily bind 
@@ -25,7 +24,6 @@ proc getFPropsFromUStruct*(ustr:UStructPtr, flags=EFieldIterationFlags.None) : s
     var fieldIterator = makeTFieldIterator[FProperty](ustr, flags)
     for it in fieldIterator:
         let prop = it.get()
-        # if CPF_BlueprintVisible in prop.getPropertyFlags():
         xs.add prop
     xs
 proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UFunctionPtr] = 
@@ -33,7 +31,6 @@ proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UF
     var fieldIterator = makeTFieldIterator[UFunction](cls, flags)
     for it in fieldIterator:
         let fn = it.get()
-      #  if FUNC_BlueprintCallable in fn.functionFlags: 
         xs.add fn
     xs
 
@@ -77,6 +74,30 @@ proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FProperty
     getFPropertiesFrom(fn).filter(isIn)
 
 
+proc `$`*(obj:UObjectPtr) : string = 
+    if obj.isNil(): "nill"
+    else: $obj.getName()
+
+
+#Probably these should be repr
+
+func `$`*(prop:FPropertyPtr):string=
+  let meta = prop.getMetadataMap()
+  &"Prop: {prop.getName()} CppType: {prop.getCppType()} Flags: {prop.getPropertyFlags()} Metadata: {meta}"
+
 
     
 
+func `$`*(fn:UFunctionPtr):string = 
+  let metadataMap = fn.getMetadataMap()
+  if metadataMap.len() > 0:
+    metadataMap.remove(n"Comment")
+    metadataMap.remove(n"ToolTip")
+  let params = getFPropsFromUStruct(fn).mapIt($it).join("\n\t")
+    #PROPS?
+  &"""Func: {fn.getName()} Flags: {fn.functionFlags} Metadata: {metadataMap}
+  
+  Params: 
+    {params}
+  """
+    

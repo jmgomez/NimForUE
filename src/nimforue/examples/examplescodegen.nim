@@ -5,17 +5,93 @@ import ../../buildscripts/nimforueconfig
 import ../../codegen/[codegentemplate,genreflectiondata]
 import ../macros/genmodule #not sure if it's worth to process this file just for one function? 
 
+
+#[
+  NimForUEBindings: [examplescodegen.nim:58]: Func: PrintString Flags: FUNC_Final, FUNC_Native, FUNC_Static, FUNC_Public, FUNC_HasDefaults, FUNC_BlueprintCallable, FUNC_AllFlags Metadata: {AdvancedDisplay: 2, CallableWithoutWorldContext: , Category: Development, CPP_Default_bPrintToLog: true, CPP_Default_bPrintToScreen: true, CPP_Default_Duration: 2.000000, CPP_Default_InString: Hello, CPP_Default_Key: None, CPP_Default_TextColor: (R=0.000000,G=0.660000,B=1.000000,A=1.000000), DevelopmentOnly: , Keywords: log print, ModuleRelativePath: Classes/Kismet/KismetSystemLibrary.h, WorldContext: WorldCon
+textObject}
+  
+  Params: 
+    Prop: WorldContextObject CppType: UObject* Flags: CPF_ConstParm, CPF_Parm, CPF_ZeroConstructor, CPF_NoDestructor, CPF_HasGetValueTypeHash, CPF_NativeAccessSpecifierPublic Metadata: {NativeConst: }
+    Prop: InString CppType: FString Flags: CPF_Parm, CPF_ZeroConstructor, CPF_HasGetValueTypeHash, CPF_NativeAccessSpecifierPublic Metadata: {NativeConst: }
+    Prop: bPrintToScreen CppType: bool Flags: CPF_Parm, CPF_ZeroConstructor, CPF_IsPlainOldData, CPF_NoDestructor, CPF_AdvancedDisplay, CPF_HasGetValueTypeHash, CPF_NativeAccessSpecifierPublic Metadata: {:}
+    Prop: bPrintToLog CppType: bool Flags: CPF_Parm, CPF_ZeroConstructor, CPF_IsPlainOldData, CPF_NoDestructor, CPF_AdvancedDisplay, CPF_HasGetValueTypeHash, CPF_NativeAccessSpecifierPublic Metadata: {:}
+    Prop: TextColor CppType: FLinearColor Flags: CPF_Parm, CPF_ZeroConstructor, CPF_IsPlainOldData, CPF_NoDestructor, CPF_AdvancedDisplay, CPF_HasGetValueTypeHash, CPF_NativeAccessSpecifierPublic Metadata: {:}
+    Prop: Duration CppType: float Flags: CPF_Parm, CPF_ZeroConstructor, CPF_IsPlainOldData, CPF_NoDestructor, CPF_AdvancedDisplay, CPF_HasGetValueTypeHash, CPF_NativeAccessSpecifierPublic Metadata: {:}
+    Prop: Key CppType: FName Flags: CPF_ConstParm, CPF_Parm, CPF_ZeroConstructor, CPF_IsPlainOldData, CPF_NoDestructor, CPF_AdvancedDisplay, CPF_HasGetValueTypeHash, CPF_NativeAccessSpecifierPublic Metadata: {NativeConst: }
+  
+]#
+#[
+  NimForUEBindings: [examplescodegen.nim:58]: Func: InjectInputForAction Flags: FUNC_Native, FUNC_Public, FUNC_HasOutParms, FUNC_BlueprintCallable, FUNC_AllFlags Metadata: {AutoCreateRefTerm: Modifiers,Triggers, Category: Input, ModuleRelativePath: Public/EnhancedInputSubsystemInterface.h}
+  
+  Params: 
+    Prop: Action CppType: UInputAction* Flags: CPF_ConstParm, CPF_Parm, CPF_ZeroConstructor, CPF_NoDestructor, CPF_HasGetValueTypeHash, CPF_NativeAccessSpecifierPublic Metadata: {NativeConst: }
+    Prop: RawValue CppType: FInputActionValue Flags: CPF_Parm, CPF_NoDestructor, CPF_NativeAccessSpecifierPublic Metadata: {:}
+    Prop: Modifiers CppType: TArray Flags: CPF_ConstParm, CPF_Parm, CPF_OutParm, CPF_ZeroConstructor, CPF_ReferenceParm, CPF_NativeAccessSpecifierPublic Metadata: {NativeConst: }
+    Prop: Triggers CppType: TArray Flags: CPF_ConstParm, CPF_Parm, CPF_OutParm, CPF_ZeroConstructor, CPF_ReferenceParm, CPF_NativeAccessSpecifierPublic Metadata: {NativeConst: }
+  
+]#
+
+
 proc NimMain() {.importc.} 
+
+uEnum EInspectType: 
+  (BlueprintType)
+  Actor
+  Class
+  Name
 
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
+  uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenInspect):
+    inspect : EInspectType = Name
+    inspectName : FString = "EnhancedInputSubsystemInterface"
+    inspectClass : UClassPtr
+    inspectActor : AActorPtr
+    bOnlyBlueprint : bool 
+  ufuncs(): 
+    proc getClassFromInspectedType() : UClassPtr = 
+      case self.inspect:
+        of EInspectType.Actor: 
+          return self.inspectActor.getClass()
+        of EInspectType.Class: 
+          return self.inspectClass
+        of EInspectType.Name: 
+          return getClassByName(self.inspectName)
+       
+  ufuncs(BlueprintCallable, CallInEditor, Category=CodegenInspect):
+    proc showClassProps() = 
+      let cls = self.getClassFromInspectedType()
+      if cls.isNil():
+        UE_Error "Class is null"
+        return
+      let props = cls.getFPropsFromUStruct()
+      for p in props:
+        UE_Log $p
+      
+    proc showClassFuncs() = 
+      let cls = self.getClassFromInspectedType()
+      if cls.isNil():
+        UE_Error "Class is null"
+        return
+      let funcs = cls.getFuncsFromClass()
+      for f in funcs:
+        UE_Log $f
+  uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenFunctionFinder):
+    funcName : FString = "PrintString"
+  ufuncs(BlueprintCallable, CallInEditor, Category=CodegenFunctionFinder):
+    proc logFunction() = 
+      let fn = getUTypeByName[UFunction](self.funcName)
+      UE_Log $fn
+
+      
+
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "test5"
     structPtrName : FString 
     moduleName : FString
-    bOnlyBlueprint : bool 
-    actorToInspect : AActorPtr
+    
+    
 
   ufuncs(BlueprintCallable, CallInEditor, Category=ActorCodegen):
     proc genReflectionDataOnly() = 
@@ -83,22 +159,4 @@ uClass AActorCodegen of AActor:
       UE_Log $modules.head().map(x=>x.types.mapIt(it.name))
       UE_Log "Len " & $modules.len
       UE_Log "Types " & $modules.head().map(x=>x.types).get(@[]).len
-    
-    proc showClassPropsForSelectedActor() = 
-      if self.actorToInspect.isNil():
-        UE_Error "Actor is null"
-        return
-      let obj = self.actorToInspect.getClass()
-      let props = obj.getFPropsFromUStruct()
-      for p in props:
-        UE_Log $p
-      
-    proc showClassFuncsForSelectedActor() = 
-      if self.actorToInspect.isNil():
-        UE_Error "Actor is null"
-        return
-      let obj = self.actorToInspect.getClass()
-      let funcs = obj.getFuncsFromClass()
-      for f in funcs:
-        UE_Log $f
-      
+

@@ -211,9 +211,13 @@ func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool =
 
 
 
-func getMetaDataMap*(field:FFieldPtr) : TMap[FName, FString] {.importcpp:"*(#->GetMetaDataMap())".}
-func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
+func getMetaDataMapPtr(field:FFieldPtr) : ptr TMap[FName, FString] {.importcpp:"const_cast<'0>(#->GetMetaDataMap())".}
+func getMetadataMap*(field:FFieldPtr) : TMap[FName, FString] =
+    let metadataMap = getMetadataMapPtr(field)
+    if metadataMap.isNil: makeTMap[FName, FString]()
+    else: metadataMap[]
 
+func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
 func getMetadataMap*(field:UObjectPtr) : TMap[FName, FString] =
     let metadataMap = getMetadataMapPtr(field)
     if metadataMap.isNil: makeTMap[FName, FString]()
@@ -230,9 +234,6 @@ func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] =
 proc bindType*(field:UFieldPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
 proc getPrefixCpp*(str:UFieldPtr | UStructPtr) : FString {.importcpp:"FString(#->GetPrefixCPP())".}
 
-
-func `$`*(prop:FPropertyPtr):string=
-  &"Prop: {prop.getName()} CppType: {prop.getCppType()} Flags: {prop.getPropertyFlags()} Metadata: {prop.getMetadataMap()}"
 
 
 
@@ -286,17 +287,7 @@ proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
 proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
 proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
 
-proc `$`*(obj:UObjectPtr) : string = 
-    if obj.isNil(): "nill"
-    else: $obj.getName()
 
-func `$`*(fn:UFunctionPtr):string = 
-  let metadataMap = fn.getMetadataMap()
-#   metadataMap.remove(n"Comment")
-#   metadataMap.remove(n"ToolTip")
-    #PROPS?
-  &"""Func: {fn.getName()} Flags: {fn.functionFlags} Metadata: {metadataMap}"""
-    
 
 #bool UClass::Rename( const TCHAR* InName, UObject* NewOuter, ERenameFlags Flags )
 #notice rename flags is not an enum in cpp we define it here adhoc
