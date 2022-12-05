@@ -101,7 +101,8 @@ type
         uerImportBlueprintOnly #affects all types and all target. If set, it will only import the blueprint types.
         uerVirtualModule
         uerInnerClassDelegate #Some delegates are declared withit a class and can collide. This rule is for when both are true
-    
+        uerIgnoreHash #ignore the hash when importing a module so always imports it. 
+        
     UERuleTarget* = enum 
         uertType
         uertField

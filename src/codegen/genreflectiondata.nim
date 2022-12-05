@@ -198,6 +198,10 @@ moduleRules["UnrealEd"] = @[
           "ScriptReimportHelper"
   ])
 ]
+moduleRules["AudioExtensions"] = @[
+  makeImportedRuleModule(uerImportBlueprintOnly),
+  makeImportedRuleModule(uerIgnoreHash)
+]
 
 moduleRules["MegascansPlugin"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
@@ -308,7 +312,10 @@ proc genReflectionData*(plugins: seq[string]): UEProject =
   let modulesToGen = modCache
                       .values
                       .toSeq()
-                      .filterIt(it.hash != getModuleHashFromFile(bindingsPath(it.name)).get("_"))
+                      .filterIt(
+                        it.hash != getModuleHashFromFile(bindingsPath(it.name)).get("_") or 
+                        uerIgnoreHash in it.rules)
+                      
 
   UE_Log &"Modules to gen: {modulesToGen.len}"
   UE_Log &"Modules in cache {modCache.len}"

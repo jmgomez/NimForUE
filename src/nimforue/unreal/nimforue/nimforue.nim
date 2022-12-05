@@ -75,13 +75,15 @@ proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FProperty
 
 
 proc `$`*(obj:UObjectPtr) : string = 
-    if obj.isNil(): "nill"
+    if obj.isNil(): "nil"
     else: $obj.getName()
 
 
 #Probably these should be repr
 
 func `$`*(prop:FPropertyPtr):string=
+  if prop.isNil(): 
+    return "nil"
   let meta = prop.getMetadataMap()
   &"Prop: {prop.getName()} CppType: {prop.getCppType()} Flags: {prop.getPropertyFlags()} Metadata: {meta}"
 
@@ -89,6 +91,9 @@ func `$`*(prop:FPropertyPtr):string=
     
 
 func `$`*(fn:UFunctionPtr):string = 
+  if fn.isNil(): 
+    return "nil"
+  
   let metadataMap = fn.getMetadataMap()
   if metadataMap.len() > 0:
     metadataMap.remove(n"Comment")

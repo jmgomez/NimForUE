@@ -340,7 +340,7 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let exportBindingsPath = bindingsDir / "exported" / module.name.toLower() & ".nim"
     let importBindingsPath = bindingsDir / module.name.toLower() & ".nim"
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
-    if prevModHash == module.hash:
+    if prevModHash == module.hash and uerIgnoreHash notin module.rules:
       echo "Skipping module: " & module.name & " as it has not changed"
       continue
     let moduleStrTemplate = &"""
