@@ -87,7 +87,7 @@ func genUStructImportCTypeDefBinding(ueType: UEType): NimNode =
   var recList = ueType.fields
     .map(prop => nnkIdentDefs.newTree(
         getFieldIdent(prop),
-        prop.getTypeNodeFromUProp(),
+        prop.getTypeNodeFromUProp(isVarContext=false),
         newEmptyNode()
       )
     )
@@ -112,7 +112,7 @@ func genImportCProp(typeDef: UEType, prop: UEField): NimNode =
   let ptrName = ident typeDef.name & "Ptr"
   let className = typeDef.name.substr(1)
   let typeNode = case prop.kind:
-    of uefProp: getTypeNodeFromUProp(prop)
+    of uefProp: getTypeNodeFromUProp(prop, isVarContext=false)
     else: newEmptyNode() #No Support
   let typeNodeAsReturnValue = case prop.kind:
     of uefProp: prop.getTypeNodeForReturn(typeNode)

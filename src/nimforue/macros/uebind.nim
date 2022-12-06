@@ -16,7 +16,6 @@ func isOutParam*(field:UEField) : bool =
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 #varContexts refer to if it's allowed or not to gen var (i.e. you cant gen var in a type definition but you can in a func definition)
 func getTypeNodeFromUProp*(prop : UEField, isVarContext:bool) : NimNode = 
-
   func fromGenericStringToNode(generic:string) : NimNode = 
     let genericType = generic.extractOuterGenericInNimFormat()
      
@@ -37,8 +36,8 @@ func getTypeNodeFromUProp*(prop : UEField, isVarContext:bool) : NimNode =
       let typeNode =  
         if not prop.isGeneric: ident prop.uePropType
         else: fromGenericStringToNode(prop.uePropType)
-           
-      if prop.isOutParam:
+      #Should not wrap var in all contexts 
+      if prop.isOutParam and isVarContext:
         nnkVarTy.newTree typeNode
       else:
         typeNode
@@ -99,10 +98,10 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
   let className = typeDef.name.substr(1)
 
   let typeNode = case prop.kind:
-          of uefProp: getTypeNodeFromUProp(prop, isVarContext=true)
+          of uefProp: getTypeNodeFromUProp(prop, isVarContext=false)
           else: newEmptyNode() #No Support 
   let typeNodeAsReturnValue = case prop.kind:
-              of uefProp: prop.getTypeNodeForReturn(typeNode)
+              of uefProp: prop.getTypeNodeForReturn(getTypeNodeFromUProp(prop, isVarContext=true))
               else: newEmptyNode()#No Support as UProp getter/Seter
   
   
@@ -160,8 +159,8 @@ func genParamInFnBodyAsType(funField:UEField) : NimNode =
                   funField.signatureAsNode(identWrapper) &
                   returnProp.map(prop=>
                     @[nnkIdentDefs.newTree([ident("returnValue"), 
-                              # getTypeNodeFromUProp(prop),
-                              ident prop.uePropType, 
+                              getTypeNodeFromUProp(prop, isVarContext = false),
+                              # ident prop.uePropType, 
                               newEmptyNode()])]).get(@[])
                 )])
             ])])
@@ -180,9 +179,8 @@ func genFormalParamsInFunctionSignature(typeDef : UEType, funField:UEField, firs
 
   let returnType =  
     if funField.doesReturn(): 
-        ident funField.getReturnProp().get().uePropType
-
-      # getTypeNodeFromUProp(funField.getReturnProp().get())
+        # ident funField.getReturnProp().get().uePropType
+      getTypeNodeFromUProp(funField.getReturnProp().get(), isVarContext = false)
     else: ident "void"
 
   
@@ -329,16 +327,10 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
     let className = firstParam.uePropType.removeLastLettersIfPtr()
     
     
-    
     let returnParam = formalParamsNode #for being void it can be empty or void
-                        .first(n=>n.kind==nnkIdent)
-                        .flatMap((n:NimNode)=>(if n.strVal()=="void": none[NimNode]() else: some(n)))
+                        .first(n=>n.kind in [nnkIdent, nnkBracketExpr])
+                        .flatMap((n:NimNode)=>(if n.kind==nnkIdent and n.strVal()=="void": none[NimNode]() else: some(n)))
                         .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
-    # debugEcho treeRepr formalParamsNode.head().get(newEmptyNode())
-    # let returnParam = formalParamsNode #for being void it can be empty or void
-    #                     .first(n=>n.kind in [nnkIdent, nnkBracketExpr])
-    #                     .flatMap((n:NimNode)=>(if n.kind==nnkIdent and n.strVal()=="void": none[NimNode]() else: some(n)))
-    #                     .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
     let actualParams = classParam.map(n=>fields) #if there is class param, first param would be use as actual param
                                  .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
     
@@ -497,14 +489,14 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
       typeDef.fields
             .map(prop => nnkIdentDefs.newTree(
               [getFieldIdent(prop), 
-              prop.getTypeNodeFromUProp(isVarContext=true), newEmptyNode()]))
+              prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode()]))
 
             .foldl(a.add b, nnkRecList.newTree)
     of uexExport: 
       var fields = nnkRecList.newTree()
       var size, offset, padId: int
       for prop in typeDef.fields:
-        var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=true), newEmptyNode())
+        var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode())
 
         let offsetDelta = prop.offset - offset
         if offsetDelta > 0:
@@ -559,7 +551,7 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
   var recList = nnkRecList.newTree()
   var size, offset, padId: int
   for prop in ueType.fields:
-    var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=true), newEmptyNode())
+    var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode())
 
     let offsetDelta = prop.offset - offset
     if offsetDelta > 0:

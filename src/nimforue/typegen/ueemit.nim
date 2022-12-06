@@ -512,9 +512,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                         outAddr = cast[pointer](paraName.addr)
             else: newEmptyNode()
 
-        var param = param
-        param.propFlags = CPF_None #Makes sure there is no CPF_ParmOut flag before calling GetTypeNodeFromUprop so it doenst produce var here
-        let paramType = param.getTypeNodeFromUProp(isVarContext=true)# param.uePropType
+        let paramType = param.getTypeNodeFromUProp(isVarContext=false)# param.uePropType
         
         genAst(paraName, paramType, genOutParam): 
             stack.mostRecentPropertyAddress = nil
@@ -533,9 +531,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     
     proc genSetOutParams(param:UEField) : NimNode = 
         let paraName = ident param.name
-        var param = param
-        param.propFlags = CPF_None #Makes sure there is no CPF_ParmOut flag before calling GetTypeNodeFromUprop so it doenst produce var here
-        let paramType = param.getTypeNodeFromUProp(isVarContext=true)# param.uePropType
+        let paramType = param.getTypeNodeFromUProp(isVarContext=false)# param.uePropType
         genAst(paraName, paramType, outAddr=ident(param.name & "Out")): 
                 cast[ptr paramType](outAddr)[] = paraName
 
@@ -550,7 +546,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                                                 .map(genSetOutParams))
                             
     let returnParam = funField.signature.first(isReturnParam)
-    let returnType = returnParam.map(it=>it.getTypeNodeFromUProp(isVarContext=true)).get(ident "void")
+    let returnType = returnParam.map(it=>it.getTypeNodeFromUProp(isVarContext=false)).get(ident "void")
     let innerCall = 
         if funField.doesReturn():
             genAst(returnType):
@@ -600,6 +596,7 @@ proc ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
     let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
 
     result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
+
 
 macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField]())
 
