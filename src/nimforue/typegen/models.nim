@@ -241,6 +241,7 @@ func makeUEMetadata*(name:string, value:string) : UEMetadata =
 
 
 func hasUEMetadata*[T:UEField|UEType](val:T, name:string) : bool = val.metadata.any(m => m.name == name)
+func hasUEMetadataDefaultValue*(val:UEField) : bool = val.metadata.any(m => m.name.contains(CPP_Default_MetadataKeyPrefix))
 
 func getAllParametersWithDefaultValuesFromFunc*(fnField:UEField) : seq[UEField] =
     assert fnField.kind == uefFunction

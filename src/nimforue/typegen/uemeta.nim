@@ -462,8 +462,8 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
       let (virtualModuleTypes, types) = types.partition((x: UEType) => x.name in r.affectedTypes)
       virtModules.add UEModule(name: r.moduleName, types: virtualModuleTypes, isVirtual: true, dependencies: deps & name)
 
-  UE_Log &"Module: + {name} Types: {types.mapIt(it.name)} Excluded types: {excludedTypes.mapIt(it.name)}"
-  UE_Warn &"Module: + {name} excluded deps: {excludeDeps}"
+  # UE_Log &"Module: + {name} Types: {types.mapIt(it.name)} Excluded types: {excludedTypes.mapIt(it.name)}"
+  # UE_Warn &"Module: + {name} excluded deps: {excludeDeps}"
 
   # UE_Log &"Deps for {name}: {deps}"
   var module = makeUEModule(name, types, rules, deps)

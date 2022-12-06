@@ -46,6 +46,29 @@ textObject}
     Prop: Options CppType: FModifyContextOptions Flags: CPF_ConstParm, CPF_Parm, CPF_OutParm, CPF_ReferenceParm, CPF_NoDestructor, CPF_NativeAccessSpecifierPublic Metadata: {NativeConst: }
   
 ]#
+#[
+   {"ECollisionChannel": "ECC_Visibility", 
+   "FText": "INVTEXT(\"Hello\")", "bool": "true", "FName": "None", 
+   "FRotator": "", "UForceFeedbackAttenuationPtr": "None", 
+   "float32": "1.000000", "EBlendMode": "BLEND_Translucent", 
+   "EDetachmentRule": "KeepRelative", "AActorPtr": "None", "UFontPtr": "None", 
+   "FVector2D": "(X=1.000,Y=1.000)", "AControllerPtr": "None", "FVector": "", 
+   "FString": "", "FLinearColor": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)", 
+   "USoundConcurrencyPtr": "None", "ETextureRenderTargetFormat": 
+   "RTF_RGBA16f", "EPSCPoolMethod": "None", "USoundAttenuationPtr": "None", "int32": "-1", 
+   "EViewTargetBlendFunction": "VTBlend_Linear", 
+   "EMontagePlayReturnType": "MontageLength", 
+   "TSubclassOf[ULevelStreamingDynamic] ": "None", 
+   "EAttachLocation::Type": "KeepRelativeOffset"}
+]#
+#[
+  Doesnt include ref types so those will require an extra pass (they will be generating function overloads anyways)
+  Mostly Enums. Hopefully they all start with E
+  Lots of pointer, they will be just nil
+  bool, floats and strings whould be direct
+  FVector, Colors and so can be just a fn call
+]#
+
 
 
 proc NimMain() {.importc.} 
@@ -56,6 +79,17 @@ uEnum EInspectType:
   Class
   Name
 
+
+
+proc getModules(moduleName:string, onlyBp : bool) : seq[UEModule] = 
+      let pkg = tryGetPackageByName(moduleName)
+      let rules = 
+        if onlyBp:  
+          @[makeImportedRuleModule(uerImportBlueprintOnly)]
+        else: 
+          @[]
+
+      pkg.map((pkg:UPackagePtr) => pkg.toUEModule(rules, @[], @[])).get(@[])
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
@@ -65,6 +99,8 @@ uClass AActorCodegen of AActor:
     inspectClass : UClassPtr
     inspectActor : AActorPtr
     bOnlyBlueprint : bool 
+    moduleName : FString
+
   ufuncs(): 
     proc getClassFromInspectedType() : UClassPtr = 
       case self.inspect:
@@ -74,6 +110,8 @@ uClass AActorCodegen of AActor:
           return self.inspectClass
         of EInspectType.Name: 
           return getClassByName(self.inspectName)
+    
+
        
   ufuncs(BlueprintCallable, CallInEditor, Category=CodegenInspect):
     proc showClassProps() = 
@@ -114,13 +152,34 @@ uClass AActorCodegen of AActor:
         else:
           UE_Warn "Type not supported for default value: " & p.uePropType
           UE_Log $p
-      
+    
+    proc traverseAllFunctionsWithDefParams() = 
+      let modules = getModules(self.moduleName, self.bOnlyBlueprint)
+      let fns : seq[UEField]= modules.mapIt(it.types.mapIt(it.fields)).flatten().flatten()
+      let fnsWithDefaultParams = fns.filterIt(it.kind == uefFunction and it.getAllParametersWithDefaultValuesFromFunc().len() > 0)
+      #I should get next a tuple with the param Type. Only type for now
+      var params : Table[string, string] 
+      for fn in fnsWithDefaultParams:
+        for m in fn.metadata:
+          if m.name.startsWith CPP_Default_MetadataKeyPrefix:
+            let name = m.name.replace(CPP_Default_MetadataKeyPrefix, "")
+            for p in fn.signature:
+              if p.name == name:
+                UE_Log $p.name & " " & $p.uePropType & " " & $m.value
+                params[p.uePropType] = m.value
+                break
+            
+            
+        
+
+      UE_Log "Found " & $fnsWithDefaultParams.len() & " functions with default parameters"
+      UE_Log "Found " & $params.len() & " unique parameters type"
+      UE_Log $params
       
 
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "test5"
     structPtrName : FString 
-    moduleName : FString
     
     
 
