@@ -132,8 +132,22 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
 #isGeneratingType 
 func signatureAsNode(funField:UEField, identFn : string->NimNode, isDefaultValueContext:bool) : seq[NimNode] =  
   proc getDefaultParamValue(param:UEField) : NimNode = 
+    func makeFnCall(fnName, val:string) : NimNode = nnkCall.newTree(ident fnName, newLit val)
     if param.defaultParamValue == "" or not isDefaultValueContext: newEmptyNode()
-    else: ident param.defaultParamValue
+    else: 
+      case param.uePropType:
+      of "bool":newLit parseBool(param.defaultParamValue)
+      of "FString": newLit param.defaultParamValue
+      of "float32": newLit parseFloat(param.defaultParamValue).float32
+      of "float64": newLit parseFloat(param.defaultParamValue).float64
+      of "int32": newLit parseInt(param.defaultParamValue).int32
+      of "int": newLit parseInt(param.defaultParamValue)
+      of "FName": makeFnCall("makeFName", param.defaultParamValue)
+      of "FLinearColor": makeFnCall("makeFLinearColor", param.defaultParamValue)
+    
+      else:
+        error("Unsupported param " & param.uePropType)
+        newEmptyNode()
   proc getParamNodesFromField(param:UEField) : NimNode =
     result = 
       nnkIdentDefs.newTree(

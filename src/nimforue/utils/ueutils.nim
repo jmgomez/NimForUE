@@ -1,4 +1,4 @@
-import ../unreal/coreuobject/[uobject, nametypes]
+import ../unreal/coreuobject/[uobject, nametypes, coreuobject]
 import ../unreal/core/containers/[unrealstring, map, array]
 import ../typegen/models
 
@@ -68,5 +68,9 @@ func ueMetaToNueMeta*(ueMeta : TMap[FName, FString]) : seq[UEMetadata] =
     meta
         
 
+#"FLinearColor": "(R=1.000000,G=1.000000,B=1.000000,A=1.000000)"
+func makeFLinearColor*(colorStr:string) : FLinearColor = 
+    var r, g, b, a : float
+    if scanf(colorStr, "(R=$f,G=$f,B=$f,A=$f)", r, g, b, a): FLinearColor(r:r, g:g, b:b, a:a)
+    else: FLinearColor(r:0.0, g:0.0, b:0.0, a:0.0)
 
-# func As*[T : UStruct](field:UFieldPtr) : ptr T =  tryUECast[T](field).getOrRaise("Field is not a struct")

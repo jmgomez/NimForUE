@@ -48,7 +48,9 @@ textObject}
 ]#
 #[
    {"ECollisionChannel": "ECC_Visibility", 
-   "FText": "INVTEXT(\"Hello\")", "bool": "true", "FName": "None", 
+   "FText": "INVTEXT(\"Hello\")", 
+   "bool": "true", 
+   "FName": "None", 
    "FRotator": "", "UForceFeedbackAttenuationPtr": "None", 
    "float32": "1.000000", "EBlendMode": "BLEND_Translucent", 
    "EDetachmentRule": "KeepRelative", "AActorPtr": "None", "UFontPtr": "None", 
