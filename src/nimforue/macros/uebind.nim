@@ -130,16 +130,28 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
 #returns for each param a type definition node
 #the functions that it receives as param is used with ident/identWithInject/ etc. to make fields public or injected
 #isGeneratingType 
-func signatureAsNode(funField:UEField, identFn : string->NimNode) : seq[NimNode] =  
+func signatureAsNode(funField:UEField, identFn : string->NimNode, isDefaultValueContext:bool) : seq[NimNode] =  
+  proc getDefaultParamValue(param:UEField) : NimNode = 
+    if param.defaultParamValue == "" or not isDefaultValueContext: newEmptyNode()
+    else: ident param.defaultParamValue
+  proc getParamNodesFromField(param:UEField) : NimNode =
+    result = 
+      nnkIdentDefs.newTree(
+        identFn(param.name.firstToLow().ueNameToNimName()), 
+        param.getTypeNodeFromUProp(isVarContext=true), 
+        param.getDefaultParamValue()
+      )
+
   case funField.kind:
   of uefFunction: 
     return funField.signature
-      .filter(prop=>not isReturnParam(prop))
-      .map(param=>
-        [identFn(param.name.firstToLow().ueNameToNimName()), param.getTypeNodeFromUProp(isVarContext=true), newEmptyNode()])
-      .map(n=>nnkIdentDefs.newTree(n))
+      .filterIt(not it.isReturnParam())
+      .map(getParamNodesFromField)
   else:
     error("funField: not a func")
+    @[]
+
+  
 
 func genParamInFnBodyAsType(funField:UEField) : NimNode = 
   let returnProp = funField.signature.filter(isReturnParam).head()
@@ -156,7 +168,7 @@ func genParamInFnBodyAsType(funField:UEField) : NimNode =
               nnkObjectTy.newTree([
                 newEmptyNode(), newEmptyNode(),  
                 nnkRecList.newTree(
-                  funField.signatureAsNode(identWrapper) &
+                  funField.signatureAsNode(identWrapper, isDefaultValueContext=false) &
                   returnProp.map(prop=>
                     @[nnkIdentDefs.newTree([ident("returnValue"), 
                               getTypeNodeFromUProp(prop, isVarContext = false),
@@ -193,7 +205,7 @@ func genFormalParamsInFunctionSignature(typeDef : UEType, funField:UEField, firs
           @[returnType] &
           (if funField.isStatic(): @[] 
           else: @[nnkIdentDefs.newTree([identWithInject firstParamName, objType, newEmptyNode()])]) &  
-          funField.signatureAsNode(identWithInject))
+          funField.signatureAsNode(identWithInject, isDefaultValueContext=true))
 
 
 func getGenFuncName(funField : UEField) : string = funField.name.firstToLow()

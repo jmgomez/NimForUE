@@ -67,6 +67,9 @@ textObject}
   Lots of pointer, they will be just nil
   bool, floats and strings whould be direct
   FVector, Colors and so can be just a fn call
+
+
+  
 ]#
 
 

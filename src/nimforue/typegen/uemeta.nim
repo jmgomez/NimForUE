@@ -166,9 +166,20 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
     if isEmpty or outerName in importRule.get().onlyFor:
       nimType = getFuncDelegateNimName(nimType, outerName)
 
+  let outerFn = tryUECast[UFunction](outer)
+  var defaultValue : string  = ""
+  if outerFn.isSome(): #the default values for the params are on the metadata of the function
+    let ufun = outerFn.get()
+    if ufun.hasMetadata(CPP_Default_MetadataKeyPrefix & prop.getName()) and nimType in ["bool"]: 
+      defaultValue = ufun.getMetadata(CPP_Default_MetadataKeyPrefix & prop.getName()).get("")
+      UE_Log &"Default value for {prop.getName()} is {defaultValue} and the type is {nimType} and the flags are {prop.getPropertyFlags()}"
+      
 
+  
   if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules):
-    some makeFieldAsUProp(name, nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
+    var field = makeFieldAsUProp(name, nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
+    field.defaultParamValue = defaultValue
+    return some field
   else:
     none(UEField)
 
