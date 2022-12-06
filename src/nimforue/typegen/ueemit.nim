@@ -550,7 +550,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                                                 .map(genSetOutParams))
                             
     let returnParam = funField.signature.first(isReturnParam)
-    let returnType = ident returnParam.map(x=>x.uePropType).get("void")
+    let returnType = returnParam.map(getTypeNodeFromUProp).get(ident "void")
     let innerCall = 
         if funField.doesReturn():
             genAst(returnType):
@@ -621,7 +621,6 @@ macro uFunctions*(body : untyped) : untyped =
         .filter(n=>n.kind==nnkProcDef)
         .map(procBody=>ufuncImpl(procBody, firstParam, metas))
     
-    # exec("sleep 1")
     result = nnkStmtList.newTree allFuncs
 
 macro uConstructor*(fn:untyped) : untyped = 
