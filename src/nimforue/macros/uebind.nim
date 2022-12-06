@@ -1,4 +1,4 @@
-import std/[options, strutils,sugar, sequtils,strformat,  genasts, macros, importutils]
+import std/[options, strutils, sugar, sequtils, strformat,  genasts, macros, importutils]
 
 include ../unreal/definitions
 import ../utils/ueutils
@@ -135,19 +135,25 @@ func signatureAsNode(funField:UEField, identFn : string->NimNode, isDefaultValue
     func makeFnCall(fnName, val:string) : NimNode = nnkCall.newTree(ident fnName, newLit val)
     if param.defaultParamValue == "" or not isDefaultValueContext: newEmptyNode()
     else: 
-      case param.uePropType:
-      of "bool":newLit parseBool(param.defaultParamValue)
-      of "FString": newLit param.defaultParamValue
-      of "float32": newLit parseFloat(param.defaultParamValue).float32
-      of "float64": newLit parseFloat(param.defaultParamValue).float64
-      of "int32": newLit parseInt(param.defaultParamValue).int32
-      of "int": newLit parseInt(param.defaultParamValue)
-      of "FName": makeFnCall("makeFName", param.defaultParamValue)
-      of "FLinearColor": makeFnCall("makeFLinearColor", param.defaultParamValue)
-    
+      let propType = param.uePropType
+      let val = param.defaultParamValue
+      case propType:
+      of "bool":newLit parseBool(val)
+      of "FString": newLit val
+      of "float32": newLit parseFloat(val).float32
+      of "float64": newLit parseFloat(val).float64
+      of "int32": newLit parseInt(val).int32
+      of "int": newLit parseInt(val)
+      of "FName": makeFnCall("makeFName", val)
+      of "FLinearColor": makeFnCall("makeFLinearColor", val)
+      of "FVector2D": makeFnCall("makeFVector2D", val)
+      of "FVector": makeFnCall("makeFVector", val)
       else:
-        error("Unsupported param " & param.uePropType)
-        newEmptyNode()
+        if propType.startsWith("E"): 
+          nnkDotExpr.newTree(ident propType, ident val)
+        else:
+          error("Unsupported param " & propType)
+          newEmptyNode()
   proc getParamNodesFromField(param:UEField) : NimNode =
     result = 
       nnkIdentDefs.newTree(

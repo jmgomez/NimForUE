@@ -1,5 +1,6 @@
 import ../unreal/coreuobject/[uobject, nametypes, coreuobject]
 import ../unreal/core/containers/[unrealstring, map, array]
+import ../unreal/core/math/vector
 import ../typegen/models
 
 import std/[options, strutils, tables, sequtils, sugar, strscans]
@@ -73,4 +74,13 @@ func makeFLinearColor*(colorStr:string) : FLinearColor =
     var r, g, b, a : float
     if scanf(colorStr, "(R=$f,G=$f,B=$f,A=$f)", r, g, b, a): FLinearColor(r:r, g:g, b:b, a:a)
     else: FLinearColor(r:0.0, g:0.0, b:0.0, a:0.0)
-
+#FVector2D (X=1.000,Y=1.000)
+func makeFVector2D*(vecStr:string) : FVector2D = 
+    var x, y : float
+    if scanf(vecStr, "(X=$f,Y=$f)", x, y): FVector2D(x:x, y:y)
+    else: FVector2D(x:0.0, y:0.0)
+#FVector 1.000000,1.000000,1.000000
+func makeFVector*(vecStr:string) : FVector = 
+    var x, y, z : float
+    if scanf(vecStr, "$f,$f,$f", x, y, z): FVector(x:x, y:y, z:z)
+    else: FVector(x:0.0, y:0.0, z:0.0)
