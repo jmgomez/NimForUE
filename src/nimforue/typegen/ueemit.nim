@@ -514,7 +514,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
 
         var param = param
         param.propFlags = CPF_None #Makes sure there is no CPF_ParmOut flag before calling GetTypeNodeFromUprop so it doenst produce var here
-        let paramType = param.getTypeNodeFromUProp()# param.uePropType
+        let paramType = param.getTypeNodeFromUProp(isVarContext=true)# param.uePropType
         
         genAst(paraName, paramType, genOutParam): 
             stack.mostRecentPropertyAddress = nil
@@ -535,7 +535,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
         let paraName = ident param.name
         var param = param
         param.propFlags = CPF_None #Makes sure there is no CPF_ParmOut flag before calling GetTypeNodeFromUprop so it doenst produce var here
-        let paramType = param.getTypeNodeFromUProp()# param.uePropType
+        let paramType = param.getTypeNodeFromUProp(isVarContext=true)# param.uePropType
         genAst(paraName, paramType, outAddr=ident(param.name & "Out")): 
                 cast[ptr paramType](outAddr)[] = paraName
 
@@ -550,7 +550,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                                                 .map(genSetOutParams))
                             
     let returnParam = funField.signature.first(isReturnParam)
-    let returnType = returnParam.map(getTypeNodeFromUProp).get(ident "void")
+    let returnType = returnParam.map(it=>it.getTypeNodeFromUProp(isVarContext=true)).get(ident "void")
     let innerCall = 
         if funField.doesReturn():
             genAst(returnType):

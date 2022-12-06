@@ -14,7 +14,8 @@ func isOutParam*(field:UEField) : bool =
    
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
-func getTypeNodeFromUProp*(prop : UEField) : NimNode = 
+#varContexts refer to if it's allowed or not to gen var (i.e. you cant gen var in a type definition but you can in a func definition)
+func getTypeNodeFromUProp*(prop : UEField, isVarContext:bool) : NimNode = 
 
   func fromGenericStringToNode(generic:string) : NimNode = 
     let genericType = generic.extractOuterGenericInNimFormat()
@@ -98,7 +99,7 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
   let className = typeDef.name.substr(1)
 
   let typeNode = case prop.kind:
-          of uefProp: getTypeNodeFromUProp(prop)
+          of uefProp: getTypeNodeFromUProp(prop, isVarContext=true)
           else: newEmptyNode() #No Support 
   let typeNodeAsReturnValue = case prop.kind:
               of uefProp: prop.getTypeNodeForReturn(typeNode)
@@ -136,7 +137,7 @@ func signatureAsNode(funField:UEField, identFn : string->NimNode) : seq[NimNode]
     return funField.signature
       .filter(prop=>not isReturnParam(prop))
       .map(param=>
-        [identFn(param.name.firstToLow().ueNameToNimName()), param.getTypeNodeFromUProp(), newEmptyNode()])
+        [identFn(param.name.firstToLow().ueNameToNimName()), param.getTypeNodeFromUProp(isVarContext=true), newEmptyNode()])
       .map(n=>nnkIdentDefs.newTree(n))
   else:
     error("funField: not a func")
@@ -159,7 +160,8 @@ func genParamInFnBodyAsType(funField:UEField) : NimNode =
                   funField.signatureAsNode(identWrapper) &
                   returnProp.map(prop=>
                     @[nnkIdentDefs.newTree([ident("returnValue"), 
-                              getTypeNodeFromUProp(prop),# prop.uePropType, 
+                              # getTypeNodeFromUProp(prop),
+                              ident prop.uePropType, 
                               newEmptyNode()])]).get(@[])
                 )])
             ])])
@@ -177,19 +179,11 @@ func genFormalParamsInFunctionSignature(typeDef : UEType, funField:UEField, firs
   let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
 
   let returnType =  
-    if funField.doesReturn(): getTypeNodeFromUProp(funField.getReturnProp().get())
-            # funField.getReturnProp()
-            #         .map(p=>
-            #           ( if p.uePropType.isGeneric():
-            #               nnkBracketExpr.newTree(
-            #                 ident p.uePropType.extractOuterGenericInNimFormat(), 
-            #                 ident p.uePropType.extractInnerGenericInNimFormat()
-            #               )                   
-            #             else:ident p.uePropType
-            #           )
-            #         ).get
-    else:
-      ident "void"
+    if funField.doesReturn(): 
+        ident funField.getReturnProp().get().uePropType
+
+      # getTypeNodeFromUProp(funField.getReturnProp().get())
+    else: ident "void"
 
   
 
@@ -214,7 +208,6 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
 
   let formalParams = genFormalParamsInFunctionSignature(typeDef, funField, "obj")
 
-  # let pragmas = nnkPragma.newTree([ident "inject"])
   let generateObjForStaticFunCalls = 
     if isStatic: 
       genAst(clsName=newStrLitNode(clsName)): 
@@ -335,11 +328,17 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
     let firstParam = classParam.chainNone(()=>fields.head()).getOrRaise("Class not found. Please use the ufunctions macr and specify the type there if you are trying to define a static function. Otherwise, you can also set the type as first argument")
     let className = firstParam.uePropType.removeLastLettersIfPtr()
     
-    # debugEcho treeRepr formalParamsNode.head().get(newEmptyNode())
+    
+    
     let returnParam = formalParamsNode #for being void it can be empty or void
-                        .first(n=>n.kind in [nnkIdent, nnkBracketExpr])
-                        .flatMap((n:NimNode)=>(if n.kind==nnkIdent and n.strVal()=="void": none[NimNode]() else: some(n)))
+                        .first(n=>n.kind==nnkIdent)
+                        .flatMap((n:NimNode)=>(if n.strVal()=="void": none[NimNode]() else: some(n)))
                         .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
+    # debugEcho treeRepr formalParamsNode.head().get(newEmptyNode())
+    # let returnParam = formalParamsNode #for being void it can be empty or void
+    #                     .first(n=>n.kind in [nnkIdent, nnkBracketExpr])
+    #                     .flatMap((n:NimNode)=>(if n.kind==nnkIdent and n.strVal()=="void": none[NimNode]() else: some(n)))
+    #                     .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
     let actualParams = classParam.map(n=>fields) #if there is class param, first param would be use as actual param
                                  .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
     
@@ -498,14 +497,14 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
       typeDef.fields
             .map(prop => nnkIdentDefs.newTree(
               [getFieldIdent(prop), 
-              prop.getTypeNodeFromUProp(), newEmptyNode()]))
+              prop.getTypeNodeFromUProp(isVarContext=true), newEmptyNode()]))
 
             .foldl(a.add b, nnkRecList.newTree)
     of uexExport: 
       var fields = nnkRecList.newTree()
       var size, offset, padId: int
       for prop in typeDef.fields:
-        var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(), newEmptyNode())
+        var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=true), newEmptyNode())
 
         let offsetDelta = prop.offset - offset
         if offsetDelta > 0:
@@ -560,7 +559,7 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
   var recList = nnkRecList.newTree()
   var size, offset, padId: int
   for prop in ueType.fields:
-    var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(), newEmptyNode())
+    var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=true), newEmptyNode())
 
     let offsetDelta = prop.offset - offset
     if offsetDelta > 0:

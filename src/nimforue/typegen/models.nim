@@ -58,6 +58,7 @@ type
                 propFlags*:EPropertyFlagsVal
                 size*: int32
                 offset*: int32
+                defaultParamValue*:string #Only valid for params. It has the UE Format
 
             of uefFunction:
                 className*:string
@@ -287,11 +288,11 @@ func getUETypeByName*(ueTypes:seq[UEType], name:string) : Option[UEType] = ueTyp
 
 func shouldBeReturnedAsVar*(field:UEField) : bool =
     let typesReturnedAsVar = ["TMap", "TArray"]
-    field.kind == uefProp and typesReturnedAsVar.any(tp => tp in field.uePropType) or
-        field.isMulticastDelegate() or 
-        field.isDelegate() or
-        field.uePropType.startsWith("F") #FStruct always starts with F. We need to enforce it in our types too.
- 
+    result = field.kind == uefProp and typesReturnedAsVar.any(tp => tp in field.uePropType) or
+               field.isMulticastDelegate() or 
+               field.isDelegate() or
+               field.uePropType.startsWith("F") #FStruct always starts with F. We need to enforce it in our types too.
+
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
 # func `==`*(a, b : EClassFlagsVal) : bool {.borrow.}
