@@ -170,8 +170,8 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
   var defaultValue : string  = ""
   if outerFn.isSome(): #the default values for the params are on the metadata of the function
     let ufun = outerFn.get()
-    let supportedTypes = ["bool", "FString", "float32", "float64", "int32", "int", "FName", "FLinearColor", "FVector", "FVector2D"]
-    let isSupportedDefault = nimType in supportedTypes or nimType.startsWith("E")
+    let supportedTypes = ["bool", "FString", "float32", "float64", "int32", "int", "FName", "FLinearColor", "FVector", "FVector2D", "FRotator"]
+    let isSupportedDefault = nimType in supportedTypes or @["E", "A", "U"].filterIt(nimType.startsWith(it)).any()
     if ufun.hasMetadata(CPP_Default_MetadataKeyPrefix & prop.getName()) and isSupportedDefault: 
       defaultValue = ufun.getMetadata(CPP_Default_MetadataKeyPrefix & prop.getName()).get("")
       UE_Log &"Default value for {prop.getName()} is {defaultValue} and the type is {nimType} and the flags are {prop.getPropertyFlags()}"

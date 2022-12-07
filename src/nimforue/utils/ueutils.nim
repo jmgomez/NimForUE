@@ -84,3 +84,9 @@ func makeFVector*(vecStr:string) : FVector =
     var x, y, z : float
     if scanf(vecStr, "$f,$f,$f", x, y, z): FVector(x:x, y:y, z:z)
     else: FVector(x:0.0, y:0.0, z:0.0)
+
+#FRotator 4.000000,2.000000,1.000000
+func makeFRotator*(rotStr:string) : FRotator = 
+    var pitch, yaw, roll : float
+    if scanf(rotStr, "$f,$f,$f", roll, yaw, pitch): FRotator(pitch:pitch, yaw:yaw, roll:roll)
+    else: FRotator(pitch:0.0, yaw:0.0, roll:0.0)

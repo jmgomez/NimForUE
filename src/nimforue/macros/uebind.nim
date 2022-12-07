@@ -148,9 +148,12 @@ func signatureAsNode(funField:UEField, identFn : string->NimNode, isDefaultValue
       of "FLinearColor": makeFnCall("makeFLinearColor", val)
       of "FVector2D": makeFnCall("makeFVector2D", val)
       of "FVector": makeFnCall("makeFVector", val)
+      of "FRotator": makeFnCall("makeFRotator", val)
       else:
         if propType.startsWith("E"): 
           nnkDotExpr.newTree(ident propType, ident val)
+        elif @["A", "U"].filterIt(propType.startsWith(it)).any(): #Will be always a null pointer
+          ident "nil"
         else:
           error("Unsupported param " & propType)
           newEmptyNode()
