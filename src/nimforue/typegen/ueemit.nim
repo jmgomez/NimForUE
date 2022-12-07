@@ -686,7 +686,27 @@ func genDeclaredConstructor(body:NimNode, className:string) : Option[NimNode] =
   constructorBlock
     .map(consBody => genConstructorForClass(body, className, consBody.body(), param[0].strVal()))
     
-  
+
+ 
+func genDefaults(body:NimNode) : Option[NimNode] = 
+    func replaceFirstIdentWithSelfDotExpr(assignment:NimNode) : NimNode = 
+        case assignment[0].kind:
+        of nnkIdent: assignment.kind.newTree(nnkDotExpr.newTree(ident "self", assignment[0]) & assignment[1..^1])
+        else: assignment.kind.newTree(replaceFirstIdentWithSelfDotExpr(assignment[0]) & assignment[1..^1])
+       
+    result = 
+        body.toSeq()
+            .filterIt(it.kind == nnkCall and it[0].strVal().toLower() in ["default", "defaults"])
+            .head()
+            .map(defaultsBlock=>(
+                nnkStmtList.newTree(
+                    defaultsBlock[^1].children.toSeq()
+                    .filterIt(it.kind == nnkAsgn)
+                    .map(replaceFirstIdentWithSelfDotExpr)
+                )
+            )
+        )
+
 
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
@@ -704,16 +724,17 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     var uClassNode = emitUClass(ueType)
     
     #returns empty if there is no block defined
+    let defaults = genDefaults(body)
     let declaredConstructor = genDeclaredConstructor(body, className)
     if declaredConstructor.isSome():
         uClassNode.add declaredConstructor.get()
-    elif doesClassNeedsConstructor(className):
-        let defaultConstructor = genConstructorForClass(body, className, newEmptyNode())
+    elif doesClassNeedsConstructor(className) or defaults.isSome():
+        let defaultConstructor = genConstructorForClass(body, className, defaults.get(newEmptyNode()))
         uClassNode.add defaultConstructor
 
     let fns = genUFuncsForUClass(body, className)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
-    # echo result.repr
+
   
 
 
