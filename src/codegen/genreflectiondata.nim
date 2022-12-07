@@ -87,6 +87,8 @@ moduleRules["Engine"] = @[
     "FOnTemperatureChangeDelegate", #Mac gets stuck here?,
     # "UParticleSystem", #collision with a function name and Cascade is deprecated, use Niagara instead.
     ]), 
+    # makeImportedRuleModule(uerIgnoreHash),
+
     
   makeImportedRuleField(uerIgnore, @[
     "PerInstanceSMCustomData", 
@@ -134,7 +136,7 @@ moduleRules["EnhancedInput"] = @[
     "ETriggerEvent",
     "FInputActionValue",
   ]),
-  makeImportedRuleModule(uerIgnoreHash)
+  # makeImportedRuleModule(uerIgnoreHash)
 
 ]
 
@@ -202,7 +204,7 @@ moduleRules["UnrealEd"] = @[
 ]
 moduleRules["AudioExtensions"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
-  makeImportedRuleModule(uerIgnoreHash)
+  # makeImportedRuleModule(uerIgnoreHash)
 ]
 
 moduleRules["MegascansPlugin"] = @[

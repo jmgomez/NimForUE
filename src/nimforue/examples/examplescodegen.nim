@@ -122,7 +122,7 @@ uClass AActorCodegen of AActor:
           return getClassByName(self.inspectName)
     
 
-       
+  
   ufuncs(BlueprintCallable, CallInEditor, Category=CodegenInspect):
     proc showClassProps() = 
       let cls = self.getClassFromInspectedType()
@@ -141,6 +141,23 @@ uClass AActorCodegen of AActor:
       let funcs = cls.getFuncsFromClass()
       for f in funcs:
         UE_Log $f
+
+    proc showClassMetas() = 
+      let cls = self.getClassFromInspectedType()
+      if cls.isNil():
+        UE_Error "Class is null"
+        return
+      let metas = cls.getMetadataMap().toTable()
+      for key, value in metas:
+        UE_Log $key & " : " & $value
+    proc showClassInterfaces() = 
+      let cls = self.getClassFromInspectedType()
+      if cls.isNil():
+        UE_Error "Class is null"
+        return
+      for i in cls.interfaces:
+        UE_Log $i.class
+
   uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenFunctionFinder):
     funcName : FString = "PrintString"
   ufuncs(BlueprintCallable, CallInEditor, Category=CodegenFunctionFinder):

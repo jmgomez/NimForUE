@@ -98,7 +98,7 @@ func isBPExposed(str: UFieldPtr): bool = str.hasMetadata("BlueprintType")
 func isBPExposed(str: UScriptStructPtr): bool = str.hasMetadata("BlueprintType")
 
 func isBPExposed(cls: UClassPtr): bool =
-
+  ueCast[UInterface](cls).isNotNil() or
   cls.hasMetadata("BlueprintType") or
   cls.hasMetadata("BlueprintSpawnableComponent") or
       (cast[uint32](CLASS_MinimalAPI) and cast[uint32](cls.classFlags)) != 0 or
@@ -268,6 +268,7 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
   let name = cls.getPrefixCpp() & cls.getName()
   let parent = someNil cls.getSuperClass()
 
+  
 
   let parentName = parent
     .map(p => (if uerImportBlueprintOnly in rules: getFirstBpExposedParent(p) else: p))
@@ -281,7 +282,7 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
       return none(UEType)
 
   if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
-    some UEType(name: name, kind: uetClass, parent: parentName, fields: fields)
+    some UEType(name: name, kind: uetClass, parent: parentName, fields: fields, interfaces: cls.interfaces.mapIt("U" & $it.class.getName()))
   else:
     # UE_Warn &"Class {name} is not exposed to BP"
     none(UEType)

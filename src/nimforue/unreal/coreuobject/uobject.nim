@@ -41,7 +41,9 @@ type
     #Notice this is not really the signature. It has const 
     UClassConstructor* = proc (objectInitializer:var FObjectInitializer) : void {.cdecl.}
     UClassAddReferencedObjectsType* = proc (obj:UObjectPtr, collector:var FReferenceCollector) : void {.cdecl.}
-
+    FImplementedInterface* {.importcpp.} = object
+        class* {.importcpp:"Class".}: UClassPtr
+        
     UClass* {.importcpp, inheritable, pure .} = object of UStruct
         classWithin* {.importcpp:"ClassWithin".}: UClassPtr #  The required type for the outer of instances of this class */
         classConfigName* {.importcpp:"ClassConfigName".}: FName 
@@ -49,6 +51,8 @@ type
         classCastFlags* {.importcpp:"ClassCastFlags".}: EClassCastFlags
         classConstructor* {.importcpp:"ClassConstructor".}: UClassConstructor
         addReferencedObjects* {.importcpp:"AddReferencedObjects".}: UClassAddReferencedObjectsType
+        interfaces* {.importcpp:"Interfaces".}: TArray[FImplementedInterface]
+
     UClassPtr* = ptr UClass
     UInterface* {.importcpp, inheritable, pure .} = object of UObject
     UInterfacePtr* = ptr UInterface

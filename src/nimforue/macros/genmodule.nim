@@ -142,6 +142,7 @@ func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
     genAst(props, funcs):
       props
       funcs
+  result = nnkStmtList.newTree(genInterfaceConverers(typeDef), result)
 
 proc genImportCTypeDecl*(typeDef: UEType, rule: UERule = uerNone): NimNode =
   case typeDef.kind:

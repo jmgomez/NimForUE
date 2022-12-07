@@ -82,6 +82,7 @@ type
                 parent* : string
                 clsFlags*: EClassFlagsVal
                 ctorSourceHash*: string
+                interfaces* : seq[string]
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal

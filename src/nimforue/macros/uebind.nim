@@ -376,7 +376,17 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
     (fnField, firstParam)
 
 
+func genInterfaceConverers*(ueType:UEType) : NimNode =   
+  let typeNamePtr = ident ueType.name & "Ptr"
+  func genConverter(interName:string) : NimNode = 
+    let interfaceName = ident interName
+    let interfacePtrName = ident interName & "Ptr"
+    let fnName = ident ueType.name & "to" & interName
 
+    genAst(fnName,typeNamePtr, interfaceName, interfacePtrName):
+      converter fnName*(self {.inject.} : typeNamePtr): interfacePtrName =  ueCast[interfaceName](self)
+  
+  nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
 
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =
@@ -427,6 +437,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
       proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
     result = nnkStmtList.newTree(result, exportFn)
 
+  result.add genInterfaceConverers(typeDef)
 
 func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode = 
   let formalParams = genFormalParamsInFunctionSignature(typeDef, funField, "obj")
