@@ -70,8 +70,13 @@ textObject}
   bool, floats and strings whould be direct
   FVector, Colors and so can be just a fn call
 
-
+  FROTATOR
+  U/A poitners
+  DONE. 
+  Expand functions containing const default params
+  See first how many are and see it returning the new amount of funcitons in the code gen
   
+  InjectInputVectorForAction
 ]#
 
 
@@ -142,13 +147,18 @@ uClass AActorCodegen of AActor:
     proc logFunction() = 
       let fn = getUTypeByName[UFunction](self.funcName)
       UE_Log $fn
+    proc convertToUEField() = 
+      let fn = getUTypeByName[UFunction](self.funcName)
+      let fnFields = fn.toUEField(@[])
+      UE_Log $fnFields
+
 
     proc showFunctionDefaultParams() = 
       let fn = getUTypeByName[UFunction](self.funcName)
       if fn.isNil():
         UE_Error "Function is null"
         return
-      let fnField = fn.toUEField(@[]).get()
+      let fnField = fn.toUEField(@[]).head().get()
       let defaultParams = fnField.getAllParametersWithDefaultValuesFromFunc()
       for p in defaultParams:
         if p.uePropType == "bool":
@@ -173,21 +183,23 @@ uClass AActorCodegen of AActor:
                 UE_Log $p.name & " " & $p.uePropType & " " & $m.value
                 params[p.uePropType] = m.value
                 break
-            
-            
-        
-
+  
       UE_Log "Found " & $fnsWithDefaultParams.len() & " functions with default parameters"
       UE_Log "Found " & $params.len() & " unique parameters type"
       UE_Log $params
-      
+    
+    proc traverAllFunctionsWithAutoCreateRefTerm() = 
+      let modules = getModules(self.moduleName, self.bOnlyBlueprint)
+      let fns : seq[UEField]= modules.mapIt(it.types.mapIt(it.fields)).flatten().flatten()
+      let fnsWithAutoCreateRefTerm = fns.filterIt(it.kind == uefFunction and it.hasUEMetadata(AutoCreateRefTermMetadataKey))
+      for fn in fnsWithAutoCreateRefTerm:
+        UE_Log $fn
+      UE_Log "Found " & $fnsWithAutoCreateRefTerm.len() & " unique functions with AutoCreateRefTerm type"      
 
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "test5"
     structPtrName : FString 
     
-    
-
   ufuncs(BlueprintCallable, CallInEditor, Category=ActorCodegen):
     proc genReflectionDataOnly() = 
       try:

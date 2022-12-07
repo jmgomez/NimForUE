@@ -186,7 +186,8 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
     none(UEField)
 
 
-func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): Option[UEField] =
+
+func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField] =
 
   let paramsMb = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun, rules))
   let params = paramsMb.sequence()
@@ -199,17 +200,42 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): Option[UEFi
   for rule in rules:
     if actualName in rule.affectedTypes and rule.target == uerTField and rule.rule == uerIgnore: #TODO extract
       UE_Log &"Ignoring {actualName} because it is in the ignore list"
-      return none(UEField)
+      return  newSeq[UEField]()
+
+
+
+
+  func createFunField(params:seq[UEField]) : UEField = 
+    UE_Warn &"Creating function {fnNameNim} with params {params}"
+    let funMetadata = ufun.getMetadataMap().ueMetaToNueMeta()
+    var fnField = makeFieldAsUFun(fnNameNim, params, className, ufun.functionFlags, funMetadata)
+    fnField.actualFunctionName = actualName
+    fnField
+  
+  #To support AutoCreateRefTerms we need to split the function so a different nim implementation is created
+  #per AutoCreateRefTerm param. So we add a new function per param combination
+  func getAutoCreateRefParamNamesIfAny() : seq[FString] = 
+    if uFun.hasMetadata(AutoCreateRefTermMetadataKey):
+      let refTermParamName = uFun.getMetadata(AutoCreateRefTermMetadataKey).get("") #TODO they cna be more than one
+      if ufun.hasMetadata(CPP_Default_MetadataKeyPrefix & refTermParamName):
+        return @[refTermParamName]
+    return @[]
+
+  var funFields : seq[UEField] = @[]
+  funFields.add createFunField(params)
+  let refTermParamNames = getAutoCreateRefParamNamesIfAny()
+  if refTermParamNames.any():
+    let refTermParamName = refTermParamNames[0]
+    let paramsWithoutRefTerm = params.filterIt(it.name != refTermParamName)
+    UE_Log &"Found AutoCreateRefTermMetadataKey {paramsWithoutRefTerm} in {uFun.getName()}"
+    funFields.add createFunField(paramsWithoutRefTerm)
+
 
   
-  let funMetadata = ufun.getMetadataMap().ueMetaToNueMeta()
-  var fnField = makeFieldAsUFun(fnNameNim, params, className, ufun.functionFlags, funMetadata)
-  fnField.actualFunctionName = actualName
-  let isStatic = (FUNC_Static in ufun.functionFlags) #Skips static functions for now so we can quickly iterate over compiling the engine types
   if ((ufun.isBpExposed()) or uerImportBlueprintOnly notin rules):
-    some fnField
+    funFields
   else:
-    none(UEField)
+    newSeq[UEField]()
 
 func tryParseJson[T](jsonStr: string): Option[T] =
   {.cast(noSideEffect).}:
@@ -237,7 +263,7 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
   if storedUEType.isSome(): return storedUEType
 
   let fields =  getFuncsFromClass(cls)
-                  .map(fn=>toUEField(fn, rules)).sequence() &
+                  .map(fn=>toUEField(fn, rules)).flatten() &
                 getFPropsFromUStruct(cls)
                   .map(prop=>toUEField(prop, cls, rules))
                   .sequence()

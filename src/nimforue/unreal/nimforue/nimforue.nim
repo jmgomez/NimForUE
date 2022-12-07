@@ -100,7 +100,7 @@ func `$`*(fn:UFunctionPtr):string =
     metadataMap.remove(n"ToolTip")
   let params = getFPropsFromUStruct(fn).mapIt($it).join("\n\t")
     #PROPS?
-  &"""Func: {fn.getName()} Flags: {fn.functionFlags} Metadata: {metadataMap}
+  &"""Func: {fn.getName()} Class: {fn.getOuter()} Flags: {fn.functionFlags} Metadata: {metadataMap}
   
   Params: 
     {params}

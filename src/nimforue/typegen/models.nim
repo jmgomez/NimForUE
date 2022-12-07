@@ -18,6 +18,7 @@ const SocketMetadataKey* = "Socket"
 const DefaultComponentMetadataKey* = "DefaultComponent"
 const RootComponentMetadataKey* = "RootComponent"
 const CPP_Default_MetadataKeyPrefix* = "CPP_Default_"
+const AutoCreateRefTermMetadataKey* = "AutoCreateRefTerm"
 
 
 type
