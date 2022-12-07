@@ -593,7 +593,7 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr) {.cde
  
   #Root component
   for objProp in actorCls.getAllPropsWithMetaData[:FObjectPtrProperty](RootComponentMetadataKey):
-      let comp = getPropertyValuePtr[USceneComponentPtr](objProp, actor)[]
+      let comp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](objProp, actor)[])
       if comp.isNotNil():
         let prevRoot = actor.getRootComponent()
         discard actor.setRootComponent(comp)
@@ -601,7 +601,8 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr) {.cde
           prevRoot.setupAttachment(comp)
   #Handles attachments
   for objProp in actorCls.getAllPropsOf[:FObjectPtrProperty]():
-        let comp = getPropertyValuePtr[USceneComponentPtr](objProp, actor)[]
+        let comp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](objProp, actor)[])
+        UE_Log &"Comp: {comp} {objProp}"
         if comp.isNotNil():
           if objProp.hasMetadata(AttachMetadataKey):
               #Tries to find it both, camelCase and PascalCase. Probably we should push PascalCase to UE
@@ -609,7 +610,7 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr) {.cde
               if attachToCompProp.isNil():
                 attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata(AttachMetadataKey).get().capitalizeASCII)
               
-              let attachToComp = getPropertyValuePtr[USceneComponentPtr](attachToCompProp, actor)[]
+              let attachToComp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](attachToCompProp, actor)[])
               if objProp.hasMetadata(SocketMetadataKey):
                 comp.setupAttachment(attachToComp, n(objProp.getMetadata(SocketMetadataKey).get()))
               else:
