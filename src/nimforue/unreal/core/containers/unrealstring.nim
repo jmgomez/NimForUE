@@ -24,9 +24,10 @@ func makeFString*(fstr : FString) : FString {.importcpp: "'0'(#)", constructor .
 
 func makeFString(cstr : WideCString) : FString {.importcpp: "'0(reinterpret_cast<TCHAR*>(#))", constructor .}
 
-func f*(str :string) : FString {.inline.} = 
+func makeFString*(str :string) : FString {.inline.} = 
   {.cast(noSideEffect).}:
     makeFString(newWideCString(str))
+func f*(str :string) : FString {.inline.} = makeFString(str)
 
 func `$`*(fstr: FString): string {.inline.} = 
   if fstr.getCharArray().num() == 0: ""

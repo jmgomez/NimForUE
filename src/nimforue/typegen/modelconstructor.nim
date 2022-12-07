@@ -45,3 +45,9 @@ func makeUEModule*(name: string, types: seq[UEType], rules: seq[UEImportRule] = 
 
 
 
+func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
+func isOutParam*(field:UEField) : bool = (CPF_OutParm in field.propFlags)
+func isRefParam*(field:UEField) : bool = (CPF_ReferenceParm in field.propFlags)
+func isConstParam*(field:UEField) : bool = (CPF_ConstParm in field.propFlags)
+func isConstRefParam*(field:UEField) : bool = field.isConstParam() and field.isRefParam()
+

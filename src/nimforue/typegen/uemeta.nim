@@ -211,23 +211,19 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField
     var fnField = makeFieldAsUFun(fnNameNim, params, className, ufun.functionFlags, funMetadata)
     fnField.actualFunctionName = actualName
     fnField
-  
-  #To support AutoCreateRefTerms we need to split the function so a different nim implementation is created
-  #per AutoCreateRefTerm param. So we add a new function per param combination
-  func getAutoCreateRefParamNamesIfAny() : seq[FString] = 
-    if uFun.hasMetadata(AutoCreateRefTermMetadataKey):
-      let refTermParamName = uFun.getMetadata(AutoCreateRefTermMetadataKey).get("") #TODO they cna be more than one
-      if ufun.hasMetadata(CPP_Default_MetadataKeyPrefix & refTermParamName):
-        return @[refTermParamName]
-    return @[]
+
+  func getConstRefDefaultParams() : seq[UEField] = 
+        params
+          .filterIt(it.isConstRefParam() and 
+            ufun.hasMetadata(CPP_Default_MetadataKeyPrefix & it.name))
 
   var funFields : seq[UEField] = @[]
   funFields.add createFunField(params)
-  let refTermParamNames = getAutoCreateRefParamNamesIfAny()
+  let refTermParamNames = getConstRefDefaultParams()
+  
   if refTermParamNames.any():
-    let refTermParamName = refTermParamNames[0]
-    let paramsWithoutRefTerm = params.filterIt(it.name != refTermParamName)
-    UE_Log &"Found AutoCreateRefTermMetadataKey {paramsWithoutRefTerm} in {uFun.getName()}"
+    let refTermParamName = refTermParamNames[0] #Only one is supported at the meantime if more are found this can be easily extended
+    let paramsWithoutRefTerm = params.filterIt(it.name != refTermParamName.name)
     funFields.add createFunField(paramsWithoutRefTerm)
 
 

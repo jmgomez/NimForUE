@@ -273,11 +273,6 @@ func getMetadataValueFromFunc*[T](fnField : UEField, name:string) : T =
     # return T()
     
 
-func isMulticastDelegate*(field:UEField) : bool = hasUEMetadata(field, MulticastDelegateMetadataKey)
-func isDelegate*(field:UEField) : bool = hasUEMetadata(field, DelegateMetadataKey)
-
-func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")
-
 func getFieldByName*(ueType:UEType, name:string) : Option[UEField] = ueType.fields.first(f=>f.name == name)
 func getFieldByName*(ueTypes:seq[UEType], name:string) : Option[UEField] = 
     ueTypes
@@ -286,6 +281,9 @@ func getFieldByName*(ueTypes:seq[UEType], name:string) : Option[UEField] =
         .first(f=>f.name == name)
 
 func getUETypeByName*(ueTypes:seq[UEType], name:string) : Option[UEType] = ueTypes.first(ueType=>ueType.name)
+func isMulticastDelegate*(field:UEField) : bool = hasUEMetadata(field, MulticastDelegateMetadataKey)
+func isDelegate*(field:UEField) : bool = hasUEMetadata(field, DelegateMetadataKey)
+func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")
 
 func shouldBeReturnedAsVar*(field:UEField) : bool =
     let typesReturnedAsVar = ["TMap", "TArray"]

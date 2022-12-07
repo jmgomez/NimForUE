@@ -8,10 +8,7 @@ import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
 import ../typegen/[nuemacrocache, models, modelconstructor]
 
-func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
-func isOutParam*(field:UEField) : bool = 
-  (CPF_OutParm in field.propFlags)
-   
+
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 #varContexts refer to if it's allowed or not to gen var (i.e. you cant gen var in a type definition but you can in a func definition)
