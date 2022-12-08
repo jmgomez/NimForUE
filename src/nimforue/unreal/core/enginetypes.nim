@@ -142,7 +142,9 @@ type
 
 
   EInputDeviceConnectionState* {.importc .} = enum
-    Connected, Disconnected, Unknown  
+    Connected, Disconnected, Unknown 
+  UAssetFactoryInterface*  = object of UObject 
+  UAssetFactoryInterfacePtr* = ptr UAssetFactoryInterface
   # UNetObjectPrioritizerConfig* {.importcpp .} = object of UObject
   # UReplicationBridge* {.importcpp .} = object of UObject
   # UNetBlobHandler* {.importcpp .} = object of UObject
