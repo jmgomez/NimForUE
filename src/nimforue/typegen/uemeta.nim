@@ -206,7 +206,8 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField
 
 
   func createFunField(params:seq[UEField]) : UEField = 
-    UE_Warn &"Creating function {fnNameNim} with params {params}"
+    {.cast(nosideEffect).}:
+      UE_Warn &"Creating function {fnNameNim} with params {params}"
     let funMetadata = ufun.getMetadataMap().ueMetaToNueMeta()
     var fnField = makeFieldAsUFun(fnNameNim, params, className, ufun.functionFlags, funMetadata)
     fnField.actualFunctionName = actualName
