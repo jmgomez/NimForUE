@@ -42,7 +42,8 @@ macro ffi* (pathToGenFile: static string, fn : typed) : untyped =
         type ProcType {. inject .} = procSign 
         withLock libLock:
             let fun {. inject .} = cast[ProcType](lib().symAddr(fnSymbolName))
-            callNode
+            if not fun.isNil():
+                callNode
 
     result = fn.copy()
     result[4] = nnkPragma.newTree(ident("exportc"), ident("cdecl"), ident("dynlib"))

@@ -582,13 +582,16 @@ proc isNimClassBase(cls: UClassPtr): bool = cls.isNimClass()
 
 
 
-proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr) {.cdecl.} = 
+proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actorCls:UClassPtr) {.cdecl.} = 
+  #get a chance to init the parent
+  let parentCls = actorCls.getSuperClass()
+  if parentCls.isNimClass():
+    initComponents(initializer, actor, parentCls)
 
   # #Check defaults
-  let actorCls = actor.getClass()
   for objProp in getAllPropsWithMetaData[FObjectPtrProperty](actorCls, DefaultComponentMetadataKey):
       let compCls = objProp.getPropertyClass()
-      var defaultComp = ueCast[UActorComponent](initializer.createDefaultSubobject(actor, objProp.getFName(), compCls, compCls, true, false))
+      var defaultComp = ueCast[UActorComponent](initializer.createDefaultSubobject(actor, objProp.getName().firstToUpper().makeFName(), compCls, compCls, true, false))
       setPropertyValuePtr[UActorComponentPtr](objProp, actor, defaultComp.addr)
  
   #Root component
@@ -631,7 +634,8 @@ proc callSuperConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   cppCls.classConstructor(initializer)
   let actor = tryUECast[AActor](obj)
   if actor.isSome():
-    initComponents(initializer, actor.get())
+    initComponents(initializer, actor.get(), cls)
+
 
 #This needs to be appended after the default constructor so comps can be init
 proc postConstructor*(initializer: var FObjectInitializer) {.cdecl.} =

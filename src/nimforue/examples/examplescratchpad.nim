@@ -46,6 +46,8 @@ uClass AActorScratchpad of AActor:
       discard                                                          
  
   ufuncs(CallInEditor):
+    proc printObj() = 
+      UE_Log &"Object name {self}"
     proc modifyStruct() = 
       self.myStruct.a = 10
     proc testEditorPIE() = 

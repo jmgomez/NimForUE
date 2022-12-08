@@ -74,10 +74,6 @@ proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FProperty
     getFPropertiesFrom(fn).filter(isIn)
 
 
-proc `$`*(obj:UObjectPtr) : string = 
-    if obj.isNil(): "nil"
-    else: $obj.getName()
-
 
 #Probably these should be repr
 
@@ -105,4 +101,21 @@ func `$`*(fn:UFunctionPtr):string =
   Params: 
     {params}
   """
-    
+
+
+proc `$`*(obj:UObjectPtr) : string = 
+    if obj.isNil(): return "nil"
+    var str = &"\n {obj.getName()}:\n\t"
+    let props = obj.getClass().getFPropsFromUStruct(IncludeSuper)
+    for p in props:
+        #Only UObjects vals for now:
+        if castField[FObjectPtrProperty](p).isNil(): 
+            # str = str & &"{p.getName()}: cant get the value value because it isnt an uobject\n"
+            continue
+
+        let valPtr = someNil getPropertyValuePtr[UObjectPtr](p, obj)
+        let val = valPtr.map(p=>tryUECast[UObject](p[])).flatten()
+        if val.isSome():
+            str = str & &"{p.getName()}: \n\t {val.get().getName()}\n\t"
+       
+    str
