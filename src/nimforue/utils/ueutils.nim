@@ -61,6 +61,7 @@ proc addPtrToUObjectIfNotPresentAlready*(str:string) : string =
     if str.endsWith("Ptr"): str else: str & "Ptr"
 
 func tryUECast*[T : UObject](obj:UObjectPtr) : Option[ptr T] = someNil ueCast[T](obj)
+func tryCastField*[T : FProperty](prop:FPropertyPtr) : Option[ptr T] = someNil castField[T](prop)
     
 func ueMetaToNueMeta*(ueMeta : TMap[FName, FString]) : seq[UEMetadata] = 
     var meta = newSeq[UEMetadata]()

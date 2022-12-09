@@ -143,7 +143,9 @@ proc newBasicProperty(owner : FFieldVariant, propField:UEField, propType:string,
     if propType == "FString": 
         someFProp newFStrProperty(owner, name, propObjFlags)
     elif propType == "bool": 
-        someFProp newFBoolProperty(owner, name, propObjFlags)
+        let boolProp = newFBoolProperty(owner, name, propObjFlags)
+        boolProp.setBoolSize(sizeof(bool).uint32, isNativeBool=true)
+        someFProp boolProp
     elif propType == "int8": 
         someFProp newFInt8Property(owner, name, propObjFlags)
     elif propType == "int16": 

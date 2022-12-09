@@ -18,7 +18,3 @@ proc getSubsystem*[T : USubsystem](objContext : UObjectPtr) : Option[ptr T] =
       none[ptr T]()
 
 
-
-
-converter boolToUInt8*(b: bool): uint8 = 
-  if b: 1 else: 0

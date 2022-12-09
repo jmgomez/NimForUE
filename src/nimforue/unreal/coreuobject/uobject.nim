@@ -156,6 +156,7 @@ bindFProperty([
 
 #TypeClass
 type DelegateProp* = FDelegatePropertyPtr | FMulticastInlineDelegatePropertyPtr | FMulticastDelegatePropertyPtr
+proc containerPtrToValuePtr*(prop:FPropertyPtr, container: pointer) : pointer {. importcpp: "(#->ContainerPtrToValuePtr<void>(@))".}
 
 #Concrete methods
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
@@ -181,7 +182,17 @@ proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->Valu
 proc getSignatureFunction*(delProp:DelegateProp) : UFunctionPtr {.importcpp:"(#->SignatureFunction)".}
 proc setSignatureFunction*(delProp:DelegateProp, signature : UFunctionPtr) : void {.importcpp:"(#->SignatureFunction=#)".}
 
+#	void SetBoolSize( const uint32 InSize, const bool bIsNativeBool = false, const uint32 InBitMask = 0 );
+proc setBoolSize*(prop:FBoolPropertyPtr, size:uint32, isNativeBool:bool) : void {. importcpp: "(#->SetBoolSize(@))".}
+proc setPropertyValue*(prop:FBoolPropertyPtr, container: pointer, value:bool) : void {. importcpp: "(#->SetPropertyValue(@))".}
+proc getPropertyValue*(prop:FBoolPropertyPtr, container: pointer) : bool {. importcpp: "(#->GetPropertyValue(@))".}
+#BoolReturn->GetPropertyValue(BoolReturn->ContainerPtrToValuePtr<void>(InBaseParamsAddr));
+#[
+    			
+                    				uint8* CurrentPropAddr = It->ContainerPtrToValuePtr<uint8>(Buffer);
 
+						((FBoolProperty*)*It)->SetPropertyValue( CurrentPropAddr, true );
+]#
 type
 
 

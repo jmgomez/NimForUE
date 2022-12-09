@@ -140,7 +140,7 @@ uClass ANimGameCharTest of ANimForUEDemoCharacter:
     (BlueprintType, Blueprintable)
     uprop(BlueprintReadWrite):
         testName : FString
-
+        
 
 const ueEnumType = UEType(name: "EMyTestEnum", kind: uetEnum,
                             fields: @[

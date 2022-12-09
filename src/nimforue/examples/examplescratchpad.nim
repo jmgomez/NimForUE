@@ -34,6 +34,8 @@ uClass AActorScratchpad of AActor:
     # myEnum : EMyEnum
     myStruct : FMyStructTest
     structPtrName : FString 
+    actorToInspect : AActorPtr
+    testBool : bool
   uprops(EditAnywhere, BlueprintReadWrite, Category=Whatever):
     testCV : int32 = 1
                                                                                  
@@ -44,10 +46,15 @@ uClass AActorScratchpad of AActor:
     proc beginPlay() = 
       UE_Warn "Begin called in actor scratchpad"
       discard                                                          
- 
+      
   ufuncs(CallInEditor):
+
+    proc toggleBool() = 
+      self.testBool = not self.testBool
+      UE_Log &"Bool is now {self.testBool}"
+      
     proc printObj() = 
-      UE_Log &"Object name {self}"
+      UE_Log &"Object name {self.actorToInspect}"
     proc modifyStruct() = 
       self.myStruct.a = 10
     proc testEditorPIE() = 

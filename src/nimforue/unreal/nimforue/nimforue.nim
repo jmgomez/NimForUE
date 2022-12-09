@@ -58,7 +58,7 @@ iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr =
         super = super.getSuperClass()
         yield super
 
-func isBPClass(cls:UClassPtr) : bool =
+func isBPClass*(cls:UClassPtr) : bool =
     result = (CLASS_CompiledFromBlueprint.uint32 and cls.classFlags.uint32) != 0
     
 
@@ -103,19 +103,30 @@ func `$`*(fn:UFunctionPtr):string =
   """
 
 
+proc isA[T:FProperty](prop:FPropertyPtr) : bool = tryCastField[T](prop).isSome()
+proc asA[T:FProperty](prop:FPropertyPtr) : ptr T = castField[T](prop)
+
 proc `$`*(obj:UObjectPtr) : string = 
     if obj.isNil(): return "nil"
     var str = &"\n {obj.getName()}:\n\t"
     let props = obj.getClass().getFPropsFromUStruct(IncludeSuper)
     for p in props:
         #Only UObjects vals for now:
-        if castField[FObjectPtrProperty](p).isNil(): 
-            # str = str & &"{p.getName()}: cant get the value value because it isnt an uobject\n"
-            continue
+        
+        if p.isA[:FObjectPtrProperty]():
+            let valPtr = someNil getPropertyValuePtr[UObjectPtr](p, obj)
+            let val = valPtr.map(p=>tryUECast[UObject](p[])).flatten()
+            if val.isSome():
+                str = str & &"{p.getName()}: \n\t {val.get().getName()}\n\t"
+        elif p.isA[:FBoolProperty]():
+            let val = getValueFromBoolProp(p, obj)
+            str = str & &"{p.getName()}: {val}\n\t"
+        elif p.isA[:FStrProperty]():
+            let val = getPropertyValuePtr[FString](p, obj)[]
+            str = str & &"{p.getName()}: {val}\n\t"
+        elif p.isA[:FNameProperty]():
+            let val = getPropertyValuePtr[FName](p, obj)[]
+            str = str & &"{p.getName()}: {val}\n\t"
 
-        let valPtr = someNil getPropertyValuePtr[UObjectPtr](p, obj)
-        let val = valPtr.map(p=>tryUECast[UObject](p[])).flatten()
-        if val.isSome():
-            str = str & &"{p.getName()}: \n\t {val.get().getName()}\n\t"
-       
+        # elif p.isA[FUinProperty]():
     str

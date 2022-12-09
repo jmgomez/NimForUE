@@ -104,23 +104,40 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
   
   let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)).nimToCppConflictsFreeName()
 
+
+  #bools are handled differently:
+  let actualGetter = 
+    if prop.uePropType == "bool": 
+      genAst():
+        getValueFromBoolProp(prop, obj)
+    else:
+      genAst(typeNode):
+        getPropertyValuePtr[typeNode](prop, obj)[]
+  let actualSetter = 
+    if prop.uePropType == "bool": 
+      genAst():
+        setValueInBoolProp(prop, obj, value)
+    else:
+      genAst(typeNode):
+        setPropertyValuePtr[typeNode](prop, obj, value.addr)
+
   #Notice we generate two set properties one for nim and the other for code gen due to cpp
   #not liking the equal in the ident name
   result = 
-    genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
+    genAst(propIdent, ptrName, typeNode, className, actualGetter, actualSetter, propUEName = prop.name, typeNodeAsReturnValue):
       proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {.exportcpp.} =
         let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
-        getPropertyValuePtr[typeNode](prop, obj)[]
+        actualGetter
       
       proc `propIdent=`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  = 
         var value {.inject.} : typeNode = val
         let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
-        setPropertyValuePtr[typeNode](prop, obj, value.addr)
+        actualSetter
 
       proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode) {.exportcpp.} = 
         var value {.inject.} : typeNode = val
         let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
-        setPropertyValuePtr[typeNode](prop, obj, value.addr)
+        actualSetter
   
 
 #helper func used in geneFunc and genParamsInsideFunc
