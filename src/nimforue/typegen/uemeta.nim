@@ -35,6 +35,7 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
               .replace("*", "Ptr")
     if cppType == "float": return "float32"
     if cppType == "double": return "float64"
+    if cppType == "uint8" and prop.getName().startsWith("b"): return "bool"
     return cppType.cleanTObjectPtr()
     
 
@@ -586,7 +587,7 @@ proc isNimClassBase(cls: UClassPtr): bool = cls.isNimClass()
 proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actorCls:UClassPtr) {.cdecl.} = 
   #get a chance to init the parent
   let parentCls = actorCls.getSuperClass()
-  if parentCls.isNimClass():
+  if parentCls.isNimClass() or parentCls.isBpClass():
     initComponents(initializer, actor, parentCls)
 
   # #Check defaults
