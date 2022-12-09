@@ -1,4 +1,4 @@
-import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes]
+import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes, package]
 import ../core/containers/[unrealstring, map, array]
 import nimforuebindings
 import ../../macros/uebind
@@ -7,7 +7,7 @@ include ../definitions
 import ../../typegen/models
 import ../../utils/[utils, ueutils]
 import ../core/enginetypes
-import std/[typetraits, strutils, sequtils, sugar]
+import std/[typetraits, tables, strutils, sequtils, sugar]
 
 
 #This file contains logic on top of ue types that it isnt necessarily bind 
@@ -105,6 +105,26 @@ func `$`*(fn:UFunctionPtr):string =
 
 proc isA[T:FProperty](prop:FPropertyPtr) : bool = tryCastField[T](prop).isSome()
 proc asA[T:FProperty](prop:FPropertyPtr) : ptr T = castField[T](prop)
+
+proc `$`*(cls:UClassPtr) : string = 
+    var str = &"Class: {cls.getName()} \n\t Parent: {cls.getSuperClass().getName()}\n\t Module:{cls.getPackage().getModuleName()} \n\t Package:{cls.getPackage().getName()} \n\t Flags: {cls.classFlags}"
+    str = &"{str} \n\t Interfaces:"
+    for i in cls.interfaces:
+      str = &"{str}\n\t\t {i}"
+    str = &"{str} \n\t Metas:"
+    let metas = cls.getMetadataMap().toTable()
+    for key, value in metas:
+      str = &"{str}\n\t\t {key} : {value}"
+
+    str = &"{str} \n\t Props:"
+    for p in cls.getFPropsFromUStruct():
+      str = &"{str}\n\t\t {p}"
+      
+    str = &"{str} \n\t Funcs:"
+    let funcs = cls.getFuncsFromClass()
+    for f in funcs:
+      str = &"{str}\n\t\t {f}"
+    str
 
 proc `$`*(obj:UObjectPtr) : string = 
     if obj.isNil(): return "nil"

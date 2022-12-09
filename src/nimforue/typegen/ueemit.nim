@@ -276,7 +276,10 @@ func fromNinNodeToMetadata(node : NimNode) : seq[UEMetadata] =
         else:
             error("Invalid metadata node " & repr node)
             @[]
+    of nnkAsgn:
+        @[makeUEMetadata(node[0].strVal(), node[1].strVal())]
     else:
+        debugEcho treeRepr node
         error("Invalid metadata node " & repr node)
         @[]
 
@@ -300,7 +303,8 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
     #TODO THROW ERROR WHEN NON MULTICAST AND USE MC ONLY
     # var flags : EPropertyFlags = CPF_None
     #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
-    for m in meta:
+    #TODO all the bodies simetric with funcs and classes (at least the signature is)
+    for m in metadata.mapIt(it.name):
         if m == "BlueprintReadOnly":
             flags = flags | CPF_BlueprintVisible | CPF_BlueprintReadOnly
         if m == "BlueprintReadWrite":
@@ -317,12 +321,14 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
                 flags = flags | CPF_BlueprintAssignable | CPF_BlueprintVisible
         if m == "BlueprintCallable":
                 flags = flags | CPF_BlueprintCallable
+        if m.toLower() == "config":
+                flags = flags | CPF_Config  
             #Notice this is only required in the unlikely case that the user wants to use a delegate that is not exposed to Blueprint in any way
         #TODO CPF_BlueprintAuthorityOnly is only for MC
     
-    let flagsThatShouldNotBeMeta = ["BlueprintReadOnly", "BlueprintWriteOnly", "BlueprintReadWrite", "EditAnywhere", "VisibleAnywhere", "Transient", "BlueprintAssignable", "BlueprintCallable"]
+    let flagsThatShouldNotBeMeta = ["config", "BlueprintReadOnly", "BlueprintWriteOnly", "BlueprintReadWrite", "EditAnywhere", "VisibleAnywhere", "Transient", "BlueprintAssignable", "BlueprintCallable"]
     for f in flagsThatShouldNotBeMeta:
-        metadata = metadata.filterIt(it.name != f)
+        metadata = metadata.filterIt(it.name.toLower() != f.toLower())
 
   
 
@@ -708,6 +714,15 @@ func genDefaults(body:NimNode) : Option[NimNode] =
         )
 
 
+func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags, seq[UEMetadata]) = 
+    var metas = classMetadata
+    var flags = (CLASS_Inherit | CLASS_ScriptInherit )#| CLASS_Native ) #| CLASS_CompiledFromBlueprint
+    for meta in classMetadata:
+        if meta.name.toLower() == "config": #Game config. The rest arent supported just yet
+            flags = flags or CLASS_Config
+            metas = metas.filterIt(it.name.toLower()!= "config")
+      
+    (flags, metas)
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
 
@@ -716,9 +731,8 @@ macro uClass*(name:untyped, body : untyped) : untyped =
 
     let parent = name[^1].strVal()
     let className = name[1].strVal()
-    let classMetas = getMetasForType(body)
     let ueProps = getUPropsAsFieldsForType(body, className)
-    let classFlags = (CLASS_Inherit | CLASS_ScriptInherit )#| CLASS_Native ) #| CLASS_CompiledFromBlueprint
+    let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     let ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
     
     var uClassNode = emitUClass(ueType)
