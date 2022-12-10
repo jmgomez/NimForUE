@@ -35,8 +35,13 @@ type
 
   AInfo* {.importcpp, inheritable, pure .}= object of AActor
   AInfoPtr* = ptr AInfo
+  AGameModeBase* {.importcpp, inheritable, pure .}= object of AInfo
+  AGameModeBasePtr* = ptr AGameModeBase
+  AGameMode* {.importcpp, inheritable, pure .}= object of AGameModeBase
+  AGameModePtr* = ptr AGameMode
   AGameSession* {.importcpp, inheritable, pure .}= object of AInfo
   AGameSessionPtr* = ptr AGameSession
+
 
   AWorldSettings* {.importcpp, inheritable, pure .}= object of AInfo
   AWorldSettingsPtr* = ptr AWorldSettings

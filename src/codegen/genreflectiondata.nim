@@ -6,10 +6,10 @@ import ../nimforue/macros/genmodule #not sure if it's worth to process this file
 
 #Any module not picked by default.
 #This could be exposed to the json file 
-let extraModuleNames = @["EnhancedInput", "NimForUEDemo"]
+let extraModuleNames = @["EnhancedInput"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
-let extraNonBpModules = ["DeveloperSettings", "EnhancedInput"]
+let extraNonBpModules = @["DeveloperSettings", "EnhancedInput"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
@@ -32,7 +32,7 @@ let codeGenOnly = makeImportedRuleType(uerCodeGenOnlyFields,
       "UField", "UStruct", "UScriptStruct", "UPackage",
       "UClass", "UFunction", "UDelegateFunction",
       "UEnum", "AVolume", "UInterface", "USoundWaveProcedural",
-      "UActorComponent","AController",
+      "UActorComponent","AController","AGameMode", "AGameModeBase",
       "UBlueprint", "UBlueprintGeneratedClass",
       "APlayerController", "UAnimBlueprintGeneratedClass",
       "UEngineSubsystem", "USubsystem", "UDynamicSubsystem", "UWorldSubsystem",
@@ -218,16 +218,27 @@ moduleRules["EditorSubsystem"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
-#TODO Deps module needs to pull parents !!!
-#Enums too?
 const pluginDir {.strdefine.}: string = ""
+proc getGameModules*(): seq[string] =
+  try:        
+    let projectJson = readFile(GamePath).parseJson()
+    let modules = projectJson["Modules"]
+                    .mapIt(it["Name"].jsonTo(string))
+    return modules
+  except:
+    let e : ref Exception = getCurrentException()
+    UE_Error &"Error: {e.msg}"
+    UE_Error &"Error: {e.getStackTrace()}"
+    UE_Error &"Failed to parse project json"
+    return @[]
 
-proc getAllInstalledPlugins*(config: NimForUEConfig): seq[string] =
+proc getAllInstalledPlugins*(): seq[string] =
   try:        
     let projectJson = readFile(GamePath).parseJson()
     let plugins = projectJson["Plugins"]
                     .filterIt(it["Enabled"].jsonTo(bool))
                     .mapIt(it["Name"].jsonTo(string))
+    
     return plugins
   except:
     let e : ref Exception = getCurrentException()
@@ -236,11 +247,11 @@ proc getAllInstalledPlugins*(config: NimForUEConfig): seq[string] =
     UE_Error &"Failed to parse project json"
     return @[]
 
-proc genReflectionData*(plugins: seq[string]): UEProject =
-  let deps = plugins
+proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
+  let deps = plugins 
               .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-              .foldl(a & b, newSeq[string]()) & extraModuleNames#, "Engine", "UMG", "UnrealEd"]
-
+              .foldl(a & b, newSeq[string]()) & extraModuleNames & gameModules#, "Engine", "UMG", "UnrealEd"]
+  
   # UE_Log &"Plugins: {plugins}"
   #Cache with all modules so we dont have to collect the UETypes again per deps
   var modCache = newTable[string, UEModule]()
@@ -347,9 +358,9 @@ const project* = $1
   # UE_Warn $ueProject
 
 
-proc genUnrealBindings*(plugins: seq[string]) =
+proc genUnrealBindings*(gameModules, plugins: seq[string]) =
   try:
-    let ueProject = genReflectionData(plugins)
+    let ueProject = genReflectionData(gameModules, plugins)
     # return
 
     # UE_Log $ueProject
@@ -395,8 +406,8 @@ proc execBindingsGenerationInAnotherThread*() {.cdecl.}=
     UE_Log $config[]
     # genUnrealBindings(plugins)
     discard
-  let config = getNimForUEConfig()
 
-  let plugins = getAllInstalledPlugins(config)
+  let plugins = getAllInstalledPlugins()
+  let gameModules = getGameModules()
   # executeTaskInTaskGraph[ptr NimForUEConfig](config.unsafeAddr, ffiWraper)
-  genUnrealBindings(plugins)
+  genUnrealBindings(gameModules, plugins)

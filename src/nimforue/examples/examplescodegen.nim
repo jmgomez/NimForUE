@@ -193,7 +193,7 @@ uClass AActorCodegen of AActor:
   ufuncs(BlueprintCallable, CallInEditor, Category=ActorCodegen):
     proc genReflectionDataOnly() = 
       try:
-        let ueProject =  genReflectionData(getAllInstalledPlugins(getNimForUEConfig()))
+        let ueProject =  genReflectionData(getGameModules(), getAllInstalledPlugins())
        
       except:
         let e : ref Exception = getCurrentException()
