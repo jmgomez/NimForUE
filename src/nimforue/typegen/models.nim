@@ -291,7 +291,7 @@ func shouldBeReturnedAsVar*(field:UEField) : bool =
     result = field.kind == uefProp and typesReturnedAsVar.any(tp => tp in field.uePropType) or
                field.isMulticastDelegate() or 
                field.isDelegate() or
-               field.uePropType.startsWith("F") #FStruct always starts with F. We need to enforce it in our types too.
+               field.uePropType.startsWith("F") and field.uePropType != "FString" #FStruct always starts with F. We need to enforce it in our types too.
 
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
