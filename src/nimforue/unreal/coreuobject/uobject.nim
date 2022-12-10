@@ -169,8 +169,8 @@ proc containerPtrToValuePtr*(prop:FPropertyPtr, container: pointer) : pointer {.
 
 #Concrete methods
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
-proc setPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
-proc getPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr) : UClassPtr {. importcpp: "(#->PropertyClass)".}
+proc setPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
+proc getPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr) : UClassPtr {. importcpp: "(#->PropertyClass)".}
 # proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
 proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "#->SetMetaClass(#)".}
 proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->SetEnum(#))".}

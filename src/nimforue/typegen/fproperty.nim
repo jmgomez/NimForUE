@@ -46,6 +46,8 @@ func newUStructBasedFProperty(owner : FFieldVariant, propType:string, name:FName
         #check if it's a component here
         let clsProp = newFClassProperty(owner, name, flags)
         clsProp.setPropertyMetaClass(cls)
+        clsProp.setPropertyClass(staticClass[UClass]())
+        clsProp.setPropertyFlags(CPF_UObjectWrapper or CPF_HasGetValueTypeHash)
         clsProp
     of emTSoftClassPtr:
         let clsProp = newFSoftClassProperty(owner, name, flags)
