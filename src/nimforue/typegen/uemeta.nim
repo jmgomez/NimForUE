@@ -656,6 +656,7 @@ proc callSuperConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   let obj = initializer.getObj()
   let cls = obj.getClass()
   let cppCls = cls.getFirstCppClass()
+  UE_Warn &"Calling super constructor for {cppCls.getName()}"
   cppCls.classConstructor(initializer)
   let actor = tryUECast[AActor](obj)
   if actor.isSome():
@@ -684,7 +685,7 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
     parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
 
   let parent = parentCls
-    .getOrRaise(fmt "Parent class {ueType.parent} not found for {ueType.name}")
+    .getOrRaise(&"Parent class {ueType.parent} not found for {ueType.name}")
 
   assetCreated(newCls)
 
@@ -698,11 +699,14 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
   newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32)
   newCls.classCastFlags = parent.classCastFlags
 
+
   copyMetadata(parent, newCls)
-  # newCls.setMetadata("IsBlueprintBase", "true") #todo move to ueType. BlueprintType should be producing this
-  # newCls.setMetadata("BlueprintType", "true") #todo move to ueType
+ 
   newCls.markAsNimClass()
+  UE_Error "MEtadata for class " & newCls.getName()
+   
   for metadata in ueType.metadata:
+    UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
     newCls.setMetadata(metadata.name, $metadata.value)
 
   for field in ueType.fields:
@@ -713,7 +717,6 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
       discard emitUFunction(field, newCls, getNativeFuncImplPtrFromUEField(getGlobalEmitter(), field))
     else:
       UE_Error("Unsupported field kind: " & $field.kind)
-    #should gather the functions here?
 
   newCls.staticLink(true)
  
@@ -728,7 +731,6 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
   )
 
   newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())
-
 
   discard newCls.getDefaultObject() #forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin

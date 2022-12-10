@@ -722,7 +722,8 @@ func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags,
         if meta.name.toLower() == "config": #Game config. The rest arent supported just yet
             flags = flags or CLASS_Config
             metas = metas.filterIt(it.name.toLower()!= "config")
-      
+        if meta.name.toLower() == "blueprintable":
+            metas.add makeUEMetadata("IsBlueprintBase")
     (flags, metas)
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
@@ -735,7 +736,6 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     let ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
-    
     var uClassNode = emitUClass(ueType)
     
     #returns empty if there is no block defined
