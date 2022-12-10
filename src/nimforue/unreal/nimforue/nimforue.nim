@@ -1,4 +1,4 @@
-import ../coreuobject/[uobject, unrealtype, templates/subclassof, nametypes, package]
+import ../coreuobject/[uobject, unrealtype, nametypes, package]
 import ../core/containers/[unrealstring, map, array]
 import nimforuebindings
 import ../../macros/uebind
@@ -147,6 +147,8 @@ proc `$`*(obj:UObjectPtr) : string =
         elif p.isA[:FNameProperty]():
             let val = getPropertyValuePtr[FName](p, obj)[]
             str = str & &"{p.getName()}: {val}\n\t"
-
+        elif p.isA[:FClassProperty]():
+            let val = getPropertyValuePtr[UClassPtr](p, obj)[]
+            str = str & &"{p.getName()}: {val.getName()}\n\t"
         # elif p.isA[FUinProperty]():
     str

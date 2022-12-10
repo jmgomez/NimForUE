@@ -42,6 +42,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propType:string, name:FName
 
     some case eMeta:
     of emClass, emTSubclassOf:
+        UE_Error &"ENTRA EN CLAS PARA CREAR PROPIEDAD {propType} {name} class name is {className}"
         #check if it's a component here
         let clsProp = newFClassProperty(owner, name, flags)
         clsProp.setPropertyMetaClass(cls)

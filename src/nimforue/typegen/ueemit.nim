@@ -309,6 +309,7 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
             flags = flags | CPF_BlueprintVisible | CPF_BlueprintReadOnly
         if m == "BlueprintReadWrite":
             flags = flags | CPF_BlueprintVisible
+
         if m in ["EditAnywhere", "VisibleAnywhere"]:
             flags = flags | CPF_Edit
         if m == "ExposeOnSpawn":

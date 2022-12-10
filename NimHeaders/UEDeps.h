@@ -23,7 +23,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/UserDefinedEnum.h"
 #include "Components/ActorComponent.h"
-
+#include "UObject/ConstructorHelpers.h"
 
 //NimForUEBindingsHeaders.h
 #include "NimForUEBindingsHeaders.h"

@@ -3,7 +3,7 @@ include ../unreal/prelude
 import ../bindings/[engine, enhancedinput]
 import std/[typetraits, options]
 
-proc getSubsystem*[T : UDynamicSubsystem]() : Option[ptr T] = 
+proc getSubsystem*[T : UEngineSubsystem]() : Option[ptr T] = 
     tryUECast[T](getEngineSubsystem(makeTSubclassOf[UEngineSubsystem](staticClass[T]())))
 
 proc getSubsystem*[T : USubsystem](objContext : UObjectPtr) : Option[ptr T] =

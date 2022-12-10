@@ -80,6 +80,15 @@ type
     UWorld* {.importcpp, pure, header:ueIncludes .} = object of UObject
     UWorldPtr* = ptr UWorld
 
+    ConstructorHelpers* {.importcpp, pure .} = object
+    FObjectFinder*[T] {.importcpp, pure .} = object
+      obj* {.importcpp.} : ptr T
+
+    FClassFinder*[T] {.importcpp:"ConstructorHelpers::FClassFinder<'0>", nodecl, pure .} = object
+      class* {.importcpp:"Class".} : TSubclassOf[T]
+
+    TSubclassOf*[out T]  {. importcpp: "TSubclassOf<'0>".} = object
+
 
 
 
@@ -162,7 +171,8 @@ proc containerPtrToValuePtr*(prop:FPropertyPtr, container: pointer) : pointer {.
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
 proc setPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
 proc getPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr) : UClassPtr {. importcpp: "(#->PropertyClass)".}
-proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
+# proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
+proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "#->SetMetaClass(#)".}
 proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->SetEnum(#))".}
 
 proc getElementProp*(setProp:FSetPropertyPtr) : FPropertyPtr {.importcpp:"(#->ElementProp)".}
@@ -350,3 +360,16 @@ iterator items*(ustr: UStructPtr): FFieldPtr =
     while not currentProp.isNil():
         yield currentProp
         currentProp = currentProp.next
+
+
+#CONSTRUCTOR HELPERS
+proc succeeded*(clsFinder : FClassFinder) : bool {.importcpp:"#.Succeeded()".}
+proc makeClassFinder*[T](classToFind : FString) : FClassFinder[T]{.importcpp:"'0(*#)" .}
+
+
+
+proc makeTSubclassOf*[T]() : TSubclassOf[T] {. importcpp: "TSubclassOf<'*0>()", constructor.}
+proc makeTSubclassOf*[T](cls:UClassPtr) : TSubclassOf[T] {. importcpp: "TSubclassOf<'*0>(#)", constructor.}
+
+proc get*(softObj : TSubclassOf) : UClassPtr {.importcpp:"#.Get()".}
+

@@ -1,5 +1,5 @@
 include ../definitions
-import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, templates/subclassof, nametypes]
+import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, nametypes]
 import ../core/containers/[unrealstring, array, map]
 import std/[typetraits, strutils, options, strformat]
 import ../../typegen/models

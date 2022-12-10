@@ -1,8 +1,7 @@
 import ../macros/uebind
 import ../typegen/ueemit
 import ../unreal/nimforue/[nimforuebindings, nimforue]
-import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype, templates/subclassof, tsoftobjectptr, 
-    nametypes, scriptdelegates, uobjectglobals, metadata]
+import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype, tsoftobjectptr, nametypes, scriptdelegates, uobjectglobals, metadata]
 import ../unreal/core/containers/[unrealstring, array, map, set]
 import ../unreal/core/math/[vector]
 import ../unreal/core/ftext
