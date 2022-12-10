@@ -103,6 +103,7 @@ func isBPExposed(cls: UClassPtr): bool =
   cls.hasMetadata("BlueprintType") or
   cls.hasMetadata("BlueprintSpawnableComponent") or
       (cast[uint32](CLASS_MinimalAPI) and cast[uint32](cls.classFlags)) != 0 or
+      (cast[uint32](CLASS_Interface) and cast[uint32](cls.classFlags)) != 0 or
       (cast[uint32](CLASS_Abstract) and cast[uint32](cls.classFlags)) != 0 or
       cls.getFuncsFromClass()
         .filter(isBPExposed)
@@ -125,6 +126,10 @@ proc isBPExposed(prop: FPropertyPtr, outer: UObjectPtr): bool =
   isTypeExposed
 
 func isBPExposed(uenum: UEnumPtr): bool = true
+func isBPExposed(uInterface: UInterfacePtr): bool = 
+  UE_Log &"Is BP Exposed {uInterface.getName()}"
+  UE_Log &"{uInterface}"
+  true
 
 
 func isNimTypeInAffectedTypes(nimType: string, affectedTypes: seq[string]): bool =
@@ -185,6 +190,7 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
     return some field
   else:
     none(UEField)
+
 
 
 
@@ -251,6 +257,10 @@ func getFirstBpExposedParent(parent: UClassPtr): UClassPtr =
     UE_Log &"Parent {parent} is NOT exposed"
 
     getFirstBpExposedParent(parent.getSuperClass())
+
+
+
+
 
 func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
   
@@ -441,10 +451,22 @@ func getModuleNames*(ueType: UEType, excludeMods:seq[string]= @[]): seq[string] 
       .chainNone(()=>getUnrealTypeFromName[UStruct](propType))
       .map((obj: UObjectPtr) => $obj.getModuleName())
 
+  
+
   let depsFromProps =
     ueType
       .getFPropertiesFrom()
       .mapIt(getNimTypeAsStr(it, nil))
+
+  let interfaces = 
+    case ueType.kind:
+    of uetClass:
+      let cls = getUTypeByName[UClass](ueType.name.removeFirstLetter())
+      if cls.isNil(): @[]
+      else:
+        cls.interfaces.mapIt("U" & $it.class.getName())
+     
+    else: @[]
 
   let otherDeps =
     case ueType.kind:
@@ -455,7 +477,7 @@ func getModuleNames*(ueType: UEType, excludeMods:seq[string]= @[]): seq[string] 
       .fields
       .filterIt(it.kind == uefProp and it.uePropType notin depsFromProps)
       .mapIt(it.uePropType)
-  (depsFromProps & otherDeps & fieldsMissedProps)
+  (depsFromProps & otherDeps & fieldsMissedProps & interfaces)
     # .mapIt(getInnerCppGenericType($it.getCppType()))
     .filter(filterType)
     .map(getNameOfUENamespacedEnum)
@@ -478,6 +500,7 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
   var types = allObjs.toSeq()
     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules))
     .sequence()
+  
 
   let excludeFromModuleNames = @["CoreUObject", name]
   let deps = (types
