@@ -6,7 +6,7 @@ import macros/[ffi]
 import std/[options, strformat, dynlib]
 import ../buildscripts/[nimforueconfig, buildscripts]
 import ../codegen/genreflectiondata
-import typegen/emitter
+import typegen/[gencppclass, emitter]
 
 const genFilePath* {.strdefine.} : string = ""
 
@@ -69,4 +69,6 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
     UE_Log &"lib loaded: {libName}"
   except:
     UE_Error &"Error in onLibLoaded: {getCurrentExceptionMsg()}"
+
+
 

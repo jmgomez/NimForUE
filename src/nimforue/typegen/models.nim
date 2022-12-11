@@ -6,7 +6,7 @@ else:
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, bitops, tables]
 
-import ../macros/makestrproc
+import ../macros/[makestrproc, gencppclass]
 
 
 const UETypeMetadataKey* = "UEType"
@@ -83,6 +83,7 @@ type
                 clsFlags*: EClassFlagsVal
                 ctorSourceHash*: string
                 interfaces* : seq[string]
+                fnOverrides* : seq[CppFunction]
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal

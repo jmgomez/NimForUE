@@ -6,9 +6,8 @@ import ../unreal/nimforue/[nimforue, nimforuebindings]
 import ../utils/[utils, ueutils]
 import nuemacrocache
 import uemeta
-import ../macros/uebind
+import ../macros/[uebind,gencppclass]
 import emitter
-
 
 #rename these to register
 proc getFnGetForUClass(ueType:UEType) : UPackagePtr->UFieldPtr = 
@@ -224,12 +223,18 @@ proc emitUStruct(typeDef:UEType) : NimNode =
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr resulti
 
+#Only function overrides
+func toCppClass(ueType:UEType) : CppClassType = 
+    assert ueType.kind == uetClass
+    CppClassType(name:ueType.name, parent:ueType.parent, functions: ueType.fnOverrides)
+
 proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
                 addEmitterInfo(typeDefAsNode, getFnGetForUClass(typeDefAsNode))
 
+    addClass(typeDef.toCppClass())
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
 proc emitUDelegate(typedef:UEType) : NimNode = 
