@@ -12,7 +12,3 @@ import ../utils/[utils, ueutils]
 import extras
 import engine
 
-when not defined(getUEEmitter):
-    #This function is requested by the plugin when it load this dll
-    #The UEEmitter should also have the package name where it supposed to push
-    proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   ueEmitter

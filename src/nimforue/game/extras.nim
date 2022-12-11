@@ -1,4 +1,5 @@
 include ../unreal/prelude
+import ../typegen/[ueemit, emitter]
 
 import ../bindings/[engine, enhancedinput]
 import std/[typetraits, options]
@@ -18,3 +19,6 @@ proc getSubsystem*[T : USubsystem](objContext : UObjectPtr) : Option[ptr T] =
       none[ptr T]()
 
 
+#This function is requested by the plugin when it load this dll
+#The UEEmitter should also have the package name where it supposed to push
+proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   ueEmitter

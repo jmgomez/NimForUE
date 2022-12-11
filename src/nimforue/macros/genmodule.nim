@@ -232,7 +232,7 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
 #notice this is only for testing ATM the final shape probably wont be like this
 macro genUFun*(className: static string, funField: static UEField): untyped =
   let ueType = UEType(name: className, kind: uetClass) #Notice it only looks for the name and the kind (delegates)
-  genFunc(ueType, funField)
+  genFunc(ueType, funField).impl
 
 
 proc genHeaders*(moduleDef: UEModule, headersPath: string) =
