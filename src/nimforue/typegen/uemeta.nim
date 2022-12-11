@@ -719,7 +719,8 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
       UE_Error("Unsupported field kind: " & $field.kind)
 
   newCls.staticLink(true)
- 
+  newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)
+
   setGIsUCCMakeStandaloneHeaderGenerator(true)
   newCls.bindType()
   setGIsUCCMakeStandaloneHeaderGenerator(false)
