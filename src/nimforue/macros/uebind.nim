@@ -249,7 +249,8 @@ func getGenFuncName(funField : UEField) : string = funField.name.firstToLow()
 #this is used for both, to generate regular function binds and delegate broadcast/execute functions
 #for the most part the same code is used for both
 #this is also used for native function implementation but the ast is changed afterwards
-func genFunc*(typeDef : UEType, funField : UEField) : NimNode = 
+#Returns a tuple with the forward declaration and the actual function 
+func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:NimNode] = 
   let isStatic = FUNC_Static in funField.fnFlags
   let clsName = typeDef.name.substr(1)
 
@@ -302,15 +303,16 @@ func genFunc*(typeDef : UEType, funField : UEField) : NimNode =
 
   # when defined(windows):
   #   pragmas.add(ident("thiscall")) #I Dont think this is necessary
-
-  result = nnkProcDef.newTree([
+  let forwardDeclaration = 
+   nnkProcDef.newTree([
               identPublic funField.getGenFuncName(), 
               newEmptyNode(), newEmptyNode(), 
               formalParams, 
               pragmas, newEmptyNode(),
-              fnBody
             ])
-  
+  var impl = forwardDeclaration
+  impl.add(fnBody)
+  (forwardDeclaration,impl)
   
 
 
@@ -416,7 +418,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
   let funcs = nnkStmtList.newTree(
           typeDef.fields
              .filter(prop=>prop.kind==uefFunction)
-             .map(fun=>genFunc(typeDef, fun)))
+             .map(fun=>genFunc(typeDef, fun).impl))
   
   let typeDecl = 
     if rule == uerCodeGenOnlyFields: 
@@ -507,7 +509,7 @@ proc genDelType*(delType:UEType, exposure:UEExposure) : NimNode =
   let broadcastFunType = UEField(name:broadcastFnName, kind:uefFunction, signature: delType.fields)
   let funcNode = 
     if exposure == uexImport: genImportCFunc(delType, broadcastFunType)
-    else: genFunc(delType, broadcastFunType) 
+    else: genFunc(delType, broadcastFunType).impl
 
   result = nnkStmtList.newTree(typ, funcNode)
 
@@ -665,7 +667,7 @@ macro uebind*(clsName : static string = "", fn:untyped) : untyped =
     fnField.fnFlags = FUNC_Static
   #Generates a fake class form the classField. 
   let typeDefFn = makeUEClass(firstParam.uePropType, parent="", CLASS_None, @[fnField])
-  result = genFunc(typeDefFn, fnField)
+  result = genFunc(typeDefFn, fnField).impl
   # echo repr result
   # echo treeRepr fn
   # echo $fnField

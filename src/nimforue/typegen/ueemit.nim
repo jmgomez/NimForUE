@@ -593,19 +593,20 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
 
 #first is the param specify on ufunctions when specified one. Otherwise it will use the first
 #parameter of the function
-proc ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[UEMetadata] = @[]) : NimNode = 
+#Returns a tuple with the forward declaration and the actual function 
+#Notice the impl contains the actual native implementation of the
+proc ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[UEMetadata] = @[]) : tuple[fw:NimNode, impl:NimNode] = 
     
     let (fnField, firstParam) = uFuncFieldFromNimNode(fn, classParam, functionsMetadata)
     let className = fnField.className
 
-    let fnReprNode = genFunc(UEType(name:className, kind:uetClass), fnField)
-    
+    let (fnReprfwd, fnReprImpl) = genFunc(UEType(name:className, kind:uetClass), fnField)
     let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
 
-    result =  nnkStmtList.newTree(fnReprNode, fnImplNode)
+    result =  (fnReprfwd, nnkStmtList.newTree(fnReprImpl, fnImplNode))
 
 
-macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField]())
+macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField]()).impl
 
 #this macro is ment to be used as a block that allows you to define a bunch of ufuncs 
 #that share the same flags. You dont need to specify uFunc if the func is inside
@@ -623,7 +624,7 @@ macro uFunctions*(body : untyped) : untyped =
                     
     let allFuncs = body.children.toSeq()
         .filter(n=>n.kind==nnkProcDef)
-        .map(procBody=>ufuncImpl(procBody, firstParam, metas))
+        .map(procBody=>ufuncImpl(procBody, firstParam, metas).impl) #TODO add forward declar to this one too?
     
     result = nnkStmtList.newTree allFuncs
 
@@ -641,7 +642,8 @@ macro uConstructor*(fn:untyped) : untyped =
     let fnField = makeFieldAsUFun(fn.name.strVal(), params, firstParam.uePropType.removeLastLettersIfPtr())
     constructorImpl(fnField, fn.body)
 
-func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) : NimNode = 
+#Returns a tuple with the list of forward declaration for the block and the actual functions impl
+func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tuple[fws:seq[NimNode], impl:NimNode] = 
     let metas = funcBlock.childrenAsSeq()
                     .tail() #skip ufunc and variations
                     .filterIt(it.kind==nnkIdent or it.kind==nnkExprEqExpr)
@@ -653,19 +655,29 @@ func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) : NimNo
     # debugEcho "FUNC BLOCK " & funcBlock.treeRepr()
 
     let allFuncs = funcBlock[^1].children.toSeq()
-        .filter(n=>n.kind==nnkProcDef)
+        .filterIt(it.kind==nnkProcDef)
         .map(procBody=>ufuncImpl(procBody, firstParam, metas))
+    
+    var fws = newSeq[NimNode]()
+    var impls = newSeq[NimNode]()
+    for (fw, impl) in allFuncs:
+        fws.add fw
+        impls.add impl
+    result = (fws, nnkStmtList.newTree(impls))
 
-    result = nnkStmtList.newTree allFuncs
-
-
-func genUFuncsForUClass(body:NimNode, ueTypeName:string) : seq[NimNode] = 
+#At this point the fws are reduced into a nnkStmtList and the same with the nodes
+func genUFuncsForUClass(body:NimNode, ueTypeName:string) : NimNode = 
     let fnBlocks = body.toSeq()
                        .filter(n=>n.kind == nnkCall and 
                             n[0].strVal().toLower() in ["ufunc", "ufuncs", "ufunction", "ufunctions"])
 
-    fnBlocks.map(fnBlock=>funcBlockToFunctionInUClass(fnBlock, ueTypeName))
-
+    let fns = fnBlocks.map(fnBlock=>funcBlockToFunctionInUClass(fnBlock, ueTypeName))
+    var fws = newSeq[NimNode]()
+    var impls = newSeq[NimNode]()
+    for (fw, impl) in fns:
+        fws = fws & fw 
+        impls.add impl #impl is a nnkStmtList
+    result = nnkStmtList.newTree(fws & impls)
 
 func genConstructorForClass(uClassBody:NimNode, className:string, constructorBody:NimNode, initializerName:string="") : NimNode = 
   var initializerName = if initializerName == "" : "initializer" else : initializerName
@@ -751,5 +763,3 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
 
   
-
-
