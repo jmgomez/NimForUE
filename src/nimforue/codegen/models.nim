@@ -6,9 +6,8 @@ else:
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, bitops, tables]
 
-import ../macros/[makestrproc, gencppclass]
+import ../codegen/[makestrproc, gencppclass]
 import ../codegen/modulerules
-export modulerules
 
 const UETypeMetadataKey* = "UEType"
 const ClassConstructorMetadataKey* = "ClassConstructor"

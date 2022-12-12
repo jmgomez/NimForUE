@@ -1,5 +1,6 @@
 import std/[sequtils, strutils, strformat, sugar, macros, genasts, os]
-import ../codegen/modulerules 
+
+import ../codegen/modulerules
 
 type 
   CppParam* = object #TODO take const, refs, etc. into account
@@ -37,8 +38,9 @@ func `$`*(cppHeader: CppHeader): string =
   let includes = cppHeader.includes.mapIt(&"#include \"{it}\"").join("\n")
   let classes = cppHeader.classes.mapIt(it.`$`()).join("\n")
   &"""
-  {includes}
-  {classes}
+#pragma once
+{includes}
+{classes}
   """
 
 func toEmmitTemplate*(fn:CppFunction, class:string) : string  = 

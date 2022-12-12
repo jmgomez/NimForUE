@@ -1,12 +1,14 @@
-  #include "UEDeps.h"
-  class UNimObject : public UObject {
+#pragma once
+#include "UEDeps.h"
+#include "UEGenClassDefs.h"
+class AActorScratchpad : public AActor {
     public:
       
   };
   
-class ANimActor : public AActor {
+class AActorCodegen : public AActor {
     public:
-      virtual USceneComponent* GetDefaultAttachComponent() const override;
+      
   };
   
   

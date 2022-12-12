@@ -1,12 +1,12 @@
 import std/[options, strutils, sugar, sequtils, strformat,  genasts, macros, importutils]
 
 include ../unreal/definitions
-import ../utils/ueutils
+import ../utils/[utils, ueutils]
 import ../unreal/core/containers/[unrealstring, array, map, set]
 
-import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
-import ../typegen/[nuemacrocache, models, modelconstructor]
+import ../codegen/[nuemacrocache, models, modelconstructor]
+import modulerules
 
 import gencppclass
 

@@ -5,7 +5,7 @@ import ../utils/ueutils
 
 import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
-import ../typegen/[nuemacrocache, models]
+import ../codegen/[nuemacrocache, models, modulerules]
 import ../../buildscripts/nimforueconfig
 import uebind
 

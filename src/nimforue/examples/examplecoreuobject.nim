@@ -1,6 +1,6 @@
 include ../unreal/prelude
 import std/[strformat, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
-import ../typegen/uemeta
+import ../codegen/uemeta
 
 
 

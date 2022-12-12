@@ -1,6 +1,6 @@
-import ../nimforue/unreal/coreuobject/uobjectflags
+import ../unreal/coreuobject/uobjectflags
 import std/[sequtils, options, sugar, tables]
-import utils/utils
+import ../utils/utils
 
 
 const ManuallyImportedClasses* = @[ 
@@ -102,10 +102,10 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 
 #Any module not picked by default.
 #This could be exposed to the json file 
-let extraModuleNames = @["EnhancedInput"]
+let extraModuleNames* = @["EnhancedInput"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
-let extraNonBpModules = @["DeveloperSettings", "EnhancedInput"]
+let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
@@ -124,8 +124,8 @@ let extraNonBpModules = @["DeveloperSettings", "EnhancedInput"]
     #   ] #TODO this should be introduced as param
 const codeGenOnly* = makeImportedRuleType(uerCodeGenOnlyFields, ManuallyImportedClasses)
 
-let moduleRules* = newTable[string, seq[UEImportRule]]()
-moduleRules["Engine"] = @[
+let moduleImportRules* = newTable[string, seq[UEImportRule]]()
+moduleImportRules["Engine"] = @[
     codegenOnly, 
     makeImportedRuleType(uerIgnore, @[
     "FVector", "FSlateBrush",
@@ -173,13 +173,13 @@ moduleRules["Engine"] = @[
   # makeVirtualModuleRule("mathlibrary", @["UKismetMathLibrary"])
 ]
 
-moduleRules["MovieScene"] = @[
+moduleImportRules["MovieScene"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FMovieSceneByteChannel"
   ]),
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
-moduleRules["EnhancedInput"] = @[
+moduleImportRules["EnhancedInput"] = @[
   codegenOnly,
   makeImportedRuleType(uerIgnore, @[
     "ETriggerEvent",
@@ -189,14 +189,14 @@ moduleRules["EnhancedInput"] = @[
 
 ]
 
-moduleRules["InputCore"] = @[
+moduleImportRules["InputCore"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FKey"
   ]),
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
-moduleRules["UMG"] = @[ 
+moduleImportRules["UMG"] = @[ 
   makeImportedRuleType(uerIgnore, @[ #MovieScene was removed as dependency for now          
     "UMovieScenePropertyTrack", "UMovieSceneNameableTrack",
     "UMovieScenePropertySystem", "UMovieScene2DTransformPropertySystem",
@@ -221,7 +221,7 @@ moduleRules["UMG"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
-moduleRules["SlateCore"] = @[
+moduleImportRules["SlateCore"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FSlateBrush"
   ]),
@@ -231,7 +231,7 @@ moduleRules["SlateCore"] = @[
     "FTextBlockStyle"
   ]),
 ]
-moduleRules["Slate"] = @[
+moduleImportRules["Slate"] = @[
 
    makeImportedRuleField(uerIgnore, @[
     "FComboButtonStyle",
@@ -239,30 +239,30 @@ moduleRules["Slate"] = @[
   ]),
 ]
 
-# moduleRules["DeveloperSettings"] = @[
+# moduleImportRules["DeveloperSettings"] = @[
 #   makeImportedRuleType(uerCodeGenOnlyFields, @[
 #     "UDeveloperSettings",
 #   ])
 # ]
 
-moduleRules["UnrealEd"] = @[
+moduleImportRules["UnrealEd"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
   makeImportedRuleField(uerIgnore, @[
           "ScriptReimportHelper"
   ])
 ]
-moduleRules["AudioExtensions"] = @[
+moduleImportRules["AudioExtensions"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
   # makeImportedRuleModule(uerIgnoreHash)
 ]
 
-moduleRules["MegascansPlugin"] = @[
+moduleImportRules["MegascansPlugin"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
   makeImportedRuleField(uerIgnore, @[
       "Get"
   ])
 ]
 
-moduleRules["EditorSubsystem"] = @[
+moduleImportRules["EditorSubsystem"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]

@@ -1,7 +1,7 @@
 import ../unreal/coreuobject/[uobject, nametypes, coreuobject]
 import ../unreal/core/containers/[unrealstring, map, array]
 import ../unreal/core/math/vector
-import ../typegen/models
+import ../codegen/models
 
 import std/[options, strutils, tables, sequtils, sugar, strscans]
 import utils

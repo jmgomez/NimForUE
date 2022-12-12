@@ -1,10 +1,10 @@
 import ../coreuobject/[uobject, unrealtype, nametypes, package]
 import ../core/containers/[unrealstring, map, array]
 import nimforuebindings
-import ../../macros/uebind
+import ../../codegen/uebind
 import std/[strformat, options]
 include ../definitions
-import ../../typegen/models
+import ../../codegen/models
 import ../../utils/[utils, ueutils]
 import ../core/enginetypes
 import std/[typetraits, tables, strutils, sequtils, sugar]

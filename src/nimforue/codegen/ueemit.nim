@@ -6,8 +6,10 @@ import ../unreal/nimforue/[nimforue, nimforuebindings]
 import ../utils/[utils, ueutils]
 import nuemacrocache
 import uemeta
-import ../macros/[uebind,gencppclass]
+import ../codegen/[uebind,gencppclass]
 import emitter
+import ../codegen/modelconstructor
+
 
 #rename these to register
 proc getFnGetForUClass(ueType:UEType) : UPackagePtr->UFieldPtr = 

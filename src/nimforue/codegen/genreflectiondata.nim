@@ -1,10 +1,10 @@
-include ../nimforue/unreal/prelude
+include ../unreal/prelude
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
-import ../nimforue/typegen/uemeta
-import ../buildscripts/[nimforueconfig, buildscripts]
-import ../nimforue/macros/genmodule #not sure if it's worth to process this file just for one function? 
+import ../codegen/[models, modulerules, genmodule, uemeta]
+import ../../buildscripts/[nimforueconfig, buildscripts]
 import modulerules
 const pluginDir {.strdefine.}: string = ""
+
 proc getGameModules*(): seq[string] =
   try:        
     let projectJson = readFile(GamePath).parseJson()
@@ -63,8 +63,8 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
     
     let rules = 
-      if module in moduleRules: 
-        moduleRules[module] & codeGenOnly
+      if module in moduleImportRules: 
+        moduleImportRules[module] & codeGenOnly
       elif module in extraNonBpModules: 
         @[codeGenOnly]
       else: 
@@ -130,7 +130,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
 
   let ueProjectAsStr = $ueProject
   let codeTemplate = """
-import ../nimforue/typegen/models
+import ../nimforue/codegen/models
 const project* = $1
 """
 

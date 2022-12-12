@@ -1,4 +1,4 @@
-# import ../nimforue/typegen/[models]
+# import ../nimforue/codegen/[models]
 import ../buildscripts/nimcachebuild
 import std/[strutils, strformat, os]
 

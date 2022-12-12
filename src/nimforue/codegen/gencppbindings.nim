@@ -1,7 +1,7 @@
 include ../nimforue/unreal/prelude
 import std/[macros, sequtils, strutils,genasts, os]
-import ../nimforue/typegen/[models, uemeta]
-import ../nimforue/macros/uebind
+import ../nimforue/codegen/[models, uemeta]
+import ../nimforue/codegen/uebind
 
 
 #import all bindings in the exported directory so they can be exported when compiling this file

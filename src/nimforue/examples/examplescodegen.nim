@@ -1,9 +1,9 @@
 include ../unreal/prelude
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
-import ../typegen/uemeta
+import ../codegen/uemeta
 import ../../buildscripts/nimforueconfig
-import ../../codegen/[codegentemplate,genreflectiondata]
-import ../macros/genmodule #not sure if it's worth to process this file just for one function? 
+import ../codegen/[codegentemplate,modulerules, genreflectiondata]
+import ../codegen/genmodule #not sure if it's worth to process this file just for one function? 
 
 
 #[

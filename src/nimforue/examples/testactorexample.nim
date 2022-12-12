@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import ../typegen/[uemeta]
+import ../codegen/[uemeta]
 
 
 

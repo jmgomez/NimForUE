@@ -2,11 +2,9 @@
 
 include unreal/prelude
 import unreal/editor/editor
-import macros/[ffi]
+import ../nimforue/codegen/[ffi,emitter, genreflectiondata]
 import std/[options, strformat, dynlib]
 import ../buildscripts/[nimforueconfig, buildscripts]
-import ../codegen/genreflectiondata
-import typegen/[gencppclass, emitter]
 
 const genFilePath* {.strdefine.} : string = ""
 

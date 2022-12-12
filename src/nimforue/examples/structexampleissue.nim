@@ -2,7 +2,7 @@ include ../unreal/prelude
 import ../unreal/bindings/[slate,slatecore]
 # import ../unreal/bindings/exported/[slate, slatecore]
 # import ../unreal/bindings/exported/nimforue
-import ../typegen/[uemeta]
+import ../codegen/[uemeta]
 import std/[strformat, random]
 
 

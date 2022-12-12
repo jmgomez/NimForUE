@@ -2,7 +2,7 @@ include ../definitions
 import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, nametypes]
 import ../core/containers/[unrealstring, array, map]
 import std/[typetraits, strutils, options, strformat]
-import ../../typegen/models
+import ../../codegen/models
 import ../../utils/utils
 type 
     UFunctionCaller* {.importc, inheritable, pure .} = object

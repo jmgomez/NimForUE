@@ -1,6 +1,6 @@
 include ../unreal/prelude
-import ../typegen/[ueemit, emitter]
-import ../macros/[gencppclass]
+import ../codegen/[ueemit, emitter]
+# import ../codegen/[gencppclass]
 
 import ../bindings/[engine, enhancedinput]
 import std/[typetraits, options]

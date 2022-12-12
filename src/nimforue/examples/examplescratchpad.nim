@@ -1,10 +1,9 @@
 include ../unreal/prelude
 import ../unreal/editor/editor
 import std/[strformat, enumutils, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
-import ../typegen/uemeta
+import ../codegen/[uemeta, codegentemplate]
 import ../../buildscripts/nimforueconfig
 
-import ../../codegen/codegentemplate
 
 
 
