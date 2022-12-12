@@ -29,10 +29,8 @@ else:
 
 #Dll output paths for the uclasses the user generates
 when defined(guest):
-  static:
   const OutputHeader* = "Guest.h"
 elif defined(game):
-  static:
   const OutputHeader* = "Game.h"
 
 #[
