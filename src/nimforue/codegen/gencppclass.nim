@@ -1,6 +1,7 @@
 import std/[sequtils, strutils, strformat, sugar, macros, genasts, os]
 import ../../buildscripts/nimforueconfig
 import ../codegen/modulerules
+import ../utils/utils
 
 type 
   CppParam* = object #TODO take const, refs, etc. into account
@@ -26,7 +27,8 @@ func funParamsToStrCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join
 
 func `$`*(cppCls: CppClassType): string =
   func funcForwardDeclare(fn:CppFunction) : string = 
-    &"virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) const override;"
+    &"virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override;"
+    # &"virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override{{}};"
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
   &"""
 class {cppCls.name} : public {cppCls.parent} {{
@@ -44,9 +46,10 @@ func `$`*(cppHeader: CppHeader): string =
   """
 
 func toEmmitTemplate*(fn:CppFunction, class:string) : string  = 
+  let comma = if fn.params.len > 0: "," else: ""
   &"""
     {fn.returnType} {class}::{fn.name}({fn.funParamsToStrSignature()}) {{
-      {fn.name}_impl(this, {fn.funParamsToStrCall});
+      {fn.name.firstToLow()}_impl(this {comma} {fn.funParamsToStrCall});
     }}
   """
 
@@ -86,6 +89,11 @@ proc addClass*(class: CppClassType) =
   if class.parent notin ManuallyImportedClasses:
     class.parent =  class.parent & "_" #The fake classes have a _ at the end
 
+  if class.name == "ANimBeginPlayOverrideActor":
+    debugEcho "Function added"
+    let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", params: @[])
+    class.functions.add(beginPlay)
+    
   cppHeader.classes.add class
   saveHeader(cppHeader, "NimHeaders") #it would be better to do it only once
 

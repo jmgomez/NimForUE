@@ -12,3 +12,4 @@ import examplescodegen
 # import slateexamples
 #import nimconfexample
 #import structexampleissue
+import examplevirtualfunc
