@@ -1,5 +1,5 @@
 import std/[sequtils, strutils, strformat, sugar, macros, genasts, os]
-
+import ../../buildscripts/nimforueconfig
 import ../codegen/modulerules
 
 type 
@@ -55,12 +55,12 @@ proc saveHeader*(cppHeader: CppHeader, folder: string = ".") =
   writeFile(path,  $cppHeader)
 
 #Not used for UETypes. Will be used in the future when supporting non UObject base types.
-func createNimType(typedef: CppClassType): NimNode = 
+func createNimType(typedef: CppClassType, header:string): NimNode = 
   let ptrName = ident typeDef.name & "Ptr"
   let parent = ident typeDef.parent
   result = genAst(name = ident typeDef.name, ptrName, parent):
           type 
-            name* {.inject, importcpp, header:"test.h" .} = object of parent #TODO OF BASE CLASS 
+            name* {.inject, importcpp, header:header .} = object of parent #TODO OF BASE CLASS 
             ptrName* {.inject.} = ptr name
 
 func implementOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNode = 
@@ -76,7 +76,9 @@ func implementOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNod
     fn
     {.emit: toEmit.}
 
-var cppHeader* {.compileTime.} = CppHeader(name: "test.h", includes: @["UEDeps.h", "UEGenClassDefs.h"]) #TODO change this for macro cache
+
+#TODO change this for macro cache
+var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h", "UEGenClassDefs.h"])
 
 
 proc addClass*(class: CppClassType) =

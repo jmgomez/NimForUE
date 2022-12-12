@@ -48,11 +48,12 @@ proc compileHost*() =
 
 proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
   generateFFIGenFile(config)
-  let bindingPrefix =
-    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
-  
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim"
+  let guestSwitches = @[
+    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s",
+    "-d:guest",
+  ]
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")
+  let compCmd = &"nim cpp {buildFlags} --app:lib --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim"
   doAssert(execCmd(compCmd)==0)
   
   copyNimForUELibToUEDir("nimforue")
@@ -66,16 +67,14 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
     "-p:src/nimforue/game",
     "-p:src/nimforue/unreal",
     "-p:src/nimforue/unreal/bindings",
+    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
     # "--include:../game/nueprelude"
   ]
 
-  let bindingPrefix =
-    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
   let gameFolder = NimGameDir
 
-
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} {bindingPrefix} --app:lib  -d:withPCH --nimcache:.nimcache/game {gameFolder}/game.nim"
+  let compCmd = &"nim cpp {buildFlags} --app:lib  -d:withPCH --nimcache:.nimcache/game {gameFolder}/game.nim"
   doAssert(execCmd(compCmd)==0)
   
   copyNimForUELibToUEDir("game")

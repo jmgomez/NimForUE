@@ -3,10 +3,10 @@ import std/[options, strutils, sugar, sequtils, strformat,  genasts, macros, imp
 include ../unreal/definitions
 import ../utils/[utils, ueutils]
 import ../unreal/core/containers/[unrealstring, array, map, set]
-
 import ../unreal/coreuobject/[uobjectflags]
 import ../codegen/[nuemacrocache, models, modelconstructor]
 import modulerules
+import ../../buildscripts/nimforueconfig #probably nimforueconfig should be removed from buildscripts
 
 import gencppclass
 
@@ -428,11 +428,14 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
       let parent = ident typeDef.parent
       case typeExposure:
       of uexDsl:
-        genAst(name = ident typeDef.name, ptrName, parent):
-          type #The dsl also import types from a header that's generated at compile. This is part of the support for virtual funcs. Test.h is temporal, we are going to use the current module name.h
-            name* {.inject, importcpp, header:"test.h".} = object of parent #TODO OF BASE CLASS 
-            ptrName* {.inject.} = ptr name
-
+        let outputHeader = newLit OutPutHeader
+        let typeSection = genAst(name = ident typeDef.name, ptrName, parent, outputHeader):
+                    type #The dsl also import types from a header that's generated at compile. This is part of the support for virtual funcs. Test.h is temporal, we are going to use the current module name.h
+                      name* {.inject, importcpp, header: "placeholer".} = object of parent #TODO OF BASE CLASS 
+                      ptrName* {.inject.} = ptr name
+        #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
+        typeSection[0][0][^1][^1][^1] = newLit OutPutHeader 
+        typeSection
       of uexExport:
         newEmptyNode()
         #[

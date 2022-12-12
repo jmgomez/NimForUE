@@ -54,3 +54,7 @@ NimHeaders/UEGenBindings.h
 NimHeaders/UEGenClassDefs.h
 
 nue
+
+NimHeaders/Game.h
+
+NimHeaders/Guest.h

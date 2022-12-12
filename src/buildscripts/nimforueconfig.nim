@@ -27,6 +27,13 @@ when defined(nue) and compiles(gorgeEx("")):
 else:
   const PluginDir* {.strdefine.} = ""#Defined in switches. Available for all targets (Hots, Guest..)
 
+#Dll output paths for the uclasses the user generates
+when defined(guest):
+  static:
+  const OutputHeader* = "Guest.h"
+elif defined(game):
+  static:
+  const OutputHeader* = "Game.h"
 
 #[
 The file is created for first time in from this file during compilation
