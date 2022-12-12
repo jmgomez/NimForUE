@@ -1,5 +1,5 @@
 import std/[sequtils, strutils, strformat, sugar, macros, genasts, os]
-
+import ../codegen/modulerules 
 
 type 
   CppParam* = object #TODO take const, refs, etc. into account
@@ -74,11 +74,22 @@ func implementOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNod
     fn
     {.emit: toEmit.}
 
-var cppHeader {.compileTime.} = CppHeader(name: "test.h", includes: @["UEDeps.h"]) #TODO change this for macro cache
+var cppHeader* {.compileTime.} = CppHeader(name: "test.h", includes: @["UEDeps.h", "UEGenClassDefs.h"]) #TODO change this for macro cache
 
-proc addClass*(class:CppClassType) =
+
+proc addClass*(class: CppClassType) =
+  var class = class
+  if class.parent notin ManuallyImportedClasses:
+    class.parent =  class.parent & "_" #The fake classes have a _ at the end
+
   cppHeader.classes.add class
-
   saveHeader(cppHeader, "NimHeaders") #it would be better to do it only once
+
+# macro addClass*(class: CppClassType) =
+  # cppHeader.classes.add class
+
+  # let test = bindSym("AActor")
+  # let impl =  test.getImpl()
+  # debugEcho treeRepr impl
 
 #the header should be in the cache

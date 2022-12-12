@@ -228,6 +228,8 @@ func toCppClass(ueType:UEType) : CppClassType =
     assert ueType.kind == uetClass
     CppClassType(name:ueType.name, parent:ueType.parent, functions: ueType.fnOverrides)
 
+
+
 proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
