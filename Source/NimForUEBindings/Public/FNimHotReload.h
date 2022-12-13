@@ -1,7 +1,8 @@
 #pragma once
 
+#pragma once
 
-struct FNimHotReload {
+struct DLLEXPORT FNimHotReload {
 
 	TMap<UScriptStruct*, UScriptStruct*> StructsToReinstance = {};
 	TMap<UClass*, UClass*> ClassesToReinstance = {};
@@ -18,4 +19,8 @@ struct FNimHotReload {
 	TArray<UEnum*> DeletedEnums = {};
 	
 	bool bShouldHotReload = false;
+
+	virtual int GetNumber();
 };
+
+

@@ -5,7 +5,7 @@ import uobject
 import nametypes
 import ../core/containers/[unrealstring]
 
-
+import uobject
 
 type 
     FStaticConstructObjectParameters* {.importcpp.} = object

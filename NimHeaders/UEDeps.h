@@ -22,6 +22,7 @@
 #include "Engine/Classes/GameFramework/GameModeBase.h"
 #include "Engine/Classes/Engine/World.h"
 #include "Engine/Classes/Engine/Engine.h"
+#include "Engine/Classes/Engine/DataTable.h"
 #include "Engine/Classes/Animation/BlendProfile.h"
 #include "Misc/AutomationTest.h"
 #include "AssetRegistry/AssetRegistryModule.h"

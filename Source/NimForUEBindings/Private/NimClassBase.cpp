@@ -3,6 +3,7 @@
 
 #include "NimClassBase.h"
 
+#include "FNimHotReload.h"
 #include "ReflectionHelpers.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 
@@ -17,4 +18,9 @@ TArray<TPair<FName, int64>> UNimEnum::GetEnums() {
 
 void UNimEnum::MarkNewVersionExists() {
 	SetEnumFlags(EEnumFlags::NewerVersionExists);
+}
+
+int FNimHotReload::GetNumber()
+{
+	return 5;
 }

@@ -741,6 +741,7 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
 
 
 proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
+  UE_Log &"Struct emited {ueType.name}"
   const objClsFlags = (RF_Public | RF_Transient | RF_MarkAsNative)
   let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
 
@@ -749,11 +750,16 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
     scriptStruct.setMetadata(metadata.name, $metadata.value)
 
   scriptStruct.assetCreated()
+  if ueType.superStruct.len > 0:
+    let parent = someNil(getUTypeByName[UScriptStruct](ueType.superStruct.removeFirstLetter()))
+    let parentStruct = parent.getOrRaise(&"Parent struct {ueType.parent} not found for {ueType.name}")
+    scriptStruct.setSuperStruct(parentStruct)
 
   for field in ueType.fields:
     discard field.emitFProperty(scriptStruct)
 
   setCppStructOpFor[T](scriptStruct, nil)
+  UE_Log &"Struct emited {scriptStruct.getName()}"
   scriptStruct.bindType()
   scriptStruct.staticLink(true)
   scriptStruct.setMetadata(UETypeMetadataKey, $ueType.toJson())

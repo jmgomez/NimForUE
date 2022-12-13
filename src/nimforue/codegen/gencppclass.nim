@@ -11,9 +11,12 @@ type
     name*: string
     returnType*: string
     params*: seq[CppParam] #void if none. this is not expressed as param
+  CppClassKind* = enum #TODO add more
+    cckClass, cckStruct
   CppClassType* = object
     name*, parent*: string
     functions*: seq[CppFunction]
+    kind*: CppClassKind
   CppHeader* = object
     name*: string
     includes*: seq[string]
@@ -30,8 +33,9 @@ func `$`*(cppCls: CppClassType): string =
     &"virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override;"
     # &"virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override{{}};"
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
+  let kind = if cppCls.kind == cckClass: "class" else: "struct"
   &"""
-class {cppCls.name} : public {cppCls.parent} {{
+{kind} {cppCls.name} : public {cppCls.parent} {{
     public:
       {funcs}
   }};
@@ -47,9 +51,10 @@ func `$`*(cppHeader: CppHeader): string =
 
 func toEmmitTemplate*(fn:CppFunction, class:string) : string  = 
   let comma = if fn.params.len > 0: "," else: ""
+  let returns = if fn.returnType == "void": "" else: "return "
   &"""
     {fn.returnType} {class}::{fn.name}({fn.funParamsToStrSignature()}) {{
-      {fn.name.firstToLow()}_impl(this {comma} {fn.funParamsToStrCall});
+     {returns} {fn.name.firstToLow()}_impl(this {comma} {fn.funParamsToStrCall});
     }}
   """
 
@@ -86,7 +91,7 @@ var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDe
 
 proc addClass*(class: CppClassType) =
   var class = class
-  if class.parent notin ManuallyImportedClasses:
+  if class.parent notin ManuallyImportedClasses and class.kind == cckClass:
     class.parent =  class.parent & "_" #The fake classes have a _ at the end
 
   if class.name == "ANimBeginPlayOverrideActor":
@@ -97,11 +102,7 @@ proc addClass*(class: CppClassType) =
   cppHeader.classes.add class
   saveHeader(cppHeader, "NimHeaders") #it would be better to do it only once
 
-# macro addClass*(class: CppClassType) =
-  # cppHeader.classes.add class
 
-  # let test = bindSym("AActor")
-  # let impl =  test.getImpl()
-  # debugEcho treeRepr impl
 
-#the header should be in the cache
+
+

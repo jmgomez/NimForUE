@@ -2,7 +2,7 @@
 
 include unreal/prelude
 import unreal/editor/editor
-import ../nimforue/codegen/[ffi,emitter, genreflectiondata]
+import ../nimforue/codegen/[ffi,emitter, genreflectiondata, models, uemeta]
 import std/[options, strformat, dynlib]
 import ../buildscripts/[nimforueconfig, buildscripts]
 
@@ -52,6 +52,19 @@ proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) =
         UE_Error e.getStackTrace()
 
 
+
+
+type FTableRowBase* {.importcpp, inheritable, pure .} = object
+
+type FNimTableRowBase* = object of FTableRowBase
+  testProperty*: FString
+
+const ueStructType = UEType(name: "FNimTableRowBase", kind: uetStruct, superStruct:"FTableRowBase",
+                        metadata: @[makeUEMetadata("BlueprintType")],
+                        fields: @[
+                            UEField(kind:uefProp, name: "TestProperty", uePropType: "FString"),
+                        ])
+
 #entry point for the game. but it will also be for other libs in the future
 #even the next guest/nimforue?
 proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.ffi:genFilePath} = 
@@ -61,6 +74,9 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
         emitNueTypes(getGlobalEmitter()[], "Nim")
         if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
           execBindingsGenerationInAnotherThread()
+
+        # let guestPgk = tryGetPackageByName("Nim").get()
+        # discard emitUStruct[FNimTableRowBase](ueStructType, guestPgk)                     
     of "game":
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
     

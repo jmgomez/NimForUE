@@ -11,6 +11,23 @@ import emitter
 import ../codegen/modelconstructor
 
 
+type
+
+    FNimHotReloadChild* {.importcpp, header:"Guest.h".} = object of FNimHotReload
+    FNimHotReloadChildPtr* = ptr FNimHotReloadChild
+
+const getNumberMeta = CppFunction(name: "GetNumber", returnType: "int", params: @[])
+
+const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNimHotReload", functions: @[getNumberMeta], kind: cckStruct)
+
+macro overridetest(fn : untyped) =
+  implementOverride(fn, getNumberMeta, "FNimHotReloadChild")
+
+proc getNumber(hrc: FNimHotReloadChildPtr) : int32 {.overridetest.} = 100
+static:    
+    addClass(cppHotReloadChild)
+
+
 #rename these to register
 proc getFnGetForUClass(ueType:UEType) : UPackagePtr->UFieldPtr = 
 #    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
@@ -127,8 +144,8 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
 
 proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimHotReloadPtr = 
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
-
-    var hotReloadInfo = newNimHotReload()
+    
+    var hotReloadInfo = newCpp[FNimHotReloadChild]()
     for emitter in ueEmitter.emitters:
             case emitter.ueType.kind:
             of uetStruct:
@@ -228,7 +245,7 @@ proc emitUStruct(typeDef:UEType) : NimNode =
 #Only function overrides
 func toCppClass(ueType:UEType) : CppClassType = 
     assert ueType.kind == uetClass
-    CppClassType(name:ueType.name, parent:ueType.parent, functions: ueType.fnOverrides)
+    CppClassType(name:ueType.name, kind: cckClass, parent:ueType.parent, functions: ueType.fnOverrides)
 
 
 

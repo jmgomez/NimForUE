@@ -203,7 +203,7 @@ proc createNimPackage*(packageShortName:FString) : UPackagePtr {.importcpp:"URef
 proc broadcastAsset*(asset:UObjectPtr) : void {.importcpp: "UFakeFactory::BroadcastAsset(#)" .}
 
 type
-    FNimHotReload* {.importcpp.} = object
+    FNimHotReload* {.importcpp, inheritable, pure.} = object
         structsToReinstance* {.importcpp: "StructsToReinstance" .} : TMap[UScriptStructPtr, UScriptStructPtr]
         classesToReinstance* {.importcpp: "ClassesToReinstance" .} : TMap[UClassPtr, UClassPtr]
         delegatesToReinstance* {.importcpp: "DelegatesToReinstance" .} : TMap[UDelegateFunctionPtr, UDelegateFunctionPtr]
@@ -220,6 +220,8 @@ type
 
         bShouldHotReload* {.importcpp: "bShouldHotReload" .} : bool
     FNimHotReloadPtr* = ptr FNimHotReload
+
+proc getNumber*(hotReloadInfo: ptr FNimHotReload) : int {.importcpp: "#->GetNumber()".}
 
 proc newNimHotReload*() : FNimHotReloadPtr {.importcpp: "new '*0()".}
 proc setShouldHotReload*(hotReloadInfo: ptr FNimHotReload) = 

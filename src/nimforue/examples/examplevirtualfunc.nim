@@ -19,11 +19,6 @@ uClass ANimBeginPlayOverrideActor of AActor:
 
 # {.compile: "NimHeaders/Game.h".}
 
-macro overridetest(fn : untyped) =
-  let beginPlayMeta = CppFunction(name: "BeginPlay", returnType: "void", params: @[])
-  implementOverride(fn, beginPlayMeta, "ANimBeginPlayOverrideActor")
-
-
 
 # proc beginPlay(self:ANimBeginPlayOverrideActorPtr) {.overridetest.}= 
 #   UE_Warn "Native Begin Play called once "
