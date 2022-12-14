@@ -84,11 +84,10 @@ func implementOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNod
 
 
 #TODO change this for macro cache
-var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h"])
+var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h", "UEGenClassDefs.h"])
 const header = "UEGenClassDefs.h"
-when fileExists("NimHeaders/" & header):
-  cppHeader.includes.add(header)
-  
+
+
 
 proc addClass*(class: CppClassType) =
   var class = class
