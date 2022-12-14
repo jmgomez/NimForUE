@@ -1,15 +1,15 @@
 # import testactorexample
 # import actorexample
-import structexample
+# import structexample
 # import objectexample
 
-import examplescratchpad
+# import examplescratchpad
 
 import examplescodegen
 #import examplecoreuobject
-import engineexample
+# import engineexample
 # import editorexample
 # import slateexamples
 #import nimconfexample
 #import structexampleissue
-import examplevirtualfunc
+# import examplevirtualfunc
