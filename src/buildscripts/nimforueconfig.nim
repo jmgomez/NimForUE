@@ -10,6 +10,7 @@ const BindingsExportedDir* = "src"/"nimforue"/"unreal"/"bindings"/"exported"
 const ReflectionDataDir* = "src" / ".reflectiondata"
 const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
 
+const GamePathError* = "Could not find the uproject file."
 
 
 
@@ -26,6 +27,31 @@ when defined(nue) and compiles(gorgeEx("")):
 
 else:
   const PluginDir* {.strdefine.} = ""#Defined in switches. Available for all targets (Hots, Guest..)
+
+
+proc getGamePathFromGameDir*(gameDir:string) : string = 
+  (gameDir / "*.uproject").walkFiles.toSeq().head().get(GamePathError)
+
+when defined windows:
+  import std/registry
+  proc getEnginePathFromRegistry*(association:string) : string =
+    let registryPath = "SOFTWARE\\EpicGames\\Unreal Engine\\" & association
+    getUnicodeValue(registryPath, "InstalledDirectory", HKEY_LOCAL_MACHINE)
+  
+  proc tryGetEngineAndGameDir*() : Option[(string, string)] =
+    try:
+      #We assume we are inside the game plugin folder when no json is available
+      let gameDir = absolutePath(PluginDir/".."/"..")
+      let uprojectFile = getGamePathFromGameDir(gameDir)
+      let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
+      let engineDir = getEnginePathFromRegistry(engineAssociation)
+      some (engineDir / "Engine", gameDir)
+    except:
+      log "Could not find the game path. Please set the game path in the json file."
+      log getCurrentExceptionMsg()
+      none[(string, string)]()
+else:
+  proc tryGetEngineAndGameDir*() : Option[(string, string)] = none[(string, string)]()
 
 #Dll output paths for the uclasses the user generates
 when defined(guest):
@@ -69,6 +95,14 @@ proc getOrCreateNUEConfig() : NimForUEConfig =
   if fileExists ueConfigPath:
     let json = parseFile(ueConfigPath)
     return json.to(NimForUEConfig)
+  let defaultPlatform = when defined(windows): Win64 else: Mac64
+  let conf = 
+    tryGetEngineAndGameDir()
+      .map((dirs)=> NimForUEConfig(engineDir: dirs[0], gameDir: dirs[1], targetConfiguration: Development, targetPlatform: defaultPlatform))
+  
+  if conf.isSome():
+    conf.get().saveConfig()
+    return conf.get()
 
   NimForUEConfig()
 
@@ -105,8 +139,7 @@ let
   HostLibPath* =  ueLibsDir / getFullLibName("hostnimforue")
   GenFilePath* = PluginDir / "src" / "hostnimforue"/"ffigen.nim"
   NimGameDir* = config.gameDir / "NimForUE"
-  GamePathError* = "Could not find the uproject file."
-  GamePath* = (config.gameDir / "*.uproject").walkFiles.toSeq().head().get(GamePathError)
+  GamePath* = getGamePathFromGameDir(config.gameDir)
 
 doAssert(GamePath != GamePathError, &"Config file error: The uproject file could not be found in {config.gameDir}. Please check that 'gameDir' points to the directory containing your uproject in '{PluginDir / getConfigFileName()}'.")
 

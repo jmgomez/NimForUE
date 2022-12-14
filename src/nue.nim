@@ -1,5 +1,5 @@
 # tooling for NimForUE
-import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
+import std / [ options, os, osproc, parseopt, sequtils, strformat, json, strutils, sugar, tables, times ]
 import buildscripts / [buildcommon, buildscripts, nimforueconfig]
 import buildscripts/nuecompilation/nuecompilation
 import nimforue/utils/utils
@@ -183,4 +183,3 @@ task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindin
 
 # --- End Tasks ---
 main()
-
