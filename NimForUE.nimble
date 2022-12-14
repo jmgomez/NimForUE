@@ -12,5 +12,10 @@ requires "nim >= 1.6.4"
 backend = "cpp"
 #bin = @["nue"]
 
+let buildNueCmd = "nim cpp -p:./ -d:danger --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
 task nue, "Build the NimForUE tool":
-  exec "nim cpp -p:./ -d:danger --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
+  exec buildNueCmd
+
+task setup, "Setups the plugin":
+  exec buildNueCmd
+  exec "./nue setup"
