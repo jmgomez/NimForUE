@@ -152,7 +152,7 @@ proc genImportCTypeDecl*(typeDef: UEType, rule: UERule = uerNone): NimNode =
     of uetStruct:
       genUStructTypeDef(typeDef, rule, uexImport)
     of uetEnum:
-      genUEnumTypeDef(typeDef)
+      genUEnumTypeDef(typeDef, uexImport)
     of uetDelegate: #No exporting dynamic delegates. Not sure if they make sense at all.
       genDelType(typeDef, uexImport)
 
@@ -223,7 +223,7 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
   for typeDef in moduleDef.types:
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
-    of uetClass, uetStruct:
+    of uetClass, uetStruct, uetEnum:
       result.add genTypeDecl(typeDef, rules, uexExport)
     #  of uetDelegate: #TODO genDelFuncs
     #     result.add genDelType(typeDef, uexExport)

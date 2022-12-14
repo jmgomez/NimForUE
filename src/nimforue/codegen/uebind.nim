@@ -594,7 +594,7 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
   # debugEcho result.treeRepr
 
 
-func genUEnumTypeDef*(typeDef:UEType) : NimNode = 
+func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode = 
   let typeName = ident(typeDef.name)
   let fields = typeDef.fields
             .map(f => ident f.name)
@@ -608,9 +608,11 @@ func genUEnumTypeDef*(typeDef:UEType) : NimNode =
   result[0][^1] = fields #replaces enum 
 
 
-  
-  # debugEcho repr result
-  # debugEcho treeRepr result
+  if typeExposure == uexExport: 
+    #Generates a type so it's added to the header when using --header
+    let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
+      proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
+    result = nnkStmtList.newTree(exportFn)
 
 
 func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode =
@@ -655,7 +657,7 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexD
     of uetStruct:
       genUStructTypeDef(typeDef, rule, typeExposure)
     of uetEnum:
-      genUEnumTypeDef(typeDef)
+      genUEnumTypeDef(typeDef, typeExposure)
     of uetDelegate:
       genDelType(typeDef, typeExposure)
 
