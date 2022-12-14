@@ -130,7 +130,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
 
   let ueProjectAsStr = $ueProject
   let codeTemplate = """
-import ../nimforue/codegen/models
+import ../nimforue/codegen/[models, modulerules]
 const project* = $1
 """
 

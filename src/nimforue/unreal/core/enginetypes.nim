@@ -148,6 +148,7 @@ type
 
   EInputDeviceConnectionState* {.importc .} = enum
     Connected, Disconnected, Unknown 
+  FTableRowBase* {.importcpp, inheritable, pure .} = object
 
   # UNetObjectPrioritizerConfig* {.importcpp .} = object of UObject
   # UReplicationBridge* {.importcpp .} = object of UObject

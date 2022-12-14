@@ -15,7 +15,7 @@ import ../../buildscripts/nimforueconfig
 uStruct FMyStructTest:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite):
-    a: int
+    (a, a1, a2, a3) : int
     b: float
     c : bool
     e: float32

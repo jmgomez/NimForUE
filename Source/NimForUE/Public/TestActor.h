@@ -4,8 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include <stdbool.h>
+#include "Engine/DataTable.h"
 #include "TestActor.generated.h"
+
+USTRUCT(BlueprintType)
+struct FMyStructTableRow : public FTableRowBase {
+	GENERATED_BODY()
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
+		float TurnRateGamepad;
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
+		UObject* ObjectTest;
+};
 
 
 UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent))

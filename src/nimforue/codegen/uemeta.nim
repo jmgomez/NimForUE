@@ -740,29 +740,37 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
   newCls
 
 
+
+#	explicit UStruct(UStruct* InSuperStruct, SIZE_T ParamsSize = 0, SIZE_T Alignment = 0);
+# UScriptStruct* NewStruct = new(EC_InternalUseOnlyConstructor, Outer, UTF8_TO_TCHAR(Params.NameUTF8), Params.ObjectFlags) UScriptStruct(FObjectInitializer(), Super, StructOps, (EStructFlags)Params.StructFlags, Params.SizeOf, Params.AlignOf);
+#UScriptStruct(FObjectInitializer(), Super, StructOps, (EStructFlags)Params.StructFlags, Params.SizeOf, Params.AlignOf)
+proc newScriptStruct[T](package: UPackagePtr, name:FString, flags:EObjectFlags, super:UScriptStructPtr, size:int32, align:int32, fake:T) : UScriptStructPtr {.importcpp: 
+  "new(EC_InternalUseOnlyConstructor, #, *#, #) UScriptStruct(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
 proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   UE_Log &"Struct emited {ueType.name}"
   const objClsFlags = (RF_Public | RF_Transient | RF_MarkAsNative)
-  let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
-
+  var superStruct : UScriptStructPtr
+  if ueType.superStruct.len > 0:
+    let parent = someNil(getUTypeByName[UScriptStruct](ueType.superStruct.removeFirstLetter()))
+    superStruct = parent.getOrRaise(&"Parent struct {ueType.superStruct} not found for {ueType.name}")
+  
+  # let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+  let scriptStruct = newScriptStruct[T](package, f ueType.name.removeFirstLetter(), objClsFlags, superStruct, sizeof(T).int32, alignof(T).int32, T())
   # scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
   for metadata in ueType.metadata:
     scriptStruct.setMetadata(metadata.name, $metadata.value)
 
   scriptStruct.assetCreated()
-  if ueType.superStruct.len > 0:
-    let parent = someNil(getUTypeByName[UScriptStruct](ueType.superStruct.removeFirstLetter()))
-    let parentStruct = parent.getOrRaise(&"Parent struct {ueType.parent} not found for {ueType.name}")
-    scriptStruct.setSuperStruct(parentStruct)
-
+  
   for field in ueType.fields:
     discard field.emitFProperty(scriptStruct)
 
-  setCppStructOpFor[T](scriptStruct, nil)
+  # setCppStructOpFor[T](scriptStruct, nil)
   UE_Log &"Struct emited {scriptStruct.getName()}"
   scriptStruct.bindType()
   scriptStruct.staticLink(true)
   scriptStruct.setMetadata(UETypeMetadataKey, $ueType.toJson())
+  UE_Log &"Ssale?"
   scriptStruct
 
 proc emitUStruct*[T](ueType: UEType, package: string): UFieldPtr =

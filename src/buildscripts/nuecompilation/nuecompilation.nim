@@ -49,7 +49,7 @@ proc compileHost*() =
 proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
   generateFFIGenFile(config)
   let guestSwitches = @[
-    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s",
+    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
     "-d:guest",
   ]
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")
@@ -67,7 +67,7 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
     "-p:src/nimforue/game",
     "-p:src/nimforue/unreal",
     "-p:src/nimforue/unreal/bindings",
-    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@snimforue@sunreal@sbindings@sexported@s"
+    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
     # "--include:../game/nueprelude"
   ]
 
@@ -83,7 +83,7 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
 
 proc compileGenerateBindings*() = 
   let buildFlags = @[buildSwitches, targetSwitches(false), pluginPlatformSwitches(false), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
   #It still generates NimMain in the header. So we need to get rid of it:

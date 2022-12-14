@@ -1,4 +1,4 @@
-import ../unreal/coreuobject/uobjectflags
+# import ../unreal/coreuobject/uobjectflags
 import std/[sequtils, options, sugar, tables]
 import ../utils/utils
 
@@ -132,6 +132,7 @@ moduleImportRules["Engine"] = @[
     "FHitResult",
     #issue with a field name 
     "FTransformConstraint", 
+    "FTableRowBase",
     # "UKismetMathLibrary", #issue with the funcs?,
     "FOnTemperatureChangeDelegate", #Mac gets stuck here?,
     # "UParticleSystem", #collision with a function name and Cascade is deprecated, use Niagara instead.

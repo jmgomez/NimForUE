@@ -6,7 +6,7 @@ else:
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, bitops, tables]
 
-import ../codegen/[makestrproc, gencppclass]
+import ../codegen/[makestrproc]
 import ../codegen/modulerules
 
 const UETypeMetadataKey* = "UEType"
@@ -20,6 +20,28 @@ const RootComponentMetadataKey* = "RootComponent"
 const CPP_Default_MetadataKeyPrefix* = "CPP_Default_"
 const AutoCreateRefTermMetadataKey* = "AutoCreateRefTerm"
 
+type 
+  CppParam* = object #TODO take const, refs, etc. into account
+    name*: string
+    typ*: string
+  CppAccesSpecifier* = enum 
+    caPublic, caPrivate, caProtected
+
+  CppFunction* = object #visibility?
+    name*: string
+    returnType*: string
+    accessSpecifier* : CppAccesSpecifier
+    params*: seq[CppParam] #void if none. this is not expressed as param
+  CppClassKind* = enum #TODO add more
+    cckClass, cckStruct
+  CppClassType* = object
+    name*, parent*: string
+    functions*: seq[CppFunction]
+    kind*: CppClassKind
+  CppHeader* = object
+    name*: string
+    includes*: seq[string]
+    classes*: seq[CppClassType]
 
 type
     EPropertyFlagsVal* = distinct(uint64)

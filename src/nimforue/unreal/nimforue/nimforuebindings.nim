@@ -9,6 +9,7 @@ type
     FNativeFuncPtr* {.importcpp.} = object
     
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
+    # UNimScriptStruct* = UScriptStruct
         
 
     UNimScriptStructPtr* = ptr UNimScriptStruct

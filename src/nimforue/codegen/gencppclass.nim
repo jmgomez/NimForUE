@@ -1,26 +1,9 @@
 import std/[sequtils, strutils, strformat, sugar, macros, genasts, os]
 import ../../buildscripts/nimforueconfig
-import ../codegen/modulerules
+import ../codegen/[models, modulerules]
 import ../utils/utils
 
-type 
-  CppParam* = object #TODO take const, refs, etc. into account
-    name*: string
-    typ*: string
-  CppFunction* = object #visibility?
-    name*: string
-    returnType*: string
-    params*: seq[CppParam] #void if none. this is not expressed as param
-  CppClassKind* = enum #TODO add more
-    cckClass, cckStruct
-  CppClassType* = object
-    name*, parent*: string
-    functions*: seq[CppFunction]
-    kind*: CppClassKind
-  CppHeader* = object
-    name*: string
-    includes*: seq[string]
-    classes*: seq[CppClassType]
+
   #no fields for now. They could be technically added though
 
 
@@ -30,13 +13,27 @@ func funParamsToStrCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join
 
 func `$`*(cppCls: CppClassType): string =
   func funcForwardDeclare(fn:CppFunction) : string = 
-    &"virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override;"
-    # &"virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override{{}};"
+    let accessSpecifier = 
+      case fn.accessSpecifier:
+      of caPublic: "public"
+      of caPrivate: "private"
+      of caProtected: "protected"
+
+    &"""
+{accessSpecifier}:
+  virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override;
+    """
+    
+#     &"""
+# {accessSpecifier}:
+#   virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override {{}};
+#     """
+    
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
   let kind = if cppCls.kind == cckClass: "class" else: "struct"
   &"""
-{kind} {cppCls.name} : public {cppCls.parent} {{
-    public:
+  DLLEXPORT {kind} {cppCls.name} : public {cppCls.parent} {{
+    
       {funcs}
   }};
   """
@@ -59,6 +56,7 @@ func toEmmitTemplate*(fn:CppFunction, class:string) : string  =
   """
 
 proc saveHeader*(cppHeader: CppHeader, folder: string = ".") =
+  if OutputHeader == "": return #TODO assert when done
   let path = folder / cppHeader.name 
   writeFile(path,  $cppHeader)
 
@@ -86,8 +84,11 @@ func implementOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNod
 
 
 #TODO change this for macro cache
-var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h", "UEGenClassDefs.h"])
-
+var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h"])
+const header = "UEGenClassDefs.h"
+when fileExists("NimHeaders/" & header):
+  cppHeader.includes.add(header)
+  
 
 proc addClass*(class: CppClassType) =
   var class = class
@@ -96,7 +97,7 @@ proc addClass*(class: CppClassType) =
 
   if class.name == "ANimBeginPlayOverrideActor":
     debugEcho "Function added"
-    let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", params: @[])
+    let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", accessSpecifier:caProtected, params: @[])
     class.functions.add(beginPlay)
     
   cppHeader.classes.add class

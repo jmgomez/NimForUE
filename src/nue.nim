@@ -151,7 +151,7 @@ task dumpConfig, "Displays the config variables":
 task codegen, "Generate the bindings structure from the persisted json (TEMPORAL until we have it incremental)":
   createDir(config.nimHeadersModulesDir) # we need to create the bindings folder here because we can't importc
   createDir(config.bindingsExportedDir) # we need to create the bindings folder here because we can't importc
-  doAssert(execCmd(&"nim cpp --mm:orc --compileonly -f --nomain --maxLoopIterationsVM:400000000 --nimcache:.nimcache/projectbindings src/codegen/genprojectbindings.nim") == 0)
+  doAssert(execCmd(&"nim cpp --mm:orc --compileonly -f --nomain --maxLoopIterationsVM:400000000 --nimcache:.nimcache/projectbindings src/nimforue/codegen/genprojectbindings.nim") == 0)
 
 task gencppbindings, "Generates the cpp bindings":
   codegen(taskOptions)

@@ -5,10 +5,7 @@ import ../unreal/core/containers/[unrealstring, array, map]
 import ../unreal/nimforue/[nimforue, nimforuebindings]
 import ../utils/[utils, ueutils]
 import nuemacrocache
-import uemeta
-import ../codegen/[uebind,gencppclass]
-import emitter
-import ../codegen/modelconstructor
+import ../codegen/[emitter,modelconstructor, models,uemeta, uebind,gencppclass]
 
 
 type
@@ -18,12 +15,12 @@ type
 
 const getNumberMeta = CppFunction(name: "GetNumber", returnType: "int", params: @[])
 
-const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNimHotReload", functions: @[getNumberMeta], kind: cckStruct)
+const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNimHotReload", functions: @[], kind: cckStruct)
 
-macro overridetest(fn : untyped) =
+macro overrideFNimHotReloadChild(fn : untyped) =
   implementOverride(fn, getNumberMeta, "FNimHotReloadChild")
 
-proc getNumber(hrc: FNimHotReloadChildPtr) : int32 {.overridetest.} = 100
+# proc getNumber(hrc: FNimHotReloadChildPtr) : int32 {.overrideFNimHotReloadChild.} = 100
 static:    
     addClass(cppHotReloadChild)
 
@@ -111,7 +108,7 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo,
     if areEquals: none[ptr T]()
     else: 
         prev.run prepareForReinst
-        some ueCast[T](emitter.generator(pkg))
+        tryUECast[T](emitter.generator(pkg))
 
 
 
@@ -446,11 +443,22 @@ func getUPropsAsFieldsForType(body:NimNode, ueTypeName:string) : seq[UEField]  =
         .reversed()
     
 macro uStruct*(name:untyped, body : untyped) : untyped = 
-    let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
+    var superStruct = ""
+    var structTypeName = ""
+    case name.kind
+    of nnkIdent:
+        structTypeName = name.strVal()
+    of nnkInfix:
+        superStruct = name[^1].strVal()
+        structTypeName = name[1].strVal()
+    else:
+        error("Invalid node for struct name " & repr(name) & " " & $ name.kind)
+
+    echo &"Generating struct {structTypeName} with parent {superStruct}"
     let structMetas = getMetasForType(body)
     let ueFields = getUPropsAsFieldsForType(body, structTypeName)
     let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
-    let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas, structFlags)
+    let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
 
     emitUStruct(ueType) 
 

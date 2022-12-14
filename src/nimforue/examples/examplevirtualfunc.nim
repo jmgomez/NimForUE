@@ -2,7 +2,7 @@
 
 include ../unreal/prelude
 
-import ../codegen/gencppclass
+import ../codegen/[gencppclass, models]
 # import ../unreal/bindings/[slate,slatecore, engine]
 
 
@@ -18,6 +18,10 @@ uClass ANimBeginPlayOverrideActor of AActor:
       UE_Warn "Non native begin Play called once "
 
 # {.compile: "NimHeaders/Game.h".}
+macro overridetest(fn : untyped) =
+  let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", params: @[])
+
+  implementOverride(fn, beginPlay, "ANimBeginPlayOverrideActor")
 
 
 # proc beginPlay(self:ANimBeginPlayOverrideActorPtr) {.overridetest.}= 
