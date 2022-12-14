@@ -93,15 +93,16 @@ proc getNimForUEConfig*() : NimForUEConfig =
 
 let config = getOrCreateNUEConfig()
 
-let 
+let
   ueLibsDir = PluginDir/"Binaries"/"nim"/"ue" #THIS WILL CHANGE BASED ON THE CURRENT CONF
   NimForUELibDir* = ueLibsDir.normalizePathEnd()
   HostLibPath* =  ueLibsDir / getFullLibName("hostnimforue")
   GenFilePath* = PluginDir / "src" / "hostnimforue"/"ffigen.nim"
   NimGameDir* = config.gameDir / "NimForUE"
-  GamePath* = (config.gameDir / "*.uproject").walkFiles.toSeq().head().get("Couldnt find the uproject file")
+  GamePathError* = "Could not find the uproject file."
+  GamePath* = (config.gameDir / "*.uproject").walkFiles.toSeq().head().get(GamePathError)
 
-
+doAssert(GamePath != GamePathError, &"Config file error: The uproject file could not be found in {config.gameDir}. Please check that 'gameDir' points to the directory containing your uproject in '{PluginDir / getConfigFileName()}'.")
 
 template codegenDir(fname, constName: untyped): untyped =
   proc fname*(config: NimForUEConfig): string =
