@@ -184,6 +184,7 @@ task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindin
 
 task setup, "Setups the plugin by building the initial tasks in order":
   guest(taskOptions)
+  ubuild(taskOptions)
   host(taskOptions)
 # --- End Tasks ---
 main()
