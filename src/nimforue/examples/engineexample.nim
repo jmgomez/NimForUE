@@ -11,7 +11,7 @@ uStruct FNimTableRowBase of FTableRowBase:
     testProperty: FString
     montage: UAnimMontagePtr
 
-uStruct FNimPPSettings of FPostProcessSettings:
+uStruct FNimPPSettings:# of FPostProcessSettings:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintType):
     testProperty: FString
@@ -22,10 +22,23 @@ uStruct FNimPPSettings of FPostProcessSettings:
 
 proc getOwner2*(obj : UActorComponentPtr): AActorPtr {.importcpp: "#->GetOwner()", header: ueIncludes.}
 
+uClass ANimEngineActor of AActor:
+  (BlueprintType, Blueprintable)
+  uprops(EditAnywhere, BlueprintReadWrite):
+    settings : FNimPPSettings
+    testProperty : FString
+  defaults:
+    settings.testProperty = "TestCDOOutter"
+    testProperty = "TestCDOInner"
+  ufuncs(CallInEditor):
+    proc modifySettings() = 
+      self.settings.testProperty = "Test2"
+
 uClass UNimActorComponentTest of UActorComponent:
   (BlueprintType, Blueprintable)
   uprops(EditAnywhere, BlueprintReadWrite):
     componentProp : FString
+    
   
   ufuncs(BlueprintCallable):
     proc testFunc2() = 

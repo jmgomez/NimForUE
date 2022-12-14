@@ -754,9 +754,10 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
     let parent = someNil(getUTypeByName[UScriptStruct](ueType.superStruct.removeFirstLetter()))
     superStruct = parent.getOrRaise(&"Parent struct {ueType.superStruct} not found for {ueType.name}")
   
-  # let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
-  let scriptStruct = newScriptStruct[T](package, f ueType.name.removeFirstLetter(), objClsFlags, superStruct, sizeof(T).int32, alignof(T).int32, T())
-  # scriptStruct.setMetadata("BlueprintType", "true") #todo move to ueType
+  let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+  #SuperStructs not supported but this is the way to support them
+  # let scriptStruct = newScriptStruct[T](package, f ueType.name.removeFirstLetter(), objClsFlags, superStruct, sizeof(T).int32, alignof(T).int32, T())
+
   for metadata in ueType.metadata:
     scriptStruct.setMetadata(metadata.name, $metadata.value)
 
@@ -765,7 +766,7 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   for field in ueType.fields:
     discard field.emitFProperty(scriptStruct)
 
-  # setCppStructOpFor[T](scriptStruct, nil)
+  setCppStructOpFor[T](scriptStruct, nil)
   UE_Log &"Struct emited {scriptStruct.getName()}"
   scriptStruct.bindType()
   scriptStruct.staticLink(true)

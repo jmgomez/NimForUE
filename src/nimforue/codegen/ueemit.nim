@@ -454,7 +454,6 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     else:
         error("Invalid node for struct name " & repr(name) & " " & $ name.kind)
 
-    echo &"Generating struct {structTypeName} with parent {superStruct}"
     let structMetas = getMetasForType(body)
     let ueFields = getUPropsAsFieldsForType(body, structTypeName)
     let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
