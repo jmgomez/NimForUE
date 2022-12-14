@@ -2,13 +2,14 @@ include ../definitions
 import ../coreuobject/[uobject, uobjectglobals, package, unrealtype, nametypes]
 import ../core/containers/[unrealstring, array, map]
 import std/[typetraits, strutils, options, strformat]
-import ../../typegen/models
+import ../../codegen/models
 import ../../utils/utils
 type 
     UFunctionCaller* {.importc, inheritable, pure .} = object
     FNativeFuncPtr* {.importcpp.} = object
     
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct
+    # UNimScriptStruct* = UScriptStruct
         
 
     UNimScriptStructPtr* = ptr UNimScriptStruct
@@ -203,7 +204,7 @@ proc createNimPackage*(packageShortName:FString) : UPackagePtr {.importcpp:"URef
 proc broadcastAsset*(asset:UObjectPtr) : void {.importcpp: "UFakeFactory::BroadcastAsset(#)" .}
 
 type
-    FNimHotReload* {.importcpp.} = object
+    FNimHotReload* {.importcpp, inheritable, pure.} = object
         structsToReinstance* {.importcpp: "StructsToReinstance" .} : TMap[UScriptStructPtr, UScriptStructPtr]
         classesToReinstance* {.importcpp: "ClassesToReinstance" .} : TMap[UClassPtr, UClassPtr]
         delegatesToReinstance* {.importcpp: "DelegatesToReinstance" .} : TMap[UDelegateFunctionPtr, UDelegateFunctionPtr]
@@ -220,6 +221,8 @@ type
 
         bShouldHotReload* {.importcpp: "bShouldHotReload" .} : bool
     FNimHotReloadPtr* = ptr FNimHotReload
+
+proc getNumber*(hotReloadInfo: ptr FNimHotReload) : int {.importcpp: "#->GetNumber()".}
 
 proc newNimHotReload*() : FNimHotReloadPtr {.importcpp: "new '*0()".}
 proc setShouldHotReload*(hotReloadInfo: ptr FNimHotReload) = 

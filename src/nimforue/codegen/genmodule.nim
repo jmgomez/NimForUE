@@ -1,11 +1,10 @@
 import std/[options, osproc, strutils, sugar, sequtils, strformat, strutils, genasts, macros, importutils, os]
 
-include ../unreal/definitions
 import ../utils/ueutils
 
 import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
-import ../typegen/[nuemacrocache, models]
+import ../codegen/[nuemacrocache, models, modulerules]
 import ../../buildscripts/nimforueconfig
 import uebind
 
@@ -97,6 +96,8 @@ func genUStructImportCTypeDefBinding(ueType: UEType): NimNode =
       nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
       nnkPragma.newTree(
         ident "inject",
+        ident "inheritable",
+        ident "pure",
         nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
         nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
     )

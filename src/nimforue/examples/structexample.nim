@@ -22,6 +22,7 @@ uStruct FStructExample:
         propAnother3: int
         propAnother22: int
         propAnother31: int
+        propAnother32: int
         # propMapFloat : TMap[FString, float]
 
 

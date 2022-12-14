@@ -4,7 +4,7 @@
 import ../unreal/coreuobject/uobjectflags
 import models
 import std/[sugar, tables, options, sequtils]
-
+import ../codegen/modulerules
 
 
 

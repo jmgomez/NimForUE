@@ -7,8 +7,9 @@ import examplescratchpad
 
 import examplescodegen
 #import examplecoreuobject
-# import engineexample
+import engineexample
 # import editorexample
 # import slateexamples
 #import nimconfexample
 #import structexampleissue
+import examplevirtualfunc

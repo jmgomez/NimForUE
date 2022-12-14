@@ -6,6 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "CoreUObject.h"
+#include "EngineMinimal.h"
 
 #include "Delegates/Delegate.h"
 
@@ -13,6 +14,7 @@
 #include "Containers/Array.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/DeveloperSettings.h"
+#include "Engine/Classes/GameFramework/Actor.h"
 #include "Engine/Classes/GameFramework/Volume.h"
 #include "Engine/Classes/GameFramework/GameSession.h"
 #include "Engine/Classes/GameFramework/PlayerController.h"
@@ -20,6 +22,7 @@
 #include "Engine/Classes/GameFramework/GameModeBase.h"
 #include "Engine/Classes/Engine/World.h"
 #include "Engine/Classes/Engine/Engine.h"
+#include "Engine/Classes/Engine/DataTable.h"
 #include "Engine/Classes/Animation/BlendProfile.h"
 #include "Misc/AutomationTest.h"
 #include "AssetRegistry/AssetRegistryModule.h"

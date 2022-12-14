@@ -1,5 +1,5 @@
 import bitops
-import ../../typegen/models
+import ../../codegen/models
 import std/[genasts, macros, strutils, sugar, json, sequtils]
 
 {.pragma: importflag, importcpp, nodecl, header: ueincludes.}

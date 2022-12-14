@@ -1,14 +1,14 @@
 import std/[options, strutils, sugar, sequtils, strformat,  genasts, macros, importutils]
 
 include ../unreal/definitions
-import ../utils/ueutils
+import ../utils/[utils, ueutils]
 import ../unreal/core/containers/[unrealstring, array, map, set]
-
-import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
-import ../typegen/[nuemacrocache, models, modelconstructor]
+import ../codegen/[nuemacrocache, models, modelconstructor]
+import modulerules
+import ../../buildscripts/nimforueconfig #probably nimforueconfig should be removed from buildscripts
 
-
+import gencppclass
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 #varContexts refer to if it's allowed or not to gen var (i.e. you cant gen var in a type definition but you can in a func definition)
@@ -428,10 +428,14 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
       let parent = ident typeDef.parent
       case typeExposure:
       of uexDsl:
-        genAst(name = ident typeDef.name, ptrName, parent):
-          type 
-            name* {.inject, exportcpp.} = object of parent #TODO OF BASE CLASS 
-            ptrName* {.inject.} = ptr name
+        let outputHeader = newLit OutPutHeader
+        let typeSection = genAst(name = ident typeDef.name, ptrName, parent, outputHeader):
+                    type #The dsl also import types from a header that's generated at compile. This is part of the support for virtual funcs. Test.h is temporal, we are going to use the current module name.h
+                      name* {.inject, importcpp, header: "placeholer".} = object of parent #TODO OF BASE CLASS 
+                      ptrName* {.inject.} = ptr name
+        #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
+        typeSection[0][0][^1][^1][^1] = newLit OutPutHeader 
+        typeSection
       of uexExport:
         newEmptyNode()
         #[

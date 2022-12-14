@@ -27,7 +27,13 @@ when defined(nue) and compiles(gorgeEx("")):
 else:
   const PluginDir* {.strdefine.} = ""#Defined in switches. Available for all targets (Hots, Guest..)
 
-
+#Dll output paths for the uclasses the user generates
+when defined(guest):
+  const OutputHeader* = "Guest.h"
+elif defined(game):
+  const OutputHeader* = "Game.h"
+else:
+  const OutputHeader* = ""
 #[
 The file is created for first time in from this file during compilation
 Since UBT has to set some values on it, it does so through the FFI 

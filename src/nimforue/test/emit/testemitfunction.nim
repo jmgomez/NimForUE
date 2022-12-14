@@ -4,7 +4,7 @@ import std/[strutils]
 import ../testutils
 import unittest
 import ../testdata
-import ../../typegen/[uemeta, ueemit]
+import ../../codegen/[uemeta, ueemit]
 
 
 #[

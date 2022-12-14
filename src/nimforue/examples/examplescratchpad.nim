@@ -1,10 +1,9 @@
 include ../unreal/prelude
 import ../unreal/editor/editor
 import std/[strformat, enumutils, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
-import ../typegen/uemeta
+import ../codegen/[uemeta, codegentemplate]
 import ../../buildscripts/nimforueconfig
 
-import ../../codegen/codegentemplate
 
 
 
@@ -16,7 +15,7 @@ import ../../codegen/codegentemplate
 uStruct FMyStructTest:
   (BlueprintType)
   uprops(EditAnywhere, BlueprintReadWrite):
-    a: int
+    (a, a1, a2, a3) : int
     b: float
     c : bool
     e: float32

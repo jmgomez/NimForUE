@@ -2,7 +2,7 @@ include ../../unreal/prelude
 import std/[strutils, sugar, options]
 import ../testutils
 import ../testdata
-import ../../typegen/[models, uemeta]
+import ../../codegen/[models, uemeta]
 import testemitfunction
 import tables
 

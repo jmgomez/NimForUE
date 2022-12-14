@@ -5,9 +5,24 @@ import ../unreal/core/containers/[unrealstring, array, map]
 import ../unreal/nimforue/[nimforue, nimforuebindings]
 import ../utils/[utils, ueutils]
 import nuemacrocache
-import uemeta
-import ../macros/uebind
-import emitter
+import ../codegen/[emitter,modelconstructor, models,uemeta, uebind,gencppclass]
+
+
+type
+
+    FNimHotReloadChild* {.importcpp, header:"Guest.h".} = object of FNimHotReload
+    FNimHotReloadChildPtr* = ptr FNimHotReloadChild
+
+const getNumberMeta = CppFunction(name: "GetNumber", returnType: "int", params: @[])
+
+const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNimHotReload", functions: @[], kind: cckStruct)
+
+macro overrideFNimHotReloadChild(fn : untyped) =
+  implementOverride(fn, getNumberMeta, "FNimHotReloadChild")
+
+# proc getNumber(hrc: FNimHotReloadChildPtr) : int32 {.overrideFNimHotReloadChild.} = 100
+static:    
+    addClass(cppHotReloadChild)
 
 
 #rename these to register
@@ -93,7 +108,7 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo,
     if areEquals: none[ptr T]()
     else: 
         prev.run prepareForReinst
-        some ueCast[T](emitter.generator(pkg))
+        tryUECast[T](emitter.generator(pkg))
 
 
 
@@ -126,8 +141,8 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
 
 proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimHotReloadPtr = 
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
-
-    var hotReloadInfo = newNimHotReload()
+    
+    var hotReloadInfo = newCpp[FNimHotReloadChild]()
     for emitter in ueEmitter.emitters:
             case emitter.ueType.kind:
             of uetStruct:
@@ -224,12 +239,20 @@ proc emitUStruct(typeDef:UEType) : NimNode =
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr resulti
 
+#Only function overrides
+func toCppClass(ueType:UEType) : CppClassType = 
+    assert ueType.kind == uetClass
+    CppClassType(name:ueType.name, kind: cckClass, parent:ueType.parent, functions: ueType.fnOverrides)
+
+
+
 proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
                 addEmitterInfo(typeDefAsNode, getFnGetForUClass(typeDefAsNode))
 
+    addClass(typeDef.toCppClass())
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
 proc emitUDelegate(typedef:UEType) : NimNode = 
@@ -420,11 +443,21 @@ func getUPropsAsFieldsForType(body:NimNode, ueTypeName:string) : seq[UEField]  =
         .reversed()
     
 macro uStruct*(name:untyped, body : untyped) : untyped = 
-    let structTypeName = name.strVal()#notice that it can also contains of meaning that it inherits from another struct
+    var superStruct = ""
+    var structTypeName = ""
+    case name.kind
+    of nnkIdent:
+        structTypeName = name.strVal()
+    of nnkInfix:
+        superStruct = name[^1].strVal()
+        structTypeName = name[1].strVal()
+    else:
+        error("Invalid node for struct name " & repr(name) & " " & $ name.kind)
+
     let structMetas = getMetasForType(body)
     let ueFields = getUPropsAsFieldsForType(body, structTypeName)
     let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
-    let ueType = makeUEStruct(structTypeName, ueFields, "", structMetas, structFlags)
+    let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
 
     emitUStruct(ueType) 
 

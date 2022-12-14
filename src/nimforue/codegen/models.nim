@@ -6,8 +6,8 @@ else:
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, bitops, tables]
 
-import ../macros/makestrproc
-
+import ../codegen/[makestrproc]
+import ../codegen/modulerules
 
 const UETypeMetadataKey* = "UEType"
 const ClassConstructorMetadataKey* = "ClassConstructor"
@@ -20,6 +20,28 @@ const RootComponentMetadataKey* = "RootComponent"
 const CPP_Default_MetadataKeyPrefix* = "CPP_Default_"
 const AutoCreateRefTermMetadataKey* = "AutoCreateRefTerm"
 
+type 
+  CppParam* = object #TODO take const, refs, etc. into account
+    name*: string
+    typ*: string
+  CppAccesSpecifier* = enum 
+    caPublic, caPrivate, caProtected
+
+  CppFunction* = object #visibility?
+    name*: string
+    returnType*: string
+    accessSpecifier* : CppAccesSpecifier
+    params*: seq[CppParam] #void if none. this is not expressed as param
+  CppClassKind* = enum #TODO add more
+    cckClass, cckStruct
+  CppClassType* = object
+    name*, parent*: string
+    functions*: seq[CppFunction]
+    kind*: CppClassKind
+  CppHeader* = object
+    name*: string
+    includes*: seq[string]
+    classes*: seq[CppClassType]
 
 type
     EPropertyFlagsVal* = distinct(uint64)
@@ -83,6 +105,7 @@ type
                 clsFlags*: EClassFlagsVal
                 ctorSourceHash*: string
                 interfaces* : seq[string]
+                fnOverrides* : seq[CppFunction]
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal
@@ -95,33 +118,6 @@ type
                 # delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
                 delKind*: UEDelegateKind
                 outerClassName*: string #the name of the class that contains the delegate (if any)
-
-    #Rules applies to UERuleTarget
-    UERule* = enum
-        uerNone
-        uerCodeGenOnlyFields #wont generate the type. Just its fields. Only make sense in uClass. Will affect code generation (we try to do it at the import time when possible) 
-        uerIgnore
-        uerImportStruct
-        uerImportBlueprintOnly #affects all types and all target. If set, it will only import the blueprint types.
-        uerVirtualModule
-        uerInnerClassDelegate #Some delegates are declared withit a class and can collide. This rule is for when both are true
-        uerIgnoreHash #ignore the hash when importing a module so always imports it. 
-
-    UERuleTarget* = enum 
-        uertType
-        uertField
-        uertModule
-    #TODO Rename to UEBindRule
-    UEImportRule* = object #used only to customize the codegen
-        affectedTypes* : seq[string]
-        target* : UERuleTarget
-        case  rule* : UERule
-        of uerVirtualModule:
-            moduleName* : string
-        of uerInnerClassDelegate: 
-            onlyFor* : seq[string] #Constraints the types that the rule applies to. If empty, it applies to all types.  
-        else:
-            discard
 
 
     UEModule* = object
@@ -159,52 +155,6 @@ func getFuncDelegateNimName*(ueType:UEType) : string =
 
 
 
-
-# func `or`(a, b : UERule) : UERule = bitor(a.uint32, b.uint32).UERule
-
-func makeImportedRuleType*(rule:UERule, affectedTypes:seq[string], ):UEImportRule =
-    result.affectedTypes = affectedTypes
-    result.rule = rule
-    result.target = uertType
-
-func makeImportedRuleField*(rule:UERule, affectedTypes:seq[string], ):UEImportRule =
-    result.affectedTypes = affectedTypes
-    result.rule = rule
-    result.target = uertField
-    
-func makeImportedRuleModule*(rule:UERule) : UEImportRule = 
-    result.rule = rule
-    result.target = uertModule
-
-
-#Notice the param restrictions on the functions below. Either you apply the rule to multiple types or you chose what types to apply in a single rule
-func makeImportedDelegateRule*(affectedTypes:seq[string]) : UEImportRule = 
-    result.affectedTypes = affectedTypes
-    result.rule = uerInnerClassDelegate
-    result.target = uertType
-
-func makeImportedDelegateRule*(affectedType:string, onlyFor:seq[string]) : UEImportRule = 
-    result.affectedTypes = @[affectedType]
-    result.rule = uerInnerClassDelegate
-    result.target = uertType
-    result.onlyFor = onlyFor
-
-#It's processed after the module deps are calculated
-func makeVirtualModuleRule*(moduleName:string, affectedTypes:seq[string]) : UEImportRule = 
-    result.rule = uerVirtualModule
-    result.target = uertModule
-    result.affectedTypes = affectedTypes
-    result.moduleName = moduleName
-
-
-
-func contains*(rules: seq[UEImportRule], rule:UERule): bool = 
-    rules.any((r:UEImportRule) => r.rule == rule)
-
-func isTypeAffectedByRule*(rules:seq[UEImportRule], name:string, rule:UERule): bool = 
-    rules.any((r:UEImportRule) => r.target == uertType and r.rule == rule and r.affectedTypes.contains(name))
-func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): Option[UEImportRule] = 
-    rules.first((r:UEImportRule) => r.target == uertType and r.rule == rule and r.affectedTypes.contains(name))
 
 # func getAllMatchingTypes*(module:UEModule, rule:UERule) : seq[UEType] =
 #    module.types

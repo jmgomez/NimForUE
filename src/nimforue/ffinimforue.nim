@@ -2,11 +2,9 @@
 
 include unreal/prelude
 import unreal/editor/editor
-import macros/[ffi]
+import ../nimforue/codegen/[ffi,emitter, genreflectiondata, models, uemeta, ueemit]
 import std/[options, strformat, dynlib]
 import ../buildscripts/[nimforueconfig, buildscripts]
-import ../codegen/genreflectiondata
-import typegen/emitter
 
 const genFilePath* {.strdefine.} : string = ""
 
@@ -54,6 +52,9 @@ proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) =
         UE_Error e.getStackTrace()
 
 
+
+
+
 #entry point for the game. but it will also be for other libs in the future
 #even the next guest/nimforue?
 proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.ffi:genFilePath} = 
@@ -62,11 +63,13 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
     of "nimforue": 
         emitNueTypes(getGlobalEmitter()[], "Nim")
         if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
-          execBindingsGenerationInAnotherThread()
+          execBindingsGenerationInAnotherThread()                
     of "game":
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
     
     UE_Log &"lib loaded: {libName}"
   except:
     UE_Error &"Error in onLibLoaded: {getCurrentExceptionMsg()}"
+
+
 

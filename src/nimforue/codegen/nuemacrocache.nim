@@ -2,7 +2,7 @@
 import ../utils/utils
 import std/[times,strformat,json, strutils, options, sugar, sequtils, macros, macrocache, tables]
 
-import ../typegen/models
+import ../codegen/models
 
 
 const mcMulDelegates = CacheSeq"multicastDelegates"

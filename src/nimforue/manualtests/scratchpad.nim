@@ -1,7 +1,7 @@
 #this is temp until we have tests working (have to bind dyn delegates first)
 include ../unreal/prelude
 import std/[times, strformat, strutils, options, sugar, sequtils, json, jsonutils]
-import ../typegen/[uemeta, models]
+import ../codegen/[uemeta, models]
 
 # proc saySomething(obj: UObjectPtr, msg: FString): void {.uebind.}
 

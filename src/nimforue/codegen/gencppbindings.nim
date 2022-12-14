@@ -1,7 +1,6 @@
-include ../nimforue/unreal/prelude
+include ../unreal/prelude
 import std/[macros, sequtils, strutils,genasts, os]
-import ../nimforue/typegen/[models, uemeta]
-import ../nimforue/macros/uebind
+import ../codegen/[models,uebind, uemeta]
 
 
 #import all bindings in the exported directory so they can be exported when compiling this file
@@ -15,7 +14,7 @@ macro importAllBindings() : untyped =
               
   func importStmts(modName:string) : NimNode =
     genAst(module=ident modName):
-      import ../nimforue/unreal/bindings/exported/module
+      import ../unreal/bindings/exported/module
 
   result = nnkStmtList.newTree(modules.map(importStmts))
 
