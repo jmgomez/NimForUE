@@ -2,7 +2,10 @@
 <img src="./logo.png" width="360"  align="right">
 
 ### DISCLAIMER ###
-This is not meant to be used yet. There is no instructions available, but there will be instructions once it's in a better state.  
+
+The plugin is being used to develop a Game but it isnt feature complete yet. 
+To get started there is a Third Person Template implementation in NimForUE: https://github.com/jmgomez/NimTemplate/blob/master/README.md
+
 ### Why NimForUE?
 
 The core idea is to have a short feedback loop while having native performance and a modern language that can access all features Unreal provides. 
@@ -10,6 +13,15 @@ The core idea is to have a short feedback loop while having native performance a
 The plugin outputs native dynamic libraries (DLLs) that are hooked into UnrealEngine. 
 
 The design philosophy is to not change any unreal conventions on the API side of things, so anyone that knows Unreal can reuse its knowledge. The code guidelines follow (for the most part) the Nim conventions when not in contradiction with the Unreal ones. 
+
+If you have any question or wants to know more and follow the updates:
+ 
+[Join us on the Discord group](https://discord.gg/smD8vZxzHh)
+
+If you dont have Discord, you can also reach out at:
+
+[Twitter](https://twitter.com/_jmgomez_)
+
 
 
 
@@ -55,7 +67,7 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 - [x] Test Integration via Unreal Frontend
 - [x] Cover most Unreal Reflected Types
 - [x] Getter/Setters macro for UProps
-- [ ] Generate Nim definitions from Unreal Reflection system 
+- [x] Generate Nim definitions from Unreal Reflection system 
 - [x] Being able to produce new UE types from Nim
 - [x] Macro (pragma) for implmenting UFuncs in nim
 
