@@ -4,7 +4,7 @@
 ### DISCLAIMER ###
 
 The plugin is being used to develop a Game but it isnt feature complete yet. 
-To get started there is a Third Person Template implementation in NimForUE: https://github.com/jmgomez/NimTemplate/blob/master/README.md
+To get started there is a Third Person Template implementation in NimForUE: https://github.com/jmgomez/NimTemplate
 
 ### Why NimForUE?
 
