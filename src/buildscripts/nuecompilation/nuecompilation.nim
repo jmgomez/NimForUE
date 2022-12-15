@@ -15,7 +15,7 @@ proc compileHost*() =
   doAssert(execCmd(&"nim cpp {buildFlags} --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   # copy header
   let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
-  let ffiHeaderDest = config.nimHeadersDir / "NimForUEFFI.h"
+  let ffiHeaderDest = "NimHeaders" / "NimForUEFFI.h"
   copyFile(ffiHeaderSrc, ffiHeaderDest)
   log("Copied " & ffiHeaderSrc & " to " & ffiHeaderDest)
 
