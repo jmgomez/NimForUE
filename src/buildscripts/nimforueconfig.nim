@@ -95,7 +95,7 @@ proc getOrCreateNUEConfig() : NimForUEConfig =
   if fileExists ueConfigPath:
     let json = parseFile(ueConfigPath)
     return json.to(NimForUEConfig)
-  let defaultPlatform = when defined(windows): Win64 else: Mac64
+  let defaultPlatform = when defined(windows): Win64 else: Mac
   let conf = 
     tryGetEngineAndGameDir()
       .map((dirs)=> NimForUEConfig(engineDir: dirs[0], gameDir: dirs[1], targetConfiguration: Development, targetPlatform: defaultPlatform))

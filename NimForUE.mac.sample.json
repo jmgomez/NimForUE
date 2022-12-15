@@ -1,11 +1,6 @@
 {
-  "genFilePath": "",
-  "nimForUELibDir": "",
-  "hostLibPath": "",
-  "engineDir": "/UE_5.0/Engine",
-  "pluginDir": "/NimForUEDemo/Plugins/NimForUE",
-  "nimGameDir": "/NimForUEDemo/Plugins/NimForUE",
-  "gamePath": "/NimForUEDemo/NimForUEDemo.uproject",
+  "engineDir": "/Volumes/Store/UnrealSources/UE_5.1/Engine",
+  "gameDir": "/Volumes/Store/UnrealProjects/NimTemplate",
   "targetConfiguration": "Development",
-  "targetPlatform": "Mac"
+  "targetPlatform": "Win64"
 }

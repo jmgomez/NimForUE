@@ -130,14 +130,15 @@ task ubuild, "Calls Unreal Build Tool for your project":
   log target
   try:
     setCurrentDir(config.engineDir)
-    let buildCmd = r"Build\BatchFiles\" & (
+    let buildCmd =  
       case config.targetPlatform
-        of Win64: "Build.bat"
-        of Mac: r"BatchFiles\Mac\Build.sh" # untested
-      )
+        of Win64: r"Build\BatchFiles\Build.bat"
+        of Mac: "./Build/BatchFiles/Mac/Build.sh" # untested
+      
  
     let cmd = &"{buildCmd} {target} {config.targetPlatform} {config.targetConfiguration} {uprojectFile} -waitmutex"
-    log config.engineDir
+    
+    log cmd
     doAssert(execCmd(cmd) == 0)
     setCurrentDir(curDir)
   except:
