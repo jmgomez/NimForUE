@@ -6,6 +6,7 @@ import std/typetraits
 type 
   UEditorEngine* {.importcpp.} = object of UEngine
     playWorld* {.importcpp: "PlayWorld".} : UWorldPtr
+    editorWorld* {.importcpp: "EditorWorld".} : UWorldPtr
   UEditorEnginePtr* = ptr UEditorEngine
 
 let GEditor* {.importcpp:"GEditor", nodecl.} : UEditorEnginePtr

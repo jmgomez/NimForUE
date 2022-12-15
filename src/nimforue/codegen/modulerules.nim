@@ -102,10 +102,10 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 
 #Any module not picked by default.
 #This could be exposed to the json file 
-let extraModuleNames* = @["EnhancedInput"]
+let extraModuleNames* = @["EnhancedInput", "Blutility"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
-let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput"]
+let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
@@ -197,6 +197,7 @@ moduleImportRules["InputCore"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
+
 moduleImportRules["UMG"] = @[ 
   makeImportedRuleType(uerIgnore, @[ #MovieScene was removed as dependency for now          
     "UMovieScenePropertyTrack", "UMovieSceneNameableTrack",
@@ -257,12 +258,6 @@ moduleImportRules["AudioExtensions"] = @[
   # makeImportedRuleModule(uerIgnoreHash)
 ]
 
-moduleImportRules["MegascansPlugin"] = @[
-  makeImportedRuleModule(uerImportBlueprintOnly),
-  makeImportedRuleField(uerIgnore, @[
-      "Get"
-  ])
-]
 
 moduleImportRules["EditorSubsystem"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly)

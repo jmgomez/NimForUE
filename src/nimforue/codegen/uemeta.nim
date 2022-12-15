@@ -204,7 +204,10 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField
   let class = ueCast[UClass](ufun.getOuter())
   let className = class.getPrefixCpp() & class.getName()
   let actualName: string = uFun.getName()
-  let fnNameNim = actualName.removePrefixes(fnPrefixes)
+  var fnNameNim = actualName.removePrefixes(fnPrefixes)
+  if fnNameNim.toLower() == "get": #UE uses a lot of singletons. To avoid collision we do getClass()
+    fnNameNim = fnNameNim & className
+
 
   for rule in rules:
     if actualName in rule.affectedTypes and rule.target == uerTField and rule.rule == uerIgnore: #TODO extract
