@@ -21,11 +21,10 @@ let onEndPIEEvent* {.importcpp:"FEditorDelegates::EndPIE", nodecl.}  : FOnPIEEve
 
 proc getPieWorldContext*(editor:UEditorEnginePtr, worldPIEInstance:int32 = 0) : FWorldContextPtr {.importcpp: "#->GetPIEWorldContext(#)".}
 
-
 proc getEditorWorld*() : UWorldPtr =
-  #notice this wont give you the appriate world when there is multiple viewports
+  #notice this wont give you the appropiated world when there is multiple viewports
   if GPlayInEditorID < 0:
-    var worldContext = GEditor.getPieWorldContext(1)
+    let worldContext = GEditor.getPieWorldContext(1)
     if worldContext.isNil:
       if GEngine.gameViewport.isNotNil:
         return GEngine.gameViewport.getWorld()
@@ -37,45 +36,3 @@ proc getEditorWorld*() : UWorldPtr =
       return worldContext.getWorld()
   return nil
     
-
-# /*static*/
-# UWorld* UWorldStatics::GetActiveWorld()
-# {
-# 	UWorld* world = nullptr;
-# #if WITH_EDITOR
-# 	if (GIsEditor)
-# 	{
-# 		if (GPlayInEditorID == -1)
-# 		{
-# 			FWorldContext* worldContext = GEditor->GetPIEWorldContext(1);
-# 			if (worldContext == nullptr)
-# 			{
-# 				if (UGameViewportClient* viewport = GEngine->GameViewport)
-# 				{
-# 					world = viewport->GetWorld();
-# 				}
-# 			}
-# 			else
-# 			{
-# 				world = worldContext->World();
-# 			}
-# 		}
-# 		else
-# 		{
-# 			FWorldContext* worldContext = GEditor->GetPIEWorldContext(GPlayInEditorID);
-# 			if (worldContext == nullptr)
-# 			{
-# 				return nullptr;
-# 			}
-# 			world = worldContext->World();
-# 		}
-# 	}
-# 	else
-# 	{
-# 		world = GEngine->GetCurrentPlayWorld(nullptr);
-# 	}
-# #else
-# 	world = GEngine->GetCurrentPlayWorld(nullptr);
-# #endif
-# 	return world;
-# }
