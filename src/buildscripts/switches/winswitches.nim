@@ -16,6 +16,14 @@ let pchCompileFlags = @[
   # &"/Fd\"{pchDir}\\PCH.NimForUE.h.pdb\"",
 ]
 
+#The file is created from a function in host which is called from the build rules on the plugin when UBT runs
+proc getSdkVersion() : string =
+  let sdkVersion = "10.0.18362.0"
+  let path = PluginDir / "sdk_version.txt"
+  if fileExists(path):
+    return readFile(PluginDir / "sdk_version.txt")
+  sdkVersion
+
 
 proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string] = 
   result = @[
@@ -64,7 +72,8 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     #
     "/Zf", #faster pdb gen
     "/MP",
-    "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
+    # "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
+    "--sdkversion:" & getSdkVersion()
   ]
   result &= (if withDebug: 
               @["/Od", "/Z7"] 

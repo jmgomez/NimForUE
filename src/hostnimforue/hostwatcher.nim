@@ -17,6 +17,8 @@ var logger : LoggerSignature
 proc registerLogger*(inLogger: LoggerSignature) {.ex.} =
     logger = inLogger
 
+proc setSdkVersion(version:cstring) {.ex.} =
+    writeFile(PluginDir/"sdk_version.txt", $version)
 
 proc loadNueLib*(libName, nextPath: string) =
   var nueLib = libMap[libName]

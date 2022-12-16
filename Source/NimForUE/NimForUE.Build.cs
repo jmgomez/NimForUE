@@ -52,7 +52,7 @@ public class NimForUE : ModuleRules
 				
 			});
 		}
-
+		
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -84,8 +84,9 @@ public class NimForUE : ModuleRules
 
 	}
 
-	
-	
+
+	[DllImport("hostnimforue")]
+	public static extern void setSdkVersion(string sdkVersion);
 
 
 	
@@ -112,7 +113,7 @@ public class NimForUE : ModuleRules
 			PublicDelayLoadDLLs.Add(dllName);
 			PublicAdditionalLibraries.Add(Path.Combine(nimBinPath, libSymbolsName));
 			
-			
+				
 		}
 		else {
 			dynLibPath = Path.Combine(nimBinPath, "libhostnimforue.dylib");
@@ -126,6 +127,7 @@ public class NimForUE : ModuleRules
 		try {
 			//BuildNim();
 			//setNimForUEConfig(PluginDirectory, EngineDirectory, Target.Platform.ToString(), Target.Configuration.ToString());
+			setSdkVersion(Target.WindowsPlatform.WindowsSdkVersion);
 		}
 		catch (Exception e) {
 			Console.WriteLine("There was a problem trying to load Nim. Attention, make sure the EngineDir is set. Otherwise NimForUE wont compile.");
