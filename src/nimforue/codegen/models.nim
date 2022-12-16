@@ -231,7 +231,7 @@ func getFieldByName*(ueTypes:seq[UEType], name:string) : Option[UEField] =
         .foldl(a & b)
         .first(f=>f.name == name)
 
-func getUETypeByName*(ueTypes:seq[UEType], name:string) : Option[UEType] = ueTypes.first(ueType=>ueType.name)
+func getUETypeByName*(ueTypes:seq[UEType], name:string) : Option[UEType] = ueTypes.first(ueType=>ueType.name == name)
 func isMulticastDelegate*(field:UEField) : bool = hasUEMetadata(field, MulticastDelegateMetadataKey)
 func isDelegate*(field:UEField) : bool = hasUEMetadata(field, DelegateMetadataKey)
 func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")
