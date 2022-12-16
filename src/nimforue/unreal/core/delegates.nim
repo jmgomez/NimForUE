@@ -27,7 +27,7 @@ proc reset*(del : var FDelegateHandle) {.importcpp: "#.Reset()"}
 #Delegates a variadic, for now we can just return the type adhoc
 type 
   TMulticastDelegateOneParam*[T] {.importc:"TMulticastDelegate<void('0)>", nodecl.} = object
-  TDelegateRetOneParam*[R, T] {.importc:"TDelegate<'0'('1)>", nodecl.} = object
+  TDelegateRetOneParam*[R, T] {.importcpp:"TDelegate<'0('1)>", nodecl.} = object
 
 #TODO add macro that binds all delegates with all params
 proc addStatic*[T](del: TMulticastDelegateOneParam[T], fn : proc(v:T) {.cdecl.}) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
@@ -39,3 +39,7 @@ proc remove*[T](del: TMulticastDelegateOneParam[T], handle : FDelegateHandle) {.
 
 proc addStatic*[R, T](del: TDelegateRetOneParam[R, T], fn : proc(v:T) : bool {.cdecl.}) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
 proc addStatic*[R, T, P](del: TDelegateRetOneParam[R, T], fn : proc(v:T, p:P) : bool {.cdecl.}, p:P) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
+
+proc createStatic*[R, T](fn : proc(v:T) : bool {.cdecl.}) : TDelegateRetOneParam[R, T] {.importcpp:"TDelegate<bool(float)>::CreateStatic(@)".}
+proc createStatic*[R, T, P](fn : proc(v:T, p:P) : bool {.cdecl.}, p:P) : TDelegateRetOneParam[R, T] {.importcpp:"TDelegate<bool(float)>::CreateStatic(@)".}
+
