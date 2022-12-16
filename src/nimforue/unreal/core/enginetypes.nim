@@ -254,9 +254,10 @@ type
 
 proc getWorld*(worldContext: FWorldContextPtr): UWorldPtr {.importcpp: "#->World()".}
 
+
+
 #	void ForceGarbageCollection(bool bFullPurge = false);
 proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.importcpp: "#->ForceGarbageCollection(#)".}
-
 
 # proc `rootComponent=`*(obj : AActorPtr; val : USceneComponentPtr) =
 #   var value : USceneComponentPtr = val
@@ -290,7 +291,8 @@ proc isTickFunctionRegistered*(self: FActorTickFunction): bool {.importcpp: "#.I
 #UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const
 proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)".} 
 let GEngine* = getEngine()
-proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGetWorldErrorMode) : UWorldPtr  {.importcpp: "#->GetWorldFromContextObject(#, #)".}
+proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGetWorldErrorMode) : UWorldPtr  
+  {.importcpp: "#->GetWorldFromContextObject(#, #)".}
 
 
 

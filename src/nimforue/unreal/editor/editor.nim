@@ -27,6 +27,8 @@ proc getAllViewportClients*(editor:UEditorEnginePtr) : TArray[FEditorViewportCli
 
 proc getWorld*(viewportClient:FEditorViewportClientPtr) : UWorldPtr {.importcpp: "#->GetWorld()".}
 
+proc getGameViewPort*(uworld:UWorldPtr) : UGameViewportClientPtr {. importcpp:"#->GetGameViewport()" .}
+
 proc getEditorWorld*() : UWorldPtr =
   #notice this wont give you the appropiated world when there are multiple viewports
   if GPlayInEditorID < 0:
