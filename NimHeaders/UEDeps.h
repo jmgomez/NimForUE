@@ -1,3 +1,4 @@
+
 #pragma once
 
 #ifndef WITH_ENGINE //Only include definitions is not coming from UBT
@@ -46,4 +47,5 @@
 #ifdef WITH_EDITOR
   #include "Editor/UnrealEdEngine.h"
   #include "Editor/UnrealEd/Public/Editor.h"
+  #include "Editor/UnrealEd/Public/EditorViewportClient.h"
 #endif

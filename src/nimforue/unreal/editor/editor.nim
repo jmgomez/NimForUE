@@ -1,5 +1,5 @@
 include  ../prelude
-import std/typetraits
+import std/[options,sugar, typetraits]
 
 
 
@@ -8,6 +8,8 @@ type
     playWorld* {.importcpp: "PlayWorld".} : UWorldPtr
     editorWorld* {.importcpp: "EditorWorld".} : UWorldPtr
   UEditorEnginePtr* = ptr UEditorEngine
+  FEditorViewportClient* {.importcpp.} = object
+  FEditorViewportClientPtr* = ptr FEditorViewportClient
 
 let GEditor* {.importcpp, nodecl.} : UEditorEnginePtr
 
@@ -21,8 +23,12 @@ let onEndPIEEvent* {.importcpp:"FEditorDelegates::EndPIE", nodecl.}  : FOnPIEEve
 
 proc getPieWorldContext*(editor:UEditorEnginePtr, worldPIEInstance:int32 = 0) : FWorldContextPtr {.importcpp: "#->GetPIEWorldContext(#)".}
 
+proc getAllViewportClients*(editor:UEditorEnginePtr) : TArray[FEditorViewportClientPtr] {.importcpp: "#->GetAllViewportClients()".}
+
+proc getWorld*(viewportClient:FEditorViewportClientPtr) : UWorldPtr {.importcpp: "#->GetWorld()".}
+
 proc getEditorWorld*() : UWorldPtr =
-  #notice this wont give you the appropiated world when there is multiple viewports
+  #notice this wont give you the appropiated world when there are multiple viewports
   if GPlayInEditorID < 0:
     let worldContext = GEditor.getPieWorldContext(1)
     if worldContext.isNil:
@@ -34,5 +40,11 @@ proc getEditorWorld*() : UWorldPtr =
     let worldContext = GEditor.getPieWorldContext(GPlayInEditorID)
     if worldContext.isNotNil:
       return worldContext.getWorld()
-  return nil
+  #At this point we try to return an editor one
+  return GEditor
+          .getAllViewportClients()
+          .toSeq()
+          .head()
+          .map(x=>x.getWorld())
+          .get(nil)
     
