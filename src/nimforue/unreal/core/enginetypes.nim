@@ -5,6 +5,8 @@ import ../nimforue/nimforuebindings
 
 type 
   UEngine* {.importcpp, importcpp, pure .} = object of UObject
+    gameViewport* {.importcpp:"GameViewport"}: UGameViewportClientPtr
+
   UEnginePtr* {.importcpp, pure .} = ptr UEngine
 
   USubsystem* {.importcpp, pure .} = object of UObject
@@ -100,7 +102,10 @@ type
   UVectorField* {.importcpp, inheritable, pure .} = object of UObject
   UVectorFieldPtr* = ptr UVectorField
 
+  FWorldContext* {.importcpp, pure .} = object
+   
 
+  FWorldContextPtr* = ptr FWorldContext
 
   FHitResult* {.importc, bycopy} = object
     bBlockingHit: bool
@@ -149,6 +154,10 @@ type
   EInputDeviceConnectionState* {.importc .} = enum
     Connected, Disconnected, Unknown 
   FTableRowBase* {.importcpp, inheritable, pure .} = object
+
+
+  UGameViewportClient* {.importcpp, inheritable, pure .} = object of UObject
+  UGameViewportClientPtr* = ptr UGameViewportClient
 
   # UNetObjectPrioritizerConfig* {.importcpp .} = object of UObject
   # UReplicationBridge* {.importcpp .} = object of UObject
@@ -243,6 +252,7 @@ type
     ImageSize*: FVector2D
 
 
+proc getWorld*(worldContext: FWorldContextPtr): UWorldPtr {.importcpp: "#->World()".}
 
 #	void ForceGarbageCollection(bool bFullPurge = false);
 proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.importcpp: "#->ForceGarbageCollection(#)".}
