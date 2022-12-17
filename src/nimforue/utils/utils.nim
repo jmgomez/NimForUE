@@ -175,7 +175,7 @@ proc tryGet*[K, V](self: Table[K, V], key: K): Option[V] {.inline.} =
   else: none[V]()
 
 #pointers
-proc isNotNil*[T](v : ptr T) : bool = not v.isNil()
+proc isNotNil*(v : SomePointer) : bool = not v.isNil()
 
 #allocations
 proc newCpp*[T]() :ptr T {.importcpp:"new '*0()".}

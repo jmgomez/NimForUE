@@ -8,8 +8,17 @@ import ../buildscripts/[nimforueconfig, buildscripts]
 
 const genFilePath* {.strdefine.} : string = ""
 
+var prevGameLib : Option[string]
 
-
+#Useful to free del handles in the game/lib
+proc unloadPrevLib(nextLib:string) = 
+  type OnNewLibLoadedFn = proc(): void {.gcsafe, stdcall.} 
+  if prevGameLib.isSome():
+    let lib = loadLib(prevGameLib.get())
+    let onLibUnloaded = cast[OnNewLibLoadedFn](lib.symAddr("onUnloadLib"))
+    onLibUnloaded()
+  
+  prevGameLib = some nextLib
 
 proc getEmitterFromGame(libPath:string) : UEEmitterPtr = 
   type 
@@ -18,10 +27,13 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
   let lib = loadLib(libPath)
   let getEmitter = cast[GetUEEmitterFn](lib.symAddr("getUEEmitter"))
   
-  assert not getEmitter.isNil()
+  assert getEmitter.isNotNil()
 
   let emitterPtr = getEmitter()
   assert not emitterPtr.isNil()
+
+  unloadPrevLib(libPath) 
+
   emitterPtr
 
 

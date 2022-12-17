@@ -24,5 +24,14 @@ proc getSubsystem*[T : USubsystem](objContext : UObjectPtr) : Option[ptr T] =
 #The UEEmitter should also have the package name where it supposed to push
 proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   ueEmitter
 
+type 
+  onGameUnloadedCallback* = proc()
+
+var onGameUnloaded* : onGameUnloadedCallback
+
+proc onUnloadLib() {.exportc, dynlib, cdecl.} =
+  if onGameUnloaded.isNotNil():
+    onGameUnloaded()
+
 
 
