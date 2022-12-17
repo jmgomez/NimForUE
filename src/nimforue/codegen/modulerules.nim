@@ -133,6 +133,7 @@ moduleImportRules["Engine"] = @[
     #issue with a field name 
     "FTransformConstraint", 
     "FTableRowBase",
+    "EInputEvent",
     # "UKismetMathLibrary", #issue with the funcs?,
     "FOnTemperatureChangeDelegate", #Mac gets stuck here?,
     # "UParticleSystem", #collision with a function name and Cascade is deprecated, use Niagara instead.
@@ -225,7 +226,8 @@ moduleImportRules["UMG"] = @[
 
 moduleImportRules["SlateCore"] = @[
   makeImportedRuleType(uerIgnore, @[
-    "FSlateBrush"
+    "FSlateBrush",
+    "FKeyEvent", #"FInputEvent"
   ]),
    makeImportedRuleField(uerIgnore, @[
     "FComboButtonStyle",

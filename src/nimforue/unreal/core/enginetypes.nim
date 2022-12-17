@@ -2,6 +2,7 @@ include ../definitions
 import math/vector
 import ../coreuobject/[uobject, coreuobject, nametypes]
 import ../nimforue/nimforuebindings
+import ../core/[delegates]
 
 type 
   UEngine* {.importcpp, importcpp, pure .} = object of UObject
@@ -146,7 +147,6 @@ type
 
 
   FPlatformUserId* {.importc .} = object
-  FInputDeviceId* {.importc .} = object
   FTopLevelAssetPath* {.importc .} = object
   FARFilter* {.importc .} = object
 
@@ -155,6 +155,8 @@ type
     Connected, Disconnected, Unknown 
   FTableRowBase* {.importcpp, inheritable, pure .} = object
 
+  FViewport* {.importcpp .} = object
+  FViewportPtr* = ptr FViewport
 
   UGameViewportClient* {.importcpp, inheritable, pure .} = object of UObject
   UGameViewportClientPtr* = ptr UGameViewportClient
@@ -314,7 +316,25 @@ type
   UEnhancedPlayerInputPtr* = ptr UEnhancedPlayerInput
   FEnhancedInputActionEventBinding*  {. importcpp, inheritable, pure.} = object
   FInputActionValue* {.importcpp .} = object
-  
+  FKeyEvent* {.importcpp .} = object
+  FkeyEventPtr* = ptr FKeyEvent
+
+  FInputKeyEventArgs* {.importcpp .} = object
+    viewport* {.importcpp:"Viewport".} : FViewportPtr
+    controllerId* {.importcpp:"ControllerId".} : int32
+    inputDevice* {.importcpp:"InputDevice".} : FInputDeviceId
+    key* {.importcpp:"Key".} : FKey
+    event* {.importcpp:"Event".} : EInputEvent
+    amountDepressed* {.importcpp:"AmountDepressed".} : float32
+    isTouchEvent* {.importcpp:"bIsTouchEvent".} : bool
+  FInputKeyEventArgsPtr* = ptr FInputKeyEventArgs
+
+  FInputDeviceId* {.importc .} = object
+  EInputEvent* {.size: sizeof(uint8), importcpp, pure.} = enum
+    IE_Pressed, IE_Released, IE_Repeat, IE_DoubleClick, IE_Axis, IE_MAX
+
+func getKey*(self: FKeyEventPtr) : FKey {.importcpp: "#->GetKey()".}
+
 
 proc bindActionInteral(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) : var FEnhancedInputActionEventBinding {.importcpp:"#->BindAction(@)".}
 proc bindAction*(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) =
@@ -325,3 +345,38 @@ func get*[T:float32 | FVector2D | FVector](input : FInputActionValue) {.importcp
 func axis1D*(input : FInputActionValue) : float32 {.importcpp: "#.Get<float>()".}
 func axis2D*(input : FInputActionValue) : FVector2D  {.importcpp: "#.Get<FVector2D>()".}
 func axis3D*(input : FInputActionValue) : FVector {.importcpp: "#.Get<FVector>()".}
+
+
+type FOnInputKeySignature* = TMulticastDelegateOneParam[FInputKeyEventArgsPtr]
+proc onInputKey*(self: UGameViewportClientPtr) : FOnInputKeySignature  {.importcpp: "#->OnInputKey()".}
+type OnInputKeyEventPressedNimSignature {.exportc.} = proc (keyEventArgs:FInputKeyEventArgsPtr) : void {.cdecl.}
+type OnKeyPressedNimSignature {.exportc.} = proc (keyEventArgs:FkeyEventPtr) : void {.cdecl.}
+
+proc addInputKeyPresed*(self: UGameViewportClientPtr, fn : OnInputKeyEventPressedNimSignature) : FDelegateHandle =
+  {.emit:"""
+  auto constWrapper = [](const FInputKeyEventArgs& args, OnInputKeyEventPressedNimSignature fn){ 
+    fn(const_cast<FInputKeyEventArgs*>(&args)); 
+    };
+    handle = self->OnInputKey().AddStatic(constWrapper, fn);
+  """.}
+  let handle {.importcpp.} : FDelegateHandle 
+  handle
+
+
+
+# Notice this is editor only 
+proc addGlobalEditorKeyPressed*(fn : OnKeyPressedNimSignature) : FDelegateHandle =
+  {.emit:"""
+    auto constWrapper = [](const FKeyEvent& args, OnKeyPressedNimSignature fn){ 
+      fn( const_cast<FKeyEvent*>(&args)); 
+    };
+	  handle = FSlateApplication::Get().OnApplicationPreInputKeyDownListener().AddStatic(constWrapper, fn);
+  """.}
+  let handle {.importcpp.} : FDelegateHandle 
+  handle
+
+
+proc removeGlobalEditorKeyPressed*(handle: FDelegateHandle) =
+  {.emit:"""
+    FSlateApplication::Get().OnApplicationPreInputKeyDownListener().Remove(handle);
+  """.}

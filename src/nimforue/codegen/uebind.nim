@@ -604,7 +604,7 @@ func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode =
   result= genAst(typeName, fields):
         type typeName* {.inject, size:sizeof(uint8), pure.} = enum     
           fields
-  
+
   result[0][^1] = fields #replaces enum 
 
 
