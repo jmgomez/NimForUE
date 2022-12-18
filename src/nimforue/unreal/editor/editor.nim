@@ -1,5 +1,5 @@
 include  ../prelude
-import std/[options,sugar, typetraits]
+import std/[options,sugar, typetraits, sequtils]
 
 
 
@@ -8,8 +8,13 @@ type
     playWorld* {.importcpp: "PlayWorld".} : UWorldPtr
     editorWorld* {.importcpp: "EditorWorld".} : UWorldPtr
   UEditorEnginePtr* = ptr UEditorEngine
-  FEditorViewportClient* {.importcpp.} = object
+  FEditorViewportClient* {.importcpp, inheritable.} = object
   FEditorViewportClientPtr* = ptr FEditorViewportClient
+  FLevelEditorViewportClient* {.importcpp.} = object of FEditorViewportClient
+  FLevelEditorViewportClientPtr* = ptr FLevelEditorViewportClient
+
+  FViewportCursorLocation* {.importcpp.} = object
+
 
 let GEditor* {.importcpp, nodecl.} : UEditorEnginePtr
 
@@ -24,6 +29,7 @@ let onEndPIEEvent* {.importcpp:"FEditorDelegates::EndPIE", nodecl.}  : FOnPIEEve
 proc getPieWorldContext*(editor:UEditorEnginePtr, worldPIEInstance:int32 = 0) : FWorldContextPtr {.importcpp: "#->GetPIEWorldContext(#)".}
 
 proc getAllViewportClients*(editor:UEditorEnginePtr) : TArray[FEditorViewportClientPtr] {.importcpp: "#->GetAllViewportClients()".}
+proc getLevelViewportClients*(editor:UEditorEnginePtr) : TArray[FLevelEditorViewportClientPtr] {.importcpp: "#->GetLevelViewportClients()".}
 
 proc getWorld*(viewportClient:FEditorViewportClientPtr) : UWorldPtr {.importcpp: "#->GetWorld()".}
 
@@ -50,3 +56,18 @@ proc getEditorWorld*() : UWorldPtr =
           .map(x=>x.getWorld())
           .get(nil)
     
+proc getEditorViewportClient*(editorWorld:UWorldPtr) : FEditorViewportClientPtr = GEditor.getAllViewportClients().toSeq().filterIt(it.getWorld()==editorWorld).head().get(nil)
+
+# proc getMouseX*(viewportClient:FEditorViewportClientPtr) : int32 {.importcpp: "#->GetMouseX()".}
+proc getViewLocation*(viewportClient:FEditorViewportClientPtr) : FVector {.importcpp: "#->GetViewLocation()".}
+
+
+proc getCursorWorldLocation*(viewportClient:FEditorViewportClientPtr) : FViewportCursorLocation {.importcpp: "#->GetCursorWorldLocationFromMousePos()".}
+
+
+proc getOrigin*(cursorLocation:FViewportCursorLocation) : FVector {.importcpp: "#.GetOrigin()".}
+proc getDirection*(cursorLocation:FViewportCursorLocation) : FVector {.importcpp: "#.GetDirection()".}
+proc getCursorPos*(cursorLocation:FViewportCursorLocation) : FIntPoint {.importcpp: "#.GetCursorPos()".}
+
+proc `$`*(cursorLocation:FViewportCursorLocation) : string =
+  "Origin: " & $cursorLocation.getOrigin() & " Direction: " & $cursorLocation.getDirection() & " CursorPos: " & $cursorLocation.getCursorPos()

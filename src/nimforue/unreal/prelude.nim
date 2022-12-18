@@ -4,8 +4,9 @@ import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype, tsoftob
 import ../unreal/core/containers/[unrealstring, array, map, set]
 import ../unreal/core/math/[vector]
 import ../unreal/core/[ftext, coreglobals]
-import ../unreal/core/[enginetypes, delegates, unrealmemory]
+import ../unreal/core/[delegates, unrealmemory]
 import ../unreal/runtime/[assetregistry]
+import ../unreal/engine/[enginetypes, world]
 
 
 import ../utils/[utils, ueutils]

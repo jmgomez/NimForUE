@@ -175,6 +175,7 @@ proc isChildOf*[T:UObject](cls: UClassPtr) : bool =
 
 
 proc isChildOf*[C:UStruct, P:UStruct] : bool = isChildOf(staticClass[C](), staticClass[P]())
+proc TSubclass*[T]() : TSubclassOf[T] = makeTSubClassOf[T](staticClass[T]())
 
 proc getDefaultObject*[T:UObject]() : ptr T =
     let cls = staticClass[T]()

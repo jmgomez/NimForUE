@@ -49,6 +49,9 @@ func tap*[T](xs: seq[T], fn: (x: T)->void): seq[T] =
 
 func flatten*[T](xs: seq[seq[T]]): seq[T] = xs.foldl(a & b, newSeq[T]())
 
+func tryGet*[T](xs: seq[T], idx: int): Option[T] =
+  if idx < 0 or idx >= len(xs): none[T]()
+  else: some(xs[idx])
 
 #TODO use concepts to make the general case
 func sequence*[T](xs : seq[Option[T]]) : seq[T] = 

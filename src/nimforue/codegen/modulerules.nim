@@ -20,6 +20,7 @@ const ManuallyImportedClasses* = @[
       "UInputAction",
       "UPlayerInput",
       "UEnhancedPlayerInput",
+      "APawn","UPhysicalMaterial", 
 ]
 
 type
@@ -129,7 +130,7 @@ moduleImportRules["Engine"] = @[
     codegenOnly, 
     makeImportedRuleType(uerIgnore, @[
     "FVector", "FSlateBrush",
-    "FHitResult",
+    "FHitResult","FActorInstanceHandle",
     #issue with a field name 
     "FTransformConstraint", 
     "FTableRowBase",
@@ -196,6 +197,10 @@ moduleImportRules["InputCore"] = @[
     "FKey"
   ]),
   makeImportedRuleModule(uerImportBlueprintOnly)
+]
+moduleImportRules["PhysicsCore"] = @[
+  codegenOnly,  makeImportedRuleModule(uerImportBlueprintOnly)
+
 ]
 
 

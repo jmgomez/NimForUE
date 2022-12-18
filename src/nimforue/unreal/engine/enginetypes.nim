@@ -1,5 +1,5 @@
 include ../definitions
-import math/vector
+import ../core/math/vector
 import ../coreuobject/[uobject, coreuobject, nametypes]
 import ../nimforue/nimforuebindings
 import ../core/[delegates]
@@ -33,8 +33,8 @@ type
   AControllerPtr* = ptr AController
   APlayerController* {.importcpp, inheritable, pure .}= object of AController
   APlayerControllerPtr* = ptr APlayerController
-  # APawn* {.importcpp, inheritable, pure .} = object of AActor
-  # APawnPtr* = ptr APawn
+  APawn* {.importcpp, inheritable, pure .} = object of AActor
+  APawnPtr* = ptr APawn
 
   AInfo* {.importcpp, inheritable, pure .}= object of AActor
   AInfoPtr* = ptr AInfo
@@ -53,8 +53,8 @@ type
   UActorComponentPtr* = ptr UActorComponent
   USceneComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
   USceneComponentPtr* = ptr USceneComponent
-  # UPrimitiveComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
-  # UPrimitiveComponentPtr* = ptr UPrimitiveComponent
+  UPrimitiveComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
+  UPrimitiveComponentPtr* = ptr UPrimitiveComponent
   # UShapeComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
   # UShapeComponentPtr* = ptr UShapeComponent
   # UChildActorComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
@@ -108,8 +108,27 @@ type
 
   FWorldContextPtr* = ptr FWorldContext
 
-  FHitResult* {.importc, bycopy} = object
-    bBlockingHit: bool
+  FHitResult* {.importcpp} = object
+    faceIndex* {.importcpp: "FaceIndex".}: int32
+    time* {.importcpp: "Time".}: float32
+    distance* {.importcpp: "Distance".}: float32
+    location* {.importcpp: "Location".}: FVector_NetQuantize
+    impactPoint* {.importcpp: "ImpactPoint".}: FVector_NetQuantize
+    normal* {.importcpp: "Normal".}: FVector_NetQuantizeNormal
+    impactNormal* {.importcpp: "ImpactNormal".}: FVector_NetQuantizeNormal
+    traceStart* {.importcpp: "TraceStart".}: FVector_NetQuantize
+    traceEnd* {.importcpp: "TraceEnd".}: FVector_NetQuantize
+    penetrationDepth* {.importcpp: "PenetrationDepth".}: float32
+    myItem* {.importcpp: "MyItem".}: int32
+    item* {.importcpp: "Item".}: int32
+    elementIndex* {.importcpp: "ElementIndex".}: uint8
+    bBlockingHit* {.importcpp: "bBlockingHit".}: bool
+    bStartPenetrating* {.importcpp: "bStartPenetrating".}: bool
+    # physMaterial* {.importcpp: "PhysMaterial".}: UPhysicalMaterialPtr 
+    hitObjectHandle* {.importcpp: "HitObjectHandle".}: FActorInstanceHandle 
+    # component* {.importcpp: "Component".}: TWeakObjectPtr[UPrimitiveComponentPtr]
+    boneName* {.importcpp: "BoneName".}: FName
+    myBoneName* {.importcpp: "MyBoneName".}: FName
 
   # UDeveloperSettings* {.importcpp .} = object of UObject
   UEdGraphNode* {.importcpp .} = object of UObject
@@ -161,6 +180,8 @@ type
   UGameViewportClient* {.importcpp, inheritable, pure .} = object of UObject
   UGameViewportClientPtr* = ptr UGameViewportClient
 
+  FActorInstanceHandle* {.importcpp .} = object
+
   # UNetObjectPrioritizerConfig* {.importcpp .} = object of UObject
   # UReplicationBridge* {.importcpp .} = object of UObject
   # UNetBlobHandler* {.importcpp .} = object of UObject
@@ -197,8 +218,8 @@ type
   # UInputComponentPtr* = ptr UInputComponent
   # ALevelScriptActor* {.importcpp, inheritable, pure .} = object of AActor
   # ALevelScriptActorPtr* = ptr ALevelScriptActor
-  # UPhysicalMaterial* {.importcpp, inheritable, pure .} = object of UObject
-  # UPhysicalMaterialPtr* = ptr UPhysicalMaterial
+  UPhysicalMaterial* {.importcpp, inheritable, pure .} = object of UObject
+  UPhysicalMaterialPtr* = ptr UPhysicalMaterial
   # UPhysicalMaterialMask* {.importcpp, inheritable, pure .} = object of UObject
   # UPhysicalMaterialMaskPtr* = ptr UPhysicalMaterialMask
   # UHLODLayer* {.importcpp, inheritable, pure .} = object of UObject
@@ -225,7 +246,6 @@ type
   # UDataLayerPtr* = ptr UDataLayer
   
 
-proc makeFHitResult*(): FHitResult {.importcpp:"FHitResult()", constructor.}
 
 
 
@@ -334,7 +354,7 @@ type
     IE_Pressed, IE_Released, IE_Repeat, IE_DoubleClick, IE_Axis, IE_MAX
 
 func getKey*(self: FKeyEventPtr) : FKey {.importcpp: "#->GetKey()".}
-
+func getCharacter*(self: FKeyEventPtr) : char {.importcpp: "#->GetCharacter()".}
 
 proc bindActionInteral(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) : var FEnhancedInputActionEventBinding {.importcpp:"#->BindAction(@)".}
 proc bindAction*(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) =

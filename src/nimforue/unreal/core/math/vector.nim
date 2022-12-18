@@ -8,10 +8,11 @@ import ../containers/unrealstring
 #Not sure if it will be better to just do an alias 
 
 #TODO need to handle float64 vs float32 not sure how ue exactly does it
-type FVector*{.importcpp } = object
+type FVector*{.importcpp, inheritable .} = object
   x* {.importcpp:"X".} : float32
   y* {.importcpp:"Y".} : float32
   z* {.importcpp:"Z".} : float32
+
 
 
 
@@ -30,3 +31,11 @@ func `*`*(a : SomeNumber, b: FVector): FVector {.importcpp:"# * #", noSideEffect
 func `*`*(a : FVector, b: SomeNumber): FVector {.importcpp:"# * #", noSideEffect.}
 func `==`*(a,b: FVector): bool {.importcpp:"# == #", noSideEffect.}
 
+
+
+type 
+  FVector_NetQuantize*{.importcpp, inheritable } = object of FVector #Better in net related stuff
+  FVector_NetQuantizeNormal*{.importcpp, inheritable } = object of FVector 
+
+
+# converter toVector*(v: FVector_NetQuantize | FVector_NetQuantizeNormal): FVector = FVector(x: v.x, y: v.y, z: v.z)

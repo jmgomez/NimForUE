@@ -6,7 +6,7 @@ import std/[strformat, options]
 include ../definitions
 import ../../codegen/models
 import ../../utils/[utils, ueutils]
-import ../core/enginetypes
+import ../engine/enginetypes
 import std/[typetraits, tables, strutils, sequtils, sugar]
 
 

@@ -36,7 +36,7 @@
 #include "../Source/NimForUE/Public/NimForUEHeaders.h"
 //Editor only
 //#include "FakeFactory.h"
-
+#include "PhysicsCore/Public/PhysicalMaterials/PhysicalMaterial.h"
 
 
 
@@ -48,4 +48,5 @@
   #include "Editor/UnrealEdEngine.h"
   #include "Editor/UnrealEd/Public/Editor.h"
   #include "Editor/UnrealEd/Public/EditorViewportClient.h"
+  #include "Editor/UnrealEd/Public/LevelEditorViewport.h"
 #endif
