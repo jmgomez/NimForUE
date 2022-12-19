@@ -298,6 +298,9 @@ proc setRootComponent*(actor : AActorPtr, newRootComponent : USceneComponentPtr)
 proc getRootComponent*(actor : AActorPtr): USceneComponentPtr {.importcpp: "#->GetRootComponent()".}
   # void SetActorHiddenInGame(bool bNewHidden);
 proc setupAttachment*(obj, inParent : USceneComponentPtr, inSocketName : FName = ENone) {.importcpp: "#->SetupAttachment(@)".}
+proc registerComponent*(obj : UActorComponentPtr) {.importcpp: "#->RegisterComponent()".}
+proc unRegisterComponent*(obj : UActorComponentPtr) {.importcpp: "#->UnregisterComponent()".}
+proc destroyComponent*(obj : UActorComponentPtr, bPromoteChildren=false) {.importcpp: "#->DestroyComponent(#)".}
 
 
 type EGetWorldErrorMode* {.importcpp, size: sizeof(uint8).} = enum

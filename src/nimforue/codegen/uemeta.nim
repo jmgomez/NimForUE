@@ -661,7 +661,6 @@ proc callSuperConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   let obj = initializer.getObj()
   let cls = obj.getClass()
   let cppCls = cls.getFirstCppClass()
-  UE_Warn &"Calling super constructor for {cppCls.getName()}"
   cppCls.classConstructor(initializer)
   let actor = tryUECast[AActor](obj)
   if actor.isSome():
