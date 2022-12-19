@@ -14,6 +14,7 @@ var logger : LoggerSignature
 
 {.pragma: ex, exportc, cdecl, dynlib.}
 
+
 proc registerLogger*(inLogger: LoggerSignature) {.ex.} =
     logger = inLogger
 

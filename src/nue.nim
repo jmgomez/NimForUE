@@ -184,8 +184,16 @@ task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindin
 
 
 task setup, "Setups the plugin by building the initial tasks in order":
-  host(taskOptions)
   ubuild(taskOptions)
   guest(taskOptions)
+
+
+task ok, "prints ok if NUE and Host are built":
+  if fileExists(HostLibPath):
+    log "ok host built"
+  else:
+    log "host not built"
+    host(taskOptions)
+  
 # --- End Tasks ---
 main()

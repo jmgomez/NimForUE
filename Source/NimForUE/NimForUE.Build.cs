@@ -79,9 +79,10 @@ public class NimForUE : ModuleRules
 
 		// CppStandard = CppStandardVersion.Cpp14;
 		//TODO This is only for dev. Research build path. Especially for platforms like iOS
+		
 		AddNimForUEDev();
 		
-
+		
 	}
 
 
@@ -97,9 +98,19 @@ public class NimForUE : ModuleRules
 	[DllImport("kernel32.dll")]
 	static extern bool SetDllDirectory(string lpPathName);
 
+	void NimbleSetup() {
+		var processInfo = new ProcessStartInfo();
+		processInfo.WorkingDirectory = PluginDirectory;
+		Console.WriteLine("Running nimble setup in", PluginDirectory);
+		processInfo.FileName = "nimble.exe";
+		processInfo.Arguments = "ok";
+		var process = Process.Start(processInfo);
+		process.WaitForExit();
+	}
+
 	//TODO Run buildlibs from here so the correct config/platform is picked when building
 	void AddNimForUEDev() { //ONLY FOR WIN/MAC with EDITOR (dev) target
-
+		NimbleSetup(); //Make sure NUE and Host are built
 		var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue");
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
 		string dynLibPath;
