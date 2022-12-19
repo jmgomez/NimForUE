@@ -108,7 +108,7 @@ type
 
   FWorldContextPtr* = ptr FWorldContext
 
-  FHitResult* {.importcpp} = object
+  FHitResult* {.importcpp, pure.} = object
     faceIndex* {.importcpp: "FaceIndex".}: int32
     time* {.importcpp: "Time".}: float32
     distance* {.importcpp: "Distance".}: float32
@@ -170,7 +170,7 @@ type
   FARFilter* {.importc .} = object
 
 
-  EInputDeviceConnectionState* {.importc .} = enum
+  EInputDeviceConnectionState* {.importc, pure .} = enum
     Connected, Disconnected, Unknown 
   FTableRowBase* {.importcpp, inheritable, pure .} = object
 
@@ -321,7 +321,7 @@ proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGe
 
 # INPUT ACTION. This should live in another place.
 type 
-  ETriggerEvent* {.importcpp, size: sizeof(uint8).} = enum
+  ETriggerEvent* {.importcpp, size: sizeof(uint8), pure.} = enum
     None, Triggered, Started, Ongoing, Canceled, Completed, ETriggerEvent_MAX
 
   UInputComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
@@ -339,7 +339,7 @@ type
   FKeyEvent* {.importcpp .} = object
   FkeyEventPtr* = ptr FKeyEvent
 
-  FInputKeyEventArgs* {.importcpp .} = object
+  FInputKeyEventArgs* {.importcpp, pure .} = object
     viewport* {.importcpp:"Viewport".} : FViewportPtr
     controllerId* {.importcpp:"ControllerId".} : int32
     inputDevice* {.importcpp:"InputDevice".} : FInputDeviceId
