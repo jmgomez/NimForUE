@@ -38,8 +38,7 @@ proc ensureGuestIsCompiledImpl*()  =
   let guestLibPath = getLastLibPath(NimForUELibDir, "nimforue")
   if guestLibPath.isNone():
     log "NimForUE lib not found. Will compile it now..."
-    let cmd = &"{PluginDir}/nue.exe guest"
-    let (output, _) = execCmdEx(cmd)
+    let output = compileGuestSyncFromPlugin()
     log output
   start()
 
