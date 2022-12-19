@@ -52,24 +52,25 @@ public class NimForUE : ModuleRules
 				
 			});
 		}
-		
+
 		PrivateDependencyModuleNames.AddRange(
-			new string[]
-			{
+			new string[] {
 				"CoreUObject",
 				"Engine",
 				"Slate",
 				"SlateCore",
-				
+
 				"NimForUEBindings",
 				"EditorStyle",
 				"Projects",
 				"EnhancedInput"
-			
+
+
 			}
-			);
+		);
 		
-		
+
+
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
 			{
@@ -123,8 +124,7 @@ public class NimForUE : ModuleRules
 			RuntimeDependencies.Add(dynLibPath);
 			PublicDelayLoadDLLs.Add(dllName);
 			PublicAdditionalLibraries.Add(Path.Combine(nimBinPath, libSymbolsName));
-			
-				
+
 		}
 		else {
 			dynLibPath = Path.Combine(nimBinPath, "libhostnimforue.dylib");

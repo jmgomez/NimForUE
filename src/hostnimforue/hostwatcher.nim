@@ -18,6 +18,9 @@ var logger : LoggerSignature
 proc registerLogger*(inLogger: LoggerSignature) {.ex.} =
     logger = inLogger
 
+proc ensureGuestIsCompiled*() : void {.ex.} =
+    ensureGuestIsCompiledImpl()
+
 proc setSdkVersion(version:cstring) {.ex.} =
     writeFile(PluginDir/"sdk_version.txt", $version)
 
@@ -30,7 +33,7 @@ proc loadNueLib*(libName, nextPath: string) =
     libMap[libName] = nueLib
     onLibLoaded(libName.cstring, nextPath.cstring, (nueLib.timesReloaded - 1).cint)
 
-
+#This could be done internally by exposing epol
 proc checkReload*() {.ex.} = #only for nimforue (plugin)
     let plugin = "nimforue"
     for currentLib in libMap.keys:

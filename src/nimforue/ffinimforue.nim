@@ -3,7 +3,7 @@
 include unreal/prelude
 import unreal/editor/editor
 import ../nimforue/codegen/[ffi,emitter, genreflectiondata, models, uemeta, ueemit]
-import std/[options, strformat, dynlib]
+import std/[options, strformat, dynlib, os, osproc]
 import ../buildscripts/[nimforueconfig, buildscripts]
 
 const genFilePath* {.strdefine.} : string = ""
@@ -76,7 +76,13 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
         emitNueTypes(getGlobalEmitter()[], "Nim")
         if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
           #Base the condition on if Game needs to be compiled or not.
-          execBindingGeneration(shouldRunSync=true)                
+          let doesTheGameExists = fileExists(GameLibPath)       
+          execBindingGeneration(shouldRunSync=not doesTheGameExists)                
+          if doesTheGameExists:
+            UE_Log "Game lib doesnt exists, compiling it now:"
+            let (output, _) = execCmdEx(&"{PluginDir}/nue.exe game")
+            UE_Log output
+
     of "game":
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
     
