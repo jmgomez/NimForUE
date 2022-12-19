@@ -99,6 +99,7 @@ task h, "Alias to host":
   host(taskOptions)
 
 
+
 task cleanh, "Clean the .nimcache/host folder":
   removeDir(".nimcache/host")
 
@@ -198,7 +199,10 @@ task ok, "prints ok if NUE and Host are built":
     log "host not built"
     host(taskOptions)
   
-  
+task starteditor, "opens the editor":
+  when defined windows:
+    discard execCmd("powershell.exe "&GamePath)
+
   
 # --- End Tasks ---
 main()
