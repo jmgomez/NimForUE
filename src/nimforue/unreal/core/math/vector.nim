@@ -8,7 +8,7 @@ import ../containers/unrealstring
 #Not sure if it will be better to just do an alias 
 
 #TODO need to handle float64 vs float32 not sure how ue exactly does it
-type FVector*{.importcpp, inheritable .} = object
+type FVector*{.importcpp, inheritable,pure, bycopy .} = object
   x* {.importcpp:"X".} : float32
   y* {.importcpp:"Y".} : float32
   z* {.importcpp:"Z".} : float32

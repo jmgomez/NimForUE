@@ -201,16 +201,17 @@ uClass AActorCodegen of AActor:
         UE_Error &"Error: {e.getStackTrace()}"
         UE_Error &"Failed to generate reflection data"
     
-    proc genReflectionDataAndBindings() = 
+    proc genReflectionDataAndBindingsAsync() = 
+        execBindingGeneration(shouldRunSync=false)    
+    proc genReflectionDataAndBindingsSync() = 
       try:
-        execBindingsGenerationInAnotherThread()
-       
+        execBindingGeneration(shouldRunSync=true)                       
       except:
         let e : ref Exception = getCurrentException()
         UE_Error &"Error: {e.msg}"
         UE_Error &"Error: {e.getStackTrace()}"
         UE_Error &"Failed to generate reflection data"
-   
+
     proc showType() = 
       let obj = getUTypeByName[UDelegateFunction]("UMG.ComboBoxKey:OnOpeningEvent"&DelegateFuncSuffix)
       let obj2 = getUTypeByName[UDelegateFunction]("OnOpeningEvent"&DelegateFuncSuffix)

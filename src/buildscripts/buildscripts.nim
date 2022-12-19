@@ -1,7 +1,9 @@
+
 import std/[
   algorithm,
   options,
   os,
+  osproc,
   sequtils,
   strformat,
   strscans,
@@ -9,6 +11,9 @@ import std/[
   sugar,
   times
   ]
+
+
+
 
 import buildcommon, nimforueconfig
 export buildcommon, nimforueconfig
@@ -57,6 +62,15 @@ proc getLastLibPath*(libPath, libName:string): Option[string] =
     return none[string]()
   some libs[0]
 
+
+proc compileGameSyncFromPlugin*() : string = 
+  let (output, _) = execCmdEx(&"{PluginDir}/nue.exe game")
+  output
+
+proc compileGuestSyncFromPlugin*() : string = 
+  let cmd = &"{PluginDir}/nue.exe guest"
+  let (output, _) = execCmdEx(cmd)
+  output
 
 
 proc copyNimForUELibToUEDir*(libName:string) = 

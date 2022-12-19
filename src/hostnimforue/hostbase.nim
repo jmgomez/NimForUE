@@ -1,10 +1,17 @@
-import std/[locks, dynlib, options, tables]
+import std/[locks, dynlib, options, tables, strformat, os, osproc]
 import ../buildscripts/[buildscripts]
 
 var libLock* : Lock
 initLock(libLock)
 
+type LoggerSignature* = proc(msg:cstring) {.cdecl, gcsafe.}
+var logger* : LoggerSignature
 
+proc log(str:string) = 
+  if logger != nil:
+    logger(str.cstring)
+  else:
+    echo str
 
 type 
   NueLib* = object
@@ -13,15 +20,28 @@ type
     timesReloaded* : int
 
 func isInit*(lib : NueLib) : bool = lib.lib != nil
+var libMap* : Table[string, NueLib]
+proc start() = 
+  libMap = {
+    "nimforue" : NueLib(lastLoadedPath: getLastLibPath(NimForUELibDir, "nimforue").get())
+  }.toTable()
 
-var libMap* : Table[string, NueLib] = {
-  "nimforue" : NueLib(lastLoadedPath: getLastLibPath(NimForUELibDir, "nimforue").get())
-}.toTable()
+  #Game must be compiled at least once. 
+  let gameLibPath = getLastLibPath(NimForUELibDir, "game")
+  if gameLibPath.isSome():
+    libMap["game"] = NueLib(lastLoadedPath: gameLibPath.get())
 
-#Game must be compiled at least once. 
-let gameLibPath = getLastLibPath(NimForUELibDir, "game")
-if gameLibPath.isSome():
-  libMap["game"] = NueLib(lastLoadedPath: gameLibPath.get())
+
+
+
+proc ensureGuestIsCompiledImpl*()  = 
+  let guestLibPath = getLastLibPath(NimForUELibDir, "nimforue")
+  if guestLibPath.isNone():
+    log "NimForUE lib not found. Will compile it now..."
+    let output = compileGuestSyncFromPlugin()
+    log output
+  start()
+
 
 
 

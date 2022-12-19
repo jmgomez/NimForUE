@@ -13,7 +13,7 @@ const ManuallyImportedClasses* = @[
       "UBlueprint", "UBlueprintGeneratedClass",
       "APlayerController", "UAnimBlueprintGeneratedClass",
       "UEngineSubsystem", "USubsystem", "UDynamicSubsystem", "UWorldSubsystem",
-      "USceneComponent",
+      "USceneComponent", "UPrimitiveComponent",
       "UWorld",
       "UInputComponent",
       "UEnhancedInputComponent",

@@ -137,6 +137,7 @@ let
   ueLibsDir = PluginDir/"Binaries"/"nim"/"ue" #THIS WILL CHANGE BASED ON THE CURRENT CONF
   NimForUELibDir* = ueLibsDir.normalizePathEnd()
   HostLibPath* =  ueLibsDir / getFullLibName("hostnimforue")
+  GameLibPath* =  ueLibsDir / getFullLibName("game")
   GenFilePath* = PluginDir / "src" / "hostnimforue"/"ffigen.nim"
   NimGameDir* = config.gameDir / "NimForUE"
   GamePath* = getGamePathFromGameDir(config.gameDir)

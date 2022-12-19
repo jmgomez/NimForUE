@@ -31,6 +31,7 @@ void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		UE_LOG(LogTemp, Log, TEXT("From NimForUEHost: %s"), *FString(msg));
 	};
 	registerLogger(logger);
+	ensureGuestIsCompiled();
 	checkReload();
 	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick), 0.1);
 }
