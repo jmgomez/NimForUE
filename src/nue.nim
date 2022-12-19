@@ -18,9 +18,12 @@ var tasks: seq[tuple[name:string, t:Task]]
 template task(taskName: untyped, desc: string, body: untyped): untyped =
   proc `taskName`(taskOptions: Table[string, string]) {.nimcall.} =
     let start = now()
+    let curDir = getCurrentDir()
+    setCurrentDir(PluginDir)
     log ">>>> Task: " & astToStr(taskName) & " <<<<"
     body
     log "!!>> " & astToStr(taskName) & " Time: " & $(now() - start) & " <<<<"
+    setCurrentDir(curDir)
   tasks.add (name:astToStr(taskName), t:Task(name: astToStr(taskName), description: desc, routine: `taskName`))
 
 
@@ -194,6 +197,8 @@ task ok, "prints ok if NUE and Host are built":
   else:
     log "host not built"
     host(taskOptions)
+  
+  
   
 # --- End Tasks ---
 main()

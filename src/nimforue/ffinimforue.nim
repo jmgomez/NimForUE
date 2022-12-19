@@ -75,7 +75,8 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
     of "nimforue": 
         emitNueTypes(getGlobalEmitter()[], "Nim")
         if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
-          execBindingsGenerationInAnotherThread()                
+          #Base the condition on if Game needs to be compiled or not.
+          execBindingGeneration(shouldRunSync=true)                
     of "game":
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
     

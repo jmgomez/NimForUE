@@ -144,7 +144,7 @@ const project* = $1
   # UE_Warn $ueProject
 
 
-proc genUnrealBindings*(gameModules, plugins: seq[string]) =
+proc genUnrealBindings*(gameModules, plugins: seq[string], shouldRunSync:bool) =
   try:
     let ueProject = genReflectionData(gameModules, plugins)
     # return
@@ -166,15 +166,14 @@ proc genUnrealBindings*(gameModules, plugins: seq[string]) =
       stdOut : FString
       stdErr : FString
 
-    let code = executeCmd(cmd, args, dir, stdOut, stdErr)
-
-    # let str = execProcess(cmd, 
-    #       workingDir=config.pluginDir, 
-    #     #  options={poEvalCommand, poDaemon}
-    # )
-    UE_Log $code
-    UE_Warn "output" & stdOut
-    # UE_Error "error" & stdErr
+    var code : int
+    if shouldRunSync:
+      let (output, _) = execCmdEx(&"{cmd} {args}")
+      UE_Log output
+    else:
+      code = executeCmd(cmd, args, dir, stdOut, stdErr)
+      UE_Log $code
+      UE_Warn "output" & stdOut
   except:
     let e : ref Exception = getCurrentException()
     UE_Error &"Error: {e.msg}"
@@ -183,7 +182,7 @@ proc genUnrealBindings*(gameModules, plugins: seq[string]) =
 
 
 proc NimMain() {.importc.}
-proc execBindingsGenerationInAnotherThread*() {.cdecl.}= 
+proc execBindingGeneration*(shouldRunSync:bool) {.cdecl.}= 
   # genUnrealBindings()
   # UE_Warn "Hello from another thread"
   proc ffiWraper(config:ptr NimForUEConfig) {.cdecl.} = 
@@ -196,4 +195,4 @@ proc execBindingsGenerationInAnotherThread*() {.cdecl.}=
   let plugins = getAllInstalledPlugins()
   let gameModules = getGameModules()
   # executeTaskInTaskGraph[ptr NimForUEConfig](config.unsafeAddr, ffiWraper)
-  genUnrealBindings(gameModules, plugins)
+  genUnrealBindings(gameModules, plugins, shouldRunSync)
