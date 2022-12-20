@@ -145,7 +145,7 @@ moduleImportRules["Engine"] = @[
   makeImportedRuleField(uerIgnore, @[
     "PerInstanceSMCustomData", 
     "PerInstanceSMData",
-    "ObjectTypes",
+    # "ObjectTypes",
     "EvaluatorMode",
     "RootComponent", #Manually imported
     # "AudioLinkSettings" #I should instead not import property of certain type

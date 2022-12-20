@@ -28,6 +28,12 @@ func cleanTObjectPtr(prop:string) : string =
     else:
         return prop
 
+func cleanTEnum(prop:string) : string = 
+    if prop.extractOuterGenericInNimFormat() == "TEnumAsByte":
+        return prop.extractInnerGenericInNimFormat()
+    else:
+        return prop
+
 func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expected type is something that UEField can understand
   func cleanCppType(cppType: string): string =
     #Do multireplacehere
@@ -38,7 +44,7 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
     if cppType == "float": return "float32"
     if cppType == "double": return "float64"
     if cppType == "uint8" and prop.getName().startsWith("b"): return "bool"
-    return cppType.cleanTObjectPtr()
+    return cppType.cleanTObjectPtr().cleanTEnum()
     
 
   if prop.isTArray():
@@ -66,9 +72,7 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
     if cppType == "double": return "float64"
     if cppType == "float": return "float32"
 
-    if prop.isTEnum(): #Not sure if it would be better to just support it on the macro
-      return cppType.replace("TEnumAsByte<", "")
-        .replace(">", "")
+
     if prop.isInterface():
       let class = castField[FInterfaceProperty](prop).getInterfaceClass()
       return fmt"TScriptInterface[U{class.getName()}]"
