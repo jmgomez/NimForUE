@@ -53,9 +53,9 @@ proc targetSwitches*(withDebug: bool): seq[string] =
         #in windows they use -Zi and we manually pass over Z7 (because of UE PCH) so we only set --lineDir:on
           ts &= @["--linedir:on"]#, "--debugInfo"]
         
-      ts
+      ts & @["--stacktrace:on", "--linedir:on"]
     of Shipping: @["--danger"]
-      
+  
 
 proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, true, "")
 proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "guest") 

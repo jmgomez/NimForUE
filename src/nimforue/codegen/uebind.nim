@@ -273,7 +273,13 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
           genAst(): obj.processMulticastDelegate(param.addr)
     else: genAst(): callUFuncOn(obj, fnName, param.addr)
 
-
+  let outParams = 
+    nnkStmtList.newTree(
+      funField.signature
+        .filterIt(it.isOutParam and not it.isReturnParam)
+        .mapIt(it.name)
+        .mapIt(nnkAsgn.newTree(ident(it.firstToLow().ueNameToNimName), nnkDotExpr.newTree(ident("param"), ident(it.firstToLow().ueNameToNimName))))
+    )
 
   let returnCall = if funField.doesReturn(): 
             genAst(): 
@@ -288,12 +294,13 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
               )
   let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
 
-  var fnBody = genAst(uFnName=newStrLitNode(funField.actualFunctionName), paramInsideBodyAsType, paramDeclaration, generateObjForStaticFunCalls, callUFuncOn, returnCall):
+  var fnBody = genAst(uFnName=newStrLitNode(funField.actualFunctionName), paramInsideBodyAsType, paramDeclaration, generateObjForStaticFunCalls, callUFuncOn, returnCall, outParams):
     paramInsideBodyAsType
     paramDeclaration
     var fnName {.inject, used .} : FString = uFnName
     generateObjForStaticFunCalls
     callUFuncOn
+    outParams
     returnCall
 
   var pragmas = 
