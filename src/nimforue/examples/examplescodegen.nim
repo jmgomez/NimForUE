@@ -130,6 +130,13 @@ uClass AActorCodegen of AActor:
         UE_Error "Class is null"
         return
       UE_Log $cls
+    proc dumpClassAsUEType() = 
+      let cls = self.getClassFromInspectedType()
+      if cls.isNil():
+        UE_Error "Class is null"
+        return
+      let ueType = cls.toUEType(@[])
+      UE_Log $ueType
     
   uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenFunctionFinder):
     funcName : FString = "PrintString"
@@ -254,7 +261,12 @@ uClass AActorCodegen of AActor:
           @[]
 
       let modules = pkg.map((pkg:UPackagePtr) => pkg.toUEModule(rules, @[], @[])).get(@[])
-      UE_Log $modules.head().map(x=>x.types.mapIt(it.name))
-      UE_Log "Len " & $modules.len
-      UE_Log "Types " & $modules.head().map(x=>x.types).get(@[]).len
+      # UE_Log $modules.head().map(x=>x.types.mapIt(it.name))
+      # UE_Log "Len " & $modules.len
+      # UE_Log "Types " & $modules.head().map(x=>x.types).get(@[]).len
+      let ueProject = UEProject(modules: modules)
+      UE_Log "contans deproject to mouse pos: " & $ueProject.modules.filterIt(it.types.filterIt(it.fields.filterIt(it.name.contains("DeprojectMousePositionToWorld")).any()).any()).any()
+      # writeFile(PluginDir/"engine.text", $ueProject)
+      # UE_Log $ueProject
 
+   

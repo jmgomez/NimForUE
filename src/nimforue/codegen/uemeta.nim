@@ -244,6 +244,7 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField
   if ((ufun.isBpExposed()) or uerImportBlueprintOnly notin rules):
     funFields
   else:
+    UE_Error &"Function {ufun.getName()} is not exposed to blueprint"
     newSeq[UEField]()
 
 func tryParseJson[T](jsonStr: string): Option[T] =
@@ -502,11 +503,11 @@ func getModuleHeader*(module: UEModule): seq[string] =
 proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string]): seq[UEModule] =
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
-  var types = allObjs.toSeq()
+  let initialTypes = allObjs.toSeq()
     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules))
     .sequence()
   
-
+  var types = initialTypes
   let excludeFromModuleNames = @["CoreUObject", name]
   let deps = (types
     .mapIt(it.getModuleNames(excludeFromModuleNames))
@@ -520,13 +521,21 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(excludeFromModuleNames)}"
 
   types = types.filterIt(it notin excludedTypes)
-  #Virtual modules
+  #Virtual modules.
   var virtModules = newSeq[UEModule]()
   for r in rules:
     if r.rule == uerVirtualModule:
       let r = r
       let (virtualModuleTypes, types) = types.partition((x: UEType) => x.name in r.affectedTypes)
-      virtModules.add UEModule(name: r.moduleName, types: virtualModuleTypes, isVirtual: true, dependencies: deps & name)
+      virtModules.add UEModule(name: r.moduleName, types: virtualModuleTypes, isVirtual: true, dependencies: deps & name,  rules: rules)
+  #Types that causes cycles are also part of the virtual modules. TODO this code assume excludeDeps is cycles + coreuobject
+  for cycleMod in excludeDeps.filterIt(it != "CoreUObject"):
+    let cycleMod = cycleMod
+    let (cycleTypes, types) = initialTypes.partition((x: UEType) => cycleMod in x.getModuleNames(excludeFromModuleNames))
+    let cycleName = &"{name}_{cycleMod}"
+    # UE_Error &"Module: + {name} Adding {cycleName} to {name} because it depends on {cycleMod} and {cycleTypes} is excluded"
+    virtModules.add UEModule(name: cycleName, types: cycleTypes, isVirtual: true, dependencies: deps & name & cycleMod, rules: rules)
+
 
   # UE_Log &"Module: + {name} Types: {types.mapIt(it.name)} Excluded types: {excludedTypes.mapIt(it.name)}"
   # UE_Warn &"Module: + {name} excluded deps: {excludeDeps}"

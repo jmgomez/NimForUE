@@ -45,15 +45,12 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
   proc getUEModuleFromModule(module: string): Option[UEModule] =
     #TODO adds exclude deps as a rule per module
     var excludeDeps = @["CoreUObject"]
-    if module == "Engine":
+    if module == "Engine": #TODO this exclude deps should be a rule
       excludeDeps.add "UMG"
       excludeDeps.add "Chaos"
       excludeDeps.add "AudioMixer"
+      discard
 
-    # if module == "SlateCore":
-    #   excludeDeps.add "Slate"
-    # # if module == "UMG":
-    #   excludeDeps.add "MovieScene"
 
     var includeDeps = newSeq[string]() #MovieScene doesnt need to be bound
     if module == "MovieScene":
@@ -104,11 +101,12 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
   let modules = (deps.mapIt(getDepsFromModule(it))
                     .foldl(a & b, newSeq[string]()) & deps)
                     .deduplicate()
-
+  
   var ends = now() - starts
   let config = getNimForUEConfig()
   createDir(config.bindingsDir)
   let bindingsPath = (modName:string) => config.bindingsDir / modName.toLower() & ".nim"
+
 
   let modulesToGen = modCache
                       .values
@@ -121,13 +119,8 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
   UE_Log &"Modules to gen: {modulesToGen.len}"
   UE_Log &"Modules in cache {modCache.len}"
   UE_Log &"Modules to gen {modulesToGen.mapIt(it.name)}"
-  let ueProject = UEProject(modules:modulesToGen)
-  
-  #Show all deps for testing purposes
-  UE_Log "All module deps:"
-  # for m in ueProject.modules:
-  #   UE_Log &"{m.name}: {m.dependencies}"
 
+  let ueProject = UEProject(modules:modulesToGen)
   let ueProjectAsStr = $ueProject
   let codeTemplate = """
 import ../nimforue/codegen/[models, modulerules]

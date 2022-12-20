@@ -320,6 +320,9 @@ proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGe
   {.importcpp: "#->GetWorldFromContextObject(#, #)".}
 
 
+#TEMPORAL DYNAMIC DELEGATE THIS SHOULD BE BOUND FROM THE BINDINGS
+type FOnQuartzCommandEventBP* {.importcpp, pure.} = object
+type FOnQuartzMetronomeEventBP* {.importcpp, pure.} = object
 
 
 # INPUT ACTION. This should live in another place.
@@ -384,7 +387,6 @@ proc addInputKeyPresed*(self: UGameViewportClientPtr, fn : OnInputKeyEventPresse
   """.}
   let handle {.importcpp.} : FDelegateHandle 
   handle
-
 
 
 # Notice this is editor only 

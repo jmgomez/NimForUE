@@ -21,6 +21,7 @@ const ManuallyImportedClasses* = @[
       "UPlayerInput",
       "UEnhancedPlayerInput",
       "APawn","UPhysicalMaterial", 
+      "UTickableWorldSubsystem"
 ]
 
 type
@@ -103,7 +104,7 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 
 #Any module not picked by default.
 #This could be exposed to the json file 
-let extraModuleNames* = @["EnhancedInput", "Blutility"]
+let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
 let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility"]
@@ -140,7 +141,6 @@ moduleImportRules["Engine"] = @[
     # "UParticleSystem", #collision with a function name and Cascade is deprecated, use Niagara instead.
     ]), 
     # makeImportedRuleModule(uerIgnoreHash),
-
     
   makeImportedRuleField(uerIgnore, @[
     "PerInstanceSMCustomData", 
@@ -247,6 +247,10 @@ moduleImportRules["Slate"] = @[
     "FTextBlockStyle"
   ]),
 ]
+moduleImportRules["AudioMixer"] = @[
+   makeImportedRuleModule(uerImportBlueprintOnly),
+  
+]
 
 # moduleImportRules["DeveloperSettings"] = @[
 #   makeImportedRuleType(uerCodeGenOnlyFields, @[
@@ -269,3 +273,4 @@ moduleImportRules["AudioExtensions"] = @[
 moduleImportRules["EditorSubsystem"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
+
