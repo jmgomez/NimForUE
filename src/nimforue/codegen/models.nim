@@ -19,6 +19,7 @@ const DefaultComponentMetadataKey* = "DefaultComponent"
 const RootComponentMetadataKey* = "RootComponent"
 const CPP_Default_MetadataKeyPrefix* = "CPP_Default_"
 const AutoCreateRefTermMetadataKey* = "AutoCreateRefTerm"
+const ScriptMethodMetadataKey* = "ScriptMethod"
 
 type 
   CppParam* = object #TODO take const, refs, etc. into account

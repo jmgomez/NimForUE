@@ -211,6 +211,10 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField
   var fnNameNim = actualName.removePrefixes(fnPrefixes)
   if fnNameNim.toLower() == "get": #UE uses a lot of singletons. To avoid collision we do getClass()
     fnNameNim = fnNameNim & className
+  if uFun.hasMetadata(ScriptMethodMetadataKey):
+    let tempName = uFun.getMetadata(ScriptMethodMetadataKey).get(fnNameNim)
+    if tempName.len > 1: #There are empty names
+      fnNameNim = tempName
 
 
   for rule in rules:

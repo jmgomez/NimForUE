@@ -33,6 +33,7 @@ void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	registerLogger(logger);
 	ensureGuestIsCompiled();
 	checkReload();
+	// FTransform::Identity
 	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick), 0.1);
 }
 

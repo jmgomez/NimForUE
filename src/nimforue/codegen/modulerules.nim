@@ -158,7 +158,7 @@ moduleImportRules["Engine"] = @[
     "PlayQuantized",
     "AnimBlueprintGeneratedClass",
     "UVirtualTexture2D",
-
+    "K2_GetRootComponent",
     "Cancel", #name collision on mac (it can be avoided by adding it as an exception on the codegen)
     #By type name
     # "UClothingSimulationInteractor",

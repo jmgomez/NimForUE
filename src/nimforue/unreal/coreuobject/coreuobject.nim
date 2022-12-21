@@ -467,10 +467,10 @@ type
   FTimespan* {.importcpp.} = object
   
 type
-  FTransform* {.importcpp.} = object
-    scale3D* {.importcpp: "Scale3D".}: FVector
-    translation* {.importcpp: "Translation".}: FVector
-    rotation* {.importcpp: "Rotation".}: FQuat
+  FTransform* {.importcpp, bycopy.} = object
+    # scale3D* {.importcpp: "Scale3D".}: FVector
+    # translation* {.importcpp: "Translation".}: FVector
+    # rotation* {.importcpp: "Rotation".}: FQuat
 
 type
   FTransform3d* {.importcpp.} = object
@@ -571,3 +571,15 @@ type
 type
   EDataValidationResult* {.size: sizeof(uint8), pure.} = enum
     Invalid, Valid, NotValidated, EDataValidationResult_MAX
+
+
+
+let identity* {.importcpp: "FTransform::Identity", nodecl.}: FTransform 
+
+func getLocation*(self: FTransform): FVector {.importcpp: "#.GetLocation()".}
+func getTranslation*(self: FTransform): FVector {.importcpp: "#.GetTranslation()".}
+func getRotation*(self: FTransform): FQuat {.importcpp: "#.GetRotation()".}
+func getScale3D*(self: FTransform): FVector {.importcpp: "#.GetScale3D()".}
+func getUnitAxis*(self: FTransform, axis: EAxis): FVector {.importcpp: "#.GetUnitAxis(@)".}
+func toString*(self: FTransform): FString {.importcpp: "#.ToString()".}
+func `$`*(self: FTransform): string = $self.toString()

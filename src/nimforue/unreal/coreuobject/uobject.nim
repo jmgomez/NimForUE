@@ -82,7 +82,7 @@ type
 
     ConstructorHelpers* {.importcpp, pure .} = object
     FObjectFinder*[T] {.importcpp, pure .} = object
-      obj* {.importcpp.} : ptr T
+      obj* {.importcpp:"Object".} : ptr T
 
     FClassFinder*[T] {.importcpp:"ConstructorHelpers::FClassFinder<'0>", nodecl, pure .} = object
       class* {.importcpp:"Class".} : TSubclassOf[T]
@@ -365,7 +365,7 @@ iterator items*(ustr: UStructPtr): FFieldPtr =
 #CONSTRUCTOR HELPERS
 proc succeeded*(clsFinder : FClassFinder) : bool {.importcpp:"#.Succeeded()".}
 proc makeClassFinder*[T](classToFind : FString) : FClassFinder[T]{.importcpp:"'0(*#)" .}
-
+proc makeObjectFinder*[T](objectToFind : FString) : FObjectFinder[T]{.importcpp:"'0(*#)" .}
 
 
 proc makeTSubclassOf*[T]() : TSubclassOf[T] {. importcpp: "TSubclassOf<'*0>()", constructor.}
