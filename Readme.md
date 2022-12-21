@@ -24,7 +24,6 @@ If you dont have Discord, you can also reach out at:
 
 
 
-
 ### Showcase at NimConf 2022:
 
 [![Showcase at NimConf 2022](https://img.youtube.com/vi/0b3ixaz2uOg/0.jpg)](https://youtu.be/0b3ixaz2uOg)
@@ -145,8 +144,8 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
     - [ ] Make builds work on MacOS 
     - [ ] Make builds work ok iOS
     - [ ] Make builds work on Android 
-
-
+- [ ] Inheritance in UStrucs. 
+- [ ] Virtual Functions support on UObjects. At this point, the C++ integration will be complete and you will be able to do anything that you can do in C++.
 - [ ] Nimscripter support? (allows nim in runtime)
 - [ ] Improve Debugger
   - [x] Keep the debugger hook after hot reloading
@@ -154,6 +153,7 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 - [ ] Test Nim code that consumes Unreal Code without starting the editor. 
 - [ ] REPL
 - [ ] Editor Extension for auto completation on the DSL
+
 
 
 
