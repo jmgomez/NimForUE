@@ -20,6 +20,8 @@ const RootComponentMetadataKey* = "RootComponent"
 const CPP_Default_MetadataKeyPrefix* = "CPP_Default_"
 const AutoCreateRefTermMetadataKey* = "AutoCreateRefTerm"
 const ScriptMethodMetadataKey* = "ScriptMethod"
+#UEType metadata
+const NoDeclMetadataKey* = "NoDecl"
 
 type 
   CppParam* = object #TODO take const, refs, etc. into account
@@ -50,6 +52,7 @@ type
     EClassFlagsVal* = (uint32)
     EStructFlagsVal* = distinct(uint32)
     EClassCastFlagsVal* = distinct(uint64)
+    
     
     UEExposure* = enum
         uexDsl, uexImport, uexExport

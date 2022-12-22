@@ -428,7 +428,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
              .map(fun=>genFunc(typeDef, fun).impl))
   
   let typeDecl = 
-    if rule == uerCodeGenOnlyFields: 
+    if rule == uerCodeGenOnlyFields or typeDef.metadata.filterIt(it.name.toLower() == NoDeclMetadataKey.toLower()).any(): 
       newEmptyNode()
     else: 
       let ptrName = ident typeDef.name & "Ptr"

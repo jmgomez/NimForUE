@@ -56,6 +56,8 @@ type
 
 type
   FDateTime* {.importcpp.} = object
+
+proc getTicks*(self: FDateTime): int {.importcpp: "GetTicks".}
   
 type
   FBox* {.importcpp.} = object

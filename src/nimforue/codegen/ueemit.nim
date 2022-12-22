@@ -780,7 +780,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     let className = name[1].strVal()
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
-    let ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
+    var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
     var uClassNode = emitUClass(ueType)
     
     #returns empty if there is no block defined
