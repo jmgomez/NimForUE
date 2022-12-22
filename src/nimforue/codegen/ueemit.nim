@@ -698,19 +698,24 @@ func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tupl
         impls.add impl
     result = (fws, nnkStmtList.newTree(impls))
 
+func getForwardDeclarationForProc(fn:NimNode) : NimNode = 
+   result = nnkProcDef.newTree(fn[0..^1])
+   result[^1] = newEmptyNode() 
+
 #At this point the fws are reduced into a nnkStmtList and the same with the nodes
-func genUFuncsForUClass(body:NimNode, ueTypeName:string) : NimNode = 
+func genUFuncsForUClass(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode]) : NimNode = 
     let fnBlocks = body.toSeq()
                        .filter(n=>n.kind == nnkCall and 
                             n[0].strVal().toLower() in ["ufunc", "ufuncs", "ufunction", "ufunctions"])
 
     let fns = fnBlocks.map(fnBlock=>funcBlockToFunctionInUClass(fnBlock, ueTypeName))
-    var fws = newSeq[NimNode]()
+    let procFws =nimProcs.map(getForwardDeclarationForProc) #Not used there is a internal error: environment misses: self
+    var fws = newSeq[NimNode]() 
     var impls = newSeq[NimNode]()
     for (fw, impl) in fns:
         fws = fws & fw 
         impls.add impl #impl is a nnkStmtList
-    result = nnkStmtList.newTree(fws & impls)
+    result = nnkStmtList.newTree(fws &  nimProcs & impls )
 
 func genConstructorForClass(uClassBody:NimNode, className:string, constructorBody:NimNode, initializerName:string="") : NimNode = 
   var initializerName = if initializerName == "" : "initializer" else : initializerName
@@ -771,20 +776,29 @@ func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags,
             metas.add makeUEMetadata("IsBlueprintBase")
     (flags, metas)
 
-func getTypeNodeFromUClassName(name:NimNode) : (string, string) = 
+proc getTypeNodeFromUClassName(name:NimNode) : (string, string) = 
     if name.toSeq().len() < 3:
         error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
 
     let parent = name[^1].strVal()
     let className = name[1].strVal()
+    #Register the class as emitted for us
+    emittedClasses.add className
     (className, parent)
-macro uClass*(name:untyped, body : untyped) : untyped = 
 
+func addSelfToProc(procDef:NimNode, className:string) : NimNode = 
+    procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
+    procDef
+
+macro uClass*(name:untyped, body : untyped) : untyped = 
+    
     let (className, parent) = getTypeNodeFromUClassName(name)
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
     var uClassNode = emitUClass(ueType)
+
+
     
     #returns empty if there is no block defined
     let defaults = genDefaults(body)
@@ -795,7 +809,14 @@ macro uClass*(name:untyped, body : untyped) : untyped =
         let defaultConstructor = genConstructorForClass(body, className, defaults.get(newEmptyNode()))
         uClassNode.add defaultConstructor
 
-    let fns = genUFuncsForUClass(body, className)
+    let nimProcs = body.children.toSeq
+                    .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor"])
+                    .mapIt(addSelfToProc(it, className))
+
+   
+
+        
+    let fns = genUFuncsForUClass(body, className, nimProcs)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
 
   

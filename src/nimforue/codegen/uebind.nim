@@ -687,3 +687,4 @@ macro uebind*(clsName : static string = "", fn:untyped) : untyped =
   # echo $firstParam
 
   # newEmptyNode()
+

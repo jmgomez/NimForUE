@@ -85,16 +85,18 @@ func implementOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNod
 
 #TODO change this for macro cache
 var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h"])
+var emittedClasses* {.compileTime.} = newSeq[string]()
 const header = "UEGenClassDefs.h"
 static:
   when defined(game):
     cppHeader.includes.add header
 
 
+
 proc addClass*(class: CppClassType) =
   var class = class
-  if class.parent notin ManuallyImportedClasses and class.kind == cckClass:
-    class.parent =  class.parent & "_" #The fake classes have a _ at the end
+  if class.parent notin (ManuallyImportedClasses & emittedClasses) and class.kind == cckClass:
+    class.parent =  class.parent & "_" #The fake classes have a _ at the end we need to remove the emitted classes from here as well
 
   if class.name == "ANimBeginPlayOverrideActor":
     debugEcho "Function added"
