@@ -347,6 +347,9 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
                 flags = flags | CPF_BlueprintCallable
         if m.toLower() == "config":
                 flags = flags | CPF_Config  
+        if m.toLower() == InstancedMetadataKey.toLower():
+                flags = flags | CPF_ContainsInstancedReference
+                metadata.add makeUEMetadata("EditInline")
             #Notice this is only required in the unlikely case that the user wants to use a delegate that is not exposed to Blueprint in any way
         #TODO CPF_BlueprintAuthorityOnly is only for MC
     
