@@ -774,6 +774,8 @@ func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags,
             metas = metas.filterIt(it.name.toLower()!= "config")
         if meta.name.toLower() == "blueprintable":
             metas.add makeUEMetadata("IsBlueprintBase")
+        if meta.name.toLower() == "editinlinenew":
+            flags = flags or CLASS_EditInlineNew
     (flags, metas)
 
 proc getTypeNodeFromUClassName(name:NimNode) : (string, string) = 

@@ -9,6 +9,7 @@ import std/[times,strformat,json, strutils, options, sugar, sequtils, bitops, ta
 import ../codegen/[makestrproc]
 import ../codegen/modulerules
 
+#Note not all supported metas are here. Only the ones we reference in code and generally outside of the macros
 const UETypeMetadataKey* = "UEType"
 const ClassConstructorMetadataKey* = "ClassConstructor"
 const NimClassMetadataKey* = "NimClass"
@@ -20,6 +21,7 @@ const RootComponentMetadataKey* = "RootComponent"
 const CPP_Default_MetadataKeyPrefix* = "CPP_Default_"
 const AutoCreateRefTermMetadataKey* = "AutoCreateRefTerm"
 const ScriptMethodMetadataKey* = "ScriptMethod"
+const InstancedMetadataKey* = "Instanced"
 #UEType metadata
 const NoDeclMetadataKey* = "NoDecl"
 

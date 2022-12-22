@@ -8,7 +8,7 @@ const propObjFlags = RF_Public | RF_Transient | RF_MarkAsNative
 #Forward declare
 proc newFProperty*(owner : FFieldVariant, propField:UEField, optPropType="", optName="",  propFlags=CPF_None) : FPropertyPtr 
 
-func newUStructBasedFProperty(owner : FFieldVariant, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
+func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType:string, name:FName, propFlags=CPF_None) : Option[FPropertyPtr] = 
     const flags = propObjFlags
          #It holds a complex type, like a struct or a class
     type EObjectMetaProp = enum
@@ -57,7 +57,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propType:string, name:FName
         let isComponent = isChildOf[UActorComponent](cls)
         let objProp = newFObjectPtrProperty(owner, name, flags)
         objProp.setPropertyClass(cls)
-        if isComponent: 
+        if isComponent or propField.hasUEMetadata(InstancedMetadataKey): 
             objProp.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
 
 
@@ -201,7 +201,7 @@ proc newFProperty*(owner : FFieldVariant, propField:UEField, optPropType="", opt
         if isBasicProperty(propType): newBasicProperty(owner, propField, propType, name).get()
         elif isContainer(propType) and owner.isUObject() : newContainerProperty(owner, propField, propType, name).get()
         else: #ustruct based?
-            newUStructBasedFProperty(owner, propType, name, propFlags)
+            newUStructBasedFProperty(owner,propField, propType, name, propFlags)
                 .chainNone(()=>newDelegateBasedProperty(owner, propType, name))
                 .chainNone(()=>newEnumBasedProperty(owner, propType, name))
                 .getOrRaise("FProperty not covered in the types for " & propType, Exception)
