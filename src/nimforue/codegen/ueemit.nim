@@ -771,13 +771,16 @@ func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags,
             metas.add makeUEMetadata("IsBlueprintBase")
     (flags, metas)
 
-macro uClass*(name:untyped, body : untyped) : untyped = 
-
+func getTypeNodeFromUClassName(name:NimNode) : (string, string) = 
     if name.toSeq().len() < 3:
         error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
 
     let parent = name[^1].strVal()
     let className = name[1].strVal()
+    (className, parent)
+macro uClass*(name:untyped, body : untyped) : untyped = 
+
+    let (className, parent) = getTypeNodeFromUClassName(name)
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
@@ -796,3 +799,10 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
 
   
+macro uForwardDecl*(name : untyped ) : untyped = 
+    let (className, parent) = getTypeNodeFromUClassName(name)
+    let clsPtr = ident className & "Ptr"
+    genAst(clsName=ident className, clsParent = ident parent, clsPtr):
+        type 
+          clsName = object of clsParent
+          clsPtr = ptr clsName
