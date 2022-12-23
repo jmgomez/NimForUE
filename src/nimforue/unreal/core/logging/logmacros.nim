@@ -17,16 +17,18 @@ macro ueLogImpl*(category: untyped, verbosity: ELogVerbosity, msg: string): unty
 
 
   when (NimMajor, NimMinor, NimPatch) >= (2, 0, 0):
-
     let lo = lineInfoObj(msg)
     let linfo = relativePath(lo.filename.Path, getProjectPath().Path).string & &"({lo.line}) "
-  else:
-    let pos = instantiationInfo()
-    let linfo = "$1($2) " % [pos.filename, $pos.line]
+    let metaAst = genAst(fstr, linfo, msg):
+      let fstr = makeFString(linfo & " " & msg)
+  else:   
+    let metaAst = genAst(fstr, msg):
+      let pos = instantiationInfo()
+      let linfo = "$1($2) " % [pos.filename, $pos.line]
+      let fstr = makeFString(linfo & " " & msg)
 
 
-  let metaAst = genAst(fstr, linfo, msg):
-    let fstr = makeFString(linfo & " " & msg)
+  
 
   result.add(
     metaAst,
