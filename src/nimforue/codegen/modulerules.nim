@@ -135,6 +135,7 @@ moduleImportRules["Engine"] = @[
     #issue with a field name 
     "FTransformConstraint", 
     "FTableRowBase",
+    "ECollisionChannel",
     "EInputEvent",
     # "UKismetMathLibrary", #issue with the funcs?,
     "FOnTemperatureChangeDelegate", #Mac gets stuck here?,
@@ -151,6 +152,7 @@ moduleImportRules["Engine"] = @[
     # "AudioLinkSettings" #I should instead not import property of certain type
     "SetTemplate",
     "GetBlendProfile",
+    
     "IsPolyglotDataValid",
     "PolyglotDataToText",
     #Engine external deps
