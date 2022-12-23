@@ -105,8 +105,15 @@ public class NimForUE : ModuleRules
 		Console.WriteLine("Running nimble setup in", PluginDirectory);
 		processInfo.FileName = "nimble.exe";
 		processInfo.Arguments = "ok";
-		var process = Process.Start(processInfo);
-		process.WaitForExit();
+		try {
+			var process = Process.Start(processInfo);
+			process.WaitForExit();
+		}
+		catch (Exception e) {
+			Console.WriteLine("There was a problem trying to run nimble.");
+			Console.WriteLine(e.Message);
+			Console.WriteLine(e.StackTrace);
+		}
 	}
 
 	//TODO Run buildlibs from here so the correct config/platform is picked when building
