@@ -10,8 +10,8 @@ proc add*[T](arr:TArray[T], value:T) {.importcpp: "#.Add(#)".}
 proc append*[T](a, b:TArray[T]) {.importcpp: "#.Append(#)".}
 func reserve*[T](arr:TArray[T], value:int32) {.importcpp: "#.Reserve(#)".}
 
-proc `[]`*[T](arr:TArray[T], i: int32): var T {. importcpp: "#[#]",  noSideEffect.}
-proc `[]=`*[T](arr:TArray[T], i: int32, val : T)  {. importcpp: "#[#]=#",  }
+proc `[]`*[T](arr:TArray[T], i: Natural): var T {. importcpp: "#[#]",  noSideEffect.}
+proc `[]=`*[T](arr:TArray[T], i: Natural, val : T)  {. importcpp: "#[#]=#",  }
 
 # proc `[]`*[T](arr:TArray[T], i: int): var T {. inline, noSideEffect.} = arr[i.int32]
 
