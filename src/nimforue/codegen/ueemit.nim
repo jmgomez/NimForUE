@@ -679,7 +679,7 @@ macro uConstructor*(fn:untyped) : untyped =
     constructorImpl(fnField, fn.body)
 
 #Returns a tuple with the list of forward declaration for the block and the actual functions impl
-func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tuple[fws:seq[NimNode], impl:NimNode] = 
+func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tuple[fws:seq[NimNode], impl:NimNode, metas:seq[UEMetadata]] = 
     let metas = funcBlock.childrenAsSeq()
                     .tail() #skip ufunc and variations
                     .filterIt(it.kind==nnkIdent or it.kind==nnkExprEqExpr)
@@ -699,7 +699,7 @@ func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tupl
     for (fw, impl) in allFuncs:
         fws.add fw
         impls.add impl
-    result = (fws, nnkStmtList.newTree(impls))
+    result = (fws, nnkStmtList.newTree(impls), metas)
 
 func getForwardDeclarationForProc(fn:NimNode) : NimNode = 
    result = nnkProcDef.newTree(fn[0..^1])
@@ -715,7 +715,7 @@ func genUFuncsForUClass(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode]) 
     let procFws =nimProcs.map(getForwardDeclarationForProc) #Not used there is a internal error: environment misses: self
     var fws = newSeq[NimNode]() 
     var impls = newSeq[NimNode]()
-    for (fw, impl) in fns:
+    for (fw, impl, metas) in fns:
         fws = fws & fw 
         impls.add impl #impl is a nnkStmtList
     result = nnkStmtList.newTree(fws &  nimProcs & impls )

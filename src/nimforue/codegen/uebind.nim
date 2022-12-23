@@ -254,12 +254,12 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
   let isStatic = FUNC_Static in funField.fnFlags
   let clsName = typeDef.name.substr(1)
 
-  let formalParams = genFormalParamsInFunctionSignature(typeDef, funField, "obj")
+  let formalParams = genFormalParamsInFunctionSignature(typeDef, funField, "self")
 
   let generateObjForStaticFunCalls = 
     if isStatic: 
       genAst(clsName=newStrLitNode(clsName)): 
-        let obj {.inject.} = getDefaultObjectFromClassName(clsName)
+        let self {.inject.} = getDefaultObjectFromClassName(clsName)
     else: newEmptyNode()
 
   
@@ -268,10 +268,10 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
     of uetDelegate:
       case typeDef.delKind:
         of uedelDynScriptDelegate:
-          genAst(): obj.processDelegate(param.addr)
+          genAst(): self.processDelegate(param.addr)
         of uedelMulticastDynScriptDelegate:
-          genAst(): obj.processMulticastDelegate(param.addr)
-    else: genAst(): callUFuncOn(obj, fnName, param.addr)
+          genAst(): self.processMulticastDelegate(param.addr)
+    else: genAst(): callUFuncOn(self, fnName, param.addr)
 
   let outParams = 
     nnkStmtList.newTree(

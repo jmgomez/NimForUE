@@ -196,7 +196,7 @@ func makeUEMetadata*(name:string) : UEMetadata =
 func makeUEMetadata*(name:string, value:string) : UEMetadata = 
     UEMetadata(name:name, value:value ) #todo check if the name is valid. Also they can be more than simple names
 
-
+func contains*(metas:seq[UEMetadata], name:string) : bool = metas.any(m=>m.name.toLower()==name.toLower())
 
 func hasUEMetadata*[T:UEField|UEType](val:T, name:string) : bool = val.metadata.any(m => m.name == name)
 func hasUEMetadataDefaultValue*(val:UEField) : bool = val.metadata.any(m => m.name.contains(CPP_Default_MetadataKeyPrefix))

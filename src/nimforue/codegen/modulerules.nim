@@ -135,7 +135,7 @@ moduleImportRules["Engine"] = @[
     #issue with a field name 
     "FTransformConstraint", 
     "FTableRowBase",
-    "ECollisionChannel",
+    "ECollisionChannel", "EObjectTypeQuery", "ETraceTypeQuery",
     "EInputEvent",
     # "UKismetMathLibrary", #issue with the funcs?,
     "FOnTemperatureChangeDelegate", #Mac gets stuck here?,

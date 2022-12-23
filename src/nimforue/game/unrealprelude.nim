@@ -12,5 +12,6 @@ import ../unreal/runtime/[assetregistry]
 import ../utils/[utils, ueutils]
 import extras
 import engine
+import engine_umg
 
-import std/[strutils, options, tables, sequtils, strformat, strutils]
+import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
