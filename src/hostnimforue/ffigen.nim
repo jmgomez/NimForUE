@@ -6,13 +6,3 @@ import std/dynlib
 import hostbase
 
 
-proc onLibLoaded*(libName: cstring; libPath: cstring; timesReloaded: cint): void {.
-    exportc, cdecl, dynlib.} =
-  type
-    ProcType {.inject.} = proc (libName: cstring; libPath: cstring;
-                                timesReloaded: cint): void {.cdecl.}
-  withLock libLock:
-    let fun {.inject.} = cast[ProcType](lib().symAddr("onLibLoaded"))
-    if not fun.isNil():
-      fun(libName, libPath, timesReloaded)
-
