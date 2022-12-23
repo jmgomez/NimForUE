@@ -60,6 +60,7 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
 proc compileGame*(extraSwitches:seq[string], withDebug:bool) = 
   let gameSwitches = @[
     "-d:game",
+    "-p:../../NimForUE/",
     "-p:src/game/",
     "-p:src/nimforue/",
     "-p:src/nimforue/game",
