@@ -167,6 +167,7 @@ proc staticClass*[T:UObject]() : UClassPtr =
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     let cls = getClassByName(className) #TODO stop doing this and use fname instead
     return cls
+proc staticClass*(T:typedesc) : UClassPtr = staticClass[T]()
 proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
 
 proc isChildOf*[T:UObject](cls: UClassPtr) : bool =

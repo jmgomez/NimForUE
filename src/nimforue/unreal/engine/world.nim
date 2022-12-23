@@ -20,3 +20,7 @@ proc spawnActor*(world:UWorldPtr, class: UClassPtr, transform: FTransform, spawn
 proc spawnActor*(world:UWorldPtr, class: UClassPtr, location: ptr FVector, rotation:ptr FRotator, spawnParameters=FActorSpawnParameters()): AActorPtr {.importcpp: "#->SpawnActor(@)".}
 proc spawnActor*(world:UWorldPtr, class: UClassPtr, location: FVector, rotation=FRotator(), spawnParameters=FActorSpawnParameters()): AActorPtr =
   spawnActor(world, class, unsafeAddr location, unsafeAddr rotation, spawnParameters)
+
+proc spawnActor*[T : AActor](world:UWorldPtr, location: FVector, rotation=FRotator(), spawnParameters=FActorSpawnParameters()): ptr T =
+  let class = staticClass(T)
+  spawnActor(world, class, unsafeAddr location, unsafeAddr rotation, spawnParameters).ueCast[:T]()

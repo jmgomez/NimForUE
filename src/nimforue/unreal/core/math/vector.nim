@@ -27,6 +27,7 @@ proc toString*(v: FVector): FString {.importcpp:"#.ToString()"}
 # var rightVector* {.importcpp: "FVector::RightVector".}: FVector
 # {.pop.}
 func `+`*(a,b: FVector): FVector {.importcpp:"# + #", noSideEffect.}
+func `-`*(a,b: FVector): FVector {.importcpp:"# - #", noSideEffect.}
 func `*`*(a : SomeNumber, b: FVector): FVector {.importcpp:"# * #", noSideEffect.}
 func `*`*(a : FVector, b: SomeNumber): FVector {.importcpp:"# * #", noSideEffect.}
 func `==`*(a,b: FVector): bool {.importcpp:"# == #", noSideEffect.}

@@ -126,29 +126,33 @@ proc `$`*(cls:UClassPtr) : string =
       str = &"{str}\n\t\t {f}"
     str
 
-# proc `$`*(obj:UObjectPtr) : string = 
-#     if obj.isNil(): return "nil"
-#     var str = &"\n {obj.getName()}:\n\t"
-#     let props = obj.getClass().getFPropsFromUStruct(IncludeSuper)
-#     for p in props:
-#         #Only UObjects vals for now:
+proc `$`*(obj:UObjectPtr) : string = 
+  if obj.isNil(): return "nil"
+  obj.getName()
+  
+proc repr*(obj:UObjectPtr) : string = 
+    if obj.isNil(): return "nil"
+    var str = &"\n {obj.getName()}:\n\t"
+    let props = obj.getClass().getFPropsFromUStruct(IncludeSuper)
+    for p in props:
+        #Only UObjects vals for now:
         
-#         if p.isA[:FObjectPtrProperty]():
-#             let valPtr = someNil getPropertyValuePtr[UObjectPtr](p, obj)
-#             let val = valPtr.map(p=>tryUECast[UObject](p[])).flatten()
-#             if val.isSome():
-#                 str = str & &"{p.getName()}: \n\t {val.get().getName()}\n\t"
-#         elif p.isA[:FBoolProperty]():
-#             let val = getValueFromBoolProp(p, obj)
-#             str = str & &"{p.getName()}: {val}\n\t"
-#         elif p.isA[:FStrProperty]():
-#             let val = getPropertyValuePtr[FString](p, obj)[]
-#             str = str & &"{p.getName()}: {val}\n\t"
-#         elif p.isA[:FNameProperty]():
-#             let val = getPropertyValuePtr[FName](p, obj)[]
-#             str = str & &"{p.getName()}: {val}\n\t"
-#         elif p.isA[:FClassProperty]():
-#             let val = getPropertyValuePtr[UClassPtr](p, obj)[]
-#             str = str & &"{p.getName()}: {val.getName()}\n\t"
-#         # elif p.isA[FUinProperty]():
-#     str
+        if p.isA[:FObjectPtrProperty]():
+            let valPtr = someNil getPropertyValuePtr[UObjectPtr](p, obj)
+            let val = valPtr.map(p=>tryUECast[UObject](p[])).flatten()
+            if val.isSome():
+                str = str & &"{p.getName()}: \n\t {val.get().getName()}\n\t"
+        elif p.isA[:FBoolProperty]():
+            let val = getValueFromBoolProp(p, obj)
+            str = str & &"{p.getName()}: {val}\n\t"
+        elif p.isA[:FStrProperty]():
+            let val = getPropertyValuePtr[FString](p, obj)[]
+            str = str & &"{p.getName()}: {val}\n\t"
+        elif p.isA[:FNameProperty]():
+            let val = getPropertyValuePtr[FName](p, obj)[]
+            str = str & &"{p.getName()}: {val}\n\t"
+        elif p.isA[:FClassProperty]():
+            let val = getPropertyValuePtr[UClassPtr](p, obj)[]
+            str = str & &"{p.getName()}: {val.getName()}\n\t"
+        # elif p.isA[FUinProperty]():
+    str
