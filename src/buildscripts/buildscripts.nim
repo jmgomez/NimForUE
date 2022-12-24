@@ -62,13 +62,15 @@ proc getLastLibPath*(libPath, libName:string): Option[string] =
     return none[string]()
   some libs[0]
 
+const NueExec = when defined(windows): "nue.exe" else: "nue"
 
 proc compileGameSyncFromPlugin*() : string = 
-  let (output, _) = execCmdEx(&"{PluginDir}/nue.exe game")
+  let (output, _) = execCmdEx(&"{PluginDir}/{NueExec} game")
   output
 
-proc compileGuestSyncFromPlugin*() : string = 
-  let cmd = &"{PluginDir}/nue.exe guest"
+proc compileGuestSyncFromPlugin*() : string =
+   
+  let cmd = &"{PluginDir}/{NueExec} guest"
   let (output, _) = execCmdEx(cmd)
   output
 

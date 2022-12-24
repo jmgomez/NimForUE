@@ -103,7 +103,7 @@ public class NimForUE : ModuleRules
 		var processInfo = new ProcessStartInfo();
 		processInfo.WorkingDirectory = PluginDirectory;
 		Console.WriteLine("Running nimble setup in", PluginDirectory);
-		processInfo.FileName = "nimble.exe";
+		processInfo.FileName = "nimble" + (Target.Platform == UnrealTargetPlatform.Win64 ? ".exe" : ""); 
 		processInfo.Arguments = "ok";
 		try {
 			var process = Process.Start(processInfo);
@@ -145,7 +145,8 @@ public class NimForUE : ModuleRules
 		try {
 			//BuildNim();
 			//setNimForUEConfig(PluginDirectory, EngineDirectory, Target.Platform.ToString(), Target.Configuration.ToString());
-			setSdkVersion(Target.WindowsPlatform.WindowsSdkVersion);
+			if (Target.Platform == UnrealTargetPlatform.Win64)
+				setSdkVersion(Target.WindowsPlatform.WindowsSdkVersion);
 		}
 		catch (Exception e) {
 			Console.WriteLine("There was a problem trying to load Nim. Attention, make sure the EngineDir is set. Otherwise NimForUE wont compile.");

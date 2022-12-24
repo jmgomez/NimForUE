@@ -8,8 +8,15 @@ let config = getNimForUEConfig()
 
 
 proc compileHost*() = 
-  let buildFlags = @[buildSwitches].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"nim cpp {buildFlags} --cc:vcc --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
+  let hostSwitches = @[
+    "-d:host",
+    (when defined(windows): 
+      "--cc:vcc" 
+      else: 
+        "--cc:clang --putenv:MACOSX_DEPLOYMENT_TARGET=10.15")
+  ]
+  let buildFlags = @[buildSwitches, hostSwitches].foldl(a & " " & b.join(" "), "")
+  doAssert(execCmd(&"nim cpp {buildFlags}  --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   
   # copy header
   let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
@@ -55,6 +62,7 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
   doAssert(execCmd(compCmd)==0)
   
   copyNimForUELibToUEDir("nimforue")
+
 
 
 proc compileGame*(extraSwitches:seq[string], withDebug:bool) = 
