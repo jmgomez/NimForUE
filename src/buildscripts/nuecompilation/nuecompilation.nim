@@ -7,16 +7,62 @@ import ../switches/switches
 let config = getNimForUEConfig()
 
 
-proc compileHost*() = 
-  let hostSwitches = @[
-    "-d:host",
-    (when defined(windows): 
-      "--cc:vcc" 
-      else: 
-        "--cc:clang --putenv:MACOSX_DEPLOYMENT_TARGET=10.15")
+
+#In mac we need to do a universal 
+proc compileHostMac*() =
+  let common = @[
+    "--cc:clang",
+    "--debugger:native",
+    "--threads",
+    "--tlsEmulation:off",
+    "--app:lib",
+    "--d:host",
+    "--header:NimForUEFFI.h",
   ]
-  let buildFlags = @[buildSwitches, hostSwitches].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"nim cpp {buildFlags}  --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
+  let macArmSwitches = @[
+    "--putenv:MACOSX_DEPLOYMENT_TARGET=10.15",
+    "-l:'-target arm64-apple-macos11'",
+    "-t:'-target arm64-apple-macos11'",
+  ]
+  let macx86Switches = @[
+    "-l:'-target x86_64-apple-macos10.15'",
+    "-t:'-target x86_64-apple-macos10.15'",
+  ]
+  let buildFlagsArm = @[macArmSwitches & common, buildSwitches].foldl(a & " " & b.join(" "), "")
+  let armOutDir = "Binaries/nim/hostarm"
+  doAssert(execCmd(&"nim cpp {buildFlagsArm} --outDir: {armOutDir}   --nimcache:.nimcache/hostarm src/hostnimforue/hostnimforue.nim") == 0)
+ 
+  let x86OutDir = "Binaries/nim/hostx86"
+  let buildFlagsx86 = @[macx86Switches, common, buildSwitches].foldl(a & " " & b.join(" "), "")
+  doAssert(execCmd(&"nim cpp {buildFlagsx86} --outDir: {x86OutDir}  --nimcache:.nimcache/hostx86 src/hostnimforue/hostnimforue.nim") == 0)
+  let lipoCmd = &"lipo -create {armOutDir}/libhostnimforue.dylib {x86OutDir}/libhostnimforue.dylib -output Binaries/nim/libhostnimforue.dylib"
+  doAssert(execCmd(lipoCmd) == 0)
+  # copy header
+  let ffiHeaderSrc = ".nimcache/hostarm/NimForUEFFI.h"
+  let ffiHeaderDest = "NimHeaders" / "NimForUEFFI.h"
+  copyFile(ffiHeaderSrc, ffiHeaderDest)
+  log("Copied " & ffiHeaderSrc & " to " & ffiHeaderDest)
+  let libDir = "./Binaries/nim"
+  let libDirUE = libDir / "ue"
+  createDir(libDirUE)
+
+  let hostLibName = "hostnimforue"
+  let baseFullLibName = getFullLibName(hostLibName)
+  let fileFullSrc = libDir/baseFullLibName
+  let fileFullDst = libDirUE/baseFullLibName
+
+  copyFile(fileFullSrc, fileFullDst)
+
+  let dst = "/usr/local/lib" / baseFullLibName.replace(".dylib", "")
+  copyFile(fileFullSrc, dst)
+  log("Copied " & fileFullSrc & " to " & dst)
+
+
+proc compileHost*() = 
+ 
+  
+  let buildFlags = @[buildSwitches].foldl(a & " " & b.join(" "), "")
+  doAssert(execCmd(&"nim cpp {buildFlags} --cc:vcc  --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   
   # copy header
   let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
@@ -46,9 +92,15 @@ proc compileHost*() =
     let weakSymbolsLib = hostLibName & ".lib"
     copyFile(libDir/weakSymbolsLib, libDirUE/weakSymbolsLib)
   elif defined macosx: #needed for dllimport in ubt mac only
-    let dst = "/usr/local/lib" / baseFullLibName
+    var dst = "/usr/local/lib" / baseFullLibName
     copyFile(fileFullSrc, dst)
     log("Copied " & fileFullSrc & " to " & dst)
+
+    # dst = "/usr/local/lib" / baseFullLibName.replace(".dylib", "")
+    # copyFile(fileFullSrc, dst)
+    # log("Copied " & fileFullSrc & " to " & dst)
+
+    
 
 
 proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =

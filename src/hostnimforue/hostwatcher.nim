@@ -24,6 +24,16 @@ proc ensureGuestIsCompiled*() : void {.ex.} =
 proc setSdkVersion(version:cstring) {.ex.} =
     writeFile(PluginDir/"sdk_version.txt", $version)
 
+proc setUEConfig(engineDir, conf, platform : cstring, withEditor:bool) {.ex.} =
+    #TODO add witheditor
+    let targetConf = parseEnum[TargetConfiguration]($conf)
+    let targetPlatform = parseEnum[TargetPlatform]($platform)
+    let (_,gameDir) = tryGetEngineAndGameDir().get()
+    let conf = 
+        NimForUEConfig(engineDir: $engineDir, gameDir: $gameDir, 
+            targetConfiguration: targetConf, targetPlatform: targetPlatform)
+    conf.saveConfig()
+
 proc loadNueLib*(libName, nextPath: string) =
   var nueLib = libMap[libName]
   if nueLib.lastLoadedPath != nextPath or not nueLib.isInit:

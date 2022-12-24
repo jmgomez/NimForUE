@@ -93,7 +93,12 @@ task game, "Builds the game lib":
 
 
 task host, "Builds the host that's hooked to unreal":
-  compileHost()
+  when defined(windows):
+    compileHost()
+  elif defined(macosx):
+    compileHostMac()
+  else:
+    log "Host compilation not supported on this platform"
 
 task h, "Alias to host":
   host(taskOptions)

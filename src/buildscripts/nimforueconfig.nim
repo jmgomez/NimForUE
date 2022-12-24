@@ -51,7 +51,9 @@ when defined windows:
       log getCurrentExceptionMsg()
       none[(string, string)]()
 else:
-  proc tryGetEngineAndGameDir*() : Option[(string, string)] = none[(string, string)]()
+  proc tryGetEngineAndGameDir*() : Option[(string, string)] = 
+     let gameDir = absolutePath(PluginDir/".."/"..")
+     some ("", gameDir)
 
 #Dll output paths for the uclasses the user generates
 when defined(guest):

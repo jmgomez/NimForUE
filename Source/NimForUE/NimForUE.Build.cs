@@ -90,10 +90,8 @@ public class NimForUE : ModuleRules
 	[DllImport("hostnimforue")]
 	public static extern void setSdkVersion(string sdkVersion);
 
-
-	
-	[DllImport("hostnimforue")]
-	public static extern void setNimForUEConfig(string pluginDir, string engineDir, string platform, string config);
+	[DllImport("libhostnimforue")]
+	public static extern void setUEConfig(string engineDir,string conf,string platform, bool withEditor);
 	
 	//WIN ONLY
 	[DllImport("kernel32.dll")]
@@ -108,7 +106,11 @@ public class NimForUE : ModuleRules
 		try {
 			var process = Process.Start(processInfo);
 			process.WaitForExit();
+			var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue", "libhostnimforue.dylib");
+			//setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
 		}
+		
+
 		catch (Exception e) {
 			Console.WriteLine("There was a problem trying to run nimble.");
 			Console.WriteLine(e.Message);
@@ -147,6 +149,7 @@ public class NimForUE : ModuleRules
 			//setNimForUEConfig(PluginDirectory, EngineDirectory, Target.Platform.ToString(), Target.Configuration.ToString());
 			if (Target.Platform == UnrealTargetPlatform.Win64)
 				setSdkVersion(Target.WindowsPlatform.WindowsSdkVersion);
+			//setUEConfig(
 		}
 		catch (Exception e) {
 			Console.WriteLine("There was a problem trying to load Nim. Attention, make sure the EngineDir is set. Otherwise NimForUE wont compile.");
