@@ -24,3 +24,9 @@ proc spawnActor*(world:UWorldPtr, class: UClassPtr, location: FVector, rotation=
 proc spawnActor*[T : AActor](world:UWorldPtr, location: FVector, rotation=FRotator(), spawnParameters=FActorSpawnParameters()): ptr T =
   let class = staticClass(T)
   spawnActor(world, class, unsafeAddr location, unsafeAddr rotation, spawnParameters).ueCast[:T]()
+
+proc spawnActorWith*[T : AActor](world:UWorldPtr, class:UClassPtr, location: FVector, rotation=FRotator(), spawnParameters=FActorSpawnParameters()): ptr T =
+  #useful when you want to use a Nim derived class in bp
+  spawnActor(world, class, unsafeAddr location, unsafeAddr rotation, spawnParameters).ueCast[:T]()
+
+  

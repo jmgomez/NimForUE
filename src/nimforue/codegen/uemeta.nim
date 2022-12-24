@@ -190,7 +190,7 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
       
 
   
-  if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules):
+  if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules or outerFn.isSome()):
     var field = makeFieldAsUProp(name, nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
     field.defaultParamValue = defaultValue
     return some field

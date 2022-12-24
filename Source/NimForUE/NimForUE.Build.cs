@@ -107,6 +107,7 @@ public class NimForUE : ModuleRules
 			var process = Process.Start(processInfo);
 			process.WaitForExit();
 			var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue", "libhostnimforue.dylib");
+			Console.WriteLine((Target.ProjectFile.Directory.ToString()));
 			//setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
 		}
 		
