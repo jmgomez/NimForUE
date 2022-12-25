@@ -1,7 +1,20 @@
 import ../containers/unrealstring
 import std / [macros, strformat, strutils, genAsts]
-import logverbosity
 
+type
+  ELogVerbosity* {.size: sizeof(uint8).} = enum
+    NoLogging = 0,
+    Fatal,
+    Error,
+    Warning,
+    Display,
+    Log,
+    Verbose,
+    All,
+    NumVerbosity,
+    VerbosityMask = 0xf,
+    SetColor = 0x40,
+    BreakOnLog = 0x80
 
 when (NimMajor, NimMinor, NimPatch) >= (1, 9, 1):
   import std/[paths]
@@ -33,9 +46,9 @@ macro declareLogCategory*(category: untyped, defaultVerbosity: ELogVerbosity = L
   let loggers = genAst(category) do:
     template `category Log`*(msg: string) =
       ueLogImpl(category, Log, msg)
-    template `category Warning`(msg: string) =
+    template `category Warning`*(msg: string) =
       ueLogImpl(category, Warning, msg)
-    template `category Error`(msg: string) =
+    template `category Error`*(msg: string) =
       ueLogImpl(category, Error, msg)
 
   result = nnkStmtList.newTree(
