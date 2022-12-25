@@ -18,7 +18,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
                 elif propType.contains("TSoftObjectPtr"): emTSoftObjectPtr
                 elif propType.contains("TSoftClassPtr"): emTSoftClassPtr
                 elif propType.contains("TObjectPtr"): emTObjectPtr
-                elif propType == ("UClass"): emClass
+                elif propType == ("UClassPtr"): emClass
                 else: emObjPtr #defaults to emObjPtr but it can be scriptStruct since the name it's the same(will worth to do an or?)
                 
     let className = case eMeta 
