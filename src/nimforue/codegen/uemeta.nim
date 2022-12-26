@@ -668,7 +668,8 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
 
           else:
               UE_Warn &"No attach metadata for {comp.getName()}"
-              comp.setupAttachment(actor.getRootComponent())
+              if comp != actor.getRootComponent():
+                comp.setupAttachment(actor.getRootComponent())
 
 
   if actor.getRootComponent().isNil():

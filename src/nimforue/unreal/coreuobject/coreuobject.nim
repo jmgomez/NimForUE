@@ -585,3 +585,8 @@ func getScale3D*(self: FTransform): FVector {.importcpp: "#.GetScale3D()".}
 func getUnitAxis*(self: FTransform, axis: EAxis): FVector {.importcpp: "#.GetUnitAxis(@)".}
 func toString*(self: FTransform): FString {.importcpp: "#.ToString()".}
 func `$`*(self: FTransform): string = $self.toString()
+
+proc setLocation*(self: FTransform, value: FVector) {.importcpp: "#.SetLocation(@)".}
+proc setTranslation*(self: FTransform, value: FVector) {.importcpp: "#.SetTranslation(@)".}
+proc setRotation*(self: FTransform, value: FQuat) {.importcpp: "#.SetRotation(@)".}
+proc setScale3D*(self: FTransform, value: FVector) {.importcpp: "#.SetScale3D(@)".}
