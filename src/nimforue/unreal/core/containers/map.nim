@@ -40,14 +40,14 @@ proc keys*[K, V](map:TMap[K, V]): TArray[K] =
     var arr = makeTArray[K]()
     getKeys(map, arr)
     arr
-proc vals*[K, V](map:TMap[K, V]): TArray[V] = 
+proc values*[K, V](map:TMap[K, V]): TArray[V] = 
     var arr = makeTArray[V]()
     generateValueArray(map, arr)
     arr
 
 proc toTable*[K, V](map:TMap[K, V]): Table[K, V] = 
     let keys = map.keys().toSeq()
-    let values = map.vals().toSeq()
+    let values = map.values().toSeq()
     var table = initTable[K, V]()
 
     for pairs in zip(keys, values):

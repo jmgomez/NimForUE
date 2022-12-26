@@ -21,7 +21,9 @@ const ManuallyImportedClasses* = @[
       "UPlayerInput",
       "UEnhancedPlayerInput",
       "APawn","UPhysicalMaterial", 
-      "UTickableWorldSubsystem"
+      "UTickableWorldSubsystem",
+
+
 ]
 
 type
@@ -178,11 +180,34 @@ moduleImportRules["Engine"] = @[
   # makeVirtualModuleRule("mathlibrary", @["UKismetMathLibrary"])
 ]
 
+#[some types are here because of this error:
+  It can be worked around by emitting the cpp that would implement it
+  
+    with
+        [
+            T=FMovieSceneEvaluationInstanceKey_
+        ]
+E:\unreal_sources\5.1Launcher\UE_5.1\Engine\Source\Runtime\Core\Public\Containers\Set.h(301): note: see reference to class template instantiation 'TDefaultMapHashableKeyFuncs<InKeyType,InValueType,false>' being compiled
+        with
+        [
+            InKeyType=FMovieSceneEvaluationInstanceKey_,
+            InValueType=FMovieSceneEvaluationHookEventContainer_
+        ]]#
+
+
 moduleImportRules["MovieScene"] = @[
   makeImportedRuleType(uerIgnore, @[
-    "FMovieSceneByteChannel"
+    "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
+    "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate","FMovieSceneEvaluationTrack", "FMovieSceneSequenceID",
+    "FMovieSceneEvaluationInstanceKey"
   ]),
-  makeImportedRuleModule(uerImportBlueprintOnly)
+  makeImportedRuleField(uerIgnore, @[
+    "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
+    "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate", 
+    "TrackTemplates", "FMovieSceneSequenceID", "FMovieSceneEvaluationInstanceKey"
+  ]),
+  
+  # makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 moduleImportRules["EnhancedInput"] = @[
   codegenOnly,
@@ -210,10 +235,10 @@ moduleImportRules["UMG"] = @[
   makeImportedRuleType(uerIgnore, @[ #MovieScene was removed as dependency for now          
     "UMovieScenePropertyTrack", "UMovieSceneNameableTrack",
     "UMovieScenePropertySystem", "UMovieScene2DTransformPropertySystem",
-    "UMovieSceneMaterialTrack",
+    "UMovieSceneMaterialTrack", 
     ]), 
   makeImportedDelegateRule(@[
-    "FOnOpeningEvent", "FOnOpeningEvent", "FOnSelectionChangedEvent"
+    "FOnOpeningEvent", "FOnOpeningEvent", "FOnSelectionChangedEvent",
 
     ]),
   makeImportedDelegateRule("FGetText", @["USlateAccessibleWidgetData"]),
@@ -224,11 +249,10 @@ moduleImportRules["UMG"] = @[
     "SetNavigationRuleCustomBoundary",
     "SetNavigationRuleCustom",
 
-    "FTextBlockStyle",
-    "UWidgetNavigation",
-
-  ]),
-  makeImportedRuleModule(uerImportBlueprintOnly)
+    "FTextBlockStyle", "FMovieSceneTrackIdentifier",
+    "UWidgetNavigation", 
+  ])
+  # makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
 moduleImportRules["SlateCore"] = @[

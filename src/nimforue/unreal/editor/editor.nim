@@ -9,6 +9,7 @@ type
     editorWorld* {.importcpp: "EditorWorld".} : UWorldPtr
   UEditorEnginePtr* = ptr UEditorEngine
   FEditorViewportClient* {.importcpp, inheritable.} = object
+    viewport* {.importcpp: "Viewport".} : FViewportPtr
   FEditorViewportClientPtr* = ptr FEditorViewportClient
   FLevelEditorViewportClient* {.importcpp.} = object of FEditorViewportClient
   FLevelEditorViewportClientPtr* = ptr FLevelEditorViewportClient

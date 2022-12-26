@@ -95,7 +95,6 @@ type
 proc castField*[T : FField ](src:FFieldPtr) : ptr T {. importcpp:"CastField<'*0>(#)" .}
 proc ueCast*[T : UObject ](src:UObjectPtr) : ptr T {. importcpp:"Cast<'*0>(#)" .}
 
-
 proc createDefaultSubobject*[T : UObject ](obj:var FObjectInitializer, outer:UObjectPtr, subObjName:FName, bTransient=false) : ptr T {. importcpp:"#.CreateDefaultSubobject<'*0>(@)" .}
 proc createDefaultSubobject*(obj:var FObjectInitializer, outer:UObjectPtr, subObjName:FName, returnCls, default: UClassPtr, bIsRequired, bTransient:bool) : UObjectPtr {. importcpp:"#.CreateDefaultSubobject(@)" .}
 

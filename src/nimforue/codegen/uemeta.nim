@@ -144,7 +144,8 @@ func isNimTypeInAffectedTypes(nimType: string, affectedTypes: seq[string]): bool
     .any(typ =>
         typ.removeLastLettersIfPtr() == nimType.removeLastLettersIfPtr() or
         typ == nimType.extractTypeFromGenericInNimFormat("TObjectPtr") or
-        typ == nimType.extractTypeFromGenericInNimFormat("TArray")
+        typ == nimType.extractTypeFromGenericInNimFormat("TArray") or
+        typ in nimType.extractKeyValueFromMapProp()
 
       )
 

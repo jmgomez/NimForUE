@@ -8,6 +8,7 @@ import nametypes
 type
     FMulticastScriptDelegate* {.importcpp, inheritable, pure.} = object 
     FScriptDelegate* {.importcpp, inheritable, pure.} = object
+    
 
 
 proc makeScriptDelegate() : FScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}

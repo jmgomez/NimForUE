@@ -170,10 +170,10 @@ proc staticClass*[T:UObject]() : UClassPtr =
 proc staticClass*(T:typedesc) : UClassPtr = staticClass[T]()
 proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
 
+
 proc isChildOf*[T:UObject](cls: UClassPtr) : bool =
     let someBase = staticClass[T]()
     isChildOf(cls, someBase)
-
 
 proc isChildOf*[C:UStruct, P:UStruct] : bool = isChildOf(staticClass[C](), staticClass[P]())
 proc TSubclass*[T]() : TSubclassOf[T] = makeTSubClassOf[T](staticClass[T]())

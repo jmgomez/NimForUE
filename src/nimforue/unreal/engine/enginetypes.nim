@@ -130,6 +130,8 @@ type
     boneName* {.importcpp: "BoneName".}: FName
     myBoneName* {.importcpp: "MyBoneName".}: FName
 
+  
+
   # UDeveloperSettings* {.importcpp .} = object of UObject
   UEdGraphNode* {.importcpp .} = object of UObject
 
@@ -272,7 +274,9 @@ type
     # tintColor*: FSlateColor
     # margin*: FMargin
     ImageSize*: FVector2D
+  # FMovieSceneSequenceID* {.importcpp.} = object
 
+   
 
 proc getWorld*(worldContext: FWorldContextPtr): UWorldPtr {.importcpp: "#->World()".}
 
@@ -310,7 +314,8 @@ type EGetWorldErrorMode* {.importcpp, size: sizeof(uint8).} = enum
   
 
 
-#ACTOR CPP
+#ACTOR CPP and related 
+func getActor*(hitResult: FHitResult): AActorPtr {.importcpp: "#.GetActor()".}
 proc isTickFunctionRegistered*(self: FActorTickFunction): bool {.importcpp: "#.IsTickFunctionRegistered()".}  
 ##ENGINE
 #UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const
