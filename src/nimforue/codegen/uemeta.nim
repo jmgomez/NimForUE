@@ -756,8 +756,16 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
 
   newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())
 
+
+
   discard newCls.getDefaultObject() #forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
+  if newCls.isChildOf[:UEngineSubsystem]():
+    UE_Warn &"Activating engine subsystem {newCls.getName()}"
+    #initi the subystem. Doesnt seem that we need to deactivated it but there is an inverse.
+    #Need to test if it's neccesary with non engine subsystems
+    activateExternalSubsystem(newCls)
+
   newCls
 
 

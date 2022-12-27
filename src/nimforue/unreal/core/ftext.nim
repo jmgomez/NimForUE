@@ -10,3 +10,4 @@ proc toFString*(text:FText) : FString {. importcpp:"#.ToString()".}
 
 
 proc toText*(str: FString) : FText {. importcpp:"FText::FromString(#)" .}
+proc toText*(str: string) : FText  = makeFString(str).toText()

@@ -324,6 +324,8 @@ let GEngine* = getEngine()
 proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGetWorldErrorMode) : UWorldPtr  
   {.importcpp: "#->GetWorldFromContextObject(#, #)".}
 
+proc activateExternalSubsystem*(cls:UClassPtr) {.importcpp: "FObjectSubsystemCollection<UEngineSubsystem>::ActivateExternalSubsystem(#)".}
+
 
 #TEMPORAL DYNAMIC DELEGATE THIS SHOULD BE BOUND FROM THE BINDINGS
 type FOnQuartzCommandEventBP* {.importcpp, pure.} = object
