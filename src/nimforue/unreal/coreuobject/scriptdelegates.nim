@@ -21,7 +21,7 @@ proc bindUFunction*(dynDel: var FScriptDelegate, obj:UObjectPtr, name:FName) : v
 #Should use add unique?
 proc addUnique(dynDel: var FMulticastScriptDelegate, scriptDel : FScriptDelegate) : void {.importcpp: "#.AddUnique(#)".}
 
-#Notice this function doesnt exists in cpp
+# #Notice this function doesnt exists in cpp
 # proc bindUFunction*(dynDel: var FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
 #     var scriptDel = makeScriptDelegate()
 #     scriptDel.bindUFunction obj, name
