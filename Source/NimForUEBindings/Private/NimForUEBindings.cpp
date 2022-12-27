@@ -1,6 +1,5 @@
 ﻿#include "NimForUEBindings.h"
 
-#include "GenerateClass.h"
 #include "Modules/ModuleManager.h"
 
 DEFINE_LOG_CATEGORY(NimForUEBindings)

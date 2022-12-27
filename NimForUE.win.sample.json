@@ -2,5 +2,6 @@
   "engineDir": "C:\\Program Files\\Epic Games\\UE_5.0\\Engine",
   "gameDir": "G:\\NimForUEDemov2\\NimForUEDemov2",
   "targetConfiguration": "Development",
-  "targetPlatform": "Win64"
+  "targetPlatform": "Win64",
+  "withEditor": true
 }

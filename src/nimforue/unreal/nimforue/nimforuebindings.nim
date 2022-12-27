@@ -43,6 +43,7 @@ proc setClassConstructor*(cls:UClassPtr, classConstructor:UClassConstructor) : v
  
 func isNimClass*(cls:UClassPtr) : bool = cls.hasMetadata(NimClassMetadataKey)
 proc markAsNimClass*(cls:UClassPtr) = 
+  when WithEditor:
     cls.setMetadata(NimClassMetadataKey, "true")
 
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}

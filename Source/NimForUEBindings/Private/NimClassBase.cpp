@@ -5,8 +5,9 @@
 
 #include "FNimHotReload.h"
 #include "ReflectionHelpers.h"
+#if WITH_EDITOR
 #include "Subsystems/AssetEditorSubsystem.h"
-
+#endif
 
 UNimEnum::UNimEnum(const FObjectInitializer& Initializer) : UEnum(Initializer) {
 	SetEnumFlags(EEnumFlags::Flags);

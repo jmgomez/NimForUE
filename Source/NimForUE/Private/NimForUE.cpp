@@ -2,9 +2,12 @@
 
 #include "NimForUE.h"
 #include "Modules/ModuleManager.h"
-#include "Editor.h"
-#include "EditorUtils.h"
+#if WITH_EDITOR
+	#include "Editor.h"
+	#include "EditorUtils.h"
+
 #include "NimForUEFFI.h"
+#endif
 #include "Async/Async.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"

@@ -74,6 +74,7 @@ type NimForUEConfig* = object
   gameDir* : string
   targetConfiguration* : TargetConfiguration #Sets by UBT (Development, Build)
   targetPlatform* : TargetPlatform #Sets by UBT
+  withEditor* : bool
   # currentCompilation* : int 
   #WithEditor? 
   #DEBUG?
@@ -100,7 +101,7 @@ proc getOrCreateNUEConfig() : NimForUEConfig =
   let defaultPlatform = when defined(windows): Win64 else: Mac
   let conf = 
     tryGetEngineAndGameDir()
-      .map((dirs)=> NimForUEConfig(engineDir: dirs[0], gameDir: dirs[1], targetConfiguration: Development, targetPlatform: defaultPlatform))
+      .map((dirs)=> NimForUEConfig(engineDir: dirs[0], gameDir: dirs[1], withEditor:true, targetConfiguration: Development, targetPlatform: defaultPlatform))
   
   if conf.isSome():
     conf.get().saveConfig()
@@ -143,6 +144,11 @@ let
   GenFilePath* = PluginDir / "src" / "hostnimforue"/"ffigen.nim"
   NimGameDir* = config.gameDir / "NimForUE"
   GamePath* = getGamePathFromGameDir(config.gameDir)
+#TODO we need to make it accesible from game/guest at compile time
+when not defined(nue):
+  const WithEditor* {.booldefine.} = true
+else:
+  let WithEditor* = config.withEditor 
 
 doAssert(GamePath != GamePathError, &"Config file error: The uproject file could not be found in {config.gameDir}. Please check that 'gameDir' points to the directory containing your uproject in '{PluginDir / getConfigFileName()}'.")
 
@@ -167,12 +173,14 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   let pluginDir = PluginDir
   let enginePluginDir = engineDir/"Plugins"#\EnhancedInput\Source\EnhancedInput\Public\EnhancedPlayerInput.h
 
-  let pluginDefinitionsPaths = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
-  let nimForUEIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUE"
+  let unrealFolder = if conf.withEditor: "UnrealEditor" else: "UnrealGame"
+
+  let pluginDefinitionsPaths = pluginDir / "Intermediate" / "Build" / platformDir / unrealFolder / confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
+  let nimForUEIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / unrealFolder / "Inc" / "NimForUE"
   let nimForUEBindingsHeaders =  pluginDir / "Source/NimForUEBindings/Public/"
-  let nimForUEBindingsIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEBindings"
+  let nimForUEBindingsIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / unrealFolder / "Inc" / "NimForUEBindings"
   let nimForUEEditorHeaders =  pluginDir / "Source/NimForUEEditor/Public/"
-  let nimForUEEditorIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / "Inc" / "NimForUEEditor"
+  let nimForUEEditorIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / unrealFolder / "Inc" / "NimForUEEditor"
 
   let essentialHeaders = @[
     pluginDefinitionsPaths / "NimForUE",
@@ -209,7 +217,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
 
   proc getEngineRuntimeIncludePathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Public"
   proc getEngineRuntimeIncludeClassesPathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Classes"
-  proc getEngineIntermediateIncludePathFor(moduleName:string) : string = engineDir / "Intermediate/Build" / platformDir / "UnrealEditor/Inc" / moduleName
+  proc getEngineIntermediateIncludePathFor(moduleName:string) : string = engineDir / "Intermediate/Build" / platformDir / unrealFolder / "Inc" / moduleName
   proc getEnginePluginModule(moduleName:string) : string = enginePluginDir / moduleName / "Source" / moduleName / "Public"
 
 
@@ -253,21 +261,37 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   let confDir = $conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = PluginDir
+  let unrealFolder = if conf.withEditor: "UnrealEditor" else: "UnrealGame"
+  proc getObjFiles(dir: string, moduleName:string) : seq[string] = 
+    #useful for non editor builds. Some modules are split
+    let objFiles = walkFiles(dir/ &"Module.{moduleName}*.cpp.obj").toSeq()
+    objFiles
+
   #We only support Debug and Development for now and Debug is Windows only
   let suffix = if conf.targetConfiguration == Debug : "-Win64-Debug" else: "" 
-  proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string): string =  
+  proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string): seq[string] =  
     when defined windows:
-      engineDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / moduleName / &"{prefix}-{moduleName}{suffix}.lib"
+      let dir =  engineDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / moduleName 
+      if conf.withEditor:
+        @[dir / &"{prefix}-{moduleName}{suffix}.lib"]
+      else:
+        getObjFiles(dir, moduleName)
+       
     elif defined macosx:
       let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
-      engineDir / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"
+      @[engineDir / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"]
 #E:\unreal_sources\5.1Launcher\UE_5.1\Engine\Plugins\EnhancedInput\Intermediate\Build\Win64\UnrealEditor\Development\EnhancedInput
-  proc getEnginePluginSymbolsPathFor(prefix, moduleName:string): string =  
+  proc getEnginePluginSymbolsPathFor(prefix, moduleName:string): seq[string] =  
     when defined windows:
-      engineDir / "Plugins" / moduleName / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / moduleName / &"{prefix}-{moduleName}{suffix}.lib"
+      let dir = engineDir / "Plugins" / moduleName / "Intermediate/Build" / platformDir / unrealFolder / confDir / moduleName 
+      if conf.withEditor:
+        @[dir / &"{prefix}-{moduleName}{suffix}.lib"]
+      else:
+        getObjFiles(dir, moduleName)
+
     elif defined macosx:
       let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
-      engineDir / "Plugins" / moduleName / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"
+      @[engineDir / "Plugins" / moduleName / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"]
 
 
   proc getNimForUESymbols(): seq[string] = 
@@ -277,15 +301,15 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
       #notice this shouldnt be included when target <> Editor
       let libPathEditor  = pluginDir / "Binaries" / $conf.targetPlatform / "UnrealEditor-NimForUEEditor.dylib"
     elif defined windows:
-      let libPath = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / &"NimForUE/UnrealEditor-NimForUE{suffix}.lib"
-      let libPathBindings = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
-      let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / "UnrealEditor" / confDir / &"NimForUEEditor/UnrealEditor-NimForUEEditor{suffix}.lib"
+      let libPath = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUE/UnrealEditor-NimForUE{suffix}.lib"
+      let libPathBindings = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
+      let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEEditor/UnrealEditor-NimForUEEditor{suffix}.lib"
 
     @[libPath,libpathBindings, libPathEditor]
 
   let modules = @["Core", "CoreUObject", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore"]
-  let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName))
-  let enginePluginSymbolsPaths = @["EnhancedInput"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName))
+  let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
+  let enginePluginSymbolsPaths = @["EnhancedInput"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName)).flatten()
 
   (engineSymbolsPaths & enginePluginSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
 

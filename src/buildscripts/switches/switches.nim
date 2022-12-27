@@ -29,6 +29,7 @@ let buildSwitches* = @[
   "--ic:off",
   "--threads:off",
   "--path:$nim",
+  
   # "--hints:off",
   "--hint:XDeclaredButNotUsed:off",
   "--hint:Name:off",
@@ -37,6 +38,7 @@ let buildSwitches* = @[
   "-d:withReinstantiation",
   "-d:genFilePath:" & quotes(GenFilePath),
   "-d:pluginDir:" & quotes(PluginDir),
+  "-d:withEditor" & $WithEditor
 
 ]
 

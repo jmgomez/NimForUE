@@ -2,5 +2,6 @@
   "engineDir": "/Volumes/Store/UnrealSources/UE_5.1/Engine",
   "gameDir": "/Volumes/Store/UnrealProjects/NimTemplate",
   "targetConfiguration": "Development",
-  "targetPlatform": "Win64"
+  "targetPlatform": "Mac",
+  "withEditor": true
 }

@@ -15,3 +15,4 @@ import engine
 import engine_umg
 
 import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
+include definitions

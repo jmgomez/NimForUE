@@ -231,21 +231,26 @@ proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) : void {.impo
 proc findMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : ptr FString {.importcpp:"const_cast<FString*>(#->FindMetaData(*#))".}
 #notice it also checks for the ue value. It will return false on "false"
 func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool = 
-    someNil(field.findMetaData(key)).isSome()
-
+    when WithEditor:
+        someNil(field.findMetaData(key)).isSome()
+    else: false
 
 
 func getMetaDataMapPtr(field:FFieldPtr) : ptr TMap[FName, FString] {.importcpp:"const_cast<'0>(#->GetMetaDataMap())".}
 func getMetadataMap*(field:FFieldPtr) : TMap[FName, FString] =
-    let metadataMap = getMetadataMapPtr(field)
-    if metadataMap.isNil: makeTMap[FName, FString]()
-    else: metadataMap[]
+    when WithEditor:
+        let metadataMap = getMetadataMapPtr(field)
+        if metadataMap.isNil: makeTMap[FName, FString]()
+        else: metadataMap[]
+    else: makeTMap[FName, FString]()
 
 func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
 func getMetadataMap*(field:UObjectPtr) : TMap[FName, FString] =
-    let metadataMap = getMetadataMapPtr(field)
-    if metadataMap.isNil: makeTMap[FName, FString]()
-    else: metadataMap[]
+    when WithEditor:
+        let metadataMap = getMetadataMapPtr(field)
+        if metadataMap.isNil: makeTMap[FName, FString]()
+        else: metadataMap[]
+    else: makeTMap[FName, FString]()
 
 func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] = 
     let map = field.getMetadataMap()

@@ -2,10 +2,12 @@
 
 
 #include "NimForUEEngineSubsystem.h"
-
+#if WITH_EDITOR
 #include "Editor.h"
 #include "EditorUtils.h"
 #include "FNimReload.h"
+#endif
+
 #include "NimForUEFFI.h"
 #include "ReinstanceBindings.h"
 
@@ -51,8 +53,7 @@ int UNimForUEEngineSubsystem::GetReloadTimesFor(FString ModuleName) {
 
 bool UNimForUEEngineSubsystem::Tick(float DeltaTime)
 {
-	if (EditorUtils)
-		EditorUtils->Tick(DeltaTime);
+	
 	checkReload();
 	return true;
 }

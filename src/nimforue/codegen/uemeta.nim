@@ -560,8 +560,9 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
 
   let prop: FPropertyPtr = newFProperty(makeFieldVariant outer, propField)
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
-  for metadata in propField.metadata:
-    prop.setMetadata(metadata.name, $metadata.value)
+  when WithEditor:
+    for metadata in propField.metadata:
+      prop.setMetadata(metadata.name, $metadata.value)
   outer.addCppProperty(prop)
   prop
 
@@ -600,7 +601,8 @@ proc emitUFunction*(fnField: UEField, cls: UClassPtr, fnImpl: Option[UFunctionNa
     fn.functionFlags = (fn.functionFlags | (sFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms)))
 
     copyMetadata(sFn, fn)
-    fn.setMetadata("ToolTip", fn.getMetadata("ToolTip").get()&" vNim")
+    when WithEditor:
+      fn.setMetadata("ToolTip", fn.getMetadata("ToolTip").get()&" vNim")
     setSuperStruct(fn, sFn)
 
 
@@ -613,8 +615,9 @@ proc emitUFunction*(fnField: UEField, cls: UClassPtr, fnImpl: Option[UFunctionNa
   UE_Log &"FNName: {fn.getName()} Metadata {fnField.metadata}"
 
   if superFn.isNone():
-    for metadata in fnField.metadata:
-      fn.setMetadata(metadata.name, $metadata.value)
+    when WithEditor:
+      for metadata in fnField.metadata:
+        fn.setMetadata(metadata.name, $metadata.value)
 
   cls.addFunctionToFunctionMap(fn, fnName)
   if fnImpl.isSome(): #blueprint implementable events doesnt have a function implementation
@@ -727,10 +730,11 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
  
   newCls.markAsNimClass()
   UE_Error "MEtadata for class " & newCls.getName()
-   
-  for metadata in ueType.metadata:
-    UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
-    newCls.setMetadata(metadata.name, $metadata.value)
+  
+  when WithEditor:
+    for metadata in ueType.metadata:
+      UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
+      newCls.setMetadata(metadata.name, $metadata.value)
 
   for field in ueType.fields:
     case field.kind:
@@ -744,17 +748,19 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
   newCls.staticLink(true)
   newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)
 
-  setGIsUCCMakeStandaloneHeaderGenerator(true)
-  newCls.bindType()
-  setGIsUCCMakeStandaloneHeaderGenerator(false)
+  when WithEditor: #TODO Fix this, will crash at comp time. This is just to make it compile
+    setGIsUCCMakeStandaloneHeaderGenerator(true)
+    newCls.bindType()
+    setGIsUCCMakeStandaloneHeaderGenerator(false)
   newCls.assembleReferenceTokenStream()
 
   newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultConstructor))
   clsConstructor.run(proc (cons: CtorInfo) =
-    newCls.setMetadata(ClassConstructorMetadataKey, cons.hash)
+    when WithEditor:
+      newCls.setMetadata(ClassConstructorMetadataKey, cons.hash)
   )
-
-  newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())
+  when WithEditor:
+    newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())
 
 
 

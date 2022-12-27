@@ -1,12 +1,15 @@
 ﻿#include "ReinstanceBindings.h"
 
-#include "EditorUtils.h"
 #include "NimForUEEngineSubsystem.h"
 #include "Engine/Engine.h"
+#if WITH_EDITOR
+#include "EditorUtils.h"
 #include "Kismet2/ReloadUtilities.h"
 
 
+
 void ReinstanceBindings::ReinstanceNueTypes(FString NueModule, FNimHotReload* NimHotReload, FString NimError) {
+	
 	UNimForUEEngineSubsystem* NimForUESubsystem = GEngine->GetEngineSubsystem<UNimForUEEngineSubsystem>();
 	bool bIsFirstLoad = !NimForUESubsystem->ReloadCounter.Contains(NueModule);
 	
@@ -27,8 +30,7 @@ void ReinstanceBindings::ReinstanceNueTypes(FString NueModule, FNimHotReload* Ni
 
 	if (NimHotReload->bShouldHotReload && !bIsFirstLoad) {
 		// if (!bIsFirstLoad) {
-		NimForUESubsystem->EditorUtils = NewObject<UEditorUtils>();
-		NimForUESubsystem->EditorUtils->HotReload(NimHotReload, UnrealReload);
+	 NewObject<UEditorUtils>()->HotReload(NimHotReload, UnrealReload);
 	
 	}
 	if (UnrealReload != nullptr)
@@ -46,4 +48,5 @@ void ReinstanceBindings::ReinstanceNueTypes(FString NueModule, FNimHotReload* Ni
 		
 }
 
+#endif
 

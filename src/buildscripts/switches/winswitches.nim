@@ -5,8 +5,9 @@ import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 
 let config = getNimForUEConfig()
 
+let unrealFolder = if WithEditor: "UnrealEditor" else: "UnrealGame"
 
-let pchDir = PluginDir / "Intermediate\\Build\\Win64\\UnrealEditor" / $config.targetConfiguration / "NimForUE"
+let pchDir = PluginDir / "Intermediate\\Build\\Win64" / unrealFolder / $config.targetConfiguration / "NimForUE"
 let pchObjPath = pchDir / "PCH.NimForUE.h.obj"
 
 let pchCompileFlags = @[

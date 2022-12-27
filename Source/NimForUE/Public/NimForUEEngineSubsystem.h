@@ -20,8 +20,8 @@ class NIMFORUE_API UNimForUEEngineSubsystem : public UEngineSubsystem {
 	FTSTicker::FDelegateHandle TickDelegateHandle;
 	static void LoadNimGuest(FString NimError);
 public:
-	UPROPERTY()
-	class UEditorUtils* EditorUtils;
+	// UPROPERTY()
+	// class UEditorUtils* EditorUtils;
 	const FString NimPluginModule = "Nim";
 	//Holds the number of reload per module. i.e. NimPlugin -> 1, NimGame -> 2
 	TMap<FString, int> ReloadCounter = {};

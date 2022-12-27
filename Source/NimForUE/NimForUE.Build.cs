@@ -49,7 +49,7 @@ public class NimForUE : ModuleRules
 			PrivateDependencyModuleNames.AddRange(new string[]{
 				"UnrealEd",
 				"NimForUEEditor",
-				
+				"EditorStyle",
 			});
 		}
 
@@ -61,7 +61,7 @@ public class NimForUE : ModuleRules
 				"SlateCore",
 
 				"NimForUEBindings",
-				"EditorStyle",
+				
 				"Projects",
 				"EnhancedInput"
 
@@ -80,8 +80,8 @@ public class NimForUE : ModuleRules
 
 		// CppStandard = CppStandardVersion.Cpp14;
 		//TODO This is only for dev. Research build path. Especially for platforms like iOS
-		
-		AddNimForUEDev();
+	
+			AddNimForUEDev();
 		
 		
 	}
@@ -121,6 +121,7 @@ public class NimForUE : ModuleRules
 
 	//TODO Run buildlibs from here so the correct config/platform is picked when building
 	void AddNimForUEDev() { //ONLY FOR WIN/MAC with EDITOR (dev) target
+		// if(Target.bBuildEditor) //Only editor for now
 		NimbleSetup(); //Make sure NUE and Host are built
 		var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue");
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");

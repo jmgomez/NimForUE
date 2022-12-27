@@ -22,3 +22,8 @@ when defined(vcc):
 """.}
  
 # CompileArgs: -arm64 /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++  -fmessage-length=0 -pipe -fpascal-strings -fexceptions -DPLATFORM_EXCEPTIONS_DISABLED=0 -fasm-blocks -fvisibility-ms-compat -fvisibility-inlines-hidden -Wall -Werror -Wdelete-non-virtual-dtor -Wno-range-loop-analysis   -Wshadow -Wundef -c -arch x86_64 -isysroot "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.3.sdk" -mmacosx-version-min=10.15 -O3 -gdwarf-2
+
+
+
+
+const WithEditor* {.booldefine.} = true 
