@@ -120,11 +120,11 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
 
 proc ensureGameConfExists() = 
   let fileTemplate = """
-path:"../Plugins/NimForUE/src/nimforue/unreal/bindings"
-path:"../Plugins/NimForUE/src/nimforue/game"
-path:"../Plugins/NimForUE/src/nimforue/"
+switch("path", "../Plugins/NimForUE/src/nimforue/unreal/bindings")
+switch("path","../Plugins/NimForUE/src/nimforue/game")
+switch("path","../Plugins/NimForUE/src/nimforue/")
 """
-  let gameConf = NimGameDir / "game.nim.cfg"
+  let gameConf = NimGameDir / "config.nims"
   if not fileExists(gameConf):
     writeFile(gameConf, fileTemplate)
 
