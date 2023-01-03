@@ -57,7 +57,7 @@ func toEmmitTemplate*(fn:CppFunction, class:string) : string  =
 
 proc saveHeader*(cppHeader: CppHeader, folder: string = ".") =
   if OutputHeader == "": return #TODO assert when done
-  let path = folder / cppHeader.name 
+  let path = PluginDir / folder / cppHeader.name 
   writeFile(path,  $cppHeader)
 
 #Not used for UETypes. Will be used in the future when supporting non UObject base types.

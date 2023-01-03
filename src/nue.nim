@@ -130,13 +130,16 @@ task ubuild, "Calls Unreal Build Tool for your project":
 
   let curDir = getCurrentDir()
   let uprojectFile = GamePath
-  let walkPattern = config.gameDir & "/Source/*Editor.Target.cs"
-  let targetFiles = walkPattern.walkFiles.toSeq()
+  proc isTargetFile(filename:string) : bool = 
+    if WithEditor: "Editor" in filename
+    else: "Editor" notin filename
 
-  #For now only editor
+  let walkPattern = config.gameDir & "/Source/*.Target.cs"
+  let targetFiles = walkPattern.walkFiles.toSeq().filter(isTargetFile)
+
   let target = targetFiles[0].split(".")[0].split(PathSeparator)[^1] #i.e " NimForUEDemoEditor "
 
-  log target
+  log "Target is " & target
   try:
     setCurrentDir(config.engineDir)
     let buildCmd =  

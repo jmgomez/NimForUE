@@ -301,11 +301,16 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
       #notice this shouldnt be included when target <> Editor
       let libPathEditor  = pluginDir / "Binaries" / $conf.targetPlatform / "UnrealEditor-NimForUEEditor.dylib"
     elif defined windows:
-      let libPath = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUE/UnrealEditor-NimForUE{suffix}.lib"
-      let libPathBindings = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
-      let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEEditor/UnrealEditor-NimForUEEditor{suffix}.lib"
-
-    @[libPath,libpathBindings, libPathEditor]
+      if conf.withEditor:
+        let libPath = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUE/UnrealEditor-NimForUE{suffix}.lib"
+        let libPathBindings = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
+        let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEEditor/UnrealEditor-NimForUEEditor{suffix}.lib"
+        @[libPath,libpathBindings, libPathEditor]
+      else:
+        let dir = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir 
+        let libPath = getObjFiles(dir, "NimForUE")
+        let libPathBindings = getObjFiles(dir, "NimForUEBindings")
+        libPath & libPathBindings
 
   let modules = @["Core", "CoreUObject", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
