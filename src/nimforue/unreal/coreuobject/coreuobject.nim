@@ -590,3 +590,9 @@ proc setLocation*(self: FTransform, value: FVector) {.importcpp: "#.SetLocation(
 proc setTranslation*(self: FTransform, value: FVector) {.importcpp: "#.SetTranslation(@)".}
 proc setRotation*(self: FTransform, value: FQuat) {.importcpp: "#.SetRotation(@)".}
 proc setScale3D*(self: FTransform, value: FVector) {.importcpp: "#.SetScale3D(@)".}
+
+
+
+#Asset
+proc toSoftObjectPath*(assetData:FAssetData) : FSoftObjectPath {.importcpp: "#.ToSoftObjectPath()".}
+proc tryLoad*(softObjectPath:FSoftObjectPath) : UObjectPtr {.importcpp: "#.TryLoad()".}

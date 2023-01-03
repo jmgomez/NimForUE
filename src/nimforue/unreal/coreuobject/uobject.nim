@@ -222,7 +222,7 @@ type
 
 
 
-
+proc getInterface*[T](scriptInterface:TScriptInterface[T]) : ptr T {. importcpp: "(#.GetInterface())".}
 
 
 #UFIELD

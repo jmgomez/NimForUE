@@ -136,16 +136,16 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
   ensureGameConfExists()
   #We compile from the engine directory so we dont surpass the windows argument limits for the linker 
   let engineBase = parentDir(config.engineDir)
-  setCurrentDir(engineBase)
+  # setCurrentDir(engineBase)
   #TODO the final path will be relative to the engine dir this is just a hack to get it working for now
-  var uesymbols = uesymbols.mapIt(it.replace(config.engineDir, "Engine"))
+  # var uesymbols = uesymbols.mapIt(it.replace(config.engineDir, "Engine"))
   let gameFolder = NimGameDir
   let nimCache = ".nimcache/game"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"nim cpp {buildFlags} --app:lib  -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
   doAssert(execCmd(compCmd)==0)
-  setCurrentDir(PluginDir)
+  # setCurrentDir(PluginDir)
   copyNimForUELibToUEDir("game")
 
 

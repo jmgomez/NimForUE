@@ -3,6 +3,8 @@ import ../core/math/vector
 import ../coreuobject/[uobject, coreuobject, nametypes]
 import ../nimforue/nimforuebindings
 import ../core/[delegates]
+import ../core/containers/[unrealstring]
+
 
 type 
   UEngine* {.importcpp, importcpp, pure .} = object of UObject
@@ -169,6 +171,7 @@ type
 
   FPlatformUserId* {.importc .} = object
   FTopLevelAssetPath* {.importc .} = object
+
   FARFilter* {.importc .} = object
 
 
@@ -331,6 +334,10 @@ proc activateExternalSubsystem*(cls:UClassPtr) {.importcpp: "FObjectSubsystemCol
 type FOnQuartzCommandEventBP* {.importcpp, pure.} = object
 type FOnQuartzMetronomeEventBP* {.importcpp, pure.} = object
 
+
+#Asset should put those in uobject?
+proc makeFTopLevelAssetPath*(path: FString) : FTopLevelAssetPath {.importcpp: "FTopLevelAssetPath(#)", constructor.}
+proc getClassPathName*(self: UClassPtr): FTopLevelAssetPath {.importcpp: "#->GetClassPathName()".}
 
 # INPUT ACTION. This should live in another place.
 type 
