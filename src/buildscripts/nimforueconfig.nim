@@ -300,6 +300,8 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
       let libpathBindings  = pluginDir / "Binaries" / $conf.targetPlatform / "UnrealEditor-NimForUEBindings.dylib"
       #notice this shouldnt be included when target <> Editor
       let libPathEditor  = pluginDir / "Binaries" / $conf.targetPlatform / "UnrealEditor-NimForUEEditor.dylib"
+      return @[libPath,libpathBindings, libPathEditor]
+
     elif defined windows:
       if conf.withEditor:
         let libPath = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUE/UnrealEditor-NimForUE{suffix}.lib"

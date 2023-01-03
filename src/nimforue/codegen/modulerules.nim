@@ -204,7 +204,8 @@ moduleImportRules["MovieScene"] = @[
   makeImportedRuleField(uerIgnore, @[
     "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
     "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate", 
-    "TrackTemplates", "FMovieSceneSequenceID", "FMovieSceneEvaluationInstanceKey"
+    "TrackTemplates", "FMovieSceneSequenceID", "FMovieSceneEvaluationInstanceKey",
+    "NetworkMask"
   ]),
   
   # makeImportedRuleModule(uerImportBlueprintOnly)
