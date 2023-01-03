@@ -348,9 +348,9 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let moduleStrTemplate = &"""
 #hash:{module.hash}
 include ../prelude
-
-const BindingPrefix {{.strdefine.}} = ""
-{{.compile: BindingPrefix&"{module.name.tolower()}.nim.cpp".}}
+when not defined(nimsuggest):
+  const BindingPrefix {{.strdefine.}} = ""
+  {{.compile: BindingPrefix&"{module.name.tolower()}.nim.cpp".}}
 
 """
     echo &"Generating bindings for {module.name}"

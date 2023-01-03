@@ -117,18 +117,23 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
 
 
 
+
+proc ensureGameConfExists() = 
+  let fileTemplate = """
+path:"../Plugins/NimForUE/src/nimforue/unreal/bindings"
+path:"../Plugins/NimForUE/src/nimforue/game"
+path:"../Plugins/NimForUE/src/nimforue/"
+"""
+  let gameConf = NimGameDir / "game.nim.cfg"
+  if not fileExists(gameConf):
+    writeFile(gameConf, fileTemplate)
+
 proc compileGame*(extraSwitches:seq[string], withDebug:bool) = 
   let gameSwitches = @[
     "-d:game",
-    "-p:../../NimForUE/",
-    "-p:src/game/",
-    "-p:src/nimforue/",
-    "-p:src/nimforue/game",
-    "-p:src/nimforue/unreal",
-    "-p:src/nimforue/unreal/bindings",
     "-d:BindingPrefix=.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
-    # "--include:../game/nueprelude"
   ]
+  ensureGameConfExists()
 
   let gameFolder = NimGameDir
   let nimCache = ".nimcache/game"/(if withDebug: "debug" else: "release")
