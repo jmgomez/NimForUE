@@ -281,7 +281,7 @@ proc findFunctionByName*(cls : UClassPtr, name:FName) : UFunctionPtr {. importcp
 proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) : void {. importcpp: "#.AddFunctionToFunctionMap(@)"}
 proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
 proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()" .}
-proc getCDO*[T:UObjectPtr](cls:UClassPtr) : T = ueCast[T](cls.getDefaultObject())
+proc getCDO*[T:UObject](cls:UClassPtr) : ptr T = ueCast[T](cls.getDefaultObject())
 proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()" .}
 proc assembleReferenceTokenStream*(cls:UClassPtr, bForce = false) : void {. importcpp:"#->AssembleReferenceTokenStream(@)" .}
 
