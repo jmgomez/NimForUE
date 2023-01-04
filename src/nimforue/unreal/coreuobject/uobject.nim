@@ -221,9 +221,11 @@ type
         mostRecentPropertyAddress* {.importcpp:"MostRecentPropertyAddress".}: ptr uint8
 
 
-
+#Notice T is not an UObject but the Cpp interface
 proc getInterface*[T](scriptInterface:TScriptInterface[T]) : ptr T {. importcpp: "(#.GetInterface())".}
-
+proc getUObject*(scriptInterface:TScriptInterface) : UObjectPtr {. importcpp: "(#.GetObject())".}
+proc getUInterface*[T](scriptInterface:TScriptInterface) : ptr T =
+    scriptInterface.getUObject().ueCast[:T]()
 
 #UFIELD
 proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) : void {.importcpp:"#->SetMetaData(*#, *#)".}

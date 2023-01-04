@@ -8,7 +8,7 @@ import std/[typetraits, options]
 proc getSubsystem*[T : UEngineSubsystem]() : Option[ptr T] = 
     tryUECast[T](getEngineSubsystem(makeTSubclassOf[UEngineSubsystem](staticClass[T]())))
 
-proc getSubsystem*[T : USubsystem](objContext : UObjectPtr) : Option[ptr T] =
+proc  getSubsystem*[T : USubsystem](objContext : UObjectPtr) : Option[ptr T] =
     let cls = staticClass[T]()
     if cls.isChildOf(staticClass[UGameInstanceSubsystem]()):
       tryUECast[T](getGameInstanceSubsystem(objContext, makeTSubclassOf[UGameInstanceSubsystem](cls)))
