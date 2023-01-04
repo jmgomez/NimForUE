@@ -263,7 +263,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
     else: newEmptyNode()
 
   
-  let callUFuncOn = 
+  let processFn = 
     case typeDef.kind:
     of uetDelegate:
       case typeDef.delKind:
@@ -271,7 +271,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
           genAst(): self.processDelegate(param.addr)
         of uedelMulticastDynScriptDelegate:
           genAst(): self.processMulticastDelegate(param.addr)
-    else: genAst(): callUFuncOn(self, fnName, param.addr)
+    else: genAst(): self.processEvent(fn, param.addr)
 
   let outParams = 
     nnkStmtList.newTree(
@@ -294,12 +294,13 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
               )
   let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
 
-  var fnBody = genAst(uFnName=newStrLitNode(funField.actualFunctionName), paramInsideBodyAsType, paramDeclaration, generateObjForStaticFunCalls, callUFuncOn, returnCall, outParams):
+  var fnBody = genAst(clsName=newStrLitNode(clsName), uFnName=newStrLitNode(funField.actualFunctionName), paramInsideBodyAsType, paramDeclaration, generateObjForStaticFunCalls, processFn, returnCall, outParams):
     paramInsideBodyAsType
     paramDeclaration
-    var fnName {.inject, used .} : FString = uFnName
+    let fnName {.inject, used .} = n uFnName
+    let fn {.inject, used.} = getClassByName(clsName).findFunctionByName(fnName)
     generateObjForStaticFunCalls
-    callUFuncOn
+    processFn
     outParams
     returnCall
 
