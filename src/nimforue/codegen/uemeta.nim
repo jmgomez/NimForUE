@@ -8,7 +8,7 @@ import emitter
 import ../codegen/modulerules
 import ../codegen/modelconstructor
 
-const fnPrefixes = @["", "Receive", "K2_"]
+const fnPrefixes = @["", "Receive", "K2_", "BP_"]
 
 
 
@@ -583,14 +583,19 @@ func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: string): Option[UFunc
   none[UFunctionPtr]()
 
 #note at some point class can be resolved from the UEField?
-proc emitUFunction*(fnField: UEField, cls: UClassPtr, fnImpl: Option[UFunctionNativeSignature]): UFunctionPtr =
+proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Option[UFunctionNativeSignature]): UFunctionPtr =
   let superCls = someNil(cls.getSuperClass())
   let superFn = superCls.flatmap((scls: UClassPtr)=>scls.findFunctionByNameWithPrefixes(fnField.name))
 
   #if we are overriden a function we use the name with the prefix
   #notice this only works with BlueprintEvent so check that too.
-  let fnName = superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
+  var fnName = superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
 
+  #we need to see if any of the implemented interfaces have the function
+  let isAnInterfaceFn = ueType.interfaces.mapIt(getClassByName(it.removeFirstLetter()).findFunctionByNameWithPrefixes(fnField.name)).sequence().any()
+  if isAnInterfaceFn:
+    UE_Warn &"Interface function: {fnName} in {cls.getName().makeFName()}"
+    fnName = makeFName("BP_" & ($fnName).capitalizeAscii())
 
   const objFlags = RF_Public | RF_Transient | RF_MarkAsRootSet | RF_MarkAsNative
   var fn = newUObject[UNimFunction](cls, fnName, objFlags)
@@ -741,9 +746,18 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
     of uefProp: discard field.emitFProperty(newCls)
     of uefFunction:
       # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}" #notice each module emits its own functions  
-      discard emitUFunction(field, newCls, getNativeFuncImplPtrFromUEField(getGlobalEmitter(), field))
+      discard emitUFunction(field, ueType, newCls, getNativeFuncImplPtrFromUEField(getGlobalEmitter(), field))
     else:
       UE_Error("Unsupported field kind: " & $field.kind)
+
+  for iface in ueType.interfaces:
+    let ifaceCls = getClassByName(iface.removeFirstLetter())
+    if ifaceCls.isNotNil():
+      UE_Log &"Adding interface {ifaceCls.getName()} to {newCls.getName()}"
+      let implementedInterface = makeFImplementedInterface(ifaceCls, 0, true)
+      newCls.interfaces.add(implementedInterface)
+
+
 
   newCls.staticLink(true)
   newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)
@@ -843,9 +857,5 @@ proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
   fn.staticLink(true)
   fn.setMetadata(UETypeMetadataKey, $delType.toJson())
   fn
-
-proc createUFunctionInClass*(cls: UClassPtr, fnField: UEField, fnImpl: UFunctionNativeSignature): UFunctionPtr {.deprecated: "use emitUFunction instead".} =
-  fnField.emitUFunction(cls, some fnImpl)
-
 
 

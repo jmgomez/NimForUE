@@ -781,30 +781,37 @@ func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags,
             flags = flags or CLASS_EditInlineNew
     (flags, metas)
 
-proc getTypeNodeFromUClassName(name:NimNode) : (string, string) = 
+proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) = 
     if name.toSeq().len() < 3:
         error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
-
-    let parent = name[^1].strVal()
     let className = name[1].strVal()
-    #Register the class as emitted for us
+    #Register the class as emitted for us so we can generate the cpp for it and suport vfuncs
     emittedClasses.add className
-    (className, parent)
+    case name[^1].kind:
+    of nnkIdent: 
+        let parent = name[^1].strVal()
+        (className, parent, newSeq[string]())
+    of nnkCommand:
+        let parent = name[^1][0].strVal()
+        let iface = name[^1][^1][^1].strVal()
+        (className, parent, @[iface])
+    else:
+        error("Cant parse the uClass " & repr name)
+        ("", "", newSeq[string]())
+ 
 
 func addSelfToProc(procDef:NimNode, className:string) : NimNode = 
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
     procDef
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
-    
-    let (className, parent) = getTypeNodeFromUClassName(name)
+    let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
+    ueType.interfaces = interfaces
     var uClassNode = emitUClass(ueType)
 
-
-    
     #returns empty if there is no block defined
     let defaults = genDefaults(body)
     let declaredConstructor = genDeclaredConstructor(body, className)
@@ -818,15 +825,13 @@ macro uClass*(name:untyped, body : untyped) : untyped =
                     .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor"])
                     .mapIt(addSelfToProc(it, className))
 
-   
-
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
 
   
 macro uForwardDecl*(name : untyped ) : untyped = 
-    let (className, parent) = getTypeNodeFromUClassName(name)
+    let (className, parent, _) = getTypeNodeFromUClassName(name)
     let clsPtr = ident className & "Ptr"
     genAst(clsName=ident className, clsParent = ident parent, clsPtr):
         type 

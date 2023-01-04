@@ -39,7 +39,12 @@ proc getFuncsParamsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : 
     .getFuncsFromClass(flags)
     .mapIt(it.getFPropsFromUStruct(flags))
     .foldl(a & b, newSeq[FPropertyPtr]())
-        
+proc findFunctionByNameIncludingSuper*(cls : UClassPtr, name:FName) : UFunctionPtr = 
+  cls.getFuncsFromClass(EFieldIterationFlags.IncludeSuper)
+    .filterIt(it.getFName() == name)
+    .head()
+    .get(nil)
+
 proc getAllPropsOf*[T : FProperty](ustr:UStructPtr) : seq[ptr T] = 
     ustr.getFPropsFromUStruct()
         .filterIt(castField[T](it).isNotNil())

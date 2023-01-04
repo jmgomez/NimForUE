@@ -90,6 +90,7 @@ type
     TSubclassOf*[out T]  {. importcpp: "TSubclassOf<'0>".} = object
 
 
+proc makeFImplementedInterface*(class: UClassPtr, offset:int32 = 0, implementedByK2:bool = true) : FImplementedInterface {.importcpp:"FImplementedInterface(@)", constructor.}
 
 
 proc castField*[T : FField ](src:FFieldPtr) : ptr T {. importcpp:"CastField<'*0>(#)" .}
