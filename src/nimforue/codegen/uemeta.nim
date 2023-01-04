@@ -571,14 +571,15 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
 #the nim name in unreal on the emit, when the actual name is not set already.
 #it is also taking into consideration when converting from ue to nim via UClass->UEType
 func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: string): Option[UFunctionPtr] =
-  for prefix in fnPrefixes:
-    let fnName = prefix & name
-    # assert not cls.isNil()
-    if cls.isNil():
-      return none[UFunctionPtr]()
-    let fun = cls.findFunctionByName(makeFName(fnName))
-    if not fun.isNil():
-      return some fun
+  for name in [name, name.capitalizeAscii()]:
+    for prefix in fnPrefixes:
+      let fnName = prefix & name
+      # assert not cls.isNil()
+      if cls.isNil():
+        return none[UFunctionPtr]()
+      let fun = cls.findFunctionByName(makeFName(fnName))
+      if not fun.isNil():
+        return some fun
 
   none[UFunctionPtr]()
 
@@ -595,7 +596,8 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
   let isAnInterfaceFn = ueType.interfaces.mapIt(getClassByName(it.removeFirstLetter()).findFunctionByNameWithPrefixes(fnField.name)).sequence().any()
   if isAnInterfaceFn:
     UE_Warn &"Interface function: {fnName} in {cls.getName().makeFName()}"
-    fnName = makeFName("BP_" & ($fnName).capitalizeAscii())
+    if not ($fnName).startsWith("BP_"):
+      fnName = makeFName("BP_" & ($fnName).capitalizeAscii())
 
   const objFlags = RF_Public | RF_Transient | RF_MarkAsRootSet | RF_MarkAsNative
   var fn = newUObject[UNimFunction](cls, fnName, objFlags)
