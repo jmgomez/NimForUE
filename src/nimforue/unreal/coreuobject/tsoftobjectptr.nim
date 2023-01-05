@@ -4,6 +4,7 @@ type TSoftObjectPtr*[out T] {.importcpp:"TSoftObjectPtr<'0>", bycopy.} = object
 type TSoftClassPtr*[out T] {.importcpp:"TSoftClassPtr<'0>", bycopy.} = object
 
 
+
 proc makeTSoftObjectPtr*[T : UObject]() : TSoftObjectPtr[T] {.importcpp:"TSoftObjectPtr<'*0>()" constructor.}
 proc makeTSoftObjectPtr*[T : UObject](obj : ptr T) : TSoftObjectPtr[T] {.importcpp:"TSoftObjectPtr<'*1>(#)" constructor.}
 

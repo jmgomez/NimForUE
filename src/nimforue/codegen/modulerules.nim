@@ -22,6 +22,7 @@ const ManuallyImportedClasses* = @[
       "UEnhancedPlayerInput",
       "APawn","UPhysicalMaterial", 
       "UTickableWorldSubsystem",
+      "UGameViewportClient"
 
 
 ]
@@ -109,7 +110,7 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
-let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "AssetRegistry"]
+let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "AssetRegistry", "CommonUI", "CommonInput"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 

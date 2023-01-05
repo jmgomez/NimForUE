@@ -34,3 +34,9 @@ proc getPackage*(obj : UObjectPtr) : UPackagePtr {. importcpp: "#->GetPackage()"
 proc getModuleName*(obj : UObjectPtr) : FString = obj.getPackage().getShortName()
 
 
+func getUETypeByName*[T : UObject](pkg:UPackagePtr, name:FString) : ptr T = 
+    let fullName = pkg.getName() & "." & name
+    findObject[T](pkg, fullName)
+
+func tryGetUETypeByName*[T : UObject](pkg:UPackagePtr, name:FString) : Option[ptr T] = 
+    someNil(getUETypeByName[T](pkg, name))

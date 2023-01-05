@@ -159,7 +159,7 @@ proc genImportCTypeDecl*(typeDef: UEType, rule: UERule = uerNone): NimNode =
 
 
 proc genDelTypeDef*(delType: UEType, exposure: UEExposure): NimNode =
-  let typeName = ident delType.name
+  let typeName = identPublic delType.name
 
   let delBaseType =
     case delType.delKind

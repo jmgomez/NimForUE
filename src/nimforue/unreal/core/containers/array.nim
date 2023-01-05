@@ -1,7 +1,7 @@
 include ../../definitions
 import std/[sugar]
 
-type TArray*[T] {.importcpp: "TArray<'0>", bycopy } = object
+type TArray*[out T] {.importcpp: "TArray<'0>", bycopy } = object
 
 func num*[T](arr:TArray[T]): Natural {.importcpp: "#.Num()" noSideEffect}
 proc remove*[T](arr:TArray[T], value:T) {.importcpp: "#.Remove(#)".}
@@ -24,6 +24,7 @@ func makeTArray*[T](a : T, args:varargs[T]): TArray[T] =
   result.add a
   for arg in args:
     result.add arg
+
 
 # proc makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
 

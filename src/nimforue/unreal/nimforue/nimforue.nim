@@ -80,6 +80,16 @@ proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FProperty
 
 
 
+
+
+#this shouldnt be needed when having out in TArray
+func asUObjectArray*[T : UObject](arr:TArray[ptr T]): TArray[UObjectPtr] = 
+  var xs = makeTArray[UObjectPtr]()
+  for x in arr:
+    xs.add x
+  xs
+
+
 #Probably these should be repr
 
 func `$`*(prop:FPropertyPtr):string=

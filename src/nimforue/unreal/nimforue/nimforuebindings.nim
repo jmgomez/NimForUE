@@ -156,6 +156,12 @@ proc newUObject*[T:UObject](outer:UObjectPtr, name:FName, flags: EObjectFlags) :
     params.SetFlags = flags
     cast[ptr T](newObjectFromClass(params))
 
+proc newUObject*[T:UObject](outer:UObjectPtr, subcls : TSubClassOf[T]) : ptr T = 
+    let cls = subcls.get()
+    var params = makeFStaticConstructObjectParameters(cls)
+    params.Outer = outer
+    cast[ptr T](newObjectFromClass(params))
+
 
 
 

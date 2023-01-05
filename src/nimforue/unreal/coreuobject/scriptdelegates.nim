@@ -22,10 +22,10 @@ proc bindUFunction*(dynDel: var FScriptDelegate, obj:UObjectPtr, name:FName) : v
 proc addUnique(dynDel: var FMulticastScriptDelegate, scriptDel : FScriptDelegate) : void {.importcpp: "#.AddUnique(#)".}
 
 # #Notice this function doesnt exists in cpp
-# proc bindUFunction*(dynDel: var FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
-#     var scriptDel = makeScriptDelegate()
-#     scriptDel.bindUFunction obj, name
-#     dynDel.addUnique(scriptDel)
+proc bindUFunc*(dynDel: var FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
+    var scriptDel = makeScriptDelegate()
+    scriptDel.bindUFunction obj, name
+    dynDel.addUnique(scriptDel)
 
 template bindUFunction*(dynDel: var FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
     var scriptDel = makeScriptDelegate()

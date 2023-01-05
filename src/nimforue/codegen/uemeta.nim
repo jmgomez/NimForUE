@@ -93,9 +93,9 @@ func getUnrealTypeFromName[T](name: FString): Option[UObjectPtr] =
   result = tryUECast[UObject](getUTypeByName[T](name))
   # UE_Log &"Name: {name} result: {result}"
 
-func tryGetUTypeByName[T](name: FString): Option[ptr T] =
-  #ScriptStruct, Classes
-  tryUECast[T](getUTypeByName[T](name))
+# func tryGetUTypeByName[T](name: FString): Option[ptr T] =
+#   #ScriptStruct, Classes
+#   tryUECast[T](getUTypeByName[T](name))
 
 
 func isBPExposed(ufun: UFunctionPtr): bool = FUNC_BlueprintCallable in ufun.functionFlags
@@ -121,10 +121,10 @@ proc isBPExposed(prop: FPropertyPtr, outer: UObjectPtr): bool =
   if typeName.contains("TObjectPtr"):
     typeName = typeName.extractTypeFromGenericInNimFormat("TObjectPtr")
   typeName = typeName.removeFirstLetter()
-
-  let isTypeExposed = tryGetUTypeByName[UClass](typeName).map(isBPExposed)
-    .chainNone(()=>tryGetUTypeByName[UScriptStruct](typeName).map(isBPExposed))
-    .chainNone(()=>tryGetUTypeByName[UFunction](prop.getNimTypeAsStr(outer)).map(isBPExposed))
+  let pkg = outer.getPackage()
+  let isTypeExposed = tryGetUETypeByName[UClass](pkg, typeName).map(isBPExposed)
+    .chainNone(()=>tryGetUETypeByName[UScriptStruct](pkg, typeName).map(isBPExposed))
+    .chainNone(()=>tryGetUETypeByName[UFunction](pkg, prop.getNimTypeAsStr(outer)).map(isBPExposed))
     .get(true) #we assume it is by default
 
   let flags = prop.getPropertyFlags()
@@ -210,6 +210,9 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField
   let className = class.getPrefixCpp() & class.getName()
   let actualName: string = uFun.getName()
   var fnNameNim = actualName.removePrefixes(fnPrefixes)
+  #checks if there is another funciton within the class with the same name to avoid collisions
+  if class.findFunctionByName(n fnNameNim).isNotNil():
+    fnNameNim = actualName
   if fnNameNim.toLower() == "get": #UE uses a lot of singletons. To avoid collision we do getClass()
     fnNameNim = fnNameNim & className
   if uFun.hasMetadata(ScriptMethodMetadataKey):
@@ -425,13 +428,13 @@ func convertToUEType[T](obj: UObjectPtr, rules: seq[UEImportRule] = @[]): Option
 proc getUETypeFrom(obj: UObjectPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
   if obj.getFlags() & RF_ClassDefaultObject == RF_ClassDefaultObject:
     return none[UEType]()
-
+  
   convertToUEType[UClass](obj, rules)
     .chainNone(()=>convertToUEType[UScriptStruct](obj, rules))
     .chainNone(()=>convertToUEType[UEnum](obj, rules))
     .chainNone(()=>convertToUEType[UDelegateFunction](obj, rules))
 
-func getFPropertiesFrom*(ueType: UEType): seq[FPropertyPtr] =
+func getFPropertiesFrom*(ueType: UEType, pkg:UPackagePtr): seq[FPropertyPtr] =
   case ueType.kind:
   of uetClass:
     let outer = getUTypeByName[UClass](ueType.name.removeFirstLetter())
@@ -452,7 +455,7 @@ func getFPropertiesFrom*(ueType: UEType): seq[FPropertyPtr] =
 
 
 #returns all modules neccesary to reference the UEType
-func getModuleNames*(ueType: UEType, excludeMods:seq[string]= @[]): seq[string] =
+func getModuleNames*(ueType: UEType, pkg:UPackagePtr, excludeMods:seq[string]= @[]): seq[string] =
   #only uStructs based for now
   let typesToSkip = @["uint8", "uint16", "uint32", "uint64",
                       "int", "int8", "int16", "int32", "int64",
@@ -470,7 +473,7 @@ func getModuleNames*(ueType: UEType, excludeMods:seq[string]= @[]): seq[string] 
 
   let depsFromProps =
     ueType
-      .getFPropertiesFrom()
+      .getFPropertiesFrom(pkg)
       .mapIt(getNimTypeAsStr(it, nil))
 
   let interfaces = 
@@ -519,15 +522,15 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
   var types = initialTypes
   let excludeFromModuleNames = @["CoreUObject", name]
   let deps = (types
-    .mapIt(it.getModuleNames(excludeFromModuleNames))
+    .mapIt(it.getModuleNames(pkg, excludeFromModuleNames))
     .foldl(a & b, newSeq[string]()) & includeDeps)
     .deduplicate()
     .filterIt(it != name and it notin excludeDeps)
 
   #TODO Per module add them to a virtual module
-  let excludedTypes = types.filterIt(it.getModuleNames(excludeFromModuleNames).any(modName => modName in excludeDeps))
+  let excludedTypes = types.filterIt(it.getModuleNames(pkg, excludeFromModuleNames).any(modName => modName in excludeDeps))
   for t in excludedTypes:
-    UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(excludeFromModuleNames)}"
+    UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(pkg, excludeFromModuleNames)}"
 
   types = types.filterIt(it notin excludedTypes)
   #Virtual modules.
@@ -540,7 +543,7 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
   #Types that causes cycles are also part of the virtual modules. TODO this code assume excludeDeps is cycles + coreuobject
   for cycleMod in excludeDeps.filterIt(it != "CoreUObject"):
     let cycleMod = cycleMod
-    let (cycleTypes, types) = initialTypes.partition((x: UEType) => cycleMod in x.getModuleNames(excludeFromModuleNames))
+    let (cycleTypes, types) = initialTypes.partition((x: UEType) => cycleMod in x.getModuleNames(pkg, excludeFromModuleNames))
     let cycleName = &"{name}_{cycleMod}"
     # UE_Error &"Module: + {name} Adding {cycleName} to {name} because it depends on {cycleMod} and {cycleTypes} is excluded"
     virtModules.add UEModule(name: cycleName, types: cycleTypes, isVirtual: true, dependencies: deps & name & cycleMod, rules: rules)
@@ -593,11 +596,11 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
   var fnName = superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
 
   #we need to see if any of the implemented interfaces have the function
-  let isAnInterfaceFn = ueType.interfaces.mapIt(getClassByName(it.removeFirstLetter()).findFunctionByNameWithPrefixes(fnField.name)).sequence().any()
-  if isAnInterfaceFn:
-    UE_Warn &"Interface function: {fnName} in {cls.getName().makeFName()}"
-    if not ($fnName).startsWith("BP_"):
-      fnName = makeFName("BP_" & ($fnName).capitalizeAscii())
+  # let isAnInterfaceFn = ueType.interfaces.mapIt(getClassByName(it.removeFirstLetter()).findFunctionByNameWithPrefixes(fnField.name)).sequence().any()
+  # if isAnInterfaceFn:
+  #   UE_Warn &"Interface function: {fnName} in {cls.getName().makeFName()}"
+  #   if not ($fnName).startsWith("BP_"):
+  #     fnName = makeFName("BP_" & ($fnName).capitalizeAscii())
 
   const objFlags = RF_Public | RF_Transient | RF_MarkAsRootSet | RF_MarkAsNative
   var fn = newUObject[UNimFunction](cls, fnName, objFlags)
@@ -619,8 +622,6 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
   for field in fnField.signature.reversed():
     let fprop = field.emitFProperty(fn)
   
-  UE_Log &"FNName: {fn.getName()} Metadata {fnField.metadata}"
-
   if superFn.isNone():
     when WithEditor:
       for metadata in fnField.metadata:
