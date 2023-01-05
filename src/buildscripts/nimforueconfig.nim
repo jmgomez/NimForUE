@@ -264,7 +264,10 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   let unrealFolder = if conf.withEditor: "UnrealEditor" else: "UnrealGame"
   proc getObjFiles(dir: string, moduleName:string) : seq[string] = 
     #useful for non editor builds. Some modules are split
-    let objFiles = walkFiles(dir/ &"Module.{moduleName}*.cpp.obj").toSeq()
+    # let objFiles = walkFiles(dir/ &"Module.{moduleName}*.cpp.obj").toSeq()
+    let objFiles = walkFiles(dir/ &"*.obj").toSeq()
+    echo &"objFiles for {moduleName} in {dir}: {objFiles}"
+    
     objFiles
 
   #We only support Debug and Development for now and Debug is Windows only
@@ -310,8 +313,8 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
         @[libPath,libpathBindings, libPathEditor]
       else:
         let dir = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir 
-        let libPath = getObjFiles(dir, "NimForUE")
-        let libPathBindings = getObjFiles(dir, "NimForUEBindings")
+        let libPath = getObjFiles(dir / "NimForUE", "NimForUE")
+        let libPathBindings = getObjFiles(dir / "NimForUEBindings", "NimForUEBindings")
         libPath & libPathBindings
 
   let modules = @["Core", "CoreUObject", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore"]
