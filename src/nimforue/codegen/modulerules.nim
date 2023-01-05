@@ -218,6 +218,14 @@ moduleImportRules["EnhancedInput"] = @[
     "FInputActionValue",
   ]),
   # makeImportedRuleModule(uerIgnoreHash)
+]
+moduleImportRules["UMGEditor"] = @[
+  codegenOnly,
+  makeImportedRuleType(uerIgnore, @[
+    "UBlueprintExtension",
+    "UEdGraphSchema_K2",
+    "UAssetEditorUISubsystem",
+  ]),
 
 ]
 

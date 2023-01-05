@@ -79,7 +79,7 @@ func identWrapper*(name:string) : NimNode = ident(name) #cant use ident as argum
 func identPublic*(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
 
 func nimToCppConflictsFreeName*(propName:string) : string = 
-  let reservedCppKeywords = ["template", "operator", "enum", "class"]
+  let reservedCppKeywords = ["template", "operator", "enum", "class", "struct"]
   if propName in reservedCppKeywords: propName.firstToUpper() else: propName
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
