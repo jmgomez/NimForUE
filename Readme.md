@@ -29,6 +29,10 @@ If you dont have Discord, you can also reach out at:
 [![Showcase at NimConf 2022](https://img.youtube.com/vi/0b3ixaz2uOg/0.jpg)](https://youtu.be/0b3ixaz2uOg)
 
 
+### Getting started on Windows:
+[![Showcase at NimConf 2022](https://img.youtube.com/vi/NuB_PjxVisw/0.jpg)](https://www.youtube.com/watch?v=NuB_PjxVisw&t=2&ab_channel=JuanMG%C3%B3mez
+)
+
 
 ### Why Nim?
 
