@@ -475,7 +475,13 @@ typedef double NF64;
 typedef double NF;
 
 typedef char NIM_CHAR;
-typedef char* NCSTRING;
+
+#if WITH_EDITORONLY_DATA
+  typedef char* NCSTRING;
+#else
+  typedef char* NCSTRING;
+
+#endif
 
 #ifdef NIM_BIG_ENDIAN
 #  define NIM_IMAN 1

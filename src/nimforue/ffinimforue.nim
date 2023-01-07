@@ -36,13 +36,13 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
 
   emitterPtr
 
-
+proc isRunningCommandlet*() : bool {.importcpp:"IsRunningCommandlet" .}
 
 proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) = 
     try:
         let nimHotReload = emitUStructsForPackage(emitter, packageName)
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
-        if not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
+        if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
           reinstanceNueTypes(packageName, nimHotReload, "")
           return;
        
@@ -74,6 +74,7 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
     case $libName:
     of "nimforue": 
         emitNueTypes(getGlobalEmitter()[], "Nim")
+        if isRunningCommandlet(): return
         # if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
           #Base the condition on if Game needs to be compiled or not.
         let doesTheGameExists = fileExists(GameLibPath)    

@@ -86,6 +86,9 @@ type UEmitable = UNimScriptStruct | UClass | UDelegateFunction | UEnum
         
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T], isFirstLoad:bool) : Option[ptr T]= 
+    when not WithEditor:
+        let r = emitter.generator(pkg)
+        return tryUECast[T](r)
 
     when defined withReinstantiation:
         let reinst = true
@@ -141,7 +144,9 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
 
 proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimHotReloadPtr = 
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
-    
+    UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()
+    UE_Log "Emit ustructs for Length " & $ueEmitter.emitters.len
+    UE_Log $ueEmitter.emitters.mapIt(it.ueType)
     var hotReloadInfo = newCpp[FNimHotReloadChild]()
     for emitter in ueEmitter.emitters:
             case emitter.ueType.kind:
@@ -160,7 +165,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
                     hotReloadInfo.structsToReinstance.add(prevStructPtr.get(), newStructPtr.get())
 
                
-            of uetClass:                
+            of uetClass:            
                 let clsName = emitter.ueType.name.removeFirstLetter()
 
                 let prevClassPtr = someNil getClassByName(clsName)
@@ -828,6 +833,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
+    echo result.repr
 
   
 macro uForwardDecl*(name : untyped ) : untyped = 

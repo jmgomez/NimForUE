@@ -901,7 +901,8 @@ void UEditorUtils::HotReloadV2(FNimHotReload* NimHotReload) {
 
 void UEditorUtils::ShowLoadNotification(bool bIsFirstLoad) {
 	AsyncTask(ENamedThreads::GameThread, [bIsFirstLoad] {
-	
+    //If we are cooking we just skip
+	if (IsRunningCommandlet()) return;
 	FString NimUserMsg = (bIsFirstLoad ? "Nim Initialized!" : "Nim Hot Reload Complete!");
 	// FNotificationInfo Info( FInternationalization::ForUseOnlyByLocMacroAndGraphNodeTextLiterals_CreateText(TEXT("NimForUE.HotReload"), *NimUserMsg, TEXT("NimForUE.HotReload")));
 	FNotificationInfo Info( LOCTEXT("HotReloadFinished", "Nim Hot Reload Complete!") );

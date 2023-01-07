@@ -89,7 +89,12 @@ task game, "Builds the game lib":
  
   let debug = "debug" in taskOptions
 
-  compileGame(extraSwitches, debug)
+  if WithEditor:
+    compileGame(extraSwitches, debug)
+  else:
+    compileGameNonEditor(extraSwitches, debug)
+
+
 
 
 task host, "Builds the host that's hooked to unreal":
@@ -147,6 +152,7 @@ task ubuild, "Calls Unreal Build Tool for your project":
         of Win64: r"Build\BatchFiles\Build.bat"
         of Mac: "./Build/BatchFiles/Mac/Build.sh" # untested
       
+
  
     let cmd = &"{buildCmd} {target} {config.targetPlatform} {config.targetConfiguration} {uprojectFile} -waitmutex"
     

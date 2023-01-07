@@ -5,8 +5,10 @@
 #if WITH_EDITOR
 	#include "Editor.h"
 	#include "EditorUtils.h"
-
 #include "NimForUEFFI.h"
+
+#else
+#include "NimForUEGame.h"
 #endif
 #include "Async/Async.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -19,6 +21,10 @@ DEFINE_LOG_CATEGORY(NimForUE);
 
 #define LOCTEXT_NAMESPACE "FNimForUEModule"
 
+
+struct TestStruct {
+	
+};
 
 void FNimForUEModule::LoadNimForUEHost() {
 	//Notice MacOS does not require to manually load the library. It happens on the build.cs file.
@@ -49,13 +55,30 @@ void FNimForUEModule::UnloadNimForUEHost() {
 #endif
 }
 
+
+
+#if !WITH_EDITOR
+extern "C" N_LIB_PRIVATE N_CDECL(void, startNue)(void);
+N_CDECL(void, NimMain)(void);
+#endif
+
 void FNimForUEModule::StartupModule()
 {
+	//If we are cooking we just skip
+	if (IsRunningCommandlet()) return;
+#if WITH_EDITOR
 	LoadNimForUEHost();
+#else
+	NimMain();
+	startNue();
+#endif
+	
 }
 
 void FNimForUEModule::ShutdownModule()
 {
+	//If we are cooking we just skip
+	if (IsRunningCommandlet()) return;
 	UnloadNimForUEHost();
 }
 

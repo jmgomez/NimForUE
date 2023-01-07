@@ -41,10 +41,10 @@ proc getNativeFuncImplPtrFromUEField*(emitter: UEEmitter, ueField: UEField): Opt
 
 proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string = 
     result = $emitter.emitters
-var ueEmitter* = UEEmitter() 
+var ueEmitter* {.compileTime.} = UEEmitterRaw() 
 
 proc getGlobalEmitter*() : UEEmitter = 
-    result = ueEmitter
+    result = cast[UEEmitter](addr ueEmitter)
 
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
     var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == ueField.className).get()

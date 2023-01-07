@@ -77,13 +77,15 @@ public class NimForUE : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
-
-		// CppStandard = CppStandardVersion.Cpp14;
-		//TODO This is only for dev. Research build path. Especially for platforms like iOS
-	
+		
+		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
+		PublicIncludePaths.Add(nimHeadersPath);
+		
+		if (Target.bBuildEditor)
 			AddNimForUEDev();
 		
-		
+		// bStrictConformanceMode = true;
+		bUseUnity = false;
 	}
 
 
@@ -124,7 +126,8 @@ public class NimForUE : ModuleRules
 		// if(Target.bBuildEditor) //Only editor for now
 		NimbleSetup(); //Make sure NUE and Host are built
 		var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue");
-		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
+		
+
 		string dynLibPath;
 		var isWin = Target.Platform == UnrealTargetPlatform.Win64;
 		if (isWin) {
@@ -141,7 +144,6 @@ public class NimForUE : ModuleRules
 			dynLibPath = Path.Combine(nimBinPath, "libhostnimforue.dylib");
 			PublicAdditionalLibraries.Add(dynLibPath);
 		}
-		PublicIncludePaths.Add(nimHeadersPath);
 		
 		
 		//PublicDefinitions.Add($"NIM_FOR_UE_LIB_PATH  \"{dynLibPath}\"");

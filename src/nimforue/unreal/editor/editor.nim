@@ -22,7 +22,8 @@ let GEditor* {.importcpp, nodecl.} : UEditorEnginePtr
 type FOnPIEEvent* = TMulticastDelegateOneParam[bool]
 # proc onBeginPIEEvent*() : FOnPIEEvent  {.importcpp:"(FEditorDelegates::BeginPIE)".}
 
-func isInPIE*(editor:UEditorEnginePtr) : bool = editor.playWorld.isNotNil
+func isInPIE*(editor:UEditorEnginePtr) : bool = 
+  editor.playWorld.isNotNil
 
 let onBeginPIEEvent* {.importcpp:"FEditorDelegates::BeginPIE", nodecl.}  : FOnPIEEvent
 let onEndPIEEvent* {.importcpp:"FEditorDelegates::EndPIE", nodecl.}  : FOnPIEEvent

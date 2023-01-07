@@ -32,7 +32,7 @@
 		},
 		{
 			"Name": "NimForUEEditor",
-			"Type": "Editor",
+			"Type": "EditorNoCommandlet",
 			"LoadingPhase": "PostDefault"
 		}
 	],

@@ -147,6 +147,60 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
   doAssert(execCmd(compCmd)==0)
   # setCurrentDir(PluginDir)
   copyNimForUELibToUEDir("game")
+  #We need to make sure that gen cpp files doenst exists in editor builds
+  let privateFolder = PluginDir / "Source" / "NimForUE" / "Private" / "NimForUEGame"
+  removeDir(privateFolder)
+
+
+proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) = 
+  let gameSwitches = @[
+    "-d:game",
+    &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
+  ]
+  let bindingsDir = PluginDir / ".nimcache/gencppbindings"
+  ensureGameConfExists()
+  #We compile from the engine directory so we dont surpass the windows argument limits for the linker 
+  let engineBase = parentDir(config.engineDir)
+  # setCurrentDir(engineBase)
+  #TODO the final path will be relative to the engine dir this is just a hack to get it working for now
+  # var uesymbols = uesymbols.mapIt(it.replace(config.engineDir, "Engine"))
+  let gameFolder = NimGameDir
+  let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
+
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
+  let compCmd = &"nim cpp {buildFlags} -f --compileOnly  -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
+  doAssert(execCmd(compCmd)==0)
+  #Copy the header into the NimHeaders
+  # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")
+  #We need to copy all cpp files into the private folder in the plugin
+  let privateFolder = PluginDir / "Source" / "NimForUE" / "Private" / "NimForUEGame"
+  removeDir(privateFolder)
+  createDir(privateFolder)
+  for cppFile in walkFiles(nimCache / &"*.cpp"):
+    #we need to clean the cpp file to avoid a const error on NCString (which is defined as const char* due to strict strings)
+    let cppFileContent = readFile(cppFile)
+    let formsToMatch = ["(NCSTRING)", "(NCSTRING*)"]
+    if formsToMatch.any(x=> x in cppFileContent):
+      let cleanedCppFileContent = cppFileContent.multiReplace(("(NCSTRING)", "(char*)"), ("(NCSTRING*)", "(char**)"))
+      writeFile(cppFile, cleanedCppFileContent)
+
+    let filename = cppFile.extractFilename()
+    # #For some reason that needs to be investigated the generated cpp files are empty so we need to copy the original from the cppbindings
+    # if filename.contains("sbindings@"): continue
+    #   let modulePart = filename.split("sbindings@")[^1]
+    #   let originalCppBinding = walkFiles(bindingsDir / &"*.cpp").toseq().filterIt(modulePart in it)[0]
+    #   copyFile(originalCppBinding, privateFolder / filename)
+    # else:
+    #   copyFile(cppFile, privateFolder / filename)
+    copyFile(cppFile, privateFolder / filename)
+
+
+  # for cppFile in walkFiles(bindingsDir/ &"*.cpp"):
+  #   let filename = cppFile.extractFilename()
+  #   if filename.contains("sbindings@") and not (filename.contains("unrealed") or filename.contains("umgeditor")): 
+  #     copyFile(cppFile, privateFolder / filename)
+
+
 
 
 

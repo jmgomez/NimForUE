@@ -460,3 +460,5 @@ type
     TraceTypeQuery_MAX, ETraceTypeQuery_MAX
 
 converter toObjectType*(collisionChannel:ECollisionChannel) : EObjectTypeQuery {.importcpp: "UEngineTypes::ConvertToObjectType(@)".}
+
+

@@ -609,9 +609,8 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
   if superFn.isSome():
     let sFn = superFn.get()
     fn.functionFlags = (fn.functionFlags | (sFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms)))
-
-    copyMetadata(sFn, fn)
     when WithEditor:
+      copyMetadata(sFn, fn)
       fn.setMetadata("ToolTip", fn.getMetadata("ToolTip").get()&" vNim")
     setSuperStruct(fn, sFn)
 
@@ -708,11 +707,25 @@ proc defaultConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   callSuperConstructor(initializer)
   postConstructor(initializer)
 
+# when WithEditor:
+#   proc setGIsUCCMakeStandaloneHeaderGenerator*(value: bool) {.importcpp: "(GIsUCCMakeStandaloneHeaderGenerator =#)".}
+# else:
+proc setGIsUCCMakeStandaloneHeaderGenerator*(value: static bool) = 
+    when value:
+      {.emit:""" ;
+#define GIsUCCMakeStandaloneHeaderGenerator true
+""".}
+    else:
+      {.emit:""";
+      
+#define GIsUCCMakeStandaloneHeaderGenerator false
 
-proc setGIsUCCMakeStandaloneHeaderGenerator*(value: bool) {.importcpp: "(GIsUCCMakeStandaloneHeaderGenerator =#)".}
+""".}
+
 
 proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: Option[CtorInfo]): UFieldPtr =
-  const objClsFlags = (RF_Public | RF_Transient | RF_Transactional | RF_WasLoaded | RF_MarkAsNative)
+  UE_Log &"Emitting class {ueType.name}"
+  const objClsFlags = (RF_Public | RF_Transient | RF_Transactional | RF_WasLoaded )
 
   let
     newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
@@ -733,18 +746,20 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
   newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32)
   newCls.classCastFlags = parent.classCastFlags
 
-
-  copyMetadata(parent, newCls)
- 
-  newCls.markAsNimClass()
-  UE_Error "MEtadata for class " & newCls.getName()
   
   when WithEditor:
+      
+    copyMetadata(parent, newCls)
+  
+    newCls.markAsNimClass()
+
     for metadata in ueType.metadata:
       UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
       newCls.setMetadata(metadata.name, $metadata.value)
-
+  UE_Log &"THE UE TYPE {ueType}" 
   for field in ueType.fields:
+
+    UE_Log "Emmiting field: " & field.name & " of kind: " & $field.kind 
     case field.kind:
     of uefProp: discard field.emitFProperty(newCls)
     of uefFunction:
@@ -765,10 +780,9 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
   newCls.staticLink(true)
   newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)
 
-  when WithEditor: #TODO Fix this, will crash at comp time. This is just to make it compile
-    setGIsUCCMakeStandaloneHeaderGenerator(true)
-    newCls.bindType()
-    setGIsUCCMakeStandaloneHeaderGenerator(false)
+  setGIsUCCMakeStandaloneHeaderGenerator(true)
+  newCls.bindType()
+  setGIsUCCMakeStandaloneHeaderGenerator(false)
   newCls.assembleReferenceTokenStream()
 
   newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultConstructor))

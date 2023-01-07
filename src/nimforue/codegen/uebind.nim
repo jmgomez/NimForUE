@@ -89,6 +89,9 @@ func ueNameToNimName(propName:string) : string = #this is mostly for the autogen
     elif propName == "result": "Result"
     else: propName
 
+
+  # macro ex*(a:untyped):untyped = a
+
 func genProp(typeDef : UEType, prop : UEField) : NimNode = 
   let ptrName = ident typeDef.name & "Ptr"
   
@@ -123,6 +126,7 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
 
   #Notice we generate two set properties one for nim and the other for code gen due to cpp
   #not liking the equal in the ident name
+
   result = 
     genAst(propIdent, ptrName, typeNode, className, actualGetter, actualSetter, propUEName = prop.name, typeNodeAsReturnValue):
       proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {.exportcpp.} =
@@ -134,7 +138,7 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
         let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
         actualSetter
 
-      proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode) {.exportcpp.} = 
+      proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
         var value {.inject.} : typeNode = val
         let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
         actualSetter
@@ -306,9 +310,11 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
     returnCall
 
   var pragmas = 
-    nnkPragma.newTree(
-      nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
-      ) #export the func with an underscore to avoid collisions
+    when WithEditor:
+      nnkPragma.newTree(
+        nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
+        ) #export the func with an underscore to avoid collisions
+    else: newEmptyNode()
 
   # when defined(windows):
   #   pragmas.add(ident("thiscall")) #I Dont think this is necessary

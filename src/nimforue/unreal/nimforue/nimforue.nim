@@ -120,54 +120,55 @@ func `$`*(fn:UFunctionPtr):string =
 
 proc isA[T:FProperty](prop:FPropertyPtr) : bool = tryCastField[T](prop).isSome()
 proc asA[T:FProperty](prop:FPropertyPtr) : ptr T = castField[T](prop)
+when WithEditor:
+    
+  proc `$`*(cls:UClassPtr) : string = 
+      var str = &"Class: {cls.getName()} \n\t Parent: {cls.getSuperClass().getName()}\n\t Module:{cls.getPackage().getModuleName()} \n\t Package:{cls.getPackage().getName()} \n\t Flags: {cls.classFlags}"
+      str = &"{str} \n\t Interfaces:"
+      for i in cls.interfaces:
+        str = &"{str}\n\t\t {i}"
+      str = &"{str} \n\t Metas:"
+      let metas = cls.getMetadataMap().toTable()
+      for key, value in metas:
+        str = &"{str}\n\t\t {key} : {value}"
 
-proc `$`*(cls:UClassPtr) : string = 
-    var str = &"Class: {cls.getName()} \n\t Parent: {cls.getSuperClass().getName()}\n\t Module:{cls.getPackage().getModuleName()} \n\t Package:{cls.getPackage().getName()} \n\t Flags: {cls.classFlags}"
-    str = &"{str} \n\t Interfaces:"
-    for i in cls.interfaces:
-      str = &"{str}\n\t\t {i}"
-    str = &"{str} \n\t Metas:"
-    let metas = cls.getMetadataMap().toTable()
-    for key, value in metas:
-      str = &"{str}\n\t\t {key} : {value}"
-
-    str = &"{str} \n\t Props:"
-    for p in cls.getFPropsFromUStruct():
-      str = &"{str}\n\t\t {p}"
-      
-    str = &"{str} \n\t Funcs:"
-    let funcs = cls.getFuncsFromClass()
-    for f in funcs:
-      str = &"{str}\n\t\t {f}"
-    str
-
-proc `$`*(obj:UObjectPtr) : string = 
-  if obj.isNil(): return "nil"
-  obj.getName()
-  
-proc repr*(obj:UObjectPtr) : string = 
-    if obj.isNil(): return "nil"
-    var str = &"\n {obj.getName()}:\n\t"
-    let props = obj.getClass().getFPropsFromUStruct(IncludeSuper)
-    for p in props:
-        #Only UObjects vals for now:
+      str = &"{str} \n\t Props:"
+      for p in cls.getFPropsFromUStruct():
+        str = &"{str}\n\t\t {p}"
         
-        if p.isA[:FObjectPtrProperty]():
-            let valPtr = someNil getPropertyValuePtr[UObjectPtr](p, obj)
-            let val = valPtr.map(p=>tryUECast[UObject](p[])).flatten()
-            if val.isSome():
-                str = str & &"{p.getName()}: \n\t {val.get().getName()}\n\t"
-        elif p.isA[:FBoolProperty]():
-            let val = getValueFromBoolProp(p, obj)
-            str = str & &"{p.getName()}: {val}\n\t"
-        elif p.isA[:FStrProperty]():
-            let val = getPropertyValuePtr[FString](p, obj)[]
-            str = str & &"{p.getName()}: {val}\n\t"
-        elif p.isA[:FNameProperty]():
-            let val = getPropertyValuePtr[FName](p, obj)[]
-            str = str & &"{p.getName()}: {val}\n\t"
-        elif p.isA[:FClassProperty]():
-            let val = getPropertyValuePtr[UClassPtr](p, obj)[]
-            str = str & &"{p.getName()}: {val.getName()}\n\t"
-        # elif p.isA[FUinProperty]():
-    str
+      str = &"{str} \n\t Funcs:"
+      let funcs = cls.getFuncsFromClass()
+      for f in funcs:
+        str = &"{str}\n\t\t {f}"
+      str
+
+  proc `$`*(obj:UObjectPtr) : string = 
+    if obj.isNil(): return "nil"
+    obj.getName()
+    
+  proc repr*(obj:UObjectPtr) : string = 
+      if obj.isNil(): return "nil"
+      var str = &"\n {obj.getName()}:\n\t"
+      let props = obj.getClass().getFPropsFromUStruct(IncludeSuper)
+      for p in props:
+          #Only UObjects vals for now:
+          
+          if p.isA[:FObjectPtrProperty]():
+              let valPtr = someNil getPropertyValuePtr[UObjectPtr](p, obj)
+              let val = valPtr.map(p=>tryUECast[UObject](p[])).flatten()
+              if val.isSome():
+                  str = str & &"{p.getName()}: \n\t {val.get().getName()}\n\t"
+          elif p.isA[:FBoolProperty]():
+              let val = getValueFromBoolProp(p, obj)
+              str = str & &"{p.getName()}: {val}\n\t"
+          elif p.isA[:FStrProperty]():
+              let val = getPropertyValuePtr[FString](p, obj)[]
+              str = str & &"{p.getName()}: {val}\n\t"
+          elif p.isA[:FNameProperty]():
+              let val = getPropertyValuePtr[FName](p, obj)[]
+              str = str & &"{p.getName()}: {val}\n\t"
+          elif p.isA[:FClassProperty]():
+              let val = getPropertyValuePtr[UClassPtr](p, obj)[]
+              str = str & &"{p.getName()}: {val.getName()}\n\t"
+          # elif p.isA[FUinProperty]():
+      str

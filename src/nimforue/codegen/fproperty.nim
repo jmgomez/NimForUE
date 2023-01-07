@@ -196,7 +196,7 @@ proc newFProperty*(owner : FFieldVariant, propField:UEField, optPropType="", opt
         #is optX is passed, priotize it since it comes from newContainerProperty
         propType = optPropType.nonEmptyOr(propField.uePropType)
         name = optName.nonEmptyOr(propField.name).makeFName()
-
+    # if name == ENone: return nil
     const flags = propObjFlags
     UE_Log "Creating new property: " & $name & " of type: " & propType
     let prop : FPropertyPtr = 

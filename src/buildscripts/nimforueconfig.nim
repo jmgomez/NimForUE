@@ -265,10 +265,11 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   proc getObjFiles(dir: string, moduleName:string) : seq[string] = 
     #useful for non editor builds. Some modules are split
     # let objFiles = walkFiles(dir/ &"Module.{moduleName}*.cpp.obj").toSeq()
-    let objFiles = walkFiles(dir/ &"*.obj").toSeq()
-    echo &"objFiles for {moduleName} in {dir}: {objFiles}"
+    # let objFiles = walkFiles(dir/ &"*.obj").toSeq()
+    # echo &"objFiles for {moduleName} in {dir}: {objFiles}"
     
-    objFiles
+    # objFiles
+    @[]
 
   #We only support Debug and Development for now and Debug is Windows only
   let suffix = if conf.targetConfiguration == Debug : "-Win64-Debug" else: "" 
