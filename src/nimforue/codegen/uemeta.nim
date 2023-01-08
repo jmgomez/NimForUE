@@ -816,7 +816,7 @@ proc newScriptStruct[T](package: UPackagePtr, name:FString, flags:EObjectFlags, 
   "new(EC_InternalUseOnlyConstructor, #, *#, #) UScriptStruct(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
 proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   UE_Log &"Struct emited {ueType.name}"
-  const objClsFlags = (RF_Public, RF_Standalone, RF_Transient )
+  const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
   var superStruct : UScriptStructPtr
   if ueType.superStruct.len > 0:
     let parent = someNil(getUTypeByName[UScriptStruct](ueType.superStruct.removeFirstLetter()))
