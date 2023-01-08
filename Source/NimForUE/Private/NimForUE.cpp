@@ -22,9 +22,7 @@ DEFINE_LOG_CATEGORY(NimForUE);
 #define LOCTEXT_NAMESPACE "FNimForUEModule"
 
 
-struct TestStruct {
-	
-};
+
 
 void FNimForUEModule::LoadNimForUEHost() {
 	//Notice MacOS does not require to manually load the library. It happens on the build.cs file.
@@ -56,16 +54,21 @@ void FNimForUEModule::UnloadNimForUEHost() {
 }
 
 
-
-#if !WITH_EDITOR
 extern "C" N_LIB_PRIVATE N_CDECL(void, startNue)(void);
+//
+#if !WITH_EDITOR
 N_CDECL(void, NimMain)(void);
 #endif
 
 void FNimForUEModule::StartupModule()
 {
-	//If we are cooking we just skip
-	if (IsRunningCommandlet()) return;
+	
+	// If we are cooking we just skip
+	 if (IsRunningCommandlet()) {
+	 	NimMain();
+	 	startNue();
+	 	return;
+	 }
 #if WITH_EDITOR
 	LoadNimForUEHost();
 #else

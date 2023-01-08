@@ -25,7 +25,6 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString NimError) {
 
 
 
-
 void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 
@@ -69,7 +68,3 @@ bool UNimForUEEngineSubsystem::Tick(float DeltaTime)
 	return true;
 }
 
-
-struct TestStruct {
-	
-};

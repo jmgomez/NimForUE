@@ -725,7 +725,7 @@ proc setGIsUCCMakeStandaloneHeaderGenerator*(value: static bool) =
 
 proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: Option[CtorInfo]): UFieldPtr =
   UE_Log &"Emitting class {ueType.name}"
-  const objClsFlags = (RF_Public | RF_Transient | RF_Transactional | RF_WasLoaded )
+  const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
 
   let
     newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
@@ -756,6 +756,8 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
     for metadata in ueType.metadata:
       UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
       newCls.setMetadata(metadata.name, $metadata.value)
+
+
   UE_Log &"THE UE TYPE {ueType}" 
   for field in ueType.fields:
 
@@ -814,7 +816,7 @@ proc newScriptStruct[T](package: UPackagePtr, name:FString, flags:EObjectFlags, 
   "new(EC_InternalUseOnlyConstructor, #, *#, #) UScriptStruct(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
 proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   UE_Log &"Struct emited {ueType.name}"
-  const objClsFlags = (RF_Public | RF_Transient | RF_MarkAsNative)
+  const objClsFlags = (RF_Public, RF_Standalone, RF_Transient )
   var superStruct : UScriptStructPtr
   if ueType.superStruct.len > 0:
     let parent = someNil(getUTypeByName[UScriptStruct](ueType.superStruct.removeFirstLetter()))

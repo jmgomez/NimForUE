@@ -11,6 +11,8 @@
 /**
  * 
  */
+// UCLASS(Abstract)
+//THe proper solution will be to move this to the EditorModule
 UCLASS()
 class NIMFORUE_API UNimForUEEngineSubsystem : public UEngineSubsystem {
 	GENERATED_BODY()

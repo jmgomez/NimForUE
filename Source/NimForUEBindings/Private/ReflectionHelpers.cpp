@@ -178,6 +178,7 @@ TArray<FString> UReflectionHelpers::GetAllModuleDepsForPlugin(FString PluginName
 UPackage* UReflectionHelpers::CreateNimPackage(FString PackageShortName) {
 	auto NimForUEPackage = CreatePackage(*FString::Printf(TEXT("/Script/%s"), *PackageShortName));
 	NimForUEPackage->SetPackageFlags(PKG_CompiledIn);
+	NimForUEPackage->SetPackageFlags(PKG_Cooked);
 	NimForUEPackage->SetFlags(RF_Standalone);
 	NimForUEPackage->AddToRoot();
 	return NimForUEPackage;

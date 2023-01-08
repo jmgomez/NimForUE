@@ -150,6 +150,7 @@ when not defined(nue):
 else:
   let WithEditor* = config.withEditor 
 
+
 doAssert(GamePath != GamePathError, &"Config file error: The uproject file could not be found in {config.gameDir}. Please check that 'gameDir' points to the directory containing your uproject in '{PluginDir / getConfigFileName()}'.")
 
 template codegenDir(fname, constName: untyped): untyped =

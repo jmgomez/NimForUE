@@ -36,11 +36,24 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
 
   emitterPtr
 
-proc isRunningCommandlet*() : bool {.importcpp:"IsRunningCommandlet" .}
+proc startNue(libPath:string)  = 
+  type 
+    StartNueFN = proc ():void {.gcsafe, stdcall.}
+
+  let lib = loadLib(libPath)
+  let startNueFn = cast[StartNueFN](lib.symAddr("startNue"))
+  
+  assert startNueFn.isNotNil()
+
+  startNueFn()
+
+
+
 
 proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) = 
     try:
         let nimHotReload = emitUStructsForPackage(emitter, packageName)
+        return
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
           reinstanceNueTypes(packageName, nimHotReload, "")
@@ -70,6 +83,9 @@ proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) =
 #entry point for the game. but it will also be for other libs in the future
 #even the next guest/nimforue?
 proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.ffi:genFilePath} = 
+  UE_Log &"lib loaded: {libName}"
+
+  
   try:
     case $libName:
     of "nimforue": 
@@ -86,9 +102,10 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
           UE_Log output
 
     of "game":
+        UE_Log "GetEmiiterFromGame content" 
+      
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
     
-    UE_Log &"lib loaded: {libName}"
   except:
     UE_Error &"Error in onLibLoaded: {getCurrentExceptionMsg()}"
 

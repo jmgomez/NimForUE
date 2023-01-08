@@ -141,7 +141,7 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
         hotReloadInfo.deletedEnums.add(instance)
 
 
-
+#32431 
 proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimHotReloadPtr = 
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
     UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()
@@ -833,7 +833,6 @@ macro uClass*(name:untyped, body : untyped) : untyped =
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
-    echo result.repr
 
   
 macro uForwardDecl*(name : untyped ) : untyped = 

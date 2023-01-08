@@ -41,7 +41,12 @@ proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVers
 proc setClassConstructor*(cls:UClassPtr, classConstructor:UClassConstructor) : void {.importcpp:"UReflectionHelpers::SetClassConstructor(@)".}
 # proc prepareNimClass*(cls:UNimClassBasePtr) : void {.importcpp:"#->PrepareNimClass()".}
  
-func isNimClass*(cls:UClassPtr) : bool = cls.hasMetadata(NimClassMetadataKey)
+func isNimClass*(cls:UClassPtr) : bool = 
+    when WithEditor:
+        cls.hasMetadata(NimClassMetadataKey)
+    else: #Maybe I can just check on the global emitter
+        cls.getName() in ["AnotherActor", "NimGameMode", "NimCharacter"]
+
 proc markAsNimClass*(cls:UClassPtr) = 
   when WithEditor:
     cls.setMetadata(NimClassMetadataKey, "true")

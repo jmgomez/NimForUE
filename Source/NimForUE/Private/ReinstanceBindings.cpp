@@ -11,7 +11,8 @@
 void ReinstanceBindings::ReinstanceNueTypes(FString NueModule, FNimHotReload* NimHotReload, FString NimError) {
 	
 	UNimForUEEngineSubsystem* NimForUESubsystem = GEngine->GetEngineSubsystem<UNimForUEEngineSubsystem>();
-	bool bIsFirstLoad = !NimForUESubsystem->ReloadCounter.Contains(NueModule);
+	// bool bIsFirstLoad = !NimForUESubsystem->ReloadCounter.Contains(NueModule);
+	bool bIsFirstLoad = true;// !NimForUESubsystem->ReloadCounter.Contains(NueModule);
 	
 	FReload* UnrealReload = nullptr;
 	if(!bIsFirstLoad) //We need to instanciate the unreal reloader because it's used across the engine when reloading
@@ -39,12 +40,7 @@ void ReinstanceBindings::ReinstanceNueTypes(FString NueModule, FNimHotReload* Ni
 
 	// FCoreUObjectDelegates::ReloadCompleteDelegate.Broadcast(EReloadCompleteReason::HotReloadManual);
 	UEditorUtils::ShowLoadNotification(bIsFirstLoad);
-	UE_LOG(LogTemp, Log, TEXT("NimForUE just hot reloaded!! %s"), *NimError);
-	if (bIsFirstLoad) {
-		NimForUESubsystem->ReloadCounter.Add(NueModule, 0);
-	} else {
-		NimForUESubsystem->ReloadCounter[NueModule]++;
-	}
+
 		
 }
 

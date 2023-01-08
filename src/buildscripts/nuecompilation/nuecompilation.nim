@@ -149,7 +149,7 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
   copyNimForUELibToUEDir("game")
   #We need to make sure that gen cpp files doenst exists in editor builds
   let privateFolder = PluginDir / "Source" / "NimForUE" / "Private" / "NimForUEGame"
-  removeDir(privateFolder)
+  # removeDir(privateFolder)
 
 
 proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) = 
