@@ -53,22 +53,25 @@ void FNimForUEModule::UnloadNimForUEHost() {
 #endif
 }
 
-
+#if WITH_STARTNUE
 extern "C" N_LIB_PRIVATE N_CDECL(void, startNue)(void);
-//
+#endif
+
 #if !WITH_EDITOR
 N_CDECL(void, NimMain)(void);
+
 #endif
 
 void FNimForUEModule::StartupModule()
 {
-	
+#if WITH_STARTNUE
 	// If we are cooking we just skip
 	 if (IsRunningCommandlet()) {
 	 	NimMain();
 	 	startNue();
 	 	return;
 	 }
+#endif
 #if WITH_EDITOR
 	LoadNimForUEHost();
 #else
