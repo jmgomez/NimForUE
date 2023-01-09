@@ -80,19 +80,6 @@ task guest, "Builds the main lib. The one that makes sense to hot reload.":
 
   compilePlugin(extraSwitches, debug)
 
-task game, "Builds the game lib":
-  var extraSwitches = newSeq[string]()
-  if "f" in taskOptions: 
-    extraSwitches.add "-f" #force 
-  if "nolinedir" in taskOptions:  
-    extraSwitches.add "--linedir:off"
- 
-  let debug = "debug" in taskOptions
-
-  if WithEditor:
-    compileGame(extraSwitches, debug)
-  else:
-    compileGameNonEditor(extraSwitches, debug)
 
 
 
@@ -163,6 +150,26 @@ task ubuild, "Calls Unreal Build Tool for your project":
     log getCurrentExceptionMsg(), lgError
     log getCurrentException().getStackTrace(), lgError
     quit(QuitFailure)
+
+
+
+task game, "Builds the game lib":
+  var extraSwitches = newSeq[string]()
+  if "f" in taskOptions: 
+    extraSwitches.add "-f" #force 
+  if "nolinedir" in taskOptions:  
+    extraSwitches.add "--linedir:off"
+ 
+  let debug = "debug" in taskOptions
+
+  if WithEditor:
+    compileGame(extraSwitches, debug)
+  else:
+    compileGameNonEditor(extraSwitches, debug)
+    ubuild(taskOptions)
+
+
+
 
 task dumpConfig, "Displays the config variables":
   dump config

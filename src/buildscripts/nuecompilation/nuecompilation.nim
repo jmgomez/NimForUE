@@ -168,7 +168,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} -f --compileOnly  -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
+  let compCmd = &"nim cpp {buildFlags} --compileOnly  -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")
@@ -177,22 +177,29 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   removeDir(privateFolder)
   createDir(privateFolder)
   for cppFile in walkFiles(nimCache / &"*.cpp"):
+    
+    
     #we need to clean the cpp file to avoid a const error on NCString (which is defined as const char* due to strict strings)
+    #Probably this is windows only
     let cppFileContent = readFile(cppFile)
     let formsToMatch = ["(NCSTRING)", "(NCSTRING*)"]
     if formsToMatch.any(x=> x in cppFileContent):
       let cleanedCppFileContent = cppFileContent.multiReplace(("(NCSTRING)", "(char*)"), ("(NCSTRING*)", "(char**)"))
       writeFile(cppFile, cleanedCppFileContent)
 
+
+    #checks if the file changed so UE doesnt compile it again:
+    
+
+
+
     let filename = cppFile.extractFilename()
-    # #For some reason that needs to be investigated the generated cpp files are empty so we need to copy the original from the cppbindings
-    # if filename.contains("sbindings@"): continue
-    #   let modulePart = filename.split("sbindings@")[^1]
-    #   let originalCppBinding = walkFiles(bindingsDir / &"*.cpp").toseq().filterIt(modulePart in it)[0]
-    #   copyFile(originalCppBinding, privateFolder / filename)
-    # else:
-    #   copyFile(cppFile, privateFolder / filename)
-    copyFile(cppFile, privateFolder / filename)
+    let cppDst = privateFolder / filename
+    if fileExists(cppDst) and readFile(cppFile) == readFile(cppDst):
+      continue
+    else:
+      log "Will recompile " & cppDst
+      copyFile(cppFile, cppDst)
 
 
   # for cppFile in walkFiles(bindingsDir/ &"*.cpp"):
