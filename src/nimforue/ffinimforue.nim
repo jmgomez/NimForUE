@@ -85,7 +85,6 @@ proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) =
 proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.ffi:genFilePath} = 
   UE_Log &"lib loaded: {libName}"
 
-  
   try:
     case $libName:
     of "nimforue": 
@@ -101,9 +100,7 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
           let output = compileGameSyncFromPlugin()
           UE_Log output
 
-    of "game":
-        UE_Log "GetEmiiterFromGame content" 
-      
+    of "game":      
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
     
   except:

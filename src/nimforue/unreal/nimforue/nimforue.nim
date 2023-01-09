@@ -1,16 +1,31 @@
 import ../coreuobject/[uobject, unrealtype, nametypes, package]
 import ../core/containers/[unrealstring, map, array]
 import nimforuebindings
-import ../../codegen/uebind
 import std/[strformat, options]
 include ../definitions
-import ../../codegen/models
+import ../../codegen/[models,uebind, emitter]
+
 import ../../utils/[utils, ueutils]
 import ../engine/enginetypes
 import std/[typetraits, tables, strutils, sequtils, sugar]
 
 
 #This file contains logic on top of ue types that it isnt necessarily bind 
+
+
+
+func isNimClass*(cls:UClassPtr) : bool = 
+  {.cast(noSideEffect).}:
+    when WithEditor:
+        cls.hasMetadata(NimClassMetadataKey)
+    else: #Maybe I can just check on the global emitter
+      let fullname = cls.getPrefixCpp() & cls.getName()
+      getGlobalEmitter().emitters.filterIt(fullname == it.ueType.name).len() > 0
+
+
+proc markAsNimClass*(cls:UClassPtr) = 
+  when WithEditor:
+    cls.setMetadata(NimClassMetadataKey, "true")
 
 #not sure if I should make a specific file for object extensions that are outside of the bindings
 proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr {.exportcpp.} = getClassByName(clsName).getDefaultObject()
@@ -77,6 +92,7 @@ proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FProperty
     let isIn = (p:FPropertyPtr) => flag in p.getPropertyFlags()
 
     getFPropertiesFrom(fn).filter(isIn)
+
 
 
 

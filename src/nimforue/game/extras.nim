@@ -35,4 +35,9 @@ proc onUnloadLib() {.exportc, dynlib, cdecl.} =
     onGameUnloaded()
 
 
-
+#Called from NimForUE module as entry point when we are in a non editor build
+proc startNue*() {.cdecl, exportc, dynlib.} =
+  UE_Log "Start Nue CALLED"
+  let nimHotReload = emitUStructsForPackage(getGlobalEmitter()[], "GameNim")
+  
+ 

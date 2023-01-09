@@ -1,7 +1,12 @@
 
-include ../unreal/prelude
+# include ../unreal/prelude
+import ../unreal/coreuobject/[uobject, package]
 import models
 import std/[sugar, tables, options, sequtils]
+import ../unreal/nimforue/[nimforuebindings]
+import ../utils/[utils, ueutils]
+ 
+
 
 type UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
 
