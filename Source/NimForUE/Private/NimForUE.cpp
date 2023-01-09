@@ -74,7 +74,7 @@ void FNimForUEModule::StartupModule()
 #endif
 #if WITH_EDITOR
 	LoadNimForUEHost();
-#else
+#elif WITH_STARTNUE
 	NimMain();
 	startNue();
 #endif
