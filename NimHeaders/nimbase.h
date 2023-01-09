@@ -24,8 +24,10 @@ __AVR__
 
 #include "UEDeps.h"
 
-
-
+#if defined(__clang__)
+  #pragma clang diagnostic ignored "-Warray-bounds"
+  #pragma clang diagnostic ignored "-Wignored-attributes"
+#endif
 //NimForUE specific conflicts
 #if defined(WIN32) 
   #undef _wenviron
@@ -501,7 +503,7 @@ typedef char NIM_CHAR;
 #if defined(__cplusplus) && defined(__clang__)
 #  define SEQ_DECL_SIZE 1
 #elif defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
-#  define SEQ_DECL_SIZE /* empty is correct! */
+#  define SEQ_DECL_SIZE  /* empty is correct! */
 #else
 #  define SEQ_DECL_SIZE 1000000
 #endif

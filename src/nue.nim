@@ -162,7 +162,7 @@ task game, "Builds the game lib":
  
   let debug = "debug" in taskOptions
 
-  if WithEditor:
+  if config.withEditor:
     compileGame(extraSwitches, debug)
   else:
     compileGameNonEditor(extraSwitches, debug)
