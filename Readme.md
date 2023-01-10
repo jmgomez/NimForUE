@@ -143,11 +143,14 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 
 - [x] Allow to define constructors on UObjects
 
-- Shipping Builds
-    - [ ] Make builds work on Windows 
-    - [ ] Make builds work on MacOS 
-    - [ ] Make builds work ok iOS
+- Non Editor Builds (Manual)
+    - [x] Make builds work on Windows 
+    - [x] Make builds work on MacOS 
+    - [x] Make builds work ok iOS
     - [ ] Make builds work on Android 
+- [x] Non editor builds should be statically linked
+- [ ] Automatize non editor builds
+
 - [ ] Inheritance in UStrucs. 
 - [ ] Virtual Functions support on UObjects. At this point, the C++ integration will be complete and you will be able to do anything that you can do in C++.
 - [ ] Nimscripter support? (allows nim in runtime)
