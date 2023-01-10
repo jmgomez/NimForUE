@@ -94,7 +94,7 @@ type
     min* {.importcpp: "Min".}: FVector3d
 
 type
-  FVector3d* {.importcpp.} = object
+  FVector3d* {.importcpp, inheritable, pure .} = object
     z* {.importcpp: "Z".}: float64
     y* {.importcpp: "Y".}: float64
     x* {.importcpp: "X".}: float64
@@ -106,7 +106,7 @@ type
     min* {.importcpp: "Min".}: FVector3f
 
 type
-  FVector3f* {.importcpp.} = object
+  FVector3f* {.importcpp, inheritable, pure.} = object
     z* {.importcpp: "Z".}: float32
     y* {.importcpp: "Y".}: float32
     x* {.importcpp: "X".}: float32
@@ -330,7 +330,7 @@ type
     xPlane* {.importcpp: "XPlane".}: FPlane
 
 type
-  FPlane* {.importcpp.} = object
+  FPlane* {.importcpp.} = object of FVector
     w* {.importcpp: "W".}: float64
 
 type
@@ -341,7 +341,7 @@ type
     xPlane* {.importcpp: "XPlane".}: FPlane4d
 
 type
-  FPlane4d* {.importcpp.} = object
+  FPlane4d* {.importcpp, .} = object of FVector3d
     w* {.importcpp: "W".}: float64
 
 type
@@ -352,7 +352,7 @@ type
     xPlane* {.importcpp: "XPlane".}: FPlane4f
 
 type
-  FPlane4f* {.importcpp.} = object
+  FPlane4f* {.importcpp.} = object of FVector3f
     w* {.importcpp: "W".}: float32
 
 type
