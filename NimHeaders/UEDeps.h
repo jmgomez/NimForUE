@@ -38,7 +38,7 @@
 //#include "FakeFactory.h"
 #include "PhysicsCore/Public/PhysicalMaterials/PhysicalMaterial.h"
 
-
+#include "NavigationSystem.h"
 
 #include "InputAction.h"
 #include "InputActionValue.h"

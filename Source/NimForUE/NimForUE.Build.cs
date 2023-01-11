@@ -43,7 +43,7 @@ public class NimForUE : ModuleRules
 			);
 			
 		
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "NavigationSystem" });
 
 
 		if (Target.bBuildEditor) {
@@ -64,7 +64,8 @@ public class NimForUE : ModuleRules
 				"NimForUEBindings",
 				
 				"Projects",
-				"EnhancedInput"
+				"EnhancedInput",
+				
 
 
 			}

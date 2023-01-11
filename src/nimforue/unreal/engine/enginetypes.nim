@@ -135,10 +135,14 @@ type
   
 
   # UDeveloperSettings* {.importcpp .} = object of UObject
+  UEdGraph* {.importcpp .} = object of UObject
+  UEdGraphPtr* = ptr UEdGraph
   UEdGraphNode* {.importcpp .} = object of UObject
+  UEdGraphNodePtr* = ptr UEdGraphNode
 
-  UStreamableRenderAsset* {.importcpp, inheritable, pure .} = object of UObject
-  UStreamableRenderAssetPtr* = ptr UStreamableRenderAsset
+
+  # UStreamableRenderAsset* {.importcpp, inheritable, pure .} = object of UObject
+  # UStreamableRenderAssetPtr* = ptr UStreamableRenderAsset
 
   UHandlerComponentFactory* {.importcpp .} = object of UObject
   UHandlerComponentFactoryPtr* = ptr UHandlerComponentFactory
@@ -250,15 +254,16 @@ type
   # UDataLayer* {.importcpp, inheritable, pure .} = object of UObject
   # UDataLayerPtr* = ptr UDataLayer
   
+  UUserDefinedStruct* {.importcpp, inheritable, pure .} = object of UScriptStruct
+  UUserDefinedStructPtr* = ptr UUserDefinedStruct
+  UNavigationSystemModuleConfig* {.importcpp, inheritable, pure .} = object of UObject
+  UNavigationSystemModuleConfigPtr* = ptr UNavigationSystemModuleConfig
+  UNavigationSystemConfig* {.importcpp, inheritable, pure .} = object of UObject
+  UNavigationSystemConfigPtr* = ptr UNavigationSystemConfig
 
 
-
-
-# type 
-#     ETeleportType* {.importcpp, size: sizeof(uint8).} = enum
-#         None,
-#         TeleportPhysics,
-#         ResetPhysic
+  FNavAgentSelector* {.importcpp .} = object
+  FKConvexElem* {.importcpp .} = object
 
 
 type

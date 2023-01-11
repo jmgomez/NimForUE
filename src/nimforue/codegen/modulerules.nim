@@ -22,7 +22,8 @@ const ManuallyImportedClasses* = @[
       "UEnhancedPlayerInput",
       "APawn","UPhysicalMaterial", 
       "UTickableWorldSubsystem",
-      "UGameViewportClient"
+      "UGameViewportClient",
+      "UNavigationSystemConfig","UNavigationSystemModuleConfig"
 
 
 ]
@@ -107,10 +108,11 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 
 #Any module not picked by default.
 #This could be exposed to the json file 
-let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry"]
+let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry", "NavigationSystem"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
-let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "AssetRegistry", "CommonUI", "CommonInput"]
+#TODO add a hook to the user
+let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "AssetRegistry", "CommonUI", "CommonInput", "NavigationSystem", "DungeonArchitectRuntime"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
@@ -229,12 +231,25 @@ moduleImportRules["UMGEditor"] = @[
 
 ]
 
+moduleImportRules["DungeonArchitectRuntime"] = @[
+  makeImportedRuleType(uerIgnore, @[
+    "FFlowTilemapCoord"
+  ]), 
+  makeImportedRuleField(uerIgnore, @[
+    "FFlowTilemapCoord"
+  ]),
+  # makeImportedRuleModule(uerImportBlueprintOnly)
+]
+
 moduleImportRules["InputCore"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FKey"
   ]),
   makeImportedRuleModule(uerImportBlueprintOnly)
 ]
+
+
+
 moduleImportRules["PhysicsCore"] = @[
   codegenOnly,  makeImportedRuleModule(uerImportBlueprintOnly)
 
