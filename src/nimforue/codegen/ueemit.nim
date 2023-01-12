@@ -86,9 +86,9 @@ type UEmitable = UNimScriptStruct | UClass | UDelegateFunction | UEnum
         
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T], isFirstLoad:bool) : Option[ptr T]= 
-    when not WithEditor:
-        let r = emitter.generator(pkg)
-        return tryUECast[T](r)
+    # when not WithEditor:
+    #     let r = emitter.generator(pkg)
+    #     return tryUECast[T](r)
 
     when defined withReinstantiation:
         let reinst = true
@@ -107,7 +107,9 @@ proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo,
     
 
 
-    let areEquals = prev.isSome() and prev.get().toUEType().get() == emitter.ueType
+    var areEquals = prev.isSome() and prev.get().toUEType().get() == emitter.ueType
+  
+        
     if areEquals: none[ptr T]()
     else: 
         prev.run prepareForReinst
@@ -167,16 +169,17 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
                
             of uetClass:            
                 let clsName = emitter.ueType.name.removeFirstLetter()
-
                 let prevClassPtr = someNil getClassByName(clsName)
                 let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr, not wasAlreadyLoaded)
-
+                
                 if prevClassPtr.isNone() and newClassPtr.isSome():
                     hotReloadInfo.newClasses.add(newClassPtr.get())
-                if prevClassPtr.isSome() and newClassPtr.isSome():
-                   
-                    # prevClassPtr.get().prepareNimClass()
+     
+                if prevClassPtr.isSome() and newClassPtr.isSome() :
                     hotReloadInfo.classesToReinstance.add(prevClassPtr.get(), newClassPtr.get())
+
+               
+
 
                 if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated
                     let ctor = ueEmitter.clsConstructorTable.tryGet(emitter.ueType.name)

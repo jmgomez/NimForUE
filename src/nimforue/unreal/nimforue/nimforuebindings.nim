@@ -238,9 +238,11 @@ proc setShouldHotReload*(hotReloadInfo: ptr FNimHotReload) =
         hotReloadInfo.enumsToReinstance.keys().len() +
         hotReloadInfo.delegatesToReinstance.keys().len() > 0
 
+proc `$`(cls:UClassPtr) : string = cls.getName()
 
 proc `$`*(hr:FNimHotReloadPtr) : string = 
-    &"""StructsToReinstance: {hr.structsToReinstance}  
+    &"""
+        StructsToReinstance: {hr.structsToReinstance}  
         ClassesToReinstance: {hr.classesToReinstance} 
         DelegatesToReinstance: {hr.delegatesToReinstance} 
         EnumsToReinstance: {hr.enumsToReinstance} 

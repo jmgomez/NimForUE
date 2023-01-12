@@ -53,7 +53,7 @@ proc startNue(libPath:string)  =
 proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) = 
     try:
         let nimHotReload = emitUStructsForPackage(emitter, packageName)
-        return
+        
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
           reinstanceNueTypes(packageName, nimHotReload, "")

@@ -12,7 +12,7 @@ void ReinstanceBindings::ReinstanceNueTypes(FString NueModule, FNimHotReload* Ni
 	
 	UNimForUEEngineSubsystem* NimForUESubsystem = GEngine->GetEngineSubsystem<UNimForUEEngineSubsystem>();
 	// bool bIsFirstLoad = !NimForUESubsystem->ReloadCounter.Contains(NueModule);
-	bool bIsFirstLoad = true;// !NimForUESubsystem->ReloadCounter.Contains(NueModule);
+	bool bIsFirstLoad = false;// !NimForUESubsystem->ReloadCounter.Contains(NueModule);
 	
 	FReload* UnrealReload = nullptr;
 	if(!bIsFirstLoad) //We need to instanciate the unreal reloader because it's used across the engine when reloading
