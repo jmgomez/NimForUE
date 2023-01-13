@@ -591,6 +591,23 @@ proc setTranslation*(self: FTransform, value: FVector) {.importcpp: "#.SetTransl
 proc setRotation*(self: FTransform, value: FQuat) {.importcpp: "#.SetRotation(@)".}
 proc setScale3D*(self: FTransform, value: FVector) {.importcpp: "#.SetScale3D(@)".}
 
+func location*(self: FTransform): FVector {.importcpp: "#.GetLocation()".}
+func translation*(self: FTransform): FVector {.importcpp: "#.GetTranslation()".}
+func rotation*(self: FTransform): FQuat {.importcpp: "#.GetRotation()".}
+func scale3D*(self: FTransform): FVector {.importcpp: "#.GetScale3D()".}
+
+func `location=`*(self: FTransform, value: FVector) {.importcpp: "#.SetLocation(@)".}
+func `translation=`*(self: FTransform, value: FVector) {.importcpp: "#.SetTranslation(@)".}
+func `rotation=`*(self: FTransform, value: FQuat) {.importcpp: "#.SetRotation(@)".}
+func `scale3D=`*(self: FTransform, value: FVector) {.importcpp: "#.SetScale3D(@)".}
+
+proc makeFTransform*(location: FVector, rotation: FQuat, scale: FVector): FTransform = 
+  var transform = FTransform()
+  transform.location = location
+  transform.rotation = rotation
+  transform.scale3D = scale
+  transform
+
 
 
 #Asset

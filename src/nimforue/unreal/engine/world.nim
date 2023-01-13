@@ -16,7 +16,7 @@ type
 
 # AActor* SpawnActor( UClass* Class, FTransform const* Transform, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
 
-proc spawnActor*(world:UWorldPtr, class: UClassPtr, transform: FTransform, spawnParameters=FActorSpawnParameters()): AActorPtr {.importcpp: "#->SpawnActor(@)".}
+proc spawnActor*(world:UWorldPtr, class: UClassPtr, transform: ptr FTransform, spawnParameters=FActorSpawnParameters()): AActorPtr {.importcpp: "#->SpawnActor(@)".}
 proc spawnActor*(world:UWorldPtr, class: UClassPtr, location: ptr FVector, rotation:ptr FRotator, spawnParameters=FActorSpawnParameters()): AActorPtr {.importcpp: "#->SpawnActor(@)".}
 proc spawnActor*(world:UWorldPtr, class: UClassPtr, location: FVector, rotation=FRotator(), spawnParameters=FActorSpawnParameters()): AActorPtr =
   spawnActor(world, class, unsafeAddr location, unsafeAddr rotation, spawnParameters)
@@ -29,4 +29,7 @@ proc spawnActorWith*[T : AActor](world:UWorldPtr, class:UClassPtr, location: FVe
   #useful when you want to use a Nim derived class in bp
   spawnActor(world, class, unsafeAddr location, unsafeAddr rotation, spawnParameters).ueCast[:T]()
 
-  
+proc spawnActorWith*[T : AActor](world:UWorldPtr, class:UClassPtr, transform: FTransform,  spawnParameters=FActorSpawnParameters()): ptr T =
+  #useful when you want to use a Nim derived class in bp
+  let actor = spawnActor(world, class, unsafeAddr transform, spawnParameters)
+  ueCast[T](actor)
