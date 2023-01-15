@@ -610,6 +610,9 @@ proc makeFTransform*(location: FVector, rotation: FQuat, scale: FVector): FTrans
 
 
 
+func `*`*(a, b: FRotator): FRotator {.importcpp: "#*#".}
+func `*`*(a, b: FQuat): FQuat {.importcpp: "#*#".}
+
 #Asset
 proc toSoftObjectPath*(assetData:FAssetData) : FSoftObjectPath {.importcpp: "#.ToSoftObjectPath()".}
 proc tryLoad*(softObjectPath:FSoftObjectPath) : UObjectPtr {.importcpp: "#.TryLoad()".}
