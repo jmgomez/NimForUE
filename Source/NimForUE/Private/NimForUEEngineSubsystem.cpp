@@ -33,7 +33,7 @@ void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	};
 #if WITH_EDITOR
 	//If we are cooking we just skip
-	if (IsRunningCommandlet()) return;
+	// if (IsRunningCommandlet()) return;
 	registerLogger(logger);
 	ensureGuestIsCompiled();
 	checkReload();

@@ -46,6 +46,7 @@ proc loadNueLib*(libName, nextPath: string) =
 #This could be done internally by exposing epol
 proc checkReload*() {.ex.} = #only for nimforue (plugin)
     let plugin = "nimforue"
+    logger("Checking reload")
     for currentLib in libMap.keys:
         let isPlugin = plugin == currentLib
         let mbNext = getLastLibPath(NimForUELibDir, currentLib)

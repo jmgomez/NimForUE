@@ -27,6 +27,8 @@ DEFINE_LOG_CATEGORY(NimForUE);
 void FNimForUEModule::LoadNimForUEHost() {
 	//Notice MacOS does not require to manually load the library. It happens on the build.cs file.
 	//The gues library, it's loaded in the EngineSubsystem
+	UE_LOG(NimForUE, Log, TEXT("Will load NimForUEHost now..."));
+
 #if PLATFORM_WINDOWS
 	FString PluginPath =  IPluginManager::Get().FindPlugin("NimForUE")->GetBaseDir();
 	
@@ -39,9 +41,9 @@ void FNimForUEModule::LoadNimForUEHost() {
 	FString StdOutput;
 	FString StdError;
 	//FPlatformProcess::ExecProcess(*Cmd, TEXT("gencppbindings"), &ReturnCode, &StdOutput, &StdError, *PluginPath);
-	UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib loaded %s"), *DllPath);
-	UE_LOG(NimForUE, Warning, TEXT("NimForUE Out %s"), *StdOutput);
-	UE_LOG(NimForUE, Error, TEXT("NimForUE Error %s"), *StdError);
+	// UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib loaded %s"), *DllPath);
+	// UE_LOG(NimForUE, Warning, TEXT("NimForUE Out %s"), *StdOutput);
+	// UE_LOG(NimForUE, Error, TEXT("NimForUE Error %s"), *StdError);
 #endif
 }
 

@@ -6,6 +6,14 @@ import std/dynlib
 import hostbase
 
 
+proc genBindingsEntryPoint*(): void {.exportc, cdecl, dynlib.} =
+  type
+    ProcType {.inject.} = proc (): void {.cdecl.}
+  withLock libLock:
+    let fun {.inject.} = cast[ProcType](lib().symAddr("genBindingsEntryPoint"))
+    if not fun.isNil():
+      fun()
+
 proc onLibLoaded*(libName: cstring; libPath: cstring; timesReloaded: cint): void {.
     exportc, cdecl, dynlib.} =
   type

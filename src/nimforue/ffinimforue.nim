@@ -47,7 +47,10 @@ proc startNue(libPath:string)  =
 
   startNueFn()
 
-
+#Will be called from the commandlet that generates the bindigns
+proc genBindingsEntryPoint() : void {.ffi:genFilePath} = 
+  UE_LOG "Running genBindingsEntryPoint"
+  execBindingGeneration(true)                
 
 
 proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) = 

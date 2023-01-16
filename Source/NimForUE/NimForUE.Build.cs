@@ -52,6 +52,11 @@ public class NimForUE : ModuleRules
 				"NimForUEEditor",
 				"EditorStyle",
 			});
+			PrivateIncludePaths.AddRange(
+				new string[] {
+					"CommandletPlugin/Private",
+					"CommandletPlugin/Private/Commandlets"
+				});
 		}
 
 		PrivateDependencyModuleNames.AddRange(

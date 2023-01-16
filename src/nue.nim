@@ -226,6 +226,12 @@ task starteditor, "opens the editor":
   else:
     discard execCmd("open "&GamePath)
 
+task genbindings, "Runs the Generate Bindings commandlet":
+  when defined windows:
+    let cmd = &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor.exe {GamePath} -run=GenerateBindings"
+    echo execProcess("powershell.exe "&cmd)
+  else:
+    discard execCmd("open "&GamePath&" -run=GenerateBindings")
   
 # --- End Tasks ---
 main()

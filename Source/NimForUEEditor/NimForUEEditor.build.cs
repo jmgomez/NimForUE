@@ -20,7 +20,7 @@ public class NimForUEEditor : ModuleRules
 			"Kismet",
 			"BlueprintGraph",
 		});
-
+		
 	}
 
 }
