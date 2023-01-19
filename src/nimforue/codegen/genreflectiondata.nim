@@ -137,6 +137,22 @@ const project* = $1
   # UE_Warn $ueProject
 
 
+#Fire and forget 
+proc genBindingsAsync*() = 
+  when defined(windows):
+    var cmd = f &"{pluginDir}\\nue.exe"    
+  else:
+    var cmd = f &"{pluginDir}/nue"
+  var
+    args = f"genbindings"
+    dir = f pluginDir
+    stdOut : FString
+    stdErr : FString
+
+  let code = executeCmd(cmd, args, dir, stdOut, stdErr)
+  UE_Log $code
+  UE_Warn "output" & stdOut
+
 proc genUnrealBindings*(gameModules, plugins: seq[string], shouldRunSync:bool) =
   try:
     let ueProject = genReflectionData(gameModules, plugins)

@@ -208,9 +208,19 @@ task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindin
   host(taskOptions)
 
 
+task genbindings, "Runs the Generate Bindings commandlet":
+  when defined windows:
+    let cmd = &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor.exe {GamePath} -run=GenerateBindings"
+    echo execProcess("powershell.exe "&cmd)
+  else:
+    discard execCmd("open "&GamePath&" -run=GenerateBindings")
+
+
 task setup, "Setups the plugin by building the initial tasks in order":
   ubuild(taskOptions)
   guest(taskOptions)
+  gencppbindings(taskOptions)
+  game(taskOptions)
 
 
 task ok, "prints ok if NUE and Host are built":
@@ -226,12 +236,6 @@ task starteditor, "opens the editor":
   else:
     discard execCmd("open "&GamePath)
 
-task genbindings, "Runs the Generate Bindings commandlet":
-  when defined windows:
-    let cmd = &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor.exe {GamePath} -run=GenerateBindings"
-    echo execProcess("powershell.exe "&cmd)
-  else:
-    discard execCmd("open "&GamePath&" -run=GenerateBindings")
   
 # --- End Tasks ---
 main()

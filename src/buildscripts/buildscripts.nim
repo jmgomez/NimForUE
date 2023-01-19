@@ -69,10 +69,15 @@ proc compileGameSyncFromPlugin*() : string =
   output
 
 proc compileGuestSyncFromPlugin*() : string =
-   
   let cmd = &"{PluginDir}/{NueExec} guest"
   let (output, _) = execCmdEx(cmd)
   output
+
+proc executeNueTask(task: string) =
+  let cmd = &"{PluginDir}/{NueExec} {task}"
+  let (output, _) = execCmdEx(cmd)
+  log output
+
 
 
 proc copyNimForUELibToUEDir*(libName:string) = 

@@ -92,16 +92,18 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
     case $libName:
     of "nimforue": 
         emitNueTypes(getGlobalEmitter()[], "Nim")
-        if isRunningCommandlet(): return
-        # if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
-          #Base the condition on if Game needs to be compiled or not.
-        let doesTheGameExists = fileExists(GameLibPath)    
-        UE_Log &"Game lib exists: {doesTheGameExists}"   
-        execBindingGeneration(shouldRunSync=not doesTheGameExists)                
-        if not doesTheGameExists:
-          UE_Log "Game lib doesnt exists, compiling it now:"
-          let output = compileGameSyncFromPlugin()
-          UE_Log output
+        # if isRunningCommandlet(): return
+        # # if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
+        #   #Base the condition on if Game needs to be compiled or not.
+        # let doesTheGameExists = fileExists(GameLibPath)    
+        # UE_Log &"Game lib exists: {doesTheGameExists}"   
+        # execBindingGeneration(shouldRunSync=not doesTheGameExists)                
+        # if not doesTheGameExists:
+        #   UE_Log "Game lib doesnt exists, compiling it now:"
+        #   let output = compileGameSyncFromPlugin()
+        #   UE_Log output
+        if not isRunningCommandlet(): 
+          genBindingsAsync()
 
     of "game":      
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
