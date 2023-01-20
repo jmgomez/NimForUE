@@ -30,8 +30,10 @@ If you dont have Discord, you can also reach out at:
 
 
 ### Getting started on Windows:
-[![Showcase at NimConf 2022](https://img.youtube.com/vi/NuB_PjxVisw/0.jpg)](https://www.youtube.com/watch?v=NuB_PjxVisw&t=2&ab_channel=JuanMG%C3%B3mez
-)
+[![etting started on Windows](https://img.youtube.com/vi/NuB_PjxVisw/0.jpg)](https://www.youtube.com/watch?v=NuB_PjxVisw)
+
+### NimForUE 101: uClasses and HotReload basics:
+[![NimForUE 101: uClasses and HotReload basics](https://img.youtube.com/vi/j6N6WGt2lO0/0.jpg)](https://www.youtube.com/watch?v=j6N6WGt2lO0)
 
 
 ### Why Nim?
