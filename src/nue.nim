@@ -211,10 +211,10 @@ task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindin
 task genbindings, "Runs the Generate Bindings commandlet":
   when defined windows:
     let cmd = &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor.exe {GamePath} -run=GenerateBindings"
-    # echo execCmd("powershell.exe "&cmd)
     echo execCmd(cmd)
   else:
-    discard execCmd("open "&GamePath&" -run=GenerateBindings")
+    let cmd = &"{config.engineDir}/Binaries/Mac//UnrealEditor.app/Contents/MacOS/UnrealEditor  {GamePath} -run=GenerateBindings"
+    discard execCmd(cmd)
 
 
 task setup, "Setups the plugin by building the initial tasks in order":
