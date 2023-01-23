@@ -326,10 +326,13 @@ when defined(macosx):
 
 
 proc getModuleHashFromFile*(filePath: string): Option[string] =
-  if not fileExists(filePath): return none[string]()
-  readLines(filePath, 1)
-    .head()
-    .map(line => line.split(":")[^1].strip())
+  try:
+    if not fileExists(filePath): return none[string]()
+    readLines(filePath, 1)
+      .head()
+      .map(line => line.split(":")[^1].strip())
+  except:
+    return none[string]()
 
 
 macro genProjectBindings*(project: static UEProject, pluginDir: static string) =

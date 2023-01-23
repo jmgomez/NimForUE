@@ -512,6 +512,31 @@ func getModuleHeader*(module: UEModule): seq[string] =
     .mapIt(&"""#include "{it}" """)
 
 
+proc getUETypeByNameFromUE(name:string, rules:seq[UEImportRule]) : Option[UEType] = 
+  
+  let obj = getUnrealTypeFromName[UStruct](name.removeFirstLetter().removeLastLettersIfPtr())
+              .chainNone(()=>getUnrealTypeFromName[UEnum](name.extractTypeFromGenericInNimFormat("TEnumAsByte")))
+              .chainNone(()=>getUnrealTypeFromName[UStruct](name))
+              
+
+  result = obj.map(it=>getUETypeFrom(it)).flatten()
+  
+
+
+proc getForcedTypes*(moduleName:string, rules: seq[UEImportRule]): seq[UEType] =
+  result = rules
+      .filterIt(it.rule == uerForce)
+      .mapIt(it.affectedTypes)
+      .foldl(a & b, newSeq[string]())
+      .mapIt(getUETypeByNameFromUE(it, rules))
+      .sequence()
+  if result.any():
+    UE_Log &"Forced types for {moduleName}: {result} and {rules.filterIt(it.rule == uerForce)}"
+  
+  
+ 
+  
+
 proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string]): seq[UEModule] =
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
@@ -519,7 +544,8 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules))
     .sequence()
   
-  var types = initialTypes
+    
+  var types = initialTypes & getForcedTypes(name, rules)
   let excludeFromModuleNames = @["CoreUObject", name]
   let deps = (types
     .mapIt(it.getModuleNames(pkg, excludeFromModuleNames))

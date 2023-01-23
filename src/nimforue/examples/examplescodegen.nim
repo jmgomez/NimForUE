@@ -110,7 +110,7 @@ uClass AActorCodegen of AActor:
     inspectActor : AActorPtr
     bOnlyBlueprint : bool 
     moduleName : FString
-
+  
   ufuncs(): 
     proc getClassFromInspectedType() : UClassPtr = 
       case self.inspect:
@@ -196,7 +196,20 @@ uClass AActorCodegen of AActor:
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "test5"
     structPtrName : FString 
-    
+  uprops(EditAnywhere, BlueprintReadWrite, Category = StructInspector):
+    structToFind : FString
+  
+  ufuncs(BlueprintCallable, CallInEditor, Category=StructInspector):
+    proc showStruct() = 
+      let struct = getUTypeByName[UScriptStruct](self.structToFind)
+      if struct.isNil():
+        UE_Error "Struct is null"
+        return
+      let structField = struct.toUEType()
+      UE_Log $structField
+      UE_Log &"Module Name: {struct.getModuleName()}"
+
+
   ufuncs(BlueprintCallable, CallInEditor, Category=ActorCodegen):
     proc genReflectionDataOnly() = 
       try:
@@ -256,7 +269,7 @@ uClass AActorCodegen of AActor:
       let pkg = tryGetPackageByName(self.moduleName)
       let rules = 
         if self.bOnlyBlueprint:  
-          @[makeImportedRuleModule(uerImportBlueprintOnly)]
+          @[makeImportedRuleModule(uerImportBlueprintOnly),  makeImportedRuleType(uerForce, @["FNiagaraPosition"])]
         else: 
           @[]
 

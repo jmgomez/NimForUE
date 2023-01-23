@@ -39,7 +39,7 @@ type
         uerVirtualModule
         uerInnerClassDelegate #Some delegates are declared withit a class and can collide. This rule is for when both are true
         uerIgnoreHash #ignore the hash when importing a module so always imports it. 
-
+        uerForce #Force the import of a type. This is useful for types that are not exported by default but we want to import them anyway
     UERuleTarget* = enum 
         uertType
         uertField
@@ -108,7 +108,7 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 
 #Any module not picked by default.
 #This could be exposed to the json file 
-let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry", "NavigationSystem"]
+let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry", "NavigationSystem", "Niagara"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
 #TODO add a hook to the user
@@ -229,6 +229,29 @@ moduleImportRules["UMGEditor"] = @[
     "UAssetEditorUISubsystem",
   ]),
 
+]
+moduleImportRules["Niagara"] = @[
+  codegenOnly,
+   makeImportedRuleType(uerForce, @[
+    "FNiagaraPosition",
+    "UNiagaraParameterCollection",
+    "UNiagaraEffectType",
+    "ANiagaraPerfBaselineActor",
+    "FNiagaraVariable",
+    "FNiagaraSystemScalabilitySettingsArray",
+    "FNiagaraSystemScalabilitySettings",
+    "FNiagaraPlatformSet",
+    "FNiagaraSystemVisibilityCullingSettings",
+    "FNiagaraGlobalBudgetScaling",
+    "FNiagaraDeviceProfileStateEntry",
+    
+
+   ]),
+  makeImportedRuleField(uerIgnore, @[
+    
+  ]),
+  makeImportedRuleModule(uerImportBlueprintOnly)
+  
 ]
 
 moduleImportRules["DungeonArchitectRuntime"] = @[
