@@ -112,7 +112,7 @@ let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
 #TODO add a hook to the user
-let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "AssetRegistry", "CommonUI", "CommonInput", "NavigationSystem", "DungeonArchitectRuntime"]
+let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "AssetRegistry", "CommonUI", "CommonInput", "NavigationSystem", "DungeonArchitectRuntime", "NiagaraCore"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
@@ -230,27 +230,16 @@ moduleImportRules["UMGEditor"] = @[
   ]),
 
 ]
+
 moduleImportRules["Niagara"] = @[
   codegenOnly,
-   makeImportedRuleType(uerForce, @[
-    "FNiagaraPosition",
-    "UNiagaraParameterCollection",
-    "UNiagaraEffectType",
-    "ANiagaraPerfBaselineActor",
-    "FNiagaraVariable",
-    "FNiagaraSystemScalabilitySettingsArray",
-    "FNiagaraSystemScalabilitySettings",
-    "FNiagaraPlatformSet",
-    "FNiagaraSystemVisibilityCullingSettings",
-    "FNiagaraGlobalBudgetScaling",
-    "FNiagaraDeviceProfileStateEntry",
-    
-
-   ]),
+ 
   makeImportedRuleField(uerIgnore, @[
-    
+    "ShaderScriptParametersMetadata",
+    "SimulationStageMetaData",
+    "LastCompileEvents"
   ]),
-  makeImportedRuleModule(uerImportBlueprintOnly)
+  # makeImportedRuleModule(uerImportBlueprintOnly)
   
 ]
 

@@ -102,8 +102,8 @@ type
   # UAudioLinkSettingsAbstract* {.importcpp, inheritable, pure .} = object of UObject
   # UAudioLinkSettingsAbstractPtr* = ptr UAudioLinkSettingsAbstract
 
-  UVectorField* {.importcpp, inheritable, pure .} = object of UObject
-  UVectorFieldPtr* = ptr UVectorField
+  # UVectorField* {.importcpp, inheritable, pure .} = object of UObject
+  # UVectorFieldPtr* = ptr UVectorField
 
   FWorldContext* {.importcpp, pure .} = object
    
@@ -265,7 +265,7 @@ type
   FNavAgentSelector* {.importcpp .} = object
   FKConvexElem* {.importcpp .} = object
 
-
+  FRichCurve* {.importcpp .} = object
 type
   # FSlateBrush*  = object
     
