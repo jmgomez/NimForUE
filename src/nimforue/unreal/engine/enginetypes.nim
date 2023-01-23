@@ -133,7 +133,8 @@ type
     myBoneName* {.importcpp: "MyBoneName".}: FName
 
   
-
+  FGameplayTag* {.importcpp, pure.} = object
+    tag* {.importcpp: "Tag".}: FName
   # UDeveloperSettings* {.importcpp .} = object of UObject
   UEdGraph* {.importcpp .} = object of UObject
   UEdGraphPtr* = ptr UEdGraph

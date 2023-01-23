@@ -35,6 +35,7 @@ func cleanTEnum(prop:string) : string =
         return prop
 
 func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expected type is something that UEField can understand
+  
   func cleanCppType(cppType: string): string =
     #Do multireplacehere
     let cppType =
@@ -48,8 +49,8 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
     
 
   if prop.isTArray():
-    var innerType = castField[FArrayProperty](prop).getInnerProp().getCPPType()
-    return fmt"TArray[{innerType.cleanCppType()}]"
+    let innerProp = castField[FArrayProperty](prop).getInnerProp()
+    return fmt"TArray[{innerProp.getNimTypeAsStr(outer)}]"
 
 
   if prop.isTSet():

@@ -40,6 +40,8 @@
 
 #include "NavigationSystem.h"
 
+#include "GameplayTags/Classes/GameplayTagContainer.h"
+
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"

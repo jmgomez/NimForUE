@@ -237,7 +237,14 @@ moduleImportRules["Niagara"] = @[
   makeImportedRuleField(uerIgnore, @[
     "ShaderScriptParametersMetadata",
     "SimulationStageMetaData",
-    "LastCompileEvents"
+    "LastCompileEvents",
+    "FNiagaraVariable",
+    "FNiagaraVariableBase"
+  ]), 
+  makeImportedRuleType(uerIgnore, @[
+    "FNiagaraVariable", #Has the Map issue when generating the compiled cpp. Need to investegate it
+    "FNiagaraVariableBase",
+   
   ]),
   # makeImportedRuleModule(uerImportBlueprintOnly)
   
@@ -250,6 +257,14 @@ moduleImportRules["DungeonArchitectRuntime"] = @[
   makeImportedRuleField(uerIgnore, @[
     "FFlowTilemapCoord"
   ]),
+  # makeImportedRuleModule(uerImportBlueprintOnly)
+]
+
+moduleImportRules["GameplayTags"] = @[
+  makeImportedRuleType(uerIgnore, @[
+    "FGameplayTag" #manually imported
+  ])
+ 
   # makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 

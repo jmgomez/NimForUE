@@ -66,7 +66,7 @@ public class NimForUE : ModuleRules
 				"Projects",
 				"EnhancedInput",
 				
-
+				"GameplayTags",
 
 			}
 		);
