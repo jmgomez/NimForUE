@@ -106,7 +106,12 @@ type
   # UVectorFieldPtr* = ptr UVectorField
 
   FWorldContext* {.importcpp, pure .} = object
-   
+  
+  FBoneReference* {.importcpp, pure .} = object
+    boneName* {.importcpp: "BoneName".}: FName
+    boneIndex* {.importcpp: "BoneIndex".}: int32
+    bUseSkeletonIndex* {.importcpp.}: bool
+
 
   FWorldContextPtr* = ptr FWorldContext
 
