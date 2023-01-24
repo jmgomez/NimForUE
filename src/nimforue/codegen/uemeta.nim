@@ -838,9 +838,9 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
 
 #	explicit UStruct(UStruct* InSuperStruct, SIZE_T ParamsSize = 0, SIZE_T Alignment = 0);
 # UScriptStruct* NewStruct = new(EC_InternalUseOnlyConstructor, Outer, UTF8_TO_TCHAR(Params.NameUTF8), Params.ObjectFlags) UScriptStruct(FObjectInitializer(), Super, StructOps, (EStructFlags)Params.StructFlags, Params.SizeOf, Params.AlignOf);
-#UScriptStruct(FObjectInitializer(), Super, StructOps, (EStructFlags)Params.StructFlags, Params.SizeOf, Params.AlignOf)
-proc newScriptStruct[T](package: UPackagePtr, name:FString, flags:EObjectFlags, super:UScriptStructPtr, size:int32, align:int32, fake:T) : UScriptStructPtr {.importcpp: 
-  "new(EC_InternalUseOnlyConstructor, #, *#, #) UScriptStruct(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
+# UScriptStruct(FObjectInitializer(), Super, StructOps, (EStructFlags)Params.StructFlags, Params.SizeOf, Params.AlignOf)
+proc newScriptStruct[T](package: UPackagePtr, name:FString, flags:EObjectFlags, super:UScriptStructPtr, size:int32, align:int32, fake:T) : UNimScriptStructPtr {.importcpp: 
+  "new(EC_InternalUseOnlyConstructor, #, *#, #) UNimScriptStruct(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
 proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   UE_Log &"Struct emited {ueType.name}"
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
@@ -849,9 +849,9 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
     let parent = someNil(getUTypeByName[UScriptStruct](ueType.superStruct.removeFirstLetter()))
     superStruct = parent.getOrRaise(&"Parent struct {ueType.superStruct} not found for {ueType.name}")
   
-  let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+  # let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
   #SuperStructs not supported but this is the way to support them
-  # let scriptStruct = newScriptStruct[T](package, f ueType.name.removeFirstLetter(), objClsFlags, superStruct, sizeof(T).int32, alignof(T).int32, T())
+  let scriptStruct = newScriptStruct[T](package, f ueType.name.removeFirstLetter(), objClsFlags, superStruct, sizeof(T).int32, alignof(T).int32, T())
 
   for metadata in ueType.metadata:
     scriptStruct.setMetadata(metadata.name, $metadata.value)
@@ -863,8 +863,11 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
 
   setCppStructOpFor[T](scriptStruct, nil)
   UE_Log &"Struct emited {scriptStruct.getName()}"
+  setGIsUCCMakeStandaloneHeaderGenerator(true)
   scriptStruct.bindType()
   scriptStruct.staticLink(true)
+  setGIsUCCMakeStandaloneHeaderGenerator(false)
+
   scriptStruct.setMetadata(UETypeMetadataKey, $ueType.toJson())
   UE_Log &"Ssale?"
   scriptStruct

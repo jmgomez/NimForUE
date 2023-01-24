@@ -15,6 +15,10 @@ class NIMFORUEBINDINGS_API UNimScriptStruct : public UScriptStruct {
 
 	ICppStructOps* OriginalStructOps;//To be used as fallback for prepareStruct
 public:
+	// explicit UNimScriptStruct(UScriptStruct* InSuperStruct, SIZE_T ParamsSize = 0, SIZE_T Alignment = 0);
+	//UNimScriptStruct(UStrøuct* InSuperStruct, SIZE_T ParamsSize = 0, SIZE_T Alignment = 0);
+	NIMFORUEBINDINGS_API explicit UNimScriptStruct(const FObjectInitializer& ObjectInitializer, UScriptStruct* InSuperStruct, ICppStructOps* InCppStructOps = nullptr, EStructFlags InStructFlags = STRUCT_NoFlags, SIZE_T ExplicitSize = 0, SIZE_T ExplicitAlignment = 0);
+	UNimScriptStruct(){};
 	template<typename T>
 	void SetCppStructOpFor(T* FakeObject) {
 		// Now is final. If using it right away doesnt work or we find a missmatch (which we will probably do) we could reimplement it
@@ -26,7 +30,7 @@ public:
 	}
 	//We need to override this because the FReload reinstancer will
 	//check for the ops of the previus struct and it wont be here because
-	void PrepareCppStructOps() override;
+	// void PrepareCppStructOps() override;
 
 	
 };
