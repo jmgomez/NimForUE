@@ -17,13 +17,14 @@ UScriptStruct(ObjectInitializer, InSuperStruct, InCppStructOps, InStructFlags, E
 
 void UNimScriptStruct::PrepareCppStructOps() {
 	GIsUCCMakeStandaloneHeaderGenerator = true;
+	
 	UScriptStruct::PrepareCppStructOps();
 	if(!CppStructOps) {
-		//If it fails after preparing it, it means it's already gonna away so we use our backup (and copy for the next usage)
-		void* StructOps = FMemory::Malloc(sizeof(ICppStructOps), alignof(ICppStructOps));
-		FMemory::Memcpy(StructOps, OriginalStructOps,sizeof(ICppStructOps));
-		CppStructOps = static_cast<ICppStructOps*>(StructOps);
-	}
+    		//If it fails after preparing it, it means it's already gonna away so we use our backup (and copy for the next usage)
+    		void* StructOps = FMemory::Malloc(sizeof(ICppStructOps), alignof(ICppStructOps));
+    		FMemory::Memcpy(StructOps, OriginalStructOps,sizeof(ICppStructOps));
+    		CppStructOps = static_cast<ICppStructOps*>(StructOps);
+    	}
 	GIsUCCMakeStandaloneHeaderGenerator = false;
 
 }

@@ -594,10 +594,18 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
         fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(typeDef.size - size), ident "byte"), newEmptyNode())
       fields
 
-  result = genAst(typeName, fields):
-        type typeName = object
+  if typeDef.superStruct == "":
+    result = genAst(typeName, fields):
+          type typeName = object
+    result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])
+
+  else:
+    let superStruct = ident typeDef.superStruct
+    result = genAst(typeName, superStruct, fields):
+          type typeName = object of superStruct
+    result[0][^1][^1] = fields
+
   
-  result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])
 
   if typeExposure == uexExport: 
     #Generates a type so it's added to the header when using --header

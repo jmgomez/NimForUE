@@ -31,8 +31,9 @@ func `$`*(cppCls: CppClassType): string =
     
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
   let kind = if cppCls.kind == cckClass: "class" else: "struct"
+  let parent = if cppCls.parent.len > 0: &"  : public {cppCls.parent}  " else: ""
   &"""
-  DLLEXPORT {kind} {cppCls.name} : public {cppCls.parent} {{
+  DLLEXPORT {kind} {cppCls.name} {parent} {{
     
       {funcs}
   }};
@@ -93,7 +94,7 @@ static:
 
 
 
-proc addClass*(class: CppClassType) =
+proc addCppClass*(class: CppClassType) =
   var class = class
   if class.parent notin (ManuallyImportedClasses & emittedClasses) and class.kind == cckClass:
     class.parent =  class.parent & "_" #The fake classes have a _ at the end we need to remove the emitted classes from here as well
@@ -105,6 +106,7 @@ proc addClass*(class: CppClassType) =
     
   cppHeader.classes.add class
   saveHeader(cppHeader, "NimHeaders") #it would be better to do it only once
+
 
 
 

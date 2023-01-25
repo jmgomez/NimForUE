@@ -22,7 +22,7 @@ macro overrideFNimHotReloadChild(fn : untyped) =
 
 # proc getNumber(hrc: FNimHotReloadChildPtr) : int32 {.overrideFNimHotReloadChild.} = 100
 static:    
-    addClass(cppHotReloadChild)
+    addCppClass(cppHotReloadChild)
 
 
 #rename these to register
@@ -233,6 +233,17 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
     hotReloadInfo
 
 
+#Only function overrides
+func toCppClass(ueType:UEType) : CppClassType = 
+    case ueType.kind:
+    of uetClass:
+        CppClassType(name:ueType.name, kind: cckClass, parent:ueType.parent, functions: ueType.fnOverrides)
+    of uetStruct: #Structs can keep inhereting from Nim structs for now. We will need to do something about the produced fields in order to gen funcs. 
+        CppClassType(name:ueType.name, kind: cckStruct, parent:ueType.superStruct, functions: @[])
+    else:
+        error("Cant convert a non class or struct to a CppClassType")
+        CppClassType() 
+
 
 
 
@@ -244,13 +255,9 @@ proc emitUStruct(typeDef:UEType) : NimNode =
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, structName=newStrLitNode(typeDef.name)): #defers the execution
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUStruct[name](typeDefAsNode, package))
                 addStructOpsWrapper(structName, (str:UNimScriptStructPtr) => setCppStructOpFor[name](str, nil))
+    
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr resulti
-
-#Only function overrides
-func toCppClass(ueType:UEType) : CppClassType = 
-    assert ueType.kind == uetClass
-    CppClassType(name:ueType.name, kind: cckClass, parent:ueType.parent, functions: ueType.fnOverrides)
 
 
 
@@ -260,7 +267,7 @@ proc emitUClass(typeDef:UEType) : NimNode =
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
                 addEmitterInfo(typeDefAsNode, getFnGetForUClass(typeDefAsNode))
 
-    addClass(typeDef.toCppClass())
+    addCppClass(typeDef.toCppClass())
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
 proc emitUDelegate(typedef:UEType) : NimNode = 
@@ -469,7 +476,6 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     let ueFields = getUPropsAsFieldsForType(body, structTypeName)
     let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
     let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
-
     emitUStruct(ueType) 
 
 

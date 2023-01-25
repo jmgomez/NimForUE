@@ -17,7 +17,7 @@ class NIMFORUEBINDINGS_API UNimScriptStruct : public UScriptStruct {
 public:
 	// explicit UNimScriptStruct(UScriptStruct* InSuperStruct, SIZE_T ParamsSize = 0, SIZE_T Alignment = 0);
 	//UNimScriptStruct(UStrøuct* InSuperStruct, SIZE_T ParamsSize = 0, SIZE_T Alignment = 0);
-	NIMFORUEBINDINGS_API explicit UNimScriptStruct(const FObjectInitializer& ObjectInitializer, UScriptStruct* InSuperStruct, ICppStructOps* InCppStructOps = nullptr, EStructFlags InStructFlags = STRUCT_NoFlags, SIZE_T ExplicitSize = 0, SIZE_T ExplicitAlignment = 0);
+    UNimScriptStruct(const FObjectInitializer& ObjectInitializer, UScriptStruct* InSuperStruct, ICppStructOps* InCppStructOps = nullptr, EStructFlags InStructFlags = STRUCT_NoFlags, SIZE_T ExplicitSize = 0, SIZE_T ExplicitAlignment = 0);
 	UNimScriptStruct(){};
 	template<typename T>
 	void SetCppStructOpFor(T* FakeObject) {
