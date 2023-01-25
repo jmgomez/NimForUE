@@ -14,13 +14,16 @@ UNimScriptStruct::UNimScriptStruct(const FObjectInitializer& ObjectInitializer, 
 UScriptStruct(ObjectInitializer, InSuperStruct, InCppStructOps, InStructFlags, ExplicitSize, ExplicitAlignment) {
 	OriginalStructOps = InCppStructOps;
 }
-//
-// void UNimScriptStruct::PrepareCppStructOps() {
-// 	UScriptStruct::PrepareCppStructOps();
-// 	if(!CppStructOps) {
-// 		//If it fails after preparing it, it means it's already gonna away so we use our backup (and copy for the next usage)
-// 		void* StructOps = FMemory::Malloc(sizeof(ICppStructOps), alignof(ICppStructOps));
-// 		FMemory::Memcpy(StructOps, OriginalStructOps,sizeof(ICppStructOps));
-// 		CppStructOps = static_cast<ICppStructOps*>(StructOps);
-// 	}
-// }
+
+void UNimScriptStruct::PrepareCppStructOps() {
+	GIsUCCMakeStandaloneHeaderGenerator = true;
+	UScriptStruct::PrepareCppStructOps();
+	if(!CppStructOps) {
+		//If it fails after preparing it, it means it's already gonna away so we use our backup (and copy for the next usage)
+		void* StructOps = FMemory::Malloc(sizeof(ICppStructOps), alignof(ICppStructOps));
+		FMemory::Memcpy(StructOps, OriginalStructOps,sizeof(ICppStructOps));
+		CppStructOps = static_cast<ICppStructOps*>(StructOps);
+	}
+	GIsUCCMakeStandaloneHeaderGenerator = false;
+
+}

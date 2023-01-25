@@ -14,6 +14,7 @@ struct FMyStructTableRow : public FTableRowBase {
 		float TurnRateGamepad;
 		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 		UObject* ObjectTest;
+	 
 };
 
 

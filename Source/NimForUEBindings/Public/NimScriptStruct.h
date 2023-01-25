@@ -30,7 +30,7 @@ public:
 	}
 	//We need to override this because the FReload reinstancer will
 	//check for the ops of the previus struct and it wont be here because
-	// void PrepareCppStructOps() override;
+	void PrepareCppStructOps() override;
 
 	
 };
