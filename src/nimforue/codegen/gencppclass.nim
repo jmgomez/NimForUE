@@ -32,12 +32,31 @@ func `$`*(cppCls: CppClassType): string =
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
   let kind = if cppCls.kind == cckClass: "class" else: "struct"
   let parent = if cppCls.parent.len > 0: &"  : public {cppCls.parent}  " else: ""
+  let constructor = if cppCls.name == "ANimBeginPlayOverrideActor": 
+      """DECLARE_CLASS_INTRINSIC(ANimBeginPlayOverrideActor, AActor, CLASS_MatchedSerializers, TEXT("/Script/Nim"))"""
+      # "DECLARE_CLASS(ANimBeginPlayOverrideActor, AActor, 0, Engine);"
+      # &"static void __DefaultConstructor(const FObjectInitializer& X) {{ new((EInternal*)X.GetObj())ANimBeginPlayOverrideActor; }}" 
+    else: 
+      ""
+  # let extra = &"IMPLEMENT_CLASS_NO_AUTO_REGISTRATION({cppCls.name})"
+
+  let extra = 
+    if cppCls.name == "ANimBeginPlayOverrideActor": 
+      # &"IMPLEMENT_CLASS_NO_AUTO_REGISTRATION({cppCls.name})"
+       &"""IMPLEMENT_INTRINSIC_CLASS({cppCls.name}, NIMFORUE_API, AActor, ENGINE_API, "/Script/Nim", {{}});"""
+      #  &"IMPLEMENT_CLASS_({cppCls.name}, 0);"
+    else: 
+      ""
+  
   &"""
   DLLEXPORT {kind} {cppCls.name} {parent} {{
-    
-      {funcs}
+    public:
+    {constructor}
+    {funcs}
   }};
+  {extra}
   """
+
 func `$`*(cppHeader: CppHeader): string =
   let includes = cppHeader.includes.mapIt(&"#include \"{it}\"").join("\n")
   let classes = cppHeader.classes.mapIt(it.`$`()).join("\n")
@@ -103,6 +122,7 @@ proc addCppClass*(class: CppClassType) =
     debugEcho "Function added"
     let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", accessSpecifier:caProtected, params: @[])
     class.functions.add(beginPlay)
+    
     
   cppHeader.classes.add class
   saveHeader(cppHeader, "NimHeaders") #it would be better to do it only once

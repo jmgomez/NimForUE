@@ -805,6 +805,8 @@ proc setGIsUCCMakeStandaloneHeaderGenerator*(value: static bool) =
 
 proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: Option[CtorInfo]): UFieldPtr =
   UE_Log &"Emitting class {ueType.name}"
+  if ueType.name == "ANimBeginPlayOverrideActor":
+    return nil
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
 
   let
