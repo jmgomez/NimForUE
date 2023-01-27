@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[times, strformat, tables, json, bitops, jsonUtils, strutils, options, sugar, algorithm, sequtils, hashes]
+import std/[times, strformat, tables, json, bitops, jsonUtils, strutils, options, sugar, algorithm, sequtils, hashes, typetraits]
 import fproperty
 import models
 import modelconstructor #For some odd reason (a cycle in the mod probably) if this is not included but imported the make* arent visible here?
@@ -803,15 +803,87 @@ proc setGIsUCCMakeStandaloneHeaderGenerator*(value: static bool) =
 """.}
 
 
-proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: Option[CtorInfo]): UFieldPtr =
-  UE_Log &"Emitting class {ueType.name}"
-  if ueType.name == "ANimBeginPlayOverrideActor":
-    return nil
-  const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
+#[
+  ReturnClass = ::new (ReturnClass)
+		UClass
+		(
+		EC_StaticConstructor,
+		Name,
+		InSize,
+		InAlignment,
+		InClassFlags,
+		InClassCastFlags,
+		InConfigName,
+		EObjectFlags(RF_Public | RF_Standalone | RF_Transient | RF_MarkAsNative | RF_MarkAsRootSet),
+		InClassConstructor,
+		InClassVTableHelperCtorCaller,
+		MoveTemp(InCppClassStaticFunctions)
+		);
+]#
+#[
+  UClass( EStaticConstructor, FName InName, uint32 InSize, uint32 InAlignment, EClassFlags InClassFlags, EClassCastFlags InClassCastFlags,
+		const TCHAR* InClassConfigName, EObjectFlags InFlags, ClassConstructorType InClassConstructor,
+		ClassVTableHelperCtorCallerType InClassVTableHelperCtorCaller,
+		FUObjectCppClassStaticFunctions&& InCppClassStaticFunctions);
+# ]#
+# proc newUClass[T](package: UPackagePtr, name:FString, flags:EObjectFlags, super:UScriptStructPtr, size:int32, align:int32, fake:T) : UClassPtr {.importcpp: 
+#   "new(EC_InternalUseOnlyConstructor, #, *#, #) UClass(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
 
-  let
+proc newUClass*[T](package:UPackagePtr, name:FName, flags:EObjectFlags, classFlags: EClassFlags, clsConstructor:UClassConstructor, fake:ptr T) : UClassPtr =
+  #  {.emit:"result = ANimBeginPlayOverrideActor::StaticClass();".}
+  var config : FString = "Engine"
+
+  # {.emit:"result = (UClass*)GUObjectAllocator.AllocateUObject(sizeof(UClass), alignof(UClass), true);".}
+  # {.emit:"result = NewObject<UClass>();".}
+  {.emit:[
+  
+  
+  # "result = ::new (result) UClass(EC_StaticConstructor,", 
+  "result = (UClass*) new(EC_InternalUseOnlyConstructor, package, *name.GetPlainNameString(), flags) UClass(EC_StaticConstructor,", 
+  name, ",",
+  sizeof(T).uint32, ",",
+  alignof(T).uint32,  ",",
+  classFlags,  ",",
+ "(EClassCastFlags)0,",
+  "*", config, ",",
+  flags,  ",",
+  r"(UClass::ClassConstructorType)InternalConstructor<ANimBeginPlayOverrideActor>", ",",
+  r"(UClass::ClassVTableHelperCtorCallerType)InternalVTableHelperCtorCaller<ANimBeginPlayOverrideActor>",  ",",
+  "FUObjectCppClassStaticFunctions());"
+  ].}
+  if result.isNil():
+    UE_Error "THE CLASS IS NILsL"
+  return result
+# "*4::StaticClass()".}
+#GetPrivateStaticClassBody
+#  r"(UClass::ClassVTableHelperCtorCallerType)InternalVTableHelperCtorCaller<ANimBeginPlayOverrideActor>",  ",",
+
+proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: Option[CtorInfo]): UFieldPtr =
+  UE_Log &"Emitting class {ueType.name}"
+  var isNimBeginPlayOverrideActor = false
+  if ueType.name == "ANimBeginPlayOverrideActor":
+    isNimBeginPlayOverrideActor = true
+    # return nil
+  const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
+  {.emit:"UClass* newCls;".}
+  var newCls {.importcpp.}: UClassPtr 
+  when typeof(T).name ==  "ANimBeginPlayOverrideActor":
+    proc beginPlayConstructor(initializer: var FObjectInitializer) {.cdecl.} =
+      {.emit: "/*INCLUDESECTION*/ #include \"Guest.h\"".}
+    
+      {.emit:[" new((EInternal*)",initializer.getObj(), ")ANimBeginPlayOverrideActor;"].}
+
+    # newCls = newUClass[T](package, makeFName ueType.name.removeFirstLetter(), cast[EObjectFlags](objClsFlags),cast[EClassFlags](ueType.clsFlags.uint32), clsConstructor.map(ctor=>ctor.fn).get(defaultConstructor), nil)
     newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
-    parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
+    newCls.setClassConstructor(beginPlayConstructor)
+    # {.emit:"((UClass*)result)->ClassVTableHelperCtorCaller = InternalVTableHelperCtorCaller<ANimBeginPlayOverrideActor>;".}
+    # {.emit:"newCls->ClassConstructor = InternalConstructor<ANimBeginPlayOverrideActor>;// (UClass::ClassConstructorType)&InternalConstructor<ANimBeginPlayOverrideActor>;".}
+   
+
+    # {.emit:"((UClass*)result)->ClassVTableHelperCtorCaller = InternalVTableHelperCtorCaller<ANimBeginPlayOverrideActor>();".}
+  else:
+    newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
+  let  parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
 
   let parent = parentCls
     .getOrRaise(&"Parent class {ueType.parent} not found for {ueType.name}")
@@ -868,8 +940,8 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
   newCls.bindType()
   setGIsUCCMakeStandaloneHeaderGenerator(false)
   newCls.assembleReferenceTokenStream()
-
-  newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultConstructor))
+  if not isNimBeginPlayOverrideActor:
+    newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultConstructor))
   clsConstructor.run(proc (cons: CtorInfo) =
     when WithEditor:
       newCls.setMetadata(ClassConstructorMetadataKey, cons.hash)
@@ -896,6 +968,8 @@ proc emitUClass*(ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], 
 # UScriptStruct(FObjectInitializer(), Super, StructOps, (EStructFlags)Params.StructFlags, Params.SizeOf, Params.AlignOf)
 proc newScriptStruct[T](package: UPackagePtr, name:FString, flags:EObjectFlags, super:UScriptStructPtr, size:int32, align:int32, fake:T) : UNimScriptStructPtr {.importcpp: 
   "new(EC_InternalUseOnlyConstructor, #, *#, #) UNimScriptStruct(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
+
+
 proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   UE_Log &"Struct emited {ueType.name}"
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)

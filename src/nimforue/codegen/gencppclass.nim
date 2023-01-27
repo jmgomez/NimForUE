@@ -8,6 +8,7 @@ import ../utils/utils
 
 
 
+
 func funParamsToStrSignature(fn:CppFunction) : string = fn.params.mapIt(it.typ & " " & it.name).join(", ")
 func funParamsToStrCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join(", ")
 
@@ -28,22 +29,34 @@ func `$`*(cppCls: CppClassType): string =
 # {accessSpecifier}:
 #   virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override {{}};
 #     """
+  
     
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
   let kind = if cppCls.kind == cckClass: "class" else: "struct"
   let parent = if cppCls.parent.len > 0: &"  : public {cppCls.parent}  " else: ""
   let constructor = if cppCls.name == "ANimBeginPlayOverrideActor": 
-      """DECLARE_CLASS_INTRINSIC(ANimBeginPlayOverrideActor, AActor, CLASS_MatchedSerializers, TEXT("/Script/Nim"))"""
-      # "DECLARE_CLASS(ANimBeginPlayOverrideActor, AActor, 0, Engine);"
-      # &"static void __DefaultConstructor(const FObjectInitializer& X) {{ new((EInternal*)X.GetObj())ANimBeginPlayOverrideActor; }}" 
+    """
+  virtual void BeginPlay() override {
+    
+    UE_LOG(LogTemp, Log, TEXT("Hola Nartive  sss"));
+  };
+  
+    """
+    # ""
+    # "DEFINE_DEFAULT_CONSTRUCTOR_CALL(ANimBeginPlayOverrideActor)" & 
+    # "DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(ANimBeginPlayOverrideActor)" & 
+    # "	DEFINE_VTABLE_PTR_HELPER_CTOR(ANimBeginPlayOverrideActor);"
+    # "static void StaticRegisterNativesANimBeginPlayOverrideActor(){};" &
+    # "DECLARE_CLASS(ANimBeginPlayOverrideActor, AActor,  CLASS_Intrinsic, CASTCLASS_None, TEXT(\"/Script/Nim\"), NO_API);"
     else: 
       ""
   # let extra = &"IMPLEMENT_CLASS_NO_AUTO_REGISTRATION({cppCls.name})"
 
   let extra = 
     if cppCls.name == "ANimBeginPlayOverrideActor": 
+      ""
       # &"IMPLEMENT_CLASS_NO_AUTO_REGISTRATION({cppCls.name})"
-       &"""IMPLEMENT_INTRINSIC_CLASS({cppCls.name}, NIMFORUE_API, AActor, ENGINE_API, "/Script/Nim", {{}});"""
+      #  &"""IMPLEMENT_INTRINSIC_CLASS({cppCls.name}, NIMFORUE_API, AActor, ENGINE_API, "/Script/Nim", {{}});"""
       #  &"IMPLEMENT_CLASS_({cppCls.name}, 0);"
     else: 
       ""
@@ -120,8 +133,9 @@ proc addCppClass*(class: CppClassType) =
 
   if class.name == "ANimBeginPlayOverrideActor":
     debugEcho "Function added"
-    let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", accessSpecifier:caProtected, params: @[])
-    class.functions.add(beginPlay)
+    # {.emit: "ANimBeginPlayOverrideActor::StaticRegisterNativesANimBeginPlayOverrideActor(){}".}
+    # let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", accessSpecifier:caProtected, params: @[])
+    # class.functions.add(beginPlay)
     
     
   cppHeader.classes.add class

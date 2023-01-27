@@ -97,6 +97,7 @@ type
     TSubclassOf*[out T]  {. importcpp: "TSubclassOf<'0>".} = object
     TFieldPath*[out T]  {. importcpp: "TFieldPath<'0>".} = object
 
+    FVTableHelper* {.importcpp.} = object
 
 proc getDefaultObject*(fieldClass:FFieldClassPtr) : FFieldPtr {.importcpp:"#->GetDefaultObject()" .}
 

@@ -30,6 +30,7 @@
 #include "Engine/UserDefinedEnum.h"
 #include "Components/ActorComponent.h"
 #include "UObject/ConstructorHelpers.h"
+#include "UObject/UObjectAllocator.h"
 
 //NimForUEBindingsHeaders.h
 #include "NimForUEBindingsHeaders.h"

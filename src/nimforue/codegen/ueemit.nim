@@ -26,18 +26,18 @@ static:
 
 
 #rename these to register
-proc getFnGetForUClass(ueType:UEType) : UPackagePtr->UFieldPtr = 
+proc getFnGetForUClass[T](ueType:UEType) : UPackagePtr->UFieldPtr = 
 #    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
     proc toReturn (pgk:UPackagePtr) : UFieldPtr = #the UEType changes when functions are added
         var ueType = getGlobalEmitter().emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
-        ueType.emitUClass(pgk, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
+        ueType.emitUClass[:T](pgk, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
     toReturn
     
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
     ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
 
-proc addEmitterInfo*(ueType:UEType) : void =  
-    addEmitterInfo(ueType, getFnGetForUClass(ueType))
+proc addEmitterInfo*[T](ueType:UEType) : void =  
+    addEmitterInfo(ueType, getFnGetForUClass[T](ueType))
 
 proc addStructOpsWrapper*(structName : string, fn : UNimScriptStructPtr->void) = 
     ueEmitter.setStructOpsWrapperTable.add(structName, fn)
@@ -268,7 +268,7 @@ proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
-                addEmitterInfo(typeDefAsNode, getFnGetForUClass(typeDefAsNode))
+                addEmitterInfo(typeDefAsNode, getFnGetForUClass[name](typeDefAsNode))
 
     addCppClass(typeDef.toCppClass())
     result = nnkStmtList.newTree [typeDecl, typeEmitter]

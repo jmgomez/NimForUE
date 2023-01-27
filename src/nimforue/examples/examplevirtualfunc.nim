@@ -24,6 +24,6 @@ macro overridetest(fn : untyped) =
   implementOverride(fn, beginPlay, "ANimBeginPlayOverrideActor")
 
 
-proc beginPlay(self:ANimBeginPlayOverrideActorPtr) {.overridetest.}= 
-  UE_Warn "Native BeginPlay called once!"
+# proc beginPlay(self:ANimBeginPlayOverrideActorPtr) {.overridetest.}= 
+#   UE_Warn "Native BeginPlay called once!"
   
