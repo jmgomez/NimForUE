@@ -3,6 +3,7 @@ import std/[sugar, macros, algorithm, strutils, strformat, tables, times, genast
 import ../unreal/coreuobject/[uobject, package, uobjectglobals, nametypes]
 import ../unreal/core/containers/[unrealstring, array, map]
 import ../unreal/nimforue/[nimforue, nimforuebindings]
+import ../unreal/engine/enginetypes
 import ../utils/[utils, ueutils]
 import nuemacrocache
 import ../codegen/[emitter,modelconstructor, models,uemeta, uebind,gencppclass]
@@ -25,12 +26,29 @@ static:
     addCppClass(cppHotReloadChild)
 
 
+
+
+
+proc newInstanceInAddr[T](obj:UObjectPtr, fake : ptr T) {.importcpp: "new((EInternal*)#)'*2".} 
+  
+#It seems we dont need to call super anymore since we are calling the cpp default constructor
+proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
+#   {.emit: "#include \"Guest.h\"".}
+  newInstanceInAddr[T](initializer.getObj(), nil)
+  let obj = initializer.getObj()
+  let cls = obj.getClass()
+
+  let actor = tryUECast[AActor](obj)
+  if actor.isSome():
+    initComponents(initializer, actor.get(), cls)
+
 #rename these to register
 proc getFnGetForUClass[T](ueType:UEType) : UPackagePtr->UFieldPtr = 
 #    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
     proc toReturn (pgk:UPackagePtr) : UFieldPtr = #the UEType changes when functions are added
         var ueType = getGlobalEmitter().emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
-        ueType.emitUClass[:T](pgk, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
+        let clsConstructor = ueEmitter.clsConstructorTable.tryGet(ueType.name).map(x=>x.fn).get(defaultConstructorStatic[T])
+        ueType.emitUClass[:T](pgk, ueEmitter.fnTable, clsConstructor)
     toReturn
     
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  

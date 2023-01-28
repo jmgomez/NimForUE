@@ -784,23 +784,10 @@ proc postConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
  
  
   
-proc defaultConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
+proc defaultConstructor*(initializer: var FObjectInitializer) {.cdecl, deprecated.} =
   callSuperConstructor(initializer)
   postConstructor(initializer)
 
-
-proc newInstanceInAddr*[T](obj:UObjectPtr, fake : ptr T) {.importcpp: "new((EInternal*)#)'*2".} 
-  
-#It seems we dont need to call super anymore since we are calling the cpp default constructor
-proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
-  {.emit: "#include \"Guest.h\"".}
-  newInstanceInAddr[T](initializer.getObj(), nil)
-  let obj = initializer.getObj()
-  let cls = obj.getClass()
-
-  let actor = tryUECast[AActor](obj)
-  if actor.isSome():
-    initComponents(initializer, actor.get(), cls)
 
 # when WithEditor:
 #   proc setGIsUCCMakeStandaloneHeaderGenerator*(value: bool) {.importcpp: "(GIsUCCMakeStandaloneHeaderGenerator =#)".}
@@ -817,90 +804,13 @@ proc setGIsUCCMakeStandaloneHeaderGenerator*(value: static bool) =
 
 """.}
 
-
-#[
-  ReturnClass = ::new (ReturnClass)
-		UClass
-		(
-		EC_StaticConstructor,
-		Name,
-		InSize,
-		InAlignment,
-		InClassFlags,
-		InClassCastFlags,
-		InConfigName,
-		EObjectFlags(RF_Public | RF_Standalone | RF_Transient | RF_MarkAsNative | RF_MarkAsRootSet),
-		InClassConstructor,
-		InClassVTableHelperCtorCaller,
-		MoveTemp(InCppClassStaticFunctions)
-		);
-]#
-#[
-  UClass( EStaticConstructor, FName InName, uint32 InSize, uint32 InAlignment, EClassFlags InClassFlags, EClassCastFlags InClassCastFlags,
-		const TCHAR* InClassConfigName, EObjectFlags InFlags, ClassConstructorType InClassConstructor,
-		ClassVTableHelperCtorCallerType InClassVTableHelperCtorCaller,
-		FUObjectCppClassStaticFunctions&& InCppClassStaticFunctions);
-# ]#
-# proc newUClass[T](package: UPackagePtr, name:FString, flags:EObjectFlags, super:UScriptStructPtr, size:int32, align:int32, fake:T) : UClassPtr {.importcpp: 
-#   "new(EC_InternalUseOnlyConstructor, #, *#, #) UClass(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
-
-proc newUClass*[T](package:UPackagePtr, name:FName, flags:EObjectFlags, classFlags: EClassFlags, clsConstructor:UClassConstructor, fake:ptr T) : UClassPtr =
-  #  {.emit:"result = ANimBeginPlayOverrideActor::StaticClass();".}
-  var config : FString = "Engine"
-
-  # {.emit:"result = (UClass*)GUObjectAllocator.AllocateUObject(sizeof(UClass), alignof(UClass), true);".}
-  # {.emit:"result = NewObject<UClass>();".}
-  {.emit:[
-  
-  
-  # "result = ::new (result) UClass(EC_StaticConstructor,", 
-  "result = (UClass*) new(EC_InternalUseOnlyConstructor, package, *name.GetPlainNameString(), flags) UClass(EC_StaticConstructor,", 
-  name, ",",
-  sizeof(T).uint32, ",",
-  alignof(T).uint32,  ",",
-  classFlags,  ",",
- "(EClassCastFlags)0,",
-  "*", config, ",",
-  flags,  ",",
-  r"(UClass::ClassConstructorType)InternalConstructor<ANimBeginPlayOverrideActor>", ",",
-  r"(UClass::ClassVTableHelperCtorCallerType)InternalVTableHelperCtorCaller<ANimBeginPlayOverrideActor>",  ",",
-  "FUObjectCppClassStaticFunctions());"
-  ].}
-  if result.isNil():
-    UE_Error "THE CLASS IS NILsL"
-  return result
-# "*4::StaticClass()".}
-#GetPrivateStaticClassBody
-#  r"(UClass::ClassVTableHelperCtorCallerType)InternalVTableHelperCtorCaller<ANimBeginPlayOverrideActor>",  ",",
-
-proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: Option[CtorInfo]): UFieldPtr =
-  UE_Log &"Emitting class {ueType.name}"
-  var isNimBeginPlayOverrideActor = false
-  if ueType.name == "ANimBeginPlayOverrideActor":
-    isNimBeginPlayOverrideActor = true
-    # return nil
+proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
-  {.emit:"UClass* newCls;".}
-  var newCls {.importcpp.}: UClassPtr 
-  when typeof(T).name ==  "ANimBeginPlayOverrideActor":
-    proc beginPlayConstructor(initializer: var FObjectInitializer) {.cdecl.} =
-      {.emit: "/*INCLUDESECTION*/ #include \"Guest.h\"".}
-    
-      {.emit:[" new((EInternal*)",initializer.getObj(), ")ANimBeginPlayOverrideActor;"].}
+ 
+  let newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
+  newCls.setClassConstructor(clsConstructor)
 
-    # newCls = newUClass[T](package, makeFName ueType.name.removeFirstLetter(), cast[EObjectFlags](objClsFlags),cast[EClassFlags](ueType.clsFlags.uint32), clsConstructor.map(ctor=>ctor.fn).get(defaultConstructor), nil)
-    newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
-    newCls.markAsNimClass()
-    newCls.setClassConstructor(defaultConstructorStatic[T])
-    # {.emit:"((UClass*)result)->ClassVTableHelperCtorCaller = InternalVTableHelperCtorCaller<ANimBeginPlayOverrideActor>;".}
-    # {.emit:"newCls->ClassConstructor = InternalConstructor<ANimBeginPlayOverrideActor>;// (UClass::ClassConstructorType)&InternalConstructor<ANimBeginPlayOverrideActor>;".}
-   
-
-    # {.emit:"((UClass*)result)->ClassVTableHelperCtorCaller = InternalVTableHelperCtorCaller<ANimBeginPlayOverrideActor>();".}
-  else:
-    newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
-  let  parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
-
+  let parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
   let parent = parentCls
     .getOrRaise(&"Parent class {ueType.parent} not found fosr {ueType.name}")
 
@@ -956,12 +866,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.bindType()
   setGIsUCCMakeStandaloneHeaderGenerator(false)
   newCls.assembleReferenceTokenStream()
-  if not isNimBeginPlayOverrideActor:
-    newCls.setClassConstructor(clsConstructor.map(ctor=>ctor.fn).get(defaultConstructor))
-  clsConstructor.run(proc (cons: CtorInfo) =
-    when WithEditor:
-      newCls.setMetadata(ClassConstructorMetadataKey, cons.hash)
-  )
+  
   when WithEditor:
     newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())
 

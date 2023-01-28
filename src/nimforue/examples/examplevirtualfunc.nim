@@ -10,7 +10,7 @@ uClass ANimBeginPlayOverrideActor of AActor:
   (Blueprintable, BlueprintType)
   uprops(EditAnywhere):
     test : FString 
-    test32 : FString 
+    test322 : FString 
   uprops(EditAnywhere, DefaultComponent):
     testComp : USceneComponentPtr
     # test2 : FString = "adios"
@@ -27,6 +27,6 @@ macro overridetest(fn : untyped) =
   implementOverride(fn, beginPlay, "ANimBeginPlayOverrideActor")
 
 
-# proc beginPlay(self:ANimBeginPlayOverrideActorPtr) {.overridetest.}= 
-#   UE_Warn "Native BeginPlay called once!"
+proc beginPlay(self:ANimBeginPlayOverrideActorPtr) {.overridetest.}= 
+  UE_Warn "Native BeginPlay called once! Nice"
   

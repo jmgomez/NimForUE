@@ -64,7 +64,6 @@ func `$`*(cppCls: CppClassType): string =
   &"""
   DLLEXPORT {kind} {cppCls.name} {parent} {{
     public:
-    {constructor}
     {funcs}
   }};
   {extra}
@@ -133,9 +132,8 @@ proc addCppClass*(class: CppClassType) =
 
   if class.name == "ANimBeginPlayOverrideActor":
     debugEcho "Function added"
-    # {.emit: "ANimBeginPlayOverrideActor::StaticRegisterNativesANimBeginPlayOverrideActor(){}".}
-    # let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", accessSpecifier:caProtected, params: @[])
-    # class.functions.add(beginPlay)
+    let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", accessSpecifier:caProtected, params: @[])
+    class.functions.add(beginPlay)
     
     
   cppHeader.classes.add class
