@@ -767,10 +767,11 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
       discard actor.setRootComponent(initializer.createDefaultSubobject[:USceneComponent](n"DefaultSceneRoot"))
 #This always be appened at the default constructor at the beggining
 proc callSuperConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
-  let obj = initializer.getObj()
+  let obj = initializer.getObj() #NEXT test line by line until it breaks
   let cls = obj.getClass()
-  let cppCls = cls.getFirstCppClass()
+  var cppCls = cls.getFirstCppClass()
   cppCls.classConstructor(initializer)
+ 
   let actor = tryUECast[AActor](obj)
   if actor.isSome():
     initComponents(initializer, actor.get(), cls)
@@ -786,6 +787,20 @@ proc postConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
 proc defaultConstructor*(initializer: var FObjectInitializer) {.cdecl.} =
   callSuperConstructor(initializer)
   postConstructor(initializer)
+
+
+proc newInstanceInAddr*[T](obj:UObjectPtr, fake : ptr T) {.importcpp: "new((EInternal*)#)'*2".} 
+  
+#It seems we dont need to call super anymore since we are calling the cpp default constructor
+proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
+  {.emit: "#include \"Guest.h\"".}
+  newInstanceInAddr[T](initializer.getObj(), nil)
+  let obj = initializer.getObj()
+  let cls = obj.getClass()
+
+  let actor = tryUECast[AActor](obj)
+  if actor.isSome():
+    initComponents(initializer, actor.get(), cls)
 
 # when WithEditor:
 #   proc setGIsUCCMakeStandaloneHeaderGenerator*(value: bool) {.importcpp: "(GIsUCCMakeStandaloneHeaderGenerator =#)".}
@@ -875,7 +890,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
 
     # newCls = newUClass[T](package, makeFName ueType.name.removeFirstLetter(), cast[EObjectFlags](objClsFlags),cast[EClassFlags](ueType.clsFlags.uint32), clsConstructor.map(ctor=>ctor.fn).get(defaultConstructor), nil)
     newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
-    newCls.setClassConstructor(beginPlayConstructor)
+    newCls.markAsNimClass()
+    newCls.setClassConstructor(defaultConstructorStatic[T])
     # {.emit:"((UClass*)result)->ClassVTableHelperCtorCaller = InternalVTableHelperCtorCaller<ANimBeginPlayOverrideActor>;".}
     # {.emit:"newCls->ClassConstructor = InternalConstructor<ANimBeginPlayOverrideActor>;// (UClass::ClassConstructorType)&InternalConstructor<ANimBeginPlayOverrideActor>;".}
    
@@ -886,7 +902,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   let  parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
 
   let parent = parentCls
-    .getOrRaise(&"Parent class {ueType.parent} not found for {ueType.name}")
+    .getOrRaise(&"Parent class {ueType.parent} not found fosr {ueType.name}")
 
   assetCreated(newCls)
 

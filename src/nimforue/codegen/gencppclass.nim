@@ -38,7 +38,7 @@ func `$`*(cppCls: CppClassType): string =
     """
   virtual void BeginPlay() override {
     
-    UE_LOG(LogTemp, Log, TEXT("Hola Nartive  sss"));
+    UE_LOG(LogTemp, Warning, TEXT("Hola Nartive  3"));
   };
   
     """

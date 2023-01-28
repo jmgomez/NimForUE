@@ -10,6 +10,9 @@ uClass ANimBeginPlayOverrideActor of AActor:
   (Blueprintable, BlueprintType)
   uprops(EditAnywhere):
     test : FString 
+    test32 : FString 
+  uprops(EditAnywhere, DefaultComponent):
+    testComp : USceneComponentPtr
     # test2 : FString = "adios"
   # defaults:
     # test = "s2"
