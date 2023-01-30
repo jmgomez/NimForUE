@@ -23,6 +23,7 @@ func `$`*(cppCls: CppClassType): string =
     &"""
 {accessSpecifier}:
   virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override;
+  {fn.returnType} {fn.name}Super({fn.funParamsToStrSignature()}) {{ {cppCls.parent}::{fn.name}(); }}
     """
     
 #     &"""
@@ -34,39 +35,11 @@ func `$`*(cppCls: CppClassType): string =
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
   let kind = if cppCls.kind == cckClass: "class" else: "struct"
   let parent = if cppCls.parent.len > 0: &"  : public {cppCls.parent}  " else: ""
-  let constructor = if cppCls.name == "ANimBeginPlayOverrideActor": 
-    """
-  virtual void BeginPlay() override {
-    
-    UE_LOG(LogTemp, Warning, TEXT("Hola Nartive  3"));
-  };
-  
-    """
-    # ""
-    # "DEFINE_DEFAULT_CONSTRUCTOR_CALL(ANimBeginPlayOverrideActor)" & 
-    # "DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(ANimBeginPlayOverrideActor)" & 
-    # "	DEFINE_VTABLE_PTR_HELPER_CTOR(ANimBeginPlayOverrideActor);"
-    # "static void StaticRegisterNativesANimBeginPlayOverrideActor(){};" &
-    # "DECLARE_CLASS(ANimBeginPlayOverrideActor, AActor,  CLASS_Intrinsic, CASTCLASS_None, TEXT(\"/Script/Nim\"), NO_API);"
-    else: 
-      ""
-  # let extra = &"IMPLEMENT_CLASS_NO_AUTO_REGISTRATION({cppCls.name})"
-
-  let extra = 
-    if cppCls.name == "ANimBeginPlayOverrideActor": 
-      ""
-      # &"IMPLEMENT_CLASS_NO_AUTO_REGISTRATION({cppCls.name})"
-      #  &"""IMPLEMENT_INTRINSIC_CLASS({cppCls.name}, NIMFORUE_API, AActor, ENGINE_API, "/Script/Nim", {{}});"""
-      #  &"IMPLEMENT_CLASS_({cppCls.name}, 0);"
-    else: 
-      ""
-  
+ 
   &"""
   DLLEXPORT {kind} {cppCls.name} {parent} {{
-    public:
     {funcs}
   }};
-  {extra}
   """
 
 func `$`*(cppHeader: CppHeader): string =

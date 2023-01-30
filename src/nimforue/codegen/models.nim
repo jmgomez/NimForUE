@@ -303,7 +303,8 @@ func `==`*(a, b:UEType) : bool =
         (case a.kind:
         of uetClass:
             a.parent == b.parent and
-            a.ctorSourceHash == b.ctorSourceHash 
+            a.fnOverrides == b.fnOverrides 
+
             # a.clsFlags == b.clsFlags
         of uetStruct:
             a.superStruct == b.superStruct #and

@@ -103,6 +103,9 @@ proc getModules(moduleName:string, onlyBp : bool) : seq[UEModule] =
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
+  override:
+    proc beginPlay() = 
+      UE_Warn "Hello Begin play from actor codegen"
   uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenInspect):
     inspect : EInspectType = Name
     inspectName : FString = "EnhancedInputSubsystemInterface"
@@ -193,8 +196,7 @@ uClass AActorCodegen of AActor:
       for fn in fnsWithAutoCreateRefTerm:
         UE_Log $fn
       UE_Log "Found " & $fnsWithAutoCreateRefTerm.len() & " unique functions with AutoCreateRefTerm type"      
-  override:
-    proc beginPlay() = UE_Warn "Hello Begin play from actor codegen"
+
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "test5"
     structPtrName : FString 
