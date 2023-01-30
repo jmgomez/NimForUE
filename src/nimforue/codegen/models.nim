@@ -36,7 +36,7 @@ type
     name*: string
     returnType*: string
     accessSpecifier* : CppAccesSpecifier
-    params*: seq[CppParam] #void if none. this is not expressed as param
+    params*: seq[CppParam] #this is not expressed as param
   CppClassKind* = enum #TODO add more
     cckClass, cckStruct
   CppClassType* = object

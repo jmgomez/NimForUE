@@ -101,12 +101,15 @@ func createNimType(typedef: CppClassType, header:string): NimNode =
             name* {.inject, importcpp, header:header .} = object of parent #TODO OF BASE CLASS 
             ptrName* {.inject.} = ptr name
 
-func implementOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNode = 
+
+func genOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNode = 
   let exportCppPragma =
     nnkExprColonExpr.newTree(
       ident("exportcpp"),
       newStrLitNode("$1_impl")#Import the cpp func. Not sure if the value will work across all the signature combination
     )
+  #Adds the parameter to the nim function so we can call it
+  fn.params.insert(1, nnkIdentDefs.newTree(ident "self", ident class & "Ptr", newEmptyNode()))
   fn.addPragma(exportCppPragma)
   
   let toEmit = toEmmitTemplate(fnDecl, class)
@@ -118,24 +121,36 @@ func implementOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNod
 #TODO change this for macro cache
 var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h"])
 var emittedClasses* {.compileTime.} = newSeq[string]()
-const header = "UEGenClassDefs.h"
-static:
-  when defined(game):
-    cppHeader.includes.add header
+
+# func getOrCreateCppClass*(name, parent :string) : CppClass = 
+#   let cls = cppHeader.classes.filterIt(it.name == name)
+#   if cls.len > 0: cls[0]
+#   else:
+#     CppClass(name: name, kind: cckClass, parent: parent, functions: @[])
+
+# const header = "UEGenClassDefs.h"
+# static:
+#   when defined(game):
+#     cppHeader.includes.add header
 
 
+#Only function overrides
+func toCppClass*(ueType:UEType) : CppClassType = 
+    case ueType.kind:
+    of uetClass:
+        CppClassType(name:ueType.name, kind: cckClass, parent:ueType.parent, functions: ueType.fnOverrides)
+    of uetStruct: #Structs can keep inhereting from Nim structs for now. We will need to do something about the produced fields in order to gen funcs. 
+        CppClassType(name:ueType.name, kind: cckStruct, parent:ueType.superStruct, functions: @[])
+    else:
+        error("Cant convert a non class or struct to a CppClassType")
+        CppClassType() 
 
 proc addCppClass*(class: CppClassType) =
   var class = class
   if class.parent notin (ManuallyImportedClasses & emittedClasses) and class.kind == cckClass:
     class.parent =  class.parent & "_" #The fake classes have a _ at the end we need to remove the emitted classes from here as well
 
-  if class.name == "ANimBeginPlayOverrideActor":
-    debugEcho "Function added"
-    let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", accessSpecifier:caProtected, params: @[])
-    class.functions.add(beginPlay)
-    
-    
+  
   cppHeader.classes.add class
   saveHeader(cppHeader, "NimHeaders") #it would be better to do it only once
 

@@ -110,6 +110,7 @@ uClass AActorCodegen of AActor:
     inspectActor : AActorPtr
     bOnlyBlueprint : bool 
     moduleName : FString
+    test : FString
   
   ufuncs(): 
     proc getClassFromInspectedType() : UClassPtr = 
@@ -192,7 +193,8 @@ uClass AActorCodegen of AActor:
       for fn in fnsWithAutoCreateRefTerm:
         UE_Log $fn
       UE_Log "Found " & $fnsWithAutoCreateRefTerm.len() & " unique functions with AutoCreateRefTerm type"      
-
+  override:
+    proc beginPlay() = UE_Warn "Hello Begin play from actor codegen"
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "test5"
     structPtrName : FString 

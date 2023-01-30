@@ -12,18 +12,11 @@ import ../codegen/[emitter,modelconstructor, models,uemeta, uebind,gencppclass]
 type
 
     FNimHotReloadChild* {.importcpp, header:"Guest.h".} = object of FNimHotReload
-    FNimHotReloadChildPtr* = ptr FNimHotReloadChild
 
 const getNumberMeta = CppFunction(name: "GetNumber", returnType: "int", params: @[])
 
 const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNimHotReload", functions: @[], kind: cckStruct)
 
-macro overrideFNimHotReloadChild(fn : untyped) =
-  implementOverride(fn, getNumberMeta, "FNimHotReloadChild")
-
-# proc getNumber(hrc: FNimHotReloadChildPtr) : int32 {.overrideFNimHotReloadChild.} = 100
-static:    
-    addCppClass(cppHotReloadChild)
 
 
 
@@ -168,7 +161,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
     UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()
     UE_Log "Emit ustructs for Length " & $ueEmitter.emitters.len
     UE_Log $ueEmitter.emitters.mapIt(it.ueType)
-    var hotReloadInfo = newCpp[FNimHotReloadChild]()
+    var hotReloadInfo = newCpp[FNimHotReload]()
     for emitter in ueEmitter.emitters:
             case emitter.ueType.kind:
             of uetStruct:
@@ -254,16 +247,6 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
     hotReloadInfo
 
 
-#Only function overrides
-func toCppClass(ueType:UEType) : CppClassType = 
-    case ueType.kind:
-    of uetClass:
-        CppClassType(name:ueType.name, kind: cckClass, parent:ueType.parent, functions: ueType.fnOverrides)
-    of uetStruct: #Structs can keep inhereting from Nim structs for now. We will need to do something about the produced fields in order to gen funcs. 
-        CppClassType(name:ueType.name, kind: cckStruct, parent:ueType.superStruct, functions: @[])
-    else:
-        error("Cant convert a non class or struct to a CppClassType")
-        CppClassType() 
 
 
 
@@ -839,11 +822,55 @@ func addSelfToProc(procDef:NimNode, className:string) : NimNode =
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
     procDef
 
+
+
+
+
+func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
+  assert identDef.kind == nnkIdentDefs
+  let name = identDef[0].strVal
+  let typ = identDef[1].strVal
+  CppParam(name: name, typ: typ)
+
+func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
+  let returnType = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal
+  #We skip the first two params, which are the self and the name of the function
+#   let params = fn.params.children.toSeq()[2..^1].filterIt(it.kind == nnkIdentDefs).map(getCppParamFromIdentDefs)
+  let name =  fn.name.strVal.capitalizeAscii()
+  CppFunction(name: name, returnType: returnType, params: @[])
+
+
+#TODO implement forwards
+func overrideImpl(fn : NimNode, className:string) : (CppFunction, NimNode) =
+  let cppFunc = getCppFunctionFromNimFunc(fn)
+
+  (cppFunc, genOverride(fn, cppFunc, className))
+  
+# macro overrideCpp(fn : untyped) = overrideImpl(fn)
+func getCppOverrides(body:NimNode, ueType:UEType) : (UEType, NimNode) = 
+    let overrideBlocks = 
+            body.toSeq()
+                .filterIt(it.kind == nnkCall and it[0].strVal().toLower() in ["override"])
+    if not overrideBlocks.any():
+        return (ueType, newEmptyNode())
+    let overrides = overrideBlocks.mapIt(it[^1].children.toSeq()).flatten().filterIt(it.kind == nnkProcDef).mapIt(overrideImpl(it, ueType.name))
+    var ueType = ueType
+    let stmOverrides = nnkStmtList.newTree()
+    for (cppFunc, override) in overrides:
+        ueType.fnOverrides.add cppFunc
+        stmOverrides.add override
+
+    (ueType, stmOverrides)
+    
+            
+
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
+    var cppOverridesNodes : NimNode
+    (ueType, cppOverridesNodes) = getCppOverrides(body, ueType)
     ueType.interfaces = interfaces
     var uClassNode = emitUClass(ueType)
 
@@ -862,9 +889,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
 
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
-    result =  nnkStmtList.newTree(@[uClassNode] & fns)
-
-  
+    result =  nnkStmtList.newTree(@[uClassNode] & fns & cppOverridesNodes)
 macro uForwardDecl*(name : untyped ) : untyped = 
     let (className, parent, _) = getTypeNodeFromUClassName(name)
     let clsPtr = ident className & "Ptr"
@@ -872,3 +897,4 @@ macro uForwardDecl*(name : untyped ) : untyped =
         type 
           clsName = object of clsParent
           clsPtr = ptr clsName
+

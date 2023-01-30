@@ -4,6 +4,10 @@ include ../unreal/prelude
 
 import ../codegen/[gencppclass, models]
 # import ../unreal/bindings/[slate,slatecore, engine]
+import std/[macros, sequtils, strutils]
+
+
+
 
 
 uClass ANimBeginPlayOverrideActor of AActor:
@@ -19,14 +23,11 @@ uClass ANimBeginPlayOverrideActor of AActor:
   # ufuncs:
   #   proc beginPlay() = 
   #     UE_Warn "Non native begin Play called once "
+  override:
+    proc beginPlay() : void = 
+      UE_Warn "Native BeginPlay called once! Nice"
+    
 
 # {.compile: "NimHeaders/Game.h".}
-macro overridetest(fn : untyped) =
-  let beginPlay = CppFunction(name: "BeginPlay", returnType: "void", params: @[])
-
-  implementOverride(fn, beginPlay, "ANimBeginPlayOverrideActor")
 
 
-proc beginPlay(self:ANimBeginPlayOverrideActorPtr) {.overridetest.}= 
-  UE_Warn "Native BeginPlay called once! Nice"
-  
