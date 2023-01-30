@@ -51,14 +51,7 @@ func `$`*(cppHeader: CppHeader): string =
 {classes}
   """
 
-func toEmmitTemplate*(fn:CppFunction, class:string) : string  = 
-  let comma = if fn.params.len > 0: "," else: ""
-  let returns = if fn.returnType == "void": "" else: "return "
-  &"""
-    {fn.returnType} {class}::{fn.name}({fn.funParamsToStrSignature()}) {{
-     {returns} {fn.name.firstToLow()}_impl(this {comma} {fn.funParamsToStrCall});
-    }}
-  """
+
 
 proc saveHeader*(cppHeader: CppHeader, folder: string = ".") =
   if OutputHeader == "": return #TODO assert when done
@@ -74,6 +67,24 @@ func createNimType(typedef: CppClassType, header:string): NimNode =
             name* {.inject, importcpp, header:header .} = object of parent #TODO OF BASE CLASS 
             ptrName* {.inject.} = ptr name
 
+func toEmmitTemplate*(fn:CppFunction, class:string) : string  = 
+  let comma = if fn.params.len > 0: "," else: ""
+  let returns = if fn.returnType == "void": "" else: "return "
+  &"""
+    {fn.returnType} {class}::{fn.name}({fn.funParamsToStrSignature()}) {{
+     {returns} {fn.name.firstToLow()}_impl(this {comma} {fn.funParamsToStrCall});
+    }}
+  """
+#notice fn has params
+func genSuperFunc*(fn:NimNode, class:string) : NimNode = 
+  let superName = fn.name.strVal.capitalizeAscii() & "Super"
+  let name = ident(superName)
+  let nameLit = newStrLitNode(superName)
+  let clsName = ident class & "Ptr"
+  # let params = fn.params probably wont use genAst but just hijack the params, remember self is alredy here
+  genAst(name, nameLit, clsName):
+    proc super(self:clsName) : void {.importcpp:nameLit.}
+
 
 func genOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNode = 
   let exportCppPragma =
@@ -84,12 +95,15 @@ func genOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNode =
   #Adds the parameter to the nim function so we can call it
   fn.params.insert(1, nnkIdentDefs.newTree(ident "self", ident class & "Ptr", newEmptyNode()))
   fn.addPragma(exportCppPragma)
+  fn.body.insert(0, genSuperFunc(fn, class))
   
   let toEmit = toEmmitTemplate(fnDecl, class)
-  genAst(fn, toEmit):
-    fn
-    {.emit: toEmit.}
-
+  let override = 
+    genAst(fn, toEmit):
+      fn
+      {.emit: toEmit.}
+  result = override
+  debugEcho result.repr
 
 #TODO change this for macro cache
 var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h"])
