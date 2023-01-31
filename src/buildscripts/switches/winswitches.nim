@@ -22,8 +22,14 @@ proc getSdkVersion() : string =
   let sdkVersion = "10.0.18362.0"
   let path = PluginDir / "sdk_version.txt"
   if fileExists(path):
-    return readFile(PluginDir / "sdk_version.txt")
+    return readFile(path)
   sdkVersion
+proc getCompilerVersion() : string = 
+  let compilerVersion = "14.34.31937"
+  let path = PluginDir / "compiler_version.txt"
+  if fileExists(path):
+    return readFile(path)
+  compilerVersion.split(".")[0] & "0"
 
 
 proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string] = 
@@ -74,7 +80,12 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "/Zf", #faster pdb gen
     "/MP",
     # "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
-    "--sdkversion:" & getSdkVersion()
+    "--sdkversion:" & getSdkVersion(),
+    # "--noCommand",
+    "--printPath",
+    "--vccarsall:"&escape(r"%VSInstallDir%\VC\Auxiliary\Build"),
+    # "--command:./nue echotask --test",
+    "--vccversion:0" #$ & getCompilerVersion()
   ]
   result &= (if withDebug: 
               @["/Od", "/Z7"] 

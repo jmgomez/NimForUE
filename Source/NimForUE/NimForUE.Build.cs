@@ -92,7 +92,7 @@ public class NimForUE : ModuleRules
 
 
 	[DllImport("hostnimforue")]
-	public static extern void setSdkVersion(string sdkVersion);
+	public static extern void setWinCompilerSettings(string sdkVersion, string compilerVersion, string toolchainDir);
 
 	[DllImport("libhostnimforue")]
 	public static extern void setUEConfig(string engineDir,string conf,string platform, bool withEditor);
@@ -154,7 +154,10 @@ public class NimForUE : ModuleRules
 			//BuildNim();
 			//setNimForUEConfig(PluginDirectory, EngineDirectory, Target.Platform.ToString(), Target.Configuration.ToString());
 			if (Target.Platform == UnrealTargetPlatform.Win64)
-				setSdkVersion(Target.WindowsPlatform.WindowsSdkVersion);
+				setWinCompilerSettings(Target.WindowsPlatform.WindowsSdkVersion, Target.WindowsPlatform.CompilerVersion, Target.WindowsPlatform.ToolChainDir);
+			Console.WriteLine(Target.WindowsPlatform.ToolChainDir);	
+			Console.WriteLine(Target.WindowsPlatform.ToolChainDir);	
+			Console.WriteLine(Target.WindowsPlatform.CompilerVersion);	
 			//setUEConfig(
 		}
 		catch (Exception e) {

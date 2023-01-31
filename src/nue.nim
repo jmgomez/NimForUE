@@ -237,6 +237,5 @@ task starteditor, "opens the editor":
   else:
     discard execCmd("open "&GamePath)
 
-  
 # --- End Tasks ---
 main()

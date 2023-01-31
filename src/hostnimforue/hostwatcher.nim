@@ -21,8 +21,11 @@ proc registerLogger*(inLogger: LoggerSignature) {.ex.} =
 proc ensureGuestIsCompiled*() : void {.ex.} =
     ensureGuestIsCompiledImpl()
 
-proc setSdkVersion(version:cstring) {.ex.} =
-    writeFile(PluginDir/"sdk_version.txt", $version)
+proc setWinCompilerSettings(sdkVersion, compilerVersion, toolchainDir:cstring) {.ex.} =
+    #TODO unify it in one file
+    writeFile(PluginDir/"sdk_version.txt", $sdkVersion)
+    writeFile(PluginDir/"compiler_version.txt", $compilerVersion)
+    writeFile(PluginDir/"toolchain_dir.txt", $toolchainDir)
 
 proc setUEConfig(engineDir, conf, platform : cstring, withEditor:bool) {.ex.} =
     #TODO add witheditor
