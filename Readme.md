@@ -239,7 +239,9 @@ BuildConfiguration.xml
 </Configuration>
 ```
 
-In one of the Unreal recommend path. See https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/BuildTools/UnrealBuildTool/BuildConfiguration/ for more information. The compiler version may vary on what you have in your vc toolchain. The Nim compiler picks the latest, you can see the unreal version in the generated `compiler_version.txt` in the NimForUE plugin directory.
+In one of the Unreal recommend path. See https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/BuildTools/UnrealBuildTool/BuildConfiguration/ for more information. The compiler version may vary on what you have in your vc toolchain. The Nim compiler picks the latest, you can see the unreal version in the generated `compiler_version.txt` in the NimForUE plugin directory. 
+
+Kudos to Mike from https://gamefromscratch.com/ for reporting and support on troubleshoot it.
 
 
 ## Acknowledgments
