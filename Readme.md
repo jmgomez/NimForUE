@@ -204,7 +204,7 @@ proc myUFunction(self: AExampleActorPtr, param : FString) : int32 {. ufunc, Blue
     UE_Log "UFunction called"
     5
 
-#You can also use the uFunctions macro to declare multiple uFunctions at once. This is the preferred way.
+#You can also use the uFunctions macro to declare multiple uFunctions at once. The preferred way is still to use them in an uClass block like shown above.
 uFunctions:
     (BlueprintCallable, self:AExampleActorPtr) #you must specify the type and any shared meta like this.
 
