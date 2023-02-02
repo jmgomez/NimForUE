@@ -241,7 +241,7 @@ BuildConfiguration.xml
 
 In one of the Unreal recommend path. See https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/BuildTools/UnrealBuildTool/BuildConfiguration/ for more information. The compiler version may vary on what you have in your vc toolchain. The Nim compiler picks the latest, you can see the unreal version in the generated `compiler_version.txt` in the NimForUE plugin directory. 
 
-Kudos to Mike from https://gamefromscratch.com/ for reporting and support on troubleshoot it.
+Kudos to Mike from https://gamefromscratch.com/ for reporting and support on troubleshoot it. We are also working in a patch so the next version of the Nim compiler tooling (vcc) can work with a specific version of the c++ compiler via an argument so we dont have to specify the version on the UBT side of things.
 
 
 ## Acknowledgments
