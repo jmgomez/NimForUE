@@ -221,6 +221,25 @@ uFunctions:
 Which produces:
 ![Blueprint](https://media.discordapp.net/attachments/844939530913054752/1004338096160120913/unknown.png)
 
+## Troubleshooting 
+
+#### '...\NimTemplate\Plugins\NimForUE\Intermediate\Build\Win64\UnrealEditor\Development\NimForUE\PCH.NimForUE.h.pch' precompiled header file is from a different version of the compiler, or the precompiled header is C++ and you are using it from C (or vice versa)`
+
+This erros means that the vs tools is using a different compiler version to compile the Nim Dll and the Unreal plugin. You need to place this file 
+
+BuildConfiguration.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<Configuration xmlns="https://www.unrealengine.com/BuildConfiguration">
+    <WindowsPlatform>
+        <CompilerVersion>14.34.31933</CompilerVersion>
+        <Compiler>VisualStudio2022</Compiler>
+    </WindowsPlatform>
+</Configuration>
+```
+
+In one of the Unreal recommend path. See https://docs.unrealengine.com/4.27/en-US/ProductionPipelines/BuildTools/UnrealBuildTool/BuildConfiguration/ for more information. The compiler version may vary on what you have in your vc toolchain. The Nim compiler picks the latest, you can see the unreal version in the generated `compiler_version.txt` in the NimForUE plugin directory.
 
 
 ## Acknowledgments
