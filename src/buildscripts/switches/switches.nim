@@ -18,7 +18,7 @@ const withPCH* = true
 #but since we are using unreal PCH it shouldnt be a big deal
 
 let ueincludes* = getUEHeadersIncludePaths(config).map(headerPath => "-t:-I" & escape(quotes(headerPath)))
-let uesymbols* = getUESymbols(config).map(symbolPath => "-l:" & quotes(symbolPath))
+let uesymbols* = getUESymbols(config).map(symbolPath => "-l:" & escape(quotes(symbolPath)))
 
 let buildSwitches* = @[
   "--outdir:./Binaries/nim/",

@@ -82,10 +82,9 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     # "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
     "--sdkversion:" & getSdkVersion(),
     # "--noCommand",
-    "--printPath",
-    "--vccarsall:"&escape(r"%VSInstallDir%\VC\Auxiliary\Build"),
+    # "--printPath",
     # "--command:./nue echotask --test",
-    "--vccversion:0" #$ & getCompilerVersion()
+    # "--vccversion:0" #$ & getCompilerVersion()
   ]
   result &= (if withDebug: 
               @["/Od", "/Z7"] 
