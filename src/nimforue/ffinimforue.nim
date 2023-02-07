@@ -2,6 +2,7 @@
 
 include unreal/prelude
 import unreal/editor/editor
+import unreal/core/containers/containers
 import ../nimforue/codegen/[ffi,emitter, genreflectiondata, models, uemeta, ueemit]
 import std/[options, strformat, dynlib, os, osproc]
 import ../buildscripts/[nimforueconfig, buildscripts]
@@ -78,7 +79,6 @@ proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) =
         UE_Error "Nim CRASHED "
         UE_Error e.msg
         UE_Error e.getStackTrace()
-
 
 
 

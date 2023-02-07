@@ -1,10 +1,11 @@
 include ../unreal/prelude
+import ../unreal/core/containers/containers
 import ../codegen/[ueemit, emitter]
 # import ../codegen/[gencppclass]
 
 import engine
 import enhancedinput
-import std/[typetraits, options]
+import std/[typetraits, options, asyncdispatch]
 
 proc getSubsystem*[T : UEngineSubsystem]() : Option[ptr T] = 
     tryUECast[T](getEngineSubsystem(makeTSubclassOf[UEngineSubsystem](staticClass[T]())))
@@ -28,11 +29,33 @@ proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   cast[UEEmitter](a
 type 
   onGameUnloadedCallback* = proc()
 
+
+proc tickPoll(deltaTime:float32) : bool {.cdecl.} =
+  try:
+    let p = getGlobalDispatcher()
+    poll(0)
+  except: 
+    discard
+  true
+
+
+proc subscribeToTick() : FTickerDelegateHandle = 
+  UE_Log "Subscribed to tick"
+  let tickerDel : FTickerDelegate = createStatic[bool, float32](tickPoll)
+  let handle = (getCoreTicker()[]).addTicker(tickerDel, 0)
+  handle
+
+let tickHandle = subscribeToTick()
+
 var onGameUnloaded* : onGameUnloadedCallback
 
 proc onUnloadLib() {.exportc, dynlib, cdecl.} =
   if onGameUnloaded.isNotNil():
+    removeTicker(tickHandle)
     onGameUnloaded()
+
+
+UE_Warn "Is this called?"
 
 
 #Called from NimForUE module as entry point when we are in a non editor build
