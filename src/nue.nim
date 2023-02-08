@@ -237,5 +237,13 @@ task starteditor, "opens the editor":
   else:
     discard execCmd("open "&GamePath)
 
+
+task copybuildconfiguration, "Copies the unreal build configuration from the plugin to APPData/Roaming/Unreal Engine/BuildConfiguration":
+  let buildConfigFile = PluginDir / "BuildConfiguration.xml"
+  let appDataDir = getEnv("USERPROFILE")
+  let buildConfigFileDest =  appDataDir / "Unreal Engine/UnrealBuildTool/BuildConfiguration.xml"
+  log "Copying build configuration from " & buildConfigFile & " to " & buildConfigFileDest
+  createDir(buildConfigFileDest.parentDir)
+  copyFile(buildConfigFile, buildConfigFileDest)
 # --- End Tasks ---
 main()
