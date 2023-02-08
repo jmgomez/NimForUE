@@ -43,6 +43,10 @@ enum class EMyTestEnumClass
 
 UCLASS(BlueprintType, Blueprintable)
 class NIMFORUE_API ATestActor : public AActor {
+public:
+	virtual bool IsListedInSceneOutliner() const override;
+
+private:
 	GENERATED_BODY()
 	bool bTickCalled = false;
 public:
@@ -102,4 +106,6 @@ public:
 	UFUNCTION(CallInEditor)
 	void ResetActorLocation();
 
+
+	
 };

@@ -10,6 +10,10 @@
 #include "Kismet/KismetStringLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+bool ATestActor::IsListedInSceneOutliner() const {
+	return AActor::IsListedInSceneOutliner();
+}
+
 // Sets default values
 ATestActor::ATestActor() {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.

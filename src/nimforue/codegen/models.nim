@@ -31,12 +31,15 @@ type
     typ*: string
   CppAccesSpecifier* = enum 
     caPublic, caPrivate, caProtected
+  CppModifiers* = enum
+    cmNone, cmConst
 
   CppFunction* = object #visibility?
     name*: string
     returnType*: string
     accessSpecifier* : CppAccesSpecifier
     params*: seq[CppParam] #this is not expressed as param
+    modifiers*: CppModifiers #convert this into a set when there are more or just support bitset operations?
   CppClassKind* = enum #TODO add more
     cckClass, cckStruct
   CppClassType* = object

@@ -9,6 +9,7 @@ import ../utils/[ueutils, utils]
 
 
 func convertNimTypeStrToCpp(nimType:string) : string = 
+  #would this need to handle the types with underscore (our fake types)?
   #todo handle numbers
   if nimType.endswith("Ptr"): nimType.removeLastLettersIfPtr() & "*"
   else: nimType
@@ -19,6 +20,8 @@ func funParamsToStrCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join
 
 func `$`*(cppCls: CppClassType): string =
   func funcForwardDeclare(fn:CppFunction) : string = 
+    let constModifier = if fn.modifiers == cmConst: "const" else: ""
+    let superReturn = if fn.returnType == "void": "" else: "return "
     let accessSpecifier = 
       case fn.accessSpecifier:
       of caPublic: "public"
@@ -27,16 +30,10 @@ func `$`*(cppCls: CppClassType): string =
 
     &"""
 {accessSpecifier}:
-  virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override;
-  {fn.returnType} {fn.name}Super({fn.funParamsToStrSignature()}) {{ {cppCls.parent}::{fn.name}({fn.funParamsToCall}); }}
+  virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) {constModifier} override;
+  {fn.returnType} {fn.name}Super({fn.funParamsToStrSignature()}) {{ {superReturn} {cppCls.parent}::{fn.name}({fn.funParamsToCall}); }}
     """
-    
-#     &"""
-# {accessSpecifier}:
-#   virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override {{}};
-#     """
   
-    
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
   let kind = if cppCls.kind == cckClass: "class" else: "struct"
   let parent = if cppCls.parent.len > 0: &"  : public {cppCls.parent}  " else: ""
@@ -73,12 +70,16 @@ func createNimType(typedef: CppClassType, header:string): NimNode =
             ptrName* {.inject.} = ptr name
 
 func toEmmitTemplate*(fn:CppFunction, class:string) : string  = 
+  let constModifier = if fn.modifiers == cmConst: "const" else: ""
+  let this = if fn.modifiers == cmConst: &"const_cast<{class}*>(this)"  else: "this"
+
   let comma = if fn.params.len > 0: "," else: ""
   let returns = if fn.returnType == "void": "" else: "return "
   &"""
-    {fn.returnType} {class}::{fn.name}({fn.funParamsToStrSignature()}) {{
-     {returns} {fn.name.firstToLow()}_impl(this {comma} {fn.funParamsToStrCall});
-    }}
+
+{fn.returnType} {class}::{fn.name}({fn.funParamsToStrSignature()}) {constModifier} {{
+     {returns} {fn.name.firstToLow()}_impl({this} {comma} {fn.funParamsToStrCall});
+}}
   """
 #notice fn has params
 func genSuperFunc*(fn:NimNode, class:string) : NimNode = 

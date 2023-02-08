@@ -835,13 +835,16 @@ func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
 func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
   let returnType = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal
   #We skip the first two params, which are the self and the name of the function
-#   debugEcho treeRepr fn.params()
+  debugEcho treeRepr fn
 #   {.cast(nosideeffect).}:
-    # quit("stop")
-    # discard
+#     quit("stop")
+#     discard
+  let isConstFn = fn.pragma.children.toSeq().filterIt(it.strVal() == "constcpp").any()
+  let modifiers = if isConstFn: cmConst else: cmNone
+  fn.pragma = newEmptyNode() #TODO remove const instead of removing all pragmas and move the pragmas to the impl
   let params = fn.params.filterIt(it.kind == nnkIdentDefs).map(getCppParamFromIdentDefs)
   let name =  fn.name.strVal.capitalizeAscii()
-  CppFunction(name: name, returnType: returnType, params: params)
+  CppFunction(name: name, returnType: returnType, params: params, modifiers: modifiers)
 
 
 #TODO implement forwards
