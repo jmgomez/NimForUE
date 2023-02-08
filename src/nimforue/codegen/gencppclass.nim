@@ -1,15 +1,19 @@
 import std/[sequtils, strutils, strformat, sugar, macros, genasts, os]
 import ../../buildscripts/nimforueconfig
 import ../codegen/[models, modulerules]
-import ../utils/utils
+import ../utils/[ueutils, utils]
 
 
   #no fields for now. They could be technically added though
 
 
 
+func convertNimTypeStrToCpp(nimType:string) : string = 
+  #todo handle numbers
+  if nimType.endswith("Ptr"): nimType.removeLastLettersIfPtr() & "*"
+  else: nimType
 
-func funParamsToStrSignature(fn:CppFunction) : string = fn.params.mapIt(it.typ & " " & it.name).join(", ")
+func funParamsToStrSignature(fn:CppFunction) : string = fn.params.mapIt(convertNimTypeStrToCpp(it.typ) & " " & it.name).join(", ")
 func funParamsToCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join(", ")
 func funParamsToStrCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join(", ")
 
