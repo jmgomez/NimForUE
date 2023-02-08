@@ -835,9 +835,13 @@ func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
 func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
   let returnType = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal
   #We skip the first two params, which are the self and the name of the function
-#   let params = fn.params.children.toSeq()[2..^1].filterIt(it.kind == nnkIdentDefs).map(getCppParamFromIdentDefs)
+#   debugEcho treeRepr fn.params()
+#   {.cast(nosideeffect).}:
+    # quit("stop")
+    # discard
+  let params = fn.params.filterIt(it.kind == nnkIdentDefs).map(getCppParamFromIdentDefs)
   let name =  fn.name.strVal.capitalizeAscii()
-  CppFunction(name: name, returnType: returnType, params: @[])
+  CppFunction(name: name, returnType: returnType, params: params)
 
 
 #TODO implement forwards

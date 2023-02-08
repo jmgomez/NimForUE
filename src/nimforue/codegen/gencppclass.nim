@@ -10,6 +10,7 @@ import ../utils/utils
 
 
 func funParamsToStrSignature(fn:CppFunction) : string = fn.params.mapIt(it.typ & " " & it.name).join(", ")
+func funParamsToCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join(", ")
 func funParamsToStrCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join(", ")
 
 func `$`*(cppCls: CppClassType): string =
@@ -23,7 +24,7 @@ func `$`*(cppCls: CppClassType): string =
     &"""
 {accessSpecifier}:
   virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) override;
-  {fn.returnType} {fn.name}Super({fn.funParamsToStrSignature()}) {{ {cppCls.parent}::{fn.name}(); }}
+  {fn.returnType} {fn.name}Super({fn.funParamsToStrSignature()}) {{ {cppCls.parent}::{fn.name}({fn.funParamsToCall}); }}
     """
     
 #     &"""
