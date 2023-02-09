@@ -835,7 +835,7 @@ func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
 func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
   let returnType = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal
   #We skip the first two params, which are the self and the name of the function
-  debugEcho treeRepr fn
+#   debugEcho treeRepr fn
 #   {.cast(nosideeffect).}:
 #     quit("stop")
 #     discard

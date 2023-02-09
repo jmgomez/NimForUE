@@ -11,8 +11,17 @@ import ../utils/[ueutils, utils]
 func convertNimTypeStrToCpp(nimType:string) : string = 
   #would this need to handle the types with underscore (our fake types)?
   #todo handle numbers
-  if nimType.endswith("Ptr"): nimType.removeLastLettersIfPtr() & "*"
-  else: nimType
+  #nim int is 64 bits
+  #nim float is 64 bits
+
+  case nimType:
+  of "int": "int64"
+  of "float": "double"
+  of "float32": "float"
+  of "float64": "double"
+  else:
+    if nimType.endswith("Ptr"): nimType.removeLastLettersIfPtr() & "*"
+    else: nimType
 
 func funParamsToStrSignature(fn:CppFunction) : string = fn.params.mapIt(convertNimTypeStrToCpp(it.typ) & " " & it.name).join(", ")
 func funParamsToCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join(", ")
@@ -22,6 +31,7 @@ func `$`*(cppCls: CppClassType): string =
   func funcForwardDeclare(fn:CppFunction) : string = 
     let constModifier = if fn.modifiers == cmConst: "const" else: ""
     let superReturn = if fn.returnType == "void": "" else: "return "
+    let returnType = fn.returnType.convertNimTypeStrToCpp()
     let accessSpecifier = 
       case fn.accessSpecifier:
       of caPublic: "public"
@@ -30,8 +40,8 @@ func `$`*(cppCls: CppClassType): string =
 
     &"""
 {accessSpecifier}:
-  virtual {fn.returnType} {fn.name}({fn.funParamsToStrSignature()}) {constModifier} override;
-  {fn.returnType} {fn.name}Super({fn.funParamsToStrSignature()}) {{ {superReturn} {cppCls.parent}::{fn.name}({fn.funParamsToCall}); }}
+  virtual {returnType} {fn.name}({fn.funParamsToStrSignature()}) {constModifier} override;
+  {returnType} {fn.name}Super({fn.funParamsToStrSignature()}) {{ {superReturn} {cppCls.parent}::{fn.name}({fn.funParamsToCall}); }}
     """
   
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
@@ -77,7 +87,7 @@ func toEmmitTemplate*(fn:CppFunction, class:string) : string  =
   let returns = if fn.returnType == "void": "" else: "return "
   &"""
 
-{fn.returnType} {class}::{fn.name}({fn.funParamsToStrSignature()}) {constModifier} {{
+{fn.returnType.convertNimTypeStrToCpp} {class}::{fn.name}({fn.funParamsToStrSignature()}) {constModifier} {{
      {returns} {fn.name.firstToLow()}_impl({this} {comma} {fn.funParamsToStrCall});
 }}
   """
