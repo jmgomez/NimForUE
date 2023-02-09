@@ -26,13 +26,18 @@ const InstancedMetadataKey* = "Instanced"
 const NoDeclMetadataKey* = "NoDecl"
 
 type 
+  CppModifiers* = enum
+    cmNone, cmConst
+    
   CppParam* = object #TODO take const, refs, etc. into account
     name*: string
     typ*: string
+    modifiers*: CppModifiers #convert this into a set when there are more or just support bitset operations?
+
+
   CppAccesSpecifier* = enum 
     caPublic, caPrivate, caProtected
-  CppModifiers* = enum
-    cmNone, cmConst
+
 
   CppFunction* = object #visibility?
     name*: string

@@ -1,4 +1,4 @@
-import std/[sequtils, strutils, strformat, sugar, macros, genasts, os]
+import std/[sequtils, strutils, strformat, sugar, macros, genasts, os, strutils]
 import ../../buildscripts/nimforueconfig
 import ../codegen/[models, modulerules]
 import ../utils/[ueutils, utils]
@@ -23,9 +23,23 @@ func convertNimTypeStrToCpp(nimType:string) : string =
     if nimType.endswith("Ptr"): nimType.removeLastLettersIfPtr() & "*"
     else: nimType
 
-func funParamsToStrSignature(fn:CppFunction) : string = fn.params.mapIt(convertNimTypeStrToCpp(it.typ) & " " & it.name).join(", ")
+
+func funParamToStrSignature(param:CppParam) : string = 
+  let constModifier = if param.modifiers == cmConst: "const" else: ""
+  &"{constModifier} {convertNimTypeStrToCpp(param.typ)}  {param.name}"
+
+func funParamsToStrSignature(fn:CppFunction) : string = fn.params.map(funParamToStrSignature).join(", ")
+
+func funParamToCallWithModifiers(param:CppParam) : string = 
+  if not param.typ.endsWith("Ptr"): 
+    return convertNimTypeStrtoCpp(param.name)
+
+  if param.modifiers == cmConst: 
+    &"const_cast<{convertNimTypeStrtoCpp(param.typ)}>({param.name})" 
+  else: param.name
+
+func funParamsToCallWithModifiers(fn:CppFunction) : string = fn.params.map(funParamToCallWithModifiers).join(", ")
 func funParamsToCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join(", ")
-func funParamsToStrCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join(", ")
 
 func `$`*(cppCls: CppClassType): string =
   func funcForwardDeclare(fn:CppFunction) : string = 
@@ -88,7 +102,7 @@ func toEmmitTemplate*(fn:CppFunction, class:string) : string  =
   &"""
 
 {fn.returnType.convertNimTypeStrToCpp} {class}::{fn.name}({fn.funParamsToStrSignature()}) {constModifier} {{
-     {returns} {fn.name.firstToLow()}_impl({this} {comma} {fn.funParamsToStrCall});
+     {returns} {fn.name.firstToLow()}_impl({this} {comma} {fn.funParamsToCallWithModifiers()});
 }}
   """
 

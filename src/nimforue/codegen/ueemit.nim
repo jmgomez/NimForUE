@@ -824,18 +824,47 @@ func addSelfToProc(procDef:NimNode, className:string) : NimNode =
 
 
 
-
+func isParamCppConst(identDef:NimNode) : bool = 
+    assert identDef.kind == nnkIdentDefs
+    case identDef[0].kind:
+    of nnkIdent: false
+    # of nnkBracket: false
+    of nnkPragmaExpr: identDef[0][1][0].strVal == "constcpp"
+    else: 
+      error("Cant parse param pragma " & identDef[0].kind.repr)
+      false
 
 func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
   assert identDef.kind == nnkIdentDefs
-  let name = identDef[0].strVal
+  debugEcho treeRepr identDef
+
+  let name = 
+    case identDef[0].kind:
+    of nnkIdent: identDef[0].strVal
+    # of nnkBracket: identDef[0][0].strVal
+    of nnkPragmaExpr: identDef[0][0].strVal
+    else: 
+      error("Cant parse param " & identDef[0].kind.repr) 
+      ""
+      
+  let isConst = identDef.isParamCppConst()
+  
+  let modifiers = if isConst: cmConst else: cmNone
   let typ = identDef[1].strVal
-  CppParam(name: name, typ: typ)
+  CppParam(name: name, typ: typ, modifiers: modifiers)
+
+func removeConstFromParam(identDef : NimNode) : NimNode =
+  let isConst = identDef.isParamCppConst()
+  result = identDef
+  if isConst: #This remove all pragmas
+    result[0] = identDef[0][0]
 
 func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
   let returnType = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal
+
   #We skip the first two params, which are the self and the name of the function
 #   debugEcho treeRepr fn
+
 #   {.cast(nosideeffect).}:
 #     quit("stop")
 #     discard
@@ -850,7 +879,9 @@ func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
 #TODO implement forwards
 func overrideImpl(fn : NimNode, className:string) : (CppFunction, NimNode) =
   let cppFunc = getCppFunctionFromNimFunc(fn)
-
+  debugEcho treeRepr fn
+  let paramsWithoutConst = fn.params.children.toSeq.filterIt(it.kind == nnkIdentDefs).map(removeConstFromParam)
+  fn.params = nnkFormalParams.newTree(fn.params[0] & paramsWithoutConst)
   (cppFunc, genOverride(fn, cppFunc, className))
   
 # macro overrideCpp(fn : untyped) = overrideImpl(fn)
