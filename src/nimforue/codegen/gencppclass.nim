@@ -81,15 +81,16 @@ func toEmmitTemplate*(fn:CppFunction, class:string) : string  =
      {returns} {fn.name.firstToLow()}_impl({this} {comma} {fn.funParamsToStrCall});
 }}
   """
-#notice fn has params
+
 func genSuperFunc*(fn:NimNode, class:string) : NimNode = 
   let superName = fn.name.strVal.capitalizeAscii() & "Super"
   let name = ident(superName)
   let nameLit = newStrLitNode(superName)
-  let clsName = ident class & "Ptr"
-  # let params = fn.params probably wont use genAst but just hijack the params, remember self is alredy here
-  genAst(name, nameLit, clsName):
-    proc super(self:clsName) : void {.importcpp:nameLit.}
+
+  let clsNamePtr = ident class & "Ptr"
+  result = genAst(name, nameLit, ):
+    proc super() {.importcpp:nameLit.}
+  result.params = fn.params 
 
 
 func genOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNode = 

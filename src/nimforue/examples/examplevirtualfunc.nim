@@ -29,12 +29,17 @@ import std/[macros, sequtils, strutils]
   [] Generics params
   [] Generics return
 
+  [ ] When removing a function there is a linker issue for the already compiled.
+      - [ ] Detect the functions that change between compilations
+      - [ ] Detect all the files that uses the header and remove them so they get recompiled. 
+
+
 ]#
 
 uClass ANimBeginPlayOverrideActor of AActor:
   (Blueprintable, BlueprintType)
   uprops(EditAnywhere):
-    test7 : FString 
+    test8 : FString 
   
   
   override:
@@ -42,14 +47,15 @@ uClass ANimBeginPlayOverrideActor of AActor:
       UE_Warn "Native BeginPlay called twice! Nice. Quite amazing I would say"
     
     proc postDuplicate(b : bool) = 
+      self.super(b)
       UE_Warn "post duplicated called !"
     proc preEditChange(p : FPropertyPtr) : void = 
+      self.super(p)
       UE_Warn "PreEditChange called !" & p.getName()
     proc postLoad() : void = 
       self.super()
       UE_Warn "PostLoad called once"
 
     proc isListedInSceneOutliner() : bool {. constcpp .} = 
-      # self.super()
       UE_Log "IsListedInSceneOutliner called once"
-      true
+      self.super()
