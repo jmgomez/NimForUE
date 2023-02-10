@@ -143,6 +143,10 @@ type
     boneName* {.importcpp: "BoneName".}: FName
     myBoneName* {.importcpp: "MyBoneName".}: FName
 
+  FLifetimeProperty* {.importcpp, pure.} = object
+    repIndex* {.importcpp: "RepIndex".}: uint16
+    condition* {.importcpp: "Condition".}: ELifetimeCondition
+    repNotifyCondition* {.importcpp: "RepNotifyCondition".}: ELifetimeRepNotifyCondition
   
   FGameplayTag* {.importcpp, pure.} = object
     tag* {.importcpp: "Tag".}: FName

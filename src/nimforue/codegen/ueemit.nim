@@ -834,6 +834,22 @@ func isParamCppConst(identDef:NimNode) : bool =
       error("Cant parse param pragma " & identDef[0].kind.repr)
       false
 
+
+#notice even though the name says cpp we are converting Nim types to string here. The cpp is only to show that it has to do with the cpp generation
+#in the future this can be standalone and then we can remove the cpp part of the name
+func getCppTypeFromParamType(paramType:NimNode) : string = 
+  case paramType.kind:
+    of nnkIdent: paramType.strVal
+    of nnkVarTy: "var " & getCppTypeFromParamType(paramType[0])
+    of nnkBracketExpr: 
+        #only arity one for now
+        &"{paramType[0].strVal}[{paramType[1].strVal}]"
+
+    else:
+      debugEcho treeRepr paramType
+      error("Cant parse param type " & paramType.repr)
+      ""
+
 func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
   assert identDef.kind == nnkIdentDefs
   debugEcho treeRepr identDef
@@ -850,13 +866,7 @@ func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
   let isConst = identDef.isParamCppConst()
   
   let modifiers = if isConst: cmConst else: cmNone
-  let typ = case identDef[1].kind:
-    # of nnkBracket: identDef[1][0].strVal
-    of nnkIdent: identDef[1].strVal
-    of nnkVarTy: "var " & identDef[1][0].strVal
-    else:
-      error("Cant parse param type " & identDef[1].kind.repr)
-      ""
+  let typ = getCppTypeFromParamType(identDef[1])
   CppParam(name: name, typ: typ, modifiers: modifiers)
 
 func removeConstFromParam(identDef : NimNode) : NimNode =

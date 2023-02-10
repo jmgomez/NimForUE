@@ -29,12 +29,16 @@ import std/[macros, sequtils, strutils]
   [ ] multiple fields with the same type
   
   [] Should fnImpl be a var so we can replace it in the next execution?
+  [] When adding a vfunction should reinstance the Actor
+  
 
   [] Move into the gamedll (just import this actor from there)
   [] Interfaces
 
-  [] Generics params
+  [] Generics params 
   [] Generics return
+
+  [] Generic params arity + 1
 
   [ ] When removing a function there is a linker issue for the already compiled.
       - [ ] Detect the functions that change between compilations
@@ -47,7 +51,7 @@ import std/[macros, sequtils, strutils]
 uClass ANimBeginPlayOverrideActor of AActor:
   (Blueprintable, BlueprintType)
   uprops(EditAnywhere):
-    test16 : FString 
+    test17 : FString 
   
   
   override:
@@ -89,6 +93,12 @@ uClass ANimBeginPlayOverrideActor of AActor:
     proc editorApplyMirror(mirrorScale {. constcpp .} : var FVector, pivotLocation {. constcpp .} : var FVector) = 
       self.super(mirrorScale, pivotLocation)
       UE_Warn "EditorApplyMirror called !"
+
+    #	virtual void GetLifetimeReplicatedProps( TArray< class FLifetimeProperty > & OutLifetimeProps ) const;
+    proc getLifetimeReplicatedProps(outLifetimeProps : var TArray[FLifetimeProperty]) {.constcpp.} = 
+      self.super(outLifetimeProps)
+      UE_Warn "GetLifetimeReplicatedProps called !"
+
 
 
 uClass ANimBeginPlayOverrideActorChild of ANimBeginPlayOverrideActor:

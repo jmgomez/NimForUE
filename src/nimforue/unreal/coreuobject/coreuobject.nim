@@ -514,6 +514,11 @@ type
     COND_InitialOrOwner, COND_Custom, COND_ReplayOrOwner, COND_ReplayOnly,
     COND_SimulatedOnlyNoReplay, COND_SimulatedOrPhysicsNoReplay,
     COND_SkipReplay, COND_Never, COND_Max
+
+  ELifetimeRepNotifyCondition* {.size: sizeof(uint8), pure.} = enum
+    REPNOTIFY_OnChanged,  # Only call the property's RepNotify function if it changes from the local value
+    REPNOTIFY_Always,  #Always Call the property's RepNotify function when it is received from the server
+
 type
   ESearchCase* {.size: sizeof(uint8), pure.} = enum
     CaseSensitive, IgnoreCase, ESearchCase_MAX
