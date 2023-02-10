@@ -23,9 +23,10 @@ import std/[macros, sequtils, strutils]
   [] return const ? (is there any function that needs it?)
   
   [x] Const in params
-  [] Raw references
+  [x] Raw references
   [] const ref in params
   [x] const ptr in params
+  [ ] multiple fields with the same type
   
   [] Should fnImpl be a var so we can replace it in the next execution?
 
@@ -46,7 +47,7 @@ import std/[macros, sequtils, strutils]
 uClass ANimBeginPlayOverrideActor of AActor:
   (Blueprintable, BlueprintType)
   uprops(EditAnywhere):
-    test15 : FString 
+    test16 : FString 
   
   
   override:
@@ -83,6 +84,11 @@ uClass ANimBeginPlayOverrideActor of AActor:
     proc editorCanAttachTo(inParent {. constcpp .} : AActorPtr, outReason : var FText) : bool {. constcpp .} = 
       UE_Log "EditorCanAttachTo called in the parent"
       self.super(inParent, outReason)
+    
+    # virtual void EditorApplyMirror(const FVector& MirrorScale, const FVector& PivotLocation);	
+    proc editorApplyMirror(mirrorScale {. constcpp .} : var FVector, pivotLocation {. constcpp .} : var FVector) = 
+      self.super(mirrorScale, pivotLocation)
+      UE_Warn "EditorApplyMirror called !"
 
 
 uClass ANimBeginPlayOverrideActorChild of ANimBeginPlayOverrideActor:

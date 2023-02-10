@@ -32,7 +32,7 @@ func funParamToStrSignature(param:CppParam) : string =
 func funParamsToStrSignature(fn:CppFunction) : string = fn.params.map(funParamToStrSignature).join(", ")
 
 func funParamToCallWithModifiers(param:CppParam) : string = 
-  if not param.typ.endsWith("Ptr"): 
+  if not param.typ.endsWith("Ptr") and not param.typ.contains("var"): 
     return convertNimTypeStrtoCpp(param.name)
 
   if param.modifiers == cmConst: 
