@@ -850,7 +850,13 @@ func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
   let isConst = identDef.isParamCppConst()
   
   let modifiers = if isConst: cmConst else: cmNone
-  let typ = identDef[1].strVal
+  let typ = case identDef[1].kind:
+    # of nnkBracket: identDef[1][0].strVal
+    of nnkIdent: identDef[1].strVal
+    of nnkVarTy: "var " & identDef[1][0].strVal
+    else:
+      error("Cant parse param type " & identDef[1].kind.repr)
+      ""
   CppParam(name: name, typ: typ, modifiers: modifiers)
 
 func removeConstFromParam(identDef : NimNode) : NimNode =

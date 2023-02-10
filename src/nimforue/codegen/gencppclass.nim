@@ -21,6 +21,7 @@ func convertNimTypeStrToCpp(nimType:string) : string =
   of "float64": "double"
   else:
     if nimType.endswith("Ptr"): nimType.removeLastLettersIfPtr() & "*"
+    elif nimType.contains("var"): convertNimTypeStrToCpp(nimType.replace("var", "").strip()) & "&"
     else: nimType
 
 

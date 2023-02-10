@@ -46,7 +46,7 @@ import std/[macros, sequtils, strutils]
 uClass ANimBeginPlayOverrideActor of AActor:
   (Blueprintable, BlueprintType)
   uprops(EditAnywhere):
-    test14 : FString 
+    test15 : FString 
   
   
   override:
@@ -79,6 +79,10 @@ uClass ANimBeginPlayOverrideActor of AActor:
     proc canEditChange(inProperty {. constcpp .} : FPropertyPtr) : bool {. constcpp .} = 
       UE_Log "CanEditChange called in the parent"
       self.super(inProperty)
+    #	virtual bool EditorCanAttachTo(const AActor* InParent, FText& OutReason) const;
+    proc editorCanAttachTo(inParent {. constcpp .} : AActorPtr, outReason : var FText) : bool {. constcpp .} = 
+      UE_Log "EditorCanAttachTo called in the parent"
+      self.super(inParent, outReason)
 
 
 uClass ANimBeginPlayOverrideActorChild of ANimBeginPlayOverrideActor:
