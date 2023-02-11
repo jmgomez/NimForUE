@@ -2,7 +2,7 @@
 
 include ../unreal/prelude
 
-import ../codegen/[gencppclass, models]
+import ../codegen/[gencppclass, models, ueemit]
 # import ../unreal/bindings/[slate,slatecore, engine]
 import std/[macros, sequtils, strutils]
 
@@ -24,9 +24,12 @@ import std/[macros, sequtils, strutils]
   
   [x] Const in params
   [x] Raw references
-  [] const ref in params
+  [x] const ref in params
   [x] const ptr in params
   [ ] multiple fields with the same type
+
+  [ ] Reinstance.
+  [ ] Skip vtable update for now
   
   [] Should fnImpl be a var so we can replace it in the next execution?
   [] When adding a vfunction should reinstance the Actor
@@ -35,7 +38,8 @@ import std/[macros, sequtils, strutils]
   [] Move into the gamedll (just import this actor from there)
   [] Interfaces
 
-  [] Generics params 
+  [x] Generics params arity of one
+  [ ] Generics params arity of two (ie tmap)
   [] Generics return
 
   [] Generic params arity + 1
@@ -48,22 +52,71 @@ import std/[macros, sequtils, strutils]
 
 ]#
 
+type
+  VTable* = array[0..100, pointer]
+  VTablePtr* = ptr VTable
+
+proc getVTable*(obj : UObjectPtr) : pointer {. importcpp: "*(void**)#".}
+# proc getVTable*(cls : pointer) : pointer {. importcpp: "(int*)((int*)#)[0]".}*(void**)Target
+proc setVTable*(obj : UObjectPtr, newVTable:pointer) : void {. importcpp: "((*(void**)#)=(#))".}
+# proc getClassVTable*(cls : pointer) : ptr int32 {. importcpp: "((int*)#)[0]".}
+
 uClass ANimBeginPlayOverrideActor of AActor:
   (Blueprintable, BlueprintType)
   uprops(EditAnywhere):
-    test17 : FString 
+    test3: FString 
   
-  
+  ufuncs(CallInEditor):
+   
+    proc printFnSize() = 
+      proc getSize() : int {.importcpp:"sizeof(&ANimBeginPlayOverrideActor::BeginPlay)".}
+      UE_Log "Size of BeginPlay is " & $getSize()
+      UE_Log "Size of pointer is " & $sizeof(pointer)
+
+    proc replaceCanEditChange() = 
+
+      let nimClasses = getAllClassesFromModule("Nim")
+      for c in nimClasses:
+        if "NimBeginPlay" in c.getName() and "Child" notin c.getName():
+          UE_Log "Class " & $c.getName()
+
+    proc iterateOverAllUObjects() = #NEXT Try this out directly in emit
+      #NEXT MAKE IT COMPILE AND TEST IT. THIS MUST BE THE WAY TO GO.
+      var objIter = makeFRawObjectIterator()
+
+      proc makeANimBeginPlayOverrideActor(helper : var FVTableHelper): UObjectPtr {.cdecl.} = 
+        # newInstanceWithVTableHelper[ANimBeginPlayOverrideActor](n"Test", helper)
+        newInstanceWithVTableHelper[ANimBeginPlayOverrideActor](helper)
+        
+      # {.emit:"FVTableHelper Helper = FVTableHelperNim();".}
+      # {.emit:"ANimBeginPlayOverrideActor Test = ANimBeginPlayOverrideActor(Helper);".}
+      # {.emit:"ANimBeginPlayOverrideActor* TestPtr = &Test;".}
+      var vtableConstructor : VTableConstructor = makeANimBeginPlayOverrideActor
+      var tempObjectForVTable = constructFromVTable(vtableConstructor)
+      let newVTable = tempObjectForVTable.getVTable()
+      var cls = getClassByName("NimBeginPlayOverrideActor")
+      # cls.classVTableHelperCtorCaller = vtableConstructor
+      let oldVTable = cls.getDefaultObject().getVTable()
+      for it in objIter.items():
+        let obj = it.get()
+        
+        if obj.getVTable() == oldVTable:
+          setVTable(obj, newVTable)
+          # cast[ptr pointer](obj)[] = newVTable
+          UE_Log "Object has the same vtable as the actor"
+          UE_Log "Object " & $obj.getName() 
+          
+
   override:
     proc beginPlay() = 
-      UE_Warn "Native BeginPlay called in the parent"
+      UE_Warn "Native BeginPlay test 2"
     
     proc postDuplicate(b : bool) = 
       self.super(b)
       UE_Warn "post duplicated called !"
     proc preEditChange(p : FPropertyPtr) : void = 
       self.super(p)
-      UE_Warn "PreEditChange called !" & p.getName()
+      UE_Warn "PreEditChange called " & p.getName()
     proc postLoad() : void = 
       self.super()
       UE_Warn "PostLoad called once"
@@ -82,7 +135,7 @@ uClass ANimBeginPlayOverrideActor of AActor:
 
     #	virtual bool CanEditChange(const FProperty* InProperty) const;
     proc canEditChange(inProperty {. constcpp .} : FPropertyPtr) : bool {. constcpp .} = 
-      UE_Log "CanEditChange called in the parent"
+      UE_Log "CanEditChange called in the parent updated 1"
       self.super(inProperty)
     #	virtual bool EditorCanAttachTo(const AActor* InParent, FText& OutReason) const;
     proc editorCanAttachTo(inParent {. constcpp .} : AActorPtr, outReason : var FText) : bool {. constcpp .} = 
@@ -100,6 +153,9 @@ uClass ANimBeginPlayOverrideActor of AActor:
       UE_Warn "GetLifetimeReplicatedProps called !"
 
 
+    proc getCustomIconName() : FName {. constcpp .} = 
+      # UE_Log "GetCustomIconName called in the parent"
+      ENone
 
 uClass ANimBeginPlayOverrideActorChild of ANimBeginPlayOverrideActor:
   (Blueprintable, BlueprintType)
@@ -118,3 +174,7 @@ uClass ANimBeginPlayOverrideActorChild of ANimBeginPlayOverrideActor:
     proc isListedInSceneOutliner() : bool {. constcpp .} = 
       UE_Log "IsListedInSceneOutliner called in the child"
       self.super()
+    
+    proc canEditChange(inProperty {. constcpp .} : FPropertyPtr) : bool {. constcpp .} = 
+      UE_Log "CanEditChange called in the child updated 1"
+      self.super(inProperty)

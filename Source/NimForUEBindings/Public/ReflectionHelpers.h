@@ -122,7 +122,7 @@ public:
 	static bool ContainsStrongReference(FProperty* Property);
 	
 	static void SetClassConstructor(UClass* Class, void (*NimClassConstructor) (FObjectInitializer&));
-
+	static UObject* ConstructFromVTable(UObject* (*ClsVTableHelperCtor)(FVTableHelper& Helper));
 	//
 	// //Input action
 	// UFUNCTION()

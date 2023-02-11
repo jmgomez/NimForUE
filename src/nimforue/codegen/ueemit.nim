@@ -21,13 +21,16 @@ const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNim
 
 
 
-
-proc newInstanceInAddr[T](obj:UObjectPtr, fake : ptr T) {.importcpp: "new((EInternal*)#)'*2".} 
+proc getVTable*(cls : pointer) : pointer {. importcpp: "(int*)((int*)#)[0]".}
+proc setVTable*(cls : pointer, newVTable:pointer) : void {. importcpp: "((int*)((int*)#)[0]=(#))".}
+#	return new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), NAME_None, RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) TClass(Helper);
+proc newInstanceInAddr*[T](obj:UObjectPtr, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*2".} 
+proc newInstanceWithVTableHelper*[T](helper : var FVTableHelper, fake : ptr T = nil) : UObjectPtr {.importcpp: "new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), FName(), RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) '*2(#)".} 
   
 #It seems we dont need to call super anymore since we are calling the cpp default constructor
 proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
 #   {.emit: "#include \"Guest.h\"".}
-  newInstanceInAddr[T](initializer.getObj(), nil)
+  newInstanceInAddr[T](initializer.getObj())
   let obj = initializer.getObj()
   let cls = obj.getClass()
 
@@ -878,12 +881,6 @@ func removeConstFromParam(identDef : NimNode) : NimNode =
 func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
   let returnType = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal
 
-  #We skip the first two params, which are the self and the name of the function
-#   debugEcho treeRepr fn
-
-#   {.cast(nosideeffect).}:
-#     quit("stop")
-#     discard
   let isConstFn = fn.pragma.children.toSeq().filterIt(it.strVal() == "constcpp").any()
   let modifiers = if isConstFn: cmConst else: cmNone
   fn.pragma = newEmptyNode() #TODO remove const instead of removing all pragmas and move the pragmas to the impl
@@ -900,7 +897,6 @@ func overrideImpl(fn : NimNode, className:string) : (CppFunction, NimNode) =
   fn.params = nnkFormalParams.newTree(fn.params[0] & paramsWithoutConst)
   (cppFunc, genOverride(fn, cppFunc, className))
   
-# macro overrideCpp(fn : untyped) = overrideImpl(fn)
 func getCppOverrides(body:NimNode, ueType:UEType) : (UEType, NimNode) = 
     let overrideBlocks = 
             body.toSeq()

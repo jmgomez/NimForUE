@@ -48,14 +48,13 @@ func `$`*(cppCls: CppClassType): string =
     let constModifier = if fn.modifiers == cmConst: "const" else: ""
     let superReturn = if fn.returnType == "void": "" else: "return "
     let returnType = fn.returnType.convertNimTypeStrToCpp()
-    let accessSpecifier = 
+    let accessSpecifier = #not used
       case fn.accessSpecifier:
       of caPublic: "public"
       of caPrivate: "private"
       of caProtected: "protected"
 
     &"""
-{accessSpecifier}:
   virtual {returnType} {fn.name}({fn.funParamsToStrSignature()}) {constModifier} override;
   {returnType} {fn.name}Super({fn.funParamsToStrSignature()}) {{ {superReturn} {cppCls.parent}::{fn.name}({fn.funParamsToCall}); }}
     """
@@ -65,8 +64,12 @@ func `$`*(cppCls: CppClassType): string =
   let parent = if cppCls.parent.len > 0: &"  : public {cppCls.parent}  " else: ""
  
   &"""
-  DLLEXPORT {kind} {cppCls.name} {parent} {{
-    {funcs}
+DLLEXPORT {kind} {cppCls.name} {parent} {{
+public:
+  {cppCls.name}() = default;
+  {cppCls.name}(FVTableHelper& Helper) : {cppCls.parent}(Helper) {{}}
+  
+{funcs}
   }};
   """
 

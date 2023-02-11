@@ -49,6 +49,7 @@ proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UF
         xs.add fn
     xs
 
+
 proc getFuncsParamsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[FPropertyPtr] = 
     cls 
     .getFuncsFromClass(flags)

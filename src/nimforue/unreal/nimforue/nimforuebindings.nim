@@ -40,7 +40,7 @@ proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVers
 #UNimClassBase
 proc setClassConstructor*(cls:UClassPtr, classConstructor:UClassConstructor) : void {.importcpp:"UReflectionHelpers::SetClassConstructor(@)".}
 # proc prepareNimClass*(cls:UNimClassBasePtr) : void {.importcpp:"#->PrepareNimClass()".}
- 
+proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.importcpp:"UReflectionHelpers::ConstructFromVTable(@)".}
 
 
 # proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}

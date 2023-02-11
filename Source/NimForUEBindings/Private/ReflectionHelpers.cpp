@@ -221,6 +221,26 @@ void UReflectionHelpers::SetClassConstructor(UClass* Class, void(* NimClassConst
 	Class->ClassConstructor = reinterpret_cast< void(*)(const FObjectInitializer&)>(NimClassConstructor);
 }
 
+UObject* UReflectionHelpers::ConstructFromVTable(UObject*(* ClsVTableHelperCtor)(FVTableHelper& Helper)) {
+	UObject* TempObjectForVTable = nullptr;
+	{
+		TGuardValue<bool> Guard(GIsRetrievingVTablePtr, true);
+
+		// Mark we're in the constructor now.
+		FUObjectThreadContext& ThreadContext = FUObjectThreadContext::Get();
+		TScopeCounter<int32> InConstructor(ThreadContext.IsInConstructor);
+
+		FVTableHelper Helper;
+		TempObjectForVTable = ClsVTableHelperCtor(Helper);
+		TempObjectForVTable->AtomicallyClearInternalFlags(EInternalObjectFlags::PendingConstruction);
+	}
+
+	if( !TempObjectForVTable->IsRooted() ) {
+		TempObjectForVTable->MarkAsGarbage();
+	}
+	return TempObjectForVTable;
+}
+
 // void UReflectionHelpers::BindAction(UEnhancedInputComponent* InputComponent, UInputAction* Action, ETriggerEvent TriggerEvent, UObject* Object, FName FunctionName)
 //
 // {
