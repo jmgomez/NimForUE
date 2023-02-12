@@ -11,10 +11,14 @@ import ../utils/[utils, ueutils]
 type UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
 
 
-type CtorInfo* = object #stores the constuctor information for a class.
-  fn*: UClassConstructor
-  hash*: string
-  className*: string
+type 
+  CtorInfo* = object #stores the constuctor information for a class.
+    fn*: UClassConstructor
+    hash*: string
+    className*: string
+    # vTableConstructor*: VTableConstructor
+    # updateVTableForType*: proc(prevCls:UClassPtr)
+
 
 type 
     EmitterInfo* = object 
@@ -33,6 +37,7 @@ type
         fnTable* : seq[FnEmitter]
 
         clsConstructorTable* : Table[string, CtorInfo]
+       
         setStructOpsWrapperTable* : Table[string, UNimScriptStructPtr->void]
     UEEmitter* = ref UEEmitterRaw
     UEEmitterPtr* = ptr UEEmitterRaw
@@ -46,6 +51,7 @@ proc getNativeFuncImplPtrFromUEField*(emitter: UEEmitter, ueField: UEField): Opt
 
 proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string = 
     result = $emitter.emitters
+
 var ueEmitter* {.compileTime.} = UEEmitterRaw() 
 
 proc getGlobalEmitter*() : UEEmitter = 

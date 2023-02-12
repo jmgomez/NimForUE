@@ -804,7 +804,7 @@ proc setGIsUCCMakeStandaloneHeaderGenerator*(value: static bool) =
 
 """.}
 
-proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor): UFieldPtr =
+proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
  
   let newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
@@ -821,6 +821,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.classConfigName = parent.classConfigName
 
   newCls.setSuperStruct(parent)
+  newCls.classVTableHelperCtorCaller = vtableConstructor
 
   # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
   newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32)

@@ -4,7 +4,7 @@ include ../unreal/prelude
 
 import ../codegen/[gencppclass, models, ueemit]
 # import ../unreal/bindings/[slate,slatecore, engine]
-import std/[macros, sequtils, strutils]
+import std/[macros, sequtils, strutils, typetraits]
 
 
 
@@ -52,19 +52,11 @@ import std/[macros, sequtils, strutils]
 
 ]#
 
-type
-  VTable* = array[0..100, pointer]
-  VTablePtr* = ptr VTable
-
-proc getVTable*(obj : UObjectPtr) : pointer {. importcpp: "*(void**)#".}
-# proc getVTable*(cls : pointer) : pointer {. importcpp: "(int*)((int*)#)[0]".}*(void**)Target
-proc setVTable*(obj : UObjectPtr, newVTable:pointer) : void {. importcpp: "((*(void**)#)=(#))".}
-# proc getClassVTable*(cls : pointer) : ptr int32 {. importcpp: "((int*)#)[0]".}
 
 uClass ANimBeginPlayOverrideActor of AActor:
   (Blueprintable, BlueprintType)
   uprops(EditAnywhere):
-    test3: FString 
+    test4: FString 
   
   ufuncs(CallInEditor):
    
@@ -79,7 +71,8 @@ uClass ANimBeginPlayOverrideActor of AActor:
       for c in nimClasses:
         if "NimBeginPlay" in c.getName() and "Child" notin c.getName():
           UE_Log "Class " & $c.getName()
-
+    proc updateVTable() = 
+      updateVTableStatic[ANimBeginPlayOverrideActor](self.getClass())
     proc iterateOverAllUObjects() = #NEXT Try this out directly in emit
       #NEXT MAKE IT COMPILE AND TEST IT. THIS MUST BE THE WAY TO GO.
       var objIter = makeFRawObjectIterator()
@@ -95,7 +88,7 @@ uClass ANimBeginPlayOverrideActor of AActor:
       var tempObjectForVTable = constructFromVTable(vtableConstructor)
       let newVTable = tempObjectForVTable.getVTable()
       var cls = getClassByName("NimBeginPlayOverrideActor")
-      # cls.classVTableHelperCtorCaller = vtableConstructor
+      cls.classVTableHelperCtorCaller = vtableConstructor
       let oldVTable = cls.getDefaultObject().getVTable()
       for it in objIter.items():
         let obj = it.get()
@@ -113,10 +106,10 @@ uClass ANimBeginPlayOverrideActor of AActor:
     
     proc postDuplicate(b : bool) = 
       self.super(b)
-      UE_Warn "post duplicated called !"
+      UE_Warn "post duplicated called update !"
     proc preEditChange(p : FPropertyPtr) : void = 
       self.super(p)
-      UE_Warn "PreEditChange called " & p.getName()
+      UE_Warn "PreEditChange called update?1" & p.getName()
     proc postLoad() : void = 
       self.super()
       UE_Warn "PostLoad called once"

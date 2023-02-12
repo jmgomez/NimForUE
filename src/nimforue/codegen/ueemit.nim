@@ -19,14 +19,13 @@ const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNim
 
 
 
-
-
-proc getVTable*(cls : pointer) : pointer {. importcpp: "(int*)((int*)#)[0]".}
-proc setVTable*(cls : pointer, newVTable:pointer) : void {. importcpp: "((int*)((int*)#)[0]=(#))".}
 #	return new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), NAME_None, RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) TClass(Helper);
 proc newInstanceInAddr*[T](obj:UObjectPtr, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*2".} 
 proc newInstanceWithVTableHelper*[T](helper : var FVTableHelper, fake : ptr T = nil) : UObjectPtr {.importcpp: "new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), FName(), RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) '*2(#)".} 
   
+
+proc vtableConstructorStatic*[T](helper : var FVTableHelper): UObjectPtr {.cdecl.} = 
+  newInstanceWithVTableHelper[T](helper)
 #It seems we dont need to call super anymore since we are calling the cpp default constructor
 proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
 #   {.emit: "#include \"Guest.h\"".}
@@ -38,26 +37,48 @@ proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.}
   if actor.isSome():
     initComponents(initializer, actor.get(), cls)
 
+
+
+proc getVTable*(obj : UObjectPtr) : pointer {. importcpp: "*(void**)#".}
+proc setVTable*(obj : UObjectPtr, newVTable:pointer) : void {. importcpp: "((*(void**)#)=(#))".}
+
+
+proc updateVTable*(prevCls:UClassPtr, newVTable:pointer) : void =
+  let oldVTable = prevCls.getDefaultObject().getVTable()
+  var objIter = makeFRawObjectIterator()
+  for it in objIter.items():
+    let obj = it.get()
+    if obj.getVTable() == oldVTable:
+      setVTable(obj, newVTable)
+
+proc updateVTableStatic*[T](prevCls:UClassPtr) : void =
+  var tempObjectForVTable = constructFromVTable(vtableConstructorStatic[T])
+  let newVTable = tempObjectForVTable.getVTable()
+  updateVTable(prevCls, newVTable)
+
+
 #rename these to register
 proc getFnGetForUClass[T](ueType:UEType) : UPackagePtr->UFieldPtr = 
 #    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
     proc toReturn (pgk:UPackagePtr) : UFieldPtr = #the UEType changes when functions are added
         var ueType = getGlobalEmitter().emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
         let clsConstructor = ueEmitter.clsConstructorTable.tryGet(ueType.name).map(x=>x.fn).get(defaultConstructorStatic[T])
-        ueType.emitUClass[:T](pgk, ueEmitter.fnTable, clsConstructor)
+        let vtableConstructor = vtableConstructorStatic[T]
+        ueType.emitUClass[:T](pgk, ueEmitter.fnTable, clsConstructor, vtableConstructor)
     toReturn
     
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
     ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
 
-proc addEmitterInfo*[T](ueType:UEType) : void =  
+proc addEmitterInfoForClass*[T](ueType:UEType) : void =  
     addEmitterInfo(ueType, getFnGetForUClass[T](ueType))
-
+  
 proc addStructOpsWrapper*(structName : string, fn : UNimScriptStructPtr->void) = 
     ueEmitter.setStructOpsWrapperTable.add(structName, fn)
 
-proc addClassConstructor*(clsName:string, classConstructor:UClassConstructor, hash:string) : void =  
-    let ctorInfo = CtorInfo(fn:classConstructor, hash:hash, className: clsName)
+proc addClassConstructor*[T](clsName:string, classConstructor:UClassConstructor, hash:string) : void =  
+    let ctorInfo = CtorInfo(fn:classConstructor, hash:hash, className: clsName) 
+                    # vtableConstructor: vtableConstructorStatic[T], updateVTableForType: updateVTableStatic[T])
     if not ueEmitter.clsConstructorTable.contains(clsName):
         ueEmitter.clsConstructorTable.add(clsName, ctorInfo)
     else:
@@ -197,8 +218,16 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
 
 
                 if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated
+                    let prevCls = prevClassPtr.get()
                     let ctor = ueEmitter.clsConstructorTable.tryGet(emitter.ueType.name)
-                    prevClassPtr.get().setClassConstructor(ctor.map(ctor=>ctor.fn).get(defaultConstructor))
+                    prevCls.setClassConstructor(ctor.map(ctor=>ctor.fn).get(defaultConstructor))
+                    #We update the prev class pointer to hook the new vfuncs in the new objects
+                    #we traverse all the object and update the vtable
+                    # let vtableCtor = ueEmitter.clsVTableCtorHelperTable.tryGet(emitter.ueType.name)
+                    # prevCls.classVTableHelperCtorCaller = vtableCtor.get()
+                    # let updateVTable = ueEmitter.updateVTableForTypeTable.tryGet(emitter.ueType.name)
+                    # updateVTable.get()(prevCls)
+                    
 
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
@@ -272,7 +301,7 @@ proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
-                addEmitterInfo(typeDefAsNode, getFnGetForUClass[name](typeDefAsNode))
+                addEmitterInfoForClass[name](typeDefAsNode)
 
     addCppClass(typeDef.toCppClass())
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
@@ -526,9 +555,9 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             fnBody
             postConstructor(initName) #inits any missing comp that the user hasnt set
     
-    let ctorRes = genAst(fnName, typeLiteral, hash=newStrLitNode($hash(repr(ctorImpl)))):
+    let ctorRes = genAst(typeIdent, fnName, typeLiteral, hash=newStrLitNode($hash(repr(ctorImpl)))):
         #add constructor to constructor table
-        addClassConstructor(typeLiteral, fnName, hash)
+        addClassConstructor[typeIdent](typeLiteral, fnName, hash)
 
     result = nnkStmtList.newTree(ctorImpl, ctorRes)
 
