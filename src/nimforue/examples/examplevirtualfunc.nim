@@ -28,14 +28,11 @@ import std/[macros, sequtils, strutils, typetraits]
   [x] const ptr in params
   [ ] multiple fields with the same type
 
-  [ ] Reinstance.
-  [ ] Skip vtable update for now
+  [-] Skip vtable update for now (almost there)
   
-  [] Should fnImpl be a var so we can replace it in the next execution?
-  [] When adding a vfunction should reinstance the Actor
+  [x] When adding a vfunction should reinstance the Actor
   
-
-  [] Move into the gamedll (just import this actor from there)
+  [x] Move into the gamedll (just import this actor from there)
   [] Interfaces
 
   [x] Generics params arity of one
@@ -59,45 +56,9 @@ uClass ANimBeginPlayOverrideActor of AActor:
     test4: FString 
   
   ufuncs(CallInEditor):
-   
-    proc printFnSize() = 
-      proc getSize() : int {.importcpp:"sizeof(&ANimBeginPlayOverrideActor::BeginPlay)".}
-      UE_Log "Size of BeginPlay is " & $getSize()
-      UE_Log "Size of pointer is " & $sizeof(pointer)
-
-    proc replaceCanEditChange() = 
-
-      let nimClasses = getAllClassesFromModule("Nim")
-      for c in nimClasses:
-        if "NimBeginPlay" in c.getName() and "Child" notin c.getName():
-          UE_Log "Class " & $c.getName()
+  
     proc updateVTable() = 
       updateVTableStatic[ANimBeginPlayOverrideActor](self.getClass())
-    proc iterateOverAllUObjects() = #NEXT Try this out directly in emit
-      #NEXT MAKE IT COMPILE AND TEST IT. THIS MUST BE THE WAY TO GO.
-      var objIter = makeFRawObjectIterator()
-
-      proc makeANimBeginPlayOverrideActor(helper : var FVTableHelper): UObjectPtr {.cdecl.} = 
-        # newInstanceWithVTableHelper[ANimBeginPlayOverrideActor](n"Test", helper)
-        newInstanceWithVTableHelper[ANimBeginPlayOverrideActor](helper)
-        
-      # {.emit:"FVTableHelper Helper = FVTableHelperNim();".}
-      # {.emit:"ANimBeginPlayOverrideActor Test = ANimBeginPlayOverrideActor(Helper);".}
-      # {.emit:"ANimBeginPlayOverrideActor* TestPtr = &Test;".}
-      var vtableConstructor : VTableConstructor = makeANimBeginPlayOverrideActor
-      var tempObjectForVTable = constructFromVTable(vtableConstructor)
-      let newVTable = tempObjectForVTable.getVTable()
-      var cls = getClassByName("NimBeginPlayOverrideActor")
-      cls.classVTableHelperCtorCaller = vtableConstructor
-      let oldVTable = cls.getDefaultObject().getVTable()
-      for it in objIter.items():
-        let obj = it.get()
-        
-        if obj.getVTable() == oldVTable:
-          setVTable(obj, newVTable)
-          # cast[ptr pointer](obj)[] = newVTable
-          UE_Log "Object has the same vtable as the actor"
-          UE_Log "Object " & $obj.getName() 
           
 
   override:
@@ -109,13 +70,13 @@ uClass ANimBeginPlayOverrideActor of AActor:
       UE_Warn "post duplicated called update !"
     proc preEditChange(p : FPropertyPtr) : void = 
       self.super(p)
-      UE_Warn "PreEditChange called update?1" & p.getName()
+      UE_Warn "PreEditChange called update?2   " & p.getName()
     proc postLoad() : void = 
       self.super()
       UE_Warn "PostLoad called once"
 
     proc isListedInSceneOutliner() : bool {. constcpp .} = 
-      UE_Log "IsListedInSceneOutliner called in the parent"
+      UE_Log "IsListedInSceneOutliner called in the parent. Reinstanced?"
       self.super()
     proc getLifeSpan() : float32 {. constcpp .} = 
       UE_Log "GetLifeSpan called in the parent" & $self.super()
@@ -144,7 +105,6 @@ uClass ANimBeginPlayOverrideActor of AActor:
     proc getLifetimeReplicatedProps(outLifetimeProps : var TArray[FLifetimeProperty]) {.constcpp.} = 
       self.super(outLifetimeProps)
       UE_Warn "GetLifetimeReplicatedProps called !"
-
 
     proc getCustomIconName() : FName {. constcpp .} = 
       # UE_Log "GetCustomIconName called in the parent"

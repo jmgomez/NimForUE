@@ -43,7 +43,7 @@ func funParamToCallWithModifiers(param:CppParam) : string =
 func funParamsToCallWithModifiers(fn:CppFunction) : string = fn.params.map(funParamToCallWithModifiers).join(", ")
 func funParamsToCall(fn:CppFunction) : string = fn.params.mapIt(it.name).join(", ")
 
-func `$`*(cppCls: CppClassType): string =
+func toStr*(cppCls: CppClassType): string =
   func funcForwardDeclare(fn:CppFunction) : string = 
     let constModifier = if fn.modifiers == cmConst: "const" else: ""
     let superReturn = if fn.returnType == "void": "" else: "return "
@@ -72,6 +72,9 @@ public:
 {funcs}
   }};
   """
+
+
+func `$`*(cppCls: CppClassType): string = toStr(cppCls)
 
 func `$`*(cppHeader: CppHeader): string =
   let includes = cppHeader.includes.mapIt(&"#include \"{it}\"").join("\n")
@@ -151,10 +154,10 @@ var emittedClasses* {.compileTime.} = newSeq[string]()
 #   else:
 #     CppClass(name: name, kind: cckClass, parent: parent, functions: @[])
 
-# const header = "UEGenClassDefs.h"
-# static:
-#   when defined(game):
-#     cppHeader.includes.add header
+const header = "UEGenClassDefs.h"
+static:
+  when defined(game):
+    cppHeader.includes.add header
 
 
 #Only function overrides
