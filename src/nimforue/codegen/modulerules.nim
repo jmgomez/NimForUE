@@ -20,7 +20,7 @@ const ManuallyImportedClasses* = @[
       "UInputAction",
       "UPlayerInput",
       "UEnhancedPlayerInput",
-      "APawn","UPhysicalMaterial", 
+      "UPhysicalMaterial", 
       "UTickableWorldSubsystem",
       "UGameViewportClient",
       "UNavigationSystemConfig","UNavigationSystemModuleConfig"

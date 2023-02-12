@@ -62,7 +62,7 @@ proc getFnGetForUClass[T](ueType:UEType) : UPackagePtr->UFieldPtr =
 #    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
     proc toReturn (pgk:UPackagePtr) : UFieldPtr = #the UEType changes when functions are added
         var ueType = getGlobalEmitter().emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
-        let clsConstructor = ueEmitter.clsConstructorTable.tryGet(ueType.name).map(x=>x.fn).get(defaultConstructorStatic[T])
+        let clsConstructor = defaultConstructorStatic[T]# ueEmitter.clsConstructorTable.tryGet(ueType.name).map(x=>x.fn).get(defaultConstructorStatic[T])
         let vtableConstructor = vtableConstructorStatic[T]
         ueType.emitUClass[:T](pgk, ueEmitter.fnTable, clsConstructor, vtableConstructor)
     toReturn
@@ -884,7 +884,6 @@ func getCppTypeFromParamType(paramType:NimNode) : string =
 
 func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
   assert identDef.kind == nnkIdentDefs
-  debugEcho treeRepr identDef
 
   let name = 
     case identDef[0].kind:
@@ -921,7 +920,7 @@ func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
 #TODO implement forwards
 func overrideImpl(fn : NimNode, className:string) : (CppFunction, NimNode) =
   let cppFunc = getCppFunctionFromNimFunc(fn)
-  debugEcho treeRepr fn
+#   debugEcho treeRepr fn
   let paramsWithoutConst = fn.params.children.toSeq.filterIt(it.kind == nnkIdentDefs).map(removeConstFromParam)
   fn.params = nnkFormalParams.newTree(fn.params[0] & paramsWithoutConst)
   (cppFunc, genOverride(fn, cppFunc, className))

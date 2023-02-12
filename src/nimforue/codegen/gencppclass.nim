@@ -142,7 +142,7 @@ func genOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNode =
       fn
       {.emit: toEmit.}
   result = override
-  debugEcho result.repr
+  # debugEcho result.repr
 
 #TODO change this for macro cache
 var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h"])
