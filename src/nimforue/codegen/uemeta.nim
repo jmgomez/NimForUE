@@ -146,6 +146,8 @@ func isNimTypeInAffectedTypes(nimType: string, affectedTypes: seq[string]): bool
         typ.removeLastLettersIfPtr() == nimType.removeLastLettersIfPtr() or
         typ == nimType.extractTypeFromGenericInNimFormat("TObjectPtr") or
         typ == nimType.extractTypeFromGenericInNimFormat("TArray") or
+        typ == nimType.extractTypeFromGenericInNimFormat("TSubclassOf") or
+        typ == nimType.extractTypeFromGenericInNimFormat("TScriptInterface") or
         typ in nimType.extractKeyValueFromMapProp()
 
       )
@@ -231,8 +233,8 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField
 
 
   func createFunField(params:seq[UEField]) : UEField = 
-    {.cast(nosideEffect).}:
-      UE_Warn &"Creating function {fnNameNim} with params {params}"
+    # {.cast(nosideEffect).}:
+      # UE_Warn &"Creating function {fnNameNim} with params {params}"
     let funMetadata = ufun.getMetadataMap().ueMetaToNueMeta()
     var fnField = makeFieldAsUFun(fnNameNim, params, className, ufun.functionFlags, funMetadata)
     fnField.actualFunctionName = actualName
@@ -257,7 +259,7 @@ func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField
   if ((ufun.isBpExposed()) or uerImportBlueprintOnly notin rules):
     funFields
   else:
-    UE_Error &"Function {ufun.getName()} is not exposed to blueprint"
+    # UE_Error &"Function {ufun.getName()} is not exposed to blueprint"
     newSeq[UEField]()
 
 func tryParseJson[T](jsonStr: string): Option[T] =
@@ -553,7 +555,6 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     .foldl(a & b, newSeq[string]()) & includeDeps)
     .deduplicate()
     .filterIt(it != name and it notin excludeDeps)
-
   #TODO Per module add them to a virtual module
   let excludedTypes = types.filterIt(it.getModuleNames(pkg, excludeFromModuleNames).any(modName => modName in excludeDeps))
   for t in excludedTypes:

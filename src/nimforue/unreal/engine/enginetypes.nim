@@ -11,6 +11,8 @@ type
     gameViewport* {.importcpp:"GameViewport"}: UGameViewportClientPtr
 
   UEnginePtr* {.importcpp, pure .} = ptr UEngine
+  # UGameEngine* {.importcpp, pure .} = object of UEngine
+  # UGameEnginePtr* {.importcpp, pure .} = ptr UGameEngine
 
   USubsystem* {.importcpp, pure .} = object of UObject
   USubsystemPtr* {.importcpp, pure .} = ptr USubsystem
@@ -44,12 +46,12 @@ type
   AGameModeBasePtr* = ptr AGameModeBase
   AGameMode* {.importcpp, inheritable, pure .}= object of AGameModeBase
   AGameModePtr* = ptr AGameMode
-  AGameSession* {.importcpp, inheritable, pure .}= object of AInfo
-  AGameSessionPtr* = ptr AGameSession
+  # AGameSession* {.importcpp, inheritable, pure .}= object of AInfo
+  # AGameSessionPtr* = ptr AGameSession
 
 
-  AWorldSettings* {.importcpp, inheritable, pure .}= object of AInfo
-  AWorldSettingsPtr* = ptr AWorldSettings
+  # AWorldSettings* {.importcpp, inheritable, pure .}= object of AInfo
+  # AWorldSettingsPtr* = ptr AWorldSettings
 
   UActorComponent* {.importcpp, inheritable, pure .} = object of UObject
   UActorComponentPtr* = ptr UActorComponent
@@ -82,13 +84,17 @@ type
   ASceneCapture* {.importcpp, inheritable, pure .} = object of AActor
   ASceneCapturePtr* = ptr ASceneCapture
 
+
+
+  # UAssetManager* {.importcpp, inheritable, pure .} = object of UObject
+  # UAssetManagerPtr* = ptr UAssetManager
   # UDataAsset* {.importcpp, inheritable, pure .} = object of UObject
   # UDataAssetPtr* = ptr UDataAsset
 
   AVolume* {.importcpp, inheritable, pure .} = object of UObject
   AVolumePtr* = ptr AVolume
-  APhysicsVolume* {.importcpp, inheritable, pure .} = object of AVolume
-  APhysicsVolumePtr* = ptr APhysicsVolume
+  # APhysicsVolume* {.importcpp, inheritable, pure .} = object of AVolume
+  # APhysicsVolumePtr* = ptr APhysicsVolume
   
   UAudioComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
   UAudioComponentPtr* = ptr UAudioComponent
@@ -107,10 +113,10 @@ type
 
   FWorldContext* {.importcpp, pure .} = object
   
-  FBoneReference* {.importcpp, pure .} = object
-    boneName* {.importcpp: "BoneName".}: FName
-    boneIndex* {.importcpp: "BoneIndex".}: int32
-    bUseSkeletonIndex* {.importcpp.}: bool
+  # FBoneReference* {.importcpp, pure .} = object
+  #   boneName* {.importcpp: "BoneName".}: FName
+  #   boneIndex* {.importcpp: "BoneIndex".}: int32
+  #   bUseSkeletonIndex* {.importcpp.}: bool
 
 
   FWorldContextPtr* = ptr FWorldContext
@@ -141,28 +147,28 @@ type
   FGameplayTag* {.importcpp, pure.} = object
     tag* {.importcpp: "Tag".}: FName
   # UDeveloperSettings* {.importcpp .} = object of UObject
-  UEdGraph* {.importcpp .} = object of UObject
-  UEdGraphPtr* = ptr UEdGraph
-  UEdGraphNode* {.importcpp .} = object of UObject
-  UEdGraphNodePtr* = ptr UEdGraphNode
+  # UEdGraph* {.importcpp .} = object of UObject
+  # UEdGraphPtr* = ptr UEdGraph
+  # UEdGraphNode* {.importcpp .} = object of UObject
+  # UEdGraphNodePtr* = ptr UEdGraphNode
 
 
   # UStreamableRenderAsset* {.importcpp, inheritable, pure .} = object of UObject
   # UStreamableRenderAssetPtr* = ptr UStreamableRenderAsset
 
-  UHandlerComponentFactory* {.importcpp .} = object of UObject
-  UHandlerComponentFactoryPtr* = ptr UHandlerComponentFactory
+  # UHandlerComponentFactory* {.importcpp .} = object of UObject
+  # UHandlerComponentFactoryPtr* = ptr UHandlerComponentFactory
   #Is not the type above part of CoreUObject? 
   UPackageMap* {.importcpp .} = object of UObject
   UPackageMapPtr* = ptr UPackageMap
   #Probably these are forward decls?
-  UMeshDescriptionBaseBulkData* {.importcpp .} = object of UObject
-  UMeshDescriptionBaseBulkDataPtr* = ptr UMeshDescriptionBaseBulkData
+  # UMeshDescriptionBaseBulkData* {.importcpp .} = object of UObject
+  # UMeshDescriptionBaseBulkDataPtr* = ptr UMeshDescriptionBaseBulkData
   ULandscapeGrassType* {.importcpp .} = object of UObject
   ULandscapeGrassTypePtr* = ptr ULandscapeGrassType
 
-  UBlendProfile* {.importcpp, pure .} = object of UObject
-  UBlendProfilePtr* = ptr UBlendProfile
+  # UBlendProfile* {.importcpp, pure .} = object of UObject
+  # UBlendProfilePtr* = ptr UBlendProfile
 
 
   TFieldPath* {.importcpp .} = object
@@ -171,12 +177,12 @@ type
 
   UPlayer* {.importcpp, pure, inheritable .} = object of UObject
   UPlayerPtr* = ptr UPlayer
-  ULocalPlayer* {.importcpp, pure, inheritable .} = object of UPlayer
-  ULocalPlayerPtr* = ptr ULocalPlayer
+  # ULocalPlayer* {.importcpp, pure, inheritable .} = object of UPlayer
+  # ULocalPlayerPtr* = ptr ULocalPlayer
 
   #This is just part of the non blueprint exposed api
-  ULayer* {.importcpp, pure, inheritable .} = object of UObject
-  ULayerPtr* = ptr ULayer
+  # ULayer* {.importcpp, pure, inheritable .} = object of UObject
+  # ULayerPtr* = ptr ULayer
 
 
   FPlatformUserId* {.importc .} = object
@@ -260,18 +266,18 @@ type
   # UDataLayer* {.importcpp, inheritable, pure .} = object of UObject
   # UDataLayerPtr* = ptr UDataLayer
   
-  UUserDefinedStruct* {.importcpp, inheritable, pure .} = object of UScriptStruct
-  UUserDefinedStructPtr* = ptr UUserDefinedStruct
+  # UUserDefinedStruct* {.importcpp, inheritable, pure .} = object of UScriptStruct
+  # UUserDefinedStructPtr* = ptr UUserDefinedStruct
   UNavigationSystemModuleConfig* {.importcpp, inheritable, pure .} = object of UObject
   UNavigationSystemModuleConfigPtr* = ptr UNavigationSystemModuleConfig
   UNavigationSystemConfig* {.importcpp, inheritable, pure .} = object of UObject
   UNavigationSystemConfigPtr* = ptr UNavigationSystemConfig
 
 
-  FNavAgentSelector* {.importcpp .} = object
+  # FNavAgentSelector* {.importcpp .} = object
   FKConvexElem* {.importcpp .} = object
 
-  FRichCurve* {.importcpp .} = object
+  # FRichCurve* {.importcpp .} = object
 type
   # FSlateBrush*  = object
     
@@ -289,6 +295,7 @@ type
     # margin*: FMargin
     ImageSize*: FVector2D
   # FMovieSceneSequenceID* {.importcpp.} = object
+  # FTextBlockStyle* {.importcpp.} = object
 
    
 
@@ -431,6 +438,10 @@ proc removeGlobalEditorKeyPressed*(handle: FDelegateHandle) =
     FSlateApplication::Get().OnApplicationPreInputKeyDownListener().Remove(handle);
   """.}
 
+
+type 
+  EAxisList* {.size: sizeof(uint8), importcpp:"EAxisList::Type", pure.} = enum
+    None, X, Y, Z, X_Neg, Y_Neg, Z_Neg, EAxisList_MAX
 
 
 

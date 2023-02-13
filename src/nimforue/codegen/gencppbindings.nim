@@ -10,6 +10,7 @@ macro importAllBindings() : untyped =
         walkDir(exportBindingsPath)
         .toSeq()
         .filterIt(it[0] == pcFile and it[1].endsWith(".nim"))
+        .filterIt(not it[1].contains("blueprintgraph_unrealed"))
         .mapIt(it[1].split(PathSeparator)[^1].replace(".nim", ""))
               
   func importStmts(modName:string) : NimNode =

@@ -264,7 +264,15 @@ uClass AActorCodegen of AActor:
      
       executeTaskInTaskGraph(2, ffiWraper)   
 
-    
+    proc showModuleDeps() = 
+      let pkg = tryGetPackageByName(self.moduleName)
+      if pkg.isNone():
+        UE_Error &"Cant find any module with {self.moduleName} name"
+        return
+      let modules = pkg.get.toUEModule(@[], @[], @[])
+      if modules.any():
+        UE_Log $modules[0].dependencies
+
     proc showUEModule() = 
       let pkg = tryGetPackageByName(self.moduleName)
       let rules = 

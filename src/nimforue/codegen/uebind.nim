@@ -84,8 +84,10 @@ func nimToCppConflictsFreeName*(propName:string) : string =
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
     let reservedKeywords = ["object", "method", "type", "interface", "var", "in", "out", "end", "bLock", "from", "enum", "template"] 
+    let reservedToCapitalize = ["bool"]
     let startsWithUnderscore = propName[0] == '_'
     if propName in reservedKeywords or startsWithUnderscore: &"`{propName}`" 
+    elif propName in reservedToCapitalize: propName.firstToUpper()
     elif propName == "result": "Result"
     else: propName
 

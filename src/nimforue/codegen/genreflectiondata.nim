@@ -10,6 +10,7 @@ proc getGameModules*(): seq[string] =
     let projectJson = readFile(GamePath).parseJson()
     let modules = projectJson["Modules"]
                     .mapIt(it["Name"].jsonTo(string))
+                   
     return modules
   except:
     let e : ref Exception = getCurrentException()
@@ -44,19 +45,42 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
 
   proc getUEModuleFromModule(module: string): Option[UEModule] =
     #TODO adds exclude deps as a rule per module
-    var excludeDeps = @["CoreUObject"]
+    #TODO make this a rule
+    #this will try to generate a virtual module (not for coreuobject)
+    var excludeDeps = @["CoreUObject", "LyraGame"] ##why it ends up here? Are they overrding type names? Need to do full qualified names
     if module == "Engine": #TODO this exclude deps should be a rule
       excludeDeps.add "UMG"
       excludeDeps.add "Chaos"
       excludeDeps.add "AudioMixer"
       discard
+    if module == "UnrealEd":
+      excludeDeps.add "DataLayerEditor"
+      discard
+    if module == "BlueprintGraph":
+      excludeDeps.add "UnrealEd"
+      discard
+    if module == "MovieSceneTools":
+      excludeDeps.add "LevelSequence"
+      discard
+   
 
-
+#TODO make this a rule
     var includeDeps = newSeq[string]() #MovieScene doesnt need to be bound
     if module == "MovieScene":
       includeDeps.add "Engine"
+    if module == "MovieSceneTracks":
+      includeDeps.add "Constraints"
+      includeDeps.add "MovieSceneTools"
+    
+    if module == "GameFeatures":
+      includeDeps.add "DataRegistry" #TODO investigate why it isnt being pulled
+
+    if module == "GameplayAbilitiesEditor":
+      includeDeps.add "GameplayAbilities"
+
 
     #By default all modules that are not in the list above will only export BlueprintTypes
+    #Update: Not anymore #TODO code to be deleted once this is working 
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
     
     let rules = 
@@ -65,7 +89,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
       elif module in extraNonBpModules: 
         @[codeGenOnly]
       else: 
-        @[bpOnlyRules, codeGenOnly]
+        @[codeGenOnly]
 
 
     if module notin modCache: #if it's in the cache the virtual modules are too.
@@ -85,8 +109,12 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
 
 
   proc getDepsFromModule(modName:string, currentLevel=0) : seq[string] = 
-    if currentLevel > 5: 
-      UE_Warn &"Reached max level for {modName}. Breaking the cycle"
+    if modName in modCache:
+        return modCache[modName].dependencies
+    const maxLevel = 5
+    if currentLevel > maxLevel: 
+      UE_Log &"Reached max level ({maxLevel}) for {modName}. Breaking the cycle"
+      UE_Warn &"Current Module {modName}. Current module cache: {modCache.keys.toSeq()}"
       return @[]
     # UE_Log &"Getting deps for {modName}"
     let deps = getUEModuleFromModule(modName).map(x=>x.dependencies).get(newSeq[string]())
@@ -202,6 +230,10 @@ proc execBindingGeneration*(shouldRunSync:bool) {.cdecl.}=
     discard
 
   let plugins = getAllInstalledPlugins()
+  
   let gameModules = getGameModules()
+  UE_Warn &"Plugins: {plugins}"
+  UE_Warn &"Game Modules: {gameModules}"
+  
   # executeTaskInTaskGraph[ptr NimForUEConfig](config.unsafeAddr, ffiWraper)
   genUnrealBindings(gameModules, plugins, shouldRunSync)

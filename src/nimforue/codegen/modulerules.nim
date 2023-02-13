@@ -5,7 +5,7 @@ import ../utils/utils
 
 const ManuallyImportedClasses* = @[ 
   #we could have this list being generated automatically by using a pragma on the imported cpp
-      "AActor", "UReflectionHelpers", "UObject",
+      "AActor", "AInfo", "UReflectionHelpers", "UObject", "UEngine", 
       "UField", "UStruct", "UScriptStruct", "UPackage",
       "UClass", "UFunction", "UDelegateFunction",
       "UEnum", "AVolume", "UInterface", "USoundWaveProcedural",
@@ -108,12 +108,17 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 
 #Any module not picked by default.
 #This could be exposed to the json file 
-let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry", "NavigationSystem", "Niagara", "ControlRig"]
+let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry", "NavigationSystem", "Niagara", "NiagaraShader", 
+"Constraints", "MovieSceneTools",
+"ControlRig", "DataLayerEditor", "DataRegistry", "ActorLayerUtilities"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
 #TODO add a hook to the user
-let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "AssetRegistry", "CommonUI", "CommonInput", 
-"NavigationSystem", "DungeonArchitectRuntime", "NiagaraCore"]
+let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "AssetRegistry", "CommonUI", "CommonInput", "AudioMixer",
+"NavigationSystem", "DungeonArchitectRuntime", "NiagaraCore", "GameSettings", "CommonGame",  "SignificanceManager", "Gauntlet",
+"GameFeatures", "DataRegistry", "CommonConversationRuntime","BlueprintGraph", "Chaos",  "PhysicsUtilities", "AnimationCore",
+"ActorLayerUtilities", "NiagaraEditor", "NiagaraShader", "DataLayerEditor", "Water",
+"GameplayAbilities", "ModularGameplay", "LyraGame"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
@@ -137,6 +142,7 @@ moduleImportRules["Engine"] = @[
     codegenOnly, 
     makeImportedRuleType(uerIgnore, @[
     "FVector", "FSlateBrush",
+    "FVector_NetQuantize10", "FVector_NetQuantize100", "FVector_NetQuantizeNormal",
     "FHitResult","FActorInstanceHandle",
     #issue with a field name 
     "FTransformConstraint", 
@@ -146,10 +152,13 @@ moduleImportRules["Engine"] = @[
     # "UKismetMathLibrary", #issue with the funcs?,
     "FOnTemperatureChangeDelegate", #Mac gets stuck here?,
     # "UParticleSystem", #collision with a function name and Cascade is deprecated, use Niagara instead.
+    "UNetFaultConfig",
     ]), 
     # makeImportedRuleModule(uerIgnoreHash),
     
   makeImportedRuleField(uerIgnore, @[
+    "FOnTemperatureChangeDelegate",
+    "FChaosPhysicsSettings",
     "PerInstanceSMCustomData", 
     "PerInstanceSMData",
     # "ObjectTypes",
@@ -174,12 +183,16 @@ moduleImportRules["Engine"] = @[
     "UAudioLinkSettingsAbstract",
     "TFieldPath",
     "UWorld", #cant be casted to UObject
+    "USoundWaveProcedural",
 
     #KismetMathLibrary funcs:
     
 
   ]),
-  makeImportedRuleModule(uerImportBlueprintOnly),
+  # makeImportedRuleModule(uerImportBlueprintOnly),
+  #  makeImportedRuleType(uerForce, @[
+  #   "ContentBundleDescriptor", "FPrimaryAssetTypeInfo", "FPrimaryAssetRules"
+  #   ]),
   # makeVirtualModuleRule("gameplaystatics", @["UGameplayStatics"])
   # makeVirtualModuleRule("mathlibrary", @["UKismetMathLibrary"])
 ]
@@ -203,17 +216,18 @@ moduleImportRules["MovieScene"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
     "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate","FMovieSceneEvaluationTrack", "FMovieSceneSequenceID",
-    "FMovieSceneEvaluationInstanceKey"
+    "FMovieSceneEvaluationInstanceKey", "NetCore"
   ]),
   makeImportedRuleField(uerIgnore, @[
     "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
-    "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate", 
+    "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate", "NetCore",
     "TrackTemplates", "FMovieSceneSequenceID", "FMovieSceneEvaluationInstanceKey",
     "NetworkMask"
   ]),
   
   # makeImportedRuleModule(uerImportBlueprintOnly)
 ]
+
 moduleImportRules["EnhancedInput"] = @[
   codegenOnly,
   makeImportedRuleType(uerIgnore, @[
@@ -225,9 +239,9 @@ moduleImportRules["EnhancedInput"] = @[
 moduleImportRules["UMGEditor"] = @[
   codegenOnly,
   makeImportedRuleType(uerIgnore, @[
-    "UBlueprintExtension",
-    "UEdGraphSchema_K2",
-    "UAssetEditorUISubsystem",
+    # "UBlueprintExtension",
+    # "UEdGraphSchema_K2",
+    # "UAssetEditorUISubsystem",
   ]),
 
 ]
@@ -235,19 +249,26 @@ moduleImportRules["UMGEditor"] = @[
 moduleImportRules["Niagara"] = @[
   codegenOnly,
  
-  makeImportedRuleField(uerIgnore, @[
-    "ShaderScriptParametersMetadata",
-    "SimulationStageMetaData",
-    "LastCompileEvents",
-    "FNiagaraVariable",
-    "FNiagaraVariableBase"
-  ]), 
-  makeImportedRuleType(uerIgnore, @[
-    "FNiagaraVariable", #Has the Map issue when generating the compiled cpp. Need to investegate it
-    "FNiagaraVariableBase",
+  # makeImportedRuleField(uerIgnore, @[
+  #   "ShaderScriptParametersMetadata",
+  #   "SimulationStageMetaData",
+  #   "LastCompileEvents",
+  #   "FNiagaraVariable",
+  #   "FNiagaraVariableBase"
+  # ]), 
+  # makeImportedRuleType(uerIgnore, @[
+  #   "FNiagaraVariable", #Has the Map issue when generating the compiled cpp. Need to investegate it
+  #   "FNiagaraVariableBase",
    
-  ]),
+  # ]),
   # makeImportedRuleModule(uerImportBlueprintOnly)
+   
+  
+]
+moduleImportRules["MegascansPlugin"] = @[
+  codegenOnly,
+  makeImportedRuleModule(uerImportBlueprintOnly)
+   
   
 ]
 
@@ -258,8 +279,28 @@ moduleImportRules["DungeonArchitectRuntime"] = @[
   makeImportedRuleField(uerIgnore, @[
     "FFlowTilemapCoord"
   ]),
-  # makeImportedRuleModule(uerImportBlueprintOnly)
 ]
+
+moduleImportRules["AnimationLocomotionLibraryRuntime"] = @[
+  makeImportedRuleField(uerIgnore, @[
+    "AdvanceTimeByDistanceMatching", #need to introduce uerQualifiedName to avoid this (checkout also why the qualified is required)
+  ]),
+]
+moduleImportRules["MovieRenderPipelineRenderPasses"] = @[
+  makeImportedRuleField(uerIgnore, @[
+    "ActorLayers", #need to introduce uerQualifiedName to avoid this (checkout also why the qualified is required)
+  ]),
+]
+
+moduleImportRules["BlueprintGraph"] = @[ #there a triangle cycle between animgraph, blueprintgraph and unrealed (so we dont import unrel ed for the blueprint graph which is not super useful from nim)
+  makeImportedRuleType(uerIgnore, @[
+    "FBlueprintBreakpoint", "FPerBlueprintSettings", "UBlueprintEditorSettings"
+  ]), 
+  makeImportedRuleField(uerIgnore, @[
+    "FBlueprintBreakpoint", "FPerBlueprintSettings"
+  ]),
+]
+
 moduleImportRules["AnimGraphRuntime"] = @[
   makeImportedRuleType(uerIgnore, @[
     # "FAnimNode_ModifyBone"
@@ -270,15 +311,18 @@ moduleImportRules["AnimGraphRuntime"] = @[
   makeImportedRuleType(uerForce, @[
     "FAnimUpdateContext", "FAnimPoseContext", 
   ]),
-  makeImportedRuleModule(uerImportBlueprintOnly)
+  # makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
 moduleImportRules["GameplayTags"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FGameplayTag" #manually imported
   ])
- 
-  # makeImportedRuleModule(uerImportBlueprintOnly)
+]
+moduleImportRules["EditorInteractiveToolsFramework"] = @[
+  makeImportedRuleField(uerIgnore, @[
+    "EdMode" #cycle
+  ])
 ]
 
 moduleImportRules["InputCore"] = @[
@@ -291,8 +335,7 @@ moduleImportRules["InputCore"] = @[
 
 
 moduleImportRules["PhysicsCore"] = @[
-  codegenOnly,  makeImportedRuleModule(uerImportBlueprintOnly)
-
+  codegenOnly,  
 ]
 
 moduleImportRules["SequencerScripting"] = @[
@@ -303,6 +346,13 @@ moduleImportRules["SequencerScripting"] = @[
 moduleImportRules["ControlRigEditor"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
   makeImportedRuleField(uerIgnore, @["UControlRigSnapSettings", "UMovieSceneControlRigParameterSection"])
+]
+
+moduleImportRules["ControlRig"] = @[
+  makeImportedRuleModule(uerImportBlueprintOnly),
+  makeImportedRuleField(uerIgnore, @[
+    "FMovieSceneByteChannel"
+  ])
 ]
 
 
@@ -324,7 +374,7 @@ moduleImportRules["UMG"] = @[
     "SetNavigationRuleCustomBoundary",
     "SetNavigationRuleCustom",
 
-    "FTextBlockStyle", "FMovieSceneTrackIdentifier",
+    "FMovieSceneTrackIdentifier",
     "UWidgetNavigation", 
   ])
   # makeImportedRuleModule(uerImportBlueprintOnly)
@@ -338,19 +388,25 @@ moduleImportRules["SlateCore"] = @[
    makeImportedRuleField(uerIgnore, @[
     "FComboButtonStyle",
     "FFontOutlineSettings",
-    "FTextBlockStyle"
+    # "FTextBlockStyle"
   ]),
 ]
 moduleImportRules["Slate"] = @[
 
    makeImportedRuleField(uerIgnore, @[
     "FComboButtonStyle",
-    "FTextBlockStyle"
+    # "FTextBlockStyle"
   ]),
 ]
 moduleImportRules["AudioMixer"] = @[
-   makeImportedRuleModule(uerImportBlueprintOnly),
-  
+  makeImportedRuleModule(uerImportBlueprintOnly),
+]
+moduleImportRules["AudioModulationEditor"] = @[
+  makeImportedRuleModule(uerImportBlueprintOnly),
+  makeImportedRuleField(uerIgnore, @[
+    "GeneratorClass",
+    # "FTextBlockStyle"
+  ]),
 ]
 
 # moduleImportRules["DeveloperSettings"] = @[
@@ -360,11 +416,30 @@ moduleImportRules["AudioMixer"] = @[
 # ]
 
 moduleImportRules["UnrealEd"] = @[
-  makeImportedRuleModule(uerImportBlueprintOnly),
+  # makeImportedRuleModule(uerImportBlueprintOnly),
   makeImportedRuleField(uerIgnore, @[
-          "ScriptReimportHelper"
+    "ScriptReimportHelper", "ModeToolsContext", "PreviewInstance", "BlueprintFavorites", "CreateParams", "Bool",
   ])
 ]
+
+moduleImportRules["MovieSceneTools"] = @[
+  makeImportedRuleField(uerIgnore, @[
+    "BurnInOptions", "EventSections"
+  ])
+]
+
+moduleImportRules["MovieSceneTracks"] = @[
+  makeImportedRuleField(uerIgnore, @[
+    "BurnInOptions", "FMovieSceneByteChannel"
+  ])
+]
+
+moduleImportRules["LevelSequencer"] = @[
+  makeImportedRuleField(uerIgnore, @[
+    "FMovieSceneSequenceID"
+  ])
+]
+
 moduleImportRules["AudioExtensions"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
   # makeImportedRuleModule(uerIgnoreHash)
