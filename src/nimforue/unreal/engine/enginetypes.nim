@@ -164,8 +164,8 @@ type
   #Probably these are forward decls?
   # UMeshDescriptionBaseBulkData* {.importcpp .} = object of UObject
   # UMeshDescriptionBaseBulkDataPtr* = ptr UMeshDescriptionBaseBulkData
-  ULandscapeGrassType* {.importcpp .} = object of UObject
-  ULandscapeGrassTypePtr* = ptr ULandscapeGrassType
+  # ULandscapeGrassType* {.importcpp .} = object of UObject
+  # ULandscapeGrassTypePtr* = ptr ULandscapeGrassType
 
   # UBlendProfile* {.importcpp, pure .} = object of UObject
   # UBlendProfilePtr* = ptr UBlendProfile

@@ -83,7 +83,7 @@ func nimToCppConflictsFreeName*(propName:string) : string =
   if propName in reservedCppKeywords: propName.firstToUpper() else: propName
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
-    let reservedKeywords = ["object", "method", "type", "interface", "var", "in", "out", "end", "bLock", "from", "enum", "template"] 
+    let reservedKeywords = ["object", "method", "type", "interface", "var", "in", "out", "end", "bLock", "from", "enum", "template", "oR"] 
     let reservedToCapitalize = ["bool"]
     let startsWithUnderscore = propName[0] == '_'
     if propName in reservedKeywords or startsWithUnderscore: &"`{propName}`" 
@@ -251,7 +251,7 @@ func genFormalParamsInFunctionSignature(typeDef : UEType, funField:UEField, firs
           funField.signatureAsNode(identWithInject, isDefaultValueContext=true))
 
 
-func getGenFuncName(funField : UEField) : string = funField.name.firstToLow()
+func getGenFuncName(funField : UEField) : string = funField.name.firstToLow().ueNameToNimName
 #this is used for both, to generate regular function binds and delegate broadcast/execute functions
 #for the most part the same code is used for both
 #this is also used for native function implementation but the ast is changed afterwards
@@ -685,6 +685,8 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexD
       genUEnumTypeDef(typeDef, typeExposure)
     of uetDelegate:
       genDelType(typeDef, typeExposure)
+    of uetInterface:
+      newEmptyNode() #Not gen interfaces for now
 
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
 

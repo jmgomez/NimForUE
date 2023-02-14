@@ -102,7 +102,7 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
         #   UE_Log "Game lib doesnt exists, compiling it now:"
         #   let output = compileGameSyncFromPlugin()
         #   UE_Log output
-        if not isRunningCommandlet(): 
+        if not isRunningCommandlet() and timesReloaded == 0: 
           genBindingsAsync()
 
     of "game":      

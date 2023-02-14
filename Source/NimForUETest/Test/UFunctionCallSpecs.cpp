@@ -135,8 +135,8 @@ bool ShouldHandleDataType_Bool::RunTest(const FString& Parameters) {
 	Params Parms = { true, false};
 	
 	
-	bool ExpectedResult = TestObject->OR(Parms.A, Parms.B);
-	FString FunctionName = GET_FUNCTION_NAME_CHECKED(UFunctionTestObject, OR).ToString();
+	bool ExpectedResult = TestObject->OrOperation(Parms.A, Parms.B);
+	FString FunctionName = GET_FUNCTION_NAME_CHECKED(UFunctionTestObject, OrOperation).ToString();
 	UFunctionCaller::CallUFunctionOn(TestObject, FunctionName, &Parms);
 	
 	TestTrue("It's the same", Parms.Result == ExpectedResult);

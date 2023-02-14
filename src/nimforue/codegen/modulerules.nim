@@ -8,7 +8,7 @@ const ManuallyImportedClasses* = @[
       "AActor", "AInfo", "UReflectionHelpers", "UObject", "UEngine", 
       "UField", "UStruct", "UScriptStruct", "UPackage",
       "UClass", "UFunction", "UDelegateFunction",
-      "UEnum", "AVolume", "UInterface", "USoundWaveProcedural",
+      "UEnum", "AVolume", "UInterface", 
       "UActorComponent","AController","AGameMode", "AGameModeBase",
       "UBlueprint", "UBlueprintGeneratedClass",
       "APlayerController", "UAnimBlueprintGeneratedClass",
@@ -183,7 +183,7 @@ moduleImportRules["Engine"] = @[
     "UAudioLinkSettingsAbstract",
     "TFieldPath",
     "UWorld", #cant be casted to UObject
-    "USoundWaveProcedural",
+    # "USoundWaveProcedural",
 
     #KismetMathLibrary funcs:
     
@@ -213,17 +213,17 @@ E:\unreal_sources\5.1Launcher\UE_5.1\Engine\Source\Runtime\Core\Public\Container
 
 
 moduleImportRules["MovieScene"] = @[
-  makeImportedRuleType(uerIgnore, @[
-    "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
-    "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate","FMovieSceneEvaluationTrack", "FMovieSceneSequenceID",
-    "FMovieSceneEvaluationInstanceKey", "NetCore"
-  ]),
-  makeImportedRuleField(uerIgnore, @[
-    "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
-    "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate", "NetCore",
-    "TrackTemplates", "FMovieSceneSequenceID", "FMovieSceneEvaluationInstanceKey",
-    "NetworkMask"
-  ]),
+  # makeImportedRuleType(uerIgnore, @[
+  #   "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
+  #   "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate","FMovieSceneEvaluationTrack", "FMovieSceneSequenceID",
+  #   "FMovieSceneEvaluationInstanceKey", "NetCore"
+  # ]),
+  # makeImportedRuleField(uerIgnore, @[
+  #   "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
+  #   "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate", "NetCore",
+  #   "TrackTemplates", "FMovieSceneSequenceID", "FMovieSceneEvaluationInstanceKey",
+  #   "NetworkMask"
+  # ]),
   
   # makeImportedRuleModule(uerImportBlueprintOnly)
 ]

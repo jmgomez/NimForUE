@@ -240,11 +240,9 @@ uClass AActorCodegen of AActor:
       UE_Warn $obj2
 
     proc showTypeModule() = 
-      let obj = getUTypeByName[UField]("EFieldVectorType")
+      UE_Log self.inspectName.typeToModule().get("Couldnt find it. Make sure inspect name is set")
+      
 
-      UE_Log $obj
-      if not obj.isNil():
-        UE_Log $obj.getModuleName()
 
     proc searchDelByName() = 
       let obj = getUTypeByName[UDelegateFunction](self.delTypeName&DelegateFuncSuffix)

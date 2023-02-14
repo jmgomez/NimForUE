@@ -283,6 +283,12 @@ func getFirstBpExposedParent(parent: UClassPtr): UClassPtr =
 
 
 
+func toUEType*(iface: UInterfacePtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
+  #interfaces are not supported yet. They are only take into account for checking deps of a module
+  let name = "U" & iface.getName()
+  UE_Log &"Found interface {name}"
+  some UEType(name: name, kind: uetInterface) #TODO gather function signatures
+
 func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
   
   let storedUEType = 
@@ -434,6 +440,7 @@ proc getUETypeFrom(obj: UObjectPtr, rules: seq[UEImportRule] = @[]): Option[UETy
   
   convertToUEType[UClass](obj, rules)
     .chainNone(()=>convertToUEType[UScriptStruct](obj, rules))
+    .chainNone(()=>convertToUEType[UInterface](obj, rules))
     .chainNone(()=>convertToUEType[UEnum](obj, rules))
     .chainNone(()=>convertToUEType[UDelegateFunction](obj, rules))
 
@@ -455,7 +462,23 @@ func getFPropertiesFrom*(ueType: UEType, pkg:UPackagePtr): seq[FPropertyPtr] =
       .get(@[])
 
   of uetEnum: @[]
+  of uetInterface: @[]
 
+
+
+proc typeToModule*(propType: string): Option[string] =
+  #notice types are static
+  # type extract = extractTypeFromGenericInNimFormat
+  let attemptToExtractGenTypes = propType
+    .extractTypeFromGenericInNimFormat("TScriptInterface")
+    .extractTypeFromGenericInNimFormat("TSubclassOf")
+    .extractTypeFromGenericInNimFormat("TArray")
+    .extractTypeFromGenericInNimFormat("TWeakObjectPtr")
+  getUnrealTypeFromName[UStruct](attemptToExtractGenTypes.removeFirstLetter().removeLastLettersIfPtr())
+    # .chainNone(()=>getUnrealTypeFromName[UInterface]((propType.extractTypeFromGenericInNimFormat("TScriptInterface").removeFirstLetter())))
+    .chainNone(()=>getUnrealTypeFromName[UEnum](propType.extractTypeFromGenericInNimFormat("TEnumAsByte")))
+    .chainNone(()=>getUnrealTypeFromName[UStruct](propType))
+    .map((obj: UObjectPtr) => $obj.getModuleName())
 
 #returns all modules neccesary to reference the UEType
 func getModuleNames*(ueType: UEType, pkg:UPackagePtr, excludeMods:seq[string]= @[]): seq[string] =
@@ -466,11 +489,7 @@ func getModuleNames*(ueType: UEType, pkg:UPackagePtr, excludeMods:seq[string]= @
                       "bool", "FString", "TArray"
     ]
   func filterType(typeName: string): bool = typeName notin typesToSkip
-  proc typeToModule(propType: string): Option[string] =
-    getUnrealTypeFromName[UStruct](propType.removeFirstLetter().removeLastLettersIfPtr())
-      .chainNone(()=>getUnrealTypeFromName[UEnum](propType.extractTypeFromGenericInNimFormat("TEnumAsByte")))
-      .chainNone(()=>getUnrealTypeFromName[UStruct](propType))
-      .map((obj: UObjectPtr) => $obj.getModuleName())
+
 
   
 
@@ -484,11 +503,20 @@ func getModuleNames*(ueType: UEType, pkg:UPackagePtr, excludeMods:seq[string]= @
     of uetClass:
       let cls = getUTypeByName[UClass](ueType.name.removeFirstLetter())
       if cls.isNil(): @[]
-      else:
+      else: #class interfaces
         cls.interfaces.mapIt("U" & $it.class.getName())
-     
     else: @[]
 
+  let funcParamTypes = 
+    case ueType.kind:
+    of uetClass:
+      let cls = getUTypeByName[UClass](ueType.name.removeFirstLetter())
+      if cls.isNil(): @[]
+      else: #class func
+        cls.getFuncsParamsFromClass()
+          .mapIt(getNimTypeAsStr(it, nil))
+    else: @[]
+  
   let otherDeps =
     case ueType.kind:
     of uetClass: ueType.parent
@@ -498,7 +526,7 @@ func getModuleNames*(ueType: UEType, pkg:UPackagePtr, excludeMods:seq[string]= @
       .fields
       .filterIt(it.kind == uefProp and it.uePropType notin depsFromProps)
       .mapIt(it.uePropType)
-  (depsFromProps & otherDeps & fieldsMissedProps & interfaces)
+  (depsFromProps & otherDeps & fieldsMissedProps & interfaces & funcParamTypes)
     # .mapIt(getInnerCppGenericType($it.getCppType()))
     .filter(filterType)
     .map(getNameOfUENamespacedEnum)
@@ -516,12 +544,11 @@ func getModuleHeader*(module: UEModule): seq[string] =
 
 
 proc getUETypeByNameFromUE(name:string, rules:seq[UEImportRule]) : Option[UEType] = 
-  
   let obj = getUnrealTypeFromName[UStruct](name.removeFirstLetter().removeLastLettersIfPtr())
               .chainNone(()=>getUnrealTypeFromName[UEnum](name.extractTypeFromGenericInNimFormat("TEnumAsByte")))
+              .chainNone(()=>getUnrealTypeFromName[UInterface](name.extractTypeFromGenericInNimFormat("TScriptInterface").removeFirstLetter()))
               .chainNone(()=>getUnrealTypeFromName[UStruct](name))
               
-
   result = obj.map(it=>getUETypeFrom(it)).flatten()
   
 
@@ -548,7 +575,7 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     .sequence()
   
     
-  var types = initialTypes & getForcedTypes(name, rules)
+  var types = (initialTypes & getForcedTypes(name, rules)).deduplicate()
   let excludeFromModuleNames = @["CoreUObject", name]
   let deps = (types
     .mapIt(it.getModuleNames(pkg, excludeFromModuleNames))

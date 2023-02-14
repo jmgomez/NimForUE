@@ -104,7 +104,7 @@ public:
 		return Param1.Append(FString::FromInt(Test));
 	}
 	UFUNCTION()
-	bool OR(bool Param1, bool Param2) {
+	bool OrOperation(bool Param1, bool Param2) {
 		return Param1 || Param2;
 	}
 

@@ -64,6 +64,7 @@ type
         uetStruct
         uetDelegate
         uetEnum
+        uetInterface
 
     UEFieldKind* = enum
         uefProp, #this covers FString, int, TArray, etc. 
@@ -124,7 +125,8 @@ type
                 # delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way
                 delKind*: UEDelegateKind
                 outerClassName*: string #the name of the class that contains the delegate (if any)
-
+            of uetInterface:
+                discard
 
     UEModule* = object
         name* : string
@@ -307,5 +309,6 @@ func `==`*(a, b:UEType) : bool =
             a.superStruct == b.superStruct #and
             # a.structFlags == b.structFlags
         of uetEnum: true
+        of uetInterface: true
         of uetDelegate: true))
 

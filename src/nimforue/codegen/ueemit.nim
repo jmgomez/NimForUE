@@ -201,7 +201,9 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
                     hotReloadInfo.newDelegatesFunctions.add(newDelPtr.get())
                 if prevDelPtr.isSome() and newDelPtr.isSome():
                     hotReloadInfo.delegatesToReinstance.add(prevDelPtr.get(), newDelPtr.get())
-
+            of uetInterface:
+                assert false, "Interfaces are not supported yet"
+                
 
 
     #Updates function pointers (after a few reloads they got out scope)

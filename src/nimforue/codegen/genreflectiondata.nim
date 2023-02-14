@@ -52,6 +52,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
       excludeDeps.add "UMG"
       excludeDeps.add "Chaos"
       excludeDeps.add "AudioMixer"
+      excludeDeps.add "Landscape"
       discard
     if module == "UnrealEd":
       excludeDeps.add "DataLayerEditor"

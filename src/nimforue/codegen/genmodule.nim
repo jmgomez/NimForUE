@@ -155,6 +155,9 @@ proc genImportCTypeDecl*(typeDef: UEType, rule: UERule = uerNone): NimNode =
       genUEnumTypeDef(typeDef, uexImport)
     of uetDelegate: #No exporting dynamic delegates. Not sure if they make sense at all.
       genDelType(typeDef, uexImport)
+    of uetInterface:
+      error("Interfaces are not supported yet")
+      newEmptyNode()
 
 
 
@@ -189,6 +192,9 @@ proc genImportCModuleDecl*(moduleDef: UEModule): NimNode =
         typeSection.add genUEnumTypeDefBinding(typedef)
       of uetDelegate:
         typeSection.add genDelTypeDef(typeDef, uexImport)
+      of uetInterface:
+        error("Interfaces are not supported yet")
+        
 
   result.add typeSection
 
@@ -217,6 +223,8 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
       typeSection.add genUEnumTypeDefBinding(typedef)
     of uetDelegate:
       typeSection.add genDelTypeDef(typeDef, uexExport)
+    of uetInterface:
+      error("Interfaces are not supported yet")
 
   result.add typeSection
 
@@ -248,10 +256,21 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
   func getParentName(uet: UEType) : string =
     uet.parent & (if uet.parent in validCppParents: "" else: "_")
 
+  #[template<>
+struct TStructOpsTypeTraits<FMovieSceneTrackIdentifier> : public TStructOpsTypeTraitsBase2<FMovieSceneTrackIdentifier>
+{
+	enum
+	{
+		WithSerializer = true, WithIdenticalViaEquality = true
+	};
+};]#
 
+  proc classAsString(uet: UEType): string = #This will be changed on the virtual func bracn with the gen cpp type
+    "class {it.name}_ : public {getParentName(it)}{{}};\n"
+    
   let classDefs = moduleDef.types
     .filterIt(it.kind == uetClass and uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it))
-    .mapIt(&"class {it.name}_ : public {getParentName(it)}{{}};\n")
+    .map(classAsString)
     .join()
 
   func headerName (name: string): string =
@@ -303,7 +322,8 @@ proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, m
     ("<", "["),
     (">", "]"),     #Changes Gen. Some types has two levels of inherantce in cpp, that we dont really need to support
     ("::Type", ""), #Enum namespaces EEnumName::Type
-    ("::Mode", ""), #Enum namespaces EEnumName::TypeB
+    ("::Outcome", ""), #Enum namespaces EEnumName::Outcome
+    ("::Mode", ""), #Enum namespaces EEnumName::Mode
     ("::", "."),    #Enum namespace
     ("\"##", "  ##"),
     ("__DelegateSignature", ""))
