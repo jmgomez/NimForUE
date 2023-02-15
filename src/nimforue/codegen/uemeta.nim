@@ -15,8 +15,10 @@ const fnPrefixes = @["", "Receive", "K2_", "BP_"]
 func isTArray(prop: FPropertyPtr): bool = not castField[FArrayProperty](prop).isNil()
 func isTMap(prop: FPropertyPtr): bool = not castField[FMapProperty](prop).isNil()
 func isTSet(prop: FPropertyPtr): bool = not castField[FSetProperty](prop).isNil()
+func isStruct(prop: FPropertyPtr): bool = not castField[FStructProperty](prop).isNil()
 func isInterface(prop: FPropertyPtr): bool = not castField[FInterfaceProperty](prop).isNil()
 func isTEnum(prop: FPropertyPtr): bool = "TEnumAsByte" in prop.getName()
+func isTFieldPath(prop: FPropertyPtr): bool = not castField[FFieldPathProperty](prop).isNil()
 func isTObjectPtr(prop: string): bool = return "TObjectPtr" in prop
 func isTObjectPtr(prop: FPropertyPtr): bool = return "TObjectPtr" in prop.getName()
 func isDynDel(prop: FPropertyPtr): bool = not castField[FDelegateProperty](prop).isNil()
@@ -61,9 +63,18 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
     let mapProp = castField[FMapProperty](prop)
     var keyType = mapProp.getKeyProp().getCPPType()
     var valueType = mapProp.getValueProp().getCPPType()
-
-
     return fmt"TMap[{keyType.cleanCppType()}, {valueType.cleanCppType()}]"
+
+  
+  # if prop.isTFieldPath(): #they are not really supported. We just support them to interop in the bindings. Should be straighforward to add support for them
+  #   let innerField = castField[FFieldPathProperty](prop).getPropertyClass()
+  #   let innerProp = castField[FProperty](innerField.getDefaultObject())
+  #   if innerProp.isNotNil() and not innerProp.isStruct():
+  #     return &"TFieldPath[{innerProp.getNimTypeAsStr(outer)}]"
+  #   else:
+  #     return cleanCppType(prop.getCPPType())
+
+
 
   try:
     # UE_Log &"Will get cpp type for prop {prop.getName()} NameCpp: {prop.getNameCPP()} and outer {outer.getName()}"
@@ -169,10 +180,16 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
 
   if "TMap" in nimType:
     let key = nimType.extractKeyValueFromMapProp()[0]
-    let supported = @["FGuid", "FString"]
+    let supported = @["FGuid", "FString", "FName", "FLinearColor", "FGameplayTag", "FKey", "FVector"]
     if key notin supported and key[0] == 'F':
       UE_Log &"TMap with F prefix {nimType} is not supported yet. Ignoring {name} in {outer.getName()}"
       return none(UEField)
+  if "TFieldPath" in nimType:
+    return none(UEField )
+
+  #There is an issue with this type that needs further researching
+  if "TArray[FPolyglotTextData]" == nimType.strip():
+    return none(UEField)
 
   for rule in rules:
     if rule.target == uerTField and rule.rule == uerIgnore and

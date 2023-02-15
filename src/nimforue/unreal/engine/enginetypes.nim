@@ -172,7 +172,6 @@ type
   # UBlendProfilePtr* = ptr UBlendProfile
 
 
-  TFieldPath* {.importcpp .} = object
   FKey* {.importcpp .} = object
 
 
