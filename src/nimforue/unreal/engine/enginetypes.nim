@@ -275,7 +275,7 @@ type
 
 
   # FNavAgentSelector* {.importcpp .} = object
-  FKConvexElem* {.importcpp .} = object
+  # FKConvexElem* {.importcpp .} = object
 
   # FRichCurve* {.importcpp .} = object
 type

@@ -319,6 +319,7 @@ proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, m
     ("::Type", ""), #Enum namespaces EEnumName::Type
     ("::Outcome", ""), #Enum namespaces EEnumName::Outcome
     ("::Mode", ""), #Enum namespaces EEnumName::Mode
+    ("::Primitive", ""), #Enum namespaces EEnumName::Mode
     ("::", "."),    #Enum namespace
     ("\"##", "  ##"),
     ("__DelegateSignature", ""))

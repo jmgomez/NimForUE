@@ -626,7 +626,8 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     let (cycleTypes, types) = initialTypes.partition((x: UEType) => cycleMod in x.getModuleNames(pkg, excludeFromModuleNames))
     let cycleName = &"{name}_{cycleMod}"
     # UE_Error &"Module: + {name} Adding {cycleName} to {name} because it depends on {cycleMod} and {cycleTypes} is excluded"
-    virtModules.add UEModule(name: cycleName, types: cycleTypes, isVirtual: true, dependencies: deps & name & cycleMod, rules: rules)
+    if cycleTypes.len > 0: #if it doesnt have types it shouldnt be a added
+      virtModules.add UEModule(name: cycleName, types: cycleTypes, isVirtual: true, dependencies: deps & name & cycleMod, rules: rules)
 
 
   # UE_Log &"Module: + {name} Types: {types.mapIt(it.name)} Excluded types: {excludedTypes.mapIt(it.name)}"

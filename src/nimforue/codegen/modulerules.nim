@@ -180,8 +180,7 @@ moduleImportRules["Engine"] = @[
     "UWorld", #cant be casted to UObject
     # "USoundWaveProcedural",
     #KismetMathLibrary funcs:
-    
-
+   
   ]),
   
 ]
@@ -252,9 +251,7 @@ moduleImportRules["AnimGraphRuntime"] = @[
   makeImportedRuleField(uerIgnore, @[
     "FAnimNodeFunctionRef", "FInputBlendPose", "FAnimInitializationContext", "FAnimComponentSpacePoseContext"
   ]),
-  makeImportedRuleType(uerForce, @[
-    "FAnimUpdateContext", "FAnimPoseContext", 
-  ]),
+
   # makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
@@ -289,15 +286,15 @@ moduleImportRules["SequencerScripting"] = @[
 
 moduleImportRules["ControlRigEditor"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
-  makeImportedRuleField(uerIgnore, @["UControlRigSnapSettings", "UMovieSceneControlRigParameterSection"])
+  # makeImportedRuleField(uerIgnore, @["UControlRigSnapSettings", "UMovieSceneControlRigParameterSection"])
 ]
 
-moduleImportRules["ControlRig"] = @[
-  makeImportedRuleModule(uerImportBlueprintOnly),
-  makeImportedRuleField(uerIgnore, @[
-    "FMovieSceneByteChannel"
-  ])
-]
+# moduleImportRules["ControlRig"] = @[
+#   makeImportedRuleModule(uerImportBlueprintOnly),
+#   makeImportedRuleField(uerIgnore, @[
+#     "FMovieSceneByteChannel"
+#   ])
+# ]
 
 
 moduleImportRules["UMG"] = @[ 
