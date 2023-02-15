@@ -40,6 +40,7 @@ type
         uerInnerClassDelegate #Some delegates are declared withit a class and can collide. This rule is for when both are true
         uerIgnoreHash #ignore the hash when importing a module so always imports it. 
         uerForce #Force the import of a type. This is useful for types that are not exported by default but we want to import them anyway
+        uerExcludeDeps #Module deps to exclude from the module. They are in affectTypes. Module rule only
     UERuleTarget* = enum 
         uertType
         uertField
@@ -94,6 +95,11 @@ func makeVirtualModuleRule*(moduleName:string, affectedTypes:seq[string]) : UEIm
     result.affectedTypes = affectedTypes
     result.moduleName = moduleName
 
+func makeExcludeDepsRule*(modulesToExclude:seq[string]) : UEImportRule = 
+    result.rule = uerExcludeDeps
+    result.target = uertModule
+    result.affectedTypes = modulesToExclude
+
 
 
 func contains*(rules: seq[UEImportRule], rule:UERule): bool = 
@@ -122,26 +128,15 @@ let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "A
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
-  #There is one main header that pulls the rest.
-  #Every other header is in the module paths
-  # let validCppParents = []
-    # ["UObject", "AActor", "UInterface",
-    #   "AVolume", "USoundWaveProcedural",
-    #   # "AController",
-    #   "USceneComponent",
-    #   "UActorComponent",
-    #   "UBlueprint",
-    #   # "UBlueprintFunctionLibrary",
-    #   "UBlueprintGeneratedClass",
-    #   # "APlayerController",
-    #   ] #TODO this should be introduced as param
+
 const codeGenOnly* = makeImportedRuleType(uerCodeGenOnlyFields, ManuallyImportedClasses)
 
 let moduleImportRules* = newTable[string, seq[UEImportRule]]()
 moduleImportRules["Engine"] = @[
     codegenOnly, 
+    makeExcludeDepsRule(@[ "UMG", "Chaos", "AudioMixer", "Landscape", "LyraGame" ]),
     makeImportedRuleType(uerIgnore, @[
-    "FVector", "FSlateBrush", "FVector_NetQuantize10",
+    "FVector", "FSlateBrush", "FVector_NetQuantize", "FVector_NetQuantize10",
     "FVector_NetQuantize10", "FVector_NetQuantize100", "FVector_NetQuantizeNormal",
     "FHitResult","FActorInstanceHandle",
     #issue with a field name 
@@ -188,44 +183,9 @@ moduleImportRules["Engine"] = @[
     
 
   ]),
-  # makeImportedRuleModule(uerImportBlueprintOnly),
-  #  makeImportedRuleType(uerForce, @[
-  #   "ContentBundleDescriptor", "FPrimaryAssetTypeInfo", "FPrimaryAssetRules"
-  #   ]),
-  # makeVirtualModuleRule("gameplaystatics", @["UGameplayStatics"])
-  # makeVirtualModuleRule("mathlibrary", @["UKismetMathLibrary"])
+  
 ]
 
-#[some types are here because of this error:
-  It can be worked around by emitting the cpp that would implement it
-  
-    with
-        [
-            T=FMovieSceneEvaluationInstanceKey_
-        ]
-E:\unreal_sources\5.1Launcher\UE_5.1\Engine\Source\Runtime\Core\Public\Containers\Set.h(301): note: see reference to class template instantiation 'TDefaultMapHashableKeyFuncs<InKeyType,InValueType,false>' being compiled
-        with
-        [
-            InKeyType=FMovieSceneEvaluationInstanceKey_,
-            InValueType=FMovieSceneEvaluationHookEventContainer_
-        ]]#
-
-
-moduleImportRules["MovieScene"] = @[
-  # makeImportedRuleType(uerIgnore, @[
-  #   "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
-  #   "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate","FMovieSceneEvaluationTrack", "FMovieSceneSequenceID",
-  #   "FMovieSceneEvaluationInstanceKey", "NetCore"
-  # ]),
-  # makeImportedRuleField(uerIgnore, @[
-  #   "FMovieSceneByteChannel","FMovieSceneTrackIdentifier", "FMovieSceneEvaluationKey", "FMovieSceneOrderedEvaluationKey",
-  #   "FMovieSceneTemplateGenerationLedger", "FMovieSceneEvaluationTemplate", "NetCore",
-  #   "TrackTemplates", "FMovieSceneSequenceID", "FMovieSceneEvaluationInstanceKey",
-  #   "NetworkMask"
-  # ]),
-  
-  # makeImportedRuleModule(uerImportBlueprintOnly)
-]
 
 moduleImportRules["EnhancedInput"] = @[
   codegenOnly,
@@ -247,21 +207,6 @@ moduleImportRules["UMGEditor"] = @[
 
 moduleImportRules["Niagara"] = @[
   codegenOnly,
- 
-  # makeImportedRuleField(uerIgnore, @[
-  #   "ShaderScriptParametersMetadata",
-  #   "SimulationStageMetaData",
-  #   "LastCompileEvents",
-  #   "FNiagaraVariable",
-  #   "FNiagaraVariableBase"
-  # ]), 
-  # makeImportedRuleType(uerIgnore, @[
-  #   "FNiagaraVariable", #Has the Map issue when generating the compiled cpp. Need to investegate it
-  #   "FNiagaraVariableBase",
-   
-  # ]),
-  # makeImportedRuleModule(uerImportBlueprintOnly)
-   
   
 ]
 moduleImportRules["MegascansPlugin"] = @[
@@ -399,6 +344,8 @@ moduleImportRules["Slate"] = @[
 ]
 moduleImportRules["AudioMixer"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
+  makeExcludeDepsRule(@["LyraGame"]),
+
 ]
 moduleImportRules["AudioModulationEditor"] = @[
   makeImportedRuleModule(uerImportBlueprintOnly),
@@ -416,12 +363,16 @@ moduleImportRules["AudioModulationEditor"] = @[
 
 moduleImportRules["UnrealEd"] = @[
   # makeImportedRuleModule(uerImportBlueprintOnly),
+  makeExcludeDepsRule(@[ "DataLayerEditor" ]),
+
   makeImportedRuleField(uerIgnore, @[
     "ScriptReimportHelper", "ModeToolsContext", "PreviewInstance", "BlueprintFavorites", "CreateParams", "Bool",
   ])
 ]
 
 moduleImportRules["MovieSceneTools"] = @[
+  makeExcludeDepsRule(@[ "LevelSequence" ]),
+
   makeImportedRuleField(uerIgnore, @[
     "BurnInOptions", "EventSections"
   ])

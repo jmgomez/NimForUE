@@ -35,7 +35,7 @@ func `==`*(a,b: FVector): bool {.importcpp:"# == #", noSideEffect.}
 
 
 type 
-  # FVector_NetQuantize*{.importcpp, inheritable } = object of FVector #Better in net related stuff
+  FVector_NetQuantize*{.importcpp, inheritable } = object of FVector #Better in net related stuff
   FVector_NetQuantizeNormal*{.importcpp, inheritable } = object of FVector 
   FVector_NetQuantize100*{.importcpp, inheritable } = object of FVector 
   FVector_NetQuantize10*{.importcpp, inheritable } = object of FVector 

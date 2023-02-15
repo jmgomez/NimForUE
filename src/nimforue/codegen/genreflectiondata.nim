@@ -44,40 +44,20 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
   var modCache = newTable[string, UEModule]()
 
   proc getUEModuleFromModule(module: string): Option[UEModule] =
-    #TODO adds exclude deps as a rule per module
-    #TODO make this a rule
-    #this will try to generate a virtual module (not for coreuobject)
-    var excludeDeps = @["CoreUObject", "LyraGame"] ##why it ends up here? Are they overrding type names? Need to do full qualified names
-    if module == "Engine": #TODO this exclude deps should be a rule
-      excludeDeps.add "UMG"
-      excludeDeps.add "Chaos"
-      excludeDeps.add "AudioMixer"
-      excludeDeps.add "Landscape"
-      discard
-    if module == "UnrealEd":
-      excludeDeps.add "DataLayerEditor"
-      discard
-    if module == "BlueprintGraph":
-      excludeDeps.add "UnrealEd"
-      discard
-    if module == "MovieSceneTools":
-      excludeDeps.add "LevelSequence"
-      discard
+  
+    var excludeDeps = @["CoreUObject"] 
+   
+      
    
 
 #TODO make this a rule
     var includeDeps = newSeq[string]() #MovieScene doesnt need to be bound
-    if module == "MovieScene":
-      includeDeps.add "Engine"
+   
     if module == "MovieSceneTracks":
-      includeDeps.add "Constraints"
       includeDeps.add "MovieSceneTools"
     
     if module == "GameFeatures":
       includeDeps.add "DataRegistry" #TODO investigate why it isnt being pulled
-
-    if module == "GameplayAbilitiesEditor":
-      includeDeps.add "GameplayAbilities"
 
 
     #By default all modules that are not in the list above will only export BlueprintTypes

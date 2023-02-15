@@ -128,7 +128,7 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
 
   #Notice we generate two set properties one for nim and the other for code gen due to cpp
   #not liking the equal in the ident name
-
+  
   result = 
     genAst(propIdent, ptrName, typeNode, className, actualGetter, actualSetter, propUEName = prop.name, typeNodeAsReturnValue):
       proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {.exportcpp.} =

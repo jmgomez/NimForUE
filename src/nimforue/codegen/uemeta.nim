@@ -598,7 +598,8 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules))
     .sequence()
   
-    
+  let moduleExcludeDeps = rules.filterIt(it.rule == uerExcludeDeps).mapIt(it.affectedTypes).foldl(a & b, newSeq[string]())
+  var excludeDeps = excludeDeps & moduleExcludeDeps
   var types = (initialTypes & getForcedTypes(name, rules)).deduplicate()
   let excludeFromModuleNames = @["CoreUObject", name]
   let deps = (types
