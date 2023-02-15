@@ -227,7 +227,8 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
       error("Interfaces are not supported yet")
 
   result.add typeSection
-
+  #here seems to be a good spot to emit the typetraits but what happens with the generated code if another type uses a tmap prop
+  
   for typeDef in moduleDef.types:
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
@@ -256,17 +257,11 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
   func getParentName(uet: UEType) : string =
     uet.parent & (if uet.parent in validCppParents: "" else: "_")
 
-  #[template<>
-struct TStructOpsTypeTraits<FMovieSceneTrackIdentifier> : public TStructOpsTypeTraitsBase2<FMovieSceneTrackIdentifier>
-{
-	enum
-	{
-		WithSerializer = true, WithIdenticalViaEquality = true
-	};
-};]#
+
 
   proc classAsString(uet: UEType): string = #This will be changed on the virtual func bracn with the gen cpp type
-    "class {it.name}_ : public {getParentName(it)}{{}};\n"
+    result = &"class {uet.name}_ : public {getParentName(uet)}{{}};\n"
+    
     
   let classDefs = moduleDef.types
     .filterIt(it.kind == uetClass and uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it))

@@ -125,12 +125,12 @@ type
     faceIndex* {.importcpp: "FaceIndex".}: int32
     time* {.importcpp: "Time".}: float32
     distance* {.importcpp: "Distance".}: float32
-    location* {.importcpp: "Location".}: FVector_NetQuantize
-    impactPoint* {.importcpp: "ImpactPoint".}: FVector_NetQuantize
+    # location* {.importcpp: "Location".}: FVector_NetQuantize
+    # impactPoint* {.importcpp: "ImpactPoint".}: FVector_NetQuantize
     normal* {.importcpp: "Normal".}: FVector_NetQuantizeNormal
     impactNormal* {.importcpp: "ImpactNormal".}: FVector_NetQuantizeNormal
-    traceStart* {.importcpp: "TraceStart".}: FVector_NetQuantize
-    traceEnd* {.importcpp: "TraceEnd".}: FVector_NetQuantize
+    # traceStart* {.importcpp: "TraceStart".}: FVector_NetQuantize
+    # traceEnd* {.importcpp: "TraceEnd".}: FVector_NetQuantize
     penetrationDepth* {.importcpp: "PenetrationDepth".}: float32
     myItem* {.importcpp: "MyItem".}: int32
     item* {.importcpp: "Item".}: int32
@@ -159,6 +159,7 @@ type
   # UHandlerComponentFactory* {.importcpp .} = object of UObject
   # UHandlerComponentFactoryPtr* = ptr UHandlerComponentFactory
   #Is not the type above part of CoreUObject? 
+  #this belogs to coreuobject
   UPackageMap* {.importcpp .} = object of UObject
   UPackageMapPtr* = ptr UPackageMap
   #Probably these are forward decls?
@@ -175,8 +176,8 @@ type
   FKey* {.importcpp .} = object
 
 
-  UPlayer* {.importcpp, pure, inheritable .} = object of UObject
-  UPlayerPtr* = ptr UPlayer
+  # UPlayer* {.importcpp, pure, inheritable .} = object of UObject
+  # UPlayerPtr* = ptr UPlayer
   # ULocalPlayer* {.importcpp, pure, inheritable .} = object of UPlayer
   # ULocalPlayerPtr* = ptr ULocalPlayer
 

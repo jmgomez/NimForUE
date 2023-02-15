@@ -6,7 +6,7 @@ import ../utils/utils
 const ManuallyImportedClasses* = @[ 
   #we could have this list being generated automatically by using a pragma on the imported cpp
       "AActor", "AInfo", "UReflectionHelpers", "UObject", "UEngine", 
-      "UField", "UStruct", "UScriptStruct", "UPackage",
+      "UField", "UStruct", "UScriptStruct", "UPackage", "UPackageMap",
       "UClass", "UFunction", "UDelegateFunction",
       "UEnum", "AVolume", "UInterface", 
       "UActorComponent","AController","AGameMode", "AGameModeBase",
@@ -141,7 +141,7 @@ let moduleImportRules* = newTable[string, seq[UEImportRule]]()
 moduleImportRules["Engine"] = @[
     codegenOnly, 
     makeImportedRuleType(uerIgnore, @[
-    "FVector", "FSlateBrush",
+    "FVector", "FSlateBrush", "FVector_NetQuantize10",
     "FVector_NetQuantize10", "FVector_NetQuantize100", "FVector_NetQuantizeNormal",
     "FHitResult","FActorInstanceHandle",
     #issue with a field name 
@@ -184,7 +184,6 @@ moduleImportRules["Engine"] = @[
     "TFieldPath",
     "UWorld", #cant be casted to UObject
     # "USoundWaveProcedural",
-
     #KismetMathLibrary funcs:
     
 

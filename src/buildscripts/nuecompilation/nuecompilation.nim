@@ -143,7 +143,7 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
   let nimCache = ".nimcache/game"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} --app:lib  -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
+  let compCmd = &"nim cpp {buildFlags} --app:lib   -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
   doAssert(execCmd(compCmd)==0)
   # setCurrentDir(PluginDir)
   copyNimForUELibToUEDir("game")

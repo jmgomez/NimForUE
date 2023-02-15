@@ -167,6 +167,13 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
     let objType = nimType.extractTypeFromGenericInNimFormat("TObjectPtr")
     nimType = nimType.replace(&"TObjectPtr[{objType}]", objType & "Ptr")
 
+  if "TMap" in nimType:
+    let key = nimType.extractKeyValueFromMapProp()[0]
+    let supported = @["FGuid", "FString"]
+    if key notin supported and key[0] == 'F':
+      UE_Log &"TMap with F prefix {nimType} is not supported yet. Ignoring {name} in {outer.getName()}"
+      return none(UEField)
+
   for rule in rules:
     if rule.target == uerTField and rule.rule == uerIgnore and
         (name in rule.affectedTypes or isNimTypeInAffectedTypes(nimType, rule.affectedTypes)):
@@ -190,7 +197,7 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
     let isSupportedDefault = nimType in supportedTypes or @["E", "A", "U"].filterIt(nimType.startsWith(it)).any()
     if ufun.hasMetadata(CPP_Default_MetadataKeyPrefix & prop.getName()) and isSupportedDefault: 
       defaultValue = ufun.getMetadata(CPP_Default_MetadataKeyPrefix & prop.getName()).get("")
-      UE_Log &"Default value for {prop.getName()} is {defaultValue} and the type is {nimType} and the flags are {prop.getPropertyFlags()}"
+      # UE_Log &"Default value for {prop.getName()} is {defaultValue} and the type is {nimType} and the flags are {prop.getPropertyFlags()}"
       
 
   
