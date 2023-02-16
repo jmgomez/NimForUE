@@ -9,7 +9,9 @@ import std/[
   strscans,
   strutils,
   sugar,
-  times
+  times,
+  jsonutils,
+  json
   ]
 
 
@@ -72,6 +74,13 @@ proc compileGuestSyncFromPlugin*() : string =
   let cmd = &"{PluginDir}/{NueExec} guest"
   let (output, _) = execCmdEx(cmd)
   output
+
+proc getGameUserConfig*() : Option[JSonNode] = 
+  let path = NimGameDir / "game.json"
+  if fileExists(path):
+    some readFile(path).parseJson()
+  else:
+    none[JSonNode]()
 
 proc executeNueTask(task: string) =
   let cmd = &"{PluginDir}/{NueExec} {task}"

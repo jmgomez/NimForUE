@@ -21,10 +21,14 @@ proc getGameModules*(): seq[string] =
 
 proc getAllInstalledPlugins*(): seq[string] =
   try:        
+    let excludePlugins = getGameUserConfig()
+        .flatMap((config:JsonNode)=>tryGetJson[seq[string]](config, "exclude"))
+        .get(@[])
     let projectJson = readFile(GamePath).parseJson()
     let plugins = projectJson["Plugins"]
                     .filterIt(it["Enabled"].jsonTo(bool))
                     .mapIt(it["Name"].jsonTo(string))
+                    .filterIt(it notin excludePlugins)
     
     return plugins
   except:
@@ -52,7 +56,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
 
 #TODO make this a rule
     var includeDeps = newSeq[string]() #MovieScene doesnt need to be bound
-   
+
     if module == "MovieSceneTracks":
       includeDeps.add "MovieSceneTools"
     

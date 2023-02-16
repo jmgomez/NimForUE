@@ -1,4 +1,4 @@
-import std/[options, strutils, sequtils, sugar, tables]
+import std/[options, strutils, sequtils, sugar, tables, json, jsonutils]
 #NOTE Do not include UE Types here
 
 type Criteria[T] = proc (t:T) : bool {.noSideEffect.}
@@ -188,3 +188,10 @@ proc deleteCpp*[T](val : ptr T ) : void  =
   if val.isNotNil():
     deleteInteral(val)
     # val = nil
+
+
+
+#JSON
+proc tryGetJson*[T](json:JsonNode, key:string) : Option[T] =
+  if json.hasKey(key): some(json[key].jsonTo(T))
+  else: none[T]()
