@@ -33,7 +33,7 @@ proc extractOuterGenericInNimFormat*(str :string) : string =
 
 proc extractInnerGenericInNimFormat*(str :string) : string =
     var generic, inner : string
-    if scanf(str, "$*[$*]", generic, inner): inner
+    if scanf(str, "$*[$*]", generic, inner): inner.appendCloseGenIfOpen()
     else: str
 
 proc extractTypeFromGenericInNimFormat*(str, outerGeneric, innerGeneric :string) : string = 

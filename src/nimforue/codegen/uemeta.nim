@@ -489,15 +489,14 @@ func getFPropertiesFrom*(ueType: UEType, pkg:UPackagePtr): seq[FPropertyPtr] =
   of uetInterface: @[]
 
 
-
 proc typeToModule*(propType: string): Option[string] =
   #notice types are static
-  # type extract = extractTypeFromGenericInNimFormat
-  let attemptToExtractGenTypes = propType
-    .extractTypeFromGenericInNimFormat("TScriptInterface")
-    .extractTypeFromGenericInNimFormat("TSubclassOf")
-    .extractTypeFromGenericInNimFormat("TArray")
-    .extractTypeFromGenericInNimFormat("TWeakObjectPtr")
+  let attemptToExtractGenTypes = propType.extractInnerGenericInNimFormat()
+  UE_Log &"Extracted {attemptToExtractGenTypes} from {propType}"
+  if attemptToExtractGenTypes.isGeneric(): #If it's a wrapper of one of the above types  
+    UE_Log &"Found generic type {propType} from {propType}"   
+    return attemptToExtractGenTypes.typeToModule()
+
   getUnrealTypeFromName[UStruct](attemptToExtractGenTypes.removeFirstLetter().removeLastLettersIfPtr())
     # .chainNone(()=>getUnrealTypeFromName[UInterface]((propType.extractTypeFromGenericInNimFormat("TScriptInterface").removeFirstLetter())))
     .chainNone(()=>getUnrealTypeFromName[UEnum](propType.extractTypeFromGenericInNimFormat("TEnumAsByte")))

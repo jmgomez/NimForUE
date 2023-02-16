@@ -115,7 +115,7 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 #Any module not picked by default.
 #This could be exposed to the json file 
 let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry", "NavigationSystem", "Niagara", "NiagaraShader", 
-"Constraints", "MovieSceneTools",
+"Constraints", "MovieSceneTools", "HoudiniEngine", "HoudiniEngineEditor",
 "ControlRig", "DataLayerEditor", "DataRegistry", "ActorLayerUtilities"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
@@ -123,7 +123,7 @@ let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "
 let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "AssetRegistry", "CommonUI", "CommonInput", "AudioMixer",
 "NavigationSystem", "DungeonArchitectRuntime", "NiagaraCore", "GameSettings", "CommonGame",  "SignificanceManager", "Gauntlet",
 "GameFeatures", "DataRegistry", "CommonConversationRuntime","BlueprintGraph", "Chaos",  "PhysicsUtilities", "AnimationCore",
-"ActorLayerUtilities", "NiagaraEditor", "NiagaraShader", "DataLayerEditor", "Water",
+"ActorLayerUtilities", "NiagaraEditor", "NiagaraShader", "DataLayerEditor", "Water", 
 "GameplayAbilities", "ModularGameplay", "LyraGame"]
 #CodegenOnly directly affects the Engine module but needs to be passed around
 #for all modules because the one classes listed here are importc one so we dont mangle them 
@@ -284,7 +284,8 @@ moduleImportRules["SequencerScripting"] = @[
   makeImportedRuleField(uerIgnore, @["UMovieSceneByteTrack"])
 ]
 
-moduleImportRules["ControlRigEditor"] = @[
+moduleImportRules["ControlRigEditor"] = @[ 
+  #There a few types float, int collisioning with cpp types so we do the importBlueprintOnly for now
   makeImportedRuleModule(uerImportBlueprintOnly),
   # makeImportedRuleField(uerIgnore, @["UControlRigSnapSettings", "UMovieSceneControlRigParameterSection"])
 ]
