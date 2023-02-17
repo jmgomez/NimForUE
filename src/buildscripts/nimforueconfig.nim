@@ -220,6 +220,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   proc getEngineRuntimeIncludeClassesPathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Classes"
   proc getEngineIntermediateIncludePathFor(moduleName:string) : string = engineDir / "Intermediate/Build" / platformDir / unrealFolder / "Inc" / moduleName
   proc getEnginePluginModule(moduleName:string) : string = enginePluginDir / moduleName / "Source" / moduleName / "Public"
+  proc getEngineRuntimePluginModule(moduleName:string) : string = enginePluginDir / "Runtime" / moduleName / "Source" / moduleName / "Public"
 
 
   let runtimeModules = @["CoreUObject", "Core", "TraceLog", "Launch", "ApplicationCore", 
@@ -243,15 +244,19 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   "EditorStyle", "EditorSubsystem","EditorFramework",
   
   ]
-  let enginePlugins = @["EnhancedInput"]
 
+  let enginePlugins = @["EnhancedInput"]
+  let engineRuntimePlugins = @["GameplayAbilities"]
+
+#Notice the header are not need for compiling the dll. We use a PCH. They will be needed to traverse the C++
   let moduleHeaders = 
     runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
     developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
     developerModules.map(module=>getEngineRuntimeIncludeClassesPathFor("Developer", module)) & #if it starts to complain about the lengh of the cmd line. Optimize here
     editorModules.map(module=>getEngineRuntimeIncludePathFor("Editor", module)) & 
     intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module)) &
-    enginePlugins.map(module=>getEnginePluginModule(module))
+    enginePlugins.map(module=>getEnginePluginModule(module)) & 
+    engineRuntimePlugins.map(module=>getEngineRuntimePluginModule(module))
 
   (essentialHeaders & moduleHeaders & editorHeaders).map(path => path.normalizedPath().normalizePathEnd())
 
@@ -275,6 +280,7 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   #We only support Debug and Development for now and Debug is Windows only
   let suffix = if conf.targetConfiguration == Debug : "-Win64-Debug" else: "" 
   proc getEngineRuntimeSymbolPathFor(prefix, moduleName:string): seq[string] =  
+    
     when defined windows:
       let dir =  engineDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / moduleName 
       if conf.withEditor:
@@ -286,17 +292,29 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
       let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
       @[engineDir / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"]
 #E:\unreal_sources\5.1Launcher\UE_5.1\Engine\Plugins\EnhancedInput\Intermediate\Build\Win64\UnrealEditor\Development\EnhancedInput
-  proc getEnginePluginSymbolsPathFor(prefix, moduleName:string): seq[string] =  
-    when defined windows:
-      let dir = engineDir / "Plugins" / moduleName / "Intermediate/Build" / platformDir / unrealFolder / confDir / moduleName 
-      if conf.withEditor:
-        @[dir / &"{prefix}-{moduleName}{suffix}.lib"]
-      else:
-        getObjFiles(dir, moduleName)
+  proc getEnginePluginSymbolsPathFor(prefix,  moduleName:string): seq[string] =  
+      when defined windows:
+        let dir = engineDir / "Plugins" / moduleName / "Intermediate/Build" / platformDir / unrealFolder / confDir / moduleName 
+        if conf.withEditor:
+          @[dir / &"{prefix}-{moduleName}{suffix}.lib"]
+        else:
+          getObjFiles(dir, moduleName)
 
-    elif defined macosx:
-      let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
-      @[engineDir / "Plugins" / moduleName / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"]
+      elif defined macosx:
+        let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
+        @[engineDir / "Plugins" / moduleName / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"]
+
+  proc getEnginePluginRuntimeSymbolsPathFor(prefix,  moduleName:string): seq[string] =  
+      when defined windows:
+        let dir = engineDir / "Plugins" / "Runtime" / moduleName / "Intermediate/Build" / platformDir / unrealFolder / confDir / moduleName 
+        if conf.withEditor:
+          @[dir / &"{prefix}-{moduleName}{suffix}.lib"]
+        else:
+          getObjFiles(dir, moduleName)
+
+      elif defined macosx:
+        let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
+        @[engineDir / "Plugins" / "Runtime"  / moduleName / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"]
 
 
   proc getNimForUESymbols(): seq[string] = 
@@ -322,6 +340,10 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   let modules = @["Core", "CoreUObject", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
   let enginePluginSymbolsPaths = @["EnhancedInput"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName)).flatten()
+  let engineRuntimePluginSymbolsPaths = @["GameplayAbilities"].map(modName=>getEnginePluginRuntimeSymbolsPathFor("UnrealEditor", modName)).flatten()
 
-  (engineSymbolsPaths & enginePluginSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
+  (engineSymbolsPaths & enginePluginSymbolsPaths &  engineRuntimePluginSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
 
+
+
+#TODO ADD RUNTIME TO THE PATH

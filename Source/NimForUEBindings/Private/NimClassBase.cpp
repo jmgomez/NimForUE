@@ -9,6 +9,7 @@
 #include "Subsystems/AssetEditorSubsystem.h"
 #endif
 
+
 UNimEnum::UNimEnum(const FObjectInitializer& Initializer) : UEnum(Initializer) {
 	SetEnumFlags(EEnumFlags::Flags);
 }

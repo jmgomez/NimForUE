@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
+
 #include "TestActor.generated.h"
 
 USTRUCT(BlueprintType)

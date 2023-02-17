@@ -29,21 +29,16 @@ public class NimForUE : ModuleRules
 	    Console.WriteLine("Linker arguments:");
 		
 	    Console.WriteLine(Target.AdditionalLinkerArguments);
-		PublicIncludePaths.AddRange(   
-			new string[] {
-				
-			}
-			);
-				
+	
+
+		PublicIncludePathModuleNames.Add("GameplayAbilities");
+	
 		
-		PrivateIncludePaths.AddRange(
-			new string[] {
-				// ... add other private include paths required here ...
-			}
-			);
-			
+		PublicDependencyModuleNames.AddRange(new string[] { 
+			"GameplayAbilities",
+			"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", 
 		
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "NavigationSystem" });
+		});
 
 
 		if (Target.bBuildEditor) {
@@ -64,9 +59,7 @@ public class NimForUE : ModuleRules
 				"NimForUEBindings",
 				
 				"Projects",
-				"EnhancedInput",
-				
-				"GameplayTags",
+			
 
 			}
 		);

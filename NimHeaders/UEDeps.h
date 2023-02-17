@@ -47,6 +47,9 @@
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+//NOTE: The includes come from NimForUEBindinds!!
+#include "GameplayAbilities/Public/AbilitySystemGlobals.h"
+
 #if WITH_EDITORONLY_DATA
   #include "Editor/UnrealEdEngine.h"
   #include "Editor/UnrealEd/Public/Editor.h"

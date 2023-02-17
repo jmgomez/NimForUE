@@ -9,7 +9,10 @@ public class NimForUEBindings : ModuleRules
 			"Engine",
 			"Projects",
 			//"UnrealEd"
-			 "InputCore", "EnhancedInput"
+			 "InputCore", 
+			 //THE PCH pulls the headers from this module. So the search paths should be in here
+			 //maybe it's a good idea to have this templated so we can add more modules. without changing the PCH
+			 "EnhancedInput", "GameplayAbilities"
 		});
 		
 
