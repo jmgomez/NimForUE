@@ -3,6 +3,7 @@ import std/[strformat, tables, times, options, sugar, json, osproc, strutils, js
 import ../codegen/[models, modulerules, genmodule, uemeta]
 import ../../buildscripts/[nimforueconfig, buildscripts]
 import modulerules
+import headerparser
 const pluginDir {.strdefine.}: string = ""
 
 proc getGameModules*(): seq[string] =
@@ -47,13 +48,11 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
   #Cache with all modules so we dont have to collect the UETypes again per deps
   var modCache = newTable[string, UEModule]()
 
+  let pchIncludes = getPCHIncludes()
+
   proc getUEModuleFromModule(module: string): Option[UEModule] =
-  
     var excludeDeps = @["CoreUObject"] 
    
-      
-   
-
 #TODO make this a rule
     var includeDeps = newSeq[string]() #MovieScene doesnt need to be bound
 
@@ -76,7 +75,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
       else: 
         @[codeGenOnly]
 
-
+   
     if module notin modCache: #if it's in the cache the virtual modules are too.
       let ueMods = tryGetPackageByName(module)
             .map((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps))
@@ -169,8 +168,8 @@ proc genBindingsAsync*() =
 proc genUnrealBindings*(gameModules, plugins: seq[string], shouldRunSync:bool) =
   try:
     let ueProject = genReflectionData(gameModules, plugins)
-    # return
-
+    
+    
     # UE_Log $ueProject
     if ueProject.modules.isEmpty():
       UE_Log "No modules to generate"

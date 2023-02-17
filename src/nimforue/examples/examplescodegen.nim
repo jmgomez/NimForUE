@@ -2,7 +2,7 @@ include ../unreal/prelude
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
 import ../codegen/uemeta
 import ../../buildscripts/nimforueconfig
-import ../codegen/[codegentemplate,modulerules, genreflectiondata]
+import ../codegen/[codegentemplate,modulerules, genreflectiondata, headerparser]
 import ../codegen/genmodule #not sure if it's worth to process this file just for one function? 
 
 
@@ -95,67 +95,6 @@ textObject}
 
 ]#
 
-
-proc getHeaderFromPath(path : string) : Option[string] = 
-  if fileExists(path):
-    some readFile(path)
-  else: none(string)
-
-proc getIncludesFromHeader(header : string) : seq[string] = 
-  let lines = header.split("\n")
-  func getHeaderFromIncludeLine(line: string) : string = 
-    line.multiReplace(@[
-      ("#include", ""),
-      ("<", ""),
-      (">", ""),
-      ("\"", ""),
-      ("\"", ""),
-    ]).strip()
-    
-  lines
-    .filterIt(it.startsWith("#include"))
-    .map(getHeaderFromIncludeLine)
-
-func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : string = 
-    var variations = @["Public"]
-    if moduleName == "Engine":
-      variations.add("Classes")
-    
-    var path = moduleRelativePath
-    for variation in variations:
-      path = path.replace(variation & "/", "")
-    path
-
-func isModuleRelativePathInHeaders(moduleName, moduleRelativePath:string, headers:seq[string]) : bool = 
-  let path = getModuleRelativePathVariations(moduleName, moduleRelativePath)
-  headers.contains(path)
-
-#returns the absolute path of all the include paths
-proc getAllIncludePaths() : seq[string] = getNimForUEConfig().getUEHeadersIncludePaths()
-
-
-
-proc getHeaderIncludesFromIncludePaths(header:string, includePaths:seq[string]) : seq[string] = 
-  for path in includePaths:
-    let headerPath = path / header
-    let header = getHeaderFromPath(headerPath)
-    if header.isSome:
-      return getIncludesFromHeader(header.get)
-  newSeq[string]()
-
-
-proc traverseAllIncludes(entryPoint:string, includePaths:seq[string], visited:seq[string], depth=0, maxDepth=3) : seq[string] = 
-  let includes = getHeaderIncludesFromIncludePaths(entryPoint, includePaths).filterIt(it notin visited)
-  let newVisited = (visited & includes).deduplicate()
-  if depth >= maxDepth:
-    return newVisited
-  includes
-    .mapIt(traverseAllIncludes(it, includePaths, newVisited, depth+1))
-    .flatten()
-
-
-proc saveIncludesToFile(path:string, includes:seq[string]) = 
-  writeFile(path, $includes.toJson())
 
 proc NimMain() {.importc.} 
 
@@ -293,6 +232,24 @@ uClass AActorCodegen of AActor:
         UE_Log $fn
       UE_Log "Found " & $fnsWithAutoCreateRefTerm.len() & " unique functions with AutoCreateRefTerm type"      
 
+  uprops(EditAnywhere, BlueprintReadWrite, Category=EnumInspector):
+    enumName : FString = "EInputEvent"
+  
+  ufuncs(BlueprintCallable, CallInEditor, Category=EnumInspector):
+    proc showEnumAsUEType() = 
+      let uenum = getUTypeByName[UEnum](self.enumName)
+      if uenum.isNil():
+        UE_Error "Enum is null"
+        return
+      UE_Log $uenum.toUEType()
+    proc showEnumMetadata() = 
+      let uenum = getUTypeByName[UEnum](self.enumName)
+      if uenum.isNil():
+        UE_Error "Enum is null"
+        return
+      UE_Log $uenum.getMetadataMap().toTable()
+     
+
   uprops(EditAnywhere, BlueprintReadWrite):
     delTypeName : FString = "test5"
     structPtrName : FString 
@@ -393,7 +350,7 @@ uClass AActorCodegen of AActor:
       UE_Log "contans deproject to mouse pos: " & $ueProject.modules.filterIt(it.types.filterIt(it.fields.filterIt(it.name.contains("DeprojectMousePositionToWorld")).any()).any()).any()
       # writeFile(PluginDir/"engine.text", $ueProject)
       # UE_Log $ueProject
-
+    
     proc saveIncludesIntoJson() = 
       let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
       # UE_Log $includePaths

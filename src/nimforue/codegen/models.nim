@@ -113,7 +113,7 @@ type
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
         metadata* : seq[UEMetadata]
-
+        isInPCH* : bool #if the type is in the PCH at the time of generting the bindings. Means we can do importc directly (only for structs and classes for now. Need to figure out enums, not sure about if delegate worth the trouble, probably not)
         case kind*: UETypeKind
             of uetClass:
                 parent* : string

@@ -7,7 +7,7 @@ export models
 import emitter
 import ../codegen/modulerules
 import ../codegen/modelconstructor
-
+import headerparser
 const fnPrefixes = @["", "Receive", "K2_", "BP_"]
 
 
@@ -307,13 +307,13 @@ func getFirstBpExposedParent(parent: UClassPtr): UClassPtr =
 
 
 
-func toUEType*(iface: UInterfacePtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
+func toUEType*(iface: UInterfacePtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
   #interfaces are not supported yet. They are only take into account for checking deps of a module
   let name = "U" & iface.getName()
   UE_Log &"Found interface {name}"
   some UEType(name: name, kind: uetInterface) #TODO gather function signatures
 
-func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
+func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
   
   let storedUEType = 
     cls.getMetadata(UETypeMetadataKey)
@@ -331,8 +331,6 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
   let name = cls.getPrefixCpp() & cls.getName()
   let parent = someNil cls.getSuperClass()
 
-  
-
   let parentName = parent
     .map(p => (if uerImportBlueprintOnly in rules: getFirstBpExposedParent(p) else: p))
     .map(p=>p.getPrefixCpp() & p.getName()).get("")
@@ -343,15 +341,23 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
     if shouldBeIgnored(name, rule) or (parentName != "" and shouldBeIgnored(parentName, rule)):
       UE_Log &"Ignoring {name} because it is in the ignore list"
       return none(UEType)
+  
+  var isInPCH = false
+  let moduleRelativePath = cls.getModuleRelativePath()
+  if moduleRelativePath.isSome():
+    isInPCH = isModuleRelativePathInHeaders(cls.getModuleName(), moduleRelativePath.get(), pchIncludes)
+
 
   if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
-    some UEType(name: name, kind: uetClass, parent: parentName, fields: fields, interfaces: cls.interfaces.mapIt("U" & $it.class.getName()))
+    some UEType(name: name, kind: uetClass, parent: parentName, 
+      isInPCH: isInPCH,
+      fields: fields, interfaces: cls.interfaces.mapIt("U" & $it.class.getName()))
   else:
     # UE_Warn &"Class {name} is not exposed to BP"
     none(UEType)
 
 
-func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
+func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
   #same as above
   let storedUEType = 
     str.getMetadata(UETypeMetadataKey)
@@ -385,13 +391,20 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[]): Option[UE
     else:
       UE_Warn &"The struct {str} does not have StructOps therefore we cant calculate the size and alignment"
 
-    some UEType(name: name, kind: uetStruct, fields: fields, metadata: metadata, size: size, alignment: alignment)
+    var isInPCH = false
+    let moduleRelativePath = str.getModuleRelativePath()
+    if moduleRelativePath.isSome():
+      isInPCH = isModuleRelativePathInHeaders(str.getModuleName(), moduleRelativePath.get(), pchIncludes)
+
+    some UEType(name: name, kind: uetStruct, fields: fields, 
+          isInPCH: isInPCH,
+          metadata: metadata, size: size, alignment: alignment)
   else:
     # UE_Warn &"Struct {name} is not exposed to BP"
     none(UEType)
 
 
-func toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
+func toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
   let storedUEType = 
     del.getMetadata(UETypeMetadataKey)
        .flatMap((x:FString)=>tryParseJson[UEType](x))
@@ -428,7 +441,7 @@ func toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[]): Optio
   #     UE_Log &"Delegate {name} is not exposed to BP"
   #     none(UEType)
 
-func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[]): Option[UEType] = #notice we have to specify the type because we use specific functions here. All types are Nim base types
+func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[],  pchIncludes:seq[string]= @[]): Option[UEType] = #notice we have to specify the type because we use specific functions here. All types are Nim base types
     # let fields = getFPropsFromUStruct(enum).map(toUEField)
   let storedUEType = 
     uenum.getMetadata(UETypeMetadataKey)
@@ -455,18 +468,18 @@ func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[]): Option[UEType] 
     UE_Warn &"Enum {name} is not exposed to BP"
     none(UEType)
 
-func convertToUEType[T](obj: UObjectPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
-  tryUECast[T](obj).flatMap((val: ptr T)=>toUEType(val, rules))
+func convertToUEType[T](obj: UObjectPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]): Option[UEType] =
+  tryUECast[T](obj).flatMap((val: ptr T)=>toUEType(val, rules, pchIncludes))
 
-proc getUETypeFrom(obj: UObjectPtr, rules: seq[UEImportRule] = @[]): Option[UEType] =
+proc getUETypeFrom(obj: UObjectPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]): Option[UEType] =
   if obj.getFlags() & RF_ClassDefaultObject == RF_ClassDefaultObject:
     return none[UEType]()
   
-  convertToUEType[UClass](obj, rules)
-    .chainNone(()=>convertToUEType[UScriptStruct](obj, rules))
-    .chainNone(()=>convertToUEType[UInterface](obj, rules))
-    .chainNone(()=>convertToUEType[UEnum](obj, rules))
-    .chainNone(()=>convertToUEType[UDelegateFunction](obj, rules))
+  convertToUEType[UClass](obj, rules, pchIncludes)
+    .chainNone(()=>convertToUEType[UScriptStruct](obj, rules, pchIncludes))
+    .chainNone(()=>convertToUEType[UInterface](obj, rules, pchIncludes))
+    .chainNone(()=>convertToUEType[UEnum](obj, rules, pchIncludes))
+    .chainNone(()=>convertToUEType[UDelegateFunction](obj, rules, pchIncludes))
 
 func getFPropertiesFrom*(ueType: UEType, pkg:UPackagePtr): seq[FPropertyPtr] =
   case ueType.kind:
@@ -492,9 +505,9 @@ func getFPropertiesFrom*(ueType: UEType, pkg:UPackagePtr): seq[FPropertyPtr] =
 proc typeToModule*(propType: string): Option[string] =
   #notice types are static
   let attemptToExtractGenTypes = propType.extractInnerGenericInNimFormat()
-  UE_Log &"Extracted {attemptToExtractGenTypes} from {propType}"
+  # UE_Log &"Extracted {attemptToExtractGenTypes} from {propType}"
   if attemptToExtractGenTypes.isGeneric(): #If it's a wrapper of one of the above types  
-    UE_Log &"Found generic type {propType} from {propType}"   
+    # UE_Log &"Found generic type {propType} from {propType}"   
     return attemptToExtractGenTypes.typeToModule()
 
   getUnrealTypeFromName[UStruct](attemptToExtractGenTypes.removeFirstLetter().removeLastLettersIfPtr())
@@ -566,13 +579,13 @@ func getModuleHeader*(module: UEModule): seq[string] =
     .mapIt(&"""#include "{it}" """)
 
 
-proc getUETypeByNameFromUE(name:string, rules:seq[UEImportRule]) : Option[UEType] = 
+proc getUETypeByNameFromUE(name:string, rules:seq[UEImportRule], pchIncludes:seq[string]= @[]) : Option[UEType] = 
   let obj = getUnrealTypeFromName[UStruct](name.removeFirstLetter().removeLastLettersIfPtr())
               .chainNone(()=>getUnrealTypeFromName[UEnum](name.extractTypeFromGenericInNimFormat("TEnumAsByte")))
               .chainNone(()=>getUnrealTypeFromName[UInterface](name.extractTypeFromGenericInNimFormat("TScriptInterface").removeFirstLetter()))
               .chainNone(()=>getUnrealTypeFromName[UStruct](name))
               
-  result = obj.map(it=>getUETypeFrom(it)).flatten()
+  result = obj.map(it=>getUETypeFrom(it, rules, pchIncludes)).flatten()
   
 
 
@@ -590,11 +603,11 @@ proc getForcedTypes*(moduleName:string, rules: seq[UEImportRule]): seq[UEType] =
  
   
 
-proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string]): seq[UEModule] =
+proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string], pchIncludes:seq[string]= @[]): seq[UEModule] =
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
   let initialTypes = allObjs.toSeq()
-    .map((obj: UObjectPtr) => getUETypeFrom(obj, rules))
+    .map((obj: UObjectPtr) => getUETypeFrom(obj, rules, pchIncludes))
     .sequence()
   
   let moduleExcludeDeps = rules.filterIt(it.rule == uerExcludeDeps).mapIt(it.affectedTypes).foldl(a & b, newSeq[string]())
@@ -612,6 +625,9 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(pkg, excludeFromModuleNames)}"
 
   types = types.filterIt(it notin excludedTypes)
+
+
+
   #Virtual modules.
   var virtModules = newSeq[UEModule]()
   for r in rules:
