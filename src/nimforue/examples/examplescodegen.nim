@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
+import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
 import ../codegen/uemeta
 import ../../buildscripts/nimforueconfig
 import ../codegen/[codegentemplate,modulerules, genreflectiondata]
@@ -79,7 +79,83 @@ textObject}
   InjectInputVectorForAction
 ]#
 
+#[
+  
 
+]#
+
+
+
+#[
+  Function that Takes an absolute path to a Header and returns a Path to all #include files
+  Once this is done we can extract a lookup table if and attemp to generate code base on it
+  #Later
+  Function that returns all the IncludePaths of the Application. 
+  Function that try to find a header paths in the include paths
+
+]#
+
+
+proc getHeaderFromPath(path : string) : Option[string] = 
+  if fileExists(path):
+    some readFile(path)
+  else: none(string)
+
+proc getIncludesFromHeader(header : string) : seq[string] = 
+  let lines = header.split("\n")
+  func getHeaderFromIncludeLine(line: string) : string = 
+    line.multiReplace(@[
+      ("#include", ""),
+      ("<", ""),
+      (">", ""),
+      ("\"", ""),
+      ("\"", ""),
+    ]).strip()
+    
+  lines
+    .filterIt(it.startsWith("#include"))
+    .map(getHeaderFromIncludeLine)
+
+func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : string = 
+    var variations = @["Public"]
+    if moduleName == "Engine":
+      variations.add("Classes")
+    
+    var path = moduleRelativePath
+    for variation in variations:
+      path = path.replace(variation & "/", "")
+    path
+
+func isModuleRelativePathInHeaders(moduleName, moduleRelativePath:string, headers:seq[string]) : bool = 
+  let path = getModuleRelativePathVariations(moduleName, moduleRelativePath)
+  headers.contains(path)
+
+#returns the absolute path of all the include paths
+proc getAllIncludePaths() : seq[string] = getNimForUEConfig().getUEHeadersIncludePaths()
+
+
+
+proc getHeaderIncludesFromIncludePaths(header:string, includePaths:seq[string]) : seq[string] = 
+  for path in includePaths:
+    let headerPath = path / header
+    let header = getHeaderFromPath(headerPath)
+    if header.isSome:
+      return getIncludesFromHeader(header.get)
+  newSeq[string]()
+
+
+proc traverseAllIncludes(entryPoint:string, includePaths:seq[string], visited:seq[string], depth=0, maxDepth=3) : seq[string] = 
+  let includes = getHeaderIncludesFromIncludePaths(entryPoint, includePaths).filterIt(it notin visited)
+  let newVisited = (visited & includes).deduplicate()
+  if depth >= maxDepth:
+    return newVisited
+  includes
+    .mapIt(traverseAllIncludes(it, includePaths, newVisited, depth+1))
+    .flatten()
+
+
+proc saveIncludesToFile(path:string, includes:seq[string]) = 
+  writeFile(path, $includes.toJson())
 
 proc NimMain() {.importc.} 
 
@@ -141,7 +217,27 @@ uClass AActorCodegen of AActor:
         return
       let ueType = cls.toUEType(@[])
       UE_Log $ueType
-    
+
+    proc dumpMetadatas() = 
+      let cls = self.getClassFromInspectedType()
+      if cls.isNil():
+        UE_Error "Class is null"
+        return
+      var metas = cls.getMetadataMap().toTable() & cls.getFuncsFromClass().mapIt(it.getMetadataMap().toTable()) 
+      for prop in cls.getFPropertiesFrom():
+        metas = metas & prop.getMetadataMap().toTable()
+
+      for key, value in metas:
+        UE_Log &"{key} : {value}"
+
+    proc dumpModuleRelativePath() = 
+      let cls = self.getClassFromInspectedType()
+      if cls.isNil():
+        UE_Error "Class is null"
+        return
+      UE_Log $cls.getModuleRelativePath()
+
+
   uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenFunctionFinder):
     funcName : FString = "PrintString"
   ufuncs(BlueprintCallable, CallInEditor, Category=CodegenFunctionFinder):
@@ -213,6 +309,12 @@ uClass AActorCodegen of AActor:
       UE_Log $structField
       UE_Log &"Module Name: {struct.getModuleName()}"
 
+    proc dumpModuleRelativeStructPath() = 
+      let struct = getUTypeByName[UScriptStruct](self.structToFind)
+      if struct.isNil():
+        UE_Error "Struct is null"
+        return
+      UE_Log $struct.getModuleRelativePath()
 
   ufuncs(BlueprintCallable, CallInEditor, Category=ActorCodegen):
     proc genReflectionDataOnly() = 
@@ -292,4 +394,30 @@ uClass AActorCodegen of AActor:
       # writeFile(PluginDir/"engine.text", $ueProject)
       # UE_Log $ueProject
 
+    proc saveIncludesIntoJson() = 
+      let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
+      # UE_Log $includePaths
+      let allIncludes = traverseAllIncludes("UEDeps.h", includePaths, @[]).deduplicate()
+      let path = PluginDir/"allincludes.json"
+      saveIncludesToFile(path, allIncludes)
+      UE_Log $allIncludes.len
+
+    proc testClassInIncludes() = 
+
+      let cls = self.getClassFromInspectedType()
+      if cls.isNil():
+        UE_Error "Class is null"
+        return
+      UE_Log $cls.getModuleRelativePath()
+
+      #Is module relative path in includes? It will need the module name.
+      try:
+        let includes = readFile(PluginDir/"allincludes.json").parseJson().to(seq[string])
+        let isInHeaders = isModuleRelativePathInHeaders(cls.getModuleName(), cls.getModuleRelativePath().get(), includes)
+        UE_Log &"Is {cls.getName()} in PCH?" & $isInHeaders
+      except:
+        let e : ref Exception = getCurrentException()
+        UE_Error &"Error: {e.msg}"
+        UE_Error &"Error: {e.getStackTrace()}"
+        UE_Error &"Failed to generate reflection data"
    

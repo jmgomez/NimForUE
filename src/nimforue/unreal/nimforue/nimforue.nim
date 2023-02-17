@@ -71,6 +71,13 @@ proc getAllPropsWithMetaData*[T : FProperty](ustr:UStructPtr, metadataKey:string
     ustr.getAllPropsOf[:T]()
         .filterIt(it.hasMetaData(metadataKey))
 
+func getModuleRelativePath*(str:UStructPtr) : Option[string] = 
+  str
+    .getAllPropsWithMetaData[:FProperty]("ModuleRelativePath")
+    .head()
+    .flatMap((p:FPropertyPtr) => p.getMetaData("ModuleRelativePath").map(m => $m))
+  
+
 #it will call super until UObject is reached
 iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr = 
     var super = cls
