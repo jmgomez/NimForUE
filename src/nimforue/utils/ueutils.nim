@@ -60,7 +60,10 @@ proc removeLastLettersIfPtr*(str:string) : string =
 proc addPtrToUObjectIfNotPresentAlready*(str:string) : string = 
     if str.endsWith("Ptr"): str else: str & "Ptr"
 
-func tryUECast*[T : UObject](obj:UObjectPtr) : Option[ptr T] = someNil ueCast[T](obj)
+func tryUECast*[T : UObject](obj:UObjectPtr) : Option[ptr T] = 
+    if obj.isNil: none[ptr T]()
+    else: someNil(ueCast[T](obj))
+
 func tryCastField*[T : FProperty](prop:FPropertyPtr) : Option[ptr T] = someNil castField[T](prop)
     
 func ueMetaToNueMeta*(ueMeta : TMap[FName, FString]) : seq[UEMetadata] = 

@@ -31,12 +31,16 @@ func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : se
     
     #GameplayAbilities/Public/AbilitySystemGlobals.h <- Header can be included like so
     #"GameplayTags/Classes/GameplayTagContainer.h"
+    # Classes/GameFramework/Character.h" <- module relative path
+    # Include as "GameFramework/Character.h"
+
     let header = moduleRelativePath.split("/")[^1]
     @[
       moduleRelativePath, #usually is Public/SomeClass.h
       moduleRelativePath.split("/").filterIt(it notin moduleName).join("/"),
       
-    ] & variations.mapIt(&"{moduleName}/{it}/{header}")
+    ] & variations.mapIt(&"{moduleName}/{it}/{header}") &
+    moduleRelativePath.split("/").filterIt(it notin variations).join("/")
 
 func isModuleRelativePathInHeaders*(moduleName, moduleRelativePath:string, headers:seq[string]) : bool = 
   let paths = getModuleRelativePathVariations(moduleName, moduleRelativePath)
