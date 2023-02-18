@@ -34,21 +34,21 @@ proc getCompilerVersion() : string =
 
 proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string] = 
   result = @[
-    "/Zc:inline", #Remove unreferenced functions or data if they're COMDAT or have internal linkage only (off by default).
+    # "/Zc:inline", #Remove unreferenced functions or data if they're COMDAT or have internal linkage only (off by default).
     "/nologo",
-    "/Oi",
+    # "/Oi", #optimize comde
     "/FC",
     "/c",
-    "/Gw", # Enables whole-program global data optimization.
-    "/Gy", # Enables function-level linking.
-    "/Zm1000", 
+    # "/Gw", # Enables whole-program global data optimization.
+    # "/Gy", # Enables function-level linking.
+    "/Zm2000", 
     "/D_CRT_STDIO_LEGACY_WIDE_SPECIFIERS=1",
     "/D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS=1",
     "/D_WINDLL",
     "/D_DISABLE_EXTENDED_ALIGNED_STORAGE",
     "/source-charset:utf-8",
     "/execution-charset:utf-8",
-    "/Ob2",
+    # "/Ob2", #inline function expansion?
     "/errorReport:prompt",
     "/EHsc",
     "/DPLATFORM_EXCEPTIONS_DISABLED=0",
