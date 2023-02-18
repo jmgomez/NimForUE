@@ -64,3 +64,6 @@ Source/NimForUE/Private/NimForUEGame/
 compiler_version.txt
 
 toolchain_dir.txt
+
+.headerdata/allIncludes.json
+.headerdata/allpchtypes.json

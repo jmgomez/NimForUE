@@ -6,7 +6,7 @@ import ../unreal/nimforue/[nimforue, nimforuebindings]
 import ../unreal/engine/enginetypes
 import ../utils/[utils, ueutils]
 import nuemacrocache
-import ../codegen/[emitter,modelconstructor, models,uemeta, uebind,gencppclass]
+import ../codegen/[emitter,modelconstructor, models,uemeta, uebind,gencppclass, headerparser]
 
 
 type
@@ -303,7 +303,6 @@ proc emitUClass(typeDef:UEType) : NimNode =
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
                 addEmitterInfoForClass[name](typeDefAsNode)
 
-    addCppClass(typeDef.toCppClass())
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
 proc emitUDelegate(typedef:UEType) : NimNode = 
@@ -941,6 +940,7 @@ func getCppOverrides(body:NimNode, ueType:UEType) : (UEType, NimNode) =
     (ueType, stmOverrides)
     
             
+{.experimental: "dynamicBindSym".}
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
@@ -950,7 +950,12 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     var cppOverridesNodes : NimNode
     (ueType, cppOverridesNodes) = getCppOverrides(body, ueType)
     ueType.interfaces = interfaces
+    ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
+    addCppClass(ueType.toCppClass())
     var uClassNode = emitUClass(ueType)
+    
+
+
 
     #returns empty if there is no block defined
     let defaults = genDefaults(body)

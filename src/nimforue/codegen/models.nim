@@ -121,11 +121,13 @@ type
                 ctorSourceHash*: string
                 interfaces* : seq[string]
                 fnOverrides* : seq[CppFunction]
+                isParentInPCH* : bool
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal
                 size*: int32
                 alignment*: int32
+                isSuperStructInPCH* : bool
             of uetEnum:
                 discard
             of uetDelegate:

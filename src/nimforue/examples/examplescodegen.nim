@@ -96,6 +96,7 @@ textObject}
 ]#
 
 
+
 proc NimMain() {.importc.} 
 
 uEnum EInspectType: 
@@ -127,6 +128,7 @@ uClass AActorCodegen of AActor:
     inspectClass : UClassPtr
     inspectActor : AActorPtr
     bOnlyBlueprint : bool 
+    bUseIncludesInPCH : bool 
     moduleName : FString
     test : FString
   
@@ -154,7 +156,10 @@ uClass AActorCodegen of AActor:
       if cls.isNil():
         UE_Error "Class is null"
         return
-      let ueType = cls.toUEType(@[])
+      var pchIncludes = newSeq[string]()
+      if self.bUseIncludesInPCH:
+        pchIncludes = getPCHIncludes()
+      let ueType = cls.toUEType(@[], pchIncludes)
       UE_Log $ueType
 
     proc dumpMetadatas() = 
@@ -342,7 +347,7 @@ uClass AActorCodegen of AActor:
         else: 
           @[]
 
-      let modules = pkg.map((pkg:UPackagePtr) => pkg.toUEModule(rules, @[], @[])).get(@[])
+      let modules = pkg.map((pkg:UPackagePtr) => pkg.toUEModule(rules, @[], @[], getPCHIncludes())).get(@[])
       # UE_Log $modules.head().map(x=>x.types.mapIt(it.name))
       # UE_Log "Len " & $modules.len
       # UE_Log "Types " & $modules.head().map(x=>x.types).get(@[]).len
@@ -350,7 +355,18 @@ uClass AActorCodegen of AActor:
       UE_Log "contans deproject to mouse pos: " & $ueProject.modules.filterIt(it.types.filterIt(it.fields.filterIt(it.name.contains("DeprojectMousePositionToWorld")).any()).any()).any()
       # writeFile(PluginDir/"engine.text", $ueProject)
       # UE_Log $ueProject
+      UE_Log "PCH Types:" & $modules.mapIt(it.types).flatten.filterIt(it.isInPCH).len
     
+    proc showPCHTypes() = 
+      let pkg = tryGetPackageByName(self.moduleName)
+      let modules = pkg.map((pkg:UPackagePtr) => pkg.toUEModule(@[], @[], @[], getPCHIncludes())).get(@[])
+      let ueProject = UEProject(modules: modules)
+      let pchTypes = modules.mapIt(it.types).flatten.filterIt(it.isInPCH).mapIt(it.name)
+      UE_Log "PCH Types:" & $pchTypes
+
+
+
+
     proc saveIncludesIntoJson() = 
       let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
       # UE_Log $includePaths
@@ -377,4 +393,10 @@ uClass AActorCodegen of AActor:
         UE_Error &"Error: {e.msg}"
         UE_Error &"Error: {e.getStackTrace()}"
         UE_Error &"Failed to generate reflection data"
-   
+
+
+
+
+
+
+

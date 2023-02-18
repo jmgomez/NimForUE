@@ -78,7 +78,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
    
     if module notin modCache: #if it's in the cache the virtual modules are too.
       let ueMods = tryGetPackageByName(module)
-            .map((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps))
+            .map((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps, pchIncludes))
             .get(newSeq[UEModule]())
 
       if ueMods.isEmpty():
@@ -109,16 +109,17 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
         .deduplicate()
 
 
-  let starts = now()
   let modules = (deps.mapIt(getDepsFromModule(it))
                     .foldl(a & b, newSeq[string]()) & deps)
                     .deduplicate()
-  
-  var ends = now() - starts
+
   let config = getNimForUEConfig()
   createDir(config.bindingsDir)
   let bindingsPath = (modName:string) => config.bindingsDir / modName.toLower() & ".nim"
 
+  #we save the pch types right before we discard the cached modules to avoid race conditions
+  
+  savePCHTypes(modCache.values.toSeq)
 
   let modulesToGen = modCache
                       .values
@@ -142,8 +143,7 @@ const project* = $1
   createDir(config.reflectionDataDir)
   writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
 
-  ends = now() - starts
-  UE_Log &"It took {ends} to gen all deps"
+  
   return ueProject
   # UE_Warn $deps
   # UE_Warn $ueProject
@@ -219,5 +219,10 @@ proc execBindingGeneration*(shouldRunSync:bool) {.cdecl.}=
   UE_Warn &"Plugins: {plugins}"
   UE_Warn &"Game Modules: {gameModules}"
   
+  let starts = now()
+
   # executeTaskInTaskGraph[ptr NimForUEConfig](config.unsafeAddr, ffiWraper)
   genUnrealBindings(gameModules, plugins, shouldRunSync)
+  var ends = now() - starts
+
+  UE_Log &"It took {ends} to gen all deps"

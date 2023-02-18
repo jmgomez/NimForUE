@@ -164,18 +164,19 @@ static:
 func toCppClass*(ueType:UEType) : CppClassType = 
     case ueType.kind:
     of uetClass:
-        CppClassType(name:ueType.name, kind: cckClass, parent:ueType.parent, functions: ueType.fnOverrides)
+      var parent = uetype.parent
+      {.cast(noSideEffect).}:
+        if not ueType.isParentInPCH and parent notin (ManuallyImportedClasses & emittedClasses):
+          parent = ueType.parent & "_" #The fake classes have a _ at the end we need to remove the emitted classes from here as well
+
+      CppClassType(name:ueType.name, kind: cckClass, parent:parent, functions: ueType.fnOverrides)
     of uetStruct: #Structs can keep inhereting from Nim structs for now. We will need to do something about the produced fields in order to gen funcs. 
-        CppClassType(name:ueType.name, kind: cckStruct, parent:ueType.superStruct, functions: @[])
+      CppClassType(name:ueType.name, kind: cckStruct, parent:ueType.superStruct, functions: @[])
     else:
-        error("Cant convert a non class or struct to a CppClassType")
-        CppClassType() 
+      error("Cant convert a non class or struct to a CppClassType")
+      CppClassType() 
 
 proc addCppClass*(class: CppClassType) =
-  var class = class
-  if class.parent notin (ManuallyImportedClasses & emittedClasses) and class.kind == cckClass:
-    class.parent =  class.parent & "_" #The fake classes have a _ at the end we need to remove the emitted classes from here as well
-
   
   cppHeader.classes.add class
   saveHeader(cppHeader, "NimHeaders") #it would be better to do it only once

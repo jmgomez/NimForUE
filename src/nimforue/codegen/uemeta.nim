@@ -343,14 +343,18 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
       return none(UEType)
   
   var isInPCH = false
+  var isParentInPCH = false
   let moduleRelativePath = cls.getModuleRelativePath()
   if moduleRelativePath.isSome():
     isInPCH = isModuleRelativePathInHeaders(cls.getModuleName(), moduleRelativePath.get(), pchIncludes)
-
+  let parentModuleRelativePath = parent.flatMap((p:UClassPtr)=>getModuleRelativePath(p))
+  if parentModuleRelativePath.isSome():
+    let p = parent.get()
+    isParentInPCH = isModuleRelativePathInHeaders(p.getModuleName(), parentModuleRelativePath.get(), pchIncludes)
 
   if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
     some UEType(name: name, kind: uetClass, parent: parentName, 
-      isInPCH: isInPCH,
+      isInPCH: isInPCH, isParentInPCH: isParentInPCH,
       fields: fields, interfaces: cls.interfaces.mapIt("U" & $it.class.getName()))
   else:
     # UE_Warn &"Class {name} is not exposed to BP"
@@ -604,6 +608,7 @@ proc getForcedTypes*(moduleName:string, rules: seq[UEImportRule]): seq[UEType] =
   
 
 proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string], pchIncludes:seq[string]= @[]): seq[UEModule] =
+  UE_Log &"Generating module for {pkg.getShortName()} pchIncludes: {pchIncludes.len}"
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
   let initialTypes = allObjs.toSeq()

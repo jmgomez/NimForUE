@@ -8,50 +8,71 @@ import ../codegen/[nuemacrocache, models, modulerules, gencppclass]
 import ../../buildscripts/nimforueconfig
 import uebind
 
-func genUClassTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[NimNode] =
-  if rule == uerCodeGenOnlyFields:
-    @[]
-  else:
-    @[
-      # type Type* {.importcpp.} = object of Parent
-      nnkTypeDef.newTree(
-        nnkPragmaExpr.newTree(
-          nnkPostFix.newTree(ident "*", ident ueType.name),
-          nnkPragma.newTree(
-            nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
-            nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
-        )
-      ),
-        newEmptyNode(),
-        nnkObjectTy.newTree(
-          newEmptyNode(),
-          nnkOfInherit.newTree(ident ueType.parent),
-          newEmptyNode()
-        )
-      ),
-      # ptr type TypePtr* = ptr Type
-      nnkTypeDef.newTree(
-        nnkPostFix.newTree(ident "*", ident ueType.name & "Ptr"),
-        newEmptyNode(),
-        nnkPtrTy.newTree(ident ueType.name)
-      )
-    ]
+
+
+# func genUClassTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[NimNode] =
+#   let pragmas = 
+#     # if ueType.isInPCH:
+#     #   nnkPragmaExpr.newTree(
+#     #       nnkPostFix.newTree(ident "*", ident ueType.name),
+#     #       nnkPragma.newTree(ident "importcpp")
+#     #     )
+#     # else:
+#       nnkPragmaExpr.newTree(
+#           nnkPostFix.newTree(ident "*", ident ueType.name),
+#           nnkPragma.newTree(
+#             nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
+#             nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
+#         )
+#       )
+#   if rule == uerCodeGenOnlyFields:
+#     @[]
+#   else:
+#     @[
+#       # type Type* {.importcpp.} = object of Parent
+#       nnkTypeDef.newTree(
+#         pragmas,
+#         ),
+#       newEmptyNode(),
+#       nnkObjectTy.newTree(
+#         newEmptyNode(),
+#         nnkOfInherit.newTree(ident ueType.parent),
+#         newEmptyNode()
+#       ),
+#       # ptr type TypePtr* = ptr Type
+#       nnkTypeDef.newTree(
+#         nnkPostFix.newTree(ident "*", ident ueType.name & "Ptr"),
+#         newEmptyNode(),
+#         nnkPtrTy.newTree(ident ueType.name)
+#       )
+#     ]
 
 func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[NimNode] =
-  if rule == uerCodeGenOnlyFields:
-    @[]
-  else:
-    @[
-      # type Type* {.importcpp.} = object of Parent
-      nnkTypeDef.newTree(
-        nnkPragmaExpr.newTree(
+  let pragmas = 
+    if ueType.isInPCH:
+      nnkPragmaExpr.newTree(
+          nnkPostFix.newTree(ident "*", ident ueType.name),
+          nnkPragma.newTree(ident "importcpp", ident "inheritable", ident "pure")
+        )
+    else:
+      nnkPragmaExpr.newTree(
           nnkPostFix.newTree(ident "*", ident ueType.name),
           nnkPragma.newTree(
             nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
             ident "inheritable",
+            ident "pure",
             nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
         )
-      ),
+      )
+
+      
+  if rule == uerCodeGenOnlyFields:
+    @[]
+  else:
+    @[
+      # type Type* {.importcpp.} = object of Parent
+      nnkTypeDef.newTree(
+        pragmas,
         newEmptyNode(),
         nnkObjectTy.newTree(
           newEmptyNode(),
@@ -216,7 +237,7 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
     of uetClass:
-      typeSection.add genUClassTypeDefBinding(typedef, rules)
+      typeSection.add genUClassImportTypeDefBinding(typedef, rules) #UClasses are always imported
     of uetStruct:
       typeSection.add genUStructTypeDefBinding(typedef, rules)
     of uetEnum:
@@ -255,18 +276,22 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
                         .get(@[])
   
   func getParentName(uet: UEType) : string =
-    uet.parent & (if uet.parent in validCppParents: "" else: "_")
+    #Probably isParentInPCH is a superset of validCppParents. TODO check
+    uet.parent & (if uet.parent in validCppParents or uet.isParentInPCH: "" else: "_")
+   
 
+  
 
-
-  proc classAsString(uet: UEType): string = #This will be changed on the virtual func bracn with the gen cpp type
-    result = &"class {uet.name}_ : public {getParentName(uet)}{{}};\n"
+  proc classAsString(uet: UEType): string = 
+    assert not uet.isInPCH
+    toStr(CppClassType(name: uet.name & "_", parent: getParentName(uet), kind: cckClass)) & "\n"
     
     
   let classDefs = moduleDef.types
-    .filterIt(it.kind == uetClass and uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it))
-    #Wonder if there is some way to automatize this, since some classes will collide some dont. Maybe traverse the headers up and store a cache?
-    .mapIt(toStr(CppClassType(name: it.name & "_", parent: getParentName(it), kind: cckClass)) & "\n")
+    .filterIt(it.kind == uetClass and 
+      (uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it) and not it.isInPCH)
+    )
+    .map(classAsString)
     # .mapIt(&"class {it.name}_ : public {getParentName(it)}{{}};\n")
     .join()
 

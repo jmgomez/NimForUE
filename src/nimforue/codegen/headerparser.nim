@@ -2,7 +2,7 @@ include ../unreal/prelude
 
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
 import ../../buildscripts/nimforueconfig
-
+import models
 
 
 
@@ -69,8 +69,31 @@ proc saveIncludesToFile*(path:string, includes:seq[string]) =
 
 
 proc getPCHIncludes*() : seq[string] = 
+  let dir = PluginDir/".headerdata"
+  createDir(dir)
+  let path = dir / "allincludes.json"
+  if fileExists(path): #TODO Check it's newer than the PCH
+    return readFile(path).parseJson().to(seq[string])
   #if this takes too long can be cached into a file and
   let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
   UE_Log &"Includes found on the PCH: {includePaths.len}"
   let pchIncludes =  traverseAllIncludes("UEDeps.h", includePaths, @[]).deduplicate()
+  saveIncludesToFile(path, pchIncludes)
   pchIncludes
+
+
+#called from genreflection data everytime the bindings are attempted to be generated, before gencppbindings
+proc savePCHTypes*(modules:seq[UEModule]) = 
+  let dir = PluginDir/".headerdata"
+  createDir(dir)
+  let path = dir/"allpchtypes.json"
+  let pchTypes = modules.mapIt(it.types).flatten.filterIt(it.isInPCH).mapIt(it.name)
+  saveIncludesToFile(path, pchTypes)
+
+proc getAllPCHTypes*() : seq[string] =
+  #TODO cache it in the macro cache. This is only accessed at compile time
+  #If the file gets too big it can be splited between structs, classes (and enums in the future)
+  let path = PluginDir/".headerdata"/"allpchtypes.json"
+  if fileExists(path):
+    return readFile(path).parseJson().to(seq[string])
+  @[]

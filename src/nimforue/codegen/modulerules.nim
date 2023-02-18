@@ -5,7 +5,7 @@ import ../utils/utils
 
 const ManuallyImportedClasses* = @[ 
   #we could have this list being generated automatically by using a pragma on the imported cpp
-      "AActor", "AInfo", "UReflectionHelpers", "UObject", "UEngine", "APawn",  "ACharacter", "UAbilitySystemGlobals",
+      "AActor", "AInfo", "UReflectionHelpers", "UObject", "UEngine", "APawn", "UAbilitySystemGlobals",
       "UField", "UStruct", "UScriptStruct", "UPackage", "UPackageMap",
       "UClass", "UFunction", "UDelegateFunction",
       "UEnum", "AVolume", "UInterface", 
