@@ -88,6 +88,7 @@ proc savePCHTypes*(modules:seq[UEModule]) =
   createDir(dir)
   let path = dir/"allpchtypes.json"
   let pchTypes = modules.mapIt(it.types).flatten.filterIt(it.isInPCH).mapIt(it.name)
+  UE_Log &"Types found on the PCH: {pchTypes.len}"
   saveIncludesToFile(path, pchTypes)
 
 proc getAllPCHTypes*() : seq[string] =

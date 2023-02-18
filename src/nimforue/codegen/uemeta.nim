@@ -314,7 +314,7 @@ func toUEType*(iface: UInterfacePtr, rules: seq[UEImportRule] = @[], pchIncludes
   some UEType(name: name, kind: uetInterface) #TODO gather function signatures
 
 func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
-  
+  UE_Log &"PCH INCLUDES UE TYPE {pchIncludes.len}"
   let storedUEType = 
     cls.getMetadata(UETypeMetadataKey)
        .flatMap((x:FString)=>tryParseJson[UEType](x))
@@ -329,11 +329,13 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
 
 
   let name = cls.getPrefixCpp() & cls.getName()
-  let parent = someNil cls.getSuperClass()
-
-  let parentName = parent
+  var parent = someNil cls.getSuperClass()
+  #BP non exposed parentes are downgraded to exposed parents 
+  parent = parent
     .map(p => (if uerImportBlueprintOnly in rules: getFirstBpExposedParent(p) else: p))
-    .map(p=>p.getPrefixCpp() & p.getName()).get("")
+
+  let parentName = parent.map(p=>p.getPrefixCpp() & p.getName()).get("")
+
 
   let namePrefixed = cls.getPrefixCpp() & cls.getName()
   let shouldBeIgnored = (name: string, rule: UEImportRule) => name in rule.affectedTypes and rule.target == uertType and rule.rule == uerIgnore

@@ -385,7 +385,7 @@ uClass AActorCodegen of AActor:
 
       #Is module relative path in includes? It will need the module name.
       try:
-        let includes = readFile(PluginDir/"allincludes.json").parseJson().to(seq[string])
+        let includes = getPCHIncludes()
         let isInHeaders = isModuleRelativePathInHeaders(cls.getModuleName(), cls.getModuleRelativePath().get(), includes)
         UE_Log &"Is {cls.getName()} in PCH?" & $isInHeaders
       except:
