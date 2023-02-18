@@ -154,9 +154,9 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 - [x] Non editor builds should be statically linked
 - [ ] Automatize non editor builds
 
-- [ ] Inheritance in UStrucs. 
-- [ ] Virtual Functions support on UObjects. At this point, the C++ integration will be complete and you will be able to do anything that you can do in C++.
-- [ ] Nimscripter support? (allows nim in runtime)
+- [x] Inheritance in UStrucs. 
+- [x] Virtual Functions support on UObjects. At this point, the C++ integration will be complete and you will be able to do anything that you can do in C++.
+- [ ] Explore NimVM integration. No comp time for small changes/Runtime code execution
 - [ ] Improve Debugger
   - [x] Keep the debugger hook after hot reloading
   - [ ] Research if it's possible to have a better mapping on the Nim types.
