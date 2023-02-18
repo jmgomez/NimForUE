@@ -314,7 +314,6 @@ func toUEType*(iface: UInterfacePtr, rules: seq[UEImportRule] = @[], pchIncludes
   some UEType(name: name, kind: uetInterface) #TODO gather function signatures
 
 func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
-  UE_Log &"PCH INCLUDES UE TYPE {pchIncludes.len}"
   let storedUEType = 
     cls.getMetadata(UETypeMetadataKey)
        .flatMap((x:FString)=>tryParseJson[UEType](x))

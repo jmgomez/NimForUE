@@ -490,11 +490,3 @@ type
 converter toObjectType*(collisionChannel:ECollisionChannel) : EObjectTypeQuery {.importcpp: "UEngineTypes::ConvertToObjectType(@)".}
 
 
-#AbilitySystem
-type 
-  UAbilitySystemGlobals* {.importcpp, inheritable, pure.} = object of UObject
-  UAbilitySystemGlobalsPtr* = ptr UAbilitySystemGlobals
-
-
-proc getAbilitySystemGlobals*() : UAbilitySystemGlobals {.importcpp: "UAbilitySystemGlobals::Get()".}
-proc initGlobalData*(globals:UAbilitySystemGlobals) {.importcpp: "#.InitGlobalData()".}

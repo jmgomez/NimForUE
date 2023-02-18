@@ -28,6 +28,13 @@ func firstIndexOf*[T](xs: seq[T], fn: Criteria[T]): int =
   -1
 
 func first*[T](xs: seq[T], fn: T->bool): Option[T] = xs.filter(fn).head()
+func last*[T](xs: seq[T]): Option[T] = 
+  if xs.len() == 0: none[T]()
+  else: some(xs[^1])
+
+func last*[T](xs: seq[T], fn: T->bool): Option[T] = xs.filter(fn).last()
+
+  
 
 
 func replaceFirst*[T](xs: var seq[T], fnCriteria: Criteria[T], newValue: T): seq[T] =

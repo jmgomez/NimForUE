@@ -3,7 +3,7 @@ include ../unreal/prelude
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
 import ../../buildscripts/nimforueconfig
 import models
-
+import ../utils/utils
 
 
 proc getHeaderFromPath(path : string) : Option[string] = 
@@ -26,19 +26,30 @@ proc getIncludesFromHeader(header : string) : seq[string] =
     .filterIt(it.startsWith("#include"))
     .map(getHeaderFromIncludeLine)
 
-func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : string = 
-    var variations = @["Public"]
-    if moduleName == "Engine":
-      variations.add("Classes")
+func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : seq[string] = 
+    var variations = @["Public", "Classes"]
     
-    var path = moduleRelativePath
-    for variation in variations:
-      path = path.replace(variation & "/", "")
-    path
+    #GameplayAbilities/Public/AbilitySystemGlobals.h <- Header can be included like so
+    #"GameplayTags/Classes/GameplayTagContainer.h"
+    let header = moduleRelativePath.split("/")[^1]
+    @[
+      moduleRelativePath, #usually is Public/SomeClass.h
+      moduleRelativePath.split("/").filterIt(it notin moduleName).join("/"),
+      
+    ] & variations.mapIt(&"{moduleName}/{it}/{header}")
 
 func isModuleRelativePathInHeaders*(moduleName, moduleRelativePath:string, headers:seq[string]) : bool = 
-  let path = getModuleRelativePathVariations(moduleName, moduleRelativePath)
-  headers.contains(path)
+  let paths = getModuleRelativePathVariations(moduleName, moduleRelativePath)
+  # UE_Log &"Checking if {paths} is in {headers}"
+  #We cant just check against the header because some headers may have the same name but be in different folders
+  #So we check if the relative path is in the include. 
+  if not paths.any(): false
+  else: 
+    for path in paths:
+      if path in headers: 
+        return true
+    false
+  
 
 #returns the absolute path of all the include paths
 proc getAllIncludePaths*() : seq[string] = getNimForUEConfig().getUEHeadersIncludePaths()
@@ -72,14 +83,22 @@ proc getPCHIncludes*() : seq[string] =
   let dir = PluginDir/".headerdata"
   createDir(dir)
   let path = dir / "allincludes.json"
-  if fileExists(path): #TODO Check it's newer than the PCH
-    return readFile(path).parseJson().to(seq[string])
-  #if this takes too long can be cached into a file and
-  let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
-  UE_Log &"Includes found on the PCH: {includePaths.len}"
-  let pchIncludes =  traverseAllIncludes("UEDeps.h", includePaths, @[]).deduplicate()
-  saveIncludesToFile(path, pchIncludes)
+  let pchIncludes = 
+    if fileExists(path): #TODO Check it's newer than the PCH
+      readFile(path).parseJson().to(seq[string])
+    else:
+      #if this takes too long can be cached into a file and
+      let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
+      let includes = traverseAllIncludes("UEDeps.h", includePaths, @[]).deduplicate()  
+      saveIncludesToFile(path, includes)
+      includes
+
   pchIncludes
+  # UE_Log &"Includes found on the PCH: {pchIncludes.len}"
+  # let uniquePCHIncludes = pchIncludes.mapIt(it.split("/")[^1]).deduplicate()
+  # UE_Log &"Unique Includes found on the PCH: {uniquePCHIncludes.len}"
+
+  # uniquePCHIncludes
 
 
 #called from genreflection data everytime the bindings are attempted to be generated, before gencppbindings
