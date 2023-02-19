@@ -114,7 +114,7 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 #Any module not picked by default.
 #This could be exposed to the json file 
 let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry", "NavigationSystem", "Niagara", "NiagaraShader", 
-"Constraints", "MovieSceneTools", "HoudiniEngine", "HoudiniEngineEditor",
+"Constraints", "MovieSceneTools", "HoudiniEngine", "HoudiniEngineEditor", "Landscape",
 "ControlRig", "DataLayerEditor", "DataRegistry", "ActorLayerUtilities"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
@@ -250,6 +250,14 @@ moduleImportRules["AnimGraphRuntime"] = @[
   makeImportedRuleField(uerIgnore, @[
     "FAnimNodeFunctionRef", "FInputBlendPose", "FAnimInitializationContext", "FAnimComponentSpacePoseContext"
   ]),
+
+  # makeImportedRuleModule(uerImportBlueprintOnly)
+]
+moduleImportRules["AnimGraph"] = @[
+  makeImportedRuleType(uerIgnore, @[
+  ]), 
+  makeImportedRuleField(uerIgnore, @[
+    "Class"]),
 
   # makeImportedRuleModule(uerImportBlueprintOnly)
 ]

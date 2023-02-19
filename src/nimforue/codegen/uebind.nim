@@ -79,8 +79,13 @@ func identWrapper*(name:string) : NimNode = ident(name) #cant use ident as argum
 func identPublic*(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident name])
 
 func nimToCppConflictsFreeName*(propName:string) : string = 
-  let reservedCppKeywords = ["template", "operator", "enum", "class", "struct", "namespace", "min", "max", "default", "new", "else"]
-  if propName in reservedCppKeywords: propName.firstToUpper() else: propName
+  let reservedCppKeywords = ["template", "operator", "enum", "struct", 
+    "normal", "networkMask", "shadow", "id", "fraction", "bIsCaseSensitive", #they collide on mac with the apple frameworks
+    "namespace", "min", "max", "default", "new", "else"]
+  let strictReserved = ["class"]
+  if propName in strictReserved: &"{propName.capitalizeASCII()}" 
+  elif propName in reservedCppKeywords:  propName.firstToUpper() 
+  else: propName
 
 func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
     let reservedKeywords = ["object", "method", "type", "interface", "var", "in", "out", "end", "bLock", "from"] 

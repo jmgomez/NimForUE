@@ -52,7 +52,7 @@ proc getNativeFuncImplPtrFromUEField*(emitter: UEEmitter, ueField: UEField): Opt
 proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string = 
     result = $emitter.emitters
 
-var ueEmitter* {.compileTime.} = UEEmitterRaw() 
+var ueEmitter* {.compileTime.} : UEEmitterRaw = UEEmitterRaw() 
 
 proc getGlobalEmitter*() : UEEmitter = 
     result = cast[UEEmitter](addr ueEmitter)
