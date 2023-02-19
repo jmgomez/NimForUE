@@ -22,9 +22,7 @@ proc getGameModules*(): seq[string] =
 
 proc getAllInstalledPlugins*(): seq[string] =
   try:        
-    let excludePlugins = getGameUserConfig()
-        .flatMap((config:JsonNode)=>tryGetJson[seq[string]](config, "exclude"))
-        .get(@[])
+    let excludePlugins = getGameUserConfigValue("exclude", newSeq[string]())
     let projectJson = readFile(GamePath).parseJson()
     let plugins = projectJson["Plugins"]
                     .filterIt(it["Enabled"].jsonTo(bool))
@@ -66,14 +64,15 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
     #By default all modules that are not in the list above will only export BlueprintTypes
     #Update: Not anymore #TODO code to be deleted once this is working 
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
-    
+    let bpOnly = getGameUserConfigValue("bpOnly", true)
+    let ruleBp = if bpOnly: @[bpOnlyRules] else: @[]
     let rules = 
       if module in moduleImportRules: 
-        moduleImportRules[module] & codeGenOnly
+        moduleImportRules[module] & codeGenOnly & ruleBp
       elif module in extraNonBpModules: 
         @[codeGenOnly]
       else: 
-        @[codeGenOnly]
+        @[codeGenOnly] & ruleBp
 
    
     if module notin modCache: #if it's in the cache the virtual modules are too.

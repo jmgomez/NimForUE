@@ -1,20 +1,7 @@
 
-import std/[
-  algorithm,
-  options,
-  os,
-  osproc,
-  sequtils,
-  strformat,
-  strscans,
-  strutils,
-  sugar,
-  times,
-  jsonutils,
-  json
-  ]
 
-
+import std/[algorithm, options, times, os, osproc, sequtils, 
+  strformat, strscans, strutils, sugar, jsonutils, json]
 
 
 import buildcommon, nimforueconfig
@@ -81,6 +68,12 @@ proc getGameUserConfig*() : Option[JSonNode] =
     some readFile(path).parseJson()
   else:
     none[JSonNode]()
+
+proc getGameUserConfigValue*[T](key: string, default:T) : T =
+  getGameUserConfig()
+    .flatMap((config:JsonNode)=>tryGetJson[T](config, key))
+    .get(default)
+
 
 proc executeNueTask(task: string) =
   let cmd = &"{PluginDir}/{NueExec} {task}"
