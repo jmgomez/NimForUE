@@ -100,7 +100,7 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
     raise newException(Exception, fmt"Unsupported type {prop.getName()}")
 
 
-func getUnrealTypeFromName[T](name: FString): Option[UObjectPtr] =
+func getUnrealTypeFromNameAsUObject[T : UObject](name: FString): Option[UObjectPtr] =
   #ScriptStruct, Classes
   result = tryUECast[UObject](getUTypeByName[T](name))
   # UE_Log &"Name: {name} result: {result}"
@@ -476,7 +476,7 @@ func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[],  pchIncludes:seq
 func convertToUEType[T](obj: UObjectPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]): Option[UEType] =
   tryUECast[T](obj).flatMap((val: ptr T)=>toUEType(val, rules, pchIncludes))
 
-proc getUETypeFrom(obj: UObjectPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]): Option[UEType] =
+proc getUETypeFrom*(obj: UObjectPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]): Option[UEType] =
   if obj.getFlags() & RF_ClassDefaultObject == RF_ClassDefaultObject:
     return none[UEType]()
   
@@ -486,7 +486,7 @@ proc getUETypeFrom(obj: UObjectPtr, rules: seq[UEImportRule] = @[], pchIncludes:
     .chainNone(()=>convertToUEType[UEnum](obj, rules, pchIncludes))
     .chainNone(()=>convertToUEType[UDelegateFunction](obj, rules, pchIncludes))
 
-func getFPropertiesFrom*(ueType: UEType, pkg:UPackagePtr): seq[FPropertyPtr] =
+func getFPropertiesFrom*(ueType: UEType): seq[FPropertyPtr] =
   case ueType.kind:
   of uetClass:
     let outer = getUTypeByName[UClass](ueType.name.removeFirstLetter())
@@ -507,6 +507,31 @@ func getFPropertiesFrom*(ueType: UEType, pkg:UPackagePtr): seq[FPropertyPtr] =
   of uetInterface: @[]
 
 
+
+func extractSubmodule* (path, packageName:string) : Option[string] = 
+  path
+    .split("/")
+    .filterIt(it notin ["Public", "Classes", "Private"] and not it.endsWith(".h"))
+    .mapIt(if it == "": &"{packageName}Empty" else: it) #TODO change empty by modulename once I figure if they belong together
+    # .join()
+    .head()
+    
+proc getSubmodulesForTypes*(packageName:string, types:seq[UEType]): TableRef[string, seq[UEType]] = 
+  var subModTable = newTable[string, seq[UEType]]()
+  for typ in types:
+    let subMod = 
+      case typ.kind:
+      of uetClass, uetStruct:
+        &"{packageName}/{typ.moduleRelativePath.extractSubmodule(packageName).get(packageName)}"
+      of uetDelegate: &"{packageName}/Delegates"
+      of uetEnum: &"{packageName}/Enums"
+      of uetInterface: &"{packageName}/Interfaces"
+
+    if subMod notin subModTable:
+      subModTable[subMod] = newSeq[UEType]()
+    subModTable[subMod].add typ
+  subModTable
+
 proc typeToModule*(propType: string): Option[string] =
   #notice types are static
   let attemptToExtractGenTypes = propType.extractInnerGenericInNimFormat()
@@ -515,14 +540,42 @@ proc typeToModule*(propType: string): Option[string] =
     # UE_Log &"Found generic type {propType} from {propType}"   
     return attemptToExtractGenTypes.typeToModule()
 
-  getUnrealTypeFromName[UStruct](attemptToExtractGenTypes.removeFirstLetter().removeLastLettersIfPtr())
+  getUnrealTypeFromNameAsUObject[UStruct](attemptToExtractGenTypes.removeFirstLetter().removeLastLettersIfPtr())
     # .chainNone(()=>getUnrealTypeFromName[UInterface]((propType.extractTypeFromGenericInNimFormat("TScriptInterface").removeFirstLetter())))
-    .chainNone(()=>getUnrealTypeFromName[UEnum](propType.extractTypeFromGenericInNimFormat("TEnumAsByte")))
-    .chainNone(()=>getUnrealTypeFromName[UStruct](propType))
+    .chainNone(()=>getUnrealTypeFromNameAsUObject[UEnum](propType.extractTypeFromGenericInNimFormat("TEnumAsByte")))
+    .chainNone(()=>getUnrealTypeFromNameAsUObject[UStruct](propType))
     .map((obj: UObjectPtr) => $obj.getModuleName())
 
+
+proc typeToSubModule*(propType: string): Option[string] =
+  #notice types are static
+  let attemptToExtractGenTypes = propType.extractInnerGenericInNimFormat()
+  # UE_Log &"Extracted {attemptToExtractGenTypes} from {propType}"
+  if attemptToExtractGenTypes.isGeneric(): #If it's a wrapper of one of the above types  
+    # UE_Log &"Found generic type {propType} from {propType}"   
+    return attemptToExtractGenTypes.typeToModule()
+  
+  let moduleName = #Tries to get the module from the relative path if not it fallbascks to the package name
+    someNil(getUTypeByName[UStruct](attemptToExtractGenTypes.removeFirstLetter().removeLastLettersIfPtr()))
+      .map((str:UStructPtr)=>getModuleRelativePath(str)
+        .flatMap((path:string) =>
+          extractSubmodule(path, str.getModuleName()).map((subMod:string)=> &"{str.getModuleName()}/{subMod}")
+        )).flatten()
+
+      
+        
+      
+  result = moduleName
+  if result.isNone():
+    #Enums doesnt seem to have a moduleRelativePath
+    result = someNil(getUTypeByName[UEnum](propType.extractTypeFromGenericInNimFormat("TEnumAsByte")))
+              .map((obj: UEnumPtr) => &"{obj.getModuleName()}/Enums") #Cant infer the moduleRelativePath from enums
+  
+  if result.isSome() and "CoreUObject" in result.get:
+    result = some("CoreUObject")
+
 #returns all modules neccesary to reference the UEType
-func getModuleNames*(ueType: UEType, pkg:UPackagePtr, excludeMods:seq[string]= @[]): seq[string] =
+func getModuleNames*(ueType: UEType, excludeMods:seq[string]= @[]): seq[string] =
   #only uStructs based for now
   let typesToSkip = @["uint8", "uint16", "uint32", "uint64",
                       "int", "int8", "int16", "int32", "int64",
@@ -531,12 +584,9 @@ func getModuleNames*(ueType: UEType, pkg:UPackagePtr, excludeMods:seq[string]= @
     ]
   func filterType(typeName: string): bool = typeName notin typesToSkip
 
-
-  
-
   let depsFromProps =
     ueType
-      .getFPropertiesFrom(pkg)
+      .getFPropertiesFrom()
       .mapIt(getNimTypeAsStr(it, nil))
 
   let interfaces = 
@@ -571,7 +621,8 @@ func getModuleNames*(ueType: UEType, pkg:UPackagePtr, excludeMods:seq[string]= @
     # .mapIt(getInnerCppGenericType($it.getCppType()))
     .filter(filterType)
     .map(getNameOfUENamespacedEnum)
-    .map(typeToModule)
+    .map(typeToSubModule) 
+    # .map(typeToModule) 
     .sequence()
     .deduplicate()
     .filterIt(it notin excludeMods)
@@ -585,10 +636,10 @@ func getModuleHeader*(module: UEModule): seq[string] =
 
 
 proc getUETypeByNameFromUE(name:string, rules:seq[UEImportRule], pchIncludes:seq[string]= @[]) : Option[UEType] = 
-  let obj = getUnrealTypeFromName[UStruct](name.removeFirstLetter().removeLastLettersIfPtr())
-              .chainNone(()=>getUnrealTypeFromName[UEnum](name.extractTypeFromGenericInNimFormat("TEnumAsByte")))
-              .chainNone(()=>getUnrealTypeFromName[UInterface](name.extractTypeFromGenericInNimFormat("TScriptInterface").removeFirstLetter()))
-              .chainNone(()=>getUnrealTypeFromName[UStruct](name))
+  let obj = getUnrealTypeFromNameAsUObject[UStruct](name.removeFirstLetter().removeLastLettersIfPtr())
+              .chainNone(()=>getUnrealTypeFromNameAsUObject[UEnum](name.extractTypeFromGenericInNimFormat("TEnumAsByte")))
+              .chainNone(()=>getUnrealTypeFromNameAsUObject[UInterface](name.extractTypeFromGenericInNimFormat("TScriptInterface").removeFirstLetter()))
+              .chainNone(()=>getUnrealTypeFromNameAsUObject[UStruct](name))
               
   result = obj.map(it=>getUETypeFrom(it, rules, pchIncludes)).flatten()
   
@@ -605,67 +656,111 @@ proc getForcedTypes*(moduleName:string, rules: seq[UEImportRule]): seq[UEType] =
     UE_Log &"Forced types for {moduleName}: {result} and {rules.filterIt(it.rule == uerForce)}"
   
   
-func extractSubmodule* (path:string) : Option[string] = 
-  path
-    .split("/")
-    .filterIt(it notin ["Public", "Classes", "Private"] and not it.endsWith(".h"))
-    .filterIt(not it.isEmptyOrWhitespace)
-    .head()
-    
+
+
+proc getDepsFromTypes*(name: string, types : seq[UEType], excludeDeps: seq[string]) : seq[string] = 
+  types
+    .mapIt(it.getModuleNames(@["CoreUObject", name]))
+    .foldl(a & b, newSeq[string]())
+    .deduplicate()
+    .filterIt(it != name and it notin excludeDeps)
+
+# proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string], pchIncludes:seq[string]= @[]): seq[UEModule] =
+#   UE_Log &"Generating module for {pkg.getShortName()} pchIncludes: {pchIncludes.len}"
+#   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
+#   var name = pkg.getShortName()
+
+#   let initialTypes = allObjs.toSeq()
+#     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules, pchIncludes))
+#     .sequence()
   
+
+#   let moduleExcludeDeps = rules.filterIt(it.rule == uerExcludeDeps).mapIt(it.affectedTypes).foldl(a & b, newSeq[string]())
+#   var excludeDeps = excludeDeps & moduleExcludeDeps
+#   var types = (initialTypes & getForcedTypes(name, rules)).deduplicate()
+#   let excludeFromModuleNames = @["CoreUObject", name]
+#   let deps = getDepsFromTypes(name, types, excludeDeps)
+#   #TODO Per module add them to a virtual module
+#   let excludedTypes = types.filterIt(it.getModuleNames(excludeFromModuleNames).any(modName => modName in excludeDeps))
+#   for t in excludedTypes:
+#     UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(excludeFromModuleNames)}"
+
+#   types = types.filterIt(it notin excludedTypes)
+
+
+
+#   #Virtual modules.
+#   var virtModules = newSeq[UEModule]()
+#   for r in rules:
+#     if r.rule == uerVirtualModule:
+#       let r = r
+#       let (virtualModuleTypes, types) = types.partition((x: UEType) => x.name in r.affectedTypes)
+#       virtModules.add UEModule(name: r.moduleName, types: virtualModuleTypes, isVirtual: true, dependencies: deps & name,  rules: rules)
+#   #Types that causes cycles are also part of the virtual modules. TODO this code assume excludeDeps is cycles + coreuobject
+#   for cycleMod in excludeDeps.filterIt(it != "CoreUObject"):
+#     let cycleMod = cycleMod
+#     let (cycleTypes, types) = initialTypes.partition((x: UEType) => cycleMod in x.getModuleNames(excludeFromModuleNames))
+#     let cycleName = &"{name}_{cycleMod}"
+#     # UE_Error &"Module: + {name} Adding {cycleName} to {name} because it depends on {cycleMod} and {cycleTypes} is excluded"
+#     if cycleTypes.len > 0: #if it doesnt have types it shouldnt be a added
+#       virtModules.add UEModule(name: cycleName, types: cycleTypes, isVirtual: true, dependencies: deps & name & cycleMod, rules: rules)
+
+#   var module = makeUEModule(name, types, rules, deps)
+#   module.hash = $hash($module.toJson())
+#   module & virtModules
 
 proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string], pchIncludes:seq[string]= @[]): seq[UEModule] =
   UE_Log &"Generating module for {pkg.getShortName()} pchIncludes: {pchIncludes.len}"
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
-  let name = pkg.getShortName()
-  
+  var name = pkg.getShortName()
 
   let initialTypes = allObjs.toSeq()
     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules, pchIncludes))
     .sequence()
   
-  let moduleExcludeDeps = rules.filterIt(it.rule == uerExcludeDeps).mapIt(it.affectedTypes).foldl(a & b, newSeq[string]())
-  var excludeDeps = excludeDeps & moduleExcludeDeps
-  var types = (initialTypes & getForcedTypes(name, rules)).deduplicate()
-  let excludeFromModuleNames = @["CoreUObject", name]
-  let deps = (types
-    .mapIt(it.getModuleNames(pkg, excludeFromModuleNames))
-    .foldl(a & b, newSeq[string]()) & includeDeps)
-    .deduplicate()
-    .filterIt(it != name and it notin excludeDeps)
-  #TODO Per module add them to a virtual module
-  let excludedTypes = types.filterIt(it.getModuleNames(pkg, excludeFromModuleNames).any(modName => modName in excludeDeps))
-  for t in excludedTypes:
-    UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(pkg, excludeFromModuleNames)}"
-
-  types = types.filterIt(it notin excludedTypes)
+  let submodulesTable = getSubmodulesForTypes(pkg.getShortName(), initialTypes)
+  var submodules : seq[UEModule] = @[]
+  for subModuleName, submoduleTypes in submodulesTable:
+    let deps = getDepsFromTypes(subModuleName, submoduleTypes, @[])
+    var module = makeUEModule(subModuleName, submoduleTypes, rules, deps)
+    module.hash = $hash($module.toJson())
+    submodules.add module
+  return submodules
 
 
+  # let moduleExcludeDeps = rules.filterIt(it.rule == uerExcludeDeps).mapIt(it.affectedTypes).foldl(a & b, newSeq[string]())
+  # var excludeDeps = excludeDeps & moduleExcludeDeps
+  # var types = (initialTypes & getForcedTypes(name, rules)).deduplicate()
+  # let excludeFromModuleNames = @["CoreUObject", name]
+  # let deps = getDepsFromTypes(name, types, excludeDeps)
+  # #TODO Per module add them to a virtual module
+  # let excludedTypes = types.filterIt(it.getModuleNames(excludeFromModuleNames).any(modName => modName in excludeDeps))
+  # for t in excludedTypes:
+  #   UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(excludeFromModuleNames)}"
 
-  #Virtual modules.
-  var virtModules = newSeq[UEModule]()
-  for r in rules:
-    if r.rule == uerVirtualModule:
-      let r = r
-      let (virtualModuleTypes, types) = types.partition((x: UEType) => x.name in r.affectedTypes)
-      virtModules.add UEModule(name: r.moduleName, types: virtualModuleTypes, isVirtual: true, dependencies: deps & name,  rules: rules)
-  #Types that causes cycles are also part of the virtual modules. TODO this code assume excludeDeps is cycles + coreuobject
-  for cycleMod in excludeDeps.filterIt(it != "CoreUObject"):
-    let cycleMod = cycleMod
-    let (cycleTypes, types) = initialTypes.partition((x: UEType) => cycleMod in x.getModuleNames(pkg, excludeFromModuleNames))
-    let cycleName = &"{name}_{cycleMod}"
-    # UE_Error &"Module: + {name} Adding {cycleName} to {name} because it depends on {cycleMod} and {cycleTypes} is excluded"
-    if cycleTypes.len > 0: #if it doesnt have types it shouldnt be a added
-      virtModules.add UEModule(name: cycleName, types: cycleTypes, isVirtual: true, dependencies: deps & name & cycleMod, rules: rules)
+  # types = types.filterIt(it notin excludedTypes)
 
 
-  # UE_Log &"Module: + {name} Types: {types.mapIt(it.name)} Excluded types: {excludedTypes.mapIt(it.name)}"
-  # UE_Warn &"Module: + {name} excluded deps: {excludeDeps}"
 
-  # UE_Log &"Deps for {name}: {deps}"
-  var module = makeUEModule(name, types, rules, deps)
-  module.hash = $hash($module.toJson())
-  module & virtModules
+  # #Virtual modules.
+  # var virtModules = newSeq[UEModule]()
+  # for r in rules:
+  #   if r.rule == uerVirtualModule:
+  #     let r = r
+  #     let (virtualModuleTypes, types) = types.partition((x: UEType) => x.name in r.affectedTypes)
+  #     virtModules.add UEModule(name: r.moduleName, types: virtualModuleTypes, isVirtual: true, dependencies: deps & name,  rules: rules)
+  # #Types that causes cycles are also part of the virtual modules. TODO this code assume excludeDeps is cycles + coreuobject
+  # for cycleMod in excludeDeps.filterIt(it != "CoreUObject"):
+  #   let cycleMod = cycleMod
+  #   let (cycleTypes, types) = initialTypes.partition((x: UEType) => cycleMod in x.getModuleNames(excludeFromModuleNames))
+  #   let cycleName = &"{name}_{cycleMod}"
+  #   # UE_Error &"Module: + {name} Adding {cycleName} to {name} because it depends on {cycleMod} and {cycleTypes} is excluded"
+  #   if cycleTypes.len > 0: #if it doesnt have types it shouldnt be a added
+  #     virtModules.add UEModule(name: cycleName, types: cycleTypes, isVirtual: true, dependencies: deps & name & cycleMod, rules: rules)
+
+  # var module = makeUEModule(name, types, rules, deps)
+  # module.hash = $hash($module.toJson())
+  # module & virtModules
 
 
 proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =

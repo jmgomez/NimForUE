@@ -1,3 +1,4 @@
+
 include ../unreal/prelude
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
 import ../codegen/uemeta
@@ -97,6 +98,14 @@ textObject}
 
 
 
+template measureTime*(body: untyped) =
+  let starts = now()
+  body
+  let ends {.inject.} = (now() - starts)
+  UE_Log &"Time taken for : {ends} seconds"
+
+
+
 proc NimMain() {.importc.} 
 
 uEnum EInspectType: 
@@ -105,13 +114,38 @@ uEnum EInspectType:
   Class
   Name
 
-var ueProjectRef : ref UEProject
+# var ueProjectRef : ref UEProject
+# proc getProject() : UEProject = 
+#   if ueProjectRef.isNil():
+#     let ueProject =  genReflectionData(getGameModules(), getAllInstalledPlugins())
+#     ueProjectRef = new UEProject
+#     ueProjectRef[] = ueProject
+#   return ueProjectRef[]
+
+
+
 proc getProject() : UEProject = 
-  if ueProjectRef.isNil():
-    let ueProject =  genReflectionData(getGameModules(), getAllInstalledPlugins())
-    ueProjectRef = new UEProject
-    ueProjectRef[] = ueProject
-  return ueProjectRef[]
+  let pluginModules = getAllInstalledPlugins() 
+    .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
+    .flatten()
+  let gameModules = getGameModules()
+  let ueModules = @["Engine"]
+  let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
+
+    
+  var project = UEProject()
+  measureTime:
+    project.modules = projectModules.mapIt(tryGetPackageByName(it)).sequence.mapIt(toUEModule(it, @[], @[], @[])).flatten()
+    UE_Log &"Project has {project.modules.len} modules"
+    # for m in projectModules:
+    #   let pkg = tryGetPackageByName(m)
+    #   if pkg.isNone():
+    #     UE_Error &"Cant find any module with {m} name"
+    #     continue
+    #   let modules = pkg.get.toUEModule(@[], @[], @[])
+    #   for m in modules:
+    #     UE_Log &"Module {m.name} has {m.types.len} and this deps {m.dependencies}"
+  project
 
 proc getModules(moduleName:string, onlyBp : bool) : seq[UEModule] = 
       let pkg = tryGetPackageByName(moduleName)
@@ -304,7 +338,7 @@ uClass AActorCodegen of AActor:
 
 
     proc showAllCyclesDepsFromModule() = 
-      let ueProject =  getProject()
+      let ueProject =  getProject() 
       let moduleNames = ueProject.modules.mapIt(it.name)
       for m in ueProject.modules:
         let depOfs = ueProject.modules.filterIt(m.name in it.dependencies).mapIt(it.name)
@@ -355,7 +389,8 @@ uClass AActorCodegen of AActor:
 
 
 
-      let paths = modules[0].types.mapIt(it.moduleRelativePath.extractModule).sequence.deduplicate()
+      let paths = modules[0].types.mapIt(it.moduleRelativePath.extractSubmodule(self.moduleName))
+                    .sequence.deduplicate()
       UE_Log $paths
       UE_Log $paths.len
 
@@ -372,6 +407,39 @@ uClass AActorCodegen of AActor:
       
       let deps = calculateLevelDeps(moduleName, getProject(), self.depsLevel)
       UE_Warn $deps
+
+    proc getDepsFromPackage() = 
+      let pkg = tryGetPackageByName(self.moduleName)
+      if pkg.isNone():
+        UE_Error &"Cant find any module with {self.moduleName} name"
+        return
+
+      let allObjs = pkg.get.getAllObjectsFromPackage[:UObject]()
+      let initialTypes = allObjs.toSeq()
+      .map((obj: UObjectPtr) => getUETypeFrom(obj, @[], @[]))
+      .sequence()
+
+      let submodules = getSubmodulesForTypes(self.moduleName, initialTypes)
+      for k in submodules.keys():
+        UE_Warn &"{k} => {submodules[k].len}"
+        let deps = getDepsFromTypes(k, submodules[k], @[])
+        UE_Log &"Deps {deps}"
+        #NEXT HACER POSIBLE RETORNAR ENGINEDELEGATE/ENUM FROM THE MODULE DEPS
+      # UE_Log $submodules
+
+
+    proc getModulesAndDepsFromPackage() = 
+      let pkg = tryGetPackageByName(self.moduleName)
+      if pkg.isNone():
+        UE_Error &"Cant find any module with {self.moduleName} name"
+        return
+
+      #Show multiple packages
+      let modules = pkg.get.toUEModule(@[], @[], @[])
+      
+      for m in modules:
+        UE_Log &"Module {m.name} has {m.types.len} and this deps {m.dependencies}"
+
 
 
     
@@ -482,7 +550,38 @@ uClass AActorCodegen of AActor:
 
 
 
+    proc saveNewBindings() = 
+      let config = getNimForUEConfig()
+      createDir(config.bindingsDir)
 
+      #we save the pch types right before we discard the cached modules to avoid race conditions
+      
+      # savePCHTypes(modCache.values.toSeq)
+      var project = getProject()
+      let modulesToGen = @[project.modules[0]]
+      project.modules = @[project.modules[0]]
+                          
+
+      UE_Log &"Modules to gen: {modulesToGen.len}"
+
+      let ueProjectAsStr = $project
+      let codeTemplate = """
+import ../nimforue/codegen/[models, modulerules]
+
+const project* = $1
+"""
+      #Folders need to be created here because createDir is not available at compile time
+      createDir(config.reflectionDataDir)
+      writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
+
+      for module in project.modules:
+        let moduleFolder = module.name.toLower().split("/")[0]
+        let actualModule = module.name.toLower().split("/")[^1]
+        createDir(config.bindingsDir / "exported" / moduleFolder)
+        createDir(config.bindingsDir / moduleFolder)
+
+      
+      # return ueProject
 
 
 

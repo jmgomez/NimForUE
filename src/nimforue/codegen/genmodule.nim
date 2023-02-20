@@ -385,8 +385,10 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
 
   for module in project.modules:
     let module = module
-    let exportBindingsPath = bindingsDir / "exported" / module.name.toLower() & ".nim"
-    let importBindingsPath = bindingsDir / module.name.toLower() & ".nim"
+    let moduleFolder = module.name.toLower().split("/")[0]
+    let actualModule = module.name.toLower().split("/")[^1]
+    let exportBindingsPath = bindingsDir / "exported" / moduleFolder / actualModule & ".nim"
+    let importBindingsPath = bindingsDir / moduleFolder / actualModule & ".nim"
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
     if prevModHash == module.hash and uerIgnoreHash notin module.rules:
       echo "Skipping module: " & module.name & " as it has not changed"
@@ -403,4 +405,4 @@ when not defined(nimsuggest):
     genCode(exportBindingsPath, "include ../../prelude\n", module, genExportModuleDecl(module))
     genCode(importBindingsPath, moduleStrTemplate, module, genImportCModuleDecl(module))
 
-    genHeaders(module, nimHeadersDir)
+    # genHeaders(module, nimHeadersDir)

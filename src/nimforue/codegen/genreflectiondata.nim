@@ -75,8 +75,8 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
         @[codeGenOnly] & ruleBp
 
    
-    if module notin modCache: #if it's in the cache the virtual modules are too.
-      let ueMods = tryGetPackageByName(module)
+    if module notin modCache:# or module in modCache.values.toSeq.mapit(it.name): #if it's in the cache the virtual modules are too.
+      let ueMods = tryGetPackageByName(module.split("/")[0])
             .map((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps, pchIncludes))
             .get(newSeq[UEModule]())
 
@@ -92,7 +92,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
 
 
   proc getDepsFromModule(modName:string, currentLevel=0) : seq[string] = 
-    if modName in modCache:
+    if modName. in modCache:
         return modCache[modName].dependencies
     const maxLevel = 5
     if currentLevel > maxLevel: 
@@ -139,8 +139,8 @@ import ../nimforue/codegen/[models, modulerules]
 const project* = $1
 """
 
-  createDir(config.reflectionDataDir)
-  writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
+  # createDir(config.reflectionDataDir)
+  # writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
 
   
   return ueProject

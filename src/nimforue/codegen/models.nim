@@ -140,7 +140,7 @@ type
                 discard
 
     UEModule* = object
-        name* : string
+        name* : string #i.e. gamefrawework inside engine. 
         types* : seq[UEType]
         rules* : seq[UEImportRule]
         dependencies* : seq[string]   
