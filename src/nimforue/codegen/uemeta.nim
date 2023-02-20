@@ -355,7 +355,7 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
 
   if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
     some UEType(name: name, kind: uetClass, parent: parentName, 
-      isInPCH: isInPCH, isParentInPCH: isParentInPCH,
+      isInPCH: isInPCH, isParentInPCH: isParentInPCH, moduleRelativePath:moduleRelativePath.get(""),
       fields: fields, interfaces: cls.interfaces.mapIt("U" & $it.class.getName()))
   else:
     # UE_Warn &"Class {name} is not exposed to BP"
@@ -402,7 +402,7 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchInclude
       isInPCH = isModuleRelativePathInHeaders(str.getModuleName(), moduleRelativePath.get(), pchIncludes)
 
     some UEType(name: name, kind: uetStruct, fields: fields, 
-          isInPCH: isInPCH,
+          isInPCH: isInPCH, moduleRelativePath: moduleRelativePath.get(""),
           metadata: metadata, size: size, alignment: alignment)
   else:
     # UE_Warn &"Struct {name} is not exposed to BP"
@@ -605,13 +605,21 @@ proc getForcedTypes*(moduleName:string, rules: seq[UEImportRule]): seq[UEType] =
     UE_Log &"Forced types for {moduleName}: {result} and {rules.filterIt(it.rule == uerForce)}"
   
   
- 
+func extractSubmodule* (path:string) : Option[string] = 
+  path
+    .split("/")
+    .filterIt(it notin ["Public", "Classes", "Private"] and not it.endsWith(".h"))
+    .filterIt(not it.isEmptyOrWhitespace)
+    .head()
+    
   
 
 proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string], pchIncludes:seq[string]= @[]): seq[UEModule] =
   UE_Log &"Generating module for {pkg.getShortName()} pchIncludes: {pchIncludes.len}"
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   let name = pkg.getShortName()
+  
+
   let initialTypes = allObjs.toSeq()
     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules, pchIncludes))
     .sequence()

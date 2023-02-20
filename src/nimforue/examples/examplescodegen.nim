@@ -105,7 +105,13 @@ uEnum EInspectType:
   Class
   Name
 
-
+var ueProjectRef : ref UEProject
+proc getProject() : UEProject = 
+  if ueProjectRef.isNil():
+    let ueProject =  genReflectionData(getGameModules(), getAllInstalledPlugins())
+    ueProjectRef = new UEProject
+    ueProjectRef[] = ueProject
+  return ueProjectRef[]
 
 proc getModules(moduleName:string, onlyBp : bool) : seq[UEModule] = 
       let pkg = tryGetPackageByName(moduleName)
@@ -131,6 +137,7 @@ uClass AActorCodegen of AActor:
     bUseIncludesInPCH : bool 
     moduleName : FString
     test : FString
+    depsLevel : int32 = 1
   
   ufuncs(): 
     proc getClassFromInspectedType() : UClassPtr = 
@@ -288,6 +295,85 @@ uClass AActorCodegen of AActor:
         UE_Error &"Error: {e.msg}"
         UE_Error &"Error: {e.getStackTrace()}"
         UE_Error &"Failed to generate reflection data"
+    
+
+    proc showAllProjectDepsFromModule() =         
+        let deps = getProject().modules.filterIt( self.moduleName in it.dependencies).mapIt(it.name)
+        UE_Warn $deps
+    
+
+
+    proc showAllCyclesDepsFromModule() = 
+      let ueProject =  getProject()
+      let moduleNames = ueProject.modules.mapIt(it.name)
+      for m in ueProject.modules:
+        let depOfs = ueProject.modules.filterIt(m.name in it.dependencies).mapIt(it.name)
+        let cyclesFirstLevel = m.dependencies.filterIt(it in depOfs)
+        if cyclesFirstLevel.any:
+          UE_Log "First Level Deps"
+          UE_Log &"{m.name} => it's dependencies for {depOfs}"
+          UE_Warn &"{m.name} => it's dependencies/cycles for {cyclesFirstLevel}" 
+        #Next level
+        for depOf in depOfs:
+          let depOfsDepOfs = ueProject.modules.filterIt(depOf in it.dependencies).mapIt(it.name)
+          let cyclesSecondLevel = m.dependencies.filterIt(it in depOfsDepOfs)
+          if cyclesSecondLevel.any:
+            UE_Log "Second Level Deps"
+            UE_Log &"{m.name} => it's dependencies for {depOfsDepOfs}"
+            UE_Warn &"{m.name} => it's dependencies/cycles for {cyclesSecondLevel}"
+
+    proc getFirstLevelCycles() = 
+      let ueProject =  getProject()
+      let moduleNames = ueProject.modules.mapIt(it.name)
+      var cycles = newTable[string, seq[string]]()
+      for m in ueProject.modules:
+        let depOfs = ueProject.modules.filterIt(m.name in it.dependencies).mapIt(it.name)
+        let cyclesFirstLevel = m.dependencies.filterIt(it in depOfs)
+        if cyclesFirstLevel.any:
+          cycles[m.name] = cyclesFirstLevel
+
+      UE_Warn $cycles
+    proc getSecondLevelCycles() = 
+      let ueProject = getProject()
+      let moduleNames = ueProject.modules.mapIt(it.name)
+      var cycles = newTable[string, seq[string]]()
+      for m in ueProject.modules:
+        let depOfs = ueProject.modules.filterIt(m.name in it.dependencies).mapIt(it.name)
+        for depOf in depOfs:
+          let depOfsDepOfs = ueProject.modules.filterIt(depOf in it.dependencies).mapIt(it.name)
+          let cyclesSecondLevel = m.dependencies.filterIt(it in depOfsDepOfs)
+          if cyclesSecondLevel.any:
+            cycles[m.name] = cyclesSecondLevel
+      UE_Warn $cycles
+
+    proc shouldUniqueModulePaths() = 
+      let pkg = tryGetPackageByName(self.moduleName)
+      if pkg.isNone():
+        UE_Error &"Cant find any module with {self.moduleName} name"
+        return
+      let modules = pkg.get.toUEModule(@[], @[], @[])
+
+
+
+      let paths = modules[0].types.mapIt(it.moduleRelativePath.extractModule).sequence.deduplicate()
+      UE_Log $paths
+      UE_Log $paths.len
+
+
+    proc showDepsLevel() = 
+      let moduleName = self.moduleName
+    
+      #project can be a poiinter
+      proc calculateLevelDeps(moduleName : string, project:UEProject, level=0) : seq[string] =
+        let deps = project.modules.first(m=>m.name == moduleName).map(m=>m.dependencies).get(@[])
+        if level == 0: return deps
+        let depsOfDeps = deps.mapIt(calculateLevelDeps(it, project, level-1)).flatten()
+        return (deps & depsOfDeps).deduplicate()
+      
+      let deps = calculateLevelDeps(moduleName, getProject(), self.depsLevel)
+      UE_Warn $deps
+
+
     
     proc genReflectionDataAndBindingsAsync() = 
         execBindingGeneration(shouldRunSync=false)    

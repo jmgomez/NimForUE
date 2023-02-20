@@ -64,7 +64,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
     #By default all modules that are not in the list above will only export BlueprintTypes
     #Update: Not anymore #TODO code to be deleted once this is working 
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
-    let bpOnly = getGameUserConfigValue("bpOnly", true)
+    let bpOnly = getGameUserConfigValue("bpOnly", false)
     let ruleBp = if bpOnly: @[bpOnlyRules] else: @[]
     let rules = 
       if module in moduleImportRules: 
