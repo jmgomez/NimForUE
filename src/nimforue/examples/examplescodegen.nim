@@ -129,8 +129,9 @@ proc getProject() : UEProject =
     .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
     .flatten()
   let gameModules = getGameModules()
-  let ueModules = @["Engine"]
-  let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
+  let ueModules = @["Engine", "SlateCore", "Slate"]
+  # let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
+  let projectModules =  @["SlateCore", "Slate"]#(gameModules & pluginModules & ueModules).deduplicate()
 
     
   var project = UEProject()
@@ -557,13 +558,93 @@ uClass AActorCodegen of AActor:
       #we save the pch types right before we discard the cached modules to avoid race conditions
       
       # savePCHTypes(modCache.values.toSeq)
+
+
+      #let's change the way we calculate deps.
+      #First we need to get all Fields for an UEType
+      #Then we need to get all type names for an UEType (field + parent + superstruct). Notice fields here will need to deal with generics
+      #Then we need to know if a type name is in a Module. 
+      func getAllFieldsFromUEType(uet:UEType) : seq[UEField] = 
+        # Returns all fields for delegates, classes and structs. Notice it wont retunr enum fields
+        case uet.kind:
+        of uetEnum, uetInterface: @[]
+        else: uet.fields
+
+      func getAllTypesFromUEField(uef:UEField) : seq[string] = 
+        # Returns all types for a field. It will return generic types as they are in Nim.
+        case uef.kind:
+        of uefProp: @[uef.uePropType]
+        of uefFunction: uef.signature.map(getAllTypesFromUEField).flatten()
+        of uefEnumVal: @[]
+      
+      func getNameFromUEPropType(nimType:string) : seq[string] = 
+        # Will return the name of the type cleaned. No Ptr, no Generic, no Var, etc.
+        var nimType = nimType
+        if "var " in nimType:
+          nimType = nimType.replace("var ", "").strip()
+          
+        if nimType.isGeneric:
+          if "TMap" in nimType:
+            nimType.extractKeyValueFromMapProp().map(getNameFromUEPropType).flatten()
+          else:
+            getNameFromUEPropType(nimType.extractInnerGenericInNimFormat())
+        else:
+          @[nimType.removeLastLettersIfPtr()]
+
+
+      func getCleanedDependencyNamesFromUEType(uet:UEType) : seq[string] = 
+        #Consider returning empty for primitive types
+        let fields = getAllFieldsFromUEType(uet)
+        let extraTypes = 
+          case uet.kind:
+          of uetClass: uet.parent & uet.interfaces
+          of uetStruct: @[uet.superStruct]
+          else: @[]
+        let types = fields.map(getAllTypesFromUEField).flatten() & extraTypes
+        let cleanedTypes = types.map(getNameFromUEPropType).flatten()
+        cleanedTypes.deduplicate()
+      
+      func getCleanedDependencyTypes(uem:UEModule) : seq[string] = 
+        let types = uem.types
+        let cleanedTypes = types.map(getCleanedDependencyNamesFromUEType).flatten()
+        cleanedTypes.deduplicate()
+
+      func getCleanedDefinitionNamesFromUEType(uet:UEType) : seq[string] = 
+        #only name?
+        @[uet.name]
+
+      func getCleanedDefinitionTypes(uem:UEModule) : seq[string] = 
+        let types = uem.types
+        let cleanedTypes = types.map(getCleanedDefinitionNamesFromUEType).flatten()
+        cleanedTypes.deduplicate()
+
+      func isTypeDefinedInModule(uem:UEModule, typeName:string) : bool = 
+        let cleanedTypes = getCleanedDefinitionTypes(uem)
+        typeName in cleanedTypes
+
+      func getModuleNameForType(project:UEProject, typeName:string) : Option[string] = 
+        let modules = project.modules
+        let module = modules.first(m=>m.isTypeDefinedInModule(typeName)).map(m=>m.name)
+        module
+
+      func depsFromModule(project:UEProject, uem:UEModule) : seq[string] = 
+        uem
+          .getCleanedDependencyTypes
+          .mapIt(project.getModuleNameForType(it))
+          .sequence
+          .deduplicate()
+          .filterIt(it != uem.name)
+
       var project = getProject()
-      let modulesToGen = @[project.modules[0]]
-      project.modules = @[project.modules[0]]
-                          
+      var modules = newSeq[UEModule]()
+      for module in project.modules:
+        var uem = module
+        uem.dependencies = project.depsFromModule(module)
+        modules.add(uem)
+      project.modules = modules
 
-      UE_Log &"Modules to gen: {modulesToGen.len}"
-
+      # UE_Log &"Modules to gen: {project.modules.len}"
+      # UE_Log &"Modules to gen: {project.modules.mapIt(it.name)}"
       let ueProjectAsStr = $project
       let codeTemplate = """
 import ../nimforue/codegen/[models, modulerules]

@@ -7,10 +7,10 @@ import ../codegen/[models,uebind, uemeta]
 macro importAllBindings() : untyped = 
   let exportBindingsPath = "src/nimforue/unreal/bindings/exported/"
   let modules = 
-        walkDir(exportBindingsPath)
+        walkDirRec(exportBindingsPath)
         .toSeq()
-        .filterIt(it[0] == pcFile and it[1].endsWith(".nim"))
-        .mapIt(it[1].split(PathSeparator)[^1].replace(".nim", ""))
+        .filterIt(it.endsWith(".nim"))
+        .mapIt(it.split(PathSeparator).join("/").split("bindings/exported/")[^1].replace(".nim", ""))
               
   func importStmts(modName:string) : NimNode =
     genAst(module=ident modName):
@@ -20,6 +20,9 @@ macro importAllBindings() : untyped =
 
 
 importAllBindings()
+
+# import
+#   ../unreal / bindings / exported / slatecore/enums
 
 
 # Include all files from in the bindings

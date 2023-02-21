@@ -512,7 +512,7 @@ func extractSubmodule* (path, packageName:string) : Option[string] =
   path
     .split("/")
     .filterIt(it notin ["Public", "Classes", "Private"] and not it.endsWith(".h"))
-    .mapIt(if it == "": &"{packageName}Empty" else: it) #TODO change empty by modulename once I figure if they belong together
+    .mapIt(if it == "": packageName else: it) #TODO change empty by modulename once I figure if they belong together
     # .join()
     .head()
     
@@ -721,8 +721,8 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
   let submodulesTable = getSubmodulesForTypes(pkg.getShortName(), initialTypes)
   var submodules : seq[UEModule] = @[]
   for subModuleName, submoduleTypes in submodulesTable:
-    let deps = getDepsFromTypes(subModuleName, submoduleTypes, @[])
-    var module = makeUEModule(subModuleName, submoduleTypes, rules, deps)
+    # let deps = getDepsFromTypes(subModuleName, submoduleTypes, @[])
+    var module = makeUEModule(subModuleName, submoduleTypes, rules)
     module.hash = $hash($module.toJson())
     submodules.add module
   return submodules
