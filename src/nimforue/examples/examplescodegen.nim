@@ -685,6 +685,31 @@ uClass AActorCodegen of AActor:
         let dependentTypes = allDefTypes.filterIt(it in allDepTypes)
         dependentTypes
 
+      func removeDepsFromModule(modDep, modDef, commonModule: var UEModule, typeDefinitions : Table[string, seq[string]]) =
+        let dependentTypesNames = getDependentTypesFrom(modDep, modDef, typeDefinitions)
+        let dependentTypes = modDef.types.filterIt(it.name in dependentTypesNames)
+
+        moveTypesFrom(dependentTypes, modDef, commonModule)
+
+      #Notice after running this function typeDefinitions(cache) will be outdated
+      func fixCycles(project: var UEProject, commonModule : var UEModule, typeDefinitions : Table[string, seq[string]]) : UEProject =
+        var projectModules = project.modules
+        let cycles = getFirstLevelCycles(projectModules)
+        UE_Log &"Found {cycles.len} cycles"
+        var fixedCycles : TableRef[string, string] = newTable[string, string]() #TODO use this So we iterate half of the times
+        for cycle in cycles.pairs:
+          var modDep = projectModules.first(m=>m.name == cycle[0]).get()
+          for dep in cycle[1]:
+            let dep = dep
+            # UE_Log &"Cycle: {modDep.name} -> {dep}" 
+            var modDef = projectModules.first(m=>m.name == dep).get()
+            removeDepsFromModule(modDep, modDef, commonModule, typeDefinitions)
+            removeDepsFromModule(modDef, modDep, commonModule, typeDefinitions)
+            projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDef.name, modDef)
+          projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDep.name, modDep)
+
+        project.modules = projectModules & commonModule
+        project
 
 
       #Create a module with all the types or just the types in common:
@@ -699,55 +724,34 @@ uClass AActorCodegen of AActor:
       #Move types into a common module to remove cycles
         # 1. Get all types that depends from a given module and move then into another module (ForwardDeclareOnly)
       #Recalculate deps
-     
-      var typeDefinitions : Table[string, seq[string]] 
-      measureTime "Whole Project":
-        var project = getProject()
+      func generateUEProject(project:UEProject)  : UEProject = 
+        var project = project
         var modules = newSeq[UEModule]()
-        typeDefinitions = getTypeDefinitions(project.modules)
+        let typeDefinitions = getTypeDefinitions(project.modules)
 
-        measureTime "Only Deps":
-          for module in project.modules:
-            var uem = module
-            uem.dependencies = depsFromModule(project.modules, module, typeDefinitions)
-            modules.add(uem)
-          project.modules = modules
+        for module in project.modules:
+          var uem = module
+          uem.dependencies = depsFromModule(project.modules, module, typeDefinitions)
+          modules.add(uem)
+        project.modules = modules
 
-
-      measureTime "Cycles":
-        let cycles = getFirstLevelCycles(project.modules)
-        for key, value in cycles.pairs:
-          UE_Log key & " -> " & value.join(", ")
-        
-      var commonModule = UEModule(name:"Engine/Common", types: @[])
-      let firstCycle = cycles.pairs.toSeq[0]
+        var commonModule = UEModule(name:"Engine/Common", types: @[])
+        project = fixCycles(project, commonModule, typeDefinitions)
+    
+      var project = generateUEProject(getProject())
+      project = generateUEProject(project)
 
 
-      var modDep = project.modules.first(m=>m.name == firstCycle[0]).get()
-      var modDef = project.modules.first(m=>m.name == firstCycle[1][0]).get()
-      UE_Log &"First Cycle: {modDep.name} -> {modDef.name}"
-      UE_Log &"Types from {modDep.name} defined in {modDef.name}"
-
-
-      let dependentTypesNames = getDependentTypesFrom(modDep, modDef, typeDefinitions)
-      let dependentTypes = modDef.types.filterIt(it.name in dependentTypesNames)
-
-      UE_Log &"Dependent Types: {dependentTypesNames}"
-      
-      moveTypesFrom(dependentTypes, modDef, commonModule)
-
-      UE_Log &"Common module: {commonModule}"
-
-      
+              
 
       # UE_Log &"Modules to gen: {project.modules.len}"
       # UE_Log &"Modules to gen: {project.modules.mapIt(it.name)}"
       let ueProjectAsStr = $project
       let codeTemplate = """
-import ../nimforue/codegen/[models, modulerules]
+  import ../nimforue/codegen/[models, modulerules]
 
-const project* = $1
-"""
+  const project* = $1
+  """
       #Folders need to be created here because createDir is not available at compile time
       createDir(config.reflectionDataDir)
       writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
