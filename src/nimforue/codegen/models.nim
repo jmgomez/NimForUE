@@ -123,6 +123,7 @@ type
                 interfaces* : seq[string]
                 fnOverrides* : seq[CppFunction]
                 isParentInPCH* : bool
+                forwardDeclareOnly* : bool #if the class is forward declared only. This means we dont define the class in the current module, it maybe defined (func emmited) in another module or in the PCH
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal

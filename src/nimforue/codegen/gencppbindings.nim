@@ -10,7 +10,8 @@ macro importAllBindings() : untyped =
         walkDirRec(exportBindingsPath)
         .toSeq()
         .filterIt(it.endsWith(".nim"))
-        .mapIt(it.split(PathSeparator).join("/").split("bindings/exported/")[^1].replace(".nim", ""))
+        .mapIt(
+          it.split(PathSeparator).join("/").split("bindings/exported/")[^1].replace(".nim", "").toLower)
               
   func importStmts(modName:string) : NimNode =
     genAst(module=ident modName):

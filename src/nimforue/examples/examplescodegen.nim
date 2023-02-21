@@ -98,11 +98,11 @@ textObject}
 
 
 
-template measureTime*(body: untyped) =
+template measureTime*(name: static string, body: untyped) =
   let starts = now()
   body
-  let ends {.inject.} = (now() - starts)
-  UE_Log &"Time taken for : {ends} seconds"
+  let ends = (now() - starts)
+  UE_Log (name & " took " & $ends & "  seconds")
 
 
 
@@ -131,11 +131,11 @@ proc getProject() : UEProject =
   let gameModules = getGameModules()
   let ueModules = @["Engine", "SlateCore", "Slate"]
   # let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
-  let projectModules =  @["SlateCore", "Slate"]#(gameModules & pluginModules & ueModules).deduplicate()
+  let projectModules = ueModules #(gameModules & pluginModules & ueModules).deduplicate()
 
     
   var project = UEProject()
-  measureTime:
+  measureTime "Getting the project":
     project.modules = projectModules.mapIt(tryGetPackageByName(it)).sequence.mapIt(toUEModule(it, @[], @[], @[])).flatten()
     UE_Log &"Project has {project.modules.len} modules"
     # for m in projectModules:
@@ -622,26 +622,123 @@ uClass AActorCodegen of AActor:
         let cleanedTypes = getCleanedDefinitionTypes(uem)
         typeName in cleanedTypes
 
-      func getModuleNameForType(project:UEProject, typeName:string) : Option[string] = 
-        let modules = project.modules
-        let module = modules.first(m=>m.isTypeDefinedInModule(typeName)).map(m=>m.name)
-        module
+      func getModuleNameForType(typeDefinitions : Table[string, seq[string]], typeName:string) : Option[string] = 
+        for key, value in typeDefinitions.pairs:
+          if typeName in value:
+            return some(key)
+        # let modules = project.modules
+        # let module = modules.first(m=>m.isTypeDefinedInModule(typeName)).map(m=>m.name)
+        # module
+      func getTypeDefinitions(modules:seq[UEModule]) : Table[string, seq[string]] = 
+        var typeDefinitions = initTable[string, seq[string]]()
+        for module in modules:
+          typeDefinitions[module.name] = getCleanedDefinitionTypes(module)
+        typeDefinitions
 
-      func depsFromModule(project:UEProject, uem:UEModule) : seq[string] = 
+      func depsFromModule(modules:seq[UEModule], uem:UEModule, typeDefs : Table[string, seq[string]]) : seq[string] = 
         uem
           .getCleanedDependencyTypes
-          .mapIt(project.getModuleNameForType(it))
+          .mapIt(getModuleNameForType(typeDefs, it))
           .sequence
           .deduplicate()
           .filterIt(it != uem.name)
 
-      var project = getProject()
-      var modules = newSeq[UEModule]()
-      for module in project.modules:
-        var uem = module
-        uem.dependencies = project.depsFromModule(module)
-        modules.add(uem)
-      project.modules = modules
+      
+      func getFirstLevelCycles(modules:seq[UEModule]) : TableRef[string, seq[string]] = 
+        let moduleNames = modules.mapIt(it.name)
+        var allCycles = newTable[string, seq[string]]()
+        for m in modules:
+          let depOfs = modules.filterIt(m.name in it.dependencies).mapIt(it.name)
+          let cycles = m.dependencies.filterIt(it in depOfs)
+          if cycles.any:
+            allCycles[m.name] = cycles
+
+        allCycles
+      
+      func moveTypeFrom(uet:UEType, source, destiny : var UEModule) = 
+        #conceptually move types from source to destiny. 
+        #if it's struct moves the whole type and removes it from source
+        #if it's class, marks it as forwardDeclare only and do not remove for source. Doesnt copy fields
+
+        let index = source.types.firstIndexOf((typ:UEType)=>typ.name == uet.name)
+        case uet.kind:
+        of uetStruct:
+          source.types.del(index)
+          destiny.types.add(uet)
+        of uetClass:
+          var uet = uet
+          uet.forwardDeclareOnly = true
+          source.types[index] = uet
+          uet.forwardDeclareOnly = false
+          uet.fields = @[]
+          destiny.types.add(uet) #TODO remove fields
+        else: discard #only move structs and classes
+
+      func moveTypesFrom(uets:seq[UEType], source, destiny : var UEModule) =
+        for uet in uets:
+          moveTypeFrom(uet, source, destiny)
+      
+      func getDependentTypesFrom(uemDep, uemDefined : UEModule, typeDefinitions : Table[string, seq[string]]) : seq[string] = 
+        #Return all types that are defined in uemDefined and are used in uemDep
+        let allDefTypes = typeDefinitions[uemDefined.name]
+        let allDepTypes = uemDep.getCleanedDependencyTypes()
+        let dependentTypes = allDefTypes.filterIt(it in allDepTypes)
+        dependentTypes
+
+
+
+      #Create a module with all the types or just the types in common:
+      
+
+      # Speed up: Collect all types definitions in a first pass DONE
+
+      # Then in a second pass, collect all dependencies DONE
+
+      #Find cycles DONE
+
+      #Move types into a common module to remove cycles
+        # 1. Get all types that depends from a given module and move then into another module (ForwardDeclareOnly)
+      #Recalculate deps
+     
+      var typeDefinitions : Table[string, seq[string]] 
+      measureTime "Whole Project":
+        var project = getProject()
+        var modules = newSeq[UEModule]()
+        typeDefinitions = getTypeDefinitions(project.modules)
+
+        measureTime "Only Deps":
+          for module in project.modules:
+            var uem = module
+            uem.dependencies = depsFromModule(project.modules, module, typeDefinitions)
+            modules.add(uem)
+          project.modules = modules
+
+
+      measureTime "Cycles":
+        let cycles = getFirstLevelCycles(project.modules)
+        for key, value in cycles.pairs:
+          UE_Log key & " -> " & value.join(", ")
+        
+      var commonModule = UEModule(name:"Engine/Common", types: @[])
+      let firstCycle = cycles.pairs.toSeq[0]
+
+
+      var modDep = project.modules.first(m=>m.name == firstCycle[0]).get()
+      var modDef = project.modules.first(m=>m.name == firstCycle[1][0]).get()
+      UE_Log &"First Cycle: {modDep.name} -> {modDef.name}"
+      UE_Log &"Types from {modDep.name} defined in {modDef.name}"
+
+
+      let dependentTypesNames = getDependentTypesFrom(modDep, modDef, typeDefinitions)
+      let dependentTypes = modDef.types.filterIt(it.name in dependentTypesNames)
+
+      UE_Log &"Dependent Types: {dependentTypesNames}"
+      
+      moveTypesFrom(dependentTypes, modDef, commonModule)
+
+      UE_Log &"Common module: {commonModule}"
+
+      
 
       # UE_Log &"Modules to gen: {project.modules.len}"
       # UE_Log &"Modules to gen: {project.modules.mapIt(it.name)}"
