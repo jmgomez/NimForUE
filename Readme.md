@@ -6,6 +6,11 @@
 The plugin is being used to develop a Game but it isnt feature complete yet. 
 To get started there is a Third Person Template implementation in NimForUE: https://github.com/jmgomez/NimTemplate
 
+
+### Roadmap ###
+
+https://github.com/jmgomez/NimForUE/wiki/Roadmap
+
 ### Why NimForUE?
 
 The core idea is to have a short feedback loop while having native performance and a modern language that can access all features Unreal provides. 
@@ -60,111 +65,6 @@ The major inspiration is the previous NimUE plugin but NimForUE uses a radically
 We also got inspiration from the AngelScript plugin. What we like about it is how it sits on top of C++ and allows for generating Blueprint classes and functions in Editor time. We hope to not modify the Engine's sources to accomplish this. 
 
 There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.). The major differentiator factor, apart from the one mentioned above, is that we don't rely on any kind of virtual machine.
-
-
-
-### Roadmap
-- [x] Bind Unreal Symbols via C++
-- [x] POC for generating new UFuncs implemenation in Nim
-- [x] Consume Nim in Unreal via auto generated FFI
-- [x] Hot Reloading Windows
-- [x] Hot Reloading MacOS
-- [x] Debugging
-- [x] Test Integration via Unreal Frontend
-- [x] Cover most Unreal Reflected Types
-- [x] Getter/Setters macro for UProps
-- [x] Generate Nim definitions from Unreal Reflection system 
-- [x] Being able to produce new UE types from Nim
-- [x] Macro (pragma) for implmenting UFuncs in nim
-
-    ```nim
-        proc myFunc(strg: FString) : {. ufunc: params .}
-            nimCodeHere
-- [x] DSL for defining uFunctions in blocks
-
-- [x] DSL for defining UStructs
-
-    ```nim
-        uStruct FMyNimStruct:
-        (BlueprintType)
-        uprop(EditAnywhere, BlueprintReadWrite):
-            testField : int32
-            testField2 : FString
-        uprop(EditAnywhere, BlueprintReadOnly):
-            param35 : int32    
-    ```
-
-- [x] DSL for defining UEnums
-
-    ```nim
-    uEnum EMyEnumCreatedInNim:
-        (BlueprintType)
-        ValueOne
-        SomethingElse
-        AnotherThing
-    ```
-
-- [x] DSL for defining delegates
-
-    ```nim
-        uDelegate FMyDelegate2Params(str:FString, param:TArray[FString])
-        uDelegate FMyDelegateNoParams()
-    ```
-
-- [x] DSL for defining UClasses
-
-    ```nim
-        uClass MyClass of UObject = 
-            (Blueprintable, BlueprintType)
-            uprops(EditAnywhere, BlueprintReadOnly)
-                myProp : FString
-                myProp2 : int32
-            uprops(MoreParams..)
-                ...
-                More props
-            ufuncs(BlueprintCallable):
-                proc testStatic() {.static.} = 
-                    UE_Log "Test static2"
-                    regularNimFunction()
-
-                proc tick(deltaTime:float)  = 
-                    UE_Warn "Im ticking"
-                
-                proc beginPlay() = 
-                    regularNimFunction()
-
-                proc setColorInEditor() {.CallInEditor.} = 
-                    self.setColorByStringInMesh("(R=0,G=0,B=1,A=1)")
-                    testStatic()
-            ufuncs(BlueprintCallable, BlueprintPure):
-                proc getSalute() : FString = "Hello World"
-                proc addTwoNumbers(a, b : int ) : int = a + b
-    ```
-- [x] Being able to emit most used FProperties
-
-- [x] Being able to emit any type into UE with hotreload
-
-- [x] Allow to define constructors on UObjects
-
-- Non Editor Builds (Manual)
-    - [x] Make builds work on Windows 
-    - [x] Make builds work on MacOS 
-    - [x] Make builds work ok iOS
-    - [ ] Make builds work on Android 
-- [x] Non editor builds should be statically linked
-- [ ] Automatize non editor builds
-
-- [x] Inheritance in UStrucs. 
-- [x] Virtual Functions support on UObjects. At this point, the C++ integration will be complete and you will be able to do anything that you can do in C++.
-- [ ] Explore NimVM integration. No comp time for small changes/Runtime code execution
-- [ ] Improve Debugger
-  - [x] Keep the debugger hook after hot reloading
-  - [ ] Research if it's possible to have a better mapping on the Nim types.
-- [ ] Test Nim code that consumes Unreal Code without starting the editor. 
-- [ ] REPL
-- [ ] Editor Extension for auto completation on the DSL
-
-
 
 
 
@@ -244,9 +144,3 @@ In one of the Unreal recommend path. See https://docs.unrealengine.com/4.27/en-U
 
 Kudos to Mike from https://gamefromscratch.com/ for reporting and support on troubleshoot it. We are also working in a patch so the next version of the Nim compiler tooling (vcc) can work with a specific version of the c++ compiler via an argument so we dont have to specify the version on the UBT side of things.
 
-
-## Acknowledgments
-
-Thanks to the Nim community for its support, in particular to its Discord channel and also to the forums. Special thanks go to Don, (@geekrelief) for his help on the Nim side of things.
-
-I would also like to acknowledge the Unreal Slackers discord for its support and in particular, to Mark (@MarkJGx) for his help on the Unreal side. 
