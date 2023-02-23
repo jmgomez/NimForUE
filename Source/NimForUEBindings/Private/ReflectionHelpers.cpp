@@ -171,6 +171,7 @@ TArray<FString> UReflectionHelpers::GetAllModuleDepsForPlugin(FString PluginName
 	if (Plugin.IsValid()) {
 		for(FModuleDescriptor ModuleDescriptor : Plugin->GetDescriptor().Modules) {
 			Modules.Add(ModuleDescriptor.Name.ToString());
+			
 		}
 	}
 	return Modules;

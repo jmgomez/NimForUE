@@ -1,6 +1,6 @@
 
 include ../unreal/prelude
-import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
+import std/[strformat, tables, hashes, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans, algorithm, macros]
 import ../codegen/uemeta
 import ../../buildscripts/nimforueconfig
 import ../codegen/[codegentemplate,modulerules, genreflectiondata, headerparser]
@@ -114,7 +114,7 @@ uEnum EInspectType:
   Class
   Name
 
-# var ueProjectRef : ref UEProject
+var ueProjectRef : ref UEProject
 # proc getProject() : UEProject = 
 #   if ueProjectRef.isNil():
 #     let ueProject =  genReflectionData(getGameModules(), getAllInstalledPlugins())
@@ -123,30 +123,139 @@ uEnum EInspectType:
 #   return ueProjectRef[]
 
 
+# const definedDeps = @["EAxis", "ECollisionChannel", "EInputEvent", "ELifetimeCondition", "ELinearConstraintMotion", "ELocalizedTextSourceCategory", "EMouseCursor", "ENetworkFailure", "ETouchIndex", "ETraceTypeQuery", "FBox", "FBox2D", "FBoxSphereBounds", "FButtonStyle", "FCheckBoxStyle", "FColor", "FCompositeFont", "FDateTime", "FDirectoryPath", "FFilePath", "FFloatRange", "FFrameNumber", "FFrameRate", "FGuid", "FHitResult", "FInputChord", "FInputDeviceId", "FInputEvent", "FInt32Interval", "FIntPoint", "FIntVector", "FInterpCurveFloat", "FInterpCurve
+# Quat", "FInterpCurveTwoVectors", "FInterpCurveVector", "FInterpCurveVector2D", "FKey", "FKeyEvent", "FLinearColor", "FMatrix", "FName", "FPlane", "FPlatformUserId", "FPrimaryAssetId", "FPrimaryAssetType", "FQualifiedFrameTime", "FQuat", "FQuat4f", "FRandomStream", "FRotator", "FScriptTypedElementHandle", "FScriptTypedElementListProxy",  "FSoftObjectPath", "FString", "FTableRowBase", "FText", "FTimecode", "FTimespan", "FTopLevelAssetPath", "FTransform", "FVector", "FVector2D", "FVector3d", "FVector3f", "FVector4", "FVector4d", "FVector4f", "FVect
+# or_NetQuantize", "FVector_NetQuantize10", "FVector_NetQuantize100", "FVector_NetQuantizeNormal", "UAudioEndpointSettingsBase", "UAudioParameterControllerInterface", "UBodySetupCore", "UClothingAssetBase", "UClothingSimulationFactory", "UClothingSimulationInteractor", "UDeveloperSettings", "UFontFaceInterface", "UFontProviderInterface", "UHandlerComponentFactory", "ULandscapeGrassType", "UMeshDescriptionBaseBulkData", "UNetObjectCountLimiterConfig", "UObjectReplicationBridge", "UOcclusionPluginSourceSettingsBase", "UPhysicsSettingsCore", "UReverbPluginSourceSettingsBase", "USoundModulatorBase",
+#  "USoundfieldEffectBase", "USoundfieldEncodingSettingsBase", "USoundfieldEndpointSettingsBase", "USourceDataOverridePluginSourceSettingsBase", "USpatializationPluginSourceSettingsBase", "UStaticMeshDescription", "UTypedElementAssetDataInterface", "UTypedElementCounterInterface", "UTypedElementHierarchyInterface", "UTypedElementObjectInterface", "UTypedElementSelectionInterface", "UTypedElementSelectionSet", "UWaveformTransformationBase", "bool", "float32", "float64", "int16", "int32", "int64", "int8", "uint16", "uint32", "uint64", "uint8"]
+
+
+
+
+
+proc getAllTypesFromFileTree(fileTree:NimNode) : seq[string] = 
+
+  proc typeDefToName(typeNode: NimNode) : seq[string] = 
+    case typeNode.kind
+    of nnkTypeSection: 
+      typeNode
+        .children
+        .toSeq
+        .map(typeDefToName)
+        .flatten()
+    of nnkTypeDef:
+      let nameNode = typeNode[0]
+      if nameNode.kind == nnkIdent: #TYPE ALIAS
+        return @[nameNode.strVal]
+      if nameNode[0].kind == nnkPostFix: 
+        @[nameNode[0][^1].strVal]
+      else: 
+        @[nameNode[0].strVal]
+    else: 
+      error("Error got " & $typeNode.kind)
+      newSeq[string]()
+
+  let typeNames = 
+    fileTree
+      .children
+        .toSeq
+        .filterIt(it.kind == nnkTypeSection)
+        .map(typeDefToName)
+        .flatten
+        .filterIt(it != "*")
+  typeNames
+
+
+proc getAllImportsAsRelativePathsFromFileTree(fileTree:NimNode) : seq[string] = 
+  func parseImportBracketsPaths(path:string) : seq[string] = 
+    if "[" notin path:  return @[path]
+    let splited = path.split("[")
+    let (dir, files) = (splited[0], splited[1].split("]")[0].split(","))
+    return files.mapIt(dir & "/" & it) #Not sure if you can have multiple [] nested in a import
+      
+      
+  let imports = 
+    fileTree
+      .children
+        .toSeq
+        .filterIt(it.kind in [nnkImportStmt, nnkIncludeStmt])
+        .mapIt(parseImportBracketsPaths(repr it[0]))
+        .flatten
+        .mapIt(it.split("/").mapIt(strip(it)).join("/")) #clean spaces
+        
+  imports
+
+
+
+proc getAllTypesOf() : seq[string] = 
+  let dir = PluginDir / "src" / "nimforue" / "unreal" 
+  let path = dir / "prelude.nim"
+  let nimCode = readFile(path)
+  let entryPointFileTree = parseStmt(nimCode)
+
+  let nimFilePaths = 
+    getAllImportsAsRelativePathsFromFileTree(entryPointFileTree)
+    .mapIt(it.absolutePath(dir) & ".nim")
+
+  let fileTrees = 
+    entryPointFileTree & nimFilePaths.mapIt(it.readFile.parseStmt)
+
+  let typeNames = fileTrees.map(getAllTypesFromFileTree).flatten()
+
+  typeNames
+
+const DefinedTypes = getAllTypesOf()
+const PrimitiveTypes = @[ 
+  "bool", "float32", "float64", "int16", "int32", "int64", "int8", "uint16", "uint32", "uint64", "uint8"
+]
+
+proc getUEModulesFromDir(path : string) : seq[string] = 
+  #TODO make it optionally recursive 
+  var modules = newSeq[string]()
+  for dir in walkDir(path):
+    let name = dir[1].split(PathSeparator)[^1]
+    if fileExists(dir[1] / name & ".Build.cs"):
+      modules.add(name)
+  return modules
+
+proc getEngineCoreModules(ignore:seq[string] = @[]) : seq[string] = 
+  let path = getNimForUEConfig().engineDir / "Source" / "Runtime"       
+  getUEModulesFromDir(path).filterIt(it notin ignore)
 
 proc getProject() : UEProject = 
-  let pluginModules = getAllInstalledPlugins() 
-    .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-    .flatten()
-  let gameModules = getGameModules()
-  let ueModules = @["Engine", "SlateCore", "Slate"]
-  # let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
-  let projectModules = ueModules #(gameModules & pluginModules & ueModules).deduplicate()
+  if ueProjectRef.isNil():
+      
+    let pluginModules = getAllInstalledPlugins() 
+      .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
+      .flatten()
+    let gameModules = getGameModules()
+    # let ueModules = getEngineCoreModules(ignore= @["CoreUObject"]) & extraModuleNames
+    # let ueModules = @["Engine", "Slate", "SlateCore", "PhysicsCore"]
+    let ueModules = @["Engine", "Slate", "SlateCore", "PhysicsCore", "Chaos", "InputCore", "AudioMixer"]
+    # let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
+    let projectModules = ueModules #(gameModules & pluginModules & ueModules).deduplicate()
 
+
+      
+    var project = UEProject()
+    measureTime "Getting the project":
+      proc getRulesForPkg(packageName:string) : seq[UEImportRule] = 
+        if packageName in moduleImportRules: moduleImportRules[packageName] & codeGenOnly 
+        else: @[codeGenOnly]
+      
+      
+
+      project.modules = 
+        projectModules
+          .mapIt(tryGetPackageByName(it))
+          .sequence
+          .mapIt(toUEModule(it, getRulesForPkg(it.getShortName()), @[], getPCHIncludes()))
+          .flatten()
+
+      UE_Log &"Project has {project.modules.len} modules"
+      ueProjectRef = new UEProject
+      ueProjectRef[] = project
     
-  var project = UEProject()
-  measureTime "Getting the project":
-    project.modules = projectModules.mapIt(tryGetPackageByName(it)).sequence.mapIt(toUEModule(it, @[], @[], @[])).flatten()
-    UE_Log &"Project has {project.modules.len} modules"
-    # for m in projectModules:
-    #   let pkg = tryGetPackageByName(m)
-    #   if pkg.isNone():
-    #     UE_Error &"Cant find any module with {m} name"
-    #     continue
-    #   let modules = pkg.get.toUEModule(@[], @[], @[])
-    #   for m in modules:
-    #     UE_Log &"Module {m.name} has {m.types.len} and this deps {m.dependencies}"
-  project
+  return ueProjectRef[]
 
 proc getModules(moduleName:string, onlyBp : bool) : seq[UEModule] = 
       let pkg = tryGetPackageByName(moduleName)
@@ -321,6 +430,9 @@ uClass AActorCodegen of AActor:
       UE_Log $struct.getModuleRelativePath()
 
   ufuncs(BlueprintCallable, CallInEditor, Category=ActorCodegen):
+    proc showAllEngineModules() = 
+      UE_Log $getEngineCoreModules(@["CoreUObject"])
+
     proc genReflectionDataOnly() = 
       try:
         let ueProject =  genReflectionData(getGameModules(), getAllInstalledPlugins())
@@ -591,18 +703,25 @@ uClass AActorCodegen of AActor:
         else:
           @[nimType.removeLastLettersIfPtr()]
 
-
+      
       func getCleanedDependencyNamesFromUEType(uet:UEType) : seq[string] = 
-        #Consider returning empty for primitive types
-        let fields = getAllFieldsFromUEType(uet)
-        let extraTypes = 
-          case uet.kind:
-          of uetClass: uet.parent & uet.interfaces
-          of uetStruct: @[uet.superStruct]
-          else: @[]
-        let types = fields.map(getAllTypesFromUEField).flatten() & extraTypes
-        let cleanedTypes = types.map(getNameFromUEPropType).flatten()
-        cleanedTypes.deduplicate()
+        {.cast(noSideEffect).}: #Accessing PCH types is safe
+          #Consider returning empty for primitive types
+          let fields = getAllFieldsFromUEType(uet)
+          let extraTypes = 
+            case uet.kind:
+            of uetClass: uet.parent & uet.interfaces
+            of uetStruct: @[uet.superStruct]
+            else: @[]
+          let types = fields.map(getAllTypesFromUEField).flatten() & extraTypes
+          let cleanedTypes = 
+            types.map(getNameFromUEPropType)
+              .flatten()
+              .deduplicate()
+              .filterIt(it notin DefinedTypes & PrimitiveTypes)
+              .filterIt(it != "")
+              # .filterIt(it notin getAllPCHTypes())
+          cleanedTypes
       
       func getCleanedDependencyTypes(uem:UEModule) : seq[string] = 
         let types = uem.types
@@ -611,7 +730,7 @@ uClass AActorCodegen of AActor:
 
       func getCleanedDefinitionNamesFromUEType(uet:UEType) : seq[string] = 
         #only name?
-        @[uet.name]
+        @[uet.name.replace(DelegateFuncSuffix, "")]
 
       func getCleanedDefinitionTypes(uem:UEModule) : seq[string] = 
         let types = uem.types
@@ -635,7 +754,7 @@ uClass AActorCodegen of AActor:
           typeDefinitions[module.name] = getCleanedDefinitionTypes(module)
         typeDefinitions
 
-      func depsFromModule(modules:seq[UEModule], uem:UEModule, typeDefs : Table[string, seq[string]]) : seq[string] = 
+      func depsFromModule(uem:UEModule, typeDefs : Table[string, seq[string]]) : seq[string] = 
         uem
           .getCleanedDependencyTypes
           .mapIt(getModuleNameForType(typeDefs, it))
@@ -662,17 +781,20 @@ uClass AActorCodegen of AActor:
 
         let index = source.types.firstIndexOf((typ:UEType)=>typ.name == uet.name)
         case uet.kind:
-        of uetStruct:
-          source.types.del(index)
-          destiny.types.add(uet)
         of uetClass:
+          #The type is already defined in EngineTypes so no need to move it.
+          if uet.name in ManuallyImportedClasses:
+            return
           var uet = uet
           uet.forwardDeclareOnly = true
           source.types[index] = uet
           uet.forwardDeclareOnly = false
           uet.fields = @[]
-          destiny.types.add(uet) #TODO remove fields
-        else: discard #only move structs and classes
+          destiny.types.insert(uet) #Insert at the beggining so we got around and issue where the child is defined befpre the parent
+        of uetEnum, uetStruct:
+          source.types.del(index)
+          destiny.types.add(uet)
+        else: discard #only move structs, classes and enums for now
 
       func moveTypesFrom(uets:seq[UEType], source, destiny : var UEModule) =
         for uet in uets:
@@ -688,69 +810,245 @@ uClass AActorCodegen of AActor:
       func removeDepsFromModule(modDep, modDef, commonModule: var UEModule, typeDefinitions : Table[string, seq[string]]) =
         let dependentTypesNames = getDependentTypesFrom(modDep, modDef, typeDefinitions)
         let dependentTypes = modDef.types.filterIt(it.name in dependentTypesNames)
-
+        modDef.dependencies.add commonModule.name #maybe common should be included?
+        modDep.dependencies.add commonModule.name
+        modDef.dependencies = modDef.dependencies.deduplicate()
+        modDep.dependencies = modDef.dependencies.deduplicate().filterIt(it != modDef.name)
         moveTypesFrom(dependentTypes, modDef, commonModule)
 
       #Notice after running this function typeDefinitions(cache) will be outdated
       func fixCycles(project: var UEProject, commonModule : var UEModule, typeDefinitions : Table[string, seq[string]]) : UEProject =
-        var projectModules = project.modules
-        let cycles = getFirstLevelCycles(projectModules)
-        UE_Log &"Found {cycles.len} cycles"
-        var fixedCycles : TableRef[string, string] = newTable[string, string]() #TODO use this So we iterate half of the times
-        for cycle in cycles.pairs:
-          var modDep = projectModules.first(m=>m.name == cycle[0]).get()
-          for dep in cycle[1]:
-            let dep = dep
-            # UE_Log &"Cycle: {modDep.name} -> {dep}" 
-            var modDef = projectModules.first(m=>m.name == dep).get()
-            removeDepsFromModule(modDep, modDef, commonModule, typeDefinitions)
-            removeDepsFromModule(modDef, modDep, commonModule, typeDefinitions)
-            projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDef.name, modDef)
-          projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDep.name, modDep)
+        var cycles = getFirstLevelCycles(project.modules)
+        var tries = 0
+        while cycles.len > 0 and tries < 5:
+          inc tries
+          var projectModules = project.modules
 
-        project.modules = projectModules & commonModule
+          UE_Log &"Found {cycles.len} cycles"
+          var fixedCycles : TableRef[string, string] = newTable[string, string]() #TODO use this So we iterate half of the times
+          for cycle in cycles.pairs:
+            var modDep = projectModules.first(m=>m.name == cycle[0]).get()
+            for dep in cycle[1]:
+              let dep = dep
+              # UE_Log &"Cycle: {modDep.name} -> {dep}" 
+              var modDef = projectModules.first(m=>m.name == dep).get()
+              removeDepsFromModule(modDep, modDef, commonModule, typeDefinitions)
+              removeDepsFromModule(modDef, modDep, commonModule, typeDefinitions)
+            
+              projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDef.name, modDef)
+            projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDep.name, modDep)
+
+          commonModule.types = commonModule.types.deduplicate()
+          project.modules = projectModules 
+          cycles = getFirstLevelCycles(projectModules)
+
+
+        
+
         project
 
+      func fixCommonModuleDeps(project: var UEProject, commonModule : var UEModule) : UEProject = 
+        #Common module needs to gather its deps from the rest of the modules
+        let afterTypeDefinitions = getTypeDefinitions(project.modules & commonModule)
+        let commonDefs = afterTypeDefinitions["Engine/Common"]
+        let commonDeps = commonModule.getCleanedDependencyTypes().filterIt(it notin commonDefs)
+        #Create the module as key and the common deps as value
+        var commonDepsFromMod = initTable[string, seq[string]]()
+        for modName, modTypes in afterTypeDefinitions.pairs:
+          if modName == "Engine/Common": continue
+          let commonDepsInMod = modTypes.filterIt(it in commonDeps)
+          if commonDepsInMod.len > 0:
+            commonDepsFromMod[modName] = commonDepsInMod
 
-      #Create a module with all the types or just the types in common:
+        var projectModules = project.modules
+        for commonDep, typeNames in commonDepsFromMod.pairs:
+          var modDef = projectModules.first(m=>m.name == commonDep).get()
+          let types = modDef.types.filterIt(it.name in typeNames)
+          moveTypesFrom(types, modDef, commonModule)
+          projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDef.name, modDef)
+
+
+        project.modules = projectModules 
+        project
+
+      func reorderTypesSoParentAreDeclaredFirst(uem: var UEModule) : UEModule = 
+        proc splitTypesWithParentDeclaredInThisModule(types:seq[UEType]) :  (seq[UEType], seq[UEType]) =
+          let (withParentTypes, otherTypes) = types.partition((it:UEType)=> it.kind == uetClass and it.parent in types.mapIt(it.name))
+          if withParentTypes.isEmpty():
+            return (@[], otherTypes)
+          else:
+           let (withParentTypes2, otherTypes2) = splitTypesWithParentDeclaredInThisModule(withParentTypes)
+           return (withParentTypes2, otherTypes & otherTypes2)
+            
+        
+        let (_, otherTypes) = splitTypesWithParentDeclaredInThisModule(uem.types)
+        uem.types = otherTypes
+        uem
+
+      #Notice that type deps will vary based on how many modules are in the project. i.e. the same type 
+      #can be defined in common or somewhere else depending on the num of interdependencies
+      func makeSureCommonModuleIsInAllTypesThatDependOnIt(project: UEProject, commonModule:UEModule) : UEProject = 
+          var projectModules = project.modules
+           #makes sure common module is a dep for a modules that uses it
+          let commonDefinedTypes = commonModule.getCleanedDefinitionTypes()
+          for uem in projectModules:
+            if commonModule.name notin uem.dependencies:
+              let deps = uem.getCleanedDependencyTypes()
+              # UE_Log &"Checking {uem.name} for common deps {deps}"
+              let undefinedCommonDeps = commonDefinedTypes.filterIt(it in deps)
+              
+              if undefinedCommonDeps.any():
+                # UE_Warn &"Module {uem.name} has common deps {undefinedCommonDeps} but is not a dep of common module"
+                # UE_Log &"Common defined types: {commonDefinedTypes}"
+                var uem = uem 
+                uem.dependencies.add commonModule.name
+                projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == uem.name, uem)
+          result.modules = projectModules
+          
+
+
+      func calculateDeps(project:UEProject, typeDefs : Table[string, seq[string]]) : UEProject = 
+        result = project
+        var projectModules = newSeq[UEModule]()
+        for module in project.modules:
+            var uem = module
+            uem.dependencies = depsFromModule(module, typeDefs).filterIt(it != uem.name)
+            projectModules.add(uem)
+        result.modules = projectModules
+
+      func addHashToModules(project:var UEProject) : UEProject = 
+        var projectModules = project.modules
+        for uem in projectModules:
+            var uem = uem
+            uem.hash = $hash($uem)
+            projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == uem.name, uem)
+        project.modules = projectModules
+        project
+
+      func checkAllDepsAreDefinedWithinTheModule(uem : UEModule ) = 
+        let allDeps = uem.getCleanedDependencyTypes()
+        let allTypes = uem.getCleanedDefinitionTypes()
+        let undefinedDeps = allDeps.filterIt(it notin allTypes)
+        
+        if undefinedDeps.any():
+          UE_Log &"Module {uem.name} has undefined deps: {undefinedDeps}"
+      
+      func getAllTypesDepsNotDefinedInAllModules(project:UEProject, typeDefs : Table[string, seq[string]]) : Table[string, seq[string]] = 
+        #returns all types that are deps but not defined in the typeDefs table
+        var result = initTable[string, seq[string]]()
+        let allTypes = typeDefs.values.toSeq.flatten.deduplicate
+        UE_Log &"All types: {allTypes.len}"
+        for uem in project.modules:
+          let allDeps = uem.getCleanedDependencyTypes()
+          let undefinedDeps = allDeps.filterIt(it notin allTypes)
+          if undefinedDeps.any():
+            result[uem.name] = undefinedDeps
+        result
+
+      func removeDepsFromDelegatesEnumsAndCommon(project : UEProject) : UEProject = 
+        result = project
+        var projectModules = project.modules
+        for uem in projectModules: #Delegate and enums shouldnt have any deps as they are just typedefs without dependencies
+          if uem.name.split("/")[^1] in ["Delegates", "Enums", "Common"]:
+            var uem = uem
+            uem.dependencies = @[] 
+            projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == uem.name, uem)
+        result.modules = projectModules
+        
+
+
+ 
+
+      func cyclePass(uep: UEProject, typeDefs : Table[string, seq[string]]) : UEProject = 
+        result = uep
+        var commonModule = result.modules.first(m=>m.name == "Engine/Common").get()
+        result.modules = result.modules.filterIt(it.name != "Engine/Common")
+        result = calculateDeps(uep, typeDefs)
+        result = fixCycles(result, commonModule, typeDefs)
+        for i in 0..2: #Notice it require various passes because when moving types over there are new deps. TODO Add a proper cheap condition
+          result = fixCommonModuleDeps(result, commonModule)
+        
+        commonModule = reorderTypesSoParentAreDeclaredFirst(commonModule)
+        result.modules.add commonModule
+
+        result = makeSureCommonModuleIsInAllTypesThatDependOnIt(result, commonModule)
+        result = result.removeDepsFromDelegatesEnumsAndCommon()
+
+          
+      #Remove ufield from utype by dependency name
+      func removeDepFrom(uet:UEType, cleanedDepTypeName:string) : UEType = 
+        #Only structs and classes can have deps
+        if uet.kind notin [uetClass, uetStruct]: return uet 
+        var uet = uet
+       
+        let uefs = uet.fields.filterIt(cleanedDepTypeName in getAllTypesFromUEField(it).map(getNameFromUEPropType).flatten)
+        if uefs.any():
+          uet.fields = uet.fields.filterIt(it.name notin uefs.mapIt(it.name))
+        
+        case uet.kind:
+          of uetStruct:
+            if uet.superStruct == cleanedDepTypeName:
+              uet.superstruct = "" #Removes the parent (even though we are nto generating it yet)
+          of uetClass:
+            if uet.parent == cleanedDepTypeName:
+              #TODO: We could get the first parent from the reflection system
+              uet.parent =
+                if uet.parent[0] == 'A': "AActor"
+                else: "UObject"
+            if uet.interfaces.any():
+              uet.interfaces = uet.interfaces.filterIt(it != cleanedDepTypeName)
+          else: 
+            discard
+        #TODO handle parent/superstruct and interfaces
+        return uet
+
+      func removeDepFrom(uem:UEModule, cleanedDepTypeName:string) : UEModule = 
+        var uem = uem
+        uem.types = uem.types.mapIt(removeDepFrom(it, cleanedDepTypeName))
+        uem
+
+      func removeAllDepsFrom(uem:UEModule, cleanedDepTypeNames:seq[string]) : UEModule = 
+        var uem = uem 
+        for dep in cleanedDepTypeNames:
+          uem = removeDepFrom(uem, dep)
+        uem
+
+      func generateUEProject(uep:UEProject)  : UEProject = 
+        result = uep
+        # result.modules.add UEModule(name:"Engine/Common", types: @[])
+        # result = result.cyclePass(getTypeDefinitions(result.modules))
+          
+        result = result.addHashToModules()
+         
+      var project : UEProject
+      measureTime "generateUEProject":
+        project = generateUEProject(getProject())
       
 
-      # Speed up: Collect all types definitions in a first pass DONE
+      let undefinedDepsTable = project.getAllTypesDepsNotDefinedInAllModules(getTypeDefinitions(project.modules))
+      let allUndefinedDeps = undefinedDepsTable.values.toSeq.flatten.deduplicate.sorted()
+      try:
+        project.modules = project.modules.mapIt(it.removeAllDepsFrom(allUndefinedDeps))
 
-      # Then in a second pass, collect all dependencies DONE
+        let allUndefinedDepsAfter = project.getAllTypesDepsNotDefinedInAllModules(getTypeDefinitions(project.modules)).values.toSeq.flatten.deduplicate.sorted()
 
-      #Find cycles DONE
-
-      #Move types into a common module to remove cycles
-        # 1. Get all types that depends from a given module and move then into another module (ForwardDeclareOnly)
-      #Recalculate deps
-      func generateUEProject(project:UEProject)  : UEProject = 
-        var project = project
-        var modules = newSeq[UEModule]()
-        let typeDefinitions = getTypeDefinitions(project.modules)
-
-        for module in project.modules:
-          var uem = module
-          uem.dependencies = depsFromModule(project.modules, module, typeDefinitions)
-          modules.add(uem)
-        project.modules = modules
-
-        var commonModule = UEModule(name:"Engine/Common", types: @[])
-        project = fixCycles(project, commonModule, typeDefinitions)
-    
-      var project = generateUEProject(getProject())
-      project = generateUEProject(project)
+        UE_Log &"Undefined deps: {allUndefinedDeps.len}"
+        UE_Log &"Undefined deps: {allUndefinedDeps}"
+        UE_Log &"Undefined deps after clean: {allUndefinedDepsAfter.len}"
+        UE_Log &"Undefined deps after clean: {allUndefinedDepsAfter}"
+      except:
+        UE_Log &"Error: {getCurrentExceptionMsg()}"
+        raise getCurrentException()
 
 
-              
-
+      ueProjectRef[] = project
       # UE_Log &"Modules to gen: {project.modules.len}"
       # UE_Log &"Modules to gen: {project.modules.mapIt(it.name)}"
       let ueProjectAsStr = $project
       let codeTemplate = """
-  import ../nimforue/codegen/[models, modulerules]
+import ../nimforue/codegen/[models, modulerules]
 
-  const project* = $1
+const project* = $1
   """
       #Folders need to be created here because createDir is not available at compile time
       createDir(config.reflectionDataDir)

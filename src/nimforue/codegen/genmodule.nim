@@ -66,7 +66,7 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
       )
 
       
-  if rule == uerCodeGenOnlyFields:
+  if rule == uerCodeGenOnlyFields or ueType.forwardDeclareOnly:
     @[]
   else:
     @[
@@ -164,7 +164,8 @@ func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
     genAst(props, funcs):
       props
       funcs
-  result = nnkStmtList.newTree(genInterfaceConverers(typeDef), result)
+  #TODO ignore until nim is compiling with the engine
+  # result = nnkStmtList.newTree(genInterfaceConverers(typeDef), result)
 
 proc genImportCTypeDecl*(typeDef: UEType, rule: UERule = uerNone): NimNode =
   case typeDef.kind:
@@ -334,6 +335,7 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
 
 proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, moduleNode: NimNode) =
   proc getImport(moduleName: string): string =
+      var moduleName = moduleName.toLower()
       if moduleDef.name.split("/")[0] == moduleName.split("/")[0]: 
         let depName = moduleName.toLower().split("/")[^1]
         &"import {depName}"
@@ -351,11 +353,7 @@ proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, m
     ("{.inject, ", "{."),
     ("<", "["),
     (">", "]"),     #Changes Gen. Some types has two levels of inherantce in cpp, that we dont really need to support
-    ("::Type", ""), #Enum namespaces EEnumName::Type
-    ("::Outcome", ""), #Enum namespaces EEnumName::Outcome
-    ("::Mode", ""), #Enum namespaces EEnumName::Mode
-    ("::Primitive", ""), #Enum namespaces EEnumName::Mode
-    ("::", "."),    #Enum namespace
+   
     ("\"##", "  ##"),
     ("__DelegateSignature", ""))
   writeFile(filePath, code)
@@ -399,9 +397,9 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let exportBindingsPath = bindingsDir / "exported" / moduleFolder / actualModule & ".nim"
     let importBindingsPath = bindingsDir / moduleFolder / actualModule & ".nim"
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
-    # if prevModHash == module.hash and uerIgnoreHash notin module.rules:
-    #   echo "Skipping module: " & module.name & " as it has not changed"
-    #   continue
+    if prevModHash == module.hash and uerIgnoreHash notin module.rules:
+      echo "Skipping module: " & module.name & " as it has not changed"
+      continue
     let moduleStrTemplate = &"""
 #hash:{module.hash}
 include ../../prelude

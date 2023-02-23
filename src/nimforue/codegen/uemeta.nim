@@ -44,6 +44,12 @@ func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expec
       cppType.replace("<", "[")
               .replace(">", "]")
               .replace("*", "Ptr")
+      .multiReplace(
+      ("::Type", ""), #Enum namespaces EEnumName::Type
+      ("::Outcome", ""), #Enum namespaces EEnumName::Outcome
+      ("::Mode", ""), #Enum namespaces EEnumName::Mode
+      ("::Primitive", ""), #Enum namespaces EEnumName::Mode
+      ("::", "."))    #Enum namespace
     if cppType == "float": return "float32"
     if cppType == "double": return "float64"
     if cppType == "uint8" and prop.getName().startsWith("b"): return "bool"
@@ -170,6 +176,8 @@ func isNimTypeInAffectedTypes(nimType: string, affectedTypes: seq[string]): bool
 #Function that receives a FProperty and returns a Type as string
 proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] = @[]): Option[UEField] = #The expected type is something that UEField can understand
   let name = prop.getName()
+     
+      
 
   var nimType = prop.getNimTypeAsStr(outer)
   if "TEnumAsByte" in nimType:
@@ -723,7 +731,6 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
   for subModuleName, submoduleTypes in submodulesTable:
     # let deps = getDepsFromTypes(subModuleName, submoduleTypes, @[])
     var module = makeUEModule(subModuleName, submoduleTypes, rules)
-    module.hash = $hash($module.toJson())
     submodules.add module
   return submodules
 

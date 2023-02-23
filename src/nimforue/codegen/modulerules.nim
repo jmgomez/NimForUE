@@ -114,7 +114,7 @@ func getRuleAffectingType*(rules:seq[UEImportRule], name:string, rule:UERule): O
 #Any module not picked by default.
 #This could be exposed to the json file 
 let extraModuleNames* = @["EnhancedInput", "Blutility", "AudioMixer", "Chaos", "AssetRegistry", "NavigationSystem", "Niagara", "NiagaraShader", 
-"Constraints", "MovieSceneTools", "HoudiniEngine", "HoudiniEngineEditor", "Landscape",
+"Constraints", "MovieSceneTools", "HoudiniEngine", "HoudiniEngineEditor", "Landscape", "Iris",
 "ControlRig", "DataLayerEditor", "DataRegistry", "ActorLayerUtilities"]
 #By default modules import only bp symbols because it's the safest option
 #The module listed below will be an exception (alongside the ones in moduleRules that doesnt say it explicitaly)
@@ -146,7 +146,7 @@ moduleImportRules["Engine"] = @[
     # "UKismetMathLibrary", #issue with the funcs?,
     "FOnTemperatureChangeDelegate", #Mac gets stuck here?,
     # "UParticleSystem", #collision with a function name and Cascade is deprecated, use Niagara instead.
-    "UNetFaultConfig",
+    "UNetFaultConfig", "FActorTickFunction",
     ]), 
     # makeImportedRuleModule(uerIgnoreHash),
     
@@ -277,7 +277,7 @@ moduleImportRules["InputCore"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FKey"
   ]),
-  makeImportedRuleModule(uerImportBlueprintOnly)
+ # makeImportedRuleModule(uerImportBlueprintOnly)
 ]
 
 
@@ -381,6 +381,18 @@ moduleImportRules["MovieSceneTools"] = @[
   makeImportedRuleField(uerIgnore, @[
     "BurnInOptions", "EventSections"
   ])
+]
+
+moduleImportRules["MovieScene"] = @[
+
+  makeImportedRuleField(uerIgnore, @[
+    "BoolCurve",
+    "FMovieSceneEvaluationFieldTrackPtr"#This type may cause issues because it ends Ptr. We could support them in F struct like, but it isnt worht it
+  ]),
+  makeImportedRuleType(uerIgnore, @[
+    "FMovieSceneEvaluationFieldTrackPtr"#This type may cause issues because it ends Ptr. We could support them in F struct like, but it isnt worht it
+  ]),
+  
 ]
 
 moduleImportRules["MovieSceneTracks"] = @[

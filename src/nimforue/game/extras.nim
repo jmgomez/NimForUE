@@ -3,7 +3,8 @@ import ../unreal/core/containers/containers
 import ../codegen/[ueemit, emitter]
 # import ../codegen/[gencppclass]
 
-import engine
+import engine/common
+import engine/gamefrawework
 import enhancedinput
 import std/[typetraits, options, asyncdispatch]
 

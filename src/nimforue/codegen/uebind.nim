@@ -443,7 +443,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
              .map(fun=>genFunc(typeDef, fun).impl))
   
   let typeDecl = 
-    if rule == uerCodeGenOnlyFields or typeDef.metadata.filterIt(it.name.toLower() == NoDeclMetadataKey.toLower()).any(): 
+    if rule == uerCodeGenOnlyFields or typeDef.forwardDeclareOnly or typeDef.metadata.filterIt(it.name.toLower() == NoDeclMetadataKey.toLower()).any(): 
       newEmptyNode()
     else: 
       let ptrName = ident typeDef.name & "Ptr"
@@ -475,7 +475,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         props
         funcs
 
-  if typeExposure == uexExport: 
+  if typeExposure == uexExport and not typeDef.forwardDeclareOnly: 
     #Generates a type so it's added to the header when using --header
     #TODO dont create them for UStructs
     let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):

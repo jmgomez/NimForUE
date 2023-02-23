@@ -46,7 +46,6 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
   #Cache with all modules so we dont have to collect the UETypes again per deps
   var modCache = newTable[string, UEModule]()
 
-  let pchIncludes = getPCHIncludes()
 
   proc getUEModuleFromModule(module: string): Option[UEModule] =
     var excludeDeps = @["CoreUObject"] 
@@ -77,7 +76,7 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
    
     if module notin modCache:# or module in modCache.values.toSeq.mapit(it.name): #if it's in the cache the virtual modules are too.
       let ueMods = tryGetPackageByName(module.split("/")[0])
-            .map((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps, pchIncludes))
+            .map((pkg:UPackagePtr) => pkg.toUEModule(rules, excludeDeps, includeDeps, getPCHIncludes()))
             .get(newSeq[UEModule]())
 
       if ueMods.isEmpty():

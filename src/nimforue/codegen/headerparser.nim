@@ -82,12 +82,15 @@ proc traverseAllIncludes*(entryPoint:string, includePaths:seq[string], visited:s
 proc saveIncludesToFile*(path:string, includes:seq[string]) = 
   writeFile(path, $includes.toJson())
 
-
+var pchIncludes : seq[string]
 proc getPCHIncludes*() : seq[string] = 
+  if pchIncludes.any(): 
+    return pchIncludes
+
   let dir = PluginDir/".headerdata"
   createDir(dir)
   let path = dir / "allincludes.json"
-  let pchIncludes = 
+  pchIncludes = 
     if fileExists(path): #TODO Check it's newer than the PCH
       readFile(path).parseJson().to(seq[string])
     else:
@@ -97,7 +100,7 @@ proc getPCHIncludes*() : seq[string] =
       saveIncludesToFile(path, includes)
       includes
 
-  pchIncludes
+  
   # UE_Log &"Includes found on the PCH: {pchIncludes.len}"
   # let uniquePCHIncludes = pchIncludes.mapIt(it.split("/")[^1]).deduplicate()
   # UE_Log &"Unique Includes found on the PCH: {uniquePCHIncludes.len}"
@@ -114,10 +117,18 @@ proc savePCHTypes*(modules:seq[UEModule]) =
   UE_Log &"Types found on the PCH: {pchTypes.len}"
   saveIncludesToFile(path, pchTypes)
 
+var pchTypes  : seq[string]
 proc getAllPCHTypes*() : seq[string] =
+  when defined(nimvm): #We can use this function at compile time OR when generating the bindings
+    if pchTypes.any(): 
+      return pchTypes
   #TODO cache it in the macro cache. This is only accessed at compile time
   #If the file gets too big it can be splited between structs, classes (and enums in the future)
   let path = PluginDir/".headerdata"/"allpchtypes.json"
-  if fileExists(path):
-    return readFile(path).parseJson().to(seq[string])
-  @[]
+  result = 
+    if fileExists(path):
+      return readFile(path).parseJson().to(seq[string])
+    else: newSeq[string]()
+
+  when defined(nimvm):
+    pchTypes = result
