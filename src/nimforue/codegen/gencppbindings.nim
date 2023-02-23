@@ -20,10 +20,11 @@ macro importAllBindings() : untyped =
   result = nnkStmtList.newTree(modules.map(importStmts))
 
 
-# importAllBindings()
+importAllBindings()
 
-import ../unreal/bindings/exported/engine/common
-import ../unreal/bindings/exported/engine/gameframework
+# import ../unreal/bindings/exported/engine/common
+# import ../unreal/bindings/exported/engine/gameframework
+# import ../unreal/bindings/exported/engine/gameframework
 
 # import
 #   ../unreal / bindings / exported / slatecore/enums
