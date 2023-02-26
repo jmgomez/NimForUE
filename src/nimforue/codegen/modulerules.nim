@@ -179,6 +179,8 @@ moduleImportRules["Engine"] = @[
     "UWorld", #cant be casted to UObject
     # "USoundWaveProcedural",
     #KismetMathLibrary funcs:
+    
+    "PrimaryActorTick",
    
   ]),
   

@@ -54,6 +54,11 @@ func tap*[T](xs: seq[T], fn: (x: T)->void): seq[T] =
     fn(x)
   xs
 
+func forEach*[T](xs: seq[T], fn: (x: T)->void): void =
+  for x in xs:
+    fn(x)
+
+
 func flatten*[T](xs: seq[seq[T]]): seq[T] = xs.foldl(a & b, newSeq[T]())
 
 func tryGet*[T](xs: seq[T], idx: int): Option[T] =

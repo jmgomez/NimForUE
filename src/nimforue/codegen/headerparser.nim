@@ -119,16 +119,17 @@ proc savePCHTypes*(modules:seq[UEModule]) =
 
 var pchTypes  : seq[string]
 proc getAllPCHTypes*() : seq[string] =
-  when defined(nimvm): #We can use this function at compile time OR when generating the bindings
-    if pchTypes.any(): 
-      return pchTypes
-  #TODO cache it in the macro cache. This is only accessed at compile time
-  #If the file gets too big it can be splited between structs, classes (and enums in the future)
-  let path = PluginDir/".headerdata"/"allpchtypes.json"
-  result = 
-    if fileExists(path):
-      return readFile(path).parseJson().to(seq[string])
-    else: newSeq[string]()
+  {.cast(noSideEffect).}:
+    when defined(nimvm): #We can use this function at compile time OR when generating the bindings
+      if pchTypes.any(): 
+        return pchTypes
+    #TODO cache it in the macro cache. This is only accessed at compile time
+    #If the file gets too big it can be splited between structs, classes (and enums in the future)
+    let path = PluginDir/".headerdata"/"allpchtypes.json"
+    result = 
+      if fileExists(path):
+        return readFile(path).parseJson().to(seq[string])
+      else: newSeq[string]()
 
-  when defined(nimvm):
-    pchTypes = result
+    when defined(nimvm):
+      pchTypes = result

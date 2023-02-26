@@ -351,19 +351,13 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
       UE_Log &"Ignoring {name} because it is in the ignore list"
       return none(UEType)
   
-  var isInPCH = false
-  var isParentInPCH = false
-  let moduleRelativePath = cls.getModuleRelativePath()
-  if moduleRelativePath.isSome():
-    isInPCH = isModuleRelativePathInHeaders(cls.getModuleName(), moduleRelativePath.get(), pchIncludes)
-  let parentModuleRelativePath = parent.flatMap((p:UClassPtr)=>getModuleRelativePath(p))
-  if parentModuleRelativePath.isSome():
-    let p = parent.get()
-    isParentInPCH = isModuleRelativePathInHeaders(p.getModuleName(), parentModuleRelativePath.get(), pchIncludes)
+  let isInPCH = name in getAllPCHTypes()
+  let isParentInPCH = parentName in getAllPCHTypes()
+ 
 
   if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
     some UEType(name: name, kind: uetClass, parent: parentName, 
-      isInPCH: isInPCH, isParentInPCH: isParentInPCH, moduleRelativePath:moduleRelativePath.get(""),
+      isInPCH: isInPCH, isParentInPCH: isParentInPCH, moduleRelativePath:cls.getModuleRelativePath().get(""),
       fields: fields, interfaces: cls.interfaces.mapIt("U" & $it.class.getName()))
   else:
     # UE_Warn &"Class {name} is not exposed to BP"
@@ -404,13 +398,11 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchInclude
     else:
       UE_Warn &"The struct {str} does not have StructOps therefore we cant calculate the size and alignment"
 
-    var isInPCH = false
-    let moduleRelativePath = str.getModuleRelativePath()
-    if moduleRelativePath.isSome():
-      isInPCH = isModuleRelativePathInHeaders(str.getModuleName(), moduleRelativePath.get(), pchIncludes)
-
+    
+    let isInPCH = name in getAllPCHTypes()
+   
     some UEType(name: name, kind: uetStruct, fields: fields, 
-          isInPCH: isInPCH, moduleRelativePath: moduleRelativePath.get(""),
+          isInPCH: isInPCH, moduleRelativePath: str.getModuleRelativePath().get(""), #notice moduleRelativePath is used to deduce the submodule
           metadata: metadata, size: size, alignment: alignment)
   else:
     # UE_Warn &"Struct {name} is not exposed to BP"

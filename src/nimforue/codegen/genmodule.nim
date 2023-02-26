@@ -164,8 +164,8 @@ func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
     genAst(props, funcs):
       props
       funcs
-  #TODO ignore until nim is compiling with the engine
-  # result = nnkStmtList.newTree(genInterfaceConverers(typeDef), result)
+  result = nnkStmtList.newTree(genInterfaceConverers(typeDef), result)
+
 
 proc genImportCTypeDecl*(typeDef: UEType, rule: UERule = uerNone): NimNode =
   case typeDef.kind:
@@ -269,16 +269,10 @@ macro genUFun*(className: static string, funField: static UEField): untyped =
 
 proc genHeaders*(moduleDef: UEModule, headersPath: string) =
 
-  let validCppParents = moduleDef
-                        .rules
-                        .filter(rule=>rule.rule == uerCodeGenOnlyFields)
-                        .mapIt(it.affectedTypes)
-                        .head()
-                        .get(@[])
   
   func getParentName(uet: UEType) : string =
     #Probably isParentInPCH is a superset of validCppParents. TODO check
-    uet.parent & (if uet.parent in validCppParents or uet.isParentInPCH: "" else: "_")
+    uet.parent & (if uet.parent in ManuallyImportedClasses or uet.isParentInPCH: "" else: "_")
    
 
   
@@ -290,7 +284,7 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
     
   let classDefs = moduleDef.types
     .filterIt(it.kind == uetClass and 
-      (uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it) and not it.isInPCH)
+      (uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it) and not it.isInPCH and not it.forwardDeclareOnly)
     )
     .map(classAsString)
     # .mapIt(&"class {it.name}_ : public {getParentName(it)}{{}};\n")
@@ -301,7 +295,7 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
     let name = &"{name.firstToUpper()}"
     if name.endsWith(bindSuffix): name else: name & bindSuffix
 
-  let includeHeader = (name: string) => &"#include \"{headerName(name)}\" \n"
+  let includeHeader = (name: string) => &"#include \"../{headerName(name)}\" \n"
   let headerPath = headersPath / "Modules" / headerName(moduleDef.name)
   let deps = moduleDef
     .dependencies
@@ -316,11 +310,12 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
   writeFile(headerPath, headerContent)
   #Main header
   let headersAsDeps =
-    walkDir(headersPath / "Modules")
+    walkDirRec(headersPath / "Modules")
     .toSeq()
-    .filterIt(it[0] == pcFile and it[1].endsWith(".h"))
-    .mapIt(it[1].split(PathSeparator)[^1]) #replace(".h", ""))
-    .mapIt("#include \"Modules/" & it & "\"")
+    .filterIt(it.endsWith(".h"))
+   
+    .mapIt(it.split(PathSeparator & "Modules")[^1]) 
+    .mapIt(("#include \"Modules" & it & "\"").replace(PathSeparator, "/"))
     # .map(includeHeader)
     .join("\n ")                           #&"#include \"{headerName(name)}\" \n"
   let mainHeaderPath = headersPath / "UEGenClassDefs.h"
@@ -407,9 +402,11 @@ when not defined(nimsuggest):
   const BindingPrefix {{.strdefine.}} = ""
   {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
 
+proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard
+
 """
     echo &"Generating bindings for {module.name}"
     genCode(exportBindingsPath, "include ../../../prelude\n", module, genExportModuleDecl(module))
     genCode(importBindingsPath, moduleStrTemplate, module, genImportCModuleDecl(module))
 
-    # genHeaders(module, nimHeadersDir)
+    genHeaders(module, nimHeadersDir)

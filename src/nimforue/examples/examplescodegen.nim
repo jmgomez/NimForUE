@@ -240,8 +240,8 @@ proc getProject() : UEProject =
   var project = UEProject()
   measureTime "Getting the project":
     proc getRulesForPkg(packageName:string) : seq[UEImportRule] = 
-      if packageName in moduleImportRules: moduleImportRules[packageName] & codeGenOnly 
-      else: @[codeGenOnly]
+      if packageName in moduleImportRules: moduleImportRules[packageName] & codegenOnly
+      else: @[codegenOnly]
     
     
 
@@ -285,6 +285,7 @@ uClass AActorCodegen of AActor:
     test : FString
     depsLevel : int32 = 1
     bindingTypeInfo : FString
+    allDepsOf : FString
   
   ufuncs(): 
     proc getClassFromInspectedType() : UClassPtr = 
@@ -714,7 +715,7 @@ uClass AActorCodegen of AActor:
           let extraTypes = 
             case uet.kind:
             of uetClass:
-              (if uet.forwardDeclareOnly: @[uet.name] 
+              (if uet.forwardDeclareOnly: @[uet.name, uet.parent] 
                else: @[uet.parent]) &
               uet.interfaces
             of uetStruct: @[uet.superStruct]
@@ -1059,7 +1060,6 @@ uClass AActorCodegen of AActor:
       func generateUEProject(uep:UEProject)  : UEProject = 
         result = uep
        
-        result = result.addHashToModules()
          
       var project : UEProject
       measureTime "generateUEProject":
@@ -1187,12 +1187,19 @@ uClass AActorCodegen of AActor:
       UE_Log &"The selected type is {self.bindingTypeInfo}"
       UE_Warn &"It's defined on "
       for m in project.modules:
+        if self.allDepsOf == m.name:
+          UE_Log &"Deps for {m.name}"
+          UE_Warn &"{m.dependencies}"
+          UE_Log $getCleanedDependencyTypes(m)
+
         if self.bindingTypeInfo in m.types.mapIt(it.name):
           UE_Log &"{m.name}"
       UE_Warn "The mods that depend on it are: "
       for m in project.modules:
         if self.bindingTypeInfo in getCleanedDependencyTypes(m):
           UE_Log &"{m.name}"
+
+      
 
 
       UE_Log &"ALl modules "
@@ -1205,9 +1212,15 @@ uClass AActorCodegen of AActor:
         m.dependencies = m.depsFromModule(typeDefs)
         UE_Log &"Module name {m.name} deps: {m.dependencies}"
         projectModules = projectModules.replaceFirst((uem:UEModule)=>uem.name == m.name, m)
+      
+      
       project.modules = projectModules
       UE_Log $project.modules.mapIt( &"Mod: {it.name} Types: {it.types.len} Deps: {it.dependencies} \n")
 
+      project = project.addHashToModules()
+
+
+      UE_Log &"All module names{project.modules.mapIt(it.name)}"
 
       # ueProjectRef[] = project
       # UE_Log &"Modules to gen: {project.modules.len}"
@@ -1227,6 +1240,7 @@ const project* = $1
         let actualModule = module.name.toLower().split("/")[^1]
         createDir(config.bindingsDir / "exported" / moduleFolder)
         createDir(config.bindingsDir / moduleFolder)
+        createDir(PluginDir / NimHeadersModulesDir / moduleFolder)
 
       
       # return ueProject
