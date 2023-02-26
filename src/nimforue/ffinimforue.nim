@@ -3,7 +3,7 @@
 include unreal/prelude
 import unreal/editor/editor
 import unreal/core/containers/containers
-import ../nimforue/codegen/[ffi,emitter, genreflectiondata, models, uemeta, ueemit]
+import ../nimforue/codegen/[ffi,emitter, genreflectiondatav2, models, uemeta, ueemit]
 import std/[options, strformat, dynlib, os, osproc]
 import ../buildscripts/[nimforueconfig, buildscripts]
 
@@ -51,7 +51,13 @@ proc startNue(libPath:string)  =
 #Will be called from the commandlet that generates the bindigns
 proc genBindingsEntryPoint() : void {.ffi:genFilePath} = 
   UE_LOG "Running genBindingsEntryPoint"
-  execBindingGeneration(true)                
+  # execBindingGeneration(true)  
+  try:
+    generateProject()       
+  except:
+    UE_Error &"Error in genBindingsEntryPoint: {getCurrentExceptionMsg()}"
+    sleep(3000)
+     
 
 
 proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) = 
@@ -103,7 +109,7 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
         #   let output = compileGameSyncFromPlugin()
         #   UE_Log output
         if not isRunningCommandlet() and timesReloaded == 0: 
-          genBindingsAsync()
+          genBindingsEntryPoint()
 
     of "game":      
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")

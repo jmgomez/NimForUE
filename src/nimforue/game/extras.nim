@@ -46,6 +46,7 @@ proc subscribeToTick() : FTickerDelegateHandle =
   let tickerDel : FTickerDelegate = createStatic[bool, float32](tickPoll)
   let handle = (getCoreTicker()[]).addTicker(tickerDel, 0)
   handle
+ 
 
 let tickHandle = subscribeToTick()
 
@@ -57,7 +58,6 @@ proc onUnloadLib() {.exportc, dynlib, cdecl.} =
     onGameUnloaded()
 
 
-UE_Warn "Is this called?"
 
 
 #Called from NimForUE module as entry point when we are in a non editor build

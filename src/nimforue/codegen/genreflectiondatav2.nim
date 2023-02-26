@@ -215,7 +215,7 @@ func moveTypeFrom(uet:UEType, source, destiny : var UEModule) =
     #The type is already defined in EngineTypes so no need to move it.
     if uet.name in ManuallyImportedClasses:
       return
-    UE_Log &"Moving type :{uet.name} from {source.name} to {destiny.name}"
+    # UE_Log &"Moving type :{uet.name} from {source.name} to {destiny.name}"
     var uet = uet
     uet.isInCommon = true
     uet.forwardDeclareOnly = true
@@ -246,6 +246,7 @@ func removeDepsFromModule*(modDep, modDef, commonModule: var UEModule, typeDefin
   modDep.dependencies.add commonModule.name
   modDef.dependencies = modDef.dependencies.deduplicate()
   modDep.dependencies = modDef.dependencies.deduplicate().filterIt(it != modDef.name)
+  # commonModule.types.add dependentTypes
   moveTypesFrom(dependentTypes, modDef, commonModule)
 
 
