@@ -394,19 +394,23 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
     if prevModHash == module.hash and uerIgnoreHash notin module.rules:
       echo "Skipping module: " & module.name & " as it has not changed"
-      continue
-    let moduleStrTemplate = &"""
+      # continue
+    let moduleImportStrTemplate = &"""
 #hash:{module.hash}
 include ../../prelude
 when not defined(nimsuggest):
   const BindingPrefix {{.strdefine.}} = ""
   {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
 
-proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard
 
 """
+    let moduleExportStrTemplate = &"""
+include ../../../prelude
+proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard
+    
+"""
     echo &"Generating bindings for {module.name}"
-    genCode(exportBindingsPath, "include ../../../prelude\n", module, genExportModuleDecl(module))
-    genCode(importBindingsPath, moduleStrTemplate, module, genImportCModuleDecl(module))
+    genCode(exportBindingsPath, moduleExportStrTemplate, module, genExportModuleDecl(module))
+    genCode(importBindingsPath, moduleImportStrTemplate, module, genImportCModuleDecl(module))
 
     genHeaders(module, nimHeadersDir)
