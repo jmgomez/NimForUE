@@ -1,7 +1,19 @@
 include ../unreal/prelude
-import ../codegen/[codegentemplate,modulerules, headerparser, models]
+import ../codegen/[codegentemplate,modulerules, headerparser, models, uemeta, genreflectiondata]
 import std/[strformat, tables, hashes, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans, algorithm, macros]
 import ../../buildscripts/nimforueconfig
+
+
+
+
+
+template measureTime*(name: static string, body: untyped) =
+  let starts = now()
+  body
+  let ends = (now() - starts)
+  UE_Log (name & " took " & $ends & "  seconds")
+
+
 
 
 proc getAllTypesFromFileTree(fileTree:NimNode) : seq[string] = 
@@ -203,7 +215,9 @@ func moveTypeFrom(uet:UEType, source, destiny : var UEModule) =
     #The type is already defined in EngineTypes so no need to move it.
     if uet.name in ManuallyImportedClasses:
       return
+    UE_Log &"Moving type :{uet.name} from {source.name} to {destiny.name}"
     var uet = uet
+    uet.isInCommon = true
     uet.forwardDeclareOnly = true
     source.types[index] = uet
     uet.forwardDeclareOnly = false
@@ -227,45 +241,13 @@ func getDependentTypesFrom(uemDep, uemDefined : UEModule, typeDefinitions : Tabl
 
 func removeDepsFromModule*(modDep, modDef, commonModule: var UEModule, typeDefinitions : Table[string, seq[string]]) =
   let dependentTypesNames = getDependentTypesFrom(modDep, modDef, typeDefinitions)
-  let dependentTypes = modDef.types.filterIt(it.name in dependentTypesNames)
+  let dependentTypes = modDef.types.filterIt(it.name in dependentTypesNames).deduplicate()
   modDef.dependencies.add commonModule.name #maybe common should be included?
   modDep.dependencies.add commonModule.name
   modDef.dependencies = modDef.dependencies.deduplicate()
   modDep.dependencies = modDef.dependencies.deduplicate().filterIt(it != modDef.name)
   moveTypesFrom(dependentTypes, modDef, commonModule)
 
-#Notice after running this function typeDefinitions(cache) will be outdated
-func fixCycles(project: var UEProject, commonModule : var UEModule, typeDefinitions : Table[string, seq[string]]) : UEProject =
-  var cycles = getFirstLevelCycles(project.modules)
-  var tries = 0
-  while cycles.len > 0 and tries < 5:
-    inc tries
-    var projectModules = project.modules
-
-    UE_Log &"Found {cycles.len} cycles"
-    var fixedCycles : TableRef[string, string] = newTable[string, string]() #TODO use this So we iterate half of the times
-    for cycle in cycles.pairs:
-      var modDep = projectModules.first(m=>m.name == cycle[0]).get()
-      for dep in cycle[1]:
-        let dep = dep
-        # UE_Log &"Cycle: {modDep.name} -> {dep}" 
-        var modDef = projectModules.first(m=>m.name == dep).get()
-        removeDepsFromModule(modDep, modDef, commonModule, typeDefinitions)
-        removeDepsFromModule(modDef, modDep, commonModule, typeDefinitions)
-        UE_Log &"{modDep.name} Types post move: {modDef.types.len} {modDep.types.len} {commonModule.types.len}"
-
-      
-        projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDef.name, modDef)
-      projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDep.name, modDep)
-
-    commonModule.types = commonModule.types.deduplicate()
-    project.modules = projectModules 
-    cycles = getFirstLevelCycles(projectModules)
-
-
-  
-
-  project
 
 func fixCommonModuleDeps*(project: var UEProject, commonModule : var UEModule) : UEProject = 
   #Common module needs to gather its deps from the rest of the modules
@@ -454,7 +436,6 @@ proc fixCycles*(project: UEProject, commonModule : var UEModule) : UEProject =
     modDeps[m.name]= m.depsFromModule(typeDefs)
 
   let cycleProblems = findCycleProblems(modDeps)
-
   UE_Warn &"Cycle problems: {cycleProblems}"
   for cycle in cycleProblems:
     var cycle = cycle
@@ -466,12 +447,187 @@ proc fixCycles*(project: UEProject, commonModule : var UEModule) : UEProject =
 
       # UE_Log &"Cycle: {modDep.name} -> {dep}" 
       var modDef = projectModules.first(m=>m.name == modDepName).get()
-      # UE_Log &"{modDef.name} Types pre move: {modDef.types.len} Common: {commonModule.types.len}"
-
       removeDepsFromModule(modDep, problematicMod, commonModule, typeDefs)
-
       projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == modDepName, modDef)
+
     projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == problematicMod.name, problematicMod)
   
   project.modules = projectModules
   return project
+
+
+proc saveProject*(project:UEProject) = 
+  let config = getNimForUEConfig()
+  let ueProjectAsStr = $project
+  let codeTemplate = """
+import ../nimforue/codegen/[models, modulerules]
+
+const project* = $1
+"""
+  #Folders need to be created here because createDir is not available at compile time
+  createDir(config.bindingsDir)
+  createDir(config.reflectionDataDir)
+  writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
+
+  for module in project.modules:
+    let moduleFolder = module.name.toLower().split("/")[0]
+    let actualModule = module.name.toLower().split("/")[^1]
+    createDir(config.bindingsDir / "exported" / moduleFolder)
+    createDir(config.bindingsDir / moduleFolder)
+    createDir(PluginDir / NimHeadersModulesDir / moduleFolder)
+
+
+
+
+proc getUEModulesFromDir(path : string) : seq[string] = 
+  #TODO make it optionally recursive 
+  var modules = newSeq[string]()
+  for dir in walkDir(path):
+    let name = dir[1].split(PathSeparator)[^1]
+    if fileExists(dir[1] / name & ".Build.cs"):
+      modules.add(name)
+  return modules
+
+proc getEngineCoreModules*(ignore:seq[string] = @[]) : seq[string] = 
+  let path = getNimForUEConfig().engineDir / "Source" / "Runtime"       
+  getUEModulesFromDir(path).filterIt(it notin ignore)
+
+    # ueProjectRef = new UEProject
+    # ueProjectRef[] = project
+    
+  # return ueProjectRef[]
+
+proc getModules*(moduleName:string, onlyBp : bool) : seq[UEModule] = 
+      let pkg = tryGetPackageByName(moduleName)
+      let rules = 
+        if onlyBp:  
+          @[makeImportedRuleModule(uerImportBlueprintOnly)]
+        else: 
+          @[]
+
+      pkg.map((pkg:UPackagePtr) => pkg.toUEModule(rules, @[], @[])).get(@[])
+
+proc getProject*() : UEProject = 
+  # if ueProjectRef.isNil():
+    
+  let pluginModules = getAllInstalledPlugins() 
+    .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
+    .flatten()
+  let gameModules = getGameModules()
+  # let ueModules = getEngineCoreModules(ignore= @["CoreUObject"]) & extraModuleNames
+  # let ueModules = @["UnrealEd"]
+  # let ueModules = @["Engine"]
+  let ueModules = @["Engine", "Slate", "SlateCore", "PhysicsCore", "Chaos", "InputCore", "UMG", "GameplayAbilities", "EnhancedInput"]
+  let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
+  # let projectModules = ueModules #(gameModules & pluginModules & ueModules).deduplicate()
+
+
+    
+  var project = UEProject()
+  measureTime "Getting the project":
+    proc getRulesForPkg(packageName:string) : seq[UEImportRule] = 
+      if packageName in moduleImportRules: moduleImportRules[packageName] & codegenOnly
+      else: @[codegenOnly]
+    
+    
+
+    project.modules = 
+      projectModules
+        .mapIt(tryGetPackageByName(it))
+        .sequence
+        .mapIt(toUEModule(it, getRulesForPkg(it.getShortName()), @[], getPCHIncludes()))
+        .flatten()
+
+    UE_Log &"Project has {project.modules.len} modules"
+    return project
+
+proc generateProject*() = 
+  
+    measureTime "Generate Project":  
+      var project = getProject()
+      # measureTime "generateUEProject":
+      #   project = generateUEProject(getProject())
+      var commonModule = UEModule(name: "Engine/Common")
+
+      var typeDefs = getTypeDefinitions(project.modules, commonModule)
+      let allUndefinedDeps =  project.getAllTypesDepsNotDefinedInAllModules(typeDefs).values.toSeq.flatten.deduplicate.sorted()
+      project.modules = project.modules.mapIt(it.removeAllDepsFrom(allUndefinedDeps))
+
+      let allUndefinedDepsAfter = project.getAllTypesDepsNotDefinedInAllModules(typeDefs).values.toSeq.flatten.deduplicate.sorted()
+
+      UE_Log &"Undefined deps: {allUndefinedDeps.len}"
+      UE_Log &"Undefined deps after clean: {allUndefinedDepsAfter.len}"
+
+
+      var projectModules = project.modules
+      project = fixCycles(project, commonModule)
+        
+      typeDefs = getTypeDefinitions(projectModules, commonModule)
+      for modName, types in typeDefs.pairs:
+        UE_Log &"After Module: {modName} Types: {types.len}"
+
+
+      project.modules = projectModules
+      for i in 0..2: #Notice it require various passes because when moving types over there are new deps. TODO Add a proper cheap condition
+        project = fixCommonModuleDeps(project, commonModule)
+
+      commonModule.types = commonModule.types.deduplicate()
+      commonModule = reorderTypesSoParentAreDeclaredFirst(commonModule)
+
+
+      project.modules.add commonModule
+
+      #Set final deps
+      typeDefs = getTypeDefinitions(project.modules, commonModule)
+      var modDeps = initTable[string, seq[string]]()
+      projectModules = project.modules
+      for m in project.modules:
+        var m = m
+        m.dependencies = m.depsFromModule(typeDefs)
+        UE_Log &"Module name {m.name} deps: {m.dependencies}"
+        projectModules = projectModules.replaceFirst((uem:UEModule)=>uem.name == m.name, m)
+      
+      try:
+        #Fixes forward declare only types 
+        for m in projectModules:
+          if m.name == commonModule.name:
+            continue
+          var m = m
+          var typesToRemove = newSeq[string]()
+          for t in m.types:
+            if t.name in commonModule.types.mapIt(it.name):
+              var t = t
+              var idx = m.types.firstIndexOf((t2:UEType)=>t2.name == t.name)
+              case t.kind
+              of uetClass:
+                t.forwardDeclareOnly = true
+                m.types[idx] = t
+              else:
+                typesToRemove.add(t.name)
+              
+          m.types = m.types.filterIt(it.name notin typesToRemove)
+            
+          projectModules = projectModules.replaceFirst((uem:UEModule)=>uem.name == m.name, m)
+      except:
+        UE_Error &"Error fixing forward declare only types"
+        UE_Error getCurrentExceptionMsg()
+
+
+
+
+
+      project.modules = projectModules
+      UE_Log $project.modules.mapIt( &"Mod: {it.name} Types: {it.types.len} Deps: {it.dependencies} \n")
+
+      project = project.addHashToModules()
+
+
+      UE_Log &"All module names{project.modules.mapIt(it.name)}"
+
+      # ueProjectRef[] = project
+      # UE_Log &"Modules to gen: {project.modules.len}"
+      # UE_Log &"Modules to gen: {project.modules.mapIt(it.name)}"
+      project.saveProject()
+
+
+

@@ -98,13 +98,6 @@ textObject}
 
 
 
-template measureTime*(name: static string, body: untyped) =
-  let starts = now()
-  body
-  let ends = (now() - starts)
-  UE_Log (name & " took " & $ends & "  seconds")
-
-
 
 proc NimMain() {.importc.} 
 
@@ -131,67 +124,6 @@ uEnum EInspectType:
 
 
 
-
-proc getUEModulesFromDir(path : string) : seq[string] = 
-  #TODO make it optionally recursive 
-  var modules = newSeq[string]()
-  for dir in walkDir(path):
-    let name = dir[1].split(PathSeparator)[^1]
-    if fileExists(dir[1] / name & ".Build.cs"):
-      modules.add(name)
-  return modules
-
-proc getEngineCoreModules(ignore:seq[string] = @[]) : seq[string] = 
-  let path = getNimForUEConfig().engineDir / "Source" / "Runtime"       
-  getUEModulesFromDir(path).filterIt(it notin ignore)
-
-proc getProject() : UEProject = 
-  # if ueProjectRef.isNil():
-    
-  let pluginModules = getAllInstalledPlugins() 
-    .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
-    .flatten()
-  let gameModules = getGameModules()
-  # let ueModules = getEngineCoreModules(ignore= @["CoreUObject"]) & extraModuleNames
-  # let ueModules = @["UnrealEd"]
-  let ueModules = @["Engine", "Slate", "SlateCore", "PhysicsCore", "EnhancedInput", "InputCore"]
-  # let ueModules = @["Engine", "Slate", "SlateCore", "PhysicsCore", "Chaos", "InputCore", "AudioMixer", "GameplayAbilities", "EnhancedInput"]
-  # let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
-  let projectModules = ueModules #(gameModules & pluginModules & ueModules).deduplicate()
-
-
-    
-  var project = UEProject()
-  measureTime "Getting the project":
-    proc getRulesForPkg(packageName:string) : seq[UEImportRule] = 
-      if packageName in moduleImportRules: moduleImportRules[packageName] & codegenOnly
-      else: @[codegenOnly]
-    
-    
-
-    project.modules = 
-      projectModules
-        .mapIt(tryGetPackageByName(it))
-        .sequence
-        .mapIt(toUEModule(it, getRulesForPkg(it.getShortName()), @[], getPCHIncludes()))
-        .flatten()
-
-    UE_Log &"Project has {project.modules.len} modules"
-    return project
-    # ueProjectRef = new UEProject
-    # ueProjectRef[] = project
-    
-  # return ueProjectRef[]
-
-proc getModules(moduleName:string, onlyBp : bool) : seq[UEModule] = 
-      let pkg = tryGetPackageByName(moduleName)
-      let rules = 
-        if onlyBp:  
-          @[makeImportedRuleModule(uerImportBlueprintOnly)]
-        else: 
-          @[]
-
-      pkg.map((pkg:UPackagePtr) => pkg.toUEModule(rules, @[], @[])).get(@[])
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
@@ -592,132 +524,8 @@ uClass AActorCodegen of AActor:
 
 
     proc saveNewBindings() = 
-      let config = getNimForUEConfig()
-      createDir(config.bindingsDir)
+      generateProject()
 
-      #we save the pch types right before we discard the cached modules to avoid race conditions
-      
-      # savePCHTypes(modCache.values.toSeq)
-
-
-      #let's change the way we calculate deps.
-      #First we need to get all Fields for an UEType
-      #Then we need to get all type names for an UEType (field + parent + superstruct). Notice fields here will need to deal with generics
-      #Then we need to know if a type name is in a Module. 
-      
-         
-      var project = getProject()
-      # measureTime "generateUEProject":
-      #   project = generateUEProject(getProject())
-      var commonModule = UEModule(name: "Engine/Common")
-
-      var typeDefs = getTypeDefinitions(project.modules, commonModule)
-      let allUndefinedDeps =  project.getAllTypesDepsNotDefinedInAllModules(typeDefs).values.toSeq.flatten.deduplicate.sorted()
-      project.modules = project.modules.mapIt(it.removeAllDepsFrom(allUndefinedDeps))
-
-      let allUndefinedDepsAfter = project.getAllTypesDepsNotDefinedInAllModules(typeDefs).values.toSeq.flatten.deduplicate.sorted()
-
-      UE_Log &"Undefined deps: {allUndefinedDeps.len}"
-      UE_Log &"Undefined deps: {allUndefinedDeps}"
-      UE_Log &"Undefined deps after clean: {allUndefinedDepsAfter.len}"
-      UE_Log &"Undefined deps after clean: {allUndefinedDepsAfter}"
-
-      # UE_Log &"All type defs {typeDefs}"
-
-      # let cycles = findCycles(modDeps)
-      # UE_Log &"Cycles: {cycles}"
-     
-
-
-      var projectModules = project.modules
-
-      project = fixCycles(project, commonModule)
-        
-      return
-      typeDefs = getTypeDefinitions(projectModules, commonModule)
-      for modName, types in typeDefs.pairs:
-        UE_Log &"After Module: {modName} Types: {types.len}"
-
-
-      project.modules = projectModules
-      for i in 0..2: #Notice it require various passes because when moving types over there are new deps. TODO Add a proper cheap condition
-        project = fixCommonModuleDeps(project, commonModule)
-
-      commonModule.types = commonModule.types.deduplicate()
-      commonModule = reorderTypesSoParentAreDeclaredFirst(commonModule)
-
-
-      # UE_Log $project.modules.mapIt( &"After Module: {it.name} Types: {it.types.len} Deps: {it.dependencies} \n")
-
-      UE_Warn &"Common types {commonModule.types.len}"
-
-      project.modules.add commonModule
-
-
-      UE_Warn &"All Modules and Deps"
-      for m in project.modules:
-        UE_Warn &"{m.name} deps: {m.dependencies}"
-      
-
-
-      UE_Log &"The selected type is {self.bindingTypeInfo}"
-      UE_Warn &"It's defined on "
-      for m in project.modules:
-        if self.allDepsOf == m.name:
-          UE_Log &"Deps for {m.name}"
-          UE_Warn &"{m.dependencies}"
-          UE_Log $getCleanedDependencyTypes(m)
-
-        if self.bindingTypeInfo in m.types.mapIt(it.name):
-          UE_Log &"{m.name}"
-      UE_Warn "The mods that depend on it are: "
-      for m in project.modules:
-        if self.bindingTypeInfo in getCleanedDependencyTypes(m):
-          UE_Log &"{m.name}"
-
-      
-
-
-      typeDefs = getTypeDefinitions(project.modules, commonModule)
-      var modDeps = initTable[string, seq[string]]()
-      projectModules = project.modules
-      for m in project.modules:
-        var m = m
-        m.dependencies = m.depsFromModule(typeDefs)
-        UE_Log &"Module name {m.name} deps: {m.dependencies}"
-        projectModules = projectModules.replaceFirst((uem:UEModule)=>uem.name == m.name, m)
-      
-      
-      project.modules = projectModules
-      UE_Log $project.modules.mapIt( &"Mod: {it.name} Types: {it.types.len} Deps: {it.dependencies} \n")
-
-      project = project.addHashToModules()
-
-
-      UE_Log &"All module names{project.modules.mapIt(it.name)}"
-
-      # ueProjectRef[] = project
-      # UE_Log &"Modules to gen: {project.modules.len}"
-      # UE_Log &"Modules to gen: {project.modules.mapIt(it.name)}"
-      let ueProjectAsStr = $project
-      let codeTemplate = """
-import ../nimforue/codegen/[models, modulerules]
-
-const project* = $1
-  """
-      #Folders need to be created here because createDir is not available at compile time
-      createDir(config.reflectionDataDir)
-      writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
-
-      for module in project.modules:
-        let moduleFolder = module.name.toLower().split("/")[0]
-        let actualModule = module.name.toLower().split("/")[^1]
-        createDir(config.bindingsDir / "exported" / moduleFolder)
-        createDir(config.bindingsDir / moduleFolder)
-        createDir(PluginDir / NimHeadersModulesDir / moduleFolder)
-
-      
-      # return ueProject
 
 
 

@@ -164,7 +164,8 @@ func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
     genAst(props, funcs):
       props
       funcs
-  result = nnkStmtList.newTree(genInterfaceConverers(typeDef), result)
+  if not (typeDef.forwardDeclareOnly and typeDef.isInCommon): #the common def doesnt have interfaces
+    result = nnkStmtList.newTree(genInterfaceConverers(typeDef), result)
 
 
 proc genImportCTypeDecl*(typeDef: UEType, rule: UERule = uerNone): NimNode =

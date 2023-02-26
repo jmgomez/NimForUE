@@ -117,6 +117,7 @@ type
         moduleRelativePath* : string 
         case kind*: UETypeKind
             of uetClass:
+                isInCommon* : bool #the type is part of the common module (if it's the actual type in common it also has forwardDeclareOnly set to false)
                 parent* : string
                 clsFlags*: EClassFlagsVal
                 ctorSourceHash*: string
