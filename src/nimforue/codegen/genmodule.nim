@@ -363,7 +363,7 @@ macro genBindings*(moduleDef: static UEModule, exportPath: static string, import
 include ../../prelude
 when defined(macosx):
   const BindingPrefix {{.strdefine.}} = ""
-  {{.compile: BindingPrefix&"{moduleDef.name.tolower()}.nim.cpp".}}
+  {{.compile: BindingPrefix&"{moduleDef.name.tolower().replace("/", "@s")}.nim.cpp".}}
 
 """
   # let importImportDeps = moduleDef.dependencies.mapIt("import " & it.toLower()).join("\n")
@@ -405,7 +405,7 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
 include ../../prelude
 when not defined(nimsuggest):
   const BindingPrefix {{.strdefine.}} = ""
-  {{.compile: BindingPrefix&"{module.name.tolower()}.nim.cpp".}}
+  {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
 
 """
     echo &"Generating bindings for {module.name}"

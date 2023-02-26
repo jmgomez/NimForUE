@@ -136,7 +136,7 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
   ensureGameConfExists()
   #We compile from the engine directory so we dont surpass the windows argument limits for the linker 
   let engineBase = parentDir(config.engineDir)
-  # setCurrentDir(engineBase)
+  # setCurrentDir(e ngineBase)
   #TODO the final path will be relative to the engine dir this is just a hack to get it working for now
   # var uesymbols = uesymbols.mapIt(it.replace(config.engineDir, "Engine"))
   let gameFolder = NimGameDir
