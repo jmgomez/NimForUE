@@ -229,8 +229,9 @@ proc getProject() : UEProject =
     .flatten()
   let gameModules = getGameModules()
   # let ueModules = getEngineCoreModules(ignore= @["CoreUObject"]) & extraModuleNames
-  let ueModules = @["UnrealEd"]
-  # let ueModules = @["Engine", "Slate", "SlateCore", "PhysicsCore", "Chaos", "InputCore", "AudioMixer"]
+  # let ueModules = @["UnrealEd"]
+  let ueModules = @["Engine", "Slate", "SlateCore", "PhysicsCore", "EnhancedInput", "InputCore"]
+  # let ueModules = @["Engine", "Slate", "SlateCore", "PhysicsCore", "Chaos", "InputCore", "AudioMixer", "GameplayAbilities", "EnhancedInput"]
   # let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
   let projectModules = ueModules #(gameModules & pluginModules & ueModules).deduplicate()
 
@@ -283,6 +284,7 @@ uClass AActorCodegen of AActor:
     moduleName : FString
     test : FString
     depsLevel : int32 = 1
+    bindingTypeInfo : FString
   
   ufuncs(): 
     proc getClassFromInspectedType() : UClassPtr = 
@@ -711,7 +713,10 @@ uClass AActorCodegen of AActor:
           let fields = getAllFieldsFromUEType(uet)
           let extraTypes = 
             case uet.kind:
-            of uetClass: uet.parent & uet.interfaces
+            of uetClass:
+              (if uet.forwardDeclareOnly: @[uet.name] 
+               else: @[uet.parent]) &
+              uet.interfaces
             of uetStruct: @[uet.superStruct]
             else: @[]
           let types = fields.map(getAllTypesFromUEField).flatten() & extraTypes
@@ -1142,16 +1147,16 @@ uClass AActorCodegen of AActor:
         UE_Log &"After Module: {modName} Types: {types.len}"
 
 
-      modDeps = initTable[string, seq[string]]()
-      for m in projectModules: #Clean this
-        var m = m 
-        let deps = m.depsFromModule(typeDefs)
-        modDeps[m.name]= deps
-        m.dependencies = deps
-        projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == m.name, m)
-        UE_Log &"{m.name} deps: {deps}"
-      let cycleProblemsAfter = findCycleProblems(modDeps)
-      UE_Warn &"Cycle problems after: {cycleProblemsAfter}"
+      # modDeps = initTable[string, seq[string]]()
+      # for m in projectModules: #Clean this
+      #   var m = m 
+      #   let deps = m.depsFromModule(typeDefs)
+      #   modDeps[m.name]= deps
+      #   m.dependencies = deps
+      #   projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == m.name, m)
+      #   UE_Log &"Module name {m.name} deps: {deps}"
+      # let cycleProblemsAfter = findCycleProblems(modDeps)
+      # UE_Warn &"Cycle problems after: {cycleProblemsAfter}"
 
       project.modules = projectModules
       for i in 0..2: #Notice it require various passes because when moving types over there are new deps. TODO Add a proper cheap condition
@@ -1160,16 +1165,48 @@ uClass AActorCodegen of AActor:
       commonModule.types = commonModule.types.deduplicate()
       commonModule = reorderTypesSoParentAreDeclaredFirst(commonModule)
 
+
+
+
+
+
       
-      UE_Log $project.modules.mapIt( &"After Module: {it.name} Types: {it.types.len} Deps: {it.dependencies} \n")
+      # UE_Log $project.modules.mapIt( &"After Module: {it.name} Types: {it.types.len} Deps: {it.dependencies} \n")
 
       UE_Warn &"Common types {commonModule.types.len}"
 
       project.modules.add commonModule
 
 
+      UE_Warn &"All Modules and Deps"
+      for m in project.modules:
+        UE_Warn &"{m.name} deps: {m.dependencies}"
+      
 
 
+      UE_Log &"The selected type is {self.bindingTypeInfo}"
+      UE_Warn &"It's defined on "
+      for m in project.modules:
+        if self.bindingTypeInfo in m.types.mapIt(it.name):
+          UE_Log &"{m.name}"
+      UE_Warn "The mods that depend on it are: "
+      for m in project.modules:
+        if self.bindingTypeInfo in getCleanedDependencyTypes(m):
+          UE_Log &"{m.name}"
+
+
+      UE_Log &"ALl modules "
+
+      typeDefs = getTypeDefinitions(project.modules, commonModule)
+      modDeps = initTable[string, seq[string]]()
+      projectModules = project.modules
+      for m in project.modules:
+        var m = m
+        m.dependencies = m.depsFromModule(typeDefs)
+        UE_Log &"Module name {m.name} deps: {m.dependencies}"
+        projectModules = projectModules.replaceFirst((uem:UEModule)=>uem.name == m.name, m)
+      project.modules = projectModules
+      UE_Log $project.modules.mapIt( &"Mod: {it.name} Types: {it.types.len} Deps: {it.dependencies} \n")
 
 
       # ueProjectRef[] = project
