@@ -109,7 +109,7 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
         #   let output = compileGameSyncFromPlugin()
         #   UE_Log output
         if not isRunningCommandlet() and timesReloaded == 0: 
-          genBindingsEntryPoint()
+          genBindingsCMD()
 
     of "game":      
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")

@@ -427,17 +427,12 @@ proc findCycleProblems*(modules: Table[string, seq[string]]): seq[Cycle] =
         discard stack.pop()
   return cycleProblems
 
-proc fixCycles*(project: UEProject, commonModule : var UEModule) : UEProject = 
+proc fixCycles*(project: UEProject, commonModule : var UEModule, cycleProblems : seq[Cycle], typeDefs, modDeps : Table[string, seq[string]]) : UEProject = 
   var project = project
   var projectModules = project.modules
-  var modDeps = initTable[string, seq[string]]()
-  var typeDefs = getTypeDefinitions(projectModules, commonModule)
-
-  for m in project.modules:
-    modDeps[m.name]= m.depsFromModule(typeDefs)
-
-  let cycleProblems = findCycleProblems(modDeps)
+  
   UE_Warn &"Cycle problems: {cycleProblems}"
+  UE_Log "Will fix cycles now. This may take a few minutes..."
   for cycle in cycleProblems:
     var cycle = cycle
     var problematicMod = projectModules.first(m=>m.name == cycle.problematic).get()
@@ -543,9 +538,12 @@ proc getProject*() : UEProject =
     return project
 
 proc generateProject*() = 
-  
+    if not isRunningCommandlet():
+      return
+
     measureTime "Generate Project":  
       var project = getProject()
+      
       # measureTime "generateUEProject":
       #   project = generateUEProject(getProject())
       var commonModule = UEModule(name: "Engine/Common")
@@ -554,15 +552,21 @@ proc generateProject*() =
       let allUndefinedDeps =  project.getAllTypesDepsNotDefinedInAllModules(typeDefs).values.toSeq.flatten.deduplicate.sorted()
       project.modules = project.modules.mapIt(it.removeAllDepsFrom(allUndefinedDeps))
 
-      let allUndefinedDepsAfter = project.getAllTypesDepsNotDefinedInAllModules(typeDefs).values.toSeq.flatten.deduplicate.sorted()
-
-      UE_Log &"Undefined deps: {allUndefinedDeps.len}"
-      UE_Log &"Undefined deps after clean: {allUndefinedDepsAfter.len}"
+      # let allUndefinedDepsAfter = project.getAllTypesDepsNotDefinedInAllModules(typeDefs).values.toSeq.flatten.deduplicate.sorted()
+      # UE_Log &"Undefined deps: {allUndefinedDeps.len}"
+      # UE_Log &"Undefined deps after clean: {allUndefinedDepsAfter.len}"
 
 
       var projectModules = project.modules
-      project = fixCycles(project, commonModule)
-        
+      var modDeps = initTable[string, seq[string]]()
+      for m in project.modules:
+        modDeps[m.name]= m.depsFromModule(typeDefs)
+
+      let cycleProblems = findCycleProblems(modDeps)
+      #We could try to do the hash here. It could even be in a another thread when starting the editor and if it needs to regen something we could just do it
+   
+      project = fixCycles(project, commonModule, cycleProblems, typeDefs, modDeps)
+      
       typeDefs = getTypeDefinitions(projectModules, commonModule)
       for modName, types in typeDefs.pairs:
         UE_Log &"After Module: {modName} Types: {types.len}"
@@ -580,7 +584,7 @@ proc generateProject*() =
 
       #Set final deps
       typeDefs = getTypeDefinitions(project.modules, commonModule)
-      var modDeps = initTable[string, seq[string]]()
+      modDeps = initTable[string, seq[string]]()
       projectModules = project.modules
       for m in project.modules:
         var m = m
@@ -632,3 +636,28 @@ proc generateProject*() =
 
 
 
+proc genBindingsCMD*() =
+  try:
+    
+    let config = getNimForUEConfig()
+    # let cmd = &"{config.pluginDir}\\nue.exe gencppbindings"
+
+    when defined(windows):
+      var cmd = f &"{PluginDir}\\nue.exe"    
+    else:
+      var cmd = f &"{PluginDir}/nue"
+    var
+      args = f"genbindingsall"
+      dir = f PluginDir
+      stdOut : FString
+      stdErr : FString
+
+    var code : int
+    code = executeCmd(cmd, args, dir, stdOut, stdErr)
+    UE_Log $code
+    UE_Warn "output" & stdOut
+  except:
+    let e : ref Exception = getCurrentException()
+    UE_Error &"Error: {e.msg}"
+    UE_Error &"Error: {e.getStackTrace()}"
+    UE_Error &"Failed to generate reflection data"

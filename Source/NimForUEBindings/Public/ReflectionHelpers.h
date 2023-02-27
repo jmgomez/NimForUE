@@ -111,10 +111,12 @@ public:
 	static TArray<FString> GetAllModuleDepsForPlugin(FString PluginName);
 
 	static UPackage* CreateNimPackage(FString PackageShortName);
-
 	template<typename T>
-	static void ExecuteTaskInTaskGraph(T Param, void (*taskFn)(T)) {
-		Async(EAsyncExecution::ThreadPool, [&] {taskFn(Param); });
+	static void ExecuteTaskInTaskGraph(T Param, void (*taskFn)(T), void(*NimMain)()) { //TODO set NimMain as part of the global state
+		Async(EAsyncExecution::ThreadPool, [&] {
+			NimMain();
+			taskFn(Param);
+		});
 	}
 
 	static int ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOut, FString& StdError);

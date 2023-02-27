@@ -99,7 +99,6 @@ textObject}
 
 
 
-proc NimMain() {.importc.} 
 
 uEnum EInspectType: 
   (BlueprintType)
@@ -454,8 +453,9 @@ uClass AActorCodegen of AActor:
         # UE_Log "Hello from another thread" & $msg #This cashes
         # let s = "test string"
         UE_Log "Hello from another thread" 
-     
-      executeTaskInTaskGraph(2, ffiWraper)   
+      # proc test() {.cdecl.} = 
+      #   UE_Log "Hello from another thread"
+      # executeTaskInTaskGraph(2, ffiWraper, test)   
 
     proc showModuleDeps() = 
       let pkg = tryGetPackageByName(self.moduleName)
