@@ -524,7 +524,7 @@ uClass AActorCodegen of AActor:
 
 
     proc saveNewBindings() = 
-      generateProject()
+      generateProject(forceGeneration = true)
 
 
 

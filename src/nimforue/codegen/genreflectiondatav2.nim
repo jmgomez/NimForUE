@@ -1,7 +1,7 @@
 include ../unreal/prelude
 import ../codegen/[codegentemplate,modulerules, headerparser, models, uemeta, genreflectiondata]
 import std/[strformat, tables, hashes, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans, algorithm, macros]
-import ../../buildscripts/nimforueconfig
+import ../../buildscripts/[buildscripts, nimforueconfig]
 
 
 
@@ -513,7 +513,11 @@ proc getProject*() : UEProject =
   # let ueModules = getEngineCoreModules(ignore= @["CoreUObject"]) & extraModuleNames
   # let ueModules = @["UnrealEd"]
   # let ueModules = @["Engine"]
-  let ueModules = @["Engine", "Slate", "SlateCore", "PhysicsCore", "Chaos", "InputCore", "UMG", "GameplayAbilities", "EnhancedInput"]
+  let userModules = getGameUserConfigValue("extraModuleNames", newSeq[string]())
+  let ueModules = 
+    @["Engine", "Slate", "SlateCore", "PhysicsCore", "Chaos", "InputCore", "UMG", "GameplayAbilities", "EnhancedInput"] &
+    userModules
+  
   let projectModules = (gameModules & pluginModules & ueModules).deduplicate()
   # let projectModules = ueModules #(gameModules & pluginModules & ueModules).deduplicate()
 
@@ -537,13 +541,13 @@ proc getProject*() : UEProject =
     UE_Log &"Project has {project.modules.len} modules"
     return project
 
-proc generateProject*() = 
-    if not isRunningCommandlet():
-      return
-
+proc generateProject*(forceGeneration = false) = 
+    if not forceGeneration:
+      if not isRunningCommandlet():
+        return
+    
     measureTime "Generate Project":  
-      var project = getProject()
-      
+      var project = getProject()  
       # measureTime "generateUEProject":
       #   project = generateUEProject(getProject())
       var commonModule = UEModule(name: "Engine/Common")
