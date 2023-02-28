@@ -118,7 +118,6 @@ public class NimForUE : ModuleRules
 
 	//TODO Run buildlibs from here so the correct config/platform is picked when building
 	void AddNimForUEDev() { //ONLY FOR WIN/MAC with EDITOR (dev) target
-		// if(Target.bBuildEditor) //Only editor for now
 		NimbleSetup(); //Make sure NUE and Host are built
 		var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue");
 		

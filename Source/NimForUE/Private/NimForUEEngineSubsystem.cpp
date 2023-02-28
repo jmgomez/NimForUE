@@ -28,17 +28,21 @@ void UNimForUEEngineSubsystem::LoadNimGuest(FString NimError) {
 void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 
-	auto logger = [](NCSTRING msg) {
+	
+#if WITH_EDITOR
+	//Some modules use PostEngineInit but command lets only runs if PostDefault is set.
+	//So we delay init
+	FCoreDelegates::OnAllModuleLoadingPhasesComplete.AddLambda([this] {
+		auto logger = [](NCSTRING msg) {
 		UE_LOG(LogTemp, Log, TEXT("From NimForUEHost: %s"), *FString(msg));
 	};
-#if WITH_EDITOR
-	//If we are cooking we just skip
-	// if (IsRunningCommandlet()) return;
-	registerLogger(logger);
-	ensureGuestIsCompiled();
-	checkReload();
-	// FTransform::Identity
-	TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick), 0.1);
+		registerLogger(logger);
+		ensureGuestIsCompiled();
+		checkReload();
+		TickDelegateHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UNimForUEEngineSubsystem::Tick), 0.1);
+	});
+	
+	
 #endif
 }
 
