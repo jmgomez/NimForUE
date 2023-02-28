@@ -57,4 +57,4 @@
   #include "Editor/UnrealEd/Public/LevelEditorViewport.h"
 #endif
 
-// #include "UEGenBindings.h" //Uncomment this if you want to have the bindngs
+//#include "UEGenBindings.h" //Uncomment this if you want to have the bindngs

@@ -548,28 +548,40 @@ proc generateProject*(forceGeneration = false) =
     
     measureTime "Generate Project":  
       var project = getProject()  
+      
       # measureTime "generateUEProject":
       #   project = generateUEProject(getProject())
       var commonModule = UEModule(name: "Engine/Common")
+      
 
       var typeDefs = getTypeDefinitions(project.modules, commonModule)
       let allUndefinedDeps =  project.getAllTypesDepsNotDefinedInAllModules(typeDefs).values.toSeq.flatten.deduplicate.sorted()
       project.modules = project.modules.mapIt(it.removeAllDepsFrom(allUndefinedDeps))
-
-      # let allUndefinedDepsAfter = project.getAllTypesDepsNotDefinedInAllModules(typeDefs).values.toSeq.flatten.deduplicate.sorted()
-      # UE_Log &"Undefined deps: {allUndefinedDeps.len}"
-      # UE_Log &"Undefined deps after clean: {allUndefinedDepsAfter.len}"
 
 
       var projectModules = project.modules
       var modDeps = initTable[string, seq[string]]()
       for m in project.modules:
         modDeps[m.name]= m.depsFromModule(typeDefs)
-
+      
+      var cycleTable = initTable[string, seq[string]]()
       let cycleProblems = findCycleProblems(modDeps)
+      UE_Log &"Found {cycleProblems.len} cycle problems"
+      for cycle in cycleProblems:
+        if cycle.problematic notin cycleTable:
+          cycleTable.add cycle.problematic, cycle.modules
+        else:
+          cycleTable[cycle.problematic] = (cycleTable[cycle.problematic] & cycle.modules).deduplicate()
+      let minCycles = cycleTable.pairs.toSeq().mapIt((it[0], it[1]))
+      UE_Log &"Found {minCycles.len} min cycles"
+
+
+
+      
+      
       #We could try to do the hash here. It could even be in a another thread when starting the editor and if it needs to regen something we could just do it
    
-      project = fixCycles(project, commonModule, cycleProblems, typeDefs, modDeps)
+      project = fixCycles(project, commonModule, minCycles, typeDefs, modDeps)
       
       typeDefs = getTypeDefinitions(projectModules, commonModule)
       for modName, types in typeDefs.pairs:
