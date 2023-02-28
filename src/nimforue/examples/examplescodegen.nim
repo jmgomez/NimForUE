@@ -171,7 +171,7 @@ uClass AActorCodegen of AActor:
         pchIncludes = getPCHIncludes()
       let ueType = cls.toUEType(@[], pchIncludes)
       UE_Log $ueType
-
+      
     proc dumpMetadatas() = 
       let cls = self.getClassFromInspectedType()
       if cls.isNil():
@@ -306,8 +306,6 @@ uClass AActorCodegen of AActor:
     proc showAllProjectDepsFromModule() =         
         let deps = getProject().modules.filterIt( self.moduleName in it.dependencies).mapIt(it.name)
         UE_Warn $deps
-    
-
 
     proc showAllCyclesDepsFromModule() = 
       let ueProject =  getProject() 

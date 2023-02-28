@@ -518,6 +518,11 @@ func extractSubmodule* (path, packageName:string) : Option[string] =
     
 proc getSubmodulesForTypes*(packageName:string, types:seq[UEType]): TableRef[string, seq[UEType]] = 
   var subModTable = newTable[string, seq[UEType]]()
+  let nMembers = types.map(countMembers).sum()
+  if nMembers < 300:
+    let name = &"{packageName}" #remove the directory from here?
+    subModTable[name] = types
+    return subModTable
   for typ in types:
     let subMod = 
       case typ.kind:
@@ -665,49 +670,6 @@ proc getDepsFromTypes*(name: string, types : seq[UEType], excludeDeps: seq[strin
     .deduplicate()
     .filterIt(it != name and it notin excludeDeps)
 
-# proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string], pchIncludes:seq[string]= @[]): seq[UEModule] =
-#   UE_Log &"Generating module for {pkg.getShortName()} pchIncludes: {pchIncludes.len}"
-#   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
-#   var name = pkg.getShortName()
-
-#   let initialTypes = allObjs.toSeq()
-#     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules, pchIncludes))
-#     .sequence()
-  
-
-#   let moduleExcludeDeps = rules.filterIt(it.rule == uerExcludeDeps).mapIt(it.affectedTypes).foldl(a & b, newSeq[string]())
-#   var excludeDeps = excludeDeps & moduleExcludeDeps
-#   var types = (initialTypes & getForcedTypes(name, rules)).deduplicate()
-#   let excludeFromModuleNames = @["CoreUObject", name]
-#   let deps = getDepsFromTypes(name, types, excludeDeps)
-#   #TODO Per module add them to a virtual module
-#   let excludedTypes = types.filterIt(it.getModuleNames(excludeFromModuleNames).any(modName => modName in excludeDeps))
-#   for t in excludedTypes:
-#     UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(excludeFromModuleNames)}"
-
-#   types = types.filterIt(it notin excludedTypes)
-
-
-
-#   #Virtual modules.
-#   var virtModules = newSeq[UEModule]()
-#   for r in rules:
-#     if r.rule == uerVirtualModule:
-#       let r = r
-#       let (virtualModuleTypes, types) = types.partition((x: UEType) => x.name in r.affectedTypes)
-#       virtModules.add UEModule(name: r.moduleName, types: virtualModuleTypes, isVirtual: true, dependencies: deps & name,  rules: rules)
-#   #Types that causes cycles are also part of the virtual modules. TODO this code assume excludeDeps is cycles + coreuobject
-#   for cycleMod in excludeDeps.filterIt(it != "CoreUObject"):
-#     let cycleMod = cycleMod
-#     let (cycleTypes, types) = initialTypes.partition((x: UEType) => cycleMod in x.getModuleNames(excludeFromModuleNames))
-#     let cycleName = &"{name}_{cycleMod}"
-#     # UE_Error &"Module: + {name} Adding {cycleName} to {name} because it depends on {cycleMod} and {cycleTypes} is excluded"
-#     if cycleTypes.len > 0: #if it doesnt have types it shouldnt be a added
-#       virtModules.add UEModule(name: cycleName, types: cycleTypes, isVirtual: true, dependencies: deps & name & cycleMod, rules: rules)
-
-#   var module = makeUEModule(name, types, rules, deps)
-#   module.hash = $hash($module.toJson())
-#   module & virtModules
 
 proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[string], includeDeps: seq[string], pchIncludes:seq[string]= @[]): seq[UEModule] =
   UE_Log &"Generating module for {pkg.getShortName()} pchIncludes: {pchIncludes.len}"
@@ -726,40 +688,6 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     submodules.add module
   return submodules
 
-
-  # let moduleExcludeDeps = rules.filterIt(it.rule == uerExcludeDeps).mapIt(it.affectedTypes).foldl(a & b, newSeq[string]())
-  # var excludeDeps = excludeDeps & moduleExcludeDeps
-  # var types = (initialTypes & getForcedTypes(name, rules)).deduplicate()
-  # let excludeFromModuleNames = @["CoreUObject", name]
-  # let deps = getDepsFromTypes(name, types, excludeDeps)
-  # #TODO Per module add them to a virtual module
-  # let excludedTypes = types.filterIt(it.getModuleNames(excludeFromModuleNames).any(modName => modName in excludeDeps))
-  # for t in excludedTypes:
-  #   UE_Warn &"Module: + {name} Excluding {t.name} from {name} because it depends on {t.getModuleNames(excludeFromModuleNames)}"
-
-  # types = types.filterIt(it notin excludedTypes)
-
-
-
-  # #Virtual modules.
-  # var virtModules = newSeq[UEModule]()
-  # for r in rules:
-  #   if r.rule == uerVirtualModule:
-  #     let r = r
-  #     let (virtualModuleTypes, types) = types.partition((x: UEType) => x.name in r.affectedTypes)
-  #     virtModules.add UEModule(name: r.moduleName, types: virtualModuleTypes, isVirtual: true, dependencies: deps & name,  rules: rules)
-  # #Types that causes cycles are also part of the virtual modules. TODO this code assume excludeDeps is cycles + coreuobject
-  # for cycleMod in excludeDeps.filterIt(it != "CoreUObject"):
-  #   let cycleMod = cycleMod
-  #   let (cycleTypes, types) = initialTypes.partition((x: UEType) => cycleMod in x.getModuleNames(excludeFromModuleNames))
-  #   let cycleName = &"{name}_{cycleMod}"
-  #   # UE_Error &"Module: + {name} Adding {cycleName} to {name} because it depends on {cycleMod} and {cycleTypes} is excluded"
-  #   if cycleTypes.len > 0: #if it doesnt have types it shouldnt be a added
-  #     virtModules.add UEModule(name: cycleName, types: cycleTypes, isVirtual: true, dependencies: deps & name & cycleMod, rules: rules)
-
-  # var module = makeUEModule(name, types, rules, deps)
-  # module.hash = $hash($module.toJson())
-  # module & virtModules
 
 
 proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =

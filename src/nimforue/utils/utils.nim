@@ -132,6 +132,7 @@ func countSubStr*(str:string, subStr:string): int =
   count
 
   
+func sum*[SomeNumber](xs: seq[SomeNumber]): SomeNumber = xs.foldl(a + b, 0)
 
 #OPTION
 

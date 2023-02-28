@@ -6,7 +6,7 @@ import ../codegen/[ueemit, emitter]
 import engine/common
 import engine/gameframework
 import engine/engine
-import enhancedinput/enhancedinput
+import enhancedinput
 import std/[typetraits, options, asyncdispatch]
 
 proc getSubsystem*[T : UEngineSubsystem]() : Option[ptr T] = 

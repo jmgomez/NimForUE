@@ -21,14 +21,3 @@ macro importAllBindings() : untyped =
 
 
 importAllBindings()
-
-# import ../unreal/bindings/exported/engine/common
-# import ../unreal/bindings/exported/engine/gameframework
-# import ../unreal/bindings/exported/engine/gameframework
-
-# import
-#   ../unreal / bindings / exported / slatecore/enums
-
-
-# Include all files from in the bindings
-

@@ -296,7 +296,10 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
     let name = &"{name.firstToUpper()}"
     if name.endsWith(bindSuffix): name else: name & bindSuffix
 
-  let includeHeader = (name: string) => &"#include \"../{headerName(name)}\" \n"
+  func includeHeader (name: string) : string = 
+    let isOneFilePkg = "/" notin moduleDef.name 
+    if isOneFilePkg: &"#include \"{headerName(name)}\" \n" 
+    else: &"#include \"../{headerName(name)}\" \n"
   let headerPath = headersPath / "Modules" / headerName(moduleDef.name)
   let deps = moduleDef
     .dependencies
@@ -331,12 +334,15 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
 
 proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, moduleNode: NimNode) =
   proc getImport(moduleName: string): string =
+      let isOneFilePkg = "/" notin moduleDef.name
+
       var moduleName = moduleName.toLower()
       if moduleDef.name.split("/")[0] == moduleName.split("/")[0]: 
         let depName = moduleName.toLower().split("/")[^1]
         &"import {depName}"
       else:
-        &"import ../{moduleName}"
+        if isOneFilePkg: &"import {moduleName}" #we are in the same level that the module root
+        else: &"import ../{moduleName}" #we are inside a module folder and need to go up one level
   let code =
     moduleStrTemplate &
     #"{.experimental:\"codereordering\".}\n" &
@@ -388,25 +394,34 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
 
   for module in project.modules:
     let module = module
+    let isOneFilePkg = "/" notin module.name
     let moduleFolder = module.name.toLower().split("/")[0]
     let actualModule = module.name.toLower().split("/")[^1]
-    let exportBindingsPath = bindingsDir / "exported" / moduleFolder / actualModule & ".nim"
-    let importBindingsPath = bindingsDir / moduleFolder / actualModule & ".nim"
+    let path = 
+      if isOneFilePkg: actualModule
+      else: moduleFolder / actualModule
+        
+
+    let exportBindingsPath = bindingsDir / "exported" / path & ".nim"
+    let importBindingsPath = bindingsDir / path & ".nim"
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
     if prevModHash == module.hash and uerIgnoreHash notin module.rules:
       echo "Skipping module: " & module.name & " as it has not changed"
-      continue
+      
+
+
+    let preludeRelative =  if isOneFilePkg: "../" else: "../../"
     let moduleImportStrTemplate = &"""
 #hash:{module.hash}
-include ../../prelude
+include {preludeRelative}prelude
 when not defined(nimsuggest):
   const BindingPrefix {{.strdefine.}} = ""
   {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
 
-
+  
 """
     let moduleExportStrTemplate = &"""
-include ../../../prelude
+include {preludeRelative}../prelude
 proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard
     
 """

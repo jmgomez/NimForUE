@@ -468,7 +468,9 @@ const project* = $1
   for module in project.modules:
     let moduleFolder = module.name.toLower().split("/")[0]
     let actualModule = module.name.toLower().split("/")[^1]
+    #no need to create the folder if the package is just one file
     
+
     let nimImportBindingFile = config.bindingsDir / moduleFolder / actualModule & ".nim"
 
     createDir(config.bindingsDir / "exported" / moduleFolder)
