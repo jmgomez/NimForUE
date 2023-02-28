@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import ../codegen/[codegentemplate,modulerules, headerparser, models, uemeta, genreflectiondata]
+import ../codegen/[codegentemplate,modulerules, headerparser, models, uemeta, genreflectiondata, genmodule]
 import std/[strformat, tables, hashes, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans, algorithm, macros]
 import ../../buildscripts/[buildscripts, nimforueconfig]
 
@@ -454,7 +454,7 @@ proc fixCycles*(project: UEProject, commonModule : var UEModule, cycleProblems :
 
 proc saveProject*(project:UEProject) = 
   let config = getNimForUEConfig()
-  let ueProjectAsStr = $project
+  
   let codeTemplate = """
 import ../nimforue/codegen/[models, modulerules]
 
@@ -463,14 +463,34 @@ const project* = $1
   #Folders need to be created here because createDir is not available at compile time
   createDir(config.bindingsDir)
   createDir(config.reflectionDataDir)
-  writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
 
+  var modulesToPersist = newSeq[UEModule]()
   for module in project.modules:
     let moduleFolder = module.name.toLower().split("/")[0]
     let actualModule = module.name.toLower().split("/")[^1]
+    
+    let nimImportBindingFile = config.bindingsDir / moduleFolder / actualModule & ".nim"
+
     createDir(config.bindingsDir / "exported" / moduleFolder)
     createDir(config.bindingsDir / moduleFolder)
     createDir(PluginDir / NimHeadersModulesDir / moduleFolder)
+
+    let prevModuleHash = getModuleHashFromFile(nimImportBindingFile).get("_")
+    if module.hash == prevModuleHash:# and not uerIgnoreHash in module.rules:
+      UE_Log &"Skipping module {module.name} because it has not changed"
+      continue
+    modulesToPersist.add module
+  
+  var project = project
+  #we save the pch types right before we discard the cached modules to avoid race conditions
+  savePCHTypes(project.modules)
+
+  project.modules = modulesToPersist
+
+  let ueProjectAsStr = $project
+  writeFile(config.reflectionDataFilePath, codeTemplate % [ueProjectAsStr])
+
+                  
 
 
 
@@ -525,9 +545,18 @@ proc getProject*() : UEProject =
     
   var project = UEProject()
   measureTime "Getting the project":
+    let bpOnly = getGameUserConfigValue("bpOnly", true)
+    let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
+
+    let nonBp =  @["EnhancedInput", "GameplayAbilities"]
     proc getRulesForPkg(packageName:string) : seq[UEImportRule] = 
-      if packageName in moduleImportRules: moduleImportRules[packageName] & codegenOnly
-      else: @[codegenOnly]
+      let ruleBp = 
+        if bpOnly and packageName notin nonBp: 
+          @[bpOnlyRules] 
+        else: @[]
+      if packageName in moduleImportRules: 
+        moduleImportRules[packageName] & codegenOnly & ruleBp
+      else: @[codegenOnly] & ruleBp
     
     
 
@@ -589,7 +618,7 @@ proc generateProject*(forceGeneration = false) =
 
 
       project.modules = projectModules
-      for i in 0..2: #Notice it require various passes because when moving types over there are new deps. TODO Add a proper cheap condition
+      for i in 0..5: #Notice it require various passes because when moving types over there are new deps. TODO Add a proper cheap condition
         project = fixCommonModuleDeps(project, commonModule)
 
       commonModule.types = commonModule.types.deduplicate()
@@ -663,7 +692,7 @@ proc genBindingsCMD*() =
     else:
       var cmd = f &"{PluginDir}/nue"
     var
-      args = f"genbindingsall"
+      args = f"genbindingsall --silent"
       dir = f PluginDir
       stdOut : FString
       stdErr : FString

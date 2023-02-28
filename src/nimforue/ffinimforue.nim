@@ -53,7 +53,8 @@ proc genBindingsEntryPoint() : void {.ffi:genFilePath} =
   UE_LOG "Running genBindingsEntryPoint"
   # execBindingGeneration(true)  
   try:
-    generateProject()       
+    if isRunningCommandlet(): #TODO test not cooking
+      generateProject()       
   except:
     UE_Error &"Error in genBindingsEntryPoint: {getCurrentExceptionMsg()}"
     sleep(3000)

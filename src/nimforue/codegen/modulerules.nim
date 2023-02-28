@@ -216,6 +216,11 @@ moduleImportRules["MegascansPlugin"] = @[
   
 ]
 
+moduleImportRules["CommonUI"] = @[
+  makeImportedRuleType(uerIgnore, @[
+    "FOnAssetLoaded"
+  ]),  
+]
 moduleImportRules["DungeonArchitectRuntime"] = @[
   makeImportedRuleType(uerIgnore, @[
     "FFlowTilemapCoord"
