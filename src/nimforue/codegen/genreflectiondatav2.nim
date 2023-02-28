@@ -550,7 +550,7 @@ proc getProject*() : UEProject =
     let bpOnly = getGameUserConfigValue("bpOnly", true)
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
 
-    let nonBp =  @["EnhancedInput", "GameplayAbilities"]
+    let nonBp =  @["EnhancedInput", "GameplayAbilities"] & getGameUserConfigValue("extraNonBpModuleNames", newSeq[string]())
     proc getRulesForPkg(packageName:string) : seq[UEImportRule] = 
       let ruleBp = 
         if bpOnly and packageName notin nonBp: 
