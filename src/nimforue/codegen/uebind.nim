@@ -381,7 +381,7 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
     #and then call genNativeFunction passing the body
 
     #converts the params to fields (notice returns is not included)
-    let fnName = fn[0].strVal().firstToUpper()
+    let fnName = fn.name().strVal().firstToUpper() # [0].strVal().firstToUpper()
     let formalParamsNode = fn.children.toSeq() #TODO this can be handle in a way so multiple args can be defined as the smae type
                              .filter(n=>n.kind==nnkFormalParams)
                              .head()
@@ -403,7 +403,7 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
     let returnParam = formalParamsNode #for being void it can be empty or void
                         .first(n=>n.kind in [nnkIdent, nnkBracketExpr])
                         .flatMap((n:NimNode)=>(if n.kind==nnkIdent and n.strVal()=="void": none[NimNode]() else: some(n)))
-                        .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm))
+                        .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm | CPF_OutParm))
     let actualParams = classParam.map(n=>fields) #if there is class param, first param would be use as actual param
                                  .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
     
