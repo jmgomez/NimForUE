@@ -355,7 +355,11 @@ proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, m
     ("{.inject, ", "{."),
     ("<", "["),
     (">", "]"),     #Changes Gen. Some types has two levels of inherantce in cpp, that we dont really need to support
-   
+    ("::Type", ""), #Enum namespaces EEnumName::Type
+    ("::Outcome", ""), #Enum namespaces EEnumName::Outcome
+    ("::Mode", ""), #Enum namespaces EEnumName::Mode
+    ("::Primitive", ""), #Enum namespaces EEnumName::Mode
+    ("::", ".")    #Enum namespace
     ("\"##", "  ##"),
     ("__DelegateSignature", ""))
   writeFile(filePath, code)
