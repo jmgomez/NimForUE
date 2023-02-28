@@ -18,22 +18,22 @@
 		{
 			"Name": "NimForUE",
 			"Type": "Runtime",
-			"LoadingPhase": "PostDefault"
+			"LoadingPhase": "PostEngineInit"
 		},
 		{
 			"Name": "NimForUEBindings",
 			"Type": "Runtime",
-			"LoadingPhase": "PostDefault"
+			"LoadingPhase": "PostEngineInit"
 		},
 		{
 			"Name": "NimForUETest",
 			"Type": "Editor",
-			"LoadingPhase": "PostDefault"
+			"LoadingPhase": "PostEngineInit"
 		},
 		{
 			"Name": "NimForUEEditor",
 			"Type": "EditorNoCommandlet",
-			"LoadingPhase": "PostDefault"
+			"LoadingPhase": "PostEngineInit"
 		}
 	],
 	"Plugins": [
