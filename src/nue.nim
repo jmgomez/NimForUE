@@ -170,6 +170,22 @@ task game, "Builds the game lib":
 
 
 
+task lib, "Builds a game lib":
+  var extraSwitches = newSeq[string]()
+  if "f" in taskOptions: 
+    extraSwitches.add "-f" #force 
+  if "nolinedir" in taskOptions:  
+    extraSwitches.add "--linedir:off"
+ 
+  let debug = "debug" in taskOptions
+  if "name" in taskOptions:
+    compileLib(taskOptions["name"], extraSwitches, debug)
+  else:
+    log "You need to specify a name for the lib. i.e. 'nue lib -name=MyLib'"
+ 
+
+
+
 
 task dumpConfig, "Displays the config variables":
   dump config

@@ -128,7 +128,8 @@ switch("path","../Plugins/NimForUE/src/nimforue/")
   if not fileExists(gameConf):
     writeFile(gameConf, fileTemplate)
 
-proc compileGame*(extraSwitches:seq[string], withDebug:bool) = 
+
+proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) = 
   let gameSwitches = @[
     "-d:game",
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
@@ -139,17 +140,26 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
   # setCurrentDir(e ngineBase)
   #TODO the final path will be relative to the engine dir this is just a hack to get it working for now
   # var uesymbols = uesymbols.mapIt(it.replace(config.engineDir, "Engine"))
-  let gameFolder = NimGameDir
-  let nimCache = ".nimcache/game"/(if withDebug: "debug" else: "release")
+  let nimCache = &".nimcache/{name}"/(if withDebug: "debug" else: "release")
+  let isGame = name == "game"
+  let entryPoint = NimGameDir/(if isGame: "game.nim" else: &"{name}/{name}.nim")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} --app:lib   -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
+  let compCmd = &"nim cpp {buildFlags} --app:lib   -d:withPCH --nimcache:{nimCache} {entryPoint}"
   doAssert(execCmd(compCmd)==0)
   # setCurrentDir(PluginDir)
-  copyNimForUELibToUEDir("game")
+  copyNimForUELibToUEDir(name)
   #We need to make sure that gen cpp files doenst exists in editor builds
   let privateFolder = PluginDir / "Source" / "NimForUE" / "Private" / "NimForUEGame"
   # removeDir(privateFolder)
+
+
+proc compileGame*(extraSwitches:seq[string], withDebug:bool) = 
+  compileLib("game", extraSwitches, withDebug)
+
+
+
+
 
 
 proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) = 
