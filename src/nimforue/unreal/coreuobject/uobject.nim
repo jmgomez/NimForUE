@@ -101,6 +101,11 @@ type
 
     FVTableHelper* {.importcpp, pure.} = object
 
+    FPropertyChangedEvent* {.importcpp, pure} = object
+      property*  {.importcpp: "Property" .} : FPropertyPtr #	 * The actual property that changed
+      memberProperty*  {.importcpp: "MemberProperty" .} : FPropertyPtr #	 * The property that was actually modified (in the case of a struct member)
+      #TODO bind EPropertyChangeType
+
 proc getDefaultObject*(fieldClass:FFieldClassPtr) : FFieldPtr {.importcpp:"#->GetDefaultObject()" .}
 
 proc makeFImplementedInterface*(class: UClassPtr, offset:int32 = 0, implementedByK2:bool = true) : FImplementedInterface {.importcpp:"FImplementedInterface(@)", constructor.}
