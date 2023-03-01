@@ -16,8 +16,8 @@ type
     fn*: UClassConstructor
     hash*: string
     className*: string
-    # vTableConstructor*: VTableConstructor
-    # updateVTableForType*: proc(prevCls:UClassPtr)
+    vTableConstructor*: VTableConstructor
+    updateVTableForType*: proc(prevCls:UClassPtr)
 
 
 type 

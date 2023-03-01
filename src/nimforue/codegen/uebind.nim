@@ -381,7 +381,7 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
     #and then call genNativeFunction passing the body
 
     #converts the params to fields (notice returns is not included)
-    let fnName = fn.name().strVal().firstToUpper() # [0].strVal().firstToUpper()
+    let fnName = fn.name().strVal().firstToUpper()
     let formalParamsNode = fn.children.toSeq() #TODO this can be handle in a way so multiple args can be defined as the smae type
                              .filter(n=>n.kind==nnkFormalParams)
                              .head()

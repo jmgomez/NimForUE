@@ -77,8 +77,8 @@ proc addStructOpsWrapper*(structName : string, fn : UNimScriptStructPtr->void) =
     ueEmitter.setStructOpsWrapperTable.add(structName, fn)
 
 proc addClassConstructor*[T](clsName:string, classConstructor:UClassConstructor, hash:string) : void =  
-    let ctorInfo = CtorInfo(fn:classConstructor, hash:hash, className: clsName) 
-                    # vtableConstructor: vtableConstructorStatic[T], updateVTableForType: updateVTableStatic[T])
+    let ctorInfo = CtorInfo(fn:classConstructor, hash:hash, className: clsName,
+        vtableConstructor: vtableConstructorStatic[T], updateVTableForType: updateVTableStatic[T])
     if not ueEmitter.clsConstructorTable.contains(clsName):
         ueEmitter.clsConstructorTable.add(clsName, ctorInfo)
     else:
@@ -219,14 +219,16 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
 
                 if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated
                     let prevCls = prevClassPtr.get()
-                    let ctor = ueEmitter.clsConstructorTable.tryGet(emitter.ueType.name)
-                    prevCls.setClassConstructor(ctor.map(ctor=>ctor.fn).get(defaultConstructor))
                     #We update the prev class pointer to hook the new vfuncs in the new objects
                     #we traverse all the object and update the vtable
-                    # let vtableCtor = ueEmitter.clsVTableCtorHelperTable.tryGet(emitter.ueType.name)
-                    # prevCls.classVTableHelperCtorCaller = vtableCtor.get()
-                    # let updateVTable = ueEmitter.updateVTableForTypeTable.tryGet(emitter.ueType.name)
-                    # updateVTable.get()(prevCls)
+                    let ctor = ueEmitter.clsConstructorTable.tryGet(emitter.ueType.name)
+                    if ctor.isSome():
+                        let ctorInfo = ctor.get()
+                        prevCls.setClassConstructor(ctorInfo.fn)
+                        prevCls.classVTableHelperCtorCaller = ctorInfo.vTableConstructor
+                        if ctorInfo.updateVTableForType.isNotNil():
+                            ctorInfo.updateVTableForType(prevCls)
+                   
                     
 
             of uetEnum:
