@@ -21,15 +21,17 @@ type
 
 func isInit*(lib : NueLib) : bool = lib.lib != nil
 var libMap* : Table[string, NueLib]
+
 proc start() = 
   libMap = {
     "nimforue" : NueLib(lastLoadedPath: getLastLibPath(NimForUELibDir, "nimforue").get())
   }.toTable()
-
-  #Game must be compiled at least once. 
-  let gameLibPath = getLastLibPath(NimForUELibDir, "game")
-  if gameLibPath.isSome():
-    libMap["game"] = NueLib(lastLoadedPath: gameLibPath.get())
+  #Adds all game libs including game 
+  let allGameLibs = getAllGameLibs()
+  for libName in allGameLibs:
+    let libPath = getLastLibPath(NimForUELibDir, libName)
+    if libPath.isSome():
+      libMap[libName] = NueLib(lastLoadedPath: libPath.get())
 
 
 

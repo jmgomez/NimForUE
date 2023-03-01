@@ -80,6 +80,14 @@ proc executeNueTask(task: string) =
   let (output, _) = execCmdEx(cmd)
   log output
 
+proc getAllGameLibs*() : seq[string] = 
+  var libs = @["game"]
+  for dir in walkDir(NimGameDir):
+    let name = dir[1].split(PathSeparator)[^1]
+    if fileExists(dir[1] / name & ".nim"):
+      libs.add(name)
+  libs
+
 
 
 proc copyNimForUELibToUEDir*(libName:string) = 

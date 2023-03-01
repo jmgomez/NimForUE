@@ -111,9 +111,9 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.
         #   UE_Log output
         if not isRunningCommandlet() and timesReloaded == 0: 
           genBindingsCMD()
-
-    of "game":      
+    else:
         emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
+    
     
   except:
     UE_Error &"Error in onLibLoaded: {getCurrentExceptionMsg()}"

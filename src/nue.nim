@@ -38,7 +38,7 @@ proc main() =
     echoTasks()
 
   var p = initOptParser()
-  var ts:Option[Task]
+  var taskk:Option[Task]
   for kind, key, val in p.getopt():
     case kind
     of cmdEnd: doAssert(false) # cannot happen with getopt
@@ -53,16 +53,19 @@ proc main() =
     of cmdArgument:
       let res = tasks.filterIt(it.name == key) #TODO: Match first characters if whole word doesn't match, so we don't need task aliases
       if res.len > 0:
-        ts = some(res[0].t)
-      elif ts.isSome():
+        taskk = some(res[0].t)
+      elif taskk.isSome():
         doAssert(not taskOptions.hasKey("task_arg"), "TODO: accept more than one task argument")
         taskOptions["task_arg"] = key
+      elif key in getAllGameLibs():
+        taskk = some(tasks.filterIt(it.name == "lib")[0].t)
+        taskOptions["name"] = key
       else:
         log &"!! Unknown task {key}."
         echoTasks()
 
-  if ts.isSome():
-    ts.get().routine(taskOptions)
+  if taskk.isSome():
+    taskk.get().routine(taskOptions)
 
 
 
@@ -179,10 +182,13 @@ task lib, "Builds a game lib":
  
   let debug = "debug" in taskOptions
   if "name" in taskOptions:
+    let name = taskOptions["name"]
+    assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"
     compileLib(taskOptions["name"], extraSwitches, debug)
   else:
-    log "You need to specify a name for the lib. i.e. 'nue lib -name=MyLib'"
+    log "You need to specify a name for the lib. i.e. 'nue lib --name=mylib'"
  
+
 
 
 
