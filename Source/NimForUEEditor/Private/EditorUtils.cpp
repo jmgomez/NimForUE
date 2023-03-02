@@ -79,7 +79,24 @@ void UNimReferenceReplacementHelper::Serialize(FStructuredArchive::FRecord Recor
 	}
 }
 
-
+static TArray<UDataTable*> GetTablesDependentOnStruct(UScriptStruct* Struct)
+{
+	TArray<UDataTable*> Result;
+	if (Struct)
+	{
+		TArray<UObject*> DataTables;
+		GetObjectsOfClass(UDataTable::StaticClass(), DataTables);
+		for (UObject* DataTableObj : DataTables)
+		{
+			UDataTable* DataTable = Cast<UDataTable>(DataTableObj);
+			if (DataTable && (Struct == DataTable->RowStruct))
+			{
+				Result.Add(DataTable);
+			}
+		}
+	}
+	return Result;
+}
 
 void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
 	TUniquePtr<FReload> Reload(new FReload(EActiveReloadType::HotReload, TEXT(""), *GLog)); //activates hot reload so we pass a check (even though we dont use it)
@@ -194,17 +211,7 @@ void UEditorUtils::PerformReinstance(FNimHotReload* NimHotReload) {
 				DependencyBPs.Add(BP);
 		}
 
-		for (auto& Struct : ReloadStructs)
-		{
-			// FStructureEditorUtils::BroadcastPreChange(Struct.Key);
-
-			// // Update struct pointers in DataTable with newly generated replacements.
-			// TArray<UDataTable*> Tables = GetTablesDependentOnStruct(Struct.Key);
-			// for (UDataTable* Table : Tables)
-			// {
-			// 	Table->RowStruct = Struct.Value;
-			// }
-		}
+		
 
 
 
@@ -404,6 +411,25 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, FReload* UnrealReload)
 		
 	
 	UnrealReload->Reinstance();
+
+	for (auto& Struct : NimHotReload->StructsToReinstance)
+	{
+		// Update struct pointers in DataTable with newly generated replacements.
+		TArray<UDataTable*> Tables = GetTablesDependentOnStruct(Struct.Key);
+		for (UDataTable* Table : Tables)
+		{
+			auto Data = Table->GetTableAsJSON();
+			//Even though we have set NoDestructors on the StructOps at this point the flag is not in there.
+			Struct.Key->StructFlags = (EStructFlags)(STRUCT_NoDestructor | Struct.Key->StructFlags);
+			Table->CleanBeforeStructChange();
+			Table->RowStruct = Struct.Value;
+			Table->CreateTableFromJSONString(Data);
+		}
+	}
+
+
+
+	
 	UnrealReload->Finalize(true);
 	UnrealReload->SetSendReloadCompleteNotification(true);
 

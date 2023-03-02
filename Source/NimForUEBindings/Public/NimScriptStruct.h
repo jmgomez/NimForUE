@@ -21,12 +21,12 @@
 		{
 			constexpr FCapabilities Capabilities {
 				(TIsPODType<CPPSTRUCT>::Value ? CPF_IsPlainOldData : CPF_None)
-				| (TIsTriviallyDestructible<CPPSTRUCT>::Value ? CPF_NoDestructor : CPF_None)
+				| CPF_NoDestructor
 				| (TIsZeroConstructType<CPPSTRUCT>::Value ? CPF_ZeroConstructor : CPF_None)
 				| (TModels<CGetTypeHashable, CPPSTRUCT>::Value ? CPF_HasGetValueTypeHash : CPF_None),
 				TTraits::WithNoInitConstructor,
 				TTraits::WithZeroConstructor,
-				!(TTraits::WithNoDestructor || TIsPODType<CPPSTRUCT>::Value),
+				TTraits::WithNoDestructor,
 				TTraits::WithSerializer,
 				TTraits::WithStructuredSerializer,
 				TTraits::WithPostSerialize,
