@@ -259,7 +259,7 @@ task genbindingsall, "Runs the Generate Bindings commandlet":
 task setup, "Setups the plugin by building the initial tasks in order":
   ubuild(taskOptions)
   guest(taskOptions)
-  genbindings(taskOptions)
+  genbindingsall(taskOptions)
   game(taskOptions)
 
 
