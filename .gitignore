@@ -67,3 +67,4 @@ toolchain_dir.txt
 
 .headerdata/allIncludes.json
 .headerdata/allpchtypes.json
+nimvmtest_linkerArgs.txt

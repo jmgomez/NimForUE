@@ -103,8 +103,11 @@ task h, "Alias to host":
 task cleanh, "Clean the .nimcache/host folder":
   removeDir(".nimcache/host")
 
-task cleang, "Clean the .nimcache guest and winpch folder":
+task cleanlibs, "Clean the .nimcache for plugin, game and libs":
   removeDir(".nimcache/guest")
+  getAllGameLibs()
+    .forEach((dir:string)=>removeDir(dir))
+
 
 when defined windows:
   task killvcc, "Windows: Kills cl.exe and link.exe if they're running":
@@ -117,7 +120,7 @@ task clean, "Clean the nimcache folder":
   when defined windows:
     killvcc(taskOptions)
   cleanh(taskOptions)
-  cleang(taskOptions)
+  cleanlibs(taskOptions)
 
 task ubuild, "Calls Unreal Build Tool for your project":
   #This logic is temporary. We are going to get of most of the config data
@@ -189,6 +192,13 @@ task lib, "Builds a game lib":
     log "You need to specify a name for the lib. i.e. 'nue lib --name=mylib'"
  
 
+task rebuildlibs, "Rebuilds the plugin, game and libs":
+  cleanlibs(taskOptions)
+  guest(taskOptions)
+  for lib in getAllGameLibs():
+    taskOptions["name"] = lib
+    lib(taskOptions)
+  
 
 
 
