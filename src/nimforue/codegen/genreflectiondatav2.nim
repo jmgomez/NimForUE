@@ -465,6 +465,7 @@ const project* = $1
   createDir(config.reflectionDataDir)
 
   var modulesToPersist = newSeq[UEModule]()
+ 
   for module in project.modules:
     let moduleFolder = module.name.toLower().split("/")[0]
     let actualModule = module.name.toLower().split("/")[^1]
@@ -477,6 +478,8 @@ const project* = $1
     createDir(config.bindingsDir / moduleFolder)
     createDir(PluginDir / NimHeadersModulesDir / moduleFolder)
 
+
+
     let prevModuleHash = getModuleHashFromFile(nimImportBindingFile).get("_")
     if module.hash == prevModuleHash:# and not uerIgnoreHash in module.rules:
       UE_Log &"Skipping module {module.name} because it has not changed"
@@ -484,8 +487,6 @@ const project* = $1
     modulesToPersist.add module
   
   var project = project
-  #we save the pch types right before we discard the cached modules to avoid race conditions
-  savePCHTypes(project.modules)
 
   project.modules = modulesToPersist
 
@@ -566,10 +567,13 @@ proc getProject*() : UEProject =
       projectModules
         .mapIt(tryGetPackageByName(it))
         .sequence
-        .mapIt(toUEModule(it, getRulesForPkg(it.getShortName()), @[], getPCHIncludes()))
+        .mapIt(toUEModule(it, getRulesForPkg(it.getShortName()), @[], @[], getPCHIncludes()))
         .flatten()
 
     UE_Log &"Project has {project.modules.len} modules"
+
+    #we save the pch types before modules are cached. PCH Types are deduced from the module relative path 
+    savePCHTypes(project.modules)
     return project
 
 proc generateProject*(forceGeneration = false) = 

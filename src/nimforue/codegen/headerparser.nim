@@ -113,6 +113,7 @@ proc savePCHTypes*(modules:seq[UEModule]) =
   let dir = PluginDir/".headerdata"
   createDir(dir)
   let path = dir/"allpchtypes.json"
+  #Is in PCH is set in UEMEta if the include is in the include list
   let pchTypes = modules.mapIt(it.types).flatten.filterIt(it.isInPCH).mapIt(it.name)
   UE_Log &"Types found on the PCH: {pchTypes.len}"
   saveIncludesToFile(path, pchTypes)
