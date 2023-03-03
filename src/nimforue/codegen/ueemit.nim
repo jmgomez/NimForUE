@@ -62,7 +62,8 @@ proc getFnGetForUClass[T](ueType:UEType) : UPackagePtr->UFieldPtr =
 #    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
     proc toReturn (pgk:UPackagePtr) : UFieldPtr = #the UEType changes when functions are added
         var ueType = getGlobalEmitter().emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
-        let clsConstructor = defaultConstructorStatic[T]# ueEmitter.clsConstructorTable.tryGet(ueType.name).map(x=>x.fn).get(defaultConstructorStatic[T])
+        #SHouldnt user constructor call to the defaultConstructorStatic anyways?? 
+        let clsConstructor = ueEmitter.clsConstructorTable.tryGet(ueType.name).map(x=>x.fn).get(defaultConstructorStatic[T])
         let vtableConstructor = vtableConstructorStatic[T]
         ueType.emitUClass[:T](pgk, ueEmitter.fnTable, clsConstructor, vtableConstructor)
     toReturn
