@@ -547,12 +547,14 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             )
     let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assignments, initName):
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
+            defaultConstructorStatic[typeIdent](initName)
             var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
             when not declared(self): #declares self and initializer so the default compiler compiles when using the assignments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
                 var self{.inject used .} = selfIdent
           
-            #calls the cpp constructor first
-            callSuperConstructor(initName)
+            #calls the cpp constructor first it may not be needed anymore as we are using the default constructor
+            #but it's here for reference 
+            # callSuperConstructor(initName)
             assignments
             fnBody
             postConstructor(initName) #inits any missing comp that the user hasnt set
