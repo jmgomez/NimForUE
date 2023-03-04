@@ -166,7 +166,6 @@ proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =
 
 
 
-proc staticClass*(T:typedesc) : UClassPtr = staticClass[T]()
 proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
 
 

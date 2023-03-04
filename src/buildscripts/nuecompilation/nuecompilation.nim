@@ -146,6 +146,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) =
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"nim cpp {buildFlags} --app:lib   -d:withPCH --nimcache:{nimCache} {entryPoint}"
+  # echo compCmd
   doAssert(execCmd(compCmd)==0)
   # setCurrentDir(PluginDir)
   copyNimForUELibToUEDir(name)

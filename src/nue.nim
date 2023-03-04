@@ -182,10 +182,11 @@ task lib, "Builds a game lib":
     extraSwitches.add "-f" #force 
   if "nolinedir" in taskOptions:  
     extraSwitches.add "--linedir:off"
- 
+
   let debug = "debug" in taskOptions
   if "name" in taskOptions:
     let name = taskOptions["name"]
+    log "Compiling lib " & name & "..."
     assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"
     compileLib(taskOptions["name"], extraSwitches, debug)
   else:

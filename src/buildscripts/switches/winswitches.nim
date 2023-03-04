@@ -68,6 +68,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "/wd4463",#  4463 - overflow; assigning 1 to bit-field that can only hold values from -1 to 0
     "/wd5054",
     "/wd4819",
+    "/wd4703",#disables warning C4701: potentially uninitialized local variable 'dc' used   
     
     "/TP",
     "/GR-", # /GR[-]	Enables run-time type information (RTTI).
