@@ -110,8 +110,6 @@ proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.T
 proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
 proc getFPropertiesFrom*(struct:UStructPtr) : TArray[FPropertyPtr] {.importcpp: "UReflectionHelpers::GetFPropertiesFrom(@)"}
 
-proc getUTypeByName*[T :UObject](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
-proc tryGetUTypeByName*[T :UObject](typeName:FString) : Option[ptr T] = someNil getUTypeByName[T](typeName)
 
 proc getAllClassesFromModule*(moduleName:FString) : TArray[UClassPtr] {.importcpp:"UReflectionHelpers::GetAllClassesFromModule(@)" .}
 
@@ -130,7 +128,6 @@ proc getAllModuleDepsForPlugin*(pluginName:FString) : TArray[FString] {.importcp
 #1. Define package when possible, 
 #2. Do not pass copy of FStrings around.
 #3. Cache
-proc getClassByName*(className:FString) : UClassPtr {.exportcpp.} = getUTypeByName[UClass](className)
 proc tryGetClassByName*(className:FString) : Option[UClassPtr] = someNil(getClassByName(className))
 
 proc getScriptStructByName*(structName:FString) : UScriptStructPtr = getUTypeByName[UScriptStruct](structName)
@@ -167,10 +164,8 @@ proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =
     let cls = getClassByName(className)
     return cls
 
-proc staticClass*[T:UObject]() : UClassPtr = 
-    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
-    let cls = getClassByName(className) #TODO stop doing this and use fname instead
-    return cls
+
+
 proc staticClass*(T:typedesc) : UClassPtr = staticClass[T]()
 proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
 

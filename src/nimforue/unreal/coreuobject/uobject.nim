@@ -3,7 +3,7 @@ include ../definitions
 import ../Core/Containers/[unrealstring, array, map]
 import ../Core/ftext
 import nametypes
-import std/[genasts, options, strformat, macros, sequtils]
+import std/[genasts, options, strformat, macros, sequtils, typetraits]
 import ../../utils/utils
 import uobjectflags
 import sugar
@@ -400,13 +400,24 @@ iterator items*(ustr: UStructPtr): FFieldPtr =
 
 
 #CONSTRUCTOR HELPERS
+proc getUTypeByName*[T :UObject](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
+proc tryGetUTypeByName*[T :UObject](typeName:FString) : Option[ptr T] = someNil getUTypeByName[T](typeName)
+proc getClassByName*(className:FString) : UClassPtr {.exportcpp.} = getUTypeByName[UClass](className)
+
+proc staticClass*[T:UObject]() : UClassPtr = 
+    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
+    getClassByName(className) #TODO stop doing this and use fname instead
+    
+proc staticClass*(T:typedesc) : UClassPtr = staticClass[T]()
+
 proc succeeded*(clsFinder : FClassFinder) : bool {.importcpp:"#.Succeeded()".}
 proc makeClassFinder*[T](classToFind : FString) : FClassFinder[T]{.importcpp:"'0(*#)" .}
 proc makeObjectFinder*[T](objectToFind : FString) : FObjectFinder[T]{.importcpp:"'0(*#)" .}
 
 
-proc makeTSubclassOf*[T]() : TSubclassOf[T] {. importcpp: "TSubclassOf<'*0>()", constructor.}
 proc makeTSubclassOf*[T](cls:UClassPtr) : TSubclassOf[T] {. importcpp: "TSubclassOf<'*0>(#)", constructor.}
+proc makeTSubclassOf*[T : UObject]() : TSubclassOf[T] = makeTSubclassOf[T](staticClass(T))
+proc makeTSubclassOf*(T: typedesc) : TSubclassOf[T] = makeTSubclassOf[T]()
 
 proc get*(softObj : TSubclassOf) : UClassPtr {.importcpp:"#.Get()".}
 
