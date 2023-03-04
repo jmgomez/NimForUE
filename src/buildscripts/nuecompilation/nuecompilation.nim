@@ -62,7 +62,7 @@ proc compileHost*() =
  
   
   let buildFlags = @[buildSwitches].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"nim cpp {buildFlags} --cc:vcc  --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
+  doAssert(execCmd(&"nim cpp {buildFlags} --cc:vcc --passC:/EHs  --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   
   # copy header
   let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"

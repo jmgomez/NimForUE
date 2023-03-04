@@ -50,7 +50,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "/execution-charset:utf-8",
     # "/Ob2", #inline function expansion?
     "/errorReport:prompt",
-    "/EHsc",
+    "/EHs",
     "/DPLATFORM_EXCEPTIONS_DISABLED=0",
     "/MD",
     "/bigobj", # Increases the number of addressable sections in an .obj file.
@@ -68,7 +68,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     "/wd4463",#  4463 - overflow; assigning 1 to bit-field that can only hold values from -1 to 0
     "/wd5054",
     "/wd4819",
-
+    
     "/TP",
     "/GR-", # /GR[-]	Enables run-time type information (RTTI).
   

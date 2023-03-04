@@ -24,7 +24,7 @@ let buildSwitches* = @[
   "--outdir:./Binaries/nim/",
   "--mm:orc",
   "--backend:cpp",
-  "--exceptions:" & (if WithEditor: "cpp" else: "quirky"),
+  "--exceptions:cpp",# & (if WithEditor: "cpp" else: "quirky"),
   "--warnings:off",
   "--ic:off",
   "--threads:off",

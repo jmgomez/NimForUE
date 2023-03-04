@@ -14,7 +14,7 @@ public class NimForUEBindings : ModuleRules
 			 //maybe it's a good idea to have this templated so we can add more modules. without changing the PCH
 			 "EnhancedInput", "GameplayAbilities"
 		});
-		
+		bEnableExceptions = true;
 
 
 		if (Target.bBuildEditor) {
