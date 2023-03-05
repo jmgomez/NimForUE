@@ -70,6 +70,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         softObjProp
     of emScriptStruct:
         let structProp = newFStructProperty(owner, name, flags)
+        #TODO Need to set more prop flags based on the structsOPS specs
         structProp.setScriptStruct(scriptStruct)
         structProp
 

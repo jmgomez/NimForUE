@@ -14,6 +14,7 @@
 #include "Containers/UnrealString.h"
 #include "Containers/Array.h"
 #include "Engine/EngineTypes.h"
+#include "Engine/AssetManager.h"
 #include "Engine/DeveloperSettings.h"
 #include "Engine/Classes/GameFramework/Actor.h"
 #include "Engine/Classes/GameFramework/Volume.h"

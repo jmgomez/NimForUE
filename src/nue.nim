@@ -271,7 +271,7 @@ task setup, "Setups the plugin by building the initial tasks in order":
   ubuild(taskOptions)
   guest(taskOptions)
   genbindingsall(taskOptions)
-  game(taskOptions)
+  rebuildlibs(taskOptions)
 
 
 task ok, "prints ok if NUE and Host are built":

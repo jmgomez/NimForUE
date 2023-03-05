@@ -80,7 +80,7 @@ macro makeStrProc*(t: typedesc): untyped =
   # generates a proc `$`(v: t): string
   let timpl = t.getTypeImpl[1].getTypeImpl()
   #echo timpl.treeRepr
-  var strproc = nnkProcDef.newTree(
+  var strproc = nnkFuncDef.newTree(
       nnkPostfix.newTree(
         ident("*"),
         nnkAccQuoted.newTree(ident("$"))), 
