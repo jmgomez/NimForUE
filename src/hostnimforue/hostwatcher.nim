@@ -12,22 +12,30 @@ type LoggerSignature* = proc(msg:cstring) {.cdecl, gcsafe.}
 
 var logger : LoggerSignature
 
-{.pragma: ex, exportc, cdecl, dynlib.}
+proc loadNueLib*(libName, nextPath: string, loadedFrom:NueLoadedFrom) =
+  var nueLib = libMap[libName]
+  if nueLib.lastLoadedPath != nextPath or not nueLib.isInit:
+    nueLib.lib = loadLib(nextPath)
+    inc nueLib.timesReloaded
+    nueLib.lastLoadedPath = nextPath
+    libMap[libName] = nueLib
+    onLibLoaded(libName.cstring, nextPath.cstring, (nueLib.timesReloaded - 1).cint, loadedFrom)
 
+{.push  exportc, cdecl, dynlib.}
 
-proc registerLogger*(inLogger: LoggerSignature) {.ex.} =
+proc registerLogger*(inLogger: LoggerSignature)  =
     logger = inLogger
 
-proc ensureGuestIsCompiled*() : void {.ex.} =
+proc ensureGuestIsCompiled*() : void =
     ensureGuestIsCompiledImpl()
 
-proc setWinCompilerSettings(sdkVersion, compilerVersion, toolchainDir:cstring) {.ex.} =
+proc setWinCompilerSettings(sdkVersion, compilerVersion, toolchainDir:cstring) =
     #TODO unify it in one file
     writeFile(PluginDir/"sdk_version.txt", $sdkVersion)
     writeFile(PluginDir/"compiler_version.txt", $compilerVersion)
     writeFile(PluginDir/"toolchain_dir.txt", $toolchainDir)
 
-proc setUEConfig(engineDir, conf, platform : cstring, withEditor:bool) {.ex.} =
+proc setUEConfig(engineDir, conf, platform : cstring, withEditor:bool)=
     #TODO add witheditor
     let targetConf = parseEnum[TargetConfiguration]($conf)
     let targetPlatform = parseEnum[TargetPlatform]($platform)
@@ -37,28 +45,28 @@ proc setUEConfig(engineDir, conf, platform : cstring, withEditor:bool) {.ex.} =
             targetConfiguration: targetConf, targetPlatform: targetPlatform)
     conf.saveConfig()
 
-proc loadNueLib*(libName, nextPath: string) =
-  var nueLib = libMap[libName]
-  if nueLib.lastLoadedPath != nextPath or not nueLib.isInit:
-    nueLib.lib = loadLib(nextPath)
-    inc nueLib.timesReloaded
-    nueLib.lastLoadedPath = nextPath
-    libMap[libName] = nueLib
-    onLibLoaded(libName.cstring, nextPath.cstring, (nueLib.timesReloaded - 1).cint)
-
-#This could be done internally by exposing epol
-proc checkReload*() {.ex.} = #only for nimforue (plugin)
+var currentLoadPhase = nlfPreEngine #First time check reload is called is preengine
+#In the future Consider removing Host and using the plugin directly? 
+proc checkReload*(loadedFrom:NueLoadedFrom)  = #only for nimforue (plugin)
     let plugin = "nimforue"
     # logger("Checking reload")
     for currentLib in libMap.keys:
-        let isPlugin = plugin == currentLib
         let mbNext = getLastLibPath(NimForUELibDir, currentLib)
         if mbNext.isSome():
             let nextLibName = mbNext.get()
             try:
-                loadNueLib(currentLib, nextLibName)
+                loadNueLib(currentLib, nextLibName, loadedFrom)
             except:
                 logger("There was a problem trying to load the library: " & nextLibName)
                 logger(getCurrentExceptionMsg())
-            
+    
+    #TEST currentLoadPhase changed AND we are in Plugin so we can trigger the emission
+    if currentLoadPhase != loadedFrom:
+        if plugin in libMap:
+            let pluginLib = libMap[plugin]
+            if not pluginLib.lib.isNil():
+                onLoadingPhaseChanged(currentLoadPhase, loadedFrom)
+    currentLoadPhase = loadedFrom
+
+{.pop.}     
            

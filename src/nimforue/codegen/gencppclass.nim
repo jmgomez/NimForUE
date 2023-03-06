@@ -68,7 +68,7 @@ DLLEXPORT {kind} {cppCls.name} {parent} {{
 public:
   {cppCls.name}() = default;
   {cppCls.name}(FVTableHelper& Helper) : {cppCls.parent}(Helper) {{}}
-  
+public:
 {funcs}
   }};
   """

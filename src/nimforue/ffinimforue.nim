@@ -90,33 +90,44 @@ proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) =
 
 
 
-#entry point for the game. but it will also be for other libs in the future
-#even the next guest/nimforue?
-proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint) : void {.ffi:genFilePath} = 
-  UE_Log &"lib loaded: {libName}"
 
+proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoadedFrom) = 
   try:
-    case $libName:
+    case libName:
     of "nimforue": 
         emitNueTypes(getGlobalEmitter()[], "Nim")
-        # if isRunningCommandlet(): return
-        # # if timesReloaded == 0: #Generate bindings. The collected part is single threaded ATM, that's one we only do it once. It takes around 2-3 seconds.
-        #   #Base the condition on if Game needs to be compiled or not.
-        # let doesTheGameExists = fileExists(GameLibPath)    
-        # UE_Log &"Game lib exists: {doesTheGameExists}"   
-        # execBindingGeneration(shouldRunSync=not doesTheGameExists)                
-        # if not doesTheGameExists:
-        #   UE_Log "Game lib doesnt exists, compiling it now:"
-        #   let output = compileGameSyncFromPlugin()
-        #   UE_Log output
         if not isRunningCommandlet() and timesReloaded == 0: 
           genBindingsCMD()
     else:
-        emitNueTypes(getEmitterFromGame($libPath)[], "GameNim")
-    
-    
-  except:
-    UE_Error &"Error in onLibLoaded: {getCurrentExceptionMsg()}"
+        emitNueTypes(getEmitterFromGame(libPath)[], "GameNim")
+  except CatchableError as e:
+    UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
+
+
+#entry point for the game. but it will also be for other libs in the future
+#even the next guest/nimforue?
+var libsToEmmit : seq[(string, string, int)] 
+proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint, loadedFrom:NueLoadedFrom) : void {.ffi:genFilePath} = 
+  UE_Log &"lib loaded: {libName} loaded from {loadedFrom}" 
+  case loadedFrom
+  of nlfPreEngine:
+    UE_Log "Too early. TODO hook really early types"
+    libsToEmmit.add ($libName, $libPath, int timesReloaded)
+  else: #Safe to emit types here
+    emitTypeFor($libName, $libPath, timesReloaded, loadedFrom)
+
+  #1. Works as it worked before
+  #2. Make it fail by initializing everything in start
+  #3. Only emmit types when no in preInit 
+
+proc onLoadingPhaseChanged(prev : NueLoadedFrom, next:NueLoadedFrom) : void {.ffi:genFilePath} = 
+  UE_Log &"Loading phase changed: {prev} -> {next}"
+  if prev == nlfPreEngine and next == nlfPostDefault:
+    for (libName, libPath, timesReloaded) in libsToEmmit:
+      UE_Log &"Emitting types for {libName}"
+      emitTypeFor(libName, libPath, timesReloaded, next)
+  
+ 
 
 
 

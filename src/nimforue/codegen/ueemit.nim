@@ -185,7 +185,6 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimH
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
     UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()
     UE_Log "Emit ustructs for Length " & $ueEmitter.emitters.len
-    UE_Log $ueEmitter.emitters.mapIt(it.ueType)
     var hotReloadInfo = newCpp[FNimHotReload]()
     for emitter in ueEmitter.emitters:
             case emitter.ueType.kind:

@@ -33,9 +33,6 @@ proc start() =
     if libPath.isSome():
       libMap[libName] = NueLib(lastLoadedPath: libPath.get())
 
-
-
-
 proc ensureGuestIsCompiledImpl*()  = 
   let guestLibPath = getLastLibPath(NimForUELibDir, "nimforue")
   if guestLibPath.isNone():

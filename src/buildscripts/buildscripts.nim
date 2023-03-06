@@ -9,6 +9,14 @@ export buildcommon, nimforueconfig
 import ../nimforue/utils/utils
 
 
+
+type #The engine can trigger the load of a library from different places
+  NueLoadedFrom* {.size:sizeof(uint8), exportc .} = enum
+    nlfPreEngine = 0, #before the engine is loaded, when the plugin code is registered.
+    nlfPostDefault = 1, #after all modules are loaded (so all the types exists in the reflection system) this is also hot reloads. Should attempt to emit everything, layers before and after
+    nlfEditor = 2 # Dont act different as loaded 
+    nlfCommandlet = 3 #while on the commandlet. Nothing special. Dont act different as loaded 
+
 proc generateFFIGenFile*(config: NimForUEConfig) = 
   let content = """
 
@@ -17,6 +25,7 @@ proc generateFFIGenFile*(config: NimForUEConfig) =
 import locks
 import std/dynlib
 import hostbase
+import ../buildscripts/[nimforueconfig, buildscripts]
 
 
 """
@@ -127,3 +136,5 @@ proc copyNimForUELibToUEDir*(libName:string) =
 
   copyFile(fileFullSrc, fileFullDst)
   log "Copied " & fileFullSrc & " to " & fileFullDst
+
+

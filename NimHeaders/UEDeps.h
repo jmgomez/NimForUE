@@ -13,7 +13,11 @@
 
 #include "Containers/UnrealString.h"
 #include "Containers/Array.h"
-#include "Engine/EngineTypes.h"
+#include "Engine/Engine.h" //TODO review headers because proibably most already pulled from this one
+#include "CoreUObject.h"
+#include "CoreUObjectSharedPCH.h" //Same as above
+
+
 #include "Engine/AssetManager.h"
 #include "Engine/DeveloperSettings.h"
 #include "Engine/Classes/GameFramework/Actor.h"
@@ -32,6 +36,7 @@
 #include "Components/ActorComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "UObject/UObjectAllocator.h"
+#include "UObject/ObjectSaveContext.h"
 
 //NimForUEBindingsHeaders.h
 #include "NimForUEBindingsHeaders.h"

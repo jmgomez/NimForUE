@@ -24,37 +24,6 @@ DEFINE_LOG_CATEGORY(NimForUE);
 
 
 
-void FNimForUEModule::LoadNimForUEHost() {
-	//Notice MacOS does not require to manually load the library. It happens on the build.cs file.
-	//The gues library, it's loaded in the EngineSubsystem
-	UE_LOG(NimForUE, Log, TEXT("Will load NimForUEHost now..."));
-
-#if PLATFORM_WINDOWS
-	FString PluginPath =  IPluginManager::Get().FindPlugin("NimForUE")->GetBaseDir();
-	
-	FString DllPath = FPaths::Combine(PluginPath, "\\Binaries\\nim\\ue\\hostnimforue.dll");
-	//Ideally it will be set through a Deinition to keep one source of truth
-	//FString DllPath = NIM_FOR_UE_LIB_PATH;
-	NimForUEHandle = FPlatformProcess::GetDllHandle(*DllPath);
-	FString Cmd = FString::Printf(TEXT("nue.exe"));
-	int ReturnCode;
-	FString StdOutput;
-	FString StdError;
-	//FPlatformProcess::ExecProcess(*Cmd, TEXT("gencppbindings"), &ReturnCode, &StdOutput, &StdError, *PluginPath);
-	// UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib loaded %s"), *DllPath);
-	// UE_LOG(NimForUE, Warning, TEXT("NimForUE Out %s"), *StdOutput);
-	// UE_LOG(NimForUE, Error, TEXT("NimForUE Error %s"), *StdError);
-#endif
-}
-
-void FNimForUEModule::UnloadNimForUEHost() {
-#if PLATFORM_WINDOWS
-	FPlatformProcess::FreeDllHandle(NimForUEHandle);
-	NimForUEHandle = nullptr;
-	UE_LOG(NimForUE, Log, TEXT("NimForUE FFI lib unloaded %d"));
-#endif
-}
-
 #if WITH_STARTNUE
 extern "C" N_LIB_PRIVATE N_CDECL(void, startNue)(void);
 #endif
@@ -75,7 +44,6 @@ void FNimForUEModule::StartupModule()
 	 }
 #endif
 #if WITH_EDITOR
-	LoadNimForUEHost();
 #elif WITH_STARTNUE
 	NimMain();
 	startNue();
@@ -85,9 +53,7 @@ void FNimForUEModule::StartupModule()
 
 void FNimForUEModule::ShutdownModule()
 {
-	//If we are cooking we just skip
-	if (IsRunningCommandlet()) return;
-	UnloadNimForUEHost();
+	
 }
 
 #undef LOCTEXT_NAMESPACE

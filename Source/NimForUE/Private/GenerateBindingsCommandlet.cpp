@@ -23,7 +23,7 @@ int32 UGenerateBindingsCommandlet::Main(const FString& Params) {
 	registerLogger(logger);
 	CommandletHelpers::TickEngine();
 	// ensureGuestIsCompiled();
-	checkReload();
+	checkReload(3); 
     genBindingsEntryPoint();
     return 0;
 }

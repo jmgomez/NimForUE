@@ -16,8 +16,9 @@
 UCLASS()
 class NIMFORUE_API UNimForUEEngineSubsystem : public UEngineSubsystem {
 	GENERATED_BODY()
-	
-	
+	void* NimForUEHandle = nullptr;
+	void LoadNimForUEHost();
+	UNimForUEEngineSubsystem();
 	bool Tick(float DeltaTime);
 	FTSTicker::FDelegateHandle TickDelegateHandle;
 	static void LoadNimGuest(FString NimError);
