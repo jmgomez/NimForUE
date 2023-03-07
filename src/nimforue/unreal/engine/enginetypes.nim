@@ -201,6 +201,8 @@ type
     Connected, Disconnected, Unknown 
   FTableRowBase* {.importcpp, inheritable, pure .} = object
 
+  FObjectPreSaveContext* {.importcpp.} = object
+
   FViewport* {.importcpp .} = object
   FViewportPtr* = ptr FViewport
 

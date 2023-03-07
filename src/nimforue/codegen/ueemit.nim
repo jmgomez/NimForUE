@@ -180,13 +180,17 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
 
 
 #32431 
-proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string) : FNimHotReloadPtr = 
+proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string, emitEarlyLoadTypesOnly:bool) : FNimHotReloadPtr = 
     #/Script/PACKAGE_NAME For now {Nim, GameNim}
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
     UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()
     UE_Log "Emit ustructs for Length " & $ueEmitter.emitters.len
     var hotReloadInfo = newCpp[FNimHotReload]()
-    for emitter in ueEmitter.emitters:
+    let emitters = 
+        if emitEarlyLoadTypesOnly: ueEmitter.emitters.filterIt(it.ueType.shouldBeLoadedEarly()) 
+        else: ueEmitter.emitters 
+
+    for emitter in emitters:
             case emitter.ueType.kind:
             of uetStruct:
                 let structName = emitter.ueType.name.removeFirstLetter()

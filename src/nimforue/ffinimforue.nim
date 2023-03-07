@@ -61,9 +61,9 @@ proc genBindingsEntryPoint() : void {.ffi:genFilePath} =
      
 
 
-proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string) = 
+proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string, emitEarlyLoadTypesOnly:bool) = 
     try:
-        let nimHotReload = emitUStructsForPackage(emitter, packageName)
+        let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
         
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
@@ -95,11 +95,11 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
   try:
     case libName:
     of "nimforue": 
-        emitNueTypes(getGlobalEmitter()[], "Nim")
+        emitNueTypes(getGlobalEmitter()[], "Nim", loadedFrom == nlfPreEngine)
         if not isRunningCommandlet() and timesReloaded == 0: 
           genBindingsCMD()
     else:
-        emitNueTypes(getEmitterFromGame(libPath)[], "GameNim")
+        emitNueTypes(getEmitterFromGame(libPath)[], "GameNim",  loadedFrom == nlfPreEngine)
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
 
@@ -111,8 +111,10 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint, loadedFro
   UE_Log &"lib loaded: {libName} loaded from {loadedFrom}" 
   case loadedFrom
   of nlfPreEngine:
-    UE_Log "Too early. TODO hook really early types"
+    UE_Log "Too early"
     libsToEmmit.add ($libName, $libPath, int timesReloaded)
+    emitTypeFor($libName, $libPath, timesReloaded, loadedFrom)
+
   else: #Safe to emit types here
     emitTypeFor($libName, $libPath, timesReloaded, loadedFrom)
 

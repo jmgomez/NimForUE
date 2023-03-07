@@ -24,6 +24,7 @@ const ScriptMethodMetadataKey* = "ScriptMethod"
 const InstancedMetadataKey* = "Instanced"
 #UEType metadata
 const NoDeclMetadataKey* = "NoDecl"
+const EarlyLoadMetadataKey* = "EarlyLoad"
 
 type 
   CppModifiers* = enum
@@ -222,6 +223,7 @@ func contains*(metas:seq[UEMetadata], name:string) : bool = metas.any(m=>m.name.
 
 func hasUEMetadata*[T:UEField|UEType](val:T, name:string) : bool = val.metadata.any(m => m.name == name)
 func hasUEMetadataDefaultValue*(val:UEField) : bool = val.metadata.any(m => m.name.contains(CPP_Default_MetadataKeyPrefix))
+func shouldBeLoadedEarly*(uet:UEType) : bool = uet.hasUEMetadata(EarlyLoadMetadataKey)
 
 func getAllParametersWithDefaultValuesFromFunc*(fnField:UEField) : seq[UEField] =
     assert fnField.kind == uefFunction
