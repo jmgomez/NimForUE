@@ -694,8 +694,7 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexD
       newEmptyNode() #Not gen interfaces for now
 
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
-
-macro uebind*(clsName : static string = "", fn:untyped) : untyped = 
+func ueBindImpl(clsName : string, fn: NimNode) : NimNode = 
   let clsFieldMb = 
     if clsName!="": some makeFieldAsUProp("obj", clsName) 
     else: none[UEField]()
@@ -706,10 +705,6 @@ macro uebind*(clsName : static string = "", fn:untyped) : untyped =
   #Generates a fake class form the classField. 
   let typeDefFn = makeUEClass(firstParam.uePropType, parent="", CLASS_None, @[fnField])
   result = genFunc(typeDefFn, fnField).impl
-  # echo repr result
-  # echo treeRepr fn
-  # echo $fnField
-  # echo $firstParam
 
-  # newEmptyNode()
-
+macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn)
+macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn)

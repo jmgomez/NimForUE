@@ -32,3 +32,8 @@ proc makeFStaticConstructObjectParameters*(class : UClassPtr) : FStaticConstruct
 
 
 proc makeUniqueObjectName*(outer : UObjectPtr, class : UClassPtr, inbaseName : FName = EName.ENone) : FName {.importcpp:"MakeUniqueObjectName(@)".}
+
+#inline T* LoadObject( UObject* Outer, const TCHAR* Name, const TCHAR* Filename=nullptr, uint32 LoadFlags=LOAD_None, UPackageMap* Sandbox=nullptr, const FLinkerInstancingContext* InstancingContext=nullptr )
+#TODO bind ELoadFlags
+
+proc loadObject*[T : UObject](outer : UObjectPtr, name : FString, filename : FString = "", loadFlags : uint32 = 0) : ptr T {.importcpp:"LoadObject<'*0>(#, *#, *#, @)".}
