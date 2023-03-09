@@ -33,14 +33,20 @@ func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : se
     #"GameplayTags/Classes/GameplayTagContainer.h"
     # Classes/GameFramework/Character.h" <- module relative path
     # Include as "GameFramework/Character.h"
+    #Classes/Engine/DataTable.h
+    #"Engine/Classes/Engine/DataTable.h
 
     let header = moduleRelativePath.split("/")[^1]
-    @[
-      moduleRelativePath, #usually is Public/SomeClass.h
-      moduleRelativePath.split("/").filterIt(it notin moduleName).join("/"),
-      
-    ] & variations.mapIt(&"{moduleName}/{it}/{header}") &
-    moduleRelativePath.split("/").filterIt(it notin variations).join("/")
+    result = @[
+        moduleRelativePath, #usually is Public/SomeClass.h
+        moduleRelativePath.split("/").filterIt(it notin moduleName).join("/"),
+        
+      ] & #PROBABLY some of this only happens with engine. It may worth to reduce them
+      variations.mapIt(&"{moduleName}/{it}/{header}") &
+      variations.mapIt(&"{it}/{moduleName}/{header}") &
+      variations.mapIt(&"{moduleName}/{it}/{moduleName}/{header}") &
+      moduleRelativePath.split("/").filterIt(it notin variations).join("/")
+    UE_Log $result
 
 func isModuleRelativePathInHeaders*(moduleName, moduleRelativePath:string, headers:seq[string]) : bool = 
   let paths = getModuleRelativePathVariations(moduleName, moduleRelativePath)

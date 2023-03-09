@@ -141,6 +141,7 @@ uClass AActorCodegen of AActor:
     depsLevel : int32 = 1
     bindingTypeInfo : FString
     allDepsOf : FString
+    moduleRelativePath : FString
   
   ufuncs(): 
     proc getClassFromInspectedType() : UClassPtr = 
@@ -155,6 +156,11 @@ uClass AActorCodegen of AActor:
 
   
   ufuncs(BlueprintCallable, CallInEditor, Category=CodegenInspect):
+    proc testModuleRelativePath() = 
+      
+      let res = isModuleRelativePathInHeaders(self.moduleName, self.moduleRelativePath, getPCHIncludes())
+      UE_Log &"Module {self.moduleName} relative pass result for {self.moduleRelativePath} {res} in pch includes"
+      
     proc dumpClass() = 
       let cls = self.getClassFromInspectedType()
       if cls.isNil():
@@ -190,6 +196,7 @@ uClass AActorCodegen of AActor:
         UE_Error "Class is null"
         return
       UE_Log $cls.getModuleRelativePath()
+    
 
 
   uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenFunctionFinder):
