@@ -538,7 +538,7 @@ proc getProject*() : UEProject =
   # let ueModules = @["Engine"]
   let userModules = getGameUserConfigValue("extraModuleNames", newSeq[string]())
   let ueModules = 
-    @["Engine", "Slate", "SlateCore", "PhysicsCore", "Chaos", "InputCore", "UMG", "GameplayAbilities", "EnhancedInput"] &
+    @["Engine", "Slate", "SlateCore", "PhysicsCore", "Chaos", "InputCore", "UMG", "GameplayAbilities", "EnhancedInput", "AssetRegistry"] &
     userModules
   
   let projectModules = (gameModules & pluginModules & ueModules).deduplicate()

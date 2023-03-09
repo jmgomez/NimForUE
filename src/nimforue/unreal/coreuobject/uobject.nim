@@ -403,12 +403,17 @@ iterator items*(ustr: UStructPtr): FFieldPtr =
 proc getUTypeByName*[T :UObject](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
 proc tryGetUTypeByName*[T :UObject](typeName:FString) : Option[ptr T] = someNil getUTypeByName[T](typeName)
 proc getClassByName*(className:FString) : UClassPtr {.exportcpp.} = getUTypeByName[UClass](className)
+proc getScriptStructByName*(strName:FString) : UScriptStructPtr {.exportcpp.} = getUTypeByName[UScriptStruct](strName)
 
 proc staticClass*[T:UObject]() : UClassPtr = 
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     getClassByName(className) #TODO stop doing this and use fname instead
     
 proc staticClass*(T:typedesc) : UClassPtr = staticClass[T]()
+proc staticStruct*[T]() : UScriptStructPtr = 
+    let structName : FString = typeof(T).name.substr(1) 
+    getScriptStructByName(structName) 
+proc staticStruct*(T:typedesc) : UScriptStructPtr = staticStruct[T]()
 
 proc succeeded*(clsFinder : FClassFinder) : bool {.importcpp:"#.Succeeded()".}
 proc makeClassFinder*[T](classToFind : FString) : FClassFinder[T]{.importcpp:"'0(*#)" .}
