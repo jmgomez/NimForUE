@@ -44,7 +44,7 @@ If you dont have Discord, you can also reach out at:
 
 
 ### Showcase GameFromScratch
-[![Showcase GameFromScratch](https://img.youtube.com/vi/Cdr4-cOsAWA/0.jpg)][(https://youtu.be/Cdr4-cOsAWA]
+[![Showcase GameFromScratch](https://img.youtube.com/vi/Cdr4-cOsAWA/0.jpg)](https://youtu.be/Cdr4-cOsAWA)
 
 
 
