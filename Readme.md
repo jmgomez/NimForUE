@@ -70,8 +70,74 @@ There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.
 
 
 ## Examples
+The whole Cpp ThirdPersonTemplate in Nim would be like this:
 
-This code can be found at src/examples/actorexample
+```nim
+
+
+uClass ANimCharacter of ACharacter:
+  (config=Game)
+  uprops(EditAnywhere, BlueprintReadOnly, DefaultComponent, Category = Camera):
+    cameraBoom : USpringArmComponentPtr 
+  uprops(EditAnywhere, BlueprintReadOnly, DefaultComponent, Attach=(cameraBoom, SpringEndpoint), Category = Camera):
+    followCamera : UCameraComponentPtr
+  uprops(EditAnywhere, BlueprintReadOnly, Category = Input):
+    defaultMappingContext : UInputMappingContextPtr
+    (jumpAction, moveAction, lookAction) : UInputActionPtr
+
+  defaults: # default values for properties on the cdo
+    capsuleComponent.capsuleRadius = 40
+    capsuleComponent.capsuleHalfHeight = 96
+    bUseControllerRotationYaw = false
+    characterMovement.jumpZVelocity = 700
+    characterMovement.airControl = 0.35
+    characterMovement.maxWalkSpeed = 500
+    characterMovement.minAnalogWalkSpeed = 20
+    characterMovement.brakingDecelerationWalking = 2000
+    characterMovement.bOrientRotationToMovement = true
+    cameraBoom.targetArmLength = 400
+    cameraBoom.busePawnControlRotation = true
+    followCamera.bUsePawnControlRotation = true
+  
+  override: #Notice here we are overriding a native cpp virtual func. You can call `super` self.super(playerInputComponent) or super(self, playerInputComponent)
+    proc setupPlayerInputComponent(playerInputComponent : UInputComponentPtr) = 
+      let pc = ueCast[APlayerController](self.getController())
+      if pc.isNotNil():
+        let inputComponent = ueCast[UEnhancedInputComponent](playerInputComponent)
+        let subsystem = getSubsystem[UEnhancedInputLocalPlayerSubsystem](pc).get()
+        subsystem.addMappingContext(self.defaultMappingContext, 0)
+        inputComponent.bindAction(self.jumpAction, ETriggerEvent.Triggered, self, n"jump")
+        inputComponent.bindAction(self.jumpAction, ETriggerEvent.Completed, self, n"stopJumping")
+        inputComponent.bindAction(self.moveAction, ETriggerEvent.Triggered, self, n"move")
+        inputComponent.bindAction(self.lookAction, ETriggerEvent.Triggered, self, n"look")
+
+  
+  ufuncs:
+    proc move(value: FInputActionValue) = 
+      let 
+        movementVector = value.axis2D()
+        rot = self.getControlRotation()
+        rightDir = FRotator(roll: rot.roll, yaw: rot.yaw).getRightVector()
+        forwardDir = FRotator(yaw: rot.yaw).getForwardVector()
+      self.addMovementInput(rightDir, movementVector.x, false) 
+      self.addMovementInput(forwardDir, movementVector.y, false) 
+
+    proc look(value: FInputActionValue) =
+      let lookAxis = value.axis2D()
+      self.addControllerYawInput(lookAxis.x)
+      self.addControllerPitchInput(lookAxis.y)
+
+uClass ANimGameMode of AGameModeBase:
+  proc constructor(init:FObjectInitializer) = #Similar to default but allows you to write full nim code
+    let classFinder = makeClassFinder[ACharacter]("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter")
+    self.defaultPawnClass = classFinder.class
+
+
+```
+
+
+
+This code can be found at src/examples/actorexample. There are more examples inside that folder. You can do `import examples/example` in from Game.nim (see the NimTemplate) to play with it. 
 ```nim
 #Nim UClasses can derive from the same classes that blueprints can derive from.
 
