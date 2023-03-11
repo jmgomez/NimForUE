@@ -22,7 +22,11 @@ func convertNimTypeStrToCpp(nimType:string) : string =
   else:
     if nimType.endswith("Ptr"): nimType.removeLastLettersIfPtr() & "*"
     elif nimType.contains("var"): convertNimTypeStrToCpp(nimType.replace("var", "").strip()) & "&"
-    elif nimType.isGeneric(): nimType.replace("[", "<").replace("]", ">") #only one level
+    elif nimType.isGeneric(): 
+      nimType
+        .applyFunctionToInnerGeneric(convertNimTypeStrToCpp)
+        .replace("[", "<")
+        .replace("]", ">") #only one level
     else: nimType
 
 

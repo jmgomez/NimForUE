@@ -101,10 +101,11 @@ type
 
     FVTableHelper* {.importcpp, pure.} = object
 
-    FPropertyChangedEvent* {.importcpp, pure} = object
+    FPropertyChangedEvent* {.importcpp, pure, inheritable} = object
       property*  {.importcpp: "Property" .} : FPropertyPtr #	 * The actual property that changed
       memberProperty*  {.importcpp: "MemberProperty" .} : FPropertyPtr #	 * The property that was actually modified (in the case of a struct member)
       #TODO bind EPropertyChangeType
+    FPropertyChangedChainEvent* {.importcpp, pure} = object of FPropertyChangedEvent
 
 proc getDefaultObject*(fieldClass:FFieldClassPtr) : FFieldPtr {.importcpp:"#->GetDefaultObject()" .}
 
