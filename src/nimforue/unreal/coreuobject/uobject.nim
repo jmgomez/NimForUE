@@ -106,6 +106,7 @@ type
       memberProperty*  {.importcpp: "MemberProperty" .} : FPropertyPtr #	 * The property that was actually modified (in the case of a struct member)
       #TODO bind EPropertyChangeType
     FPropertyChangedChainEvent* {.importcpp, pure} = object of FPropertyChangedEvent
+    FObjectPostSaveRootContext* {.importcpp, pure.} = object
 
 proc getDefaultObject*(fieldClass:FFieldClassPtr) : FFieldPtr {.importcpp:"#->GetDefaultObject()" .}
 
@@ -400,13 +401,14 @@ iterator items*(ustr: UStructPtr): FFieldPtr =
         currentProp = currentProp.next
 
 
+
 #CONSTRUCTOR HELPERS
 proc getUTypeByName*[T :UObject](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
 proc tryGetUTypeByName*[T :UObject](typeName:FString) : Option[ptr T] = someNil getUTypeByName[T](typeName)
 proc getClassByName*(className:FString) : UClassPtr {.exportcpp.} = getUTypeByName[UClass](className)
 proc getScriptStructByName*(strName:FString) : UScriptStructPtr {.exportcpp.} = getUTypeByName[UScriptStruct](strName)
 
-proc staticClass*[T:UObject]() : UClassPtr = 
+proc staticClass*[T:UObject]() : UClassPtr = #TODO we should autogen a function and call it instead of searching
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     getClassByName(className) #TODO stop doing this and use fname instead
     
@@ -415,6 +417,42 @@ proc staticStruct*[T]() : UScriptStructPtr =
     let structName : FString = typeof(T).name.substr(1) 
     getScriptStructByName(structName) 
 proc staticStruct*(T:typedesc) : UScriptStructPtr = staticStruct[T]()
+
+
+proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
+
+
+proc isChildOf*[T:UObject](cls: UClassPtr) : bool =
+    let someBase = staticClass[T]()
+    isChildOf(cls, someBase)
+
+proc isChildOf*[C:UStruct, P:UStruct] : bool = isChildOf(staticClass[C](), staticClass[P]())
+
+proc isA*[T:UObject](obj:UObjectPtr) : bool = obj.isA(staticClass(T))
+   
+proc isCDO*(self : UObjectPtr) : bool = RF_ClassDefaultObject in self.getFlags()
+# Iterators
+iterator UObjects*() : UObjectPtr =
+  var objIter = makeFRawObjectIterator()
+  for it in objIter.items():
+    let obj = it.get()
+    yield obj
+
+func getAllObjectsOfClass*(cls:UClassPtr) : TArray[UObjectPtr] = 
+  result = makeTArray[UObjectPtr]()
+  for obj in UObjects():
+    if obj.getClass() == cls:
+      result.add(obj)
+
+func getAllUClasses*() : TArray[UClassPtr] = 
+  let cls = staticClass(UClass)
+  result = makeTArray[UClassPtr]()
+  for obj in UObjects():
+    if obj.getClass() == cls:
+      result.add(ueCast[UClass](obj))
+  
+
+#other
 
 proc succeeded*(clsFinder : FClassFinder) : bool {.importcpp:"#.Succeeded()".}
 proc makeClassFinder*[T](classToFind : FString) : FClassFinder[T]{.importcpp:"'0(*#)" .}

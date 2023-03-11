@@ -54,6 +54,8 @@ proc filter*[T](xs:TArray[T], fn : T -> bool) : TArray[T] =
   arr
 
 func toSeq*[T](arr:TArray[T]) : seq[T] = 
+  if arr.num() == 0:
+    return @[]
   var xs = newSeqOfCap[T](arr.num())
   for x in arr:
     xs.add x

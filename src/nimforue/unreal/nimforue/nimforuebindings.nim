@@ -165,15 +165,6 @@ proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =
     return cls
 
 
-
-proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
-
-
-proc isChildOf*[T:UObject](cls: UClassPtr) : bool =
-    let someBase = staticClass[T]()
-    isChildOf(cls, someBase)
-
-proc isChildOf*[C:UStruct, P:UStruct] : bool = isChildOf(staticClass[C](), staticClass[P]())
 proc staticSubclass*[T]() : TSubclassOf[T] = makeTSubClassOf[T](staticClass[T]())
 proc staticSubclass*(T:typedesc) : TSubclassOf[T] = makeTSubClassOf[T](staticClass[T]())
 
@@ -257,7 +248,7 @@ proc `$`*(hr:FNimHotReloadPtr) : string =
 
 
 
-proc executeTaskInTaskGraph*[T](param: T, taskFn: proc(param:T){.cdecl.}) {.importcpp: "UReflectionHelpers::ExecuteTaskInTaskGraph<'1>(#, #)".}
+proc executeTaskInTaskGraph*[T](param: T, taskFn: proc(param:T){.cdecl.}, nimMain:proc(){.cdecl.}) {.importcpp: "UReflectionHelpers::ExecuteTaskInTaskGraph<'1>(#, #)".}
 
 #static int ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOut, FString& StdError);
 proc executeCmd*(cmd, args, workingDir, stdOut, stdError: var FString) : int {.importcpp: "UReflectionHelpers::ExecuteCmd(@)".}
