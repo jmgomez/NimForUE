@@ -4,6 +4,20 @@ import ../codegen/uemeta
 
 
 
+proc vector4_Zero*(): FVector4 {.exportcpp: "$1_", noInit.} =
+  type
+    Params  = object
+      returnValue : FVector4 = FVector4()
+
+  var param {.noInit.}  = Params()
+  let fnName {.used.} = n "Vector4_Zero"
+  let self  = getDefaultObjectFromClassName("KismetMathLibrary")
+  let fn {.used.} = getClassByName("KismetMathLibrary").findFunctionByName(
+      fnName)
+  self.processEvent(fn, param.addr)
+  return param.returnValue
+
+
 
 # proc makeColor() : FColor = 
 #   FColor(r:100)

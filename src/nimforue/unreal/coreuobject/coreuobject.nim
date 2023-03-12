@@ -400,11 +400,11 @@ type
     translation* {.importcpp: "Translation".}: FVector3f
     rotation* {.importcpp: "Rotation".}: FQuat4f
 
-  FVector4* {.importcpp.} = object
-    w* {.importcpp: "W".}: float64
-    z* {.importcpp: "Z".}: float64
-    y* {.importcpp: "Y".}: float64
-    x* {.importcpp: "X".}: float64
+  FVector4* {.importcpp, bycopy.} = object
+    w* {.importcpp: "W".}: float64 
+    z* {.importcpp: "Z".}: float64 
+    y* {.importcpp: "Y".}: float64 
+    x* {.importcpp: "X".}: float64 
 
   FVector4d* {.importcpp.} = object
     w* {.importcpp: "W".}: float64

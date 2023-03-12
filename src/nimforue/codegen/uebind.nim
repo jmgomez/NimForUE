@@ -694,7 +694,7 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexD
       newEmptyNode() #Not gen interfaces for now
 
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
-func ueBindImpl(clsName : string, fn: NimNode) : NimNode = 
+proc ueBindImpl(clsName : string, fn: NimNode) : NimNode = 
   let clsFieldMb = 
     if clsName!="": some makeFieldAsUProp("obj", clsName) 
     else: none[UEField]()
