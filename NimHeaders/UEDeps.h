@@ -30,6 +30,7 @@
 #include "Engine/Classes/Engine/Engine.h"
 #include "Engine/Classes/Engine/DataTable.h"
 #include "Engine/Classes/Animation/BlendProfile.h"
+#include "Engine/Public/WorldPartition/DataLayer/DataLayerInstance.h"
 #include "Misc/AutomationTest.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/UserDefinedEnum.h"

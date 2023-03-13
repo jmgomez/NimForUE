@@ -184,7 +184,10 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")
   #We need to copy all cpp files into the private folder in the plugin
-  let privateGameFolder = PluginDir / "Source" / "NimForUEGame" / "Private" / "Game"
+  let privateFolder = PluginDir / "Source" / "NimForUEGame" / "Private" 
+  let privateGameFolder = privateFolder / "Game"
+  let privateBindingsFolder = privateFolder / "Bindings"
+  
   removeDir(privateGameFolder)
   createDir(privateGameFolder)
   for cppFile in walkFiles(nimCache / &"*.cpp"):
@@ -195,13 +198,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
     if formsToMatch.any(x=> x in cppFileContent):
       let cleanedCppFileContent = cppFileContent.multiReplace(("(NCSTRING)", "(char*)"), ("(NCSTRING*)", "(char**)"))
       writeFile(cppFile, cleanedCppFileContent)
-
-
     #checks if the file changed so UE doesnt compile it again:
-    
-
-
-
     let filename = cppFile.extractFilename()
     let cppDst = privateGameFolder / filename
     if fileExists(cppDst) and readFile(cppFile) == readFile(cppDst):
@@ -211,10 +208,13 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
       copyFile(cppFile, cppDst)
 
 
-  # for cppFile in walkFiles(bindingsDir/ &"*.cpp"):
-  #   let filename = cppFile.extractFilename()
-  #   if filename.contains("sbindings@") and not (filename.contains("unrealed") or filename.contains("umgeditor")): 
-  #     copyFile(cppFile, privateFolder / filename)
+  removeDir(privateBindingsFolder)
+  createDir(privateBindingsFolder)
+  #TODO pick only the used bindings files (by collecting them at compile time)
+  for cppFile in walkFiles(bindingsDir/ &"*.cpp"):
+    let filename = cppFile.extractFilename()
+    if filename.contains("sbindings@sexported") and not (filename.contains("unrealed") or filename.contains("umgeditor")): 
+      copyFile(cppFile, privateBindingsFolder / filename)
 
 
 
@@ -223,6 +223,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
 proc compileGenerateBindings*() = 
   let buildFlags = @[buildSwitches, targetSwitches(false), pluginPlatformSwitches(false), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  # doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --app:staticlib --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
   #It still generates NimMain in the header. So we need to get rid of it:

@@ -10,7 +10,8 @@ public class NimForUEGame : ModuleRules
 			"Core", 
 			"CoreUObject", 
 			"Engine", 
-			"NimForUEBindings"
+			"NimForUEBindings",
+			"EnhancedInput"
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 	
@@ -22,6 +23,9 @@ public class NimForUEGame : ModuleRules
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
 		PublicIncludePaths.Add(nimHeadersPath);
 		bUseUnity = false;
+		//The lib is quite big (24MB), it may be better to just pull the files that needs to be compiled
+		// var nimMirrorBindings = Path.Combine(PluginDirectory, "Binaries", "nim", "libmaingencppbindings.a");
+		// PublicAdditionalLibraries.Add(nimMirrorBindings);
 
 	}
 }
