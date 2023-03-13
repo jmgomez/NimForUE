@@ -38,6 +38,7 @@ void Logger(NCSTRING msg) {
 
 
 void UNimForUEEngineSubsystem::LoadNimForUEHost() {
+#if WITH_EDITORONLY_DATA
 	//Notice MacOS does not require to manually load the library. It happens on the build.cs file.
 	//The gues library, it's loaded in the EngineSubsystem
 	UE_LOG(NimForUE, Log, TEXT("Will load NimForUEHost now..."));
@@ -54,6 +55,7 @@ void UNimForUEEngineSubsystem::LoadNimForUEHost() {
 	registerLogger(Logger);
 	ensureGuestIsCompiled();
 	checkReload(0);//before the engine is loaded. 
+	#endif
 }
 
 UNimForUEEngineSubsystem::UNimForUEEngineSubsystem() {

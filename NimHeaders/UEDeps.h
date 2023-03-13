@@ -45,7 +45,6 @@
 //#include "FakeFactory.h"
 #include "PhysicsCore/Public/PhysicalMaterials/PhysicalMaterial.h"
 
-#include "NavigationSystem.h"
 
 #include "GameplayTags/Classes/GameplayTagContainer.h"
 
@@ -61,6 +60,9 @@
   #include "Editor/UnrealEd/Public/Editor.h"
   #include "Editor/UnrealEd/Public/EditorViewportClient.h"
   #include "Editor/UnrealEd/Public/LevelEditorViewport.h"
+
+  #include "NavigationSystem.h"
+
 #endif
 
 // #include "UEGenBindings.h" //Uncomment this if you want to have the bindings in the PCH

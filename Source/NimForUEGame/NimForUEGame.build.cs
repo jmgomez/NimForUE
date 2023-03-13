@@ -14,5 +14,14 @@ public class NimForUEGame : ModuleRules
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 	
+		PublicDefinitions.Add("NIM_INTBITS=64");
+
+		PrivatePCHHeaderFile = "../../NimHeaders/nimbase.h";
+		bEnableExceptions = true;
+		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
+		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
+		PublicIncludePaths.Add(nimHeadersPath);
+		bUseUnity = false;
+
 	}
 }

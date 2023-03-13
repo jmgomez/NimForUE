@@ -13,6 +13,7 @@ UGenerateBindingsCommandlet::UGenerateBindingsCommandlet() {
 }
 
 int32 UGenerateBindingsCommandlet::Main(const FString& Params) {
+#if WITH_EDITORONLY_DATA	
 	UE_LOG(NimForUE, Display, TEXT("Hello from the command let!"));
 	
 	auto logger = [](NCSTRING msg) {
@@ -25,5 +26,6 @@ int32 UGenerateBindingsCommandlet::Main(const FString& Params) {
 	// ensureGuestIsCompiled();
 	checkReload(3); 
     genBindingsEntryPoint();
+#endif
     return 0;
 }

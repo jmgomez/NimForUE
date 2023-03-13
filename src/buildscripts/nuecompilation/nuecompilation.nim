@@ -184,7 +184,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")
   #We need to copy all cpp files into the private folder in the plugin
-  let privateFolder = PluginDir / "Source" / "NimForUE" / "Private" / "NimForUEGame"
+  let privateFolder = PluginDir / "Source" / "NimForUEGame" / "Private" / "Game"
   removeDir(privateFolder)
   createDir(privateFolder)
   for cppFile in walkFiles(nimCache / &"*.cpp"):

@@ -1,19 +1,19 @@
-#include "NimForUEGame.h"
+#include "../Public/NimForUEGame.h"
 
-DEFINE_LOG_CATEGORY(NimForUETest);
+DEFINE_LOG_CATEGORY(NimForUEGame);
 
 #define LOCTEXT_NAMESPACE "FGameCorelibEditor"
 
-void FNimForUETest::StartupModule()
+void FNimForUEGame::StartupModule()
 {
 
 }
 
-void FNimForUETest::ShutdownModule()
+void FNimForUEGame::ShutdownModule()
 {
 	
 }
 
 #undef LOCTEXT_NAMESPACE
 
-IMPLEMENT_MODULE(FNimForUETest, NimForUETest)
+IMPLEMENT_MODULE(FNimForUEGame, NimForUEGame)

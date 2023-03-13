@@ -10,9 +10,7 @@
 #include "Kismet/KismetStringLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-bool ATestActor::IsListedInSceneOutliner() const {
-	return AActor::IsListedInSceneOutliner();
-}
+
 
 // Sets default values
 ATestActor::ATestActor() {

@@ -2,9 +2,9 @@
 
 #include "Modules/ModuleManager.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(NimForUETest, All, All);
+DECLARE_LOG_CATEGORY_EXTERN(NimForUEGame, All, All);
 
-class FNimForUETest : public IModuleInterface
+class FNimForUEGame : public IModuleInterface
 {
 	public:
 

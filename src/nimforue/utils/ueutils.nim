@@ -36,10 +36,11 @@ proc extractInnerGenericInNimFormat*(str :string) : string =
     if scanf(str, "$*[$*]", generic, inner): inner.appendCloseGenIfOpen()
     else: str
 
-proc applyFunctionToInnerGeneric*(str :string, fun : proc (str:string) : string) : string =
-    var generic, inner : string
-    if scanf(str, "$*[$*]", generic, inner): generic & "[" & fun(inner) & "]"
-    else: str
+func applyFunctionToInnerGeneric*(str :string, fun : proc (str:string) : string {.gcsafe.} ) : string =
+    {.cast(noSideEffect).}:
+        var generic, inner : string
+        if scanf(str, "$*[$*]", generic, inner): generic & "[" & fun(inner) & "]"
+        else: str
 
 proc extractTypeFromGenericInNimFormat*(str, outerGeneric, innerGeneric :string) : string = 
     str.replace(outerGeneric, "").replace(innerGeneric, "").replace("[").replace("]", "")

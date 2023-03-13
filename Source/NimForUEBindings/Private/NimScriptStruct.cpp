@@ -16,8 +16,9 @@ UScriptStruct(ObjectInitializer, InSuperStruct, InCppStructOps, InStructFlags, E
 }
 
 void UNimScriptStruct::PrepareCppStructOps() {
+#if WITH_EDITORONLY_DATA
 	GIsUCCMakeStandaloneHeaderGenerator = true;
-	
+#endif
 	UScriptStruct::PrepareCppStructOps();
 	if(!CppStructOps) {
     		//If it fails after preparing it, it means it's already gonna away so we use our backup (and copy for the next usage)
@@ -25,6 +26,8 @@ void UNimScriptStruct::PrepareCppStructOps() {
     		FMemory::Memcpy(StructOps, OriginalStructOps,sizeof(ICppStructOps));
     		CppStructOps = static_cast<ICppStructOps*>(StructOps);
     	}
+#if WITH_EDITORONLY_DATA
 	GIsUCCMakeStandaloneHeaderGenerator = false;
+#endif
 
 }

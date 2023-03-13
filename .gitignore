@@ -70,3 +70,5 @@ toolchain_dir.txt
 nimvmtest_linkerArgs.txt
 
 src/NimForUE.code-workspace
+
+Source/NimForUEGame/Private/Game/
