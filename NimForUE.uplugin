@@ -19,6 +19,11 @@
 			"Name": "NimForUE",
 			"Type": "Runtime",
 			"LoadingPhase": "PostDefault"
+		},		
+		{
+			"Name": "NimForUEGame",
+			"Type": "Runtime",
+			"LoadingPhase": "PostDefault"
 		},
 		{
 			"Name": "NimForUEBindings",
