@@ -24,9 +24,6 @@ proc  getSubsystem*[T : USubsystem](objContext : UObjectPtr) : Option[ptr T] =
       none[ptr T]()
 
 
-#This function is requested by the plugin when it load this dll
-#The UEEmitter should also have the package name where it supposed to push
-proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   cast[UEEmitter](addr ueEmitter)
 
 type 
   onGameUnloadedCallback* = proc()
@@ -52,16 +49,18 @@ let tickHandle = subscribeToTick()
 
 var onGameUnloaded* : onGameUnloadedCallback
 
-proc onUnloadLib() {.exportc, dynlib, cdecl.} =
-  if onGameUnloaded.isNotNil():
-    removeTicker(tickHandle)
-    onGameUnloaded()
-
-
+when WithEditor:
+  proc onUnloadLib() {.exportc, dynlib, cdecl.} =
+    if onGameUnloaded.isNotNil():
+      removeTicker(tickHandle)
+      onGameUnloaded()
+  #This function is requested by the plugin when it load this dll
+  #The UEEmitter should also have the package name where it supposed to push
+  proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   cast[UEEmitter](addr ueEmitter)
 
 
 #Called from NimForUE module as entry point when we are in a non editor build
-proc startNue*() {.cdecl, exportc, dynlib.} =
+proc startNue*() {.cdecl, exportc.} =
   UE_Log "Start Nue CALLED" #TODO hook early load 
   let nimHotReload = emitUStructsForPackage(getGlobalEmitter()[], "GameNim", false)
   

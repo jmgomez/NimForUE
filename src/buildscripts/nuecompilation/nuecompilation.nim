@@ -179,17 +179,15 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} --compileOnly  -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
+  let compCmd = &"nim cpp {buildFlags} --compileOnly --noMain  -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")
   #We need to copy all cpp files into the private folder in the plugin
-  let privateFolder = PluginDir / "Source" / "NimForUEGame" / "Private" / "Game"
-  removeDir(privateFolder)
-  createDir(privateFolder)
+  let privateGameFolder = PluginDir / "Source" / "NimForUEGame" / "Private" / "Game"
+  removeDir(privateGameFolder)
+  createDir(privateGameFolder)
   for cppFile in walkFiles(nimCache / &"*.cpp"):
-    
-    
     #we need to clean the cpp file to avoid a const error on NCString (which is defined as const char* due to strict strings)
     #Probably this is windows only
     let cppFileContent = readFile(cppFile)
@@ -205,7 +203,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
 
 
     let filename = cppFile.extractFilename()
-    let cppDst = privateFolder / filename
+    let cppDst = privateGameFolder / filename
     if fileExists(cppDst) and readFile(cppFile) == readFile(cppDst):
       continue
     else:
