@@ -12,7 +12,7 @@ public class NimForUEBindings : ModuleRules
 			 "InputCore", 
 			 //THE PCH pulls the headers from this module. So the search paths should be in here
 			 //maybe it's a good idea to have this templated so we can add more modules. without changing the PCH
-			 "EnhancedInput", "GameplayAbilities"
+			 "EnhancedInput", "GameplayAbilities",
 		});
 		bEnableExceptions = true;
 

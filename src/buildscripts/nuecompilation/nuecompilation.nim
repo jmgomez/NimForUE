@@ -179,7 +179,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} --compileOnly --noMain -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
+  let compCmd = &"nim cpp {buildFlags} --compileOnly  --noMain -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")

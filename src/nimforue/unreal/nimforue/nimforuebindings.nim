@@ -107,7 +107,14 @@ proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.T
 
 
 #TODO This should throw if the property is not found!
-proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
+#If the property is not found it tries to find it as capital. For some reason UE makes moveAction as MoveAction. Need to investigate it further
+proc getFPropertyByNameInternal(struct:UStructPtr, propName:FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
+proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr {.inline.} = 
+    let prop = getFPropertyByNameInternal(struct, propName)
+    if prop.isNil:
+        getFPropertyByNameInternal(struct, propName.capitalizeAscii())
+    else:
+        prop
 proc getFPropertiesFrom*(struct:UStructPtr) : TArray[FPropertyPtr] {.importcpp: "UReflectionHelpers::GetFPropertiesFrom(@)"}
 
 

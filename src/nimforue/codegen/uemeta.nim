@@ -902,10 +902,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
       newCls.setMetadata(metadata.name, $metadata.value)
 
 
-  UE_Log &"THE UE TYPE {ueType}" 
   for field in ueType.fields:
-
-    UE_Log "Emmiting field: " & field.name & " of kind: " & $field.kind 
+    var field = field
     case field.kind:
     of uefProp: discard field.emitFProperty(newCls)
     of uefFunction:

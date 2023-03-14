@@ -451,6 +451,7 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
                 @[]
 
         proc makeUEFieldFromFieldName(fieldName:string) : UEField = 
+            var fieldName = fieldName
             #stores the assignment but without the first ident on the dot expression as we dont know it yet
             func prepareAssignmentForLaterUsage(propName:string, right:NimNode) : NimNode = #to show intent
                 nnkAsgn.newTree(
@@ -981,6 +982,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
     result =  nnkStmtList.newTree(@[uClassNode] & fns & cppOverridesNodes)
+
 macro uForwardDecl*(name : untyped ) : untyped = 
     let (className, parent, _) = getTypeNodeFromUClassName(name)
     let clsPtr = ident className & "Ptr"
