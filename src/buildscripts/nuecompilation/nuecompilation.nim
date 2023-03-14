@@ -179,7 +179,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} --compileOnly --noMain  -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
+  let compCmd = &"nim cpp {buildFlags} --compileOnly --noMain -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")
@@ -188,7 +188,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   let privateGameFolder = privateFolder / "Game"
   let privateBindingsFolder = privateFolder / "Bindings"
   
-  removeDir(privateGameFolder)
+  # removeDir(privateGameFolder)
   createDir(privateGameFolder)
   for cppFile in walkFiles(nimCache / &"*.cpp"):
     #we need to clean the cpp file to avoid a const error on NCString (which is defined as const char* due to strict strings)
@@ -208,13 +208,15 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
       copyFile(cppFile, cppDst)
 
 
-  removeDir(privateBindingsFolder)
+  # removeDir(privateBindingsFolder)
   createDir(privateBindingsFolder)
   #TODO pick only the used bindings files (by collecting them at compile time)
   for cppFile in walkFiles(bindingsDir/ &"*.cpp"):
     let filename = cppFile.extractFilename()
     if filename.contains("sbindings@sexported") and not (filename.contains("unrealed") or filename.contains("umgeditor")): 
-      copyFile(cppFile, privateBindingsFolder / filename)
+      let path = privateBindingsFolder / filename
+      if not fileExists path:
+        copyFile(cppFile, path)
 
 
 

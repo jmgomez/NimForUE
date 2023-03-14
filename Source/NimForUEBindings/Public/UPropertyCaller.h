@@ -3,6 +3,7 @@
 
 template<typename T>
 static T* GetPropertyValuePtr(FProperty* Property, void* Container) {
+	if (Property == nullptr) return nullptr;
 	return (Property->ContainerPtrToValuePtr<T>(Container));
 }
 

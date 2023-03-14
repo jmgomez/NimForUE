@@ -61,6 +61,7 @@ when WithEditor:
 
 #Called from NimForUE module as entry point when we are in a non editor build
 proc startNue*() {.cdecl, exportc.} =
+  
   UE_Log "Start Nue CALLED" #TODO hook early load 
   let nimHotReload = emitUStructsForPackage(getGlobalEmitter()[], "GameNim", false)
   
