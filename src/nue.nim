@@ -2,6 +2,7 @@
 import std / [ options, os, osproc, parseopt, sequtils, strformat, json, strutils, sugar, tables, times ]
 import buildscripts / [buildcommon, buildscripts, nimforueconfig]
 import buildscripts/nuecompilation/nuecompilation
+import buildscripts/switches/switches
 import nimforue/utils/utils
 
 var taskOptions: Table[string, string]
@@ -210,7 +211,9 @@ task dumpConfig, "Displays the config variables":
 task codegen, "Generate the bindings structure from the persisted json (TEMPORAL until we have it incremental)":
   createDir(config.nimHeadersModulesDir) # we need to create the bindings folder here because we can't importc
   createDir(config.bindingsExportedDir) # we need to create the bindings folder here because we can't importc
-  doAssert(execCmd(&"nim cpp --mm:orc --compileonly -f --nomain --maxLoopIterationsVM:400000000 --nimcache:.nimcache/projectbindings src/nimforue/codegen/genprojectbindings.nim") == 0)
+  let buildFlags = @[buildSwitches].foldl(a & " " & b.join(" "), "")
+
+  doAssert(execCmd(&"nim cpp {buildFlags} --compileonly -f --nomain --maxLoopIterationsVM:400000000 --nimcache:.nimcache/projectbindings src/nimforue/codegen/genprojectbindings.nim") == 0)
 
 task gencppbindings, "Generates the codegen and cpp bindings":
   codegen(taskOptions)

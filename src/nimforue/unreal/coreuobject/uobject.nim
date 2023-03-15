@@ -462,6 +462,7 @@ proc makeObjectFinder*[T](objectToFind : FString) : FObjectFinder[T]{.importcpp:
 proc makeTSubclassOf*[T](cls:UClassPtr) : TSubclassOf[T] {. importcpp: "TSubclassOf<'*0>(#)", constructor.}
 proc makeTSubclassOf*[T : UObject]() : TSubclassOf[T] = makeTSubclassOf[T](staticClass(T))
 proc makeTSubclassOf*(T: typedesc) : TSubclassOf[T] = makeTSubclassOf[T]()
+func staticSubclass*[T : UObject]() : TSubclassOf[T] = makeTSubclassOf(T)
 
 proc get*(softObj : TSubclassOf) : UClassPtr {.importcpp:"#.Get()".}
 

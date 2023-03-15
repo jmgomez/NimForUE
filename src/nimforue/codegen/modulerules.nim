@@ -128,7 +128,7 @@ let extraNonBpModules* = @["DeveloperSettings", "EnhancedInput", "Blutility", "A
 #for all modules because the one classes listed here are importc one so we dont mangle them 
 
 
-const codeGenOnly* = makeImportedRuleType(uerCodeGenOnlyFields, ManuallyImportedClasses)
+const codeGenOnly* = makeImportedRuleType(uerCodeGenOnlyFields, ManuallyImportedClasses) 
 
 let moduleImportRules* = newTable[string, seq[UEImportRule]]()
 moduleImportRules["Engine"] = @[

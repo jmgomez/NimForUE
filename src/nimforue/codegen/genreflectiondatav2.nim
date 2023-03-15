@@ -3,7 +3,7 @@ import ../codegen/[codegentemplate,modulerules, headerparser, models, uemeta, ge
 import std/[strformat, tables, hashes, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans, algorithm, macros]
 import ../../buildscripts/[buildscripts, nimforueconfig]
 
-
+import projectinstrospect
 
 
 
@@ -14,83 +14,6 @@ template measureTime*(name: static string, body: untyped) =
   UE_Log (name & " took " & $ends & "  seconds")
 
 
-
-
-proc getAllTypesFromFileTree(fileTree:NimNode) : seq[string] = 
-
-  proc typeDefToName(typeNode: NimNode) : seq[string] = 
-    case typeNode.kind
-    of nnkTypeSection: 
-      typeNode
-        .children
-        .toSeq
-        .map(typeDefToName)
-        .flatten()
-    of nnkTypeDef:
-      let nameNode = typeNode[0]
-      if nameNode.kind == nnkIdent: #TYPE ALIAS
-        return @[nameNode.strVal]
-      if nameNode[0].kind == nnkPostFix: 
-        @[nameNode[0][^1].strVal]
-      else: 
-        @[nameNode[0].strVal]
-    else: 
-      error("Error got " & $typeNode.kind)
-      newSeq[string]()
-
-  let typeNames = 
-    fileTree
-      .children
-        .toSeq
-        .filterIt(it.kind == nnkTypeSection)
-        .map(typeDefToName)
-        .flatten
-        .filterIt(it != "*")
-  typeNames
-
-
-proc getAllImportsAsRelativePathsFromFileTree(fileTree:NimNode) : seq[string] = 
-  func parseImportBracketsPaths(path:string) : seq[string] = 
-    if "[" notin path:  return @[path]
-    let splited = path.split("[")
-    let (dir, files) = (splited[0], splited[1].split("]")[0].split(","))
-    return files.mapIt(dir & "/" & it) #Not sure if you can have multiple [] nested in a import
-      
-      
-  let imports = 
-    fileTree
-      .children
-        .toSeq
-        .filterIt(it.kind in [nnkImportStmt, nnkIncludeStmt])
-        .mapIt(parseImportBracketsPaths(repr it[0]))
-        .flatten
-        .mapIt(it.split("/").mapIt(strip(it)).join("/")) #clean spaces
-        
-  imports
-
-
-
-proc getAllTypesOf() : seq[string] = 
-  let dir = PluginDir / "src" / "nimforue" / "unreal" 
-  let path = dir / "prelude.nim"
-  let nimCode = readFile(path)
-  let entryPointFileTree = parseStmt(nimCode)
-
-  let nimFilePaths = 
-    getAllImportsAsRelativePathsFromFileTree(entryPointFileTree)
-    .mapIt(it.absolutePath(dir) & ".nim")
-
-  let fileTrees = 
-    entryPointFileTree & nimFilePaths.mapIt(it.readFile.parseStmt)
-
-  let typeNames = fileTrees.map(getAllTypesFromFileTree).flatten()
-
-  typeNames
-
-const DefinedTypes = getAllTypesOf()
-const PrimitiveTypes = @[ 
-  "bool", "float32", "float64", "int16", "int32", "int64", "int8", "uint16", "uint32", "uint64", "uint8"
-]
 
 
 
@@ -140,7 +63,7 @@ func getCleanedDependencyNamesFromUEType(uet:UEType) : seq[string] =
       types.map(getNameFromUEPropType)
         .flatten()
         .deduplicate()
-        .filterIt(it notin DefinedTypes & PrimitiveTypes)
+        .filterIt(it notin NimDefinedTypes & PrimitiveTypes)
         .filterIt(it != "")
         # .filterIt(it notin getAllPCHTypes())
     cleanedTypes
@@ -213,7 +136,7 @@ func moveTypeFrom(uet:UEType, source, destiny : var UEModule) =
   case uet.kind:
   of uetClass:
     #The type is already defined in EngineTypes so no need to move it.
-    if uet.name in ManuallyImportedClasses:
+    if uet.name in ManuallyImportedClasses & NimDefinedTypes:
       return
     # UE_Log &"Moving type :{uet.name} from {source.name} to {destiny.name}"
     var uet = uet
@@ -550,7 +473,9 @@ proc getProject*() : UEProject =
   measureTime "Getting the project":
     let bpOnly = getGameUserConfigValue("bpOnly", true)
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
+    let fieldsOnly =  makeImportedRuleType(uerCodeGenOnlyFields, ManuallyImportedClasses & NimDefinedTypes) 
 
+    UE_Error "CodeGenOnly" &  $fieldsOnly
     let nonBp =  @["EnhancedInput", "GameplayAbilities"] & getGameUserConfigValue("extraNonBpModuleNames", newSeq[string]())
     proc getRulesForPkg(packageName:string) : seq[UEImportRule] = 
       let ruleBp = 
@@ -558,8 +483,8 @@ proc getProject*() : UEProject =
           @[bpOnlyRules] 
         else: @[]
       if packageName in moduleImportRules: 
-        moduleImportRules[packageName] & codegenOnly & ruleBp
-      else: @[codegenOnly] & ruleBp
+        moduleImportRules[packageName] & fieldsOnly & ruleBp
+      else: @[fieldsOnly] & ruleBp
     
     
 

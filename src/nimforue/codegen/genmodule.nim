@@ -4,7 +4,7 @@ import ../utils/ueutils
 
 import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
-import ../codegen/[nuemacrocache, models, modulerules, gencppclass]
+import ../codegen/[nuemacrocache, models, modulerules, gencppclass, projectinstrospect]
 import ../../buildscripts/nimforueconfig
 import uebind
 
@@ -66,7 +66,7 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
       )
 
       
-  if rule == uerCodeGenOnlyFields or ueType.forwardDeclareOnly:
+  if rule == uerCodeGenOnlyFields or ueType.forwardDeclareOnly or ueType.name in NimDefinedTypes:
     @[]
   else:
     @[

@@ -82,6 +82,7 @@ type
   # UTextureRenderTarget2DPtr* = ptr UTextureRenderTarget2D
 
   UAsyncActionLoadPrimaryAssetBase* {.importcpp, inheritable, pure .} = object of UObject
+  UAsyncActionLoadPrimaryAssetBasePtr* = ptr UAsyncActionLoadPrimaryAssetBase
 
   ASceneCapture* {.importcpp, inheritable, pure .} = object of AActor
   ASceneCapturePtr* = ptr ASceneCapture
@@ -255,8 +256,8 @@ type
   # UHLODLayerPtr* = ptr UHLODLayer
   # USoundBase* {.importcpp, inheritable, pure .} = object of UObject
   # USoundBasePtr* = ptr USoundBase
-  # UMaterialInterface* {.importcpp, inheritable, pure .} = object of UObject
-  # UMaterialInterfacePtr* = ptr UMaterialInterface
+  UMaterialInterface* {.importcpp, inheritable, pure .} = object of UObject
+  UMaterialInterfacePtr* = ptr UMaterialInterface
   # USubsurfaceProfile* {.importcpp, inheritable, pure .} = object of UObject
   # USubsurfaceProfilePtr* = ptr USubsurfaceProfile
   # UParticleSystem* {.importcpp, inheritable, pure .} = object of UObject
