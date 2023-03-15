@@ -3,7 +3,7 @@ include ../definitions
 import ../Core/Containers/[unrealstring, array, map]
 import ../Core/ftext
 import nametypes
-import std/[genasts, options, strformat, macros, sequtils, typetraits]
+import std/[genasts, options, strformat, macros, sequtils, typetraits, tables, strformat, strutils]
 import ../../utils/utils
 import uobjectflags
 import sugar
@@ -107,6 +107,31 @@ type
       #TODO bind EPropertyChangeType
     FPropertyChangedChainEvent* {.importcpp, pure} = object of FPropertyChangedEvent
     FObjectPostSaveRootContext* {.importcpp, pure.} = object
+
+#LOGS here because we need them. Maybe they should leave in a separated file
+
+proc UE_LogInternal(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUELog(@)".}
+proc UE_WarnInternal(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEWarn(@)".}
+proc UE_ErrorInteral(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEError(@)".}
+
+
+template UE_Log*(msg: FString): untyped =
+  let pos = instantiationInfo()
+  let meta = "[$1:$2]: " % [pos.filename, $pos.line]
+  UE_LogInternal(meta & msg)
+
+
+template UE_Warn*(msg: FString): untyped =
+  let pos = instantiationInfo()
+  let meta = "[$1:$2]: " % [pos.filename, $pos.line]
+  UE_WarnInternal(meta & msg)
+
+
+template UE_Error*(msg: FString): untyped =
+  let pos = instantiationInfo()
+  let meta = "[$1:$2]: " % [pos.filename, $pos.line]
+  UE_ErrorInteral(meta & msg)
+
 
 proc getDefaultObject*(fieldClass:FFieldClassPtr) : FFieldPtr {.importcpp:"#->GetDefaultObject()" .}
 
@@ -249,41 +274,7 @@ proc getUObject*(scriptInterface:TScriptInterface) : UObjectPtr {. importcpp: "(
 proc getUInterface*[T](scriptInterface:TScriptInterface) : ptr T =
     scriptInterface.getUObject().ueCast[:T]()
 
-#UFIELD
-proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) : void {.importcpp:"#->SetMetaData(*#, *#)".}
-# proc getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) :var FString {.importcpp:"#->GetMetaData(*#)".}
-proc findMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : ptr FString {.importcpp:"const_cast<FString*>(#->FindMetaData(*#))".}
-#notice it also checks for the ue value. It will return false on "false"
-func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool = 
-    when WithEditor:
-        someNil(field.findMetaData(key)).isSome()
-    else: false
 
-
-func getMetaDataMapPtr(field:FFieldPtr) : ptr TMap[FName, FString] {.importcpp:"const_cast<'0>(#->GetMetaDataMap())".}
-func getMetadataMap*(field:FFieldPtr) : TMap[FName, FString] =
-    when WithEditor:
-        let metadataMap = getMetadataMapPtr(field)
-        if metadataMap.isNil: makeTMap[FName, FString]()
-        else: metadataMap[]
-    else: makeTMap[FName, FString]()
-
-func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
-func getMetadataMap*(field:UObjectPtr) : TMap[FName, FString] =
-    when WithEditor:
-        let metadataMap = getMetadataMapPtr(field)
-        if metadataMap.isNil: makeTMap[FName, FString]()
-        else: metadataMap[]
-    else: makeTMap[FName, FString]()
-
-func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] = 
-    let map = field.getMetadataMap()
-    let nKey = n key
-    if nkey in map:
-        some map[nkey]
-    else:
-        none[FString]()
-        
 proc bindType*(field:UFieldPtr) : void {. importcpp:"#->Bind()" .} #notice bind is a reserverd keyword in nim
 proc getPrefixCpp*(str:UFieldPtr | UStructPtr) : FString {.importcpp:"FString(#->GetPrefixCPP())".}
 
@@ -467,3 +458,74 @@ func staticSubclass*[T : UObject]() : TSubclassOf[T] = makeTSubclassOf(T)
 proc get*(softObj : TSubclassOf) : UClassPtr {.importcpp:"#.Get()".}
 
 
+
+
+
+
+#UFIELD
+when WithEditor:
+    proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) : void {.importcpp:"#->SetMetaData(*#, *#)".}
+    # proc getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) :var FString {.importcpp:"#->GetMetaData(*#)".}
+    proc findMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : ptr FString {.importcpp:"const_cast<FString*>(#->FindMetaData(*#))".}
+    #notice it also checks for the ue value. It will return false on "false"
+    proc copyMetadata*(src, dst : UObjectPtr) : void {.importcpp:"UMetaData::CopyMetadata(@)".}
+
+    func getMetaDataMapPtr(field:FFieldPtr) : ptr TMap[FName, FString] {.importcpp:"const_cast<'0>(#->GetMetaDataMap())".}
+    
+    func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
+
+    func getMetadataMap*(field:FFieldPtr) : TMap[FName, FString] =
+        when WithEditor:
+            let metadataMap = getMetadataMapPtr(field)
+            if metadataMap.isNil: makeTMap[FName, FString]()
+            else: metadataMap[]
+        else: makeTMap[FName, FString]()
+
+    func getMetadataMap*(field:UObjectPtr) : TMap[FName, FString] =
+        when WithEditor:
+            let metadataMap = getMetadataMapPtr(field)
+            if metadataMap.isNil: makeTMap[FName, FString]()
+            else: metadataMap[]
+        else: makeTMap[FName, FString]()
+else:
+    #only used in non editor builds (metadata is not available in non editor builds)
+    var metadataTable* = newTable[pointer, TMap[FName, FString]]()
+    func getMetadataMap*(field :UFieldPtr|FFieldPtr|UObjectPtr  ) : TMap[FName, FString] = 
+        let outerKey = field.getFName()
+        {.cast(noSideEffect).}:
+            if field notin metadataTable:
+                metadataTable.add(field, makeTMap[FName, FString]())
+            metadataTable[field]
+    proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) = 
+        
+        let outerKey = field.getFName()
+        # UE_Log "Adding key for field: " & $field.getFName() & " key: " & key & " value: " & inValue
+        {.cast(noSideEffect).}:
+            let map = field.getMetadataMap()
+            let nkey = n key
+            if nKey in map:
+                map[nkey] = inValue
+            else:
+                map.add(nkey, inValue)
+            metadataTable[field] = map
+    proc copyMetadata*(src, dst : UObjectPtr) : void = 
+        #assumes dst doesnt exists
+        let srcMap = src.getMetadataMap()
+        let dstMap = dst.getMetadataMap()
+        metadataTable[dst] = srcMap
+
+proc `$`*(pt:pointer) : string = $cast[int](pt)
+
+func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] = 
+    let map = field.getMetadataMap()
+    # {.cast(noSideEffect).}:
+
+    #     UE_Log $metadataTable
+    # UE_Log "Looking for key: " & key & " in map: " & $map & " for field: " & $field.getFName()
+    let nKey = n key
+    if nkey in map:
+        some map[nkey]
+    else:
+        none[FString]()
+
+func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool = field.getMetadata(key).isSome()

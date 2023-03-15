@@ -123,6 +123,16 @@ task clean, "Clean the nimcache folder":
   cleanh(taskOptions)
   cleanlibs(taskOptions)
 
+task ugenproject, "Calls UE Generate Project":
+  when defined(macosx):
+    let uprojectFile = GamePath
+    let cmd = &"{config.engineDir}/Build/BatchFiles/Mac/GenerateProjectFiles.sh -project={uprojectFile} -game"
+    log cmd
+    doAssert(execCmd(cmd) == 0)
+  else:
+    log "Project generation not supported on this platform"
+
+
 task ubuild, "Calls Unreal Build Tool for your project":
   #This logic is temporary. We are going to get of most of the config data
   #and just define const globals for all the paths we can deduce. The moment to do that is when supporting Game builds

@@ -7,6 +7,5 @@ type
     UMetadataPtr* = ptr UMetadata
 
 
-proc copyMetadata*(src, dst : UObjectPtr) : void {.importcpp:"UMetaData::CopyMetadata(@)".}
 
 
