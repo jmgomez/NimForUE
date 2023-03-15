@@ -706,9 +706,9 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
 
   let prop: FPropertyPtr = newFProperty(makeFieldVariant outer, propField)
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
-  when WithEditor:
-    for metadata in propField.metadata:
-      prop.setMetadata(metadata.name, $metadata.value)
+  for metadata in propField.metadata:
+    prop.setMetadata(metadata.name, $metadata.value)
+    UE_Log &"Setting metadata for {propField.name} {metadata.name} {metadata.value}"
   outer.addCppProperty(prop)
   prop
 
@@ -752,9 +752,8 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
   if superFn.isSome():
     let sFn = superFn.get()
     fn.functionFlags = (fn.functionFlags | (sFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms)))
-    when WithEditor:
-      copyMetadata(sFn, fn)
-      fn.setMetadata("ToolTip", fn.getMetadata("ToolTip").get()&" vNim")
+    copyMetadata(sFn, fn)
+    fn.setMetadata("ToolTip", fn.getMetadata("ToolTip").get("")&" vNim")
     setSuperStruct(fn, sFn)
 
 
@@ -765,9 +764,8 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
     let fprop = field.emitFProperty(fn)
   
   if superFn.isNone():
-    when WithEditor:
-      for metadata in fnField.metadata:
-        fn.setMetadata(metadata.name, $metadata.value)
+    for metadata in fnField.metadata:
+      fn.setMetadata(metadata.name, $metadata.value)
 
   cls.addFunctionToFunctionMap(fn, fnName)
   if fnImpl.isSome(): #blueprint implementable events doesnt have a function implementation
@@ -891,15 +889,13 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.classCastFlags = parent.classCastFlags
 
   
-  when WithEditor:
-      
-    copyMetadata(parent, newCls)
-  
-    newCls.markAsNimClass()
+  copyMetadata(parent, newCls)
 
-    for metadata in ueType.metadata:
-      UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
-      newCls.setMetadata(metadata.name, $metadata.value)
+  newCls.markAsNimClass()
+
+  for metadata in ueType.metadata:
+    UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
+    newCls.setMetadata(metadata.name, $metadata.value)
 
 
   for field in ueType.fields:
@@ -929,8 +925,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   setGIsUCCMakeStandaloneHeaderGenerator(false)
   newCls.assembleReferenceTokenStream()
   
-  when WithEditor:
-    newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())
+  newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())
 
 
 

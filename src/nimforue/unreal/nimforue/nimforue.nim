@@ -14,18 +14,10 @@ import std/[typetraits, tables, strutils, sequtils, sugar]
 
 
 
-func isNimClass*(cls:UClassPtr) : bool = 
-  {.cast(noSideEffect).}:
-    when WithEditor:
-        cls.hasMetadata(NimClassMetadataKey)
-    else: #Maybe I can just check on the global emitter
-      let fullname = cls.getPrefixCpp() & cls.getName()
-      getGlobalEmitter().emitters.filterIt(fullname == it.ueType.name).len() > 0
+func isNimClass*(cls:UClassPtr) : bool = cls.hasMetadata(NimClassMetadataKey)
+   
 
-
-proc markAsNimClass*(cls:UClassPtr) = 
-  when WithEditor:
-    cls.setMetadata(NimClassMetadataKey, "true")
+proc markAsNimClass*(cls:UClassPtr) = cls.setMetadata(NimClassMetadataKey, "true")
 
 #not sure if I should make a specific file for object extensions that are outside of the bindings
 proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr {.exportcpp.} = getClassByName(clsName).getDefaultObject()

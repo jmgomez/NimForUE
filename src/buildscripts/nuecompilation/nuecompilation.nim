@@ -168,8 +168,18 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
     "-d:game",
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
   ]
+  #TODO Clean this up
   let bindingsDir = PluginDir / ".nimcache/gencppbindings"
   ensureGameConfExists()
+  let entryPointDir = &"{PluginDir}/src/nimforue/game/"
+  let gameConf = NimGameDir / "config.nims"
+  copyFile(gameConf, entryPointDir / "config.nims")
+  var content = readFile( entryPointDir / "config.nims").replace("../Plugins/NimForUE/src/nimforue/", "../")
+  content = content & """switch("path", "../../../../../NimForUE")""" #Adds the game folder path 
+  writeFile(entryPointDir / "config.nims", content)
+    
+
+
   #We compile from the engine directory so we dont surpass the windows argument limits for the linker 
   let engineBase = parentDir(config.engineDir)
   # setCurrentDir(engineBase)
@@ -179,7 +189,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} --compileOnly  --noMain -d:withPCH --nimcache:{nimCache} {gameFolder}/game.nim"
+  let compCmd = &"nim cpp {buildFlags} --compileOnly  --noMain -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")

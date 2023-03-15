@@ -53,27 +53,6 @@ proc callUFuncOn*(class:UClassPtr, funcName : var FString, InParams : pointer) :
 
 
 
-proc UE_LogInternal(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUELog(@)".}
-proc UE_WarnInternal(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEWarn(@)".}
-proc UE_ErrorInteral(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEError(@)".}
-
-
-template UE_Log*(msg: FString): untyped =
-  let pos = instantiationInfo()
-  let meta = "[$1:$2]: " % [pos.filename, $pos.line]
-  UE_LogInternal(meta & msg)
-
-
-template UE_Warn*(msg: FString): untyped =
-  let pos = instantiationInfo()
-  let meta = "[$1:$2]: " % [pos.filename, $pos.line]
-  UE_WarnInternal(meta & msg)
-
-
-template UE_Error*(msg: FString): untyped =
-  let pos = instantiationInfo()
-  let meta = "[$1:$2]: " % [pos.filename, $pos.line]
-  UE_ErrorInteral(meta & msg)
 
 
 

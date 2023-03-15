@@ -4,7 +4,7 @@ include unrealprelude
 import std/asyncdispatch
 
 uClass AAsyncActorExample of AActor:
-  (BlueprintType, BlueprintTable)
+  (BlueprintType, Blueprintable)
   ufuncs:
     proc beginPlay() = 
       proc asyncTest() {.async.} =
