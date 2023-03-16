@@ -11,12 +11,18 @@ uClass UObjectPOC of UObject:
       UE_Log "Hola from UObjectPOC"
     proc saluteWithOneArg(arg : int) = 
       UE_Log "Hola from UObjectPOC with arg: " & $arg
+    proc saluteWithOneArgStr(arg : FString) = 
+      UE_Log "Hola from UObjectPOC with arg: " & $arg
+    proc saluteWithTwoArgs(arg1 : int, arg2 : int) = 
+      UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
+    proc saluteWithTwoDifferentArgs(arg1 : FString, arg2 : FString) = 
+      UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
 
 #[
 1. [x] Create a function that makes a call by fn name
 2. [x] Create a function that makes a call by fn name and pass a value argument
-  2.1 [ ] Create a function that makes a call by fn name and pass a two values of the same types as argument
-  2.2 [ ] Create a function that makes a call by fn name and pass a two values of different types as argument
+  2.1 [x] Create a function that makes a call by fn name and pass a two values of the same types as argument
+  2.2 [x] Create a function that makes a call by fn name and pass a two values of different types as argument
 3. [ ] Create a function that makes a call by fn name and pass a pointer argument
 4. [ ] Create a function that makes a call by fn name and pass a value and pointer argument
 5. [ ] Create a function that makes a call by fn name and pass a value and pointer argument and return a value
@@ -43,24 +49,36 @@ type
     #The json is used as a table where we will be finding the values as keys. We know the params of a function (we are at runtime)
     value : JsonNode #make this binary data?
 
-
-
+# type VMType = 
 
 proc uCall(call : UECall) = 
   let self {.inject.} = getDefaultObjectFromClassName(call.fn.className.removeFirstLetter())
   let fn = getClassByName(call.fn.className.removeFirstLetter()).findFunctionByName(n call.fn.name)
   if call.fn.signature.any():
     var memoryBlock = alloc0(fn.parmsSize)
+    let memoryBlockAddr = cast[int](memoryBlock)
 
     let fprops = fn.getFPropsFromUStruct()
-    #We need to check the position, but right now there is only one
-    let param1Prop = fprops[0]
-    var param1Value = call.value["arg"].getInt() #we cant trust this size, we need the actual param size
-    var param1Size = param1Prop.getSize() 
-    #TODO how we can trunc the size if we need to? Right now is int64 but what happens if the param is i32 and the value is i64?
+    var allocatedStrings = makeTArray[FString]()
+    #TODO check return param and out params
+    for paramProp in fprops:
+      #We need to check the position, but right now there is only one
+      let paramName = paramProp.getName()
+      let paramAsJson = call.value[paramName]
+      let paramSize = paramProp.getSize() #we cant trust this size, we need the actual param size
+      let paramOffset = paramProp.getOffset()
+      var paramMemoryRegion = cast[pointer](memoryBlockAddr + paramOffset)
+      UE_Log "Param name: " & $paramName & " Param size: " & $paramSize & " Param offset: " & $paramOffset & " Param memory region: " & $paramMemoryRegion
+      case paramAsJson.kind:
+        of JString: 
+          allocatedStrings.add paramAsJson.getStr() #FStrings need to be kept alive since they have a ptr to the content
+          copyMem(paramMemoryRegion, addr allocatedStrings[allocatedStrings.len - 1], paramSize)
+        of JInt:
+          var paramValue = paramAsJson.getInt()
+          copyMem(paramMemoryRegion, addr paramValue, paramSize)
+        else: discard
 
-
-    copyMem(memoryBlock, param1Value.unsafeAddr, param1Size) 
+    
     self.processEvent(fn, memoryBlock)
     dealloc(memoryBlock)
   else:
@@ -80,5 +98,23 @@ uClass AActorPOCVMTest of AActor:
           value: (arg: 10).toJson()
         )
       uCall(callData)
-      
+    proc test21() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("saluteWithOneArgStr",  @[makeFieldAsUPropParam("arg", "FString", CPF_Parm)], "UObjectPOC"), 
+          value: (arg: "10 cadena").toJson()
+        )
+      uCall(callData)
+
+    proc test3() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("saluteWithTwoArgs",  @[makeFieldAsUPropParam("arg1", "int", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC"), 
+          value: (arg1: 10, arg2: 20).toJson()
+        )
+      uCall(callData)
+    proc test4() =
+      let callData = UECall(
+          fn: makeFieldAsUFun("saluteWithTwoDifferentArgs",  @[makeFieldAsUPropParam("arg1", "int", CPF_Parm), makeFieldAsUPropParam("arg2", "FString", CPF_Parm)], "UObjectPOC"), 
+          value: (arg1: "10 cadena", arg2: "Hola").toJson()
+        )
+      uCall(callData)
 
