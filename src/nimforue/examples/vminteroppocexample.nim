@@ -17,18 +17,26 @@ uClass UObjectPOC of UObject:
       UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
     proc saluteWithTwoDifferentArgs(arg1 : FString, arg2 : FString) = 
       UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
+    proc saluteWitthTwoDifferentIntSizes(arg1 : int32, arg2 : int64) = 
+      UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
+    proc saluteWitthTwoDifferentIntSizes2(arg1 : int64, arg2 : int32) = 
+      UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
+    proc printObjectName(obj:UObjectPtr) = 
+      UE_Log "Object name: " & $obj.getName()
 
 #[
 1. [x] Create a function that makes a call by fn name
 2. [x] Create a function that makes a call by fn name and pass a value argument
   2.1 [x] Create a function that makes a call by fn name and pass a two values of the same types as argument
   2.2 [x] Create a function that makes a call by fn name and pass a two values of different types as argument
-3. [ ] Create a function that makes a call by fn name and pass a pointer argument
+  2.3 [ ] Pass a int32 and a int64
+3. [x] Create a function that makes a call by fn name and pass a pointer argument
 4. [ ] Create a function that makes a call by fn name and pass a value and pointer argument
 5. [ ] Create a function that makes a call by fn name and pass a value and pointer argument and return a value
 6. [ ] Create a function that makes a call by fn name and pass a value and pointer argument and return a pointer
 7. [ ] Repeat 1-6 where value arguments are complex types
-
+8. Arrays
+9. TMaps
 
 ]#
 proc saluteImp*(): void {.exportcpp: "$1_".} =
@@ -73,9 +81,14 @@ proc uCall(call : UECall) =
         of JString: 
           allocatedStrings.add paramAsJson.getStr() #FStrings need to be kept alive since they have a ptr to the content
           copyMem(paramMemoryRegion, addr allocatedStrings[allocatedStrings.len - 1], paramSize)
-        of JInt:
-          var paramValue = paramAsJson.getInt()
-          copyMem(paramMemoryRegion, addr paramValue, paramSize)
+        of JInt: 
+          if paramSize == 4: #probably it doesnt really matter if we use int32 or int64 because we are just copying the memory and it will get overriden by the next offset calc
+            var paramValue = paramAsJson.getInt().int32
+            copyMem(paramMemoryRegion, addr paramValue, paramSize)
+          else: #8 #This could also be a pointer. but do we care here? If it's a pointer we just copy it it, right?
+            var paramValue = paramAsJson.getInt()
+            copyMem(paramMemoryRegion, addr paramValue, paramSize)
+         
         else: discard
 
     
@@ -105,16 +118,38 @@ uClass AActorPOCVMTest of AActor:
         )
       uCall(callData)
 
+    proc test23() =
+      let callData = UECall(
+          fn: makeFieldAsUFun("saluteWithTwoDifferentArgs",  @[makeFieldAsUPropParam("arg1", "int", CPF_Parm), makeFieldAsUPropParam("arg2", "FString", CPF_Parm)], "UObjectPOC"), 
+          value: (arg1: "10 cadena", arg2: "Hola").toJson()
+        )
+      uCall(callData)
+    proc test24() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("saluteWitthTwoDifferentIntSizes",  @[makeFieldAsUPropParam("arg1", "int32", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC"), 
+          value: (arg1: 10, arg2: 10).toJson()
+        )
+      uCall(callData)
+
+    proc test25() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("saluteWitthTwoDifferentIntSizes2",  @[makeFieldAsUPropParam("arg1", "int32", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC"), 
+          value: (arg1: 15, arg2: 10).toJson()
+        )
+      uCall(callData)
+
+
     proc test3() = 
       let callData = UECall(
           fn: makeFieldAsUFun("saluteWithTwoArgs",  @[makeFieldAsUPropParam("arg1", "int", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC"), 
           value: (arg1: 10, arg2: 20).toJson()
         )
       uCall(callData)
+
     proc test4() =
       let callData = UECall(
-          fn: makeFieldAsUFun("saluteWithTwoDifferentArgs",  @[makeFieldAsUPropParam("arg1", "int", CPF_Parm), makeFieldAsUPropParam("arg2", "FString", CPF_Parm)], "UObjectPOC"), 
-          value: (arg1: "10 cadena", arg2: "Hola").toJson()
+          fn: makeFieldAsUFun("printObjectName",  @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm)], "UObjectPOC"), 
+          value: (obj: cast[int](self)).toJson()
         )
       uCall(callData)
 
