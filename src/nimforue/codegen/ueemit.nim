@@ -982,9 +982,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
     result =  nnkStmtList.newTree(@[uClassNode] & fns & cppOverridesNodes)
-    if className == "UObjectPOC":
-        debugEcho repr result
-
+  
 macro uForwardDecl*(name : untyped ) : untyped = 
     let (className, parent, _) = getTypeNodeFromUClassName(name)
     let clsPtr = ident className & "Ptr"

@@ -4,6 +4,8 @@ import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
 import std/[json, jsonutils, sequtils, options, sugar]
 
 
+
+
 uClass UObjectPOC of UObject:
   (BlueprintType)
   ufuncs(Static):
@@ -35,6 +37,8 @@ uClass UObjectPOC of UObject:
       let str = "Object name: " & $obj.getName() 
       UE_Log str
       str
+    proc printVector(vec : FVector) = 
+      UE_Log "Vector: " & $vec
 
 #[
 1. [x] Create a function that makes a call by fn name
@@ -46,7 +50,7 @@ uClass UObjectPOC of UObject:
 4. [x] Create a function that makes a call by fn name and pass a value and pointer argument
 5. [x] Create a function that makes a call by fn name and pass a value and pointer argument and return a value
 6. [x] Create a function that makes a call by fn name and pass a value and pointer argument and return a pointer
-  6.1 [ ] Create a function that makes a call by fn name and pass a value and pointer argument and returns a string
+  6.1 [x] Create a function that makes a call by fn name and pass a value and pointer argument and returns a string
 7. [ ] Repeat 1-6 where value arguments are complex types
 8. [ ] Add support for missing basic types
 8. Arrays
@@ -83,15 +87,38 @@ proc propWithValueToMemoryBlock(prop : FPropertyPtr, value : JsonNode, memoryBlo
       else: #8 #This could also be a pointer. but do we care here? If it's a pointer we just copy it it, right?
         var paramValue = value.getInt()
         copyMem(memoryRegion, addr paramValue, propSize)
+    of JFloat:
+      var paramValue = value.getFloat()
+      copyMem(memoryRegion, addr paramValue, propSize)
     # of JArray: 
     #   var paramValue = value.getElems()
     #   copyMem(memoryRegion, addr paramValue, propSize)
-    # of JObject: 
-    #   var paramValue = value.getElems()
-    #   copyMem(memoryRegion, addr paramValue, propSize)
+    of JObject: 
+      #At this point the prop must be a FStructProperty
+      assert prop.isStruct()
+      let structProp = castField[FStructProperty](prop)
+      let scriptStruct = structProp.getScriptStruct()
+      let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
+      var structMemoryRegion = memoryRegion
+      # let structMemory 
+      for paramProp in structProps:
+        let name = paramProp.getName()
+        var val : JsonNode
+        if name in value:
+          val = value[name]
+        else: #TODO test and assert?
+          val = value[name.firstToLow()] #Nim vs UE discrepancies
+        propWithValueToMemoryBlock(paramProp, val, structMemoryRegion, allocatedStrings)
+
+      #   let paramValue = value[paramProp.getName()]
+        
+
+      # var paramValue = value.getElems()
+      # copyMem(memoryRegion, addr paramValue, propSize)
     else: discard
 
 proc uCall(call : UECall) : JsonNode = 
+  result = newJNull()
   let self {.inject.} = getDefaultObjectFromClassName(call.fn.className.removeFirstLetter())
   UE_Log $call
   let fn = getClassByName(call.fn.className.removeFirstLetter()).findFunctionByName(n call.fn.name)
@@ -109,7 +136,7 @@ proc uCall(call : UECall) : JsonNode =
 
     self.processEvent(fn, memoryBlock)
 
-    var returnVal = newJNull()
+    
     if call.fn.doesReturn():
       # let returnProp = fn.getFPropsFromUStruct().filterIt(it.getName() == call.fn.getReturnProp.get.name).head().get()
       let returnProp = fn.getReturnProperty()
@@ -117,28 +144,19 @@ proc uCall(call : UECall) : JsonNode =
       let returnSize = returnProp.getSize()
       var returnMemoryRegion = cast[pointer](memoryBlockAddr + returnOffset.int)
 
-    
       if returnProp.isFString():
         var returnValue = f""
         copyMem(addr returnValue, returnMemoryRegion, returnSize)
-        returnVal = newJString(returnValue)
-        dealloc(memoryBlock)
-        return returnVal
-        # returnVal = newJString(cast[ptr FString](returnValMem)[])
+        result = newJString(returnValue)
       else:
         var returnValue = 0
         copyMem(addr returnValue, returnMemoryRegion, returnSize)
-        returnVal = newJInt(returnValue)
-        dealloc(memoryBlock)
-        return returnVal
+        result = newJInt(returnValue)
 
-    else: #no return 
-      dealloc(memoryBlock)
-      return newJNull()
+    dealloc(memoryBlock)
 
   else: #no params no return
     self.processEvent(fn, nil)
-    return newJNull()
     
 
 
@@ -229,4 +247,19 @@ uClass AActorPOCVMTest of AActor:
           value: (obj: cast[int](self)).toJson()
         )
       UE_Log $uCall(callData).jsonTo(string)
-      
+    proc test9() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("printVector", 
+              @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm)], "UObjectPOC"),
+          value: (vec:FVector(x:12, y:10)).toJson()
+        )
+      UE_Log  $uCall(callData).jsonTo(string)
+
+
+
+    proc vectorToJsonTest() =
+      UE_Log $FVector(x:10, y:10).toJson()
+      let vectorScriptStruct = staticStruct(FVector)
+      let structProps = vectorScriptStruct.getFPropsFromUStruct()
+      for prop in structProps:
+        UE_Log $prop.getName()
