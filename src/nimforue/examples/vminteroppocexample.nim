@@ -8,6 +8,9 @@ import std/[json, jsonutils, sequtils, options, sugar, enumerate]
 
 uClass UObjectPOC of UObject:
   (BlueprintType)
+  ufunc: 
+    proc instanceFunc() = 
+      UE_Log "Hola from UObjectPOC instanceFunc"
   ufuncs(Static):
     proc salute() = 
       UE_Log "Hola from UObjectPOC"
@@ -83,6 +86,7 @@ uClass UObjectPOC of UObject:
 type 
   UECall = object
     fn : UEField 
+    self : int
     #The json is used as a table where we will be finding the values as keys. We know the params of a function (we are at runtime)
     value : JsonNode #make this binary data?
 
@@ -210,7 +214,14 @@ proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAd
 
 proc uCall(call : UECall) : JsonNode = 
   result = newJNull()
-  let self {.inject.} = getDefaultObjectFromClassName(call.fn.className.removeFirstLetter())
+  
+  let self = 
+    if call.fn.isStatic():
+      getDefaultObjectFromClassName(call.fn.className.removeFirstLetter())
+    else:
+      cast[UObjectPtr](call.self)
+
+  
   let fn = getClassByName(call.fn.className.removeFirstLetter()).findFunctionByName(n call.fn.name)
   
   if call.fn.signature.any():
@@ -233,15 +244,6 @@ proc uCall(call : UECall) : JsonNode =
       let returnSize = returnProp.getSize()
       var returnMemoryRegion = memoryBlockAddr + returnOffset.int
       result = getValueFromPropMemoryBlock(returnProp, returnMemoryRegion)
-      # if returnProp.isFString():
-      #   var returnValue = f""
-      #   copyMem(addr returnValue, cast[pointer](returnMemoryRegion), returnSize)
-      #   result = newJString(returnValue)
-        
-      # else: #int based (i.e. int, ptr, etc)
-      #   var returnValue = 0
-      #   copyMem(addr returnValue, returnMemoryRegion, returnSize)
-      #   result = newJInt(returnValue)
 
     dealloc(memoryBlock)
     for str in allocatedStrings:
@@ -253,37 +255,37 @@ uClass AActorPOCVMTest of AActor:
   (BlueprintType)
   ufuncs(CallInEditor):
     proc test1() = 
-      let callData = UECall( fn: makeFieldAsUFun("salute", @[], "UObjectPOC"))
+      let callData = UECall( fn: makeFieldAsUFun("salute", @[], "UObjectPOC", FUNC_Static))
       discard uCall(callData)
     proc test2() =
       let callData = UECall(
-          fn: makeFieldAsUFun("saluteWithOneArg",  @[makeFieldAsUPropParam("arg", "int", CPF_Parm)], "UObjectPOC"), 
+          fn: makeFieldAsUFun("saluteWithOneArg",  @[makeFieldAsUPropParam("arg", "int", CPF_Parm)], "UObjectPOC", FUNC_Static), 
           value: (arg: 10).toJson()
         )
       discard uCall(callData)
     proc test21() = 
       let callData = UECall(
-          fn: makeFieldAsUFun("saluteWithOneArgStr",  @[makeFieldAsUPropParam("arg", "FString", CPF_Parm)], "UObjectPOC"), 
+          fn: makeFieldAsUFun("saluteWithOneArgStr",  @[makeFieldAsUPropParam("arg", "FString", CPF_Parm)], "UObjectPOC", FUNC_Static), 
           value: (arg: "10 cadena").toJson()
         )
       discard uCall(callData)
 
     proc test23() =
       let callData = UECall(
-          fn: makeFieldAsUFun("saluteWithTwoDifferentArgs",  @[makeFieldAsUPropParam("arg1", "int", CPF_Parm), makeFieldAsUPropParam("arg2", "FString", CPF_Parm)], "UObjectPOC"), 
+          fn: makeFieldAsUFun("saluteWithTwoDifferentArgs",  @[makeFieldAsUPropParam("arg1", "int", CPF_Parm), makeFieldAsUPropParam("arg2", "FString", CPF_Parm)], "UObjectPOC", FUNC_Static), 
           value: (arg1: "10 cadena", arg2: "Hola").toJson()
         )
       discard uCall(callData)
     proc test24() = 
       let callData = UECall(
-          fn: makeFieldAsUFun("saluteWitthTwoDifferentIntSizes",  @[makeFieldAsUPropParam("arg1", "int32", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC"), 
+          fn: makeFieldAsUFun("saluteWitthTwoDifferentIntSizes",  @[makeFieldAsUPropParam("arg1", "int32", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC", FUNC_Static), 
           value: (arg1: 10, arg2: 10).toJson()
         )
       discard uCall(callData)
 
     proc test25() = 
       let callData = UECall(
-          fn: makeFieldAsUFun("saluteWitthTwoDifferentIntSizes2",  @[makeFieldAsUPropParam("arg1", "int32", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC"), 
+          fn: makeFieldAsUFun("saluteWitthTwoDifferentIntSizes2",  @[makeFieldAsUPropParam("arg1", "int32", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC", FUNC_Static), 
           value: (arg1: 15, arg2: 10).toJson()
         )
       discard uCall(callData)
@@ -291,20 +293,20 @@ uClass AActorPOCVMTest of AActor:
 
     proc test3() = 
       let callData = UECall(
-          fn: makeFieldAsUFun("saluteWithTwoArgs",  @[makeFieldAsUPropParam("arg1", "int", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC"), 
+          fn: makeFieldAsUFun("saluteWithTwoArgs",  @[makeFieldAsUPropParam("arg1", "int", CPF_Parm), makeFieldAsUPropParam("arg2", "int", CPF_Parm)], "UObjectPOC", FUNC_Static), 
           value: (arg1: 10, arg2: 20).toJson()
         )
       discard uCall(callData)
 
     proc test4() =
       let callData = UECall(
-          fn: makeFieldAsUFun("printObjectName",  @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm)], "UObjectPOC"), 
+          fn: makeFieldAsUFun("printObjectName",  @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm)], "UObjectPOC", FUNC_Static), 
           value: (obj: cast[int](self)).toJson()
         )
       discard uCall(callData)
     proc test5() = 
       let callData = UECall(
-          fn: makeFieldAsUFun("printObjectNameWithSalute", @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm), makeFieldAsUPropParam("salute", "FString", CPF_Parm)], "UObjectPOC"),
+          fn: makeFieldAsUFun("printObjectNameWithSalute", @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm), makeFieldAsUPropParam("salute", "FString", CPF_Parm)], "UObjectPOC", FUNC_Static),
           value: (obj: cast[int](self), salute: "Hola").toJson()
         )
       discard uCall(callData)
@@ -312,7 +314,7 @@ uClass AActorPOCVMTest of AActor:
       let callData = UECall(
           fn: makeFieldAsUFun("printObjectAndReturn", 
             @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm), 
-              makeFieldAsUPropParam("return", "int", CPF_ReturnParm)], "UObjectPOC"),
+              makeFieldAsUPropParam("return", "int", CPF_ReturnParm)], "UObjectPOC", FUNC_Static),
           value: (obj: cast[int](self)).toJson()
         )
       UE_Log $uCall(callData)
@@ -321,7 +323,7 @@ uClass AActorPOCVMTest of AActor:
       let callData = UECall(
           fn: makeFieldAsUFun("printObjectAndReturnPtr", 
             @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm), 
-              makeFieldAsUPropParam("return", "UObjectPtr", CPF_ReturnParm)], "UObjectPOC"),
+              makeFieldAsUPropParam("return", "UObjectPtr", CPF_ReturnParm)], "UObjectPOC", FUNC_Static),
           value: (obj: cast[int](self)).toJson()
         )
       let objAddr = uCall(callData).jsonTo(int)
@@ -331,14 +333,14 @@ uClass AActorPOCVMTest of AActor:
       let callData = UECall(
           fn: makeFieldAsUFun("printObjectAndReturnStr", 
             @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm), 
-              makeFieldAsUPropParam("return", "FString", CPF_ReturnParm)], "UObjectPOC"),
+              makeFieldAsUPropParam("return", "FString", CPF_ReturnParm)], "UObjectPOC", FUNC_Static),
           value: (obj: cast[int](self)).toJson()
         )
       UE_Log $uCall(callData).jsonTo(string)
     proc test9() = 
       let callData = UECall(
           fn: makeFieldAsUFun("printVector", 
-              @[makeFieldAsUPropParam("vec", "UObjectPtr", CPF_Parm)], "UObjectPOC"),
+              @[makeFieldAsUPropParam("vec", "UObjectPtr", CPF_Parm)], "UObjectPOC", FUNC_Static),
           value: (vec:FVector(x:12, y:10)).toJson()
         )
       UE_Log  $uCall(callData).jsonTo(string)
@@ -346,7 +348,7 @@ uClass AActorPOCVMTest of AActor:
     proc test10() = 
       let callData = UECall(
           fn: makeFieldAsUFun("printIntArray", 
-              @[makeFieldAsUPropParam("ints", "TArray[int]", CPF_Parm)], "UObjectPOC"),
+              @[makeFieldAsUPropParam("ints", "TArray[int]", CPF_Parm)], "UObjectPOC", FUNC_Static),
           value: (ints:[2, 10]).toJson()
         )
       UE_Log  $uCall(callData).jsonTo(string)
@@ -354,7 +356,7 @@ uClass AActorPOCVMTest of AActor:
     proc test11() = 
       let callData = UECall(
           fn: makeFieldAsUFun("printVectorArray", 
-              @[makeFieldAsUPropParam("vecs", "TArray[FVector]", CPF_Parm)], "UObjectPOC"),
+              @[makeFieldAsUPropParam("vecs", "TArray[FVector]", CPF_Parm)], "UObjectPOC", FUNC_Static),
           value: (vecs:[FVector(x:12, y:10), FVector(x:12, z:1)]).toJson()
         )
       UE_Log  $uCall(callData).jsonTo(string)
@@ -362,12 +364,19 @@ uClass AActorPOCVMTest of AActor:
     proc test12NoArray() = 
       let callData = UECall(
           fn: makeFieldAsUFun("modifyAndReturnVector", 
-              @[makeFieldAsUPropParam("vec", "FVector", CPF_Parm),  makeFieldAsUPropParam("return", "FVector", CPF_ReturnParm)], "UObjectPOC"),
+              @[makeFieldAsUPropParam("vec", "FVector", CPF_Parm),  makeFieldAsUPropParam("return", "FVector", CPF_ReturnParm)], "UObjectPOC", FUNC_Static),
           value: (vec:FVector(x:12, y:10)).toJson()
         )
       UE_Log  $uCall(callData)
 
-
+    proc test13NoStatic() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("instanceFunc", 
+              @[], "UObjectPOC"),
+          value: (vec:FVector(x:12, y:10)).toJson(),
+          self: cast[int](self)
+        )
+      UE_Log  $uCall(callData)
     proc vectorToJsonTest() =
       UE_Log $FVector(x:10, y:10).toJson()
       let vectorScriptStruct = staticStruct(FVector)
