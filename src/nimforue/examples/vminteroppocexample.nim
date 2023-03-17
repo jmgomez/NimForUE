@@ -1,6 +1,6 @@
 include ../unreal/prelude
 
-import ../codegen/[modelconstructor, ueemit, uebind, models]
+import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
 import std/[json, jsonutils, sequtils, options, sugar]
 
 
@@ -28,6 +28,13 @@ uClass UObjectPOC of UObject:
     proc printObjectAndReturn(obj:UObjectPtr) : int = 
       UE_Log "Object name: " & $obj.getName() 
       10
+    proc printObjectAndReturnPtr(obj:UObjectPtr) : UObjectPtr = 
+      UE_Log "Object name: " & $obj.getName() 
+      obj
+    proc printObjectAndReturnStr(obj:UObjectPtr) : FString = 
+      let str = "Object name: " & $obj.getName() 
+      UE_Log str
+      str
 
 #[
 1. [x] Create a function that makes a call by fn name
@@ -37,8 +44,8 @@ uClass UObjectPOC of UObject:
   2.3 [x] Pass a int32 and a int64
 3. [x] Create a function that makes a call by fn name and pass a pointer argument
 4. [x] Create a function that makes a call by fn name and pass a value and pointer argument
-5. [ ] Create a function that makes a call by fn name and pass a value and pointer argument and return a value
-6. [ ] Create a function that makes a call by fn name and pass a value and pointer argument and return a pointer
+5. [x] Create a function that makes a call by fn name and pass a value and pointer argument and return a value
+6. [x] Create a function that makes a call by fn name and pass a value and pointer argument and return a pointer
   6.1 [ ] Create a function that makes a call by fn name and pass a value and pointer argument and returns a string
 7. [ ] Repeat 1-6 where value arguments are complex types
 8. [ ] Add support for missing basic types
@@ -88,6 +95,7 @@ proc uCall(call : UECall) : JsonNode =
   let self {.inject.} = getDefaultObjectFromClassName(call.fn.className.removeFirstLetter())
   UE_Log $call
   let fn = getClassByName(call.fn.className.removeFirstLetter()).findFunctionByName(n call.fn.name)
+  
   if call.fn.signature.any():
     var memoryBlock = alloc0(fn.parmsSize)
     let memoryBlockAddr = cast[int](memoryBlock)    
@@ -108,17 +116,27 @@ proc uCall(call : UECall) : JsonNode =
       let returnOffset = fn.returnValueOffset
       let returnSize = returnProp.getSize()
       var returnMemoryRegion = cast[pointer](memoryBlockAddr + returnOffset.int)
-      UE_Log  " Return offset: " & $returnOffset & " Return memory region: " & $returnMemoryRegion
-      #TODO Check types
-      var returnValInt = 0
-      copyMem(addr returnValInt, returnMemoryRegion, returnSize)
-      returnVal = newJInt(returnValInt)
-      dealloc(memoryBlock)
-      return returnVal
-    else:
+
+    
+      if returnProp.isFString():
+        var returnValue = f""
+        copyMem(addr returnValue, returnMemoryRegion, returnSize)
+        returnVal = newJString(returnValue)
+        dealloc(memoryBlock)
+        return returnVal
+        # returnVal = newJString(cast[ptr FString](returnValMem)[])
+      else:
+        var returnValue = 0
+        copyMem(addr returnValue, returnMemoryRegion, returnSize)
+        returnVal = newJInt(returnValue)
+        dealloc(memoryBlock)
+        return returnVal
+
+    else: #no return 
       dealloc(memoryBlock)
       return newJNull()
-  else:
+
+  else: #no params no return
     self.processEvent(fn, nil)
     return newJNull()
     
@@ -193,3 +211,22 @@ uClass AActorPOCVMTest of AActor:
         )
       UE_Log $uCall(callData)
 
+    proc test7() =
+      let callData = UECall(
+          fn: makeFieldAsUFun("printObjectAndReturnPtr", 
+            @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm), 
+              makeFieldAsUPropParam("return", "UObjectPtr", CPF_ReturnParm)], "UObjectPOC"),
+          value: (obj: cast[int](self)).toJson()
+        )
+      let objAddr = uCall(callData).jsonTo(int)
+      let obj = cast[UObjectPtr](objAddr)
+      UE_Log $obj
+    proc test8() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("printObjectAndReturnStr", 
+            @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm), 
+              makeFieldAsUPropParam("return", "FString", CPF_ReturnParm)], "UObjectPOC"),
+          value: (obj: cast[int](self)).toJson()
+        )
+      UE_Log $uCall(callData).jsonTo(string)
+      

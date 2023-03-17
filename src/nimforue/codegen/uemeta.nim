@@ -12,17 +12,18 @@ const fnPrefixes = @["", "Receive", "K2_", "BP_"]
 
 
 
-func isTArray(prop: FPropertyPtr): bool = not castField[FArrayProperty](prop).isNil()
-func isTMap(prop: FPropertyPtr): bool = not castField[FMapProperty](prop).isNil()
-func isTSet(prop: FPropertyPtr): bool = not castField[FSetProperty](prop).isNil()
-func isStruct(prop: FPropertyPtr): bool = not castField[FStructProperty](prop).isNil()
-func isInterface(prop: FPropertyPtr): bool = not castField[FInterfaceProperty](prop).isNil()
-func isTEnum(prop: FPropertyPtr): bool = "TEnumAsByte" in prop.getName()
-func isTFieldPath(prop: FPropertyPtr): bool = not castField[FFieldPathProperty](prop).isNil()
-func isTObjectPtr(prop: string): bool = return "TObjectPtr" in prop
-func isTObjectPtr(prop: FPropertyPtr): bool = return "TObjectPtr" in prop.getName()
-func isDynDel(prop: FPropertyPtr): bool = not castField[FDelegateProperty](prop).isNil()
-func isMulticastDel(prop: FPropertyPtr): bool = not castField[FMulticastDelegateProperty](prop).isNil()
+func isTArray*(prop: FPropertyPtr): bool = not castField[FArrayProperty](prop).isNil()
+func isFString*(prop: FPropertyPtr): bool = not castField[FStrProperty](prop).isNil()
+func isTMap*(prop: FPropertyPtr): bool = not castField[FMapProperty](prop).isNil()
+func isTSet*(prop: FPropertyPtr): bool = not castField[FSetProperty](prop).isNil()
+func isStruct*(prop: FPropertyPtr): bool = not castField[FStructProperty](prop).isNil()
+func isInterface*(prop: FPropertyPtr): bool = not castField[FInterfaceProperty](prop).isNil()
+func isTEnum*(prop: FPropertyPtr): bool = "TEnumAsByte" in prop.getName()
+func isTFieldPath*(prop: FPropertyPtr): bool = not castField[FFieldPathProperty](prop).isNil()
+func isTObjectPtr*(prop: string): bool = return "TObjectPtr" in prop
+func isTObjectPtr*(prop: FPropertyPtr): bool = return "TObjectPtr" in prop.getName()
+func isDynDel*(prop: FPropertyPtr): bool = not castField[FDelegateProperty](prop).isNil()
+func isMulticastDel*(prop: FPropertyPtr): bool = not castField[FMulticastDelegateProperty](prop).isNil()
 #TODO Dels
 func cleanTObjectPtr(prop:string) : string = 
     if prop.extractOuterGenericInNimFormat() == "TObjectPtr":
