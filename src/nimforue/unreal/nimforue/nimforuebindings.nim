@@ -145,6 +145,7 @@ proc newUObject*[T:UObject](outer:UObjectPtr, subcls : TSubClassOf[T]) : ptr T =
 
 
 
+
 proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     let cls = getClassByName(className)

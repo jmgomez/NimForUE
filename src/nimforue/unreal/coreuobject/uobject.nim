@@ -200,7 +200,7 @@ bindFProperty([
         "FInt8Property", "FInt16Property","FIntProperty", "FInt64Property",
         "FByteProperty", "FUInt16Property","FUInt32Property", "FUInt64Property",
         "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
-        "FArrayProperty", "FStructProperty", "FObjectPtrProperty", "FClassProperty",
+        "FArrayProperty", "FStructProperty", "FObjectProperty", "FObjectPtrProperty", "FClassProperty",
         "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty", 
         "FMapProperty", "FDelegateProperty", "FSetProperty", "FInterfaceProperty",
         "FMulticastDelegateProperty", #It seems to be abstract. Review Sparse vs Inline
@@ -346,7 +346,7 @@ proc rename*(obj:UObjectPtr, InName:FString, newOuter:UObjectPtr, flags:ERenameF
 proc initializeDerivedMembers*(fn:UFunctionPtr) : void {.importcpp:"#->InitializeDerivedMembers()".}
 proc getReturnProperty*(fn:UFunctionPtr) : FPropertyPtr {.importcpp:"#->GetReturnProperty()".}
 proc tryGetReturnProperty*(fn:UFunctionPtr) : Option[FPropertyPtr] = someNil fn.getReturnProperty()
-
+proc doesReturn*(fn:UFunctionPtr) : bool  = tryGetReturnProperty(fn).isSome
 
 
 #UENUM
