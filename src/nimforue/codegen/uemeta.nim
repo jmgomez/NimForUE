@@ -14,6 +14,8 @@ const fnPrefixes = @["", "Receive", "K2_", "BP_"]
 
 func isTArray*(prop: FPropertyPtr): bool = not castField[FArrayProperty](prop).isNil()
 func isFString*(prop: FPropertyPtr): bool = not castField[FStrProperty](prop).isNil()
+#any kind of float
+func isFloat*(prop: FPropertyPtr): bool = castField[FFloatProperty](prop).isNotNil() or castField[FDoubleProperty](prop).isNotNil()
 func isTMap*(prop: FPropertyPtr): bool = not castField[FMapProperty](prop).isNil()
 func isTSet*(prop: FPropertyPtr): bool = not castField[FSetProperty](prop).isNil()
 func isStruct*(prop: FPropertyPtr): bool = not castField[FStructProperty](prop).isNil()

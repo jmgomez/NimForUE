@@ -1,7 +1,7 @@
 include ../unreal/prelude
 
 import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
-import std/[json, jsonutils, sequtils, options, sugar]
+import std/[json, jsonutils, sequtils, options, sugar, enumerate]
 
 
 
@@ -40,6 +40,23 @@ uClass UObjectPOC of UObject:
     proc printVector(vec : FVector) = 
       UE_Log "Vector: " & $vec
 
+
+    proc printIntArray(ints : TArray[int]) = 
+      UE_Log "Int array length: " & $ints.len
+      for vec in ints:
+        UE_Log "int: " & $vec
+    proc printVectorArray(vecs : TArray[FVector]) = 
+      UE_Log "Vector array length: " & $vecs.len
+      for vec in vecs:
+        UE_Log "Vector: " & $vec
+
+    proc modifyAndReturnVector(vec : FVector) : FVector = 
+      var vec = vec
+      vec.x = 10
+      vec.y = 20
+      vec.z = 30
+      vec
+
 #[
 1. [x] Create a function that makes a call by fn name
 2. [x] Create a function that makes a call by fn name and pass a value argument
@@ -72,94 +89,165 @@ type
 # type VMType = 
 
 
-proc propWithValueToMemoryBlock(prop : FPropertyPtr, value : JsonNode, memoryBlock : pointer, allocatedStrings : var TArray[FString]) =
-  let propSize = prop.getSize()
-  let propOffset = prop.getOffset()
-  var memoryRegion = cast[pointer](cast[int](memoryBlock) + propOffset)
-  case value.kind: #this could be templatized 
-    of JString: 
-      allocatedStrings.add value.getStr() #FStrings need to be kept alive since they have a ptr to the content
-      copyMem(memoryRegion, addr allocatedStrings[allocatedStrings.len - 1], propSize)
-    of JInt: 
-      if propSize == 4: #probably it doesnt really matter if we use int32 or int64 because we are just copying the memory and it will get overriden by the next offset calc
-        var paramValue = value.getInt().int32
-        copyMem(memoryRegion, addr paramValue, propSize)
-      else: #8 #This could also be a pointer. but do we care here? If it's a pointer we just copy it it, right?
-        var paramValue = value.getInt()
-        copyMem(memoryRegion, addr paramValue, propSize)
-    of JFloat:
-      var paramValue = value.getFloat()
-      copyMem(memoryRegion, addr paramValue, propSize)
-    # of JArray: 
-    #   var paramValue = value.getElems()
-    #   copyMem(memoryRegion, addr paramValue, propSize)
-    of JObject: 
-      #At this point the prop must be a FStructProperty
-      assert prop.isStruct()
-      let structProp = castField[FStructProperty](prop)
-      let scriptStruct = structProp.getScriptStruct()
-      let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
-      var structMemoryRegion = memoryRegion
-      # let structMemory 
-      for paramProp in structProps:
-        let name = paramProp.getName()
-        var val : JsonNode
-        if name in value:
-          val = value[name]
-        else: #TODO test and assert?
-          val = value[name.firstToLow()] #Nim vs UE discrepancies
-        propWithValueToMemoryBlock(paramProp, val, structMemoryRegion, allocatedStrings)
+  # case value.kind: #this could be templatized 
+  #   of JString: 
+  #     # allocatedStrings.add value.getStr() #FStrings need to be kept alive since they have a ptr to the content
+  #     # copyMem(memoryRegion, addr allocatedStrings[allocatedStrings.len - 1], propSize)
+  #     setPropertyValue(prop, memoryBlock, value.getStr())
+  #   of JInt: #Notice this holds pointers as well that's why it's copied as a int
+  #     var paramValue = value.getInt()
+  #     copyMem(memoryRegion, addr paramValue, propSize)
+      
+  #   of JFloat:
+  #     var paramValue = value.getFloat()
+  #     copyMem(memoryRegion, addr paramValue, propSize)
+  #   of JArray: 
+  #     assert prop.isTArray() #Can also be a TSet, but we dont care about that for now.
+  #     let arrProp = castField[FArrayProperty](prop)
+  #     let innerProp = arrProp.getInnerProp()
+  #     UE_Log "Array prop name: " & $prop.getName() & " inner prop name: " & $innerProp.getName()
+  #     var arrayMemoryRegion = memoryRegion
+  #     # for v in value.getElems():
+  #     #   propWithValueToMemoryBlock(innerProp, v, arrayMemoryRegion, allocatedStrings)
+  #     var arr = makeTArray(1, 2, 4) #How we can bream this then? Maybe we can just use setPropertyValue instead and do the case insis
+  #     setPropertyValue(prop, memoryBlock, arr)
+     
 
-      #   let paramValue = value[paramProp.getName()]
+  #   of JObject: 
+  #     #At this point the prop must be a FStructProperty
+  #     assert prop.isStruct()
+  #     let structProp = castField[FStructProperty](prop)
+  #     let scriptStruct = structProp.getScriptStruct()
+  #     let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
+  #     var structMemoryRegion = memoryRegion
+  #     # let structMemory 
+  #     for paramProp in structProps:
+  #       let name = paramProp.getName()
+  #       var val : JsonNode
+  #       if name in value:
+  #         val = value[name]
+  #       else:
+  #         val = value[name.firstToLow()] #Nim vs UE discrepancies
+  #       propWithValueToMemoryBlock(paramProp, val, structMemoryRegion, allocatedStrings)
+
+  #     #   let paramValue = value[paramProp.getName()]
         
 
-      # var paramValue = value.getElems()
-      # copyMem(memoryRegion, addr paramValue, propSize)
-    else: discard
+  #     # var paramValue = value.getElems()
+  #     # copyMem(memoryRegion, addr paramValue, propSize)
+  #   else: discard
+
+
+proc propWithValueToMemoryBlock(prop : FPropertyPtr, memoryRegion:ByteAddress, value : JsonNode, allocatedStrings : var TArray[pointer], propOffset:int32 = prop.getOffset()) =
+  let propSize = prop.getSize()
+  let memoryRegion = (memoryRegion) + propOffset
+  let memoryBlock = cast[pointer](memoryRegion)
+  if prop.isFString(): 
+    var fstringPtr =  cast[ptr FString](alloc0(sizeof(FString)))
+    fstringPtr[] = (FString)value.getStr()
+    allocatedStrings.add fstringPtr
+    copyMem(memoryBlock, fstringPtr, propSize) 
+  elif value.kind == JInt: #Covers ints and ptrs props
+    var val = value.getInt()
+    copyMem(memoryBlock, addr val, propSize)
+  elif value.kind == JFloat: #MAYBE we can just try to match against all floats here so it works for returns too
+    var val = value.getFloat()
+    copyMem(memoryBlock, addr val, propSize)
+  # elif prop.isTArray(): TODO: This is not working
+  #   let elems = value.getElems()
+
+  #   let arrProp = castField[FArrayProperty](prop)
+  #   let innerProp = arrProp.getInnerProp()
+  #   UE_Log "Array prop name: " & $prop.getName() & " inner prop name: " & $innerProp.getName() & innerProp.getCppType()
+  #   UE_Log "Array prop size: " & $prop.getSize() & " inner prop size: " & $innerProp.getSize()
+  #   var arrayMemoryBlock = alloc0(sizeof(arrProp.getSize()))
+  #   var arrayMemoryRegion = cast[ByteAddress](arrayMemoryBlock)
+  #   allocatedStrings.add arrayMemoryBlock
+  #   for idx, elem in enumerate(elems):
+  #     let offset = idx.int32 * innerProp.getSize()
+  #     propWithValueToMemoryBlock(innerProp, arrayMemoryRegion, elem, allocatedStrings, offset)
+  #   var test = cast[ptr TArray[int]](arrayMemoryBlock)
+  #   UE_Log "Array " & $test[]
+    # copyMem(memoryBlock, arrayMemoryBlock, arrProp.getSize())
+  elif prop.isStruct():
+    let structProp = castField[FStructProperty](prop)
+    let scriptStruct = structProp.getScriptStruct()
+    let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
+    var structMemoryRegion = memoryRegion
+    # let structMemory 
+    for paramProp in structProps:
+      let name = paramProp.getName()
+      var val : JsonNode
+      if name in value:
+        val = value[name]
+      else:
+        val = value[name.firstToLow()] #Nim vs UE discrepancies
+      propWithValueToMemoryBlock(paramProp, structMemoryRegion, val, allocatedStrings)
+
+proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAddress) : JsonNode = 
+  result = newJNull()
+  let returnSize = prop.getSize()
+  let returnMemoryBlock = cast[pointer](returnMemoryRegion)
+  if prop.isFString():
+    var returnValue = f""
+    copyMem(addr returnValue, returnMemoryBlock, returnSize)
+    result = newJString(returnValue)
+  if prop.isFloat():
+    var returnValue = 0.0
+    copyMem(addr returnValue, returnMemoryBlock, returnSize)
+    result = newJFloat(returnValue)
+  if prop.isStruct():
+    let structProp = castField[FStructProperty](prop)
+    let scriptStruct = structProp.getScriptStruct()
+    let structProps = scriptStruct.getFPropsFromUStruct()
+    let structMemoryRegion = returnMemoryRegion #same but keeping it for clarity/simmetry
+    result = newJObject()
+    for paramProp in structProps:
+      let name = paramProp.getName()
+      let value = getValueFromPropMemoryBlock(paramProp, structMemoryRegion + paramProp.getOffset())
+      result[name] = value
+  
 
 proc uCall(call : UECall) : JsonNode = 
   result = newJNull()
   let self {.inject.} = getDefaultObjectFromClassName(call.fn.className.removeFirstLetter())
-  UE_Log $call
   let fn = getClassByName(call.fn.className.removeFirstLetter()).findFunctionByName(n call.fn.name)
   
   if call.fn.signature.any():
     var memoryBlock = alloc0(fn.parmsSize)
-    let memoryBlockAddr = cast[int](memoryBlock)    
+    let memoryBlockAddr = cast[ByteAddress](memoryBlock)    
 
     let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())
-    var allocatedStrings = makeTArray[FString]()
+    var allocatedStrings = makeTArray[pointer]()
     #TODO check return param and out params
     for paramProp in propParams:
       let paramValue = call.value[paramProp.getName()]
-      propWithValueToMemoryBlock(paramProp, paramValue, memoryBlock, allocatedStrings)
+      propWithValueToMemoryBlock(paramProp, memoryBlockAddr, paramValue, allocatedStrings)
 
     self.processEvent(fn, memoryBlock)
 
-    
     if call.fn.doesReturn():
       # let returnProp = fn.getFPropsFromUStruct().filterIt(it.getName() == call.fn.getReturnProp.get.name).head().get()
       let returnProp = fn.getReturnProperty()
       let returnOffset = fn.returnValueOffset
       let returnSize = returnProp.getSize()
-      var returnMemoryRegion = cast[pointer](memoryBlockAddr + returnOffset.int)
-
-      if returnProp.isFString():
-        var returnValue = f""
-        copyMem(addr returnValue, returnMemoryRegion, returnSize)
-        result = newJString(returnValue)
-      else:
-        var returnValue = 0
-        copyMem(addr returnValue, returnMemoryRegion, returnSize)
-        result = newJInt(returnValue)
+      var returnMemoryRegion = memoryBlockAddr + returnOffset.int
+      result = getValueFromPropMemoryBlock(returnProp, returnMemoryRegion)
+      # if returnProp.isFString():
+      #   var returnValue = f""
+      #   copyMem(addr returnValue, cast[pointer](returnMemoryRegion), returnSize)
+      #   result = newJString(returnValue)
+        
+      # else: #int based (i.e. int, ptr, etc)
+      #   var returnValue = 0
+      #   copyMem(addr returnValue, returnMemoryRegion, returnSize)
+      #   result = newJInt(returnValue)
 
     dealloc(memoryBlock)
-
+    for str in allocatedStrings:
+      dealloc(str) 
   else: #no params no return
     self.processEvent(fn, nil)
-    
-
-
 
 uClass AActorPOCVMTest of AActor:
   (BlueprintType)
@@ -250,11 +338,34 @@ uClass AActorPOCVMTest of AActor:
     proc test9() = 
       let callData = UECall(
           fn: makeFieldAsUFun("printVector", 
-              @[makeFieldAsUPropParam("obj", "UObjectPtr", CPF_Parm)], "UObjectPOC"),
+              @[makeFieldAsUPropParam("vec", "UObjectPtr", CPF_Parm)], "UObjectPOC"),
           value: (vec:FVector(x:12, y:10)).toJson()
         )
       UE_Log  $uCall(callData).jsonTo(string)
 
+    proc test10() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("printIntArray", 
+              @[makeFieldAsUPropParam("ints", "TArray[int]", CPF_Parm)], "UObjectPOC"),
+          value: (ints:[2, 10]).toJson()
+        )
+      UE_Log  $uCall(callData).jsonTo(string)
+
+    proc test11() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("printVectorArray", 
+              @[makeFieldAsUPropParam("vecs", "TArray[FVector]", CPF_Parm)], "UObjectPOC"),
+          value: (vecs:[FVector(x:12, y:10), FVector(x:12, z:1)]).toJson()
+        )
+      UE_Log  $uCall(callData).jsonTo(string)
+
+    proc test12NoArray() = 
+      let callData = UECall(
+          fn: makeFieldAsUFun("modifyAndReturnVector", 
+              @[makeFieldAsUPropParam("vec", "FVector", CPF_Parm),  makeFieldAsUPropParam("return", "FVector", CPF_ReturnParm)], "UObjectPOC"),
+          value: (vec:FVector(x:12, y:10)).toJson()
+        )
+      UE_Log  $uCall(callData)
 
 
     proc vectorToJsonTest() =

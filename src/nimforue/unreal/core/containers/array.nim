@@ -10,9 +10,6 @@ proc add*[T](arr:TArray[T], value:T) {.importcpp: "#.Add(#)".}
 proc append*[T](a, b:TArray[T]) {.importcpp: "#.Append(#)".}
 func reserve*[T](arr:TArray[T], value:Natural) {.importcpp: "#.Reserve(#)".}
 
-proc `[]`*[T](arr:TArray[T], i: Natural): var T {. importcpp: "#[#]",  noSideEffect.}
-proc `[]=`*[T](arr:TArray[T], i: Natural, val : T)  {. importcpp: "#[#]=#",  }
-
 # proc `[]`*[T](arr:TArray[T], i: int): var T {. inline, noSideEffect.} = arr[i.int32]
 
 # proc `[]=`*[T](arr:TArray[T], i: int, val : T)  {. inline  .} = arr[i.int32] = val why this doesnt work like so?
@@ -33,6 +30,12 @@ func makeTArray*[T](a : T, args:varargs[T]): TArray[T] =
 func getData*[T](arr:TArray[T]): ptr T {.importcpp: "#.GetData()", nodecl.}
 
 func len*[T](arr:TArray[T]) : int {.inline.} = arr.num()
+
+proc `[]`*[T](arr:TArray[T], i: Natural): var T {. importcpp: "#[#]",  noSideEffect.}
+# proc `[]`*[T](arr:TArray[T], i: BackwardsIndex): var T = arr[arr.len - int(i)]
+proc `[]=`*[T](arr:TArray[T], i: Natural, val : T)  {. importcpp: "#[#]=#",  }
+# proc `[]=`*[T](arr:TArray[T], i: BackwardsIndex, val : T) = arr[arr.len - int(i)] = val
+
 
 iterator items*[T](arr: TArray[T]): T =
   for i in 0..(arr.num()-1):
