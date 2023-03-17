@@ -75,6 +75,7 @@ type
         functionFlags* {.importcpp:"FunctionFlags".} : EFunctionFlags
         numParms* {.importcpp:"NumParms".}: uint8
         parmsSize* {.importcpp:"ParmsSize".}: uint16
+        returnValueOffset* {.importcpp:"ReturnValueOffset".}: uint16
     UFunctionPtr* = ptr UFunction
     UDelegateFunction* {.importcpp, inheritable, pure .} = object of UFunction
     UDelegateFunctionPtr* = ptr UDelegateFunction
@@ -343,6 +344,7 @@ proc rename*(obj:UObjectPtr, InName:FString, newOuter:UObjectPtr, flags:ERenameF
 #FUNC
 proc initializeDerivedMembers*(fn:UFunctionPtr) : void {.importcpp:"#->InitializeDerivedMembers()".}
 proc getReturnProperty*(fn:UFunctionPtr) : FPropertyPtr {.importcpp:"#->GetReturnProperty()".}
+proc tryGetReturnProperty*(fn:UFunctionPtr) : Option[FPropertyPtr] = someNil fn.getReturnProperty()
 
 
 
