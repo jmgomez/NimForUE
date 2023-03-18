@@ -83,9 +83,7 @@ uClass UObjectPOC of UObject:
 
 ]#
 
-# type FString2 = FString
-
-
+#TODO: Move all of this to ueTests 
 
 uClass AActorPOCVMTest of AActor:
   (BlueprintType)
