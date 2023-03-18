@@ -48,7 +48,21 @@ type
     #Notice this is not really the signature. It has const 
     UClassConstructor* = proc (objectInitializer:var FObjectInitializer) : void {.cdecl.}
     VTableConstructor* = proc (helper:var FVTableHelper) : UObjectPtr  {.cdecl.}
+    
+    FOutParmRec* {.importcpp.} = object
+        property* {.importcpp:"Property".} : FPropertyPtr
+        propAddr* {.importcpp:"PropAddr".}: pointer 
+        nextOutParm* {.importcpp:"NextOutParm".}: ptr FOutParmRec
+        mostRecentProperty* {.importcpp:"MostRecentProperty".}: FPropertyPtr
+    FFrame* {.importcpp .} = object
+        code* {.importcpp:"Code".} : ptr uint8
+        node* {.importcpp:"Node".} : UFunctionPtr
+        locals* {.importcpp:"Locals".} : ptr uint8
+        outParms* {.importcpp:"OutParms".} : ptr FOutParmRec
+        propertyChainForCompiledIn* {.importcpp:"PropertyChainForCompiledIn".}: FFieldPtr
+        mostRecentPropertyAddress* {.importcpp:"MostRecentPropertyAddress".}: ptr uint8
     UClassAddReferencedObjectsType* = proc (obj:UObjectPtr, collector:var FReferenceCollector) : void {.cdecl.}
+    UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
     FImplementedInterface* {.importcpp.} = object
         class* {.importcpp:"Class".}: UClassPtr
         
@@ -251,23 +265,7 @@ proc getPropertyValue*(prop:FBoolPropertyPtr, container: pointer) : bool {. impo
 
 						((FBoolProperty*)*It)->SetPropertyValue( CurrentPropAddr, true );
 ]#
-type
 
-
-    FOutParmRec* {.importcpp.} = object
-        property* {.importcpp:"Property".} : FPropertyPtr
-        propAddr* {.importcpp:"PropAddr".}: pointer 
-        nextOutParm* {.importcpp:"NextOutParm".}: ptr FOutParmRec
-        mostRecentProperty* {.importcpp:"MostRecentProperty".}: FPropertyPtr
-        
-       
-    FFrame* {.importcpp .} = object
-        code* {.importcpp:"Code".} : ptr uint8
-        node* {.importcpp:"Node".} : UFunctionPtr
-        locals* {.importcpp:"Locals".} : ptr uint8
-        outParms* {.importcpp:"OutParms".} : ptr FOutParmRec
-        propertyChainForCompiledIn* {.importcpp:"PropertyChainForCompiledIn".}: FFieldPtr
-        mostRecentPropertyAddress* {.importcpp:"MostRecentPropertyAddress".}: ptr uint8
 
 
 #Notice T is not an UObject but the Cpp interface

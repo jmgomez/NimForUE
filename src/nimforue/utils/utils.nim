@@ -186,10 +186,17 @@ func getWithResult*[T](opt: Option[T], default:T): (T, bool) =
   else: (default, false)
 
 #tables
+type SomeTable[K, V] = Table[K, V] | TableRef[K, V]
 
-proc tryGet*[K, V](self: Table[K, V], key: K): Option[V] {.inline.} =
+func tryGet*[K, V](self: SomeTable[K, V], key: K): Option[V] {.inline.} =
   if self.contains(key): some(self[key])
   else: none[V]()
+
+func addOrUpdate*[K, V](self: var SomeTable[K, V], key: K, value: V) {.inline.} =
+  if key in self:
+    self[key] = value
+  else:
+    self.add(key, value)
 
 #pointers
 proc isNotNil*(v : SomePointer) : bool = not v.isNil()

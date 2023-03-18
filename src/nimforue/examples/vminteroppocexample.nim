@@ -1,9 +1,9 @@
 include ../unreal/prelude
 
-import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta, vminterop]
+import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
 import std/[json, jsonutils, sequtils, options, sugar, enumerate]
 
-
+import ../vm/uecall
 
 
 uClass UObjectPOC of UObject:

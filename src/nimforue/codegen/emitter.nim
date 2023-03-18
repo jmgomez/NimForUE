@@ -8,7 +8,6 @@ import ../utils/[utils, ueutils]
  
 
 
-type UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
 
 
 type 

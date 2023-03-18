@@ -1,8 +1,8 @@
 include ../unreal/prelude
 
-import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta, vminterop]
+import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
 import std/[json, jsonutils, sequtils, options, sugar, enumerate]
-
+import ../vm/[uecall]
 
 import vminteroppocexample
 
@@ -21,7 +21,7 @@ import vminteroppocexample
 
 
 ]#
-var replacementForSaluteImpl = proc (context: UObjectPtr; stack: var FFrame; returnResult: pointer) : void {.cdecl.} =
+var replacementForSaluteImpl : UFunctionNativeSignature = proc (context: UObjectPtr; stack: var FFrame; returnResult: pointer) : void {.cdecl.} =
   stack.increaseStack()
   # let self = ueCast[AUEBorrowTestActor](context)
   UE_Log "You have been replaced!"
