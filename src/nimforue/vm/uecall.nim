@@ -1,7 +1,7 @@
 include ../unreal/prelude
 
 import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
-import std/[json, jsonutils, sequtils, options, sugar, enumerate]
+import std/[json, jsonutils, sequtils, options, sugar, enumerate, tables]
 
 
 
@@ -11,11 +11,12 @@ type
   UEFunc* = object #Light metadata we could ue UFunc but we dont want to pull all those types into the vm
     name* : string
     className* : string
+
    
   UECall* = object
     fn* : UEFunc 
     self* : int
-    value* : JsonNode 
+    value* : JsonNode #On uebind [name] = value
 
 proc makeUEFunc*(name, className : string) : UEFunc = 
   result.name = name

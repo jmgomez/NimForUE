@@ -43,7 +43,7 @@ func cleanTEnum(prop:string) : string =
     else:
         return prop
 
-func getNimTypeAsStr(prop: FPropertyPtr, outer: UObjectPtr): string = #The expected type is something that UEField can understand
+func getNimTypeAsStr*(prop: FPropertyPtr, outer: UObjectPtr): string = #The expected type is something that UEField can understand
   
   func cleanCppType(cppType: string): string =
     #Do multireplacehere

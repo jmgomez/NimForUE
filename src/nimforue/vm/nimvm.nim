@@ -107,6 +107,8 @@ var lastBorrow : UEBorrowInfo #last/current borrow info asked to be implemented
 var interpreter : Interpreter #needs to be global so it can be accesed from cdecl
 
 proc getValueFromPropInFn[T](context: UObjectPtr, stack: var FFrame) : T = 
+  #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (which we dont)
+
   var paramValue {.inject.} : int #Define the param
   var paramAddr = cast[pointer](paramValue.addr) #Cast the Param with   
   if not stack.code.isNil():
@@ -132,15 +134,13 @@ proc implementBorrow() =
       let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())  
       for prop in propParams:
         let propName = prop.getName().firstToLow()
-        #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (which we dont)
-        
+        let nimTypeStr = getNimTypeAsStr(prop, context).toJson()
+
         if prop.isInt() or prop.isObjectBased(): #ints a pointers 
           args[propName] = getValueFromPropInFn[int](context, stack).toJson()
-
-          
+                  
         #ahora solo hay un entero
-        
-
+      let ueFunc = UEFunc( className: borrowInfo.className, name: borrowInfo.getUFuncName())
       let ueCall = $makeUECall(makeUEFunc(borrowInfo.getUFuncName(), borrowInfo.className), context, args).toJson()
       let res = interpreter.callRoutine(vmFn, [newStrNode(nkStrLit, ueCall)])
       #TODO return value
@@ -181,6 +181,7 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") :
     std / "pure" / "collections",
     std / "core", 
     PluginDir/"src"/"nimforue"/"utils",
+    parentDir(currentSourcePath),
    
     ] & searchPaths)
   interpreter.registerErrorHook(onInterpreterError)
