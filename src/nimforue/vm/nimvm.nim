@@ -10,7 +10,7 @@ import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
 import compiler / [ast, nimeval, vmdef, vm, llstream, types, lineinfos]
 import compiler/options as copt
 import ../vm/[uecall]
-
+import ../codegen/[uemeta]
 
 
 type   
@@ -106,6 +106,17 @@ var lastBorrow : UEBorrowInfo #last/current borrow info asked to be implemented
 
 var interpreter : Interpreter #needs to be global so it can be accesed from cdecl
 
+proc getValueFromPropInFn[T](context: UObjectPtr, stack: var FFrame) : T = 
+  var paramValue {.inject.} : int #Define the param
+  var paramAddr = cast[pointer](paramValue.addr) #Cast the Param with   
+  if not stack.code.isNil():
+      stack.step(context, paramAddr)
+  else:
+      var prop = cast[FPropertyPtr](stack.propertyChainForCompiledIn)
+      stack.propertyChainForCompiledIn = stack.propertyChainForCompiledIn.next
+      stepExplicitProperty(stack, paramAddr, prop)
+  paramValue
+
 proc implementBorrow() = 
   proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) : void {.cdecl.} =
       stack.increaseStack()
@@ -117,7 +128,20 @@ proc implementBorrow() =
         UE_Error &"script does not export a proc of the name: {borrowInfo.vmFnName}"
         return
       #TODO pass params as json to vm call (from stack but review how it's done in uebind)
-      let ueCall = $makeUECall(makeUEFunc("TODO", "TODO"), context, newJNull()).toJson()
+      var args = newJObject()
+      let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())  
+      for prop in propParams:
+        let propName = prop.getName().firstToLow()
+        #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (which we dont)
+        
+        if prop.isInt() or prop.isObjectBased(): #ints a pointers 
+          args[propName] = getValueFromPropInFn[int](context, stack).toJson()
+
+          
+        #ahora solo hay un entero
+        
+
+      let ueCall = $makeUECall(makeUEFunc(borrowInfo.getUFuncName(), borrowInfo.className), context, args).toJson()
       let res = interpreter.callRoutine(vmFn, [newStrNode(nkStrLit, ueCall)])
       #TODO return value
   
