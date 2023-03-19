@@ -73,7 +73,7 @@ proc newUObject*[T](owner : UObjectPtr = UObjectPtr(0)) : T =
 
 #BORROW
 type UEBorrowInfo* = object
-  vmFnName*: string
+  fnName*: string
   className* : string
 
 #eventually this will be json

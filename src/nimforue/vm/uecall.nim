@@ -33,7 +33,7 @@ proc makeUECall*(fn : UEFunc, self : UObjectPtr, value : JsonNode) : UECall =
   result.value = value
 
 
-proc propWithValueToMemoryBlock(prop : FPropertyPtr, memoryRegion:ByteAddress, value : JsonNode, allocatedStrings : var TArray[pointer], propOffset:int32 = prop.getOffset()) =
+proc setPropWithValueInMemoryBlock*(prop : FPropertyPtr, memoryRegion:ByteAddress, value : JsonNode, allocatedStrings : var TArray[pointer], propOffset:int32 = prop.getOffset()) =
   let propSize = prop.getSize()
   let memoryRegion = (memoryRegion) + propOffset
   let memoryBlock = cast[pointer](memoryRegion)
@@ -77,7 +77,7 @@ proc propWithValueToMemoryBlock(prop : FPropertyPtr, memoryRegion:ByteAddress, v
         val = value[name]
       else:
         val = value[name.firstToLow()] #Nim vs UE discrepancies
-      propWithValueToMemoryBlock(paramProp, structMemoryRegion, val, allocatedStrings)
+      setPropWithValueInMemoryBlock(paramProp, structMemoryRegion, val, allocatedStrings)
 
 proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAddress) : JsonNode = 
   result = newJNull()
@@ -129,7 +129,7 @@ proc uCall*(call : UECall) : JsonNode =
     #TODO check return param and out params
     for paramProp in propParams:
       let paramValue = call.value[paramProp.getName()]
-      propWithValueToMemoryBlock(paramProp, memoryBlockAddr, paramValue, allocatedStrings)
+      setPropWithValueInMemoryBlock(paramProp, memoryBlockAddr, paramValue, allocatedStrings)
 
     self.processEvent(fn, memoryBlock)
 

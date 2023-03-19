@@ -85,13 +85,13 @@ proc implementBaseFunctions(interpreter:Interpreter) =
 
 #should args be here too?
 type UEBorrowInfo = object
-  vmFnName: string #ufuncVmImpl name where in ue would be UFunc so for Salute (ue) it will be saluteVmImpl 
+  fnName: string #nimName 
   className : string
 
 
-func getUFuncName*(info: UEBorrowInfo): string =
-  info.vmFnName.capitalizeASCII().replace("VmImpl", "")
+func getUFuncName*(info: UEBorrowInfo): string = info.fnName.capitalizeASCII()
 
+func getVMImplFuncName*(info : UEBorrowInfo): string = info.fnName & "VmImpl"
 
 func getBorrowKey*(info: UEBorrowInfo): string = info.className & info.getUFuncName()
 func getBorrowKey*(fn: UFunctionPtr) : string = fn.getOuter().getName() & fn.getName()
@@ -125,9 +125,9 @@ proc implementBorrow() =
       let fn = stack.node
       let borrowKey = fn.getBorrowKey()
       let borrowInfo = borrowTable[borrowKey]
-      let vmFn = interpreter.selectRoutine(borrowInfo.vmFnName)
+      let vmFn = interpreter.selectRoutine(borrowInfo.getVMImplFuncName)
       if vmFn.isNil():
-        UE_Error &"script does not export a proc of the name: {borrowInfo.vmFnName}"
+        UE_Error &"script does not export a proc of the name: {borrowInfo.fnName}"
         return
       #TODO pass params as json to vm call (from stack but review how it's done in uebind)
       var args = newJObject()
@@ -143,6 +143,12 @@ proc implementBorrow() =
       let ueFunc = UEFunc( className: borrowInfo.className, name: borrowInfo.getUFuncName())
       let ueCall = $makeUECall(makeUEFunc(borrowInfo.getUFuncName(), borrowInfo.className), context, args).toJson()
       let res = interpreter.callRoutine(vmFn, [newStrNode(nkStrLit, ueCall)])
+
+      let returnProp = fn.getReturnProperty()
+      if fn.doesReturn():
+        let json = parseJson(res.strVal)
+        var allocated = makeTArray[pointer]()
+        setPropWithValueInMemoryBlock(returnProp, cast[ByteAddress](returnResult), json, allocated, 0)
       #TODO return value
   
   #At this point it will be the last added or not because it can be updated

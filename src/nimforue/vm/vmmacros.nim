@@ -1,9 +1,9 @@
 import std/[json, jsonutils, macros, genasts, options, sequtils, strutils, strformat]
-import exposed
+import exposed 
 
 
 
-proc ueBindImpl(clsName : string, fn: NimNode) : NimNode = 
+proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode = 
   let argsWithFirstType =
       fn.params
       .filterIt(it.kind == nnkIdentDefs)
@@ -53,7 +53,6 @@ macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBind
 
 
 
-
 proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode = 
   let argsWithFirstType =
     fn.params
@@ -79,9 +78,8 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
   let fnBody = fn.body
   let fnName = fn.name
   let fnNameLit = fn.name.strVal()
-
-  for arg in args:
-    log treeRepr arg
+  let fnVmName = ident fnNameLit & "VmImpl"
+  let fnVmNameLit = fnNameLit & "VmImpl"
 
   func injectedArg(arg:NimNode) : NimNode = 
     let argName = arg[0]
@@ -92,15 +90,24 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
   
   let injectedArgs = nnkStmtList.newTree(args.map(injectedArg))
 
-  genAst(fnName, fnNameLit, fnBody, classTypePtr, clsNameLit, injectedArgs, isStatic):
-    setupBorrow(UEBorrowInfo(vmFnName:fnNameLit, className:clsNameLit))
-    #notice it needs to append VmImpl when doing the macro
-    proc fnName*(json:string) = #args will be like that. It also has to return
-      let callInfo {.inject.} = json.parseJson().to(UECall)
-      injectedArgs
-      when not isStatic:
-        let self {.inject.} = classTypePtr(callInfo.self)
-      fnBody
+  let vmFn = 
+    genAst(funName=fnName, fnNameLit, fnVmName, fnVmNameLit, fnBody, classTypePtr, clsNameLit, returnType, returnTypeLit, injectedArgs, isStatic):
+      setupBorrow(UEBorrowInfo(fnName:fnNameLit, className:clsNameLit))
+      #notice it needs to append VmImpl when doing the macro
+      proc fnVmName*(json:string) : string = 
+        let callInfo {.inject.} = json.parseJson().to(UECall)
+        injectedArgs
+        when not isStatic:
+          let self {.inject.} = classTypePtr(callInfo.self)
+        when returnTypeLit == "void":
+          fnBody
+          "" #no return
+        else:
+          let returnVal : returnType = fnBody
+          $returnVal.toJson()
+
+  let bindFn = ueBindImpl(clsName, fn)
+  nnkStmtList.newTree(bindFn, vmFn)
       
 
 
@@ -108,6 +115,11 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
 
 macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn)
 macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn)
+
+
+
+
+
 
 
 
