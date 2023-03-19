@@ -109,7 +109,7 @@ var interpreter : Interpreter #needs to be global so it can be accesed from cdec
 proc getValueFromPropInFn[T](context: UObjectPtr, stack: var FFrame) : T = 
   #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (which we dont)
 
-  var paramValue {.inject.} : int #Define the param
+  var paramValue {.inject.} : T #Define the param
   var paramAddr = cast[pointer](paramValue.addr) #Cast the Param with   
   if not stack.code.isNil():
       stack.step(context, paramAddr)
@@ -138,7 +138,8 @@ proc implementBorrow() =
 
         if prop.isInt() or prop.isObjectBased(): #ints a pointers 
           args[propName] = getValueFromPropInFn[int](context, stack).toJson()
-                  
+        if prop.isFloat():
+          args[propName] = getValueFromPropInFn[float](context, stack).toJson()
         #ahora solo hay un entero
       let ueFunc = UEFunc( className: borrowInfo.className, name: borrowInfo.getUFuncName())
       let ueCall = $makeUECall(makeUEFunc(borrowInfo.getUFuncName(), borrowInfo.className), context, args).toJson()

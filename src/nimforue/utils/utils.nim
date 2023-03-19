@@ -215,3 +215,13 @@ proc deleteCpp*[T](val : ptr T ) : void  =
 proc tryGetJson*[T](json:JsonNode, key:string) : Option[T] =
   if json.hasKey(key): some(json[key].jsonTo(T))
   else: none[T]()
+
+
+#small macros
+template measureTime*(name: static string, body: untyped) =
+  let starts = times.now()
+  body
+  let ends = (times.now() - starts)
+  UE_Log (name & " took " & $ends & "  seconds")
+
+

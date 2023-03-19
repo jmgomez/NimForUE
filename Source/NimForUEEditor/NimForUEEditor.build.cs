@@ -18,7 +18,7 @@ public class NimForUEEditor : ModuleRules
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			"Kismet",
-			"BlueprintGraph",
+			"BlueprintGraph","ToolMenus", "Projects"
 		});
 		
 	}

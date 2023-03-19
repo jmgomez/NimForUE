@@ -73,3 +73,19 @@ proc getCursorPos*(cursorLocation:FViewportCursorLocation) : FIntPoint {.importc
 
 proc `$`*(cursorLocation:FViewportCursorLocation) : string =
   "Origin: " & $cursorLocation.getOrigin() & " Direction: " & $cursorLocation.getDirection() & " CursorPos: " & $cursorLocation.getCursorPos()
+
+
+
+
+  #[
+     UToolMenu* AssetsToolBar = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar.AssetsToolBar");
+        if (AssetsToolBar) {
+            FToolMenuSection& Section = AssetsToolBar->AddSection("Content");
+            FToolMenuEntry LaunchPadEntry = FToolMenuEntry::InitToolBarButton("DA", FUIAction(FExecuteAction::CreateStatic(&FLaunchPadSystem::Launch)),        //FDALevelToolbarCommands::Get().OpenLaunchPad,
+                                                                                    LOCTEXT("DAToolbarButtonText_1", "Dungeon Architect"),
+                                                                                    LOCTEXT("DAToolbarButtonTooltip", "Dungeon Architect Launch Pad"),
+                                                                                    FSlateIcon(FDungeonArchitectStyle::GetStyleSetName(), TEXT("DungeonArchitect.Toolbar.IconMain")));
+            LaunchPadEntry.StyleNameOverride = "CalloutToolbar";
+            Section.AddEntry(LaunchPadEntry);
+        }
+  ]#
