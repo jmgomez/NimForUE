@@ -383,6 +383,8 @@ type
   UEnhancedPlayerInputPtr* = ptr UEnhancedPlayerInput
   FEnhancedInputActionEventBinding*  {. importcpp, inheritable, pure.} = object
   FInputActionValue* {.importcpp .} = object
+    #value (protected) : FVector3
+    
   FKeyEvent* {.importcpp .} = object
   FkeyEventPtr* = ptr FKeyEvent
 

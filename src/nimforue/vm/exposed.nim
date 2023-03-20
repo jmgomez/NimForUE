@@ -80,3 +80,6 @@ type UEBorrowInfo* = object
 #eventually this will be json
 proc setupBorrowInterop*(borrowInfo:string) = discard #override
 proc setupBorrow*(borrowInfo:UEBorrowInfo) = setupBorrowInterop($borrowInfo.toJson())
+
+
+

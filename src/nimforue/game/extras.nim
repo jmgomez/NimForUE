@@ -43,7 +43,6 @@ proc subscribeToTick() : FTickerDelegateHandle =
   let tickerDel : FTickerDelegate = createStatic[bool, float32](tickPoll)
   let handle = (getCoreTicker()[]).addTicker(tickerDel, 0)
   handle
- 
 
 let tickHandle = subscribeToTick()
 

@@ -80,31 +80,36 @@ proc setPropWithValueInMemoryBlock*(prop : FPropertyPtr, memoryRegion:ByteAddres
       setPropWithValueInMemoryBlock(paramProp, structMemoryRegion, val, allocatedStrings)
 
 proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAddress) : JsonNode = 
-  result = newJNull()
-  let returnSize = prop.getSize()
-  let returnMemoryBlock = cast[pointer](returnMemoryRegion)
-  if prop.isFString():
-    var returnValue = f""
-    copyMem(addr returnValue, returnMemoryBlock, returnSize)
-    result = newJString(returnValue)
-  if prop.isInt() or prop.isObjectBased():
-    var returnValue = 0
-    copyMem(addr returnValue, returnMemoryBlock, returnSize)
-    result = newJInt(returnValue)
-  if prop.isFloat():
-    var returnValue = 0.0
-    copyMem(addr returnValue, returnMemoryBlock, returnSize)
-    result = newJFloat(returnValue)
-  if prop.isStruct():
-    let structProp = castField[FStructProperty](prop)
-    let scriptStruct = structProp.getScriptStruct()
-    let structProps = scriptStruct.getFPropsFromUStruct()
-    let structMemoryRegion = returnMemoryRegion #same but keeping it for clarity/simmetry
-    result = newJObject()
-    for paramProp in structProps:
-      let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches
-      let value = getValueFromPropMemoryBlock(paramProp, structMemoryRegion + paramProp.getOffset())
-      result[name] = value
+  try:
+    result = newJNull()
+    let returnSize = prop.getSize()
+    let returnMemoryBlock = cast[pointer](returnMemoryRegion)
+    if prop.isFString():
+      var returnValue = f""
+      copyMem(addr returnValue, returnMemoryBlock, returnSize)
+      result = newJString(returnValue)
+    if prop.isInt() or prop.isObjectBased():
+      var returnValue = 0
+      copyMem(addr returnValue, returnMemoryBlock, returnSize)
+      result = newJInt(returnValue)
+    if prop.isFloat():
+      var returnValue = 0.0
+      copyMem(addr returnValue, returnMemoryBlock, returnSize)
+      result = newJFloat(returnValue)
+    if prop.isStruct():
+      let structProp = castField[FStructProperty](prop)
+      let scriptStruct = structProp.getScriptStruct()
+      let structProps = scriptStruct.getFPropsFromUStruct()
+      let structMemoryRegion = returnMemoryRegion #same but keeping it for clarity/simmetry
+      result = newJObject()
+      for paramProp in structProps:
+        let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches
+        let value = getValueFromPropMemoryBlock(paramProp, structMemoryRegion + paramProp.getOffset())
+        result[name] = value
+  except:
+    UE_Error "Error getting value from prop memory block " & $prop.getName() 
+    UE_Error getCurrentExceptionMsg()
+    UE_Error getStackTrace()    
   
 func isStatic*(fn : UFunctionPtr) : bool = FUNC_Static in fn.functionFlags
 
@@ -128,8 +133,13 @@ proc uCall*(call : UECall) : JsonNode =
     var allocatedStrings = makeTArray[pointer]()
     #TODO check return param and out params
     for paramProp in propParams:
-      let paramValue = call.value[paramProp.getName()]
-      setPropWithValueInMemoryBlock(paramProp, memoryBlockAddr, paramValue, allocatedStrings)
+      try:
+        let paramValue = call.value[paramProp.getName()]
+        setPropWithValueInMemoryBlock(paramProp, memoryBlockAddr, paramValue, allocatedStrings)
+      except:
+       UE_Error "Error setting the value in  " & $paramProp.getName()  & " for " & $fn.getName()
+       UE_Error getCurrentExceptionMsg()
+       UE_Error getStackTrace()    
 
     self.processEvent(fn, memoryBlock)
 

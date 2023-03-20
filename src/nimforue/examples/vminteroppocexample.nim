@@ -4,7 +4,7 @@ import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
 import std/[json, jsonutils, sequtils, options, sugar, enumerate]
 
 import ../vm/uecall
-
+import ../test/testutils
 
 uClass UObjectPOC of UObject:
   (BlueprintType)
@@ -83,7 +83,7 @@ uClass UObjectPOC of UObject:
 
 ]#
 
-#TODO: Move all of this to ueTests 
+
 
 uClass AActorPOCVMTest of AActor:
   (BlueprintType)

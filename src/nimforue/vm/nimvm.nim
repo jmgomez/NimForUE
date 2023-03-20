@@ -19,6 +19,8 @@ type
 
 
 
+
+
 proc onInterpreterError(config: ConfigRef, info: TLineInfo, msg: string, severity : Severity)  {.gcsafe.}  = 
   if severity == Severity.Error and config.error_counter >= config.error_max:
     var fileName: string
@@ -130,25 +132,43 @@ proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) :
       UE_Log &"All exported funcs: {borrowTable}"
       return
     #TODO pass params as json to vm call (from stack but review how it's done in uebind)
-    var args = newJObject()
-    let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())  
-    for prop in propParams:
-      let propName = prop.getName().firstToLow()
-      let nimTypeStr = getNimTypeAsStr(prop, context).toJson()
+    try:
+      var args = newJObject()
+      let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())  
+      for prop in propParams:
+        let propName = prop.getName().firstToLow()
+        let nimTypeStr = getNimTypeAsStr(prop, context).toJson()
 
-      if prop.isInt() or prop.isObjectBased(): #ints a pointers 
-        args[propName] = getValueFromPropInFn[int](context, stack).toJson()
-      if prop.isFloat():
-        args[propName] = getValueFromPropInFn[float](context, stack).toJson()
-      #ahora solo hay un entero
-    let ueCall = $makeUECall(makeUEFunc(borrowInfo.fnName, borrowInfo.className), context, args).toJson()
-    let res = interpreter.callRoutine(vmFn, [newStrNode(nkStrLit, ueCall)])
+        if prop.isInt() or prop.isObjectBased(): #ints a pointers 
+          args[propName] = getValueFromPropInFn[int](context, stack).toJson()
+        if prop.isFloat():
+          args[propName] = getValueFromPropInFn[float](context, stack).toJson()
+        
+        if prop.isStruct():
+          let structProp = castField[FStructProperty](prop)
+          let scriptStruct = structProp.getScriptStruct()
+          let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
+          if structProps.any():                     
+            let structValPtr = getValueFromPropInFn[pointer](context, stack) #TODO stepIn should be enough
+            args[propName] = getValueFromPropMemoryBlock(structProp, cast[ByteAddress](stack.mostRecentPropertyAddress))
+          else:
+             UE_Warn &" {scriptStruct.getName()} struct `{propName}` prop doesnt have any props"    
+             args[propName] = newJObject() #Not sure if we should query a table for global structs. But so far only FInputActionValue has this issue
 
-    let returnProp = fn.getReturnProperty()
-    if fn.doesReturn():
-      let json = parseJson(res.strVal)
-      var allocated = makeTArray[pointer]()
-      setPropWithValueInMemoryBlock(returnProp, cast[ByteAddress](returnResult), json, allocated, 0)
+        #ahora solo hay un entero
+      let ueCall = $makeUECall(makeUEFunc(borrowInfo.fnName, borrowInfo.className), context, args).toJson()
+
+      let res = interpreter.callRoutine(vmFn, [newStrNode(nkStrLit, ueCall)])
+
+      let returnProp = fn.getReturnProperty()
+      if fn.doesReturn():
+        let json = parseJson(res.strVal)
+        var allocated = makeTArray[pointer]()
+        setPropWithValueInMemoryBlock(returnProp, cast[ByteAddress](returnResult), json, allocated, 0)
+    except:
+      UE_Error &"error calling {borrowInfo.fnName} in script"
+      UE_Error getCurrentExceptionMsg()
+      UE_Error getStackTrace()
     #TODO return value
 
 
