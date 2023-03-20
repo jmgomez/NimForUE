@@ -8,7 +8,7 @@ import emitter
 import ../codegen/modulerules
 import ../codegen/modelconstructor
 import headerparser
-const fnPrefixes = @["", "Receive", "K2_", "BP_"]
+const fnPrefixes* = @["", "Receive", "K2_", "BP_"]
 
 
 

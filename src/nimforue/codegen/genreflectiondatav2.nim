@@ -7,13 +7,6 @@ import projectinstrospect
 
 
 
-template measureTime*(name: static string, body: untyped) =
-  let starts = now()
-  body
-  let ends = (now() - starts)
-  UE_Log (name & " took " & $ends & "  seconds")
-
-
 
 
 

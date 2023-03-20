@@ -87,18 +87,18 @@ proc implementBaseFunctions(interpreter:Interpreter) =
 type UEBorrowInfo = object
   fnName: string #nimName 
   className : string
+  ueActualName : string #in case it has Received or some other prefix
 
 
-func getUFuncName*(info: UEBorrowInfo): string = info.fnName.capitalizeASCII()
 
-func getVMImplFuncName*(info : UEBorrowInfo): string = info.fnName & "VmImpl"
+func getVMImplFuncName*(info : UEBorrowInfo): string = (info.fnName & "VmImpl")
 
-func getBorrowKey*(info: UEBorrowInfo): string = info.className & info.getUFuncName()
-func getBorrowKey*(fn: UFunctionPtr) : string = fn.getOuter().getName() & fn.getName()
 
 # var borrowedFns = newSeq[UFunctionNativeSignature]()
 var borrowTable = newTable[string, UEBorrowInfo]() 
-var lastBorrow : UEBorrowInfo #last/current borrow info asked to be implemented
+
+func getBorrowKey*(fn: UFunctionPtr) : string =  fn.getOuter().getName() & fn.getName()
+
 #[
   [] Functions are being replaced, we need to store them with a table. 
 ]#
@@ -119,64 +119,63 @@ proc getValueFromPropInFn[T](context: UObjectPtr, stack: var FFrame) : T =
       stepExplicitProperty(stack, paramAddr, prop)
   paramValue
 
-proc implementBorrow() = 
-  proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) : void {.cdecl.} =
-      stack.increaseStack()
-      let fn = stack.node
-      let borrowKey = fn.getBorrowKey()
-      let borrowInfo = borrowTable[borrowKey]
-      let vmFn = interpreter.selectRoutine(borrowInfo.getVMImplFuncName)
-      if vmFn.isNil():
-        UE_Error &"script does not export a proc of the name: {borrowInfo.fnName}"
-        return
-      #TODO pass params as json to vm call (from stack but review how it's done in uebind)
-      var args = newJObject()
-      let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())  
-      for prop in propParams:
-        let propName = prop.getName().firstToLow()
-        let nimTypeStr = getNimTypeAsStr(prop, context).toJson()
-
-        if prop.isInt() or prop.isObjectBased(): #ints a pointers 
-          args[propName] = getValueFromPropInFn[int](context, stack).toJson()
-        if prop.isFloat():
-          args[propName] = getValueFromPropInFn[float](context, stack).toJson()
-        #ahora solo hay un entero
-      let ueFunc = UEFunc( className: borrowInfo.className, name: borrowInfo.getUFuncName())
-      let ueCall = $makeUECall(makeUEFunc(borrowInfo.getUFuncName(), borrowInfo.className), context, args).toJson()
-      let res = interpreter.callRoutine(vmFn, [newStrNode(nkStrLit, ueCall)])
-
-      let returnProp = fn.getReturnProperty()
-      if fn.doesReturn():
-        let json = parseJson(res.strVal)
-        var allocated = makeTArray[pointer]()
-        setPropWithValueInMemoryBlock(returnProp, cast[ByteAddress](returnResult), json, allocated, 0)
-      #TODO return value
-  
-  #At this point it will be the last added or not because it can be updated
-  #But let's assume it's the case (we could use a stack or just store the last one separatedly)
-  let cls = getClassByName(lastBorrow.className)
-  if cls.isNil():
-    UE_Error &"could not find class {lastBorrow.className}"
-    return
-
-  let ueBorrowUFunc = cls.findFunctionByName(n lastBorrow.getUFuncName())
-  if ueBorrowUFunc.isNil(): 
-      UE_Error &"could not find function { lastBorrow.getUFuncName()} in class {lastBorrow.className}"
+proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) : void {.cdecl.} =
+    stack.increaseStack()
+    let fn = stack.node
+    let borrowKey = fn.getBorrowKey()
+    let borrowInfo = borrowTable[borrowKey]
+    let vmFn = interpreter.selectRoutine(borrowInfo.getVMImplFuncName)
+    if vmFn.isNil():
+      UE_Error &"script does not export a proc of the name: {borrowInfo.fnName}"
+      UE_Log &"All exported funcs: {borrowTable}"
       return
+    #TODO pass params as json to vm call (from stack but review how it's done in uebind)
+    var args = newJObject()
+    let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())  
+    for prop in propParams:
+      let propName = prop.getName().firstToLow()
+      let nimTypeStr = getNimTypeAsStr(prop, context).toJson()
 
-  #notice we could store the prev version to restore it later on 
-  ueBorrowUFunc.setNativeFunc((cast[FNativeFuncPtr](borrowImpl)))
+      if prop.isInt() or prop.isObjectBased(): #ints a pointers 
+        args[propName] = getValueFromPropInFn[int](context, stack).toJson()
+      if prop.isFloat():
+        args[propName] = getValueFromPropInFn[float](context, stack).toJson()
+      #ahora solo hay un entero
+    let ueCall = $makeUECall(makeUEFunc(borrowInfo.fnName, borrowInfo.className), context, args).toJson()
+    let res = interpreter.callRoutine(vmFn, [newStrNode(nkStrLit, ueCall)])
+
+    let returnProp = fn.getReturnProperty()
+    if fn.doesReturn():
+      let json = parseJson(res.strVal)
+      var allocated = makeTArray[pointer]()
+      setPropWithValueInMemoryBlock(returnProp, cast[ByteAddress](returnResult), json, allocated, 0)
+    #TODO return value
+
 
 
 proc setupBorrow(interpreter:Interpreter) = 
   interpreter.implementRoutine("*", "exposed", "setupBorrowInterop", proc(a: VmArgs) =
-          {.cast(noSideEffect).}:
-            let borrowInfo = a.getString(0).parseJson().jsonTo(UEBorrowInfo)
-            let borrowKey = borrowInfo.getBorrowKey()
-            borrowTable.addOrUpdate(borrowKey, borrowInfo)
-            lastBorrow = borrowInfo
-            implementBorrow()
-        )
+    {.cast(noSideEffect).}:
+      let borrowInfo = a.getString(0).parseJson().jsonTo(UEBorrowInfo)
+    
+      
+      #At this point it will be the last added or not because it can be updated
+      #But let's assume it's the case (we could use a stack or just store the last one separatedly)
+      let cls = getClassByName(borrowInfo.className)
+      if cls.isNil():
+        UE_Error &"could not find class {borrowInfo.className}"
+        return
+
+      let ueBorrowUFunc = cls.findFunctionByNameWithPrefixes(borrowInfo.fnName.capitalizeAscii())
+      if ueBorrowUFunc.isNone(): 
+          UE_Error &"could not find function { borrowInfo.fnName} in class {borrowInfo.className}"
+          return
+      
+      let borrowKey = ueBorrowUFunc.get.getBorrowKey()
+      borrowTable.addOrUpdate(borrowKey, borrowInfo)
+      #notice we could store the prev version to restore it later on 
+      ueBorrowUFunc.get.setNativeFunc((cast[FNativeFuncPtr](borrowImpl)))
+  )
 
 
 

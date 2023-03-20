@@ -43,10 +43,12 @@ void UEditorExtensions::AddReloadScriptButtom() {
 				UFunction* ReloadScript = NimVmManager->FindFunctionByName("ReloadScript");
 				if (!ReloadScript) return;
 				NimVmManager->GetDefaultObject()->ProcessEvent(ReloadScript, nullptr);
-			})),        //FDALevelToolbarCommands::Get().OpenLaunchPad,
-			LOCTEXT("NimForUEScriptEditor_1", "Reload NimScript"),
+			})),       //FDALevelToolbarCommands::Get().OpenLaunchPad,
+			// LOCTEXT("NimForUEScriptEditor_1", "Reload NimScript"),
+			TAttribute<FText>(),
 			LOCTEXT("NimForUEScriptEditor_Tooltip", "Reload the script defined in the NimVM"),
 			FSlateIcon("NimForUEStyleSet", "NimForUE.Toolbar.NimScripReload"));
+	
 																					
 		LaunchPadEntry.StyleNameOverride = "CalloutToolbar";
 		Section.AddEntry(LaunchPadEntry);

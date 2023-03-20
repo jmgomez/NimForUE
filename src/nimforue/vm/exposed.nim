@@ -75,6 +75,7 @@ proc newUObject*[T](owner : UObjectPtr = UObjectPtr(0)) : T =
 type UEBorrowInfo* = object
   fnName*: string
   className* : string
+  ueActualName* : string
 
 #eventually this will be json
 proc setupBorrowInterop*(borrowInfo:string) = discard #override
