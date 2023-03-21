@@ -36,7 +36,7 @@ uClass AUEBorrowTestActor of AActor:
 
   ufuncs(CallInEditor):
     proc callSalute() = 
-      salute()
+      callFuncWithNoArg()
     proc replaceAdHoc() = 
       let saluteFn = staticClass(UObjectPOC).getFuncsFromClass.first(fn => fn.getName()  == "Salute")
       for fn in staticClass(UObjectPOC).getFuncsFromClass():

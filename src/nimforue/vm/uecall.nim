@@ -98,7 +98,7 @@ proc setProp(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
     else:
       setPropertyValue(prop, memoryBlock, rtField.floatVal)
   of String:
-    setPropertyValue(prop, memoryBlock, rtField.stringVal)
+    setPropertyValue(prop, memoryBlock, makeFString rtField.stringVal)
   of Struct:
     # for (key, value) in rtField.structVal:
     #   let innerProp = prop.getInnerProp(key)
@@ -106,6 +106,12 @@ proc setProp(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
     discard
   # of Object:
   #   setPropertyValue(prop, memoryBlock, rtField.intVal)
+
+proc getProp(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField = 
+  if prop.isInt() or prop.isObjectBased():
+    result.kind = Int
+    copyMem(addr result.intVal, memoryBlock, prop.getSize())  
+
 
 # proc jsonToRuntimeObject*(json:JsonNode) : RuntimeObject = 
 #   for key, value in json.fields:
@@ -226,12 +232,14 @@ proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAd
   
 func isStatic*(fn : UFunctionPtr) : bool = FUNC_Static in fn.functionFlags
 
-proc uCall*(call : UECall) : JsonNode = 
-  result = newJNull()
+proc uCall*(call : UECall) : Option[RuntimeField] = 
+  result = none(RuntimeField)
+  
   let fn = getClassByName(call.fn.className.removeFirstLetter()).findFunctionByName(n call.fn.name.capitalizeAscii())
   if fn.isNil():
     UE_Error "uCall: Function " & $call.fn.name & " not found in class " & $call.fn.className
-    
+    return result
+
   let self = 
     if fn.isStatic():
       getDefaultObjectFromClassName(call.fn.className.removeFirstLetter())
@@ -269,7 +277,7 @@ proc uCall*(call : UECall) : JsonNode =
       let returnProp = fn.getReturnProperty()
       let returnOffset = fn.returnValueOffset
       var returnMemoryRegion = memoryBlockAddr + returnOffset.int
-      result = getValueFromPropMemoryBlock(returnProp, returnMemoryRegion)
+      result = some(getProp(returnProp, cast[pointer](returnMemoryRegion)))
 
     dealloc(memoryBlock)
     for str in allocatedStrings:

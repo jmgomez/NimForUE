@@ -16,26 +16,27 @@ uClass UObjectPOC of UObject:
     proc instanceFuncWithOneArgAndReturnTest(arg : int) : FVector = FVector(x:arg.float32, y:arg.float32, z:arg.float32)
 
   ufuncs(Static):
-    proc salute() = 
+    proc callFuncWithNoArg() = 
       UE_Log "Hola from UObjectPOC"
-    proc saluteWithOneArg(arg : int) = 
+    proc callFuncWithOneIntArg(arg : int) = 
       UE_Log "Hola from UObjectPOC with arg: " & $arg
-    proc saluteWithOneArgStr(arg : FString) = 
+    proc callFuncWithOneStrArg(arg : FString) = 
       UE_Log "Hola from UObjectPOC with arg: " & $arg
-    proc saluteWithTwoArgs(arg1 : int, arg2 : int) = 
+    proc callFuncWithTwoIntArg(arg1 : int, arg2 : int) = 
       UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
-    proc saluteWithTwoDifferentArgs(arg1 : FString, arg2 : FString) = 
+    proc callFuncWithTwoStrArg(arg1 : FString, arg2 : FString) = 
       UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
-    proc saluteWitthTwoDifferentIntSizes(arg1 : int32, arg2 : int64) = 
+    proc callFuncWithInt32Int64Arg(arg1 : int32, arg2 : int64) = 
       UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
     proc saluteWitthTwoDifferentIntSizes2(arg1 : int64, arg2 : int32) = 
       UE_Log "Hola from UObjectPOC with arg1: " & $arg1 & " and arg2: " & $arg2
-    proc printObjectName(obj:UObjectPtr) = 
+    proc callFuncWithOneObjPtrArg(obj:UObjectPtr) = 
       UE_Log "Object name: " & $obj.getName()
-    proc printObjectNameWithSalute(obj:UObjectPtr, salute : FString) = 
+    proc callFuncWithObjPtrStrArg(obj:UObjectPtr, salute : FString) = 
       UE_Log "Object name: " & $obj.getName() & " Salute: " & $salute
-    proc printObjectAndReturn(obj:UObjectPtr) : int = 
+    proc callFuncWithObjPtrArgReturnInt(obj:UObjectPtr) : int = 
       UE_Log "Object name: " & $obj.getName() 
+      UE_Log "Object addr: " & $cast[int](obj)
       10
     proc printObjectAndReturnPtr(obj:UObjectPtr) : UObjectPtr = 
       UE_Log "Object name: " & $obj.getName() 
@@ -133,69 +134,63 @@ uClass ANimTestBase of AActor:
 uClass AActorPOCVMTest of ANimTestBase:
   (BlueprintType)
   ufuncs(CallInEditor):
-    # proc test1() = 
-    #   let callData = UECall( fn: makeUEFunc("salute", "UObjectPOC"))
-    #   discard uCall(callData)
-    #   check true == false
-    # proc test2() =
-    #   let callData = UECall(
-    #       fn: makeUEFunc("saluteWithOneArg", "UObjectPOC"),
-    #       value: (arg: 10).toJson()
-    #     )
-    #   discard uCall(callData)
-    # proc test21() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("saluteWithOneArgStr", "UObjectPOC"),
-    #       value: (arg: "10 cadena").toJson()
-    #     )
-    #   discard uCall(callData)
+    proc testCallFuncWithNoArg() = 
+      let callData = UECall( fn: makeUEFunc("callFuncWithNoArg", "UObjectPOC"))
+      discard uCall(callData)
+    proc testCallFuncWithOneIntArg() =
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithOneIntArg", "UObjectPOC"),
+          value: (arg: 10).toRuntimeField()
+        )
+      discard uCall(callData)
+    proc testCallFuncWithOneStrArg() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithOneStrArg", "UObjectPOC"),
+          value: (arg: "10 cadena").toRuntimeField()
+        )
+      discard uCall(callData)
 
-    # proc test23() =
-    #   let callData = UECall(
-    #       fn: makeUEFunc("saluteWithTwoDifferentArgs", "UObjectPOC"),
-    #       value: (arg1: "10 cadena", arg2: "Hola").toJson()
-    #     )
-    #   discard uCall(callData)
-    # proc test24() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("saluteWitthTwoDifferentIntSizes", "UObjectPOC"),
-    #       value: (arg1: 10, arg2: 10).toJson()
-    #     )
-    #   discard uCall(callData)
+    proc testCallFuncWithTwoStrArg() =
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithTwoStrArg", "UObjectPOC"),
+          value: (arg1: "10 cadena", arg2: "Hola").toRuntimeField()
+        )
+      discard uCall(callData)
+    proc testCallFuncWithTwoIntArg() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithTwoIntArg", "UObjectPOC"),
+          value: (arg1: 10, arg2: 10).toRuntimeField()
+        )
+      discard uCall(callData)
 
-    # proc test25() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("saluteWitthTwoDifferentIntSizes2", "UObjectPOC"),
-    #       value: (arg1: 15, arg2: 10).toJson()
-    #     )
-    #   discard uCall(callData)
+    proc testCallFuncWithInt32Int64Arg() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithInt32Int64Arg", "UObjectPOC"),
+          value: (arg1: 15, arg2: 10).toRuntimeField()
+        )
+      discard uCall(callData)
 
+    proc testCallFuncWithOneObjPtrArg() =
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithOneObjPtrArg", "UObjectPOC"),
+          value: (obj: cast[int](self)).toRuntimeField()
+        )
+      discard uCall(callData)
 
-    # proc test3() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("saluteWithTwoArgs", "UObjectPOC"),
-    #       value: (arg1: 10, arg2: 20).toJson()
-    #     )
-    #   discard uCall(callData)
+    proc testCallFuncWithObjPtrStrArg() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithObjPtrStrArg", "UObjectPOC"),
+          value: (obj: cast[int](self), salute: "Hola").toRuntimeField()
+        )
+      discard uCall(callData)
 
-    # proc test4() =
-    #   let callData = UECall(
-    #       fn: makeUEFunc("printObjectName", "UObjectPOC"),
-    #       value: (obj: cast[int](self)).toJson()
-    #     )
-    #   discard uCall(callData)
-    # proc test5() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("printObjectNameWithSalute", "UObjectPOC"),
-    #       value: (obj: cast[int](self), salute: "Hola").toJson()
-    #     )
-    #   discard uCall(callData)
-    # proc test6() =
-    #   let callData = UECall(
-    #       fn: makeUEFunc("printObjectAndReturn", "UObjectPOC"),
-    #       value: (obj: cast[int](self)).toJson()
-    #     )
-    #   UE_Log $uCall(callData)
+    proc testCallFuncWithObjPtrArgReturnInt() =
+      let expected = 10
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithObjPtrArgReturnInt", "UObjectPOC"),
+          value: (obj: cast[int](self)).toRuntimeField()
+        )
+      UE_Log $uCall(callData)
 
     # proc test7() =
     #   let callData = UECall(
