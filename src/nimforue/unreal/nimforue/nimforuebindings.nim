@@ -77,12 +77,16 @@ proc stepCompiledInRef*[T, TProperty ](stack:ptr FFrame, tempBuffer:pointer, ign
 
 type 
     FNimTestBase* {.importcpp, inheritable, pure.} = object
+        testName* {.importcpp: "TestName".} : FString
         ActualTest* : proc (test:var FNimTestBase) : void {.cdecl.}
 
 
+
 proc makeFNimTestBase*(testName:FString): FNimTestBase {.importcpp:"FNimTestBase(#)", constructor.}
+proc makeFNimTestBase*(): FNimTestBase {.importcpp:"FNimTestBase()", constructor.}
 proc reloadTest*(test:FNimTestBase, isOnly:bool):void {.importcpp:"#.ReloadTest(@)".}
 proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.TestTrue(@)".}
+proc unregisterAllNimTests*() : void {.importcpp:"FNimTestBase::UnregisterAll()".} 
 
 
 #TODO This should throw if the property is not found!

@@ -16,6 +16,8 @@ func isTArray*(prop: FPropertyPtr): bool = not castField[FArrayProperty](prop).i
 func isFString*(prop: FPropertyPtr): bool = not castField[FStrProperty](prop).isNil()
 #any kind of float
 func isFloat*(prop: FPropertyPtr): bool = castField[FFloatProperty](prop).isNotNil() or castField[FDoubleProperty](prop).isNotNil()
+func isFloat32*(prop: FPropertyPtr): bool = castField[FFloatProperty](prop).isNotNil()
+func isBool*(prop: FPropertyPtr): bool = castField[FBoolProperty](prop).isNotNil()
 #any kind of int
 func isInt*(prop: FPropertyPtr): bool = castField[FIntProperty](prop).isNotNil() or castField[FInt16Property](prop).isNotNil() or castField[FInt64Property](prop).isNotNil() or castField[FInt8Property](prop).isNotNil() or castField[FUInt16Property](prop).isNotNil() or castField[FUInt32Property](prop).isNotNil() or castField[FUInt64Property](prop).isNotNil()
 #object or cls props

@@ -17,6 +17,7 @@ suite "NimForUE":
         let expectedResult = makeFVector(20, 100, 60)
 
         assert expectedResult == v2
+        assert false == true
 
     suite "TArrays": 
       

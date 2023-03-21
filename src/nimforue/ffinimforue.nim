@@ -117,6 +117,10 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint, loadedFro
 
   else: #Safe to emit types here
     emitTypeFor($libName, $libPath, timesReloaded, loadedFrom)
+    # if $libName == "nimforue" and not isRunningCommandlet():
+    #   registerVmTests() 
+
+  
 
   #1. Works as it worked before
   #2. Make it fail by initializing everything in start

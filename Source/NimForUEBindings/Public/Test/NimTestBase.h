@@ -3,8 +3,9 @@
 
 class NIMFORUEBINDINGS_API FNimTestBase : public FAutomationTestBase {
 
-	FString TestName;
 public:
+	FString TestName;
+
 	static void UnregisterAll(bool bShouldUnregisterOnly=true);
 	inline static TArray<FString> AllRegisteredNimTests = {};
 	inline static FString OnlyExecute = "";
@@ -13,7 +14,11 @@ public:
 		TestName = InName;
 	}
 	
-	FNimTestBase() :FAutomationTestBase("InName", false) {
+	FNimTestBase() : FAutomationTestBase("InName", false) {
+	}
+
+	FNimTestBase(FNimTestBase& TestBase) : FAutomationTestBase(TestBase.TestName, false) {
+		TestName = TestBase.TestName;
 	}
 
 	void (*ActualTest) (FNimTestBase&);
