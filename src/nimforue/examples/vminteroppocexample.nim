@@ -38,14 +38,15 @@ uClass UObjectPOC of UObject:
       UE_Log "Object name: " & $obj.getName() 
       UE_Log "Object addr: " & $cast[int](obj)
       10
-    proc printObjectAndReturnPtr(obj:UObjectPtr) : UObjectPtr = 
+    proc callFuncWithObjPtrArgReturnObjPtr(obj:UObjectPtr) : UObjectPtr = 
       UE_Log "Object name: " & $obj.getName() 
       obj
-    proc printObjectAndReturnStr(obj:UObjectPtr) : FString = 
+    proc callFuncWithObjPtrArgReturnStr(obj:UObjectPtr) : FString = 
       let str = "Object name: " & $obj.getName() 
       UE_Log str
       str
-    proc printVector(vec : FVector) = 
+    
+    proc callFuncWithOneFVectorArg(vec : FVector) = 
       UE_Log "Vector: " & $vec
 
 
@@ -192,26 +193,30 @@ uClass AActorPOCVMTest of ANimTestBase:
         )
       UE_Log $uCall(callData)
 
-    # proc test7() =
-    #   let callData = UECall(
-    #       fn: makeUEFunc("printObjectAndReturnPtr", "UObjectPOC"),
-    #       value: (obj: cast[int](self)).toJson()
-    #     )
-    #   let objAddr = uCall(callData).jsonTo(int)
-    #   let obj = cast[UObjectPtr](objAddr)
-    #   UE_Log $obj
-    # proc test8() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("printObjectAndReturnStr", "UObjectPOC"),
-    #       value: (obj: cast[int](self)).toJson()
-    #     )
-    #   UE_Log $uCall(callData).jsonTo(string)
-    # proc test9() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("printVector", "UObjectPOC"),
-    #       value: (vec:FVector(x:12, y:10)).toJson()
-    #     )
-    #   UE_Log  $uCall(callData).jsonTo(string)
+    proc testCallFuncWithObjPtrArgReturnObjPtr() =
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithObjPtrArgReturnObjPtr", "UObjectPOC"),
+          value: (obj: cast[int](self)).toRuntimeField()
+        )
+      let objAddr = uCall(callData).get(RuntimeField(kind:Int)).getInt()
+      let obj = cast[UObjectPtr](objAddr)
+      UE_Log $obj
+
+    proc testCallFuncWithObjPtrArgReturnStr() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithObjPtrArgReturnStr", "UObjectPOC"),
+          value: (obj: cast[int](self)).toRuntimeField()
+        )
+      let str = uCall(callData).get(RuntimeField(kind:String)).getStr()
+      UE_Log "Returned string is " & str
+      
+
+    proc testCallFuncWithOneFVectorArg() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithOneFVectorArg", "UObjectPOC"),
+          value: (vec:FVector(x:12, y:10)).toRuntimeField()
+        )
+      discard uCall(callData)
 
     # proc test10() = 
     #   let callData = UECall(

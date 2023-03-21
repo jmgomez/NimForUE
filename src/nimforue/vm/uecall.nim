@@ -10,7 +10,7 @@ type
     Int, Float, String, Struct,# Seq, Object
   
   RuntimeField* = object
-    case kind: FieldKind
+    case kind*: FieldKind
     of Int:
       intVal: int
     of Float:
@@ -32,6 +32,34 @@ type
     self* : int
     value* : RuntimeField #On uebind [name] = value #let's just do runtimeFields only for now and then we can put an object in here, although a field may contain an object
 
+func getInt*(rtField : RuntimeField) : int = 
+  case rtField.kind:
+  of Int:
+    return rtField.intVal
+  else:
+    raise newException(ValueError, "rtField is not an int")
+
+func getFloat*(rtField : RuntimeField) : float =
+  case rtField.kind:
+  of Float:
+    return rtField.floatVal
+  else:
+    raise newException(ValueError, "rtField is not a float")
+
+func getStr*(rtField : RuntimeField) : string =
+  case rtField.kind:
+  of String:
+    return rtField.stringVal
+  else:
+    raise newException(ValueError, "rtField is not a string")
+
+func getStruct*(rtField : RuntimeField) : RuntimeStruct =
+  case rtField.kind:
+  of Struct:
+    return rtField.structVal
+  else:
+    raise newException(ValueError, "rtField is not a struct")
+
 
 func `[]`*(rtField : RuntimeField, name : string) : RuntimeField = 
   case rtField.kind:
@@ -42,6 +70,17 @@ func `[]`*(rtField : RuntimeField, name : string) : RuntimeField =
     raise newException(ValueError, "Field " & name & " not found in struct")
   else:
     raise newException(ValueError, "rtField is not a struct")
+
+# func `[]=`*(rtField : var RuntimeField, name : string, value : RuntimeField) = 
+#   case rtField.kind:
+#   of Struct:
+#     for (key, val) in rtField.structVal:
+#       if key == name:
+#         val = value
+#         return
+#     raise newException(ValueError, "Field " & name & " not found in struct")
+#   else:
+#     raise newException(ValueError, "rtField is not a struct"
 
 func contains*(rtField : RuntimeField, name : string) : bool = 
   case rtField.kind:
@@ -54,11 +93,11 @@ func contains*(rtField : RuntimeField, name : string) : bool =
     raise newException(ValueError, "rtField is not a struct")
 
 func toRuntimeField*[T](value : T) : RuntimeField = 
-  let typeName = typeof(T).name
-  when T is int:
+  const typeName = typeof(T).name
+  when T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64:
     result.kind = Int
     result.intVal = value
-  elif T is float:
+  elif T is float | float32 | float64:
     result.kind = Float
     result.floatVal = value
   elif T is string:
@@ -69,7 +108,9 @@ func toRuntimeField*[T](value : T) : RuntimeField =
     for name, val in fieldPairs(value):
       result.structVal.add((name, toRuntimeField(val)))
   else:
-    raise newException(ValueError, &"Unsupported {typename} type for RuntimeField ")
+    UE_Error &"Unsupported {typeName} type for RuntimeField "
+    RuntimeField()
+    # raise newException(ValueError, &"Unsupported {typename} type for RuntimeField ")
 
 
 proc makeUEFunc*(name, className : string) : UEFunc = 
@@ -86,7 +127,7 @@ proc makeUECall*(fn : UEFunc, self : UObjectPtr, value : RuntimeField) : UECall 
   result.self = cast[int](self)
   result.value = value
 
-proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAddress) : JsonNode 
+# proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAddress) : JsonNode 
 
 proc setProp(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   case rtField.kind
@@ -100,9 +141,19 @@ proc setProp(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   of String:
     setPropertyValue(prop, memoryBlock, makeFString rtField.stringVal)
   of Struct:
-    # for (key, value) in rtField.structVal:
-    #   let innerProp = prop.getInnerProp(key)
-    #   setProp(value, innerProp, memoryBlock)
+    let structProp = castField[FStructProperty](prop)
+    let scriptStruct = structProp.getScriptStruct()
+    let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
+    var structMemoryRegion = memoryBlock
+    for paramProp in structProps:
+      let name = paramProp.getName().firstToLow()
+      if name in rtField:
+        let val = rtField[name]
+        val.setProp(paramProp, structMemoryRegion)
+      else:
+        UE_Error &"Field {name} not found in struct"
+
+  else:
     discard
   # of Object:
   #   setPropertyValue(prop, memoryBlock, rtField.intVal)
@@ -111,6 +162,11 @@ proc getProp(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField =
   if prop.isInt() or prop.isObjectBased():
     result.kind = Int
     copyMem(addr result.intVal, memoryBlock, prop.getSize())  
+  elif prop.isFString():
+    result.kind = String
+    var returnValue = f""
+    copyMem(addr returnValue, memoryBlock, prop.getSize())
+    result.stringVal = returnValue
 
 
 # proc jsonToRuntimeObject*(json:JsonNode) : RuntimeObject = 
