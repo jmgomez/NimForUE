@@ -70,7 +70,7 @@ uClass UObjectPOC of UObject:
     proc receiveVectorAndFloat32(dir:FVector, scale:float32) = 
       UE_Error "receiveVectorAndFloat32 " & $dir & " scale:" & $scale
 
-    proc modifyAndReturnVector(vec : FVector) : FVector = 
+    proc callFuncWithOneFVectorArgReturnFVector(vec : FVector) : FVector = 
       var vec = vec
       vec.x = 10 * vec.x
       vec.y = 10 * vec.y
@@ -232,12 +232,12 @@ uClass AActorPOCVMTest of ANimTestBase:
     #     )
     #   UE_Log  $uCall(callData).jsonTo(string)
 
-    # proc test12NoArray() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("modifyAndReturnVector", "UObjectPOC"),
-    #       value: (vec:FVector(x:12, y:10)).toJson()
-    #     )
-    #   UE_Log  $uCall(callData)
+    proc testCallFuncWithOneFVectorArgReturnFVector() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithOneFVectorArgReturnFVector", "UObjectPOC"),
+          value: (vec:FVector(x:12, y:10)).toRuntimeField()
+        )
+      UE_Log  $uCall(callData)
 
     # proc test13NoStatic() = 
     #   let callData = UECall(

@@ -167,6 +167,19 @@ proc getProp(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField =
     var returnValue = f""
     copyMem(addr returnValue, memoryBlock, prop.getSize())
     result.stringVal = returnValue
+  elif prop.isFloat():
+    result.kind = Float
+    copyMem(addr result.floatVal, memoryBlock, prop.getSize())
+  elif prop.isStruct():
+    let structProp = castField[FStructProperty](prop)
+    let scriptStruct = structProp.getScriptStruct()
+    let structProps = scriptStruct.getFPropsFromUStruct()
+    let structMemoryRegion = cast[ByteAddress](memoryBlock)
+    result = RuntimeField(kind:Struct)
+    for paramProp in structProps:
+      let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches
+      let value = getProp(paramProp,  cast[pointer](structMemoryRegion + paramProp.getOffset()))
+      result.structVal.add((name, value))
 
 
 # proc jsonToRuntimeObject*(json:JsonNode) : RuntimeObject = 
