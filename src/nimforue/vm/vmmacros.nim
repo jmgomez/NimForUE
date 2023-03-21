@@ -1,6 +1,6 @@
 import std/[json, jsonutils, macros, genasts, options, sequtils, strutils, strformat]
 import exposed 
-
+import runtimefield
 
 
 proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode = 
@@ -36,13 +36,15 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
     genAst(fnName, funcData, valNode, returnType, returnTypeLit, firstParam, isStatic):
       proc fnName() = 
         when isStatic:
-          let callData = UECall(fn: funcData, value: valNode.toJson()) #No params yet
+          let callData = UECall(fn: funcData, value: valNode.toRuntimeField()) #No params yet
         else:
-          let callData = UECall(fn: funcData, value: valNode.toJson(), self: int(firstParam)) #No params yet
+          let callData = UECall(fn: funcData, value: valNode.toRuntimeField(), self: int(firstParam)) #No params yet
         let returnVal {.used.} = uCall(callData) #check return val
+        log "VM:" & $callData
+        let runtimeField = uCall(callData) #check return val
         #when no return?
         when returnTypeLit != "void":
-          return returnVal.jsonTo(returnType)
+          return returnVal.get.runtimeFieldTo(returnType)
   result.params = fn.params
 
 

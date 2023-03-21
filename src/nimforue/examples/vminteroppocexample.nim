@@ -3,7 +3,8 @@ include ../unreal/prelude
 import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
 import std/[json, jsonutils, sequtils, options, sugar, enumerate, strutils]
 
-import ../vm/uecall
+import ../vm/[runtimefield, uecall]
+
 import ../test/testutils
 
 
@@ -111,6 +112,15 @@ template check*(expr: untyped) =
 
 #maybe the way to go is by raising. Let's do a test to see if we can catch the errors in the actual actor
 
+
+
+proc fromRuntimeFieldHook*(rtField : RuntimeField) : FVector = 
+  var vec = FVector()
+  vec.x = rtField.getStruct()[0][1].getFloat()
+  vec.y = rtField.getStruct()[1][1].getFloat()
+  vec.z = rtField.getStruct()[2][1].getFloat()
+  vec
+
 #Later on this can be an uobject that pulls and the actor will just run them. But this is fine as started point
 uClass ANimTestBase of AActor: 
   ufunc(CallInEditor):
@@ -129,8 +139,6 @@ uClass ANimTestBase of AActor:
         except CatchableError as e:
           UE_Error "Error in test: " & $fn.getName() & " " & $e.msg
          
-
-
 
 uClass AActorPOCVMTest of ANimTestBase:
   (BlueprintType)
@@ -237,7 +245,7 @@ uClass AActorPOCVMTest of ANimTestBase:
           fn: makeUEFunc("callFuncWithOneFVectorArgReturnFVector", "UObjectPOC"),
           value: (vec:FVector(x:12, y:10)).toRuntimeField()
         )
-      UE_Log  $uCall(callData)
+      UE_Log  $(uCall(callData).get().runtimeFieldTo(FVector))
 
     # proc test13NoStatic() = 
     #   let callData = UECall(

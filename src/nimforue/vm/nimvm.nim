@@ -9,7 +9,7 @@ import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
 
 import compiler / [ast, nimeval, vmdef, vm, llstream, types, lineinfos]
 import compiler/options as copt
-import ../vm/[uecall]
+import ../vm/[uecall, runtimefield, vmconversion]
 import ../codegen/[uemeta]
 
 
@@ -18,7 +18,21 @@ type
     info*: TLineInfo
 
 
+proc toRuntimeFieldHook*(value : TFullReg) : RuntimeField = 
+  case value.kind:
+    of rkInt:
+      result = initRuntimeField(value.intVal)
+    of rkFloat:
+      result = initRuntimeField(value.floatVal)
+    of rkNode:
+      result = fromVm(RuntimeField, value.node)
+    else:
+      raise newException(ValueError, &"Unsupported {value} register for RuntimeField ")
 
+
+proc getArg(a: VmArgs, i: int): TFullReg =
+  result = a.slots[i+a.rb+1]
+  
 
 
 proc onInterpreterError(config: ConfigRef, info: TLineInfo, msg: string, severity : Severity)  {.gcsafe.}  = 
@@ -43,12 +57,10 @@ proc implementBaseFunctions(interpreter:Interpreter) =
 
 
   interpreter.implementRoutine("*", "exposed", "uCallInterop", proc (a: VmArgs) =
-      let msg = a.getString(0)
-      let ueCall = msg.parseJson().to(UECall)
+      let ueCall = fromVm(UECall, a.getArg(0).node)
       let result = ueCall.uCall()
-      let json = $result.toJson()
-      setResult(a, json)
-      discard
+      setResult(a, toVm(result))
+     
     )
 
   #This function can be implemented with uebind directly 
@@ -133,38 +145,39 @@ proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) :
       return
     #TODO pass params as json to vm call (from stack but review how it's done in uebind)
     try:
-      var args = newJObject()
-      let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())  
-      for prop in propParams:
-        let propName = prop.getName().firstToLow()
-        let nimTypeStr = getNimTypeAsStr(prop, context).toJson()
+      discard
+    #   var args = newJObject()
+    #   let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())  
+    #   for prop in propParams:
+    #     let propName = prop.getName().firstToLow()
+    #     let nimTypeStr = getNimTypeAsStr(prop, context).toJson()
 
-        if prop.isInt() or prop.isObjectBased(): #ints a pointers 
-          args[propName] = getValueFromPropInFn[int](context, stack).toJson()
-        if prop.isFloat():
-          args[propName] = getValueFromPropInFn[float](context, stack).toJson()
+    #     if prop.isInt() or prop.isObjectBased(): #ints a pointers 
+    #       args[propName] = getValueFromPropInFn[int](context, stack).toJson()
+    #     if prop.isFloat():
+    #       args[propName] = getValueFromPropInFn[float](context, stack).toJson()
         
-        if prop.isStruct():
-          let structProp = castField[FStructProperty](prop)
-          let scriptStruct = structProp.getScriptStruct()
-          let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
-          if structProps.any():                     
-            let structValPtr = getValueFromPropInFn[pointer](context, stack) #TODO stepIn should be enough
-            args[propName] = getValueFromPropMemoryBlock(structProp, cast[ByteAddress](stack.mostRecentPropertyAddress))
-          else:
-             UE_Warn &" {scriptStruct.getName()} struct `{propName}` prop doesnt have any props"    
-             args[propName] = newJObject() #Not sure if we should query a table for global structs. But so far only FInputActionValue has this issue
+    #     if prop.isStruct():
+    #       let structProp = castField[FStructProperty](prop)
+    #       let scriptStruct = structProp.getScriptStruct()
+    #       let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
+    #       if structProps.any():                     
+    #         let structValPtr = getValueFromPropInFn[pointer](context, stack) #TODO stepIn should be enough
+    #         args[propName] = getValueFromPropMemoryBlock(structProp, cast[ByteAddress](stack.mostRecentPropertyAddress))
+    #       else:
+    #          UE_Warn &" {scriptStruct.getName()} struct `{propName}` prop doesnt have any props"    
+    #          args[propName] = newJObject() #Not sure if we should query a table for global structs. But so far only FInputActionValue has this issue
 
         #ahora solo hay un entero
-      let ueCall = $makeUECall(makeUEFunc(borrowInfo.fnName, borrowInfo.className), context, args).toJson()
+      # let ueCall = $makeUECall(makeUEFunc(borrowInfo.fnName, borrowInfo.className), context, args).toJson()
 
-      let res = interpreter.callRoutine(vmFn, [newStrNode(nkStrLit, ueCall)])
+      # let res = interpreter.callRoutine(vmFn, [newStrNode(nkStrLit, ueCall)])
 
-      let returnProp = fn.getReturnProperty()
-      if fn.doesReturn():
-        let json = parseJson(res.strVal)
-        var allocated = makeTArray[pointer]()
-        setPropWithValueInMemoryBlock(returnProp, cast[ByteAddress](returnResult), json, allocated, 0)
+      # let returnProp = fn.getReturnProperty()
+      # if fn.doesReturn():
+      #   let json = parseJson(res.strVal)
+      #   var allocated = makeTArray[pointer]()
+      #   setPropWithValueInMemoryBlock(returnProp, cast[ByteAddress](returnResult), json, allocated, 0)
     except:
       UE_Error &"error calling {borrowInfo.fnName} in script"
       UE_Error getCurrentExceptionMsg()

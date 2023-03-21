@@ -1,5 +1,6 @@
 
-import std/[json, jsonutils, typetraits, strutils, tables]
+import std/[json, jsonutils, typetraits, strutils, tables, options]
+import runtimefield
 proc log*(s:string) : void = discard #overrided
 #TODO move shared types to shared.nim
 type
@@ -11,19 +12,7 @@ type
   AMyActorPtr* =  distinct(int)
   UClassPtr* = distinct(int)
   UObjectPtr* = distinct(int)
-type 
-  UEFunc* = object 
-    name* : string
-    className* : string
-   
-  UECall* = object
-    fn* : UEFunc 
-    self* : int
-    value* : JsonNode 
 
-proc makeUEFunc*(name, className : string) : UEFunc = 
-  result.name = name
-  result.className = className
 
 converter myActorToActor*(actor:AMyActorPtr) : AActorPtr = AActorPtr(int(actor))
 
@@ -45,10 +34,9 @@ proc getName*(obj:UObjectPtr) : string = "overriden" #overrided
 
 
 
-proc uCallInterop(uCall:string) : string = "result" #overrided
+proc uCallInterop(uCall:UECall) : Option[RuntimeField] = none(RuntimeField) #overrided no need anymore, remove interop
 
-
-proc uCall*(uCall:UECall) : JsonNode = uCallInterop($uCall.toJson()).parseJson()
+proc uCall*(uCall:UECall) : Option[RuntimeField] = uCallInterop(uCall)
 
 
 proc getClassByNameInterop(className:string) : UClassPtr = UClassPtr(0) #overrided
