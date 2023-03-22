@@ -51,8 +51,8 @@ var onGameUnloaded* : onGameUnloadedCallback
 when WithEditor:
   proc onUnloadLib() {.exportc, dynlib, cdecl.} =
     if onGameUnloaded.isNotNil():
-      removeTicker(tickHandle)
       onGameUnloaded()
+    removeTicker(tickHandle)
   #This function is requested by the plugin when it load this dll
   #The UEEmitter should also have the package name where it supposed to push
   proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   cast[UEEmitter](addr ueEmitter)
