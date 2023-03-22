@@ -199,16 +199,15 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
       result.kind = Struct
       for name, val in fieldPairs(value):
         result.structVal.add((name, toRuntimeField(val)))
-    elif T is (array):
+    elif T is (array | seq):
       result.kind = Array
       for val in value:
         result.arrayVal.add(toRuntimeField(val))
-      UE_Warn "Array handled here!"
     else:
       when compiles(UE_Error ""):
         UE_Error &"Unsupported {typeName} type for RuntimeField "
       else:
-        debugEcho "ERROR: Unsupported {typeName} type for RuntimeField"
+        debugEcho &"ERROR: Unsupported {typeName} type for RuntimeField"
       RuntimeField()
     # raise newException(ValueError, &"Unsupported {typename} type for RuntimeField ")
 func initRuntimeField*[T](value : T) : RuntimeField = toRuntimeField(value)

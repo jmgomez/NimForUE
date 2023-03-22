@@ -20,8 +20,8 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
 
   let fnName = fn.name
 
-  let returnTypeLit = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal()
-  let returnType = ident returnTypeLit
+  let returnTypeLit = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
+  let returnType = fn.params[0]
 
   let uFunc = UEFunc(name:fnName.strVal(), className:clsName)
   var funcData = newLit uFunc
@@ -64,6 +64,7 @@ proc removeLastLettersIfPtr*(str:string) : string =
 
 
 proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode = 
+  #TODO the first block of code it's exactly the same as bind, unify it
   let argsWithFirstType =
     fn.params
     .filterIt(it.kind == nnkIdentDefs)
@@ -82,8 +83,8 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
   let classTypePtr = if isStatic: newEmptyNode() else: ident (argsWithFirstType[0][1].strVal())
 
 
-  let returnTypeLit = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal()
-  let returnType = ident returnTypeLit
+  let returnTypeLit = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
+  let returnType = fn.params[0]
 
   let fnBody = fn.body
   let fnName = fn.name
@@ -126,7 +127,7 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
 
   let bindFn = ueBindImpl(clsName, fn)
   result = nnkStmtList.newTree(bindFn, vmFn)
-  # log repr result
+  log repr result
       
 
 
