@@ -1,6 +1,6 @@
 import std/[macros, macrocache, sugar, typetraits, importutils]
 import compiler/[renderer, ast, idents]
-import assume/typeit
+import typeit
 
 type
   VMParseError* = object of CatchableError ## Error raised when an object cannot be parsed.

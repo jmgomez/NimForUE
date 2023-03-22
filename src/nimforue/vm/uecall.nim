@@ -18,9 +18,19 @@ proc makeUECall*(fn : UEFunc, self : UObjectPtr, value : RuntimeField) : UECall 
   result.self = cast[int](self)
   result.value = value
 
-# proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAddress) : JsonNode 
+# # proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAddress) : JsonNode 
+# proc fromRuntimeFieldHook*(vec:var FVector, rtField : RuntimeField)  = 
+#   vec.x = rtField.getStruct()[0][1].getFloat()
+#   vec.y = rtField.getStruct()[1][1].getFloat()
+#   vec.z = rtField.getStruct()[2][1].getFloat()
+  
+# proc fromRuntimeFieldHook*(rot:var FRotator, rtField : RuntimeField)  = 
+#   rot.roll = rtField.getStruct()[0][1].getFloat()
+#   rot.yaw = rtField.getStruct()[1][1].getFloat()
+#   rot.pitch = rtField.getStruct()[2][1].getFloat()
 
-proc setProp(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
+
+proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   case rtField.kind
   of Int:
     setPropertyValue(prop, memoryBlock, rtField.getInt)
@@ -44,12 +54,8 @@ proc setProp(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
       else:
         UE_Error &"Field {name} not found in struct"
 
-  else:
-    discard
-  # of Object:
-  #   setPropertyValue(prop, memoryBlock, rtField.intVal)
-
-proc getProp(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField = 
+  
+proc getProp*(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField = 
   if prop.isInt() or prop.isObjectBased():
     result.kind = Int
     copyMem(addr result.intVal, memoryBlock, prop.getSize())  
@@ -98,7 +104,6 @@ proc uCall*(call : UECall) : Option[RuntimeField] =
     var memoryBlock = alloc0(fn.parmsSize)
     let memoryBlockAddr = cast[ByteAddress](memoryBlock)    
 
-    var allocatedStrings = makeTArray[pointer]()
     #TODO check return param and out params
     for paramProp in propParams:
       try:
@@ -107,8 +112,10 @@ proc uCall*(call : UECall) : Option[RuntimeField] =
         if propName notin call.value:
           UE_Warn "Param " & $propName & " not in call value"
           continue
+       
         let rtField = call.value[propName]
         rtField.setProp(paramProp, memoryBlock)
+
       except:
        UE_Error "Error setting the value in  " & $paramProp.getName()  & " for " & $fn.getName()
        UE_Error getCurrentExceptionMsg()
@@ -118,14 +125,18 @@ proc uCall*(call : UECall) : Option[RuntimeField] =
     self.processEvent(fn, memoryBlock)
 
     if fn.doesReturn():
+      UE_Log "Does return llega aqui"
       # let returnProp = fn.getFPropsFromUStruct().filterIt(it.getName() == call.fn.getReturnProp.get.name).head().get()
       let returnProp = fn.getReturnProperty()
       let returnOffset = fn.returnValueOffset
       var returnMemoryRegion = memoryBlockAddr + returnOffset.int
-      result = some(getProp(returnProp, cast[pointer](returnMemoryRegion)))
+      let returnRuntimeField = getProp(returnProp, cast[pointer](returnMemoryRegion))
+      result = some(returnRuntimeField)
 
     dealloc(memoryBlock)
-    for str in allocatedStrings:
-      dealloc(str) 
+    UE_Log "Memory block deallocated.Exists ueCall"
+    
   else: #no params no return
     self.processEvent(fn, nil)
+
+

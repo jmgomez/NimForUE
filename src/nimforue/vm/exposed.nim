@@ -36,7 +36,9 @@ proc getName*(obj:UObjectPtr) : string = "overriden" #overrided
 
 proc uCallInterop(uCall:UECall) : Option[RuntimeField] = none(RuntimeField) #overrided no need anymore, remove interop
 
-proc uCall*(uCall:UECall) : Option[RuntimeField] = uCallInterop(uCall)
+proc uCall*(uCall:UECall) : Option[RuntimeField] = 
+  result = uCallInterop(uCall)
+  # log "uCall: " & $uCall & " result: " & $result
 
 
 proc getClassByNameInterop(className:string) : UClassPtr = UClassPtr(0) #overrided
@@ -44,12 +46,6 @@ proc getClassByName*(className:string) : UClassPtr = getClassByNameInterop(class
 
 proc newUObjectInterop(owner : UObjectPtr, cls:UClassPtr) : UObjectPtr = UObjectPtr(0) #overrided
 
-func removeFirstLetter*(str: string): string =
-  if str.len() > 0: str.substr(1)
-  else: str
-
-proc removeLastLettersIfPtr*(str:string) : string = 
-    if str.endsWith("Ptr"): str.substr(0, str.len()-4) else: str
 
 
 proc newUObject*[T](owner : UObjectPtr = UObjectPtr(0)) : T = 

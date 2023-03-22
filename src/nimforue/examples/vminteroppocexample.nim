@@ -78,6 +78,9 @@ uClass UObjectPOC of UObject:
       vec.z = 10 * vec.z
       vec
     
+    proc callFuncWithOneFVectorArgReturnFRotator(vec : FVector) : FRotator = 
+      FRotator(pitch:vec.x, yaw:vec.y, roll:vec.z)
+    
 #[
 1. [x] Create a function that makes a call by fn name
 2. [x] Create a function that makes a call by fn name and pass a value argument
@@ -114,12 +117,6 @@ template check*(expr: untyped) =
 
 
 
-proc fromRuntimeFieldHook*(rtField : RuntimeField) : FVector = 
-  var vec = FVector()
-  vec.x = rtField.getStruct()[0][1].getFloat()
-  vec.y = rtField.getStruct()[1][1].getFloat()
-  vec.z = rtField.getStruct()[2][1].getFloat()
-  vec
 
 #Later on this can be an uobject that pulls and the actor will just run them. But this is fine as started point
 uClass ANimTestBase of AActor: 
@@ -245,7 +242,21 @@ uClass AActorPOCVMTest of ANimTestBase:
           fn: makeUEFunc("callFuncWithOneFVectorArgReturnFVector", "UObjectPOC"),
           value: (vec:FVector(x:12, y:10)).toRuntimeField()
         )
-      UE_Log  $(uCall(callData).get().runtimeFieldTo(FVector))
+      UE_Log  $uCall(callData).get.runtimeFieldTo(FVector)
+
+    proc testCallFuncWithOneFVectorArgReturnFRotator() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithOneFVectorArgReturnFRotator", "UObjectPOC"),
+          value: (vec:FVector(x:12, y:10)).toRuntimeField()
+        )
+      UE_Log  $uCall(callData)
+    
+    proc testGetRightVector() = 
+      let callData = UECall(
+          fn: makeUEFunc("GetRightVector", "UKismetMathLibrary"),
+          value: (vec:FVector(x:12, y:10)).toRuntimeField()
+        )
+      UE_Log  $uCall(callData)
 
     # proc test13NoStatic() = 
     #   let callData = UECall(
@@ -261,6 +272,15 @@ uClass AActorPOCVMTest of ANimTestBase:
     #   let structProps = vectorScriptStruct.getFPropsFromUStruct()
     #   for prop in structProps:
     #     UE_Log $prop.getName()
+
+
+    proc testRuntimeFieldCanRetrieveAStructMemberByName() = 
+      let vector = FVector(x:10, y:10)
+      let rtStruct = vector.toRuntimeField()
+      let rtField = rtStruct["x"]
+      let x = rtField.getFloat()
+      check x == 10.0
+      UE_Log $x
 
     proc shouldReceiveFloat32() =
       let expected = 10.0

@@ -1,7 +1,7 @@
 import std/[json, jsonutils, macros, genasts, options, sequtils, strutils, strformat]
 import exposed 
 import runtimefield
-
+import ../utils/utils
 
 proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode = 
   let argsWithFirstType =
@@ -40,18 +40,26 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
         else:
           let callData = UECall(fn: funcData, value: valNode.toRuntimeField(), self: int(firstParam)) #No params yet
         let returnVal {.used.} = uCall(callData) #check return val
-        log "VM:" & $callData
+        # log "VM:" & $callData
         let runtimeField = uCall(callData) #check return val
         #when no return?
         when returnTypeLit != "void":
-          return returnVal.get.runtimeFieldTo(returnType)
+          # var arg : returnType
+          # when (compiles(fromRuntimeFieldHook(arg, runtimeField.get()))):
+          #   fromRuntimeFieldHook(arg, runtimeField.get())
+          # else:
+          #   arg = runtimeField.get.runtimeFieldTo(returnType)
+          runtimeField.get.runtimeFieldTo(returnType)
+          
   result.params = fn.params
 
 
 macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn)
 macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn)
 
-
+#Move into utils
+proc removeLastLettersIfPtr*(str:string) : string = 
+    if str.endsWith("Ptr"): str.substr(0, str.len()-4) else: str
 
 
 
@@ -83,33 +91,42 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
   let fnVmName = ident fnNameLit & "VmImpl"
   let fnVmNameLit = fnNameLit & "VmImpl"
 
-  func injectedArg(arg:NimNode) : NimNode = 
+  func injectedArg(arg:NimNode, idx:int) : NimNode = 
     let argName = arg[0]
     let argNameLit = argName.strVal()
     let argType = arg[1]
     genAst(argName, argNameLit, argType):
-      let argName {.inject.} = callInfo.value[argNameLit].to(argType)
+      # discard
+      # let argName {.inject.} = callInfo.value[argNameLit].runtimeFieldTo(argType)
+      # var arg : argType
+      #  (compiles(fromRuntimeFieldHook(arg, callInfo.value[argNameLit]))):
+      #   fromRuntimeFieldHook(arg, callInfo.value[argNameLit])
+      # else:
+        # arg = calwhenlInfo.value[argNameLit].runtimeFieldTo(argType)
+      let argName {.inject.} = callInfo.value[argNameLit].runtimeFieldTo(argType)
   
-  let injectedArgs = nnkStmtList.newTree(args.map(injectedArg))
+  let injectedArgs = nnkStmtList.newTree(args.mapi(injectedArg))
 
   let vmFn = 
     genAst(funName=fnName, fnNameLit, fnVmName, fnVmNameLit, fnBody, classTypePtr, clsNameLit, returnType, returnTypeLit, injectedArgs, isStatic):
       setupBorrow(UEBorrowInfo(fnName:fnNameLit, className:clsNameLit))
-      #notice it needs to append VmImpl when doing the macro
-      proc fnVmName*(json:string) : string = 
-        let callInfo {.inject.} = json.parseJson().to(UECall)
+
+      proc fnVmName*(callInfo{.inject.}:UECall) : RuntimeField = 
         injectedArgs
+        # log "call info:"
+        # log $callInfo
         when not isStatic:
           let self {.inject.} = classTypePtr(callInfo.self)
         when returnTypeLit == "void":
           fnBody
-          "" #no return
+          RuntimeField() #no return
         else:
           let returnVal : returnType = fnBody
-          $returnVal.toJson()
+          returnVal.toRuntimeField()
 
   let bindFn = ueBindImpl(clsName, fn)
-  nnkStmtList.newTree(bindFn, vmFn)
+  result = nnkStmtList.newTree(bindFn, vmFn)
+  # log repr result
       
 
 
