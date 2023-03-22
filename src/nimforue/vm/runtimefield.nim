@@ -3,7 +3,7 @@ import std/[sequtils, options, sugar, strutils, strformat, typetraits, macros]
 
 type
   FieldKind* = enum
-    Int, Float, String, Struct,# Seq, Object
+    Int, Float, String, Struct, Array
   
   RuntimeField* = object
     case kind*: FieldKind
@@ -15,6 +15,8 @@ type
       stringVal*: string
     of Struct:
       structVal*: RuntimeStruct
+    of Array: 
+      arrayVal*: seq[RuntimeField]
     
   RuntimeStruct* = seq[(string, RuntimeField)]
  
@@ -33,6 +35,8 @@ type
     fnName*: string #nimName 
     className* : string
     ueActualName* : string #in case it has Received or some other prefix
+
+
 
 
 # func toRuntimeField*[T](value : T) : RuntimeField 
@@ -71,6 +75,12 @@ func getStruct*(rtField : RuntimeField) : RuntimeStruct =
   else:
     raise newException(ValueError, "rtField is not a struct")
 
+func getArray*(rtField : RuntimeField) : seq[RuntimeField] =
+  case rtField.kind:
+  of Array:
+    return rtField.arrayVal
+  else:
+    raise newException(ValueError, "rtField is not an array")
 
 func setInt*(rtField : var RuntimeField, value : int) = 
   case rtField.kind:
@@ -98,6 +108,13 @@ func setStruct*(rtField : var RuntimeField, value : RuntimeStruct) =
     rtField.structVal = value
   else:
     raise newException(ValueError, "rtField is not a struct")
+func setArray*(rtField : var RuntimeField, value : seq[RuntimeField]) =
+  case rtField.kind:
+  of Array:
+    rtField.arrayVal = value
+  else:
+    raise newException(ValueError, "rtField is not an array")
+
 
 func `[]`*(rtField : RuntimeField, name : string) : RuntimeField = 
   case rtField.kind:
@@ -109,6 +126,12 @@ func `[]`*(rtField : RuntimeField, name : string) : RuntimeField =
   else:
     raise newException(ValueError, "rtField is not a struct")
 
+func `[]`*(rtField : RuntimeField, idx : int) : RuntimeField = 
+  case rtField.kind:
+  of Array: #Support structs too? And what about the others only for 0?
+    return rtField.arrayVal[idx]
+  else:
+    raise newException(ValueError, "rtField is not an array therefore not indexable ")
 
 func contains*(rtField : RuntimeField, name : string) : bool = 
   case rtField.kind:
@@ -116,44 +139,11 @@ func contains*(rtField : RuntimeField, name : string) : bool =
     for (key, value) in rtField.structVal:
       if key == name:
         return true
-    return false
   else:
     raise newException(ValueError, "rtField is not a struct")
 
 
-
-# func toRuntimeField*(value : JsonNode) : RuntimeField = 
-#   case value.kind:
-#   of JInt:
-#     result.kind = Int
-#     result.intVal = value.getInt()
-#   of JFloat:
-#     result.kind = Float
-#     result.floatVal = value.getFloat()
-#   of JString:
-#     result.kind = String
-#     result.stringVal = value.getStr()
-#   of JObject:
-#     result.kind = Struct
-#     for key, val in value.fields:
-#       result.structVal.add((key, toRuntimeField(val)))
-#   else:
-#     raise newException(ValueError, "Unsupported json type for RuntimeField ")
-
-
-#[
-  proc fromRuntimeFieldHook*(vec:var FVector, rtField : RuntimeField)  = 
-  vec.x = rtField.getStruct()[0][1].getFloat()
-  vec.y = rtField.getStruct()[1][1].getFloat()
-  vec.z = rtField.getStruct()[2][1].getFloat()
-  
-]#
-#For key I need to:
-
-#vec.x = rtField["x"].runtimeFieldTo(T)
-
 macro getField(obj: object, fld: string): untyped =
-  ## Turn ``obj.getField("fld")`` into ``obj.fld``.
   newDotExpr(obj, newIdentNode(fld.strVal))
 
 
@@ -180,6 +170,10 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
       when T is object:
         for fieldName, v in fieldPairs(value):
           value.getField(fieldName) = rtField[fieldName].runtimeFieldTo(typeof(v))
+    of Array:
+      when T is seq:
+        for i in 0 ..< rtField.arrayVal.len:
+          value.add(rtField.arrayVal[i].runtimeFieldTo(typeof(value[0])))
         
 
 proc runtimeFieldTo*(rtField : RuntimeField, T : typedesc) : T = 
@@ -205,6 +199,11 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
       result.kind = Struct
       for name, val in fieldPairs(value):
         result.structVal.add((name, toRuntimeField(val)))
+    elif T is (array):
+      result.kind = Array
+      for val in value:
+        result.arrayVal.add(toRuntimeField(val))
+      UE_Warn "Array handled here!"
     else:
       when compiles(UE_Error ""):
         UE_Error &"Unsupported {typeName} type for RuntimeField "

@@ -30,6 +30,8 @@ proc makeUECall*(fn : UEFunc, self : UObjectPtr, value : RuntimeField) : UECall 
 #   rot.pitch = rtField.getStruct()[2][1].getFloat()
 
 
+proc castArray(memoryBlock:pointer) : ptr TArray[int32] {.importcpp: "reinterpret_cast<TArray<int>*>(#)".}
+
 proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   case rtField.kind
   of Int:
@@ -53,8 +55,16 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
         val.setProp(paramProp, structMemoryRegion)
       else:
         UE_Error &"Field {name} not found in struct"
+  of Array:
+    let arrayProp = castField[FArrayProperty](prop)
+    let innerProp = arrayProp.getInnerProp()
+    let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, memoryBlock)
+    arrayHelper.addUninitializedValues(rtField.getArray().len.int32)
+ 
+    for idx, elem in enumerate(rtField.getArray()):
+      setProp(elem, innerProp, arrayHelper.getRawPtr(idx.int32))
+      
 
-  
 proc getProp*(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField = 
   if prop.isInt() or prop.isObjectBased():
     result.kind = Int

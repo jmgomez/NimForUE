@@ -122,7 +122,8 @@ type
       #TODO bind EPropertyChangeType
     FPropertyChangedChainEvent* {.importcpp, pure} = object of FPropertyChangedEvent
     FObjectPostSaveRootContext* {.importcpp, pure.} = object
-
+    FScriptArray* {.importcpp, pure.} = object #used only for interoping with the vm. 
+    FScriptArrayHelper* {.importcpp, pure.} = object 
 #LOGS here because we need them. Maybe they should leave in a separated file
 
 proc UE_LogInternal(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUELog(@)".}
@@ -531,3 +532,20 @@ func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] =
         none[FString]()
 
 func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool = field.getMetadata(key).isSome()
+
+
+
+#ScriptArray
+#  FScriptArrayHelper(const FArrayProperty* InProperty, const void* InArray)
+proc makeScriptArrayHelper*(prop:FArrayPropertyPtr, inArray: pointer) : FScriptArrayHelper {.importcpp:"FScriptArrayHelper(#, #)", constructor .}
+proc makeScriptArrayHelperInContainer*(prop:FArrayPropertyPtr, inArray: pointer) : FScriptArrayHelper {.importcpp:"FScriptArrayHelper_InContainer(#, #)", constructor .}
+
+proc num*(helper : FScriptArrayHelper) : int32 {.importcpp:"#.Num()".}
+
+proc addUninitializedValues*(helper : FScriptArrayHelper, num : int32) : void {.importcpp:"#.AddValues(#)".}
+
+#returns the index of the last added
+proc addValue*(helper : FScriptArrayHelper) : int32 {.importcpp:"#.AddValue()".}
+
+#returns the raw pointer to the value 
+proc getRawPtr*(helper : FScriptArrayHelper, idx:int32) : pointer {.importcpp:"#.GetRawPtr(#)".}

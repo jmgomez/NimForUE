@@ -51,7 +51,7 @@ uClass UObjectPOC of UObject:
       UE_Log "Vector: " & $vec
 
 
-    proc printIntArray(ints : TArray[int]) = 
+    proc callFuncWithOneArrayIntArg(ints : TArray[int]) = 
       UE_Log "Int array length: " & $ints.len
       for vec in ints:
         UE_Log "int: " & $vec
@@ -223,12 +223,12 @@ uClass AActorPOCVMTest of ANimTestBase:
         )
       discard uCall(callData)
 
-    # proc test10() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("printIntArray", "UObjectPOC"),
-    #       value: (ints:[2, 10]).toJson()
-    #     )
-    #   UE_Log  $uCall(callData).jsonTo(string)
+    proc testCallFuncWithOneArrayIntArg() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithOneArrayIntArg", "UObjectPOC"),
+          value: (ints:[2, 10]).toRuntimeField()
+        )
+      UE_Log  $uCall(callData)
 
     # proc test11() = 
     #   let callData = UECall(
