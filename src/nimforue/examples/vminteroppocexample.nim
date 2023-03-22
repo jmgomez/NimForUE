@@ -55,10 +55,14 @@ uClass UObjectPOC of UObject:
       UE_Log "Int array length: " & $ints.len
       for vec in ints:
         UE_Log "int: " & $vec
-    proc printVectorArray(vecs : TArray[FVector]) = 
+
+    proc callFuncWithOneArrayVectorArg(vecs : TArray[FVector]) = 
       UE_Log "Vector array length: " & $vecs.len
       for vec in vecs:
         UE_Log "Vector: " & $vec
+
+
+    proc callThatReturnsArrayInt() : TArray[int] = makeTArray(1, 2, 3, 4, 5)
 
     proc receiveFloat32(arg : float32) = #: float32 = 
       UE_Log "Float32: " & $arg
@@ -124,11 +128,11 @@ uClass ANimTestBase of AActor:
     proc runTests() = 
      #Traverse all the tests and run them. A test is a function that starts with "test" or "should
       let testFns = self
-                      .getClass()
-                      .getFuncsFromClass()
-                      .filterIt(
-                        it.getName().tolower.startsWith("test") or 
-                        it.getName().tolower.startsWith("should"))
+        .getClass()
+        .getFuncsFromClass()
+        .filterIt(
+          it.getName().tolower.startsWith("test") or 
+          it.getName().tolower.startsWith("should"))
       for fn in testFns:
         try:
           UE_Log "Running test: " & $fn.getName()
@@ -230,12 +234,12 @@ uClass AActorPOCVMTest of ANimTestBase:
         )
       UE_Log  $uCall(callData)
 
-    # proc test11() = 
-    #   let callData = UECall(
-    #       fn: makeUEFunc("printVectorArray", "UObjectPOC"),
-    #       value: (vecs:[FVector(x:12, y:10), FVector(x:12, z:1)]).toJson()
-    #     )
-    #   UE_Log  $uCall(callData).jsonTo(string)
+    proc testCallFuncWithOneArrayVectorArg() = 
+      let callData = UECall(
+          fn: makeUEFunc("callFuncWithOneArrayVectorArg", "UObjectPOC"),
+          value: (vecs:[FVector(x:12, y:10), FVector(x:12, z:1)]).toRuntimeField()
+        )
+      UE_Log  $uCall(callData)
 
     proc testCallFuncWithOneFVectorArgReturnFVector() = 
       let callData = UECall(
@@ -255,6 +259,13 @@ uClass AActorPOCVMTest of ANimTestBase:
       let callData = UECall(
           fn: makeUEFunc("GetRightVector", "UKismetMathLibrary"),
           value: (vec:FVector(x:12, y:10)).toRuntimeField()
+        )
+      UE_Log  $uCall(callData)
+
+    proc testCallThatReturnsArrayInt() = 
+      let callData = UECall(
+          fn: makeUEFunc("callThatReturnsArrayInt", "UObjectPOC"),
+          # value: ().toRuntimeField()
         )
       UE_Log  $uCall(callData)
 

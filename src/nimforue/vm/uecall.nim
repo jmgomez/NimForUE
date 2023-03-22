@@ -18,20 +18,6 @@ proc makeUECall*(fn : UEFunc, self : UObjectPtr, value : RuntimeField) : UECall 
   result.self = cast[int](self)
   result.value = value
 
-# # proc getValueFromPropMemoryBlock*(prop:FPropertyPtr, returnMemoryRegion : ByteAddress) : JsonNode 
-# proc fromRuntimeFieldHook*(vec:var FVector, rtField : RuntimeField)  = 
-#   vec.x = rtField.getStruct()[0][1].getFloat()
-#   vec.y = rtField.getStruct()[1][1].getFloat()
-#   vec.z = rtField.getStruct()[2][1].getFloat()
-  
-# proc fromRuntimeFieldHook*(rot:var FRotator, rtField : RuntimeField)  = 
-#   rot.roll = rtField.getStruct()[0][1].getFloat()
-#   rot.yaw = rtField.getStruct()[1][1].getFloat()
-#   rot.pitch = rtField.getStruct()[2][1].getFloat()
-
-
-proc castArray(memoryBlock:pointer) : ptr TArray[int32] {.importcpp: "reinterpret_cast<TArray<int>*>(#)".}
-
 proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   case rtField.kind
   of Int:
@@ -87,6 +73,15 @@ proc getProp*(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField =
       let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches
       let value = getProp(paramProp,  cast[pointer](structMemoryRegion + paramProp.getOffset()))
       result.structVal.add((name, value))
+  elif prop.isTArray():
+    let arrayProp = castField[FArrayProperty](prop)
+    let innerProp = arrayProp.getInnerProp()
+    let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, memoryBlock)
+    result = RuntimeField(kind:Array)
+    for idx in 0 ..< arrayHelper.num():
+      result.arrayVal.add(getProp(innerProp, arrayHelper.getRawPtr(idx.int32)))
+  else:
+    raise newException(ValueError, "Unknown property type")
    
 func isStatic*(fn : UFunctionPtr) : bool = FUNC_Static in fn.functionFlags
 
