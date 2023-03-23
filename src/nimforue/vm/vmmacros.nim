@@ -44,9 +44,13 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
         let runtimeField = uCall(callData) #check return val
         #when no return?
         when returnTypeLit != "void":
-          runtimeField.get.runtimeFieldTo(returnType)
+          if returnTypeLit.endsWith("Ptr"):
+            return returnType(runtimeField.get.runtimeFieldTo(int))
+          else:
+            return runtimeField.get.runtimeFieldTo(returnType)
           
   result.params = fn.params
+  # log repr result
 
 
 macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn)

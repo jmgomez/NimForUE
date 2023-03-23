@@ -20,7 +20,7 @@ converter toUObject*(actor:AActorPtr) : UObjectPtr = UObjectPtr(int(actor))
 converter toUObject*(actor:AMyActorPtr) : UObjectPtr = UObjectPtr(int(actor))
 converter toUObject*(actor:UClassPtr) : UObjectPtr = UObjectPtr(int(actor))
 
-proc isNil*(actor:AActorPtr) : bool = int(actor) == 0
+proc isNil*(actor:UObjectPtr) : bool = int(actor) == 0
 
 proc getActorByName*(actor:AActorPtr, name:string) : AActorPtr = AActorPtr(0) #overrided
 

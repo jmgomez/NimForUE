@@ -411,7 +411,7 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
     if prevModHash == module.hash and uerIgnoreHash notin module.rules:
       echo "Skipping module: " & module.name & " as it has not changed"
-      
+      continue
 
 
     let preludeRelative =  if isOneFilePkg: "../" else: "../../"

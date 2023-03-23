@@ -182,11 +182,14 @@ proc runtimeFieldTo*(rtField : RuntimeField, T : typedesc) : T =
   obj
 
 proc toRuntimeField*[T](value : T) : RuntimeField = 
+  
   when compiles(toRuntimeFieldHook(value)): 
     return toRuntimeFieldHook(value)
   else:
     const typeName = typeof(T).name
-    when T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 :
+    const isPtr = typeName.endsWith("Ptr")
+
+    when isPtr or (T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64) :
       result.kind = Int
       result.intVal = cast[int](value)
     elif T is float | float32 | float64:

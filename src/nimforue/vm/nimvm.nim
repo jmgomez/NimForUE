@@ -48,7 +48,6 @@ proc implementBaseFunctions(interpreter:Interpreter) =
       let result = ueCall.uCall()
       UE_Warn &"uCallInterop result: {result}"
       setResult(a, toVm(result))
-      UE_Log "Set resutls in vm "
      
     )
 
@@ -203,7 +202,7 @@ proc setupBorrow(interpreter:Interpreter) =
   )
 
 
-
+var userSearchPaths : seq[string] = @[]
 proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") : Interpreter = 
   let std = findNimStdLibCompileTime()
   interpreter = createInterpreter(script, @[
@@ -218,6 +217,7 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") :
   interpreter.registerErrorHook(onInterpreterError)
   interpreter.implementBaseFunctions()
   interpreter.setupBorrow()
+  userSearchPaths = searchPaths
 
   
 
@@ -246,7 +246,10 @@ var lastModTime = 0.int64
 proc watchScript() : Future[void] {.async.} = 
   if not isWatching:
     return
-  let path = parentDir(currentSourcePath) / "script.nims"
+  let path = NimGameDir / "vm" / "script.nims"
+  if not fileExists path:
+    UE_Warn "Cant find the script. Not watching"
+  # let path = parentDir(currentSourcePath) / "script.nims"
   let modTime = getLastModificationTime(path).toUnix()
   if modTime != lastModTime:
     UE_Log "Script changed. Reloading Script"
@@ -255,6 +258,7 @@ proc watchScript() : Future[void] {.async.} =
   # else:
   #   UE_Log "Script not changed. Not reloading"
   await sleepAsync(500)
+  # UE_Log "Waiting for changes"
   return watchScript()
 
 
@@ -268,6 +272,28 @@ uClass UNimVmManager of UObject:
   Helper actor to call the vm functions from the editor
   At some point it will part of the UI
 ]#
+
+
+
+proc getCurrentWorld(): UWorldPtr = 
+  #TODO base on if we are playing or not will return a different world
+  #PIE not playing
+  # var world = worldContext.getWorld()
+  # if world.isNotNil():
+  #   return world
+  let levelViewports =  GEditor.getLevelViewportClients()
+  UE_Warn &"levelViewports.len {levelViewports.len}"
+
+  for vp in levelViewports:
+    let world = vp.getWorld()
+    if world.isNotNil():
+      return world
+  return nil
+  # let levelViewport = levelViewports[0]
+  # let world = levelViewport.getWorld()
+  #TODO BP Editor
+  # return world
+
 uClass ANimVM of AActor:
 
   ufunc(CallInEditor):
@@ -279,5 +305,11 @@ uClass ANimVM of AActor:
       isWatching = false
 
     proc restartVM() = 
-      interpreter = initInterpreter(@[parentDir(currentSourcePath)])
+      interpreter = initInterpreter(userSearchPaths)
       reloadScript()
+  ufunc(Static):
+    proc getCurrentWorldContext() : UObjectPtr = 
+      UE_Warn "getCurrentWorldContext"
+      return getEditorWorld()
+      # if self.isNotNil(): self
+      # else: getEditorWorld()
