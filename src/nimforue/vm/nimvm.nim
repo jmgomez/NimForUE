@@ -218,7 +218,66 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") :
   interpreter.registerErrorHook(onInterpreterError)
   interpreter.implementBaseFunctions()
   interpreter.setupBorrow()
+
+  
+
   interpreter
 
 
 
+
+#VM MAIN
+
+# var interpreter = initInterpreter(@[parentDir(currentSourcePath)])
+
+proc reloadScript() = 
+  try:
+    measureTime "Reloading Script":
+      interpreter.evalScript()
+  except:
+    let msg = getCurrentExceptionMsg()
+    UE_Error msg
+    UE_Error getStackTrace()
+
+var isWatching = false
+var lastModTime = 0.int64
+
+
+proc watchScript() : Future[void] {.async.} = 
+  if not isWatching:
+    return
+  let path = parentDir(currentSourcePath) / "script.nims"
+  let modTime = getLastModificationTime(path).toUnix()
+  if modTime != lastModTime:
+    UE_Log "Script changed. Reloading Script"
+    lastModTime = modTime
+    reloadScript()
+  # else:
+  #   UE_Log "Script not changed. Not reloading"
+  await sleepAsync(500)
+  return watchScript()
+
+
+#This can leave in the vm file
+uClass UNimVmManager of UObject:
+  ufuncs:#Called from the button in UE
+    proc reloadScript() = 
+      reloadScript()
+
+#[
+  Helper actor to call the vm functions from the editor
+  At some point it will part of the UI
+]#
+uClass ANimVM of AActor:
+
+  ufunc(CallInEditor):
+    proc startWatch() = 
+      isWatching = true
+      asyncCheck watchScript()
+
+    proc stopWatch() = 
+      isWatching = false
+
+    proc restartVM() = 
+      interpreter = initInterpreter(@[parentDir(currentSourcePath)])
+      reloadScript()

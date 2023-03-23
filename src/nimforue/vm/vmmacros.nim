@@ -44,11 +44,6 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
         let runtimeField = uCall(callData) #check return val
         #when no return?
         when returnTypeLit != "void":
-          # var arg : returnType
-          # when (compiles(fromRuntimeFieldHook(arg, runtimeField.get()))):
-          #   fromRuntimeFieldHook(arg, runtimeField.get())
-          # else:
-          #   arg = runtimeField.get.runtimeFieldTo(returnType)
           runtimeField.get.runtimeFieldTo(returnType)
           
   result.params = fn.params
@@ -97,13 +92,6 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
     let argNameLit = argName.strVal()
     let argType = arg[1]
     genAst(argName, argNameLit, argType):
-      # discard
-      # let argName {.inject.} = callInfo.value[argNameLit].runtimeFieldTo(argType)
-      # var arg : argType
-      #  (compiles(fromRuntimeFieldHook(arg, callInfo.value[argNameLit]))):
-      #   fromRuntimeFieldHook(arg, callInfo.value[argNameLit])
-      # else:
-        # arg = calwhenlInfo.value[argNameLit].runtimeFieldTo(argType)
       let argName {.inject.} = callInfo.value[argNameLit].runtimeFieldTo(argType)
   
   let injectedArgs = nnkStmtList.newTree(args.mapi(injectedArg))
@@ -127,7 +115,7 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
 
   let bindFn = ueBindImpl(clsName, fn)
   result = nnkStmtList.newTree(bindFn, vmFn)
-  log repr result
+  # log repr result
       
 
 
