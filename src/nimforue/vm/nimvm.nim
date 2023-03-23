@@ -282,7 +282,7 @@ proc getCurrentWorld(): UWorldPtr =
   # if world.isNotNil():
   #   return world
   let levelViewports =  GEditor.getLevelViewportClients()
-  UE_Warn &"levelViewports.len {levelViewports.len}"
+  UE_Warn &"levelViewpors.len {levelViewports.len}"
 
   for vp in levelViewports:
     let world = vp.getWorld()
@@ -309,7 +309,8 @@ uClass ANimVM of AActor:
       reloadScript()
   ufunc(Static):
     proc getCurrentWorldContext() : UObjectPtr = 
-      UE_Warn "getCurrentWorldContext"
-      return getEditorWorld()
+      # UE_Warn "getCurrentWorldContext"
+      # return getEditorWorld()
       # if self.isNotNil(): self
       # else: getEditorWorld()
+      getCurrentWorld()
