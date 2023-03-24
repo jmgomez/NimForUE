@@ -28,7 +28,20 @@ If you dont have Discord, you can also reach out at:
 [Twitter](https://twitter.com/_jmgomez_)
 
 
+### Why Nim?
 
+
+Nim is fast and easy to read with a good type system and a fantastic macro system, and it also has the best C++ interop in the industry. 
+
+The compiler is incredibly fast, and it's about to get faster with incremental compilation. 
+
+The performance is the same as with C++ because you are outputting C++ with no overhead (no C types sitting in the middle that you would require with a language like Rust). 
+
+Fully control the memory if you so desire (including move semantics). 
+
+Nim Type System has everything (and probably more) that you can expect from a typed lang: generics, sum types, constraints on those, and it even has C++-like concepts (my personal favorite feature from C++).
+
+The macro system is outstanding. Just to give you an idea, await/async are implemented as a library. The same applies to Pattern Matching. This means (as you will see below) that you can create *typed* DSLs for your Unreal Projects that use the semantics that you want.
 
 
 
@@ -47,21 +60,6 @@ If you dont have Discord, you can also reach out at:
 [![Showcase GameFromScratch](https://img.youtube.com/vi/Cdr4-cOsAWA/0.jpg)](https://youtu.be/Cdr4-cOsAWA)
 
 
-
-### Why Nim?
-
-
-Nim is fast and easy to read with a good type system and a fantastic macro system, and it also has the best C++ interop in the industry. 
-
-The compiler is incredibly fast, and it's about to get faster with incremental compilation. 
-
-The performance is the same as with C++ because you are outputting C++ with no overhead (no C types sitting in the middle that you would require with a language like Rust). 
-
-Fully control the memory if you so desire (including move semantics). 
-
-Nim Type System has everything (and probably more) that you can expect from a typed lang: generics, sum types, constraints on those, and it even has C++-like concepts (my personal favorite feature from C++).
-
-The macro system is outstanding. Just to give you an idea, await/async are implemented as a library. The same applies to Pattern Matching. This means (as you will see below) that you can create *typed* DSLs for your Unreal Projects that use the semantics that you want.
 
 
 ### Inspiration 
