@@ -8,6 +8,10 @@ when not defined(nuevm):
   import ../../buildscripts/nimforueconfig
 
 type
+  NimParam* = object
+    name*: string
+    tipe*: string #couldbe NimType but we don't need it for now
+
   NimKind* = enum
     Object, GenericObject, Pointer, Proc, TypeClass, Distinct, Enum
 
@@ -15,7 +19,9 @@ type
     name* : string
     case kind* : NimKind:
     of Object:
-      fields*: seq[string]
+      parent*: string
+      params*: seq[NimParam]
+      
     of Pointer:
       ptrType*: string #just the type name as str for now. We could do a lookup in a table
     of Proc, TypeClass, Distinct, Enum, GenericObject: #ignored for now
@@ -71,10 +77,93 @@ func makeGenericObjectNimType(typeName:string, typeDef:NimNode) : NimType =
   assert typeDef[2].kind == nnkBracketExpr, "Expected nnkBracketExpr got " & $typeDef[2].kind
   NimType(name: typeName, kind:GenericObject)
 
+
+
+func getNameFromIdentDef(identDefs:NimNode) : string = 
+  assert identDefs.kind == nnkIdentDefs, "Expected nnkIdentDefs got " & $identDefs.kind
+  case identDefs[0].kind:
+    of nnkIdent:
+      identDefs[0].strVal
+    of nnkPostfix:
+      identDefs[0][^1].strVal
+
+    of nnkPragmaExpr:
+      let pragmaNode = identDefs[0]
+      case pragmaNode[0].kind:
+      of nnkIdent:
+        pragmaNode[0].strVal
+      of nnkPostfix:
+        let postFixNode = pragmaNode[0]
+        case postFixNode[^1].kind:
+        of nnkIdent:
+          postFixNode[^1].strVal
+        of nnkAccQuoted:         
+          postFixNode[0].strVal
+        else:
+          debugEcho treeRepr identDefs
+          error &"Error in getParamFromIdentDef got {identDefs[0][0].kind} in pragma expr"
+          ""  
+      else:
+        debugEcho treeRepr identDefs
+        error &"Error in getParamFromIdentDef got {identDefs[0][0].kind} in pragma expr"
+        ""
+    else:
+      debugEcho treeRepr identDefs
+      error &"Error in getParamFromIdentDef got {identDefs[0].kind} in identDefs name"
+      quit()  
+
+func getParamFromIdentDef(identDefs:NimNode) : NimParam =
+  assert identDefs.kind == nnkIdentDefs, "Expected nnkIdentDefs got " & $identDefs.kind
+
+  let name = getNameFromIdentDef(identDefs)
+  let typ = 
+    case identDefs[^2].kind:
+    of nnkIdent:
+      identDefs[^2].strVal
+    of nnkPtrTy:
+      let ptrType = identDefs[^2][0]
+      $repr ptrType 
+    of nnkBracketExpr:
+      identDefs[^2][0].strVal  
+    of nnkProcTy:
+      "proc" #Not supported as param yet but we do validate it  
+    else:
+      debugEcho treeRepr identDefs
+      error &"Error in getParamFromIdentDef got {identDefs[^2].kind} in identDefs type"
+      ""
+  
+  return NimParam(name: name)
+
 func makeObjNimType(typeName:string, typeDef:NimNode) : NimType = 
-  assert typeDef[2].kind == nnkObjectTy, "Expected nnkObjectTy got " & $typeDef[2].kind
-  # let fields = typeDef[2].children.mapIt(it[0].strVal)
-  NimType(name: typeName, kind:Object)#, fields:fields)
+  let objectTyNode = typeDef[2]
+  assert objectTyNode.kind == nnkObjectTy, "Expected nnkObjectTy got " & $typeDef[2].kind
+  
+  let parent = 
+    case objectTyNode[1].kind:
+    of nnkEmpty: ""
+    of nnkOfInherit: objectTyNode[1][0].strVal
+    else: 
+      debugEcho treeRepr typeDef
+      quit()
+
+  case objectTyNode[^1].kind:
+  of nnkEmpty:
+    NimType(name: typeName, kind:Object, parent:parent)
+  of nnkRecList:
+    let recListNode = objectTyNode[^1]
+    assert recListNode.kind == nnkRecList, "Expected nnkRecList got " & $recListNode.kind
+    let params = 
+      recListNode.children.toSeq
+        .filterIt(it.kind == nnkIdentDefs)
+        .map(getParamFromIdentDef)
+        
+
+    NimType(name: typeName, kind:Object, parent:parent, params:params)
+  else:  
+    debugEcho treeRepr typeDef
+    quit()
+  #   let fields = typeDef[2].children.mapIt(it[0].strVal)
+  # NimType(name: typeName, kind:Object)#, fields:fields)
 
 func typeDefToNimType(typeDef: NimNode) : NimType = 
   assert typeDef.kind == nnkTypeDef, "Expected nnkTypeDef got " & $typeDef.kind
@@ -224,7 +313,8 @@ when not defined(nuevm):
   const NimDefinedTypesNames* = NimDefinedTypes.mapIt(it.name)
 
   # static:
-    # echo $NimDefinedTypes.len()
+  #   echo $NimDefinedTypes.len()
+  #   echo $NimDefinedTypes
 
     # quit()
   
