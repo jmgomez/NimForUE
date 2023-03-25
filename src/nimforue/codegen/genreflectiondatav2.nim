@@ -56,7 +56,7 @@ func getCleanedDependencyNamesFromUEType(uet:UEType) : seq[string] =
       types.map(getNameFromUEPropType)
         .flatten()
         .deduplicate()
-        .filterIt(it notin NimDefinedTypes & PrimitiveTypes)
+        .filterIt(it notin NimDefinedTypesNames & PrimitiveTypes)
         .filterIt(it != "")
         # .filterIt(it notin getAllPCHTypes())
     cleanedTypes
@@ -129,7 +129,7 @@ func moveTypeFrom(uet:UEType, source, destiny : var UEModule) =
   case uet.kind:
   of uetClass:
     #The type is already defined in EngineTypes so no need to move it.
-    if uet.name in ManuallyImportedClasses & NimDefinedTypes:
+    if uet.name in ManuallyImportedClasses & NimDefinedTypesNames:
       return
     # UE_Log &"Moving type :{uet.name} from {source.name} to {destiny.name}"
     var uet = uet
@@ -466,7 +466,7 @@ proc getProject*() : UEProject =
   measureTime "Getting the project":
     let bpOnly = getGameUserConfigValue("bpOnly", true)
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
-    let fieldsOnly =  makeImportedRuleType(uerCodeGenOnlyFields, ManuallyImportedClasses & NimDefinedTypes) 
+    let fieldsOnly =  makeImportedRuleType(uerCodeGenOnlyFields, ManuallyImportedClasses & NimDefinedTypesNames) 
 
     UE_Error "CodeGenOnly" &  $fieldsOnly
     let nonBp =  @["EnhancedInput", "GameplayAbilities"] & getGameUserConfigValue("extraNonBpModuleNames", newSeq[string]())

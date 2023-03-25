@@ -210,10 +210,15 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") :
     std / "pure",
     std / "pure" / "collections",
     std / "core", 
+    PluginDir / "src" / "nimforue",
     PluginDir/"src"/"nimforue"/"utils",
     parentDir(currentSourcePath),
    
-    ] & searchPaths)
+    ] & searchPaths,
+    defines = @[("nimscript", "true"), ("nuevm", "true")],
+
+    
+    )
   interpreter.registerErrorHook(onInterpreterError)
   interpreter.implementBaseFunctions()
   interpreter.setupBorrow()

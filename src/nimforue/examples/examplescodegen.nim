@@ -168,7 +168,7 @@ uClass AActorCodegen of AActor:
         return
       UE_Log $cls
     proc dumpDefinedTypesInCode() = 
-      UE_Log $NimDefinedTypes
+      UE_Log $NimDefinedTypesNames
     proc dumpClassAsUEType() = 
       let cls = self.getClassFromInspectedType()
       if cls.isNil():

@@ -475,7 +475,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         props
         funcs
 
-  if typeExposure == uexExport and not typeDef.forwardDeclareOnly and typeDef.name notin NimDefinedTypes: 
+  if typeExposure == uexExport and not typeDef.forwardDeclareOnly and typeDef.name notin NimDefinedTypesNames: 
     #Generates a type so it's added to the header when using --header
     #TODO dont create them for UStructs
     let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
