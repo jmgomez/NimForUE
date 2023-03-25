@@ -1,4 +1,4 @@
-import ../utils/[utils]
+import ../utils/[utils, ueutils]
 
 import std/[strformat, tables, hashes, options, sugar, json, strutils, jsonutils,  sequtils, strscans, algorithm, macros]
 
@@ -26,7 +26,10 @@ type
       ptrType*: string #just the type name as str for now. We could do a lookup in a table
     of Proc, TypeClass, Distinct, Enum, GenericObject: #ignored for now
       discard
-
+  NimModule* = object
+    name*: string
+    types*: seq[NimType]
+    fullPath*: string
 
 
 func getNameFromTypeDef(typeDef:NimNode) : string = 
@@ -200,13 +203,15 @@ func typeSectionToTypeDefs(typeSection: NimNode) : seq[NimNode] =
     .toSeq
     .filterIt(it.kind == nnkTypeDef)
 
-proc getAllTypesFromFileTree(fileTree:NimNode) : seq[NimType] = 
-  fileTree
-    .getAllTypeSections
-    .map(typeSectionToTypeDefs)
-    .flatten
-    .map(typeDefToNimType)
- 
+proc createModuleFrom(fullPath:string, fileTree:NimNode) : NimModule = 
+  let name = fullPath.split(PathSeparator)[^1].split(".")[0]
+  let types =
+    fileTree
+      .getAllTypeSections
+      .map(typeSectionToTypeDefs)
+      .flatten
+      .map(typeDefToNimType)
+  NimModule(name:name, fullPath:fullPath, types: types)
 
 
 proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] = 
@@ -214,8 +219,7 @@ proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] =
     if "[" notin path:  return @[path]
     let splited = path.split("[")
     let (dir, files) = (splited[0], splited[1].split("]")[0].split(","))
-    return files.mapIt(dir & "/" & it) #Not sure if you can have multiple [] nested in a import
-      
+    return files.mapIt(dir & "/" & it) #Not sure if you can have multiple [] nested in a import      
       
   let imports = 
     fileTree
@@ -230,20 +234,22 @@ proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] =
 
 
 
-proc getAllTypesOf(dir, entryPoint:string) : seq[NimType] = 
+
+
+proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] = 
   let nimCode = readFile(entryPoint)
   let entryPointFileTree = parseStmt(nimCode)
   
-  let nimFilePaths = 
+  let nimRelativeFilePaths = 
+    entryPoint &
     getAllImportsAsRelativePathsFromFileTree(entryPointFileTree)
     .mapIt(it.absolutePath(dir) & ".nim")
 
-  let fileTrees = 
-    entryPointFileTree & nimFilePaths.mapIt(it.readFile.parseStmt)
+  let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
 
-  let typeNames = fileTrees.map(getAllTypesFromFileTree).flatten()
+  let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
 
-  typeNames
+  return modules
 
 # dumpTree:
 #   type A* = object
@@ -309,11 +315,14 @@ when not defined(nuevm):
   const dir = PluginDir / "src" / "nimforue" / "unreal" 
   const entryPoint = dir / "prelude.nim"
   assert PluginDir != ""
-  const NimDefinedTypes = getAllTypesOf(dir, entryPoint)
+  const NimModules = getAllModulesFrom(dir, entryPoint)
+  const NimDefinedTypes = NimModules.mapIt(it.types).flatten
   const NimDefinedTypesNames* = NimDefinedTypes.mapIt(it.name)
 
   # static:
-  #   echo $NimDefinedTypes.len()
+  #   echo $NimModules.len()
+  #   let engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head
+  #   echo $engineTypesModule
   #   echo $NimDefinedTypes
 
     # quit()
