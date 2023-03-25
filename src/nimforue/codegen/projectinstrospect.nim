@@ -1,6 +1,6 @@
 import ../utils/[utils, ueutils]
 
-import std/[strformat, tables, hashes, options, sugar, json, strutils, jsonutils,  sequtils, strscans, algorithm, macros]
+import std/[strformat, tables, hashes, options, sugar, json, strutils, jsonutils,  sequtils, strscans, algorithm, macros, genasts]
 
 
 when not defined(nuevm):
@@ -10,7 +10,7 @@ when not defined(nuevm):
 type
   NimParam* = object
     name*: string
-    tipe*: string #couldbe NimType but we don't need it for now
+    typ*: string #couldbe NimType but we don't need it for now
 
   NimKind* = enum
     Object, GenericObject, Pointer, Proc, TypeClass, Distinct, Enum
@@ -135,7 +135,7 @@ func getParamFromIdentDef(identDefs:NimNode) : NimParam =
       error &"Error in getParamFromIdentDef got {identDefs[^2].kind} in identDefs type"
       ""
   
-  return NimParam(name: name)
+  return NimParam(name: name, typ:typ)
 
 func makeObjNimType(typeName:string, typeDef:NimNode) : NimType = 
   let objectTyNode = typeDef[2]
@@ -233,8 +233,48 @@ proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] =
   imports
 
 
+proc paramToIdentDefs(nimParam:NimParam) : NimNode = 
+  nnkIdentDefs.newTree(
+    nnkPostfix.newTree(
+      ident "*", #
+      ident nimParam.name
+    ),
+    ident nimParam.typ,
+    newEmptyNode()
+  )
+
+proc nimObjectTypeToNimNode(nimType:NimType) : NimNode = 
+  let name = ident nimType.name
+  let params = nnkRecList.newTree(@[newEmptyNode(), newEmptyNode()] & nimtype.params.map(paramToIdentDefs))
+  result = 
+    genAst(name, params):
+      type name* = object
+        
+  
+  result.add params
+  # echo treeRepr result
+
+proc genNimVMTypeImpl(nimType:NimType) : NimNode =
+  #Maybe in the future extrac the type section. For now it's fine
+  let name = ident nimType.name
+  case nimType.kind:
+  of Object: nimObjectTypeToNimNode(nimType)
+  of Pointer: 
+    #Notice we are not emiting this for the vm but distinct int and then the converter with the ptrType
+    #Need to get the parent if any so we can create a converter
+    let ptrType = ident nimType.ptrType
+    genAst(name, ptrType): 
+      type 
+        name = ptr ptrType
+  else:
+    newEmptyNode()
 
 
+macro GenModule(nimModule: static NimModule) : untyped = 
+  for nimType in nimModule.types:
+    echo repr genNimVMTypeImpl(nimType) 
+
+  newEmptyNode()  
 
 proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] = 
   let nimCode = readFile(entryPoint)
@@ -253,8 +293,8 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
 
 # dumpTree:
 #   type A* = object
-#     a: int
-#     b: string
+#     a*: int
+#     b*: string
 #   type
 #     B = object
 #       a: int
@@ -318,15 +358,10 @@ when not defined(nuevm):
   const NimModules = getAllModulesFrom(dir, entryPoint)
   const NimDefinedTypes = NimModules.mapIt(it.types).flatten
   const NimDefinedTypesNames* = NimDefinedTypes.mapIt(it.name)
-
-  # static:
-  #   echo $NimModules.len()
-  #   let engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head
-  #   echo $engineTypesModule
-  #   echo $NimDefinedTypes
-
-    # quit()
+  const engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head
   
+  # GenModule(engineTypesModule.get)
+
 const PrimitiveTypes* = @[ 
   "bool", "float32", "float64", "int16", "int32", "int64", "int8", "uint16", "uint32", "uint64", "uint8"
 ]
