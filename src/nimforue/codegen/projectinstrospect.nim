@@ -8,9 +8,15 @@ when not defined(nuevm):
   import ../../buildscripts/nimforueconfig
 
 type
+  NimParamKind* = enum
+    TypeInfo, OnlyName
   NimParam* = object
     name*: string
-    typ*: string #couldbe NimType but we don't need it for now
+    case kind* : NimParamKind
+    of OnlyName: 
+      strType*: string #For now only this is used 
+    of TypeInfo: 
+      typeInfo*: NimType
 
   NimKind* = enum
     Object, GenericObject, Pointer, Proc, TypeClass, Distinct, Enum
@@ -19,7 +25,7 @@ type
     name* : string
     case kind* : NimKind:
     of Object:
-      parent*: string
+      parent*: string 
       params*: seq[NimParam]
       
     of Pointer:
@@ -30,6 +36,22 @@ type
     name*: string
     types*: seq[NimType]
     fullPath*: string
+    ast:string
+    deps : seq[string] #relative path to module
+
+func getTypeFromModule*(modules:seq[NimModule], typeName:string) : Option[NimType] = 
+  for module in modules:
+    for typ in module.types:
+      if typ.name == typeName:
+        return some(typ)
+  none(NimType)
+
+func getDepsAsModules*(allModules:seq[NimModule], module:NimModule) : seq[NimModule] = 
+  module.deps.mapIt(it.split("/")[^1])
+    .map(it=>allModules.first(m=>m.name == it))
+    .sequence()
+
+
 
 
 func getNameFromTypeDef(typeDef:NimNode) : string = 
@@ -135,7 +157,7 @@ func getParamFromIdentDef(identDefs:NimNode) : NimParam =
       error &"Error in getParamFromIdentDef got {identDefs[^2].kind} in identDefs type"
       ""
   
-  return NimParam(name: name, typ:typ)
+  return NimParam(name: name, kind:OnlyName, strType:typ)
 
 func makeObjNimType(typeName:string, typeDef:NimNode) : NimType = 
   let objectTyNode = typeDef[2]
@@ -203,15 +225,7 @@ func typeSectionToTypeDefs(typeSection: NimNode) : seq[NimNode] =
     .toSeq
     .filterIt(it.kind == nnkTypeDef)
 
-proc createModuleFrom(fullPath:string, fileTree:NimNode) : NimModule = 
-  let name = fullPath.split(PathSeparator)[^1].split(".")[0]
-  let types =
-    fileTree
-      .getAllTypeSections
-      .map(typeSectionToTypeDefs)
-      .flatten
-      .map(typeDefToNimType)
-  NimModule(name:name, fullPath:fullPath, types: types)
+
 
 
 proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] = 
@@ -225,12 +239,25 @@ proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] =
     fileTree
       .children
         .toSeq
-        .filterIt(it.kind in [nnkImportStmt, nnkIncludeStmt])
+        .filterIt(it.kind in [nnkImportStmt]) #, nnkIncludeStmt])
         .mapIt(parseImportBracketsPaths(repr it[0]))
         .flatten
         .mapIt(it.split("/").mapIt(strip(it)).join("/")) #clean spaces
-        
   imports
+
+
+proc createModuleFrom(fullPath:string, fileTree:NimNode) : NimModule = 
+  let name = fullPath.split(PathSeparator)[^1].split(".")[0]
+  let types =
+    fileTree
+      .getAllTypeSections
+      .map(typeSectionToTypeDefs)
+      .flatten
+      .map(typeDefToNimType)
+
+  let deps = fileTree.getAllImportsAsRelativePathsFromFileTree().mapIt(it.replace("//", "/"))
+  NimModule(name:name, fullPath:fullPath, types: types, ast:repr fileTree, deps:deps)
+
 
 
 proc paramToIdentDefs(nimParam:NimParam) : NimNode = 
@@ -239,7 +266,7 @@ proc paramToIdentDefs(nimParam:NimParam) : NimNode =
       ident "*", #
       ident nimParam.name
     ),
-    ident nimParam.typ,
+    ident nimParam.strType,
     newEmptyNode()
   )
 
@@ -270,11 +297,20 @@ proc genNimVMTypeImpl(nimType:NimType) : NimNode =
     newEmptyNode()
 
 
-macro GenModule(nimModule: static NimModule) : untyped = 
-  for nimType in nimModule.types:
-    echo repr genNimVMTypeImpl(nimType) 
+proc genModuleImpl(nimModule :NimModule) : NimNode =
+  let imports = nimModule.deps.mapIt(nnkImportStmt.newTree(ident it))
+  let types = nimModule.types.map(genNimVMTypeImpl)
+  result = nnkStmtList.newTree(imports & types)
 
-  newEmptyNode()  
+proc genVMModuleFile(dir:string, module: static NimModule) =
+  #[
+    Dir needs to be create before calling this
+  ]#
+  
+  let moduleFile = dir / module.fullPath.split("nimforue")[1] # for modDep in engineTypeDeps:
+  discard staticExec("mkdir -p " & parentDir(moduleFile))
+  let moduleVMAst = genModuleImpl(module)
+  writeFile(moduleFile, moduleVMAst.repr)
 
 proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] = 
   let nimCode = readFile(entryPoint)
@@ -284,71 +320,11 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
     entryPoint &
     getAllImportsAsRelativePathsFromFileTree(entryPointFileTree)
     .mapIt(it.absolutePath(dir) & ".nim")
-
   let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
 
   let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
 
   return modules
-
-# dumpTree:
-#   type A* = object
-#     a*: int
-#     b*: string
-#   type
-#     B = object
-#       a: int
-#       b: string
-#     C* = object
-#       a: int
-#       b: string     
-#     D {.importc.} = object
-#       a: int
-#       b: string  
-#     E* {.importc.} = object
-#       a: int
-#       b: string
-    
-#     Puntero* = ptr A
-
-
-# const astStr ="""
-
-# type A* = object
-#     a: int
-#     b: string
-# type
-#     B = object
-#       a: int
-#       b: string
-#     C* = object
-#       a: int
-#       b: string     
-#     D {.importc.} = object
-#       a: int
-#       b: string  
-#     E* {.importc.} = object
-#       a: int
-#       b: string
-#     Puntero* = ptr A
-
- 
-# """
-
-
-
-
-# static:
-#   let nimNode = parseStmt(astStr)
-
-#   let typeDefs = getAllTypeSections(nimNode).map(typeSectionToTypeDefs).flatten
-#   echo $len(typeDefs)
-
-#   for t in typeDefs:
-#     echo $typeDefToNimType(t)
-  
-
-  # echo repr nimNode
 
 
 when not defined(nuevm):
@@ -358,9 +334,13 @@ when not defined(nuevm):
   const NimModules = getAllModulesFrom(dir, entryPoint)
   const NimDefinedTypes = NimModules.mapIt(it.types).flatten
   const NimDefinedTypesNames* = NimDefinedTypes.mapIt(it.name)
-  const engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head
-  
-  # GenModule(engineTypesModule.get)
+  const engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head.get
+  const engineTypeDeps = getDepsAsModules(NimModules, engineTypesModule)
+  const vmBindingsDir = PluginDir / "src" / "nimforue" / "unreal" / "bindings" / "vm"
+  static:
+    genVMModuleFile(vmBindingsDir, engineTypesModule) 
+
+  # quit()
 
 const PrimitiveTypes* = @[ 
   "bool", "float32", "float64", "int16", "int32", "int64", "int8", "uint16", "uint32", "uint64", "uint8"
