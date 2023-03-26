@@ -150,7 +150,7 @@ func getNameFromIdentDef(identDefs:NimNode) : string =
         of nnkIdent:
           postFixNode[^1].strVal
         of nnkAccQuoted:         
-          postFixNode[0].strVal
+          &"`{postFixNode[1][0].strVal}`"
         else:
           debugEcho treeRepr identDefs
           error &"Error in getParamFromIdentDef got {identDefs[0][0].kind} in pragma expr"
@@ -172,9 +172,10 @@ func getParamFromIdentDef(identDefs:NimNode) : NimParam =
     case identDefs[^2].kind:
     of nnkIdent:
       identDefs[^2].strVal
-    of nnkPtrTy:
-      let ptrType = identDefs[^2][0]
-      $repr ptrType 
+    of nnkPtrTy: 
+      let ptrType = identDefs[^2][0]    
+      "ptr " & $repr ptrType 
+
     of nnkBracketExpr:
       identDefs[^2][0].strVal  
     of nnkProcTy:
@@ -298,16 +299,27 @@ proc paramToIdentDefs(nimParam:NimParam) : NimNode =
   )
 
 proc nimObjectTypeToNimNode(nimType:NimType) : NimNode = 
-  if nimType.ast != "": return nimType.ast.parseStmt
+  if nimType.ast != "": 
+    var ast = nimType.ast.parseStmt
+    ast = ast[0][0] #removes stmt and type section
+    return ast
   let name = ident nimType.name
   let params = nnkRecList.newTree(@[newEmptyNode(), newEmptyNode()] & nimtype.params.map(paramToIdentDefs))
   result = 
-    genAst(name, params):
-      type name* = object
-        
-  
-  result.add params
-  # echo treeRepr result
+   nnkTypeDef.newTree(
+    nnkPostfix.newTree(
+      ident "*", #
+      ident nimType.name
+    ),    
+    newEmptyNode(),
+    nnkObjectTy.newTree(
+      newEmptyNode(),
+      newEmptyNode(),
+      # nnkOfInherit.newTree(ident nimType.parent),
+      params
+    )
+   )
+
 
 proc genNimVMTypeImpl(nimType:NimType) : NimNode =
   #Maybe in the future extrac the type section. For now it's fine
@@ -318,16 +330,19 @@ proc genNimVMTypeImpl(nimType:NimType) : NimNode =
     #Notice we are not emiting this for the vm but distinct int and then the converter with the ptrType
     #Need to get the parent if any so we can create a converter
     let ptrType = ident nimType.ptrType
-    genAst(name, ptrType): 
-      type 
-        name = ptr ptrType
+    var ast = 
+      genAst(name, ptrType): 
+        type 
+          name = ptr ptrType
+    ast = ast[0] #removes type section   
+    ast   
   else:
     newEmptyNode()
 
 
 proc genModuleImpl(nimModule :NimModule) : NimNode =
   let imports = nimModule.deps.mapIt(nnkImportStmt.newTree(ident it))
-  let types = nimModule.types.map(genNimVMTypeImpl)
+  let types = nnkTypeSection.newTree nimModule.types.map(genNimVMTypeImpl)
   result = nnkStmtList.newTree(imports & types)
 
 proc genVMModuleFile(dir:string, module: NimModule) =
