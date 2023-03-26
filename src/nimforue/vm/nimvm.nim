@@ -10,8 +10,12 @@ import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
 import compiler / [ast, nimeval, vmdef, vm, llstream, types, lineinfos]
 import compiler/options as copt
 import ../vm/[uecall, runtimefield, vmconversion]
-import ../codegen/[uemeta]
+import ../codegen/[uemeta, projectinstrospect]
 
+const engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head.get
+const vmBindingsDir = PluginDir / "src" / "nimforue" / "unreal" / "bindings" / "vm"
+static:
+  genVMModuleFiles(vmBindingsDir, NimModules) 
 
 type   
   VMQuit* = object of CatchableError
@@ -212,6 +216,7 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") :
     std / "core", 
     PluginDir / "src" / "nimforue",
     PluginDir/"src"/"nimforue"/"utils",
+    PluginDir/"src"/"nimforue"/"unreal"/"bindings"/"vm",
     parentDir(currentSourcePath),
    
     ] & searchPaths,

@@ -1,6 +1,6 @@
 import ../utils/[utils, ueutils]
 
-import std/[strformat, tables, hashes, options, sugar, json, strutils, jsonutils,  sequtils, strscans, algorithm, macros, genasts]
+import std/[strformat, enumerate, tables, hashes, options, sugar, json, strutils, jsonutils,  sequtils, strscans, algorithm, macros, genasts]
 
 
 when not defined(nuevm):
@@ -23,6 +23,7 @@ type
 
   NimType* = object 
     name* : string
+    ast* : string #This field is used only when generating types for the vm. Some types are replaced by an alias (i.e. FString, TArray..)
     case kind* : NimKind:
     of Object:
       parent*: string 
@@ -39,6 +40,26 @@ type
     ast:string
     deps : seq[string] #relative path to module
 
+# func `==`*[T:NimModule](x, y: T): bool =
+#   x.name == y.name and x.fullPath == y.fullPath and x.ast == y.ast and x.deps == y.deps and x.types == y.types
+
+func `==`*[T:NimParam](x, y: T): bool =
+  x.name == y.name and x.kind == y.kind and
+  (case x.kind:
+  of TypeInfo:
+    x.typeInfo == y.typeInfo
+  of OnlyName:
+    x.strType == y.strType)
+func `==`*[T:NimType](x, y: T): bool =
+  x.name == y.name and x.ast == y.ast and x.kind == y.kind and
+  (case x.kind:
+  of Object:
+    x.parent == y.parent and x.params == y.params
+  of Pointer:
+    x.ptrType == y.ptrType
+  of Proc, TypeClass, Distinct, Enum, GenericObject: #ignored for now
+    true)
+
 func getTypeFromModule*(modules:seq[NimModule], typeName:string) : Option[NimType] = 
   for module in modules:
     for typ in module.types:
@@ -51,7 +72,13 @@ func getDepsAsModules*(allModules:seq[NimModule], module:NimModule) : seq[NimMod
     .map(it=>allModules.first(m=>m.name == it))
     .sequence()
 
-
+func getDepsAsModulesRec*(allModules:seq[NimModule], module:NimModule) : seq[NimModule] = 
+  let deps = getDepsAsModules(allModules, module)
+  if deps.any():
+    deps & deps.mapIt(getDepsAsModulesRec(allModules, it)).flatten()
+  else:
+    @[]
+   
 
 
 func getNameFromTypeDef(typeDef:NimNode) : string = 
@@ -271,6 +298,7 @@ proc paramToIdentDefs(nimParam:NimParam) : NimNode =
   )
 
 proc nimObjectTypeToNimNode(nimType:NimType) : NimNode = 
+  if nimType.ast != "": return nimType.ast.parseStmt
   let name = ident nimType.name
   let params = nnkRecList.newTree(@[newEmptyNode(), newEmptyNode()] & nimtype.params.map(paramToIdentDefs))
   result = 
@@ -302,15 +330,29 @@ proc genModuleImpl(nimModule :NimModule) : NimNode =
   let types = nimModule.types.map(genNimVMTypeImpl)
   result = nnkStmtList.newTree(imports & types)
 
-proc genVMModuleFile(dir:string, module: static NimModule) =
-  #[
-    Dir needs to be create before calling this
-  ]#
-  
-  let moduleFile = dir / module.fullPath.split("nimforue")[1] # for modDep in engineTypeDeps:
-  discard staticExec("mkdir -p " & parentDir(moduleFile))
+proc genVMModuleFile(dir:string, module: NimModule) =
+  # let moduleFile = dir / module.fullPath.split("src")[1] # for modDep in engineTypeDeps:
+  let moduleFile = dir / module.name & ".nim"
+  discard staticExec("mkdir -p " & parentDir(moduleFile)) #TODO extract this and make it work agnostic of os and also make a pr so we dont have to deal with it 
   let moduleVMAst = genModuleImpl(module)
   writeFile(moduleFile, moduleVMAst.repr)
+
+proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
+  let typesToReplace = { 
+    "FString": "type FString* = string", 
+    "TArray": "type TArray*[T] = seq[T]", 
+  }.toTable()
+
+  var engineTypesModule = modules.filterIt(it.name == "enginetypes").head.get
+  let moduleDeps = getDepsAsModulesRec(modules, engineTypesModule).deduplicate()
+  var vmTypesDeps = moduleDeps.mapIt(it.types).flatten()    
+  for idx, t in enumerate(vmTypesDeps):
+    if t.name in typesToReplace:
+      let ast = typesToReplace[t.name]
+      vmTypesDeps[idx].ast = ast
+  engineTypesModule.types = vmTypesDeps
+  engineTypesModule.deps = @[]
+  genVMModuleFile(dir, engineTypesModule)
 
 proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] = 
   let nimCode = readFile(entryPoint)
@@ -331,14 +373,10 @@ when not defined(nuevm):
   const dir = PluginDir / "src" / "nimforue" / "unreal" 
   const entryPoint = dir / "prelude.nim"
   assert PluginDir != ""
-  const NimModules = getAllModulesFrom(dir, entryPoint)
+  const NimModules* = getAllModulesFrom(dir, entryPoint)
   const NimDefinedTypes = NimModules.mapIt(it.types).flatten
   const NimDefinedTypesNames* = NimDefinedTypes.mapIt(it.name)
-  const engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head.get
-  const engineTypeDeps = getDepsAsModules(NimModules, engineTypesModule)
-  const vmBindingsDir = PluginDir / "src" / "nimforue" / "unreal" / "bindings" / "vm"
-  static:
-    genVMModuleFile(vmBindingsDir, engineTypesModule) 
+
 
   # quit()
 
