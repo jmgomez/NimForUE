@@ -68,7 +68,7 @@ func toStr*(cppCls: CppClassType): string =
   let parent = if cppCls.parent.len > 0: &"  : public {cppCls.parent}  " else: ""
  
   &"""
-DLLEXPORT {kind} {cppCls.name} {parent} {{
+{kind} {cppCls.name} {parent} {{
 public:
   {cppCls.name}() = default;
   {cppCls.name}(FVTableHelper& Helper) : {cppCls.parent}(Helper) {{}}

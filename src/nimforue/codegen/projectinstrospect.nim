@@ -477,7 +477,7 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
   return modules
 
 
-when defined(guest):
+when not defined(game):   
   const dir = PluginDir / "src" / "nimforue" / "unreal" 
   const entryPoint = dir / "prelude.nim"
   assert PluginDir != ""

@@ -22,7 +22,7 @@ public class NimForUEGame : ModuleRules
 	
 		PublicDefinitions.Add("NIM_INTBITS=64");
 
-		PrivatePCHHeaderFile = "../../NimHeaders/nimbase.h";
+		PrivatePCHHeaderFile = "../../NimHeaders/nimgame.h";
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");

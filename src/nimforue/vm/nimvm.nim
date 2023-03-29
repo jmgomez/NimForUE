@@ -259,6 +259,7 @@ proc watchScript() : Future[void] {.async.} =
   let path = NimGameDir / "vm" / "script.nims"
   if not fileExists path:
     UE_Warn "Cant find the script. Not watching"
+    
   # let path = parentDir(currentSourcePath) / "script.nims"
   let modTime = getLastModificationTime(path).toUnix()
   if modTime != lastModTime:

@@ -24,10 +24,6 @@ DEFINE_LOG_CATEGORY(NimForUE);
 
 
 
-#if WITH_STARTNUE
-extern "C" N_LIB_PRIVATE N_CDECL(void, startNue)(void);
-#endif
-
 #if !WITH_EDITOR
 N_CDECL(void, NimMain)(void);
 
@@ -35,19 +31,7 @@ N_CDECL(void, NimMain)(void);
 
 void FNimForUEModule::StartupModule()
 {
-#if WITH_STARTNUE
-	// If we are cooking we just skip
-	 if (IsRunningCommandlet()) {
-	 	NimMain();
-	 	startNue();
-	 	return;
-	 }
-#endif
-#if WITH_EDITOR
-#elif WITH_STARTNUE
-	NimMain();
-	startNue();
-#endif
+
 	
 }
 
