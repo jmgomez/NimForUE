@@ -108,6 +108,7 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
   let guestSwitches = @[
     "-d:BindingPrefix=.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
     "-d:guest",
+
   ]
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"nim cpp {buildFlags} --app:lib --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim"
@@ -132,7 +133,10 @@ switch("path","../Plugins/NimForUE/src/nimforue/")
 proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) = 
   let gameSwitches = @[
     "-d:game",
-    &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
+    &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
+    &"-l:-L./Binaries/nim",
+    "-l:-lmaingencppbindings"
+
   ]
   ensureGameConfExists()
   #We compile from the engine directory so we dont surpass the windows argument limits for the linker 
@@ -234,8 +238,8 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
 
 proc compileGenerateBindings*() = 
   let buildFlags = @[buildSwitches, targetSwitches(false), pluginPlatformSwitches(false), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  # doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --app:staticlib --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  # doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"nim  cpp {buildFlags}  --noMain --app:staticlib --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
   #It still generates NimMain in the header. So we need to get rid of it:
