@@ -15,7 +15,7 @@ import gencppclass
 func getTypeNodeFromUProp*(prop : UEField, isVarContext:bool) : NimNode = 
   func fromGenericStringToNode(generic:string) : NimNode = 
     let genericType = generic.extractOuterGenericInNimFormat()
-     
+    
     let innerTypesStr = 
       if genericType.contains("TMap"): generic.extractKeyValueFromMapProp().join(",")
       else: generic.extractTypeFromGenericInNimFormat()
@@ -474,13 +474,14 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         typeDecl
         props
         funcs
-
-  if typeExposure == uexExport and not typeDef.forwardDeclareOnly and typeDef.name notin NimDefinedTypesNames: 
-    #Generates a type so it's added to the header when using --header
-    #TODO dont create them for UStructs
-    let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
-      proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
-    result = nnkStmtList.newTree(result, exportFn)
+  
+  when not defined(game): #TODO game should apply to all game libs
+    if typeExposure == uexExport and not typeDef.forwardDeclareOnly and typeDef.name notin NimDefinedTypesNames: 
+      #Generates a type so it's added to the header when using --header
+      #TODO dont create them for UStructs
+      let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
+        proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
+      result = nnkStmtList.newTree(result, exportFn)
 
   result.add genInterfaceConverers(typeDef)
 

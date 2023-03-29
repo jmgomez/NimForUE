@@ -336,18 +336,18 @@ proc paramToIdentDefs(nimParam:NimParam) : NimNode =
     newEmptyNode()
   )
 
-dumpTree:
-  type
-    Foo* = object
-      a*: int
-      b*: string
-    GenericFoo*[T] = object
-      a*: int
-      b*: T
-    GenericFoo2*[T, out Y] = object
-      a*: int
-      b*: T
-      c*: Foo    
+# dumpTree:
+#   type
+#     Foo* = object
+#       a*: int
+#       b*: string
+#     GenericFoo*[T] = object
+#       a*: int
+#       b*: T
+#     GenericFoo2*[T, out Y] = object
+#       a*: int
+#       b*: T
+#       c*: Foo    
 
 func nimObjectTypeToNimNode(nimType:NimType) : NimNode = 
   if nimType.ast != "": 
@@ -477,7 +477,7 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
   return modules
 
 
-when not defined(nuevm):
+when defined(guest):
   const dir = PluginDir / "src" / "nimforue" / "unreal" 
   const entryPoint = dir / "prelude.nim"
   assert PluginDir != ""
