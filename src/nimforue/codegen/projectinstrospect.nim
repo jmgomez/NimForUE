@@ -471,10 +471,16 @@ func nimObjectTypeToNimNode(nimType:NimType) : NimNode =
 func nimPtrTypeToNimNode(nimType:NimType) : NimNode = 
   let name = ident nimType.name
   let ptrType = ident nimType.ptrType
+  #what we should do with the base type?
+  # result = 
+  #   genAst(name, ptrType): 
+  #     type 
+  #       name* = ptr ptrType
+  #Notice the converter needs to be produced afterwards (after the type section)
   result = 
-    genAst(name, ptrType): 
-      type 
-        name = ptr ptrType
+    genAst(name, ptrType):
+     type 
+      name* = distinct(int)
   result = result[0] #removes type section   
 
 func nimEnumTypeToNimNode(nimType:NimType) : NimNode = 
@@ -517,12 +523,29 @@ proc genNimVMTypeImpl(nimType:NimType) : NimNode =
     debugEcho "NimTypeNotSupported type: " & $nimType.kind
     newEmptyNode()
 
+proc genNimPtrConverter(nimType:NimType, types:seq[NimType]) : NimNode = 
+  assert nimType.kind == Pointer
+  let name = ident nimType.name
+  let objType = types.first(x=>x.name == nimType.name.removeLastLettersIfPtr())
+  if objType.isNone() or objType.get.parent == "": 
+    return newEmptyNode()
+  let parent = ident objType.get.parent & "Ptr"
+  
+  genAst(name, parent):
+    converter to*(self{.inject.}:name): parent = parent(int(self))
+   
+
 
 proc genModuleImpl(nimModule :NimModule) : NimNode =
   let imports = nimModule.deps.mapIt(nnkImportStmt.newTree(ident it))
   let types = nnkTypeSection.newTree nimModule.types.map(genNimVMTypeImpl)
+  let converters = 
+    nimModule.types
+      .filterIt(it.kind == Pointer)
+      .mapIt(genNimPtrConverter(it, nimModule.types))
   # let types = nimModule.types.map(genNimVMTypeImpl).filterIt(it.kind != nnkEmpty).mapIt(nnkTypeSection.newTree(it))
-  result = nnkStmtList.newTree(imports & types)
+  result = 
+      nnkStmtList.newTree(imports & types & converters)
 
 proc genVMModuleFile(dir:string, module: NimModule) =
   # let moduleFile = dir / module.fullPath.split("src")[1] # for modDep in engineTypeDeps:
@@ -541,13 +564,11 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   var moduleDeps = getDepsAsModulesRec(modules, engineTypesModule).deduplicate()
   # moduleDeps.add modules.filterIt(it.name in ["uobjectflags"])
   var vmTypesDeps = moduleDeps.mapIt(it.types).flatten()    
-  echo $vmTypesDeps.mapIt(it.name)
-
   for idx, t in enumerate(vmTypesDeps):
     if t.name in typesToReplace:
       let ast = typesToReplace[t.name]
       vmTypesDeps[idx].ast = ast
-  engineTypesModule.types = vmTypesDeps
+  engineTypesModule.types = vmTypesDeps & engineTypesModule.types
   engineTypesModule.deps = @[]
   genVMModuleFile(dir, engineTypesModule)
 
@@ -569,13 +590,18 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
 when not defined(game) or defined(vmhost):
   const dir = PluginDir / "src" / "nimforue" / "unreal" 
   const entryPoint = dir / "prelude.nim"
+  # const dir = PluginDir / "src" / "nimforue" / "unreal" / "engine" 
+  # const entryPoint = dir / "enginetypes.nim"
+  
   assert PluginDir != ""
-  const NimModules* = getAllModulesFrom(dir, entryPoint) & getAllModulesFrom(dir / "coreuobject", dir / "coreuobject" / "uobjectflags.nim"  )
+  const NimModules* = getAllModulesFrom(dir, entryPoint) & 
+    getAllModulesFrom(dir / "coreuobject", dir / "coreuobject" / "uobjectflags.nim"  ) 
+
   const NimDefinedTypes = NimModules.mapIt(it.types).flatten
   const NimDefinedTypesNames* = NimDefinedTypes.mapIt(it.name)
 
-  # static:
-    # echo $NimModules.mapIt(it.name)
+  static:
+    echo $NimModules.mapIt(it.name)
     # echo NimModules.filterIt(it.name == "uobjectflags")
   # quit()
 
