@@ -7,7 +7,7 @@
 #include "Interfaces/IPluginManager.h"
 #include "Styling/SlateStyleRegistry.h"
 
-#define LOCTEXT_NAMESPACE "NimForUEScriptEditor"
+// #define LOCTEXT_NAMESPACE "NimForUEScriptEditor"
 #define PLUGIN_IMAGE_BRUSH( RelativePath, ... ) FSlateImageBrush( InResource( RelativePath, ".png" ), __VA_ARGS__ )
 
 FString InResource(const FString& RelativePath, const ANSICHAR* Extension) {
@@ -46,7 +46,8 @@ void UEditorExtensions::AddReloadScriptButtom() {
 			})),       //FDALevelToolbarCommands::Get().OpenLaunchPad,
 			// LOCTEXT("NimForUEScriptEditor_1", "Reload NimScript"),
 			TAttribute<FText>(),
-			LOCTEXT("NimForUEScriptEditor_Tooltip", "Reload the script defined in the NimVM"),
+			TAttribute<FText>(),
+			// LOCTEXT("NimForUEScriptEditor_Tooltip", "Reload the script defined in the NimVM"),
 			FSlateIcon("NimForUEStyleSet", "NimForUE.Toolbar.NimScripReload"));
 	
 																					

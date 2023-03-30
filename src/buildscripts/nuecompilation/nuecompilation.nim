@@ -131,8 +131,9 @@ switch("path","../Plugins/NimForUE/src/nimforue/")
 
 
 proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) = 
+  let isVm = "vm" in name
   let gameSwitches = @[
-    "-d:game",
+    (if isVm: "-d:vmhost" else: "-d:game"),
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
     &"-l:-L./Binaries/nim",
     "-l:-lmaingencppbindings"
@@ -231,9 +232,6 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
       let path = privateBindingsFolder / filename
       if not fileExists path:
         copyFile(cppFile, path)
-
-
-
 
 
 proc compileGenerateBindings*() = 
