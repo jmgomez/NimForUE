@@ -94,7 +94,7 @@ type
     UDelegateFunction* {.importcpp, inheritable, pure .} = object of UFunction
     UDelegateFunctionPtr* = ptr UDelegateFunction
 
-    TObjectPtr*[out T ] {.importcpp.} = object 
+    TObjectPtr*[T ] {.importcpp.} = object 
     TLazyObjectPtr*[out T ] {.importcpp.} = object 
     TEnumAsByte*[T : enum] {.importcpp.} = object
 

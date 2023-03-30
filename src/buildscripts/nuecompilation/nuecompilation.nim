@@ -133,7 +133,8 @@ switch("path","../Plugins/NimForUE/src/nimforue/")
 proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) = 
   let isVm = "vm" in name
   let gameSwitches = @[
-    (if isVm: "-d:vmhost" else: "-d:game"),
+    "-d:game",
+    (if isVm: "-d:vmhost" else: ""),
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
     &"-l:-L./Binaries/nim",
     "-l:-lmaingencppbindings"
