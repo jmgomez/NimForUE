@@ -9,11 +9,11 @@ when not defined(nuevm):
 
 type
   NimParamKind* = enum
-    TypeInfo, OnlyName
+    TypeInfo, OnlyName, OnlyType
   NimParam* = object
     name*: string
     case kind* : NimParamKind
-    of OnlyName: 
+    of OnlyName, OnlyType: 
       strType*: string #For now only this is used 
     of TypeInfo: 
       typeInfo*: NimType
@@ -29,13 +29,14 @@ type
     of Object:
       parent*: string 
       params*: seq[NimParam]
-      typeParams*: seq[string] #for generic objects T etc
+      typeParams*: seq[NimParam] #for generic objects T etc
     of Pointer:
       ptrType*: string #just the type name as str for now. We could do a lookup in a table
     of Enum:
       enumFields: seq[string] 
     of Proc, TypeClass, Distinct, None: #ignored for now
       discard
+
   NimModule* = object
     name*: string
     types*: seq[NimType]
@@ -51,7 +52,7 @@ func `==`*[T:NimParam](x, y: T): bool =
   (case x.kind:
   of TypeInfo:
     x.typeInfo == y.typeInfo
-  of OnlyName:
+  of OnlyName, OnlyType :
     x.strType == y.strType)
 func `==`*[T:NimType](x, y: T): bool =
   x.name == y.name and x.ast == y.ast and x.kind == y.kind and
@@ -178,15 +179,42 @@ func getNameFromIdentDef(identDefs:NimNode) : string =
         debugEcho treeRepr identDefs
         error &"Error in getParamFromIdentDef got {identDefs[0][0].kind} in pragma expr"
         ""
-    of nnkPrefix: #out in type param
-      identDefs[0][^1].strVal()
-      # repr identDefs[0]
+    
     else:
       debugEcho treeRepr identDefs
       error &"Error in getParamFromIdentDef got {identDefs[0].kind} in identDefs name"
       quit() 
 
-      
+
+
+func getGenericTypeName(identDefs:NimNode) : seq[NimParam] = 
+  assert identDefs.kind == nnkIdentDefs, "Expected nnkIdentDefs got " & $identDefs.kind
+  #[
+    When 2 idents and TWO empties at the end means all idents are params 
+  ]#
+  let nIdents = identDefs.children.toSeq.filterIt(it.kind == nnkIdent).len
+  let nEmpty = identDefs.children.toSeq.filterIt(it.kind == nnkEmpty).len
+  let allIdentParams = nEmpty == 2  or nIdents > 3
+  
+  func getName(node:NimNode) : string = 
+    case node.kind:
+    of nnkEmpty, nnkEnumTy: #the enum is because TEnumAsByt[T : enum]:
+      ""
+    of nnkIdent:
+      node.strVal
+    of nnkPrefix:  #remove out/in for now
+      node[^1].strVal
+    else:
+      error &"Error in getGenericTypeName got {node.kind}"
+      ""
+  if not allIdentParams:
+    result = @[NimParam(name: getName(identDefs[0]), kind: OnlyName, strType:getName(identDefs[1]))]
+  result = identDefs
+    .children.toSeq
+    .filterIt(it.kind == nnkIdent)
+    .mapIt(NimParam(kind: OnlyType, strType:getName(it)))
+
+  
 
 func getParamFromIdentDef(identDefs:NimNode) : NimParam =
   assert identDefs.kind == nnkIdentDefs, "Expected nnkIdentDefs got " & $identDefs.kind
@@ -211,6 +239,7 @@ func getParamFromIdentDef(identDefs:NimNode) : NimParam =
   
   return NimParam(name: name, kind:OnlyName, strType:typ)
 
+
 func makeObjNimType(typeName:string, typeDef:NimNode) : NimType = 
   let objectTyNode = typeDef[2]
   assert objectTyNode.kind == nnkObjectTy, "Expected nnkObjectTy got " & $typeDef[2].kind
@@ -225,13 +254,17 @@ func makeObjNimType(typeName:string, typeDef:NimNode) : NimType =
 
   let genericParams = 
     case typeDef[^2].kind:
-    of nnkGenericParams:
+    of nnkGenericParams:      
       typeDef[^2]
       .children.toSeq
-      .filterIt(it.kind == nnkIdentDefs)
-      .map(getNameFromIdentDef)
+      .filterIt(it.kind == nnkIdentDefs)      
+      .map(getGenericTypeName)
+      .flatten
       
     else: @[]
+  # if genericParams.len > 0:
+  #   debugEcho treeRepr typeDef
+      
   
   case objectTyNode[^1].kind:
   of nnkEmpty:
@@ -336,18 +369,88 @@ proc paramToIdentDefs(nimParam:NimParam) : NimNode =
     newEmptyNode()
   )
 
-# dumpTree:
-#   type
-#     Foo* = object
-#       a*: int
-#       b*: string
-#     GenericFoo*[T] = object
-#       a*: int
-#       b*: T
-#     GenericFoo2*[T, out Y] = object
-#       a*: int
-#       b*: T
-#       c*: Foo    
+dumpTree:
+  type
+    Foo* = object
+      a*: int
+      b*: string
+    GenericFoo*[T] = object
+      a*: int
+      b*: T
+    GenericFoo2*[T, out Y] = object
+      a*: int
+      b*: T
+      c*: Foo        
+
+    GenericFoo3*[T:int, Y, Z : T] = object
+      a*: int
+      b*: T
+      c*: Foo    
+ 
+    GenericFoo3*[T:X, Y, Z] = object
+      a*: int
+      b*: T
+      c*: Foo    
+ 
+    GenericFoo3*[T] = object
+      a*: int
+      b*: T
+      c*: Foo    
+    GenericFoo3*[T, D] = object
+      a*: int
+      b*: T
+      c*: Foo    
+ 
+
+func genGenericTypeParams(nimType:NimType) : NimNode =
+  if not nimType.typeParams.any():
+    return newEmptyNode()
+
+  func genGenericType(typ:string) : NimNode = 
+    if typ == "": newEmptyNode()
+    else: ident typ
+
+  var genericParams  = nnkGenericParams.newTree()
+  var lastIdentDef = nnkIdentDefs.newTree() #we need this beacause generic are a mess
+  for nimParam in nimType.typeParams:
+    case nimParam.kind:         
+    of OnlyName:
+        #restart lastIdent
+      if lastIdentDef.children.toSeq.len > 0:
+        let nIdents = lastIdentDef.children.toSeq.len
+        if nIdents <= 2 :
+          lastIdentDef.add [newEmptyNode(), newEmptyNode()]
+        else:
+          lastIdentDef.add newEmptyNode()
+         
+        genericParams.add lastIdentDef
+      lastIdentDef = nnkIdentDefs.newTree()
+      genericParams.add nnkIdentDefs.newTree(
+        ident nimParam.name, 
+        genGenericType(nimParam.strType), 
+        newEmptyNode()
+      )
+    of OnlyType:
+      lastIdentDef.add ident nimParam.strType
+    of TypeInfo:
+      error("TypeParam shouldnt be type info")
+    
+
+  if lastIdentDef.children.toSeq.len > 0:
+    let nIdents = lastIdentDef.children.toSeq.len
+    if nIdents <= 2 :
+      lastIdentDef.add [newEmptyNode(), newEmptyNode()]
+    else:
+      lastIdentDef.add newEmptyNode()
+      
+    genericParams.add lastIdentDef
+  
+  debugEcho treeRepr genericParams
+
+  genericParams
+
+
+
 
 func nimObjectTypeToNimNode(nimType:NimType) : NimNode = 
   if nimType.ast != "": 
@@ -357,16 +460,7 @@ func nimObjectTypeToNimNode(nimType:NimType) : NimNode =
   
   let name = ident nimType.name
   let params = nnkRecList.newTree(@[newEmptyNode(), newEmptyNode()] & nimtype.params.map(paramToIdentDefs))
-  let typeParams = 
-    if nimType.typeParams.len > 0:
-      debugEcho "TYPE PARAMS " & $nimType.typeParams
-      var typeParams = nimType.typeParams.mapIt(ident it)
-      if typeParams.len == 1:
-        typeParams.add(newEmptyNode())
-      if typeParams.len == 2:
-        typeParams.add(newEmptyNode())
-      nnkGenericParams.newTree(nnkIdentDefs.newTree(typeParams))
-    else: newEmptyNode()
+  let typeParams = genGenericTypeParams(nimType)  
 
   result = 
    nnkTypeDef.newTree(
@@ -383,9 +477,7 @@ func nimObjectTypeToNimNode(nimType:NimType) : NimNode =
       params
     )
    )
-  if nimType.typeParams.len > 0:
-    debugEcho "NIM OBJECT TYPE TO NIM NODE " & $result.treeRepr
-
+ 
 func nimPtrTypeToNimNode(nimType:NimType) : NimNode = 
   let name = ident nimType.name
   let ptrType = ident nimType.ptrType
@@ -401,13 +493,19 @@ func nimEnumTypeToNimNode(nimType:NimType) : NimNode =
   if not enumFields.any():
     return newEmptyNode() #Enums with no fields are not supported without importc 
 
-  nnkTypeDef.newTree(
-    nnkPostfix.newTree(
-      ident "*", #
-      name),      
+  nnkTypeDef.newTree(      
+    nnkPragmaExpr.newTree(
+      nnkPostfix.newTree(
+        ident "*", #
+        name),   
+      nnkPragma.newTree(
+        ident "pure"
+      ),
+    ),
     newEmptyNode(),
     nnkEnumTy.newTree(
-      @[newEmptyNode()] & enumFields
+      @[newEmptyNode()] & 
+      enumFields
     )
   )
 
@@ -433,6 +531,7 @@ proc genNimVMTypeImpl(nimType:NimType) : NimNode =
 proc genModuleImpl(nimModule :NimModule) : NimNode =
   let imports = nimModule.deps.mapIt(nnkImportStmt.newTree(ident it))
   let types = nnkTypeSection.newTree nimModule.types.map(genNimVMTypeImpl)
+  # let types = nimModule.types.map(genNimVMTypeImpl).filterIt(it.kind != nnkEmpty).mapIt(nnkTypeSection.newTree(it))
   result = nnkStmtList.newTree(imports & types)
 
 proc genVMModuleFile(dir:string, module: NimModule) =

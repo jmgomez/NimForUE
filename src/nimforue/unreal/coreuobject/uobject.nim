@@ -96,7 +96,7 @@ type
 
     TObjectPtr*[out T ] {.importcpp.} = object 
     TLazyObjectPtr*[out T ] {.importcpp.} = object 
-    TEnumAsByte*[T : enum] {.importcpp.} = object
+    TEnumAsByte*[T] {.importcpp.} = object
 
     TWeakObjectPtr*[out T] {.importcpp.} = object
     TScriptInterface*[out T] {.importcpp.} = object
