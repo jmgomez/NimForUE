@@ -12,7 +12,12 @@ const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
 
 const GamePathError* = "Could not find the uproject file."
 
+const MacOsARM* = true #Change this if you want to target x86_64 on mac (TODO autodetect)
 
+when MacOsARM:
+  const MacPlatformDir* = "Mac/arm64"
+else:
+  const MacPlatformDir* = "Mac/x86_64"
 
 when defined(nue) and compiles(gorgeEx("")):
 
@@ -168,7 +173,7 @@ codegenDir(reflectionDataFilePath, ReflectionDataFilePath)
 
 
 proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
-  let platformDir = if conf.targetPlatform == Mac: "Mac/x86_64" else: $ conf.targetPlatform
+  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir else: $ conf.targetPlatform
   let confDir = $ conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = PluginDir
@@ -263,7 +268,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
 
 
 proc getUESymbols*(conf: NimForUEConfig): seq[string] =
-  let platformDir = if conf.targetPlatform == Mac: "Mac/x86_64" else: $conf.targetPlatform
+  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir else: $conf.targetPlatform
   let confDir = $conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = PluginDir

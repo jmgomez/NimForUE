@@ -182,7 +182,6 @@ proc runtimeFieldTo*(rtField : RuntimeField, T : typedesc) : T =
   obj
 
 proc toRuntimeField*[T](value : T) : RuntimeField = 
-  
   when compiles(toRuntimeFieldHook(value)): 
     return toRuntimeFieldHook(value)
   else:

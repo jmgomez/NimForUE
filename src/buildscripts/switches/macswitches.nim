@@ -2,7 +2,11 @@ import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sug
 import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 
 let config = getNimForUEConfig()
-
+let macArmSwitches = @[
+    # "--putenv:MACOSX_DEPLOYMENT_TARGET=10.15",
+    "-l:'-target arm64-apple-macos10.15'",
+    "-t:'-target arm64-apple-macos10.15'",
+]
 let macSwitches = @[
   "--cc:clang",
   "-t:-stdlib=libc++",
@@ -20,12 +24,13 @@ let macSwitches = @[
   "-t:-Wno-macro-redefined",
   "-t:-Wno-duplicate-decl-specifier",
   "-t:-mincremental-linker-compatible",
-]
+] & (if MacOsARM: macArmSwitches else: @[])
+
 
 
 proc getPlatformSwitches*(withPch, withDebug : bool, target:string) : seq[string] = 
   
-  let platformDir =  "Mac/x86_64" 
+  let platformDir =  MacPlatformDir
   let nueModule = if target == "game": "NimForUEGame" else: "NimForUE"
   let pchPath = PluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / $config.targetConfiguration / nueModule / &"PCH.{nueModule}.h.gch"
   if withPch:
