@@ -1,24 +1,27 @@
 
 import std/[json, jsonutils, typetraits, strutils, tables, options]
 import runtimefield
+import ../unreal/bindings/vm/enginetypes
+
+
 proc log*(s:string) : void = discard #overrided
 #TODO move shared types to shared.nim
 type
-  AActorPtr* = distinct(int)
-  FVector* = object
-    x*,y*,z*:float
-  FLinearColor* = object
-    r*,g*,b*,a*:float
+  # AActorPtr* = distinct(int)
+  # FVector* = object
+  #   x*,y*,z*:float
+  # FLinearColor* = object
+  #   r*,g*,b*,a*:float
   AMyActorPtr* =  distinct(int)
-  UClassPtr* = distinct(int)
-  UObjectPtr* = distinct(int)
+  # UClassPtr* = distinct(int)
+  # UObjectPtr* = distinct(int)
 
 
 converter myActorToActor*(actor:AMyActorPtr) : AActorPtr = AActorPtr(int(actor))
-
-converter toUObject*(actor:AActorPtr) : UObjectPtr = UObjectPtr(int(actor))
-converter toUObject*(actor:AMyActorPtr) : UObjectPtr = UObjectPtr(int(actor))
-converter toUObject*(actor:UClassPtr) : UObjectPtr = UObjectPtr(int(actor))
+# converter toInt(obj:UObjectPtr) : int = UObjectPtr(obj)
+# converter toUObject*(actor:AActorPtr) : UObjectPtr = UObjectPtr(int(actor))
+# converter toUObject*(actor:AMyActorPtr) : UObjectPtr = UObjectPtr(int(actor))
+# converter toUObject*(actor:UClassPtr) : UObjectPtr = UObjectPtr(int(actor))
 
 proc isNil*(actor:UObjectPtr) : bool = int(actor) == 0
 

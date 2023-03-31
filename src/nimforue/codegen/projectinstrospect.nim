@@ -83,6 +83,20 @@ func getDepsAsModulesRec*(allModules:seq[NimModule], module:NimModule) : seq[Nim
   else:
     @[]
    
+#[
+  Need to get all the parents of a child 
+
+]#
+
+
+
+func getParentHierarchy(allModules:seq[NimModule], nimType:NimType) : seq[string] = 
+  if nimType.parent == "": newSeq[string]()
+  else:
+    let parent = getTypeFromModule(allModules, nimType.parent)
+    if parent.isNone(): newSeq[string]()
+    else:
+      @[nimType.parent] & getParentHierarchy(allModules, parent.get())
 
 
 func getNameFromTypeDef(typeDef:NimNode) : string = 
@@ -523,35 +537,44 @@ proc genNimVMTypeImpl(nimType:NimType) : NimNode =
     debugEcho "NimTypeNotSupported type: " & $nimType.kind
     newEmptyNode()
 
-proc genNimPtrConverter(nimType:NimType, types:seq[NimType]) : NimNode = 
+
+
+
+func genConverter(nameLit: string, parentLit:string) : NimNode =
+  let name = ident nameLit
+  let parent = ident parentLit & "Ptr"
+  let fnName = ident &"{nameLit}To{parentLit}"
+  genAst(fnName, name, parent):
+    converter fnName*(self{.inject.}:name): parent = parent(int(self))
+  
+  
+func genNimPtrConverter(nimType:NimType, modules:seq[NimModule]) : NimNode = 
   assert nimType.kind == Pointer
   let name = ident nimType.name
+  let types = modules.mapIt(it.types).foldl(a & b, newSeq[NimType]())
   let objType = types.first(x=>x.name == nimType.name.removeLastLettersIfPtr())
   if objType.isNone() or objType.get.parent == "": 
     return newEmptyNode()
-  let parent = ident objType.get.parent & "Ptr"
-  
-  genAst(name, parent):
-    converter to*(self{.inject.}:name): parent = parent(int(self))
-   
+  let parents = getParentHierarchy(modules, objType.get())
+  result = nnkStmtList.newTree parents.mapIt(genConverter(nimType.name, it))
 
 
-proc genModuleImpl(nimModule :NimModule) : NimNode =
+proc genModuleImpl(nimModule :NimModule, allModules:seq[NimModule]) : NimNode =
   let imports = nimModule.deps.mapIt(nnkImportStmt.newTree(ident it))
   let types = nnkTypeSection.newTree nimModule.types.map(genNimVMTypeImpl)
   let converters = 
     nimModule.types
       .filterIt(it.kind == Pointer)
-      .mapIt(genNimPtrConverter(it, nimModule.types))
+      .mapIt(genNimPtrConverter(it, allModules))
   # let types = nimModule.types.map(genNimVMTypeImpl).filterIt(it.kind != nnkEmpty).mapIt(nnkTypeSection.newTree(it))
   result = 
       nnkStmtList.newTree(imports & types & converters)
 
-proc genVMModuleFile(dir:string, module: NimModule) =
+proc genVMModuleFile(dir:string, module: NimModule, modules:seq[NimModule]) =
   # let moduleFile = dir / module.fullPath.split("src")[1] # for modDep in engineTypeDeps:
   let moduleFile = dir / module.name & ".nim"
   discard staticExec("mkdir -p " & parentDir(moduleFile)) #TODO extract this and make it work agnostic of os and also make a pr so we dont have to deal with it 
-  let moduleVMAst = genModuleImpl(module)
+  let moduleVMAst = genModuleImpl(module, modules)
   writeFile(moduleFile, moduleVMAst.repr)
 
 proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
@@ -570,7 +593,7 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
       vmTypesDeps[idx].ast = ast
   engineTypesModule.types = vmTypesDeps & engineTypesModule.types
   engineTypesModule.deps = @[]
-  genVMModuleFile(dir, engineTypesModule)
+  genVMModuleFile(dir, engineTypesModule, modules)
 
 proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] = 
   let nimCode = readFile(entryPoint)
