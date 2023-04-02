@@ -7,7 +7,9 @@ let config = getNimForUEConfig()
 
 let unrealFolder = if WithEditor: "UnrealEditor" else: "UnrealGame"
 
-let pchDir = PluginDir / "Intermediate\\Build\\Win64" / unrealFolder / $config.targetConfiguration / "NimForUE"
+
+
+let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir / unrealFolder / $config.targetConfiguration / "NimForUE"
 let pchObjPath = pchDir / "PCH.NimForUE.h.obj"
 
 let pchCompileFlags = @[
@@ -86,7 +88,8 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     # "--printPath",
     # "--command:./nue echotask --test",
     # "--vccversion:0" #$ & getCompilerVersion()
-  ]
+  ] & (if UEVersion >= 5.2: @["/Zc:__cplusplus"] else: @[])
+
   result &= (if withDebug: 
               @["/Od", "/Z7"] 
             else: 

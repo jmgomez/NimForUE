@@ -14,10 +14,21 @@ const GamePathError* = "Could not find the uproject file."
 
 const MacOsARM* = true #Change this if you want to target x86_64 on mac (TODO autodetect)
 
-when MacOsARM:
+
+const UEVersion* = 5.2 #TODO autodetect
+
+
+when MacOsARM and UEVersion >= 5.2:
   const MacPlatformDir* = "Mac/arm64"
 else:
   const MacPlatformDir* = "Mac/x86_64"
+
+
+when UEVersion < 5.2: #Seems they introduced ARM win support in 5.2
+  const WinPlatformDir* = "Win64"
+else:
+  const WinPlatformDir* = "Win64"/"x64"
+  
 
 when defined(nue) and compiles(gorgeEx("")):
 
@@ -173,7 +184,7 @@ codegenDir(reflectionDataFilePath, ReflectionDataFilePath)
 
 
 proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
-  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir else: $ conf.targetPlatform
+  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir else:  WinPlatformDir
   let confDir = $ conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = PluginDir
@@ -268,7 +279,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
 
 
 proc getUESymbols*(conf: NimForUEConfig): seq[string] =
-  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir else: $conf.targetPlatform
+  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir else: WinPlatformDir
   let confDir = $conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = PluginDir
@@ -331,7 +342,9 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
       return @[libPath,libpathBindings, libPathEditor]
 
     elif defined windows:
+
       if conf.withEditor:
+        #seems like the plugin is still win64?
         let libPath = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUE/UnrealEditor-NimForUE{suffix}.lib"
         let libPathBindings = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
         let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEEditor/UnrealEditor-NimForUEEditor{suffix}.lib"

@@ -136,10 +136,17 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) =
     "-d:game",
     (if isVm: "-d:vmhost" else: ""),
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
-    &"-l:-L./Binaries/nim",
-    "-l:-lmaingencppbindings"
+   
 
-  ]
+  ] & (if defined(macos):
+    @[
+       &"-l:-L./Binaries/nim",
+      "-l:-lmaingencppbindings",
+    ]
+  else:
+    @[
+      &"-l:{absolutePath(PluginDir)}/Binaries/nim"/"maingenbindings.lib",
+    ])
   ensureGameConfExists()
   #We compile from the engine directory so we dont surpass the windows argument limits for the linker 
   let engineBase = parentDir(config.engineDir)
