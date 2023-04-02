@@ -74,3 +74,5 @@ src/NimForUE.code-workspace
 Source/NimForUEGame/Private/Game/
 
 Source/NimForUEGame/Private/Bindings/
+
+src/hostnimforue/ffigen.nim

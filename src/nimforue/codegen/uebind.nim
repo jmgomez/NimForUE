@@ -671,6 +671,7 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
       nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
       nnkPragma.newTree(
         ident "inject",
+        ident "bycopy", #so when the struct is big enough it gets exported in the header. This can be avoided if we generate our own struct like we do for the classes 
         nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
       )
     ]),
