@@ -21,7 +21,7 @@ public class NimForUEGame : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 	
 		PublicDefinitions.Add("NIM_INTBITS=64");
-
+		
 		PrivatePCHHeaderFile = "../../NimHeaders/nimgame.h";
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;

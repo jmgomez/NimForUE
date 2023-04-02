@@ -9,15 +9,26 @@ let unrealFolder = if WithEditor: "UnrealEditor" else: "UnrealGame"
 
 
 
-let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir / unrealFolder / $config.targetConfiguration / "NimForUE"
-let pchObjPath = pchDir / "PCH.NimForUE.h.obj"
+let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir / unrealFolder / $config.targetConfiguration 
 
-let pchCompileFlags = @[
-  &"/FI\"{pchDir}\\PCH.NimForUE.h\"",
-  &"/Yu\"{pchDir}\\PCH.NimForUE.h\"",
-  &"/Fp\"{pchDir}\\PCH.NimForUE.h.pch\"",
-  # &"/Fd\"{pchDir}\\PCH.NimForUE.h.pdb\"",
-]
+func getModuleName(target:string) : string = 
+  if target == "guest": "NimForUE"
+  else: "NimForUE"
+
+proc pchObjPath(target:string) : string = 
+  let module = getModuleName(target)
+  pchDir / module / &"PCH.{module}.h.obj"
+
+
+proc pchCompileFlags(target:string) : seq[string] = 
+  let module = getModuleName(target)
+  let pchCompileFlags = @[
+    &"/FI\"{pchDir}\\{module}\\PCH.{module}.h\"",
+    &"/Yu\"{pchDir}\\{module}\\PCH.{module}.h\"",
+    &"/Fp\"{pchDir}\\{module}\\PCH.{module}.h.pch\"",
+    # &"/Fd\"{pchDir}\\PCH.NimForUE.h.pdb\"",
+  ]
+  pchCompileFlags
 
 #The file is created from a function in host which is called from the build rules on the plugin when UBT runs
 proc getSdkVersion() : string =
@@ -34,7 +45,7 @@ proc getCompilerVersion() : string =
   compilerVersion.split(".")[0] & "0"
 
 
-proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string] = 
+proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool, target:string) : seq[string] = 
   result = @[
     # "/Zc:inline", #Remove unreferenced functions or data if they're COMDAT or have internal linkage only (off by default).
     "/nologo",
@@ -88,15 +99,21 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool) : seq[string]
     # "--printPath",
     # "--command:./nue echotask --test",
     # "--vccversion:0" #$ & getCompilerVersion()
-  ] & (if UEVersion >= 5.2: @["/Zc:__cplusplus"] else: @[])
+  ] & (if UEVersion >= 5.2: 
+        @[
+          "/Zc:__cplusplus"
+        
+        ] else: @[])
 
   result &= (if withDebug: 
               @["/Od", "/Z7"] 
             else: 
               @["/O2"])
   if withPch: 
-    result &= pchCompileFlags
+    result &= pchCompileFlags(target)
 
+
+ 
 
 #nimforue or game are the target, the folder and the base name must match
 proc getPdbFilePath*(targetName:static string): string =
@@ -126,12 +143,12 @@ proc getPdbFilePath*(targetName:static string): string =
   let pdbFile = pdbFolder / targetName & version & ".pdb"
   pdbFile
 
-proc vccCompileSwitches*(withDebug, withIncremental, withPch : bool, debugFolder:static string) : seq[string]= 
-  var switches = vccPchCompileFlags(withDebug, withIncremental, withPch).mapIt("-t:" & it) & @[&"--cc:vcc"]
+proc vccCompileSwitches*(withDebug, withIncremental, withPch : bool, target:static string) : seq[string]= 
+  var switches = vccPchCompileFlags(withDebug, withIncremental, withPch, target).mapIt("-t:" & it) & @[&"--cc:vcc"]
   if withPch:
-    switches.add "-l:" & pchObjPath
+    switches.add "-l:" & pchObjPath(target)
   if withDebug: 
-      let debugSwitches = (&"/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath(debugFolder)}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
+      let debugSwitches = (&"/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath(target)}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
 
       # let debugSwitches = "-l:\"/INCREMENTAL /DEBUG\"" & &"-l:/PDB:\"{getPdbFilePath(debugFolder)}\""
       switches & debugSwitches
@@ -139,5 +156,5 @@ proc vccCompileSwitches*(withDebug, withIncremental, withPch : bool, debugFolder
 
 
 
-proc getPlatformSwitches*(withPch, withDebug : bool, debugFolder:static string) : seq[string] = 
-  result = vccCompileSwitches(withDebug, not withDebug, withPch, debugFolder) 
+proc getPlatformSwitches*(withPch, withDebug : bool, target:static string) : seq[string] = 
+  result = vccCompileSwitches(withDebug, not withDebug, withPch, target) 

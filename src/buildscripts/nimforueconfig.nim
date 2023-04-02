@@ -320,9 +320,10 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
         let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
         @[engineDir / "Plugins" / moduleName / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"]
 
-  proc getEnginePluginRuntimeSymbolsPathFor(prefix,  moduleName:string): seq[string] =  
+  #engineFolder is Runtime, Experimental etc.
+  proc getEnginePluginSymbolsPathFor(prefix,  engineFolder, moduleName:string): seq[string] =  
       when defined windows:
-        let dir = engineDir / "Plugins" / "Runtime" / moduleName / "Intermediate/Build" / platformDir / unrealFolder / confDir / moduleName 
+        let dir = engineDir / "Plugins" / engineFolder / moduleName / "Intermediate/Build" / platformDir / unrealFolder / confDir / moduleName 
         if conf.withEditor:
           @[dir / &"{prefix}-{moduleName}{suffix}.lib"]
         else:
@@ -330,7 +331,7 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
 
       elif defined macosx:
         let platform = $conf.targetPlatform #notice the platform changed for the symbols (not sure how android/consoles/ios will work)
-        @[engineDir / "Plugins" / "Runtime"  / moduleName / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"]
+        @[engineDir / "Plugins" / engineFolder  / moduleName / "Binaries" / platform / &"{prefix}-{moduleName}.dylib"]
 
 
   proc getNimForUESymbols(): seq[string] = 
@@ -358,9 +359,10 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   let modules = @["Core", "CoreUObject", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
   let enginePluginSymbolsPaths = @["EnhancedInput"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName)).flatten()
-  let engineRuntimePluginSymbolsPaths = @["GameplayAbilities"].map(modName=>getEnginePluginRuntimeSymbolsPathFor("UnrealEditor", modName)).flatten()
+  let engineRuntimePluginSymbolsPaths = @["GameplayAbilities"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Runtime", modName)).flatten()
+  let engineExperimentalPluginSymbolsPaths = @["PCG"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Experimental", modName)).flatten()
 
-  (engineSymbolsPaths & enginePluginSymbolsPaths &  engineRuntimePluginSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
+  (engineSymbolsPaths & enginePluginSymbolsPaths &  engineRuntimePluginSymbolsPaths & engineExperimentalPluginSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
 
 
 
