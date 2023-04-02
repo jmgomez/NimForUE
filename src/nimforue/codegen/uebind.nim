@@ -362,10 +362,31 @@ func makeUEFieldFromNimParamNode*(n:NimNode) : UEField =
     #make sure there is no var at this point, but CPF_Out
 
     var nimType = n[1].repr.strip()
-    let paramName = n[0].strVal()
-    var paramFlags = CPF_Parm
+    let paramName = 
+      case n[0].kind:
+      of nnkPragmaExpr:
+        n[0][0].strVal()
+      else:            
+        n[0].strVal()
+
+    var paramFlags = 
+      case n[0].kind:
+        of nnkPragmaExpr:
+          var flags = CPF_Parm
+          let pragmas = n[0][^1].children.toSeq()
+          let isOut = pragmas.any(n=>n.kind == nnkMutableTy) #notice out translates to nnkMutableTy
+          let isConst = pragmas.any(n=>n.kind == nnkIdent and n.strVal == "constp")
+          if isConst:
+            flags = flags or CPF_ConstParm #will leave it for refs but notice that ref params are actually ignore when checking funcs (see GetDefaultIgnoredSignatureCompatibilityFlags )
+          if isOut:
+            flags = flags or CPF_OutParm #out params are also set when var (see below)
+          flags
+          
+        else:    
+          CPF_Parm
+      
     if nimType.split(" ")[0] == "var":
-        paramFlags = paramFlags | CPF_OutParm
+        paramFlags = paramFlags | CPF_OutParm | CPF_ReferenceParm
         nimType = nimType.split(" ")[1]
     makeFieldAsUPropParam(paramName, nimType, paramFlags)
 
