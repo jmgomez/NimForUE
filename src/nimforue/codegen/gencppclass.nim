@@ -66,12 +66,15 @@ func toStr*(cppCls: CppClassType): string =
   let funcs = cppCls.functions.mapIt(it.funcForwardDeclare()).join("\n")
   let kind = if cppCls.kind == cckClass: "class" else: "struct"
   let parent = if cppCls.parent.len > 0: &"  : public {cppCls.parent}  " else: ""
- 
-  &"""
-{kind} {cppCls.name} {parent} {{
+  let constructors = if cppCls.isUObjectBased: &"""
 public:
   {cppCls.name}() = default;
   {cppCls.name}(FVTableHelper& Helper) : {cppCls.parent}(Helper) {{}}
+""" else : "" #TODO custom constructors?
+ 
+  &"""
+{kind} {cppCls.name} {parent} {{
+  {constructors}
 public:
 {funcs}
   }};
@@ -173,7 +176,7 @@ func toCppClass*(ueType:UEType) : CppClassType =
         if not ueType.isParentInPCH and parent notin (ManuallyImportedClasses & emittedClasses):
           parent = ueType.parent & "_" #The fake classes have a _ at the end we need to remove the emitted classes from here as well
 
-      CppClassType(name:ueType.name, kind: cckClass, parent:parent, functions: ueType.fnOverrides)
+      CppClassType(name:ueType.name, kind: cckClass, isUObjectBased:true, parent:parent, functions: ueType.fnOverrides)
     of uetStruct: #Structs can keep inhereting from Nim structs for now. We will need to do something about the produced fields in order to gen funcs. 
       CppClassType(name:ueType.name, kind: cckStruct, parent:ueType.superStruct, functions: @[])
     else:
@@ -187,6 +190,117 @@ proc addCppClass*(class: CppClassType) =
 
 
 
+#notice even though the name says cpp we are converting Nim types to string here. The cpp is only to show that it has to do with the cpp generation
+#in the future this can be standalone and then we can remove the cpp part of the name
+func getCppTypeFromParamType(paramType:NimNode) : string = 
+  case paramType.kind:
+    of nnkIdent: paramType.strVal
+    of nnkVarTy: "var " & getCppTypeFromParamType(paramType[0])
+    of nnkBracketExpr: 
+        #only arity one for now
+        &"{paramType[0].strVal}[{paramType[1].strVal}]"
 
+    else:
+      debugEcho treeRepr paramType
+      error("Cant parse param type " & paramType.repr)
+      ""
+
+func isParamCppConst(identDef:NimNode) : bool = 
+    assert identDef.kind == nnkIdentDefs
+    case identDef[0].kind:
+    of nnkIdent: false
+    # of nnkBracket: false
+    of nnkPragmaExpr: identDef[0][1][0].strVal == "constcpp"
+    else: 
+      error("Cant parse param pragma " & identDef[0].kind.repr)
+      false
+
+
+         
+func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
+  assert identDef.kind == nnkIdentDefs
+
+  let name = 
+    case identDef[0].kind:
+    of nnkIdent: identDef[0].strVal
+    # of nnkBracket: identDef[0][0].strVal
+    of nnkPragmaExpr: identDef[0][0].strVal
+    else: 
+      error("Cant parse param " & identDef[0].kind.repr) 
+      ""
+      
+  let isConst = identDef.isParamCppConst()
+  
+  let modifiers = if isConst: cmConst else: cmNone
+  let typ = getCppTypeFromParamType(identDef[1])
+  CppParam(name: name, typ: typ, modifiers: modifiers)
+
+func removeConstFromParam(identDef : NimNode) : NimNode =
+  let isConst = identDef.isParamCppConst()
+  result = identDef
+  if isConst: #This remove all pragmas
+    result[0] = identDef[0][0]
+
+
+func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
+  let returnType = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal
+
+  let isConstFn = fn.pragma.children.toSeq().filterIt(it.strVal() == "constcpp").any()
+  let modifiers = if isConstFn: cmConst else: cmNone
+  fn.pragma = newEmptyNode() #TODO remove const instead of removing all pragmas and move the pragmas to the impl
+  let params = fn.params.filterIt(it.kind == nnkIdentDefs).map(getCppParamFromIdentDefs)
+  let name =  fn.name.strVal.capitalizeAscii()
+  CppFunction(name: name, returnType: returnType, params: params, modifiers: modifiers)
+
+
+
+#TODO implement forwards
+func overrideImpl(fn : NimNode, className:string) : (CppFunction, NimNode) =
+  let cppFunc = getCppFunctionFromNimFunc(fn)
+#   debugEcho treeRepr fn
+  let paramsWithoutConst = fn.params.children.toSeq.filterIt(it.kind == nnkIdentDefs).map(removeConstFromParam)
+  fn.params = nnkFormalParams.newTree(fn.params[0] & paramsWithoutConst)
+  (cppFunc, genOverride(fn, cppFunc, className))
+
+
+func getCppOverrides*(body:NimNode, typeName:string) : seq[(CppFunction, NimNode)] =    
+    #TODO add forwards
+    let overrideBlocks = 
+            body.toSeq()
+                .filterIt(it.kind == nnkCall and it[0].strVal().toLower() in ["override"])
+    let overrides = overrideBlocks
+        .mapIt(it[^1].children.toSeq())
+        .flatten().filterIt(it.kind == nnkProcDef)
+        .mapIt(overrideImpl(it, typeName))
+    overrides
+
+proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =    
+    let className = name[1].strVal()
+    case name[^1].kind:
+    of nnkIdent: 
+        let parent = name[^1].strVal()
+        (className, parent, newSeq[string]())
+    of nnkCommand:
+        let parent = name[^1][0].strVal()
+        let iface = name[^1][^1][^1].strVal()
+        (className, parent, @[iface])
+    else:
+        error("Cant parse the class " & repr name)
+        ("", "", newSeq[string]())
+
+
+proc genRawCppTypeImpl(name, body : NimNode, kind:CppClassKind) =     
+  let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
+  var overrides = getCppOverrides(body, className)  
+  let cppType = CppClassType(name:className, kind: kind, 
+    parent:parent, functions: overrides.mapIt(it[0]))
+  addCppClass(cppType)   
+
+macro class*(name:untyped, body : untyped) : untyped = 
+  genRawCppTypeImpl(name, body, cckClass)
+macro struct*(name:untyped, body : untyped) : untyped = 
+  genRawCppTypeImpl(name, body, cckStruct)
+
+#TODO The Nim type has to be generated from the cpp type. It's just generating the functions for now
 
 

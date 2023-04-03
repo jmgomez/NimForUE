@@ -8978,6 +8978,7 @@ N_LIB_PRIVATE N_NIMCALL(void, keepUEditorExtensions)(UEditorExtensions_* fake);
 extern "C" N_LIB_PRIVATE N_NIMCALL(void, keepNimForUETest)(void);
 N_LIB_PRIVATE N_NIMCALL(void, keepANimForUETestTestActor)(ANimForUETestTestActor_* fake);
 extern "C" N_LIB_PRIVATE N_NIMCALL(void, keepNimTemplate)(void);
+N_LIB_PRIVATE N_NIMCALL(void, keepUPCGCppTestSettings)(UPCGCppTestSettings_* fake);
 extern "C" N_LIB_PRIVATE N_NIMCALL(void, keepPCGEditor)(void);
 N_LIB_PRIVATE N_NIMCALL(void, keepUPCGVolumeFactory)(UPCGVolumeFactory_* fake);
 N_LIB_PRIVATE N_NIMCALL(void, keepEPCGElementType)(tyEnum_EPCGElementType__9cl3C4Kqopb3mzu9cNzI8rqg fake);

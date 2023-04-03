@@ -52,6 +52,7 @@ type
     name*, parent*: string
     functions*: seq[CppFunction]
     kind*: CppClassKind
+    isUObjectBased* : bool #TODO add to kind class only
   CppHeader* = object
     name*: string
     includes*: seq[string]

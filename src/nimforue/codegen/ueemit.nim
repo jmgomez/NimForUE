@@ -864,92 +864,20 @@ func addSelfToProc(procDef:NimNode, className:string) : NimNode =
 
 
 
-func isParamCppConst(identDef:NimNode) : bool = 
-    assert identDef.kind == nnkIdentDefs
-    case identDef[0].kind:
-    of nnkIdent: false
-    # of nnkBracket: false
-    of nnkPragmaExpr: identDef[0][1][0].strVal == "constcpp"
-    else: 
-      error("Cant parse param pragma " & identDef[0].kind.repr)
-      false
 
-
-#notice even though the name says cpp we are converting Nim types to string here. The cpp is only to show that it has to do with the cpp generation
-#in the future this can be standalone and then we can remove the cpp part of the name
-func getCppTypeFromParamType(paramType:NimNode) : string = 
-  case paramType.kind:
-    of nnkIdent: paramType.strVal
-    of nnkVarTy: "var " & getCppTypeFromParamType(paramType[0])
-    of nnkBracketExpr: 
-        #only arity one for now
-        &"{paramType[0].strVal}[{paramType[1].strVal}]"
-
-    else:
-      debugEcho treeRepr paramType
-      error("Cant parse param type " & paramType.repr)
-      ""
-
-func getCppParamFromIdentDefs(identDef : NimNode) : CppParam =
-  assert identDef.kind == nnkIdentDefs
-
-  let name = 
-    case identDef[0].kind:
-    of nnkIdent: identDef[0].strVal
-    # of nnkBracket: identDef[0][0].strVal
-    of nnkPragmaExpr: identDef[0][0].strVal
-    else: 
-      error("Cant parse param " & identDef[0].kind.repr) 
-      ""
-      
-  let isConst = identDef.isParamCppConst()
-  
-  let modifiers = if isConst: cmConst else: cmNone
-  let typ = getCppTypeFromParamType(identDef[1])
-  CppParam(name: name, typ: typ, modifiers: modifiers)
-
-func removeConstFromParam(identDef : NimNode) : NimNode =
-  let isConst = identDef.isParamCppConst()
-  result = identDef
-  if isConst: #This remove all pragmas
-    result[0] = identDef[0][0]
-
-func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
-  let returnType = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal
-
-  let isConstFn = fn.pragma.children.toSeq().filterIt(it.strVal() == "constcpp").any()
-  let modifiers = if isConstFn: cmConst else: cmNone
-  fn.pragma = newEmptyNode() #TODO remove const instead of removing all pragmas and move the pragmas to the impl
-  let params = fn.params.filterIt(it.kind == nnkIdentDefs).map(getCppParamFromIdentDefs)
-  let name =  fn.name.strVal.capitalizeAscii()
-  CppFunction(name: name, returnType: returnType, params: params, modifiers: modifiers)
-
-
-#TODO implement forwards
-func overrideImpl(fn : NimNode, className:string) : (CppFunction, NimNode) =
-  let cppFunc = getCppFunctionFromNimFunc(fn)
-#   debugEcho treeRepr fn
-  let paramsWithoutConst = fn.params.children.toSeq.filterIt(it.kind == nnkIdentDefs).map(removeConstFromParam)
-  fn.params = nnkFormalParams.newTree(fn.params[0] & paramsWithoutConst)
-  (cppFunc, genOverride(fn, cppFunc, className))
-  
 func getCppOverrides(body:NimNode, ueType:UEType) : (UEType, NimNode) = 
-    let overrideBlocks = 
-            body.toSeq()
-                .filterIt(it.kind == nnkCall and it[0].strVal().toLower() in ["override"])
-    if not overrideBlocks.any():
+    let overrides = getCppOverrides(body, ueType.name)
+    if not overrides.any():
         return (ueType, newEmptyNode())
-    let overrides = overrideBlocks.mapIt(it[^1].children.toSeq()).flatten().filterIt(it.kind == nnkProcDef).mapIt(overrideImpl(it, ueType.name))
-    var ueType = ueType
+
     let stmOverrides = nnkStmtList.newTree()
+    var ueType = ueType
     for (cppFunc, override) in overrides:
         ueType.fnOverrides.add cppFunc
         stmOverrides.add override
 
     (ueType, stmOverrides)
-    
-            
-{.experimental: "dynamicBindSym".}
+       
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)

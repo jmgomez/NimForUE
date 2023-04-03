@@ -75,4 +75,5 @@
 #if  ENGINE_MINOR_VERSION >= 2   
   #include "Elements/PCGExecuteBlueprint.h"
   #include "PCGContext.h"
+  #include "PCGElement.h"
 #endif

@@ -52,8 +52,11 @@ import std/[macros, sequtils, strutils, typetraits]
 
 uClass ANimBeginPlayOverrideActor of AActor:
   (Blueprintable, BlueprintType)
+  defaults:
+    test = "adios"
   uprops(EditAnywhere):
-    test4: FString 
+    test: FString 
+
   
   ufuncs(CallInEditor):
   
@@ -70,7 +73,7 @@ uClass ANimBeginPlayOverrideActor of AActor:
       UE_Warn "post duplicated called update !"
     proc preEditChange(p : FPropertyPtr) : void = 
       self.super(p)
-      UE_Warn "PreEditChange called update?2   " & p.getName()
+      UE_Warn "PreEditChange  (9) " & p.getName()
     proc postLoad() : void = 
       self.super()
       UE_Warn "PostLoad called once"
@@ -89,7 +92,7 @@ uClass ANimBeginPlayOverrideActor of AActor:
 
     #	virtual bool CanEditChange(const FProperty* InProperty) const;
     proc canEditChange(inProperty {. constcpp .} : FPropertyPtr) : bool {. constcpp .} = 
-      UE_Log "CanEditChange called in the parent updated 1"
+      # UE_Log "CanEditChange called in the parent updated 1"
       self.super(inProperty)
     #	virtual bool EditorCanAttachTo(const AActor* InParent, FText& OutReason) const;
     proc editorCanAttachTo(inParent {. constcpp .} : AActorPtr, outReason : var FText) : bool {. constcpp .} = 
