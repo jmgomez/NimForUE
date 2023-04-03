@@ -289,18 +289,21 @@ proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =
         ("", "", newSeq[string]())
 
 
-proc genRawCppTypeImpl(name, body : NimNode, kind:CppClassKind) =     
+proc genRawCppTypeImpl(name, body : NimNode, kind:CppClassKind) : NimNode =     
   let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
   var overrides = getCppOverrides(body, className)  
   let cppType = CppClassType(name:className, kind: kind, 
     parent:parent, functions: overrides.mapIt(it[0]))
   addCppClass(cppType)   
 
+  genAst(clsName=ident className, parent = ident parent):
+    type clsName {.importcpp.} = object of parent
+
 macro class*(name:untyped, body : untyped) : untyped = 
   genRawCppTypeImpl(name, body, cckClass)
 macro struct*(name:untyped, body : untyped) : untyped = 
   genRawCppTypeImpl(name, body, cckStruct)
 
-#TODO The Nim type has to be generated from the cpp type. It's just generating the functions for now
+
 
 
