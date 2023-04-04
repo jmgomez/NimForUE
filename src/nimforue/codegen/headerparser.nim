@@ -1,6 +1,6 @@
 # include ../unreal/prelude
 
-import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
+import std/[strformat, tables, enumerate, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
 import ../../buildscripts/nimforueconfig
 import models
 import ../utils/utils
@@ -102,7 +102,6 @@ proc getPCHIncludes*(useCache=true) : seq[string] =
     else:      
       let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
       let includes = traverseAllIncludes("UEDeps.h", includePaths, @[]).deduplicate() 
-      echo "Includes found on the PCH: " & $includes.len()
       if useCache: 
         saveIncludesToFile(path, includes)
 
@@ -116,6 +115,7 @@ proc getPCHIncludes*(useCache=true) : seq[string] =
 
   # uniquePCHIncludes
 
+proc getAllTypes*(useCache:bool=true) : seq[string] #fw (bottom)
 
 #called from genreflection data everytime the bindings are attempted to be generated, before gencppbindings
 proc savePCHTypes*(modules:seq[UEModule]) = 
@@ -124,7 +124,9 @@ proc savePCHTypes*(modules:seq[UEModule]) =
   let path = dir/"allpchtypes.json"
   #Is in PCH is set in UEMEta if the include is in the include list
   let pchTypes = modules.mapIt(it.types).flatten.filterIt(it.isInPCH).mapIt(it.name)
-  saveIncludesToFile(path, pchTypes)
+  let allTypes = pchTypes & getAllTypes()
+
+  saveIncludesToFile(path, allTypes.deduplicate())
 
 var pchTypes  : seq[string]
 proc getAllPCHTypes*() : seq[string] =
@@ -142,3 +144,56 @@ proc getAllPCHTypes*() : seq[string] =
 
     when defined(nimvm):
       pchTypes = result
+
+
+proc readHeader(includePaths:seq[string], header:string) : Option[string]  = 
+  includePaths
+    .first(dir=>fileExists(dir/header))
+    .map(dir=>readFile(dir/header))
+
+proc getUClassesNamesFromHeaders(cppCode:string) : seq[string] =   
+  # let uClasses = cppCode.split("UCLASS(")  
+  # for uClass in uClasses:
+  #   var ignore, name : string 
+  #   if scanf(uClass, "$*_API $* :", ignore, name):
+  #     if name.len > 20:
+  #       echo uClass
+  #       echo cppCode
+  #       quit()
+  #     result.add(name)
+  let lines = cppCode.splitLines()
+  for idx, line in enumerate(lines):   
+    if line.contains("UCLASS"):
+      var nextLine = lines[idx + 1]
+      var idx = idx
+      while nextLine.strip() == "": #TODO improve condition to check if it's a comment
+        inc idx
+        nextLine = lines[idx + 1]
+
+      echo "Next line is "
+      echo nextLine
+
+      var ignore, name : string 
+      if scanf(nextLine, "class $* :", name) or scanf(nextLine, "$* _API $* ", ignore, name):
+        result.add(name.split("API")[^1].strip())
+    
+  
+
+
+proc getAllTypesFromHeader*(includePaths:seq[string], header:string) :  seq[string] = 
+  let header = readHeader(includePaths, header)
+  header
+    .map(getUClassesNamesFromHeaders)
+    .get(newSeq[string]())
+
+#This try to parse types from the PCH but it's not reliable
+#It's better to use both the PCH and this ones so PCH returns this too (works for a subset of types that doesnt have a header in the uprops)
+#At some point we will parse the AST and retrieve the types from there.
+proc getAllTypes*(useCache:bool=true) : seq[string] = 
+  #only one header for now
+  let includes = getPCHIncludes(useCache=false)
+  let searchPaths = getAllIncludePaths()
+  #TODO store types in a file
+  includes
+    .mapIt(getAllTypesFromHeader(searchPaths, it))
+    .flatten()

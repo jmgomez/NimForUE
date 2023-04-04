@@ -4,7 +4,7 @@ else:
     include ../unreal/definitions
 
 import ../utils/utils
-import std/[times,strformat,json, strutils, options, sugar, sequtils, bitops, tables]
+import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
 
 import ../codegen/[makestrproc]
 import ../codegen/modulerules

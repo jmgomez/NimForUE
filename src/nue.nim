@@ -314,6 +314,12 @@ task showincludes, "Traverses UEDeps.h gathering includes and shows then in the 
   log $includes
   log $len(includes)
 
+task showtypes, "Traverses UEDeps.h looking for types (uclasses only for now)":
+  let useCache = "usecache" in taskOptions
+  let types = getAllTypes(useCache)
+  log $types
+  log $len(types)
+
 task copybuildconfiguration, "Copies the unreal build configuration from the plugin to APPData/Roaming/Unreal Engine/BuildConfiguration":
   let buildConfigFile = PluginDir / "BuildConfiguration.xml"
   let appDataDir = getEnv("USERPROFILE")
