@@ -307,7 +307,7 @@ proc genRawCppTypeImpl(name, body : NimNode, kind:CppClassKind) : NimNode =
           typeNamePtr = ptr typeName
 
   result = newStmtList(typeDefs & overrides.mapIt(it[1]))
-  echo repr result
+  # echo repr result
 
 
 macro class*(name:untyped, body : untyped) : untyped = 

@@ -237,6 +237,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   proc getEngineIntermediateIncludePathFor(moduleName:string) : string = engineDir / "Intermediate/Build" / platformDir / unrealFolder / "Inc" / moduleName
   proc getEnginePluginModule(moduleName:string) : string = enginePluginDir / moduleName / "Source" / moduleName / "Public"
   proc getEngineRuntimePluginModule(moduleName:string) : string = enginePluginDir / "Runtime" / moduleName / "Source" / moduleName / "Public"
+  proc getEngineExperimentalPluginModule(moduleName:string) : string = enginePluginDir / "Experimental" / moduleName / "Source" / moduleName / "Public"
 
 
   let runtimeModules = @["CoreUObject", "Core", "TraceLog", "Launch", "ApplicationCore", 
@@ -261,7 +262,9 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   
   ]
 
+
   let enginePlugins = @["EnhancedInput"]
+  let engineExperimentalPlugins = @["PCG"]
   let engineRuntimePlugins = @["GameplayAbilities"]
 
 #Notice the header are not need for compiling the dll. We use a PCH. They will be needed to traverse the C++
@@ -272,7 +275,8 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     editorModules.map(module=>getEngineRuntimeIncludePathFor("Editor", module)) & 
     intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module)) &
     enginePlugins.map(module=>getEnginePluginModule(module)) & 
-    engineRuntimePlugins.map(module=>getEngineRuntimePluginModule(module))
+    engineRuntimePlugins.map(module=>getEngineRuntimePluginModule(module)) &
+    engineExperimentalPlugins.map(module=>getEngineExperimentalPluginModule(module))
 
   (essentialHeaders & moduleHeaders & editorHeaders).map(path => path.normalizedPath().normalizePathEnd())
 

@@ -4,6 +4,7 @@ import buildscripts / [buildcommon, buildscripts, nimforueconfig]
 import buildscripts/nuecompilation/nuecompilation
 import buildscripts/switches/switches
 import nimforue/utils/utils
+import nimforue/codegen/[headerparser]
 
 var taskOptions: Table[string, string]
 let config = getNimForUEConfig()
@@ -307,6 +308,12 @@ task starteditor, "opens the editor":
     discard execCmd("open "&GamePath)
 
 
+task showincludes, "Traverses UEDeps.h gathering includes and shows then in the script":
+  let useCache = "usecache" in taskOptions
+  let includes = getPCHIncludes(useCache)
+  log $includes
+  log $len(includes)
+
 task copybuildconfiguration, "Copies the unreal build configuration from the plugin to APPData/Roaming/Unreal Engine/BuildConfiguration":
   let buildConfigFile = PluginDir / "BuildConfiguration.xml"
   let appDataDir = getEnv("USERPROFILE")
@@ -316,3 +323,4 @@ task copybuildconfiguration, "Copies the unreal build configuration from the plu
   copyFile(buildConfigFile, buildConfigFileDest)
 # --- End Tasks ---
 main()
+

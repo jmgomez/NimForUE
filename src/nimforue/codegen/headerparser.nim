@@ -1,4 +1,4 @@
-include ../unreal/prelude
+# include ../unreal/prelude
 
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
 import ../../buildscripts/nimforueconfig
@@ -46,7 +46,7 @@ func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : se
       variations.mapIt(&"{it}/{moduleName}/{header}") &
       variations.mapIt(&"{moduleName}/{it}/{moduleName}/{header}") &
       moduleRelativePath.split("/").filterIt(it notin variations).join("/")
-    UE_Log $result
+    
 
 func isModuleRelativePathInHeaders*(moduleName, moduleRelativePath:string, headers:seq[string]) : bool = 
   let paths = getModuleRelativePathVariations(moduleName, moduleRelativePath)
@@ -85,11 +85,11 @@ proc traverseAllIncludes*(entryPoint:string, includePaths:seq[string], visited:s
     .flatten()
 
 
-proc saveIncludesToFile*(path:string, includes:seq[string]) = 
+proc saveIncludesToFile*(path:string, includes:seq[string]) =   
   writeFile(path, $includes.toJson())
 
 var pchIncludes : seq[string]
-proc getPCHIncludes*() : seq[string] = 
+proc getPCHIncludes*(useCache=true) : seq[string] = 
   if pchIncludes.any(): 
     return pchIncludes
 
@@ -97,14 +97,17 @@ proc getPCHIncludes*() : seq[string] =
   createDir(dir)
   let path = dir / "allincludes.json"
   pchIncludes = 
-    if fileExists(path): #TODO Check it's newer than the PCH
+    if useCache and fileExists(path): #TODO Check it's newer than the PCH
       readFile(path).parseJson().to(seq[string])
-    else:
-      #if this takes too long can be cached into a file and
+    else:      
       let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
-      let includes = traverseAllIncludes("UEDeps.h", includePaths, @[]).deduplicate()  
-      saveIncludesToFile(path, includes)
+      let includes = traverseAllIncludes("UEDeps.h", includePaths, @[]).deduplicate() 
+      echo "Includes found on the PCH: " & $includes.len()
+      if useCache: 
+        saveIncludesToFile(path, includes)
+
       includes
+  pchIncludes  
 
   
   # UE_Log &"Includes found on the PCH: {pchIncludes.len}"
@@ -121,7 +124,6 @@ proc savePCHTypes*(modules:seq[UEModule]) =
   let path = dir/"allpchtypes.json"
   #Is in PCH is set in UEMEta if the include is in the include list
   let pchTypes = modules.mapIt(it.types).flatten.filterIt(it.isInPCH).mapIt(it.name)
-  UE_Log &"Types found on the PCH: {pchTypes.len}"
   saveIncludesToFile(path, pchTypes)
 
 var pchTypes  : seq[string]

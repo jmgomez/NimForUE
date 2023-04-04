@@ -505,7 +505,7 @@ uClass AActorCodegen of AActor:
 
     proc saveIncludesIntoJson() = 
       let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
-      # UE_Log $includePaths
+      UE_Log $includePaths
       let allIncludes = traverseAllIncludes("UEDeps.h", includePaths, @[]).deduplicate()
       let path = PluginDir/"allincludes.json"
       saveIncludesToFile(path, allIncludes)
