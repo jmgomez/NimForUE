@@ -76,4 +76,5 @@
   #include "Elements/PCGExecuteBlueprint.h"
   #include "PCGContext.h"
   #include "PCGElement.h"
+  #include "PCGSubgraph.h"
 #endif

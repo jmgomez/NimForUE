@@ -5,7 +5,7 @@ import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype,tsoftobj
 import ../unreal/core/containers/[unrealstring, array, map, set]
 import ../unreal/core/logging/[logmacros]
 import ../unreal/core/math/[vector]
-import ../unreal/core/[coreglobals,ftext, delegates]
+import ../unreal/core/[coreglobals,ftext, delegates, templates]
 import ../unreal/engine/[enginetypes, world]
 import ../unreal/runtime/[assetregistry]
 

@@ -291,13 +291,24 @@ proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =
 
 proc genRawCppTypeImpl(name, body : NimNode, kind:CppClassKind) : NimNode =     
   let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
-  var overrides = getCppOverrides(body, className)  
+  let overrides = getCppOverrides(body, className)  
   let cppType = CppClassType(name:className, kind: kind, 
     parent:parent, functions: overrides.mapIt(it[0]))
   addCppClass(cppType)   
 
-  genAst(clsName=ident className, parent = ident parent):
-    type clsName {.importcpp.} = object of parent
+  let  
+    typeName = ident className
+    typeNamePtr = ident $className & "Ptr"
+    typeParent = ident parent
+    typeDefs=
+      genAst(typeName, typeNamePtr, typeParent):
+        type 
+          typeName {.importcpp.} = object of typeParent
+          typeNamePtr = ptr typeName
+
+  result = newStmtList(typeDefs & overrides.mapIt(it[1]))
+  echo repr result
+
 
 macro class*(name:untyped, body : untyped) : untyped = 
   genRawCppTypeImpl(name, body, cckClass)

@@ -280,7 +280,7 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
 
   proc classAsString(uet: UEType): string = 
     assert not uet.isInPCH
-    toStr(CppClassType(name: uet.name & "_", parent: getParentName(uet), kind: cckClass)) & "\n"
+    toStr(CppClassType(name: uet.name & "_", parent: getParentName(uet), kind: cckClass, isUObjectBased:true)) & "\n"
     
     
   let classDefs = moduleDef.types
