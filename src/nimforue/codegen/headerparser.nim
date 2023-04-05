@@ -146,42 +146,47 @@ proc getAllPCHTypes*() : seq[string] =
       pchTypes = result
 
 
-proc readHeader(includePaths:seq[string], header:string) : Option[string]  = 
-  includePaths
-    .first(dir=>fileExists(dir/header))
-    .map(dir=>readFile(dir/header))
+proc readHeader(searchPaths:seq[string], header:string) : Option[string]  = 
+  result = 
+    searchPaths
+      .first(dir=>fileExists(dir/header))
+      .map(dir=>readFile(dir/header))
+  if result.isNone and header.split(PathSeparator).len>1:
+    return readHeader(searchPaths, header.split(PathSeparator)[^1])
 
 proc getUClassesNamesFromHeaders(cppCode:string) : seq[string] =   
-  # let uClasses = cppCode.split("UCLASS(")  
-  # for uClass in uClasses:
-  #   var ignore, name : string 
-  #   if scanf(uClass, "$*_API $* :", ignore, name):
-  #     if name.len > 20:
-  #       echo uClass
-  #       echo cppCode
-  #       quit()
-  #     result.add(name)
   let lines = cppCode.splitLines()
-  for idx, line in enumerate(lines):   
-    if line.contains("UCLASS"):
-      var nextLine = lines[idx + 1]
-      var idx = idx
-      while nextLine.strip() == "": #TODO improve condition to check if it's a comment
-        inc idx
-        nextLine = lines[idx + 1]
+  #Two cases (for UStructs and FStrucs) Need to do UEnums
+  #1. via separating class ad hoc
+  #2. Next line after UCLASS 
+  #Probably there is something else nto matching. But this should cover most scenarios
+  #At some point we are doing full AST parsing anyways. So this is just a temporary solution
+  func getTypeSeparatingSemicolong(typ:string): seq[string] = 
+    var needToContains = [typ, ":" ] #only class that has a base
+    for idx, line in enumerate(lines):   
+      if needToContains.mapIt(line.contains(it)).foldl(a and b, true):
+        let separator = if line.contains("final") : "final" else: ":"
+        let clsName = line.split(separator)[0].strip.split(" ")[^1]
+        result.add(clsName)
 
-      echo "Next line is "
-      echo nextLine
+  func getTypeAfterUType(utype, typ:string) : seq[string] = 
+    for idx, line in enumerate(lines):  
+      if line.contains(utype):
+        if len(lines) > idx+1:
+          let nextLine = lines[idx+1]
+          if nextLine.contains(typ):
+            let clsName = nextline.strip.split(" ")[^1]
+            result.add(clsName)
 
-      var ignore, name : string 
-      if scanf(nextLine, "class $* :", name) or scanf(nextLine, "$* _API $* ", ignore, name):
-        result.add(name.split("API")[^1].strip())
-    
-  
+  result = getTypeSeparatingSemicolong("class")
+  result.add(getTypeSeparatingSemicolong("struct"))
+  result.add(getTypeAfterUType("UCLASS", "class"))
+  result.add(getTypeAfterUType("USTRUCT", "struct"))
 
+  result = result.deduplicate()
 
-proc getAllTypesFromHeader*(includePaths:seq[string], header:string) :  seq[string] = 
-  let header = readHeader(includePaths, header)
+proc getAllTypesFromHeader*(includePaths:seq[string], headerName:string) :  seq[string] = 
+  let header = readHeader(includePaths, headerName)
   header
     .map(getUClassesNamesFromHeaders)
     .get(newSeq[string]())
@@ -190,10 +195,42 @@ proc getAllTypesFromHeader*(includePaths:seq[string], header:string) :  seq[stri
 #It's better to use both the PCH and this ones so PCH returns this too (works for a subset of types that doesnt have a header in the uprops)
 #At some point we will parse the AST and retrieve the types from there.
 proc getAllTypes*(useCache:bool=true) : seq[string] = 
-  #only one header for now
-  let includes = getPCHIncludes(useCache=false)
   let searchPaths = getAllIncludePaths()
-  #TODO store types in a file
-  includes
-    .mapIt(getAllTypesFromHeader(searchPaths, it))
-    .flatten()
+  let includes = getPCHIncludes(useCache=true)
+  let includesNoCache = getPCHIncludes(useCache=false)
+  let newIncludes = includesNoCache.filterIt(it notin includes)
+  let missingIncludes = includes.filterIt(it notin includesNoCache)
+
+  echo "Missing includes: ", missingIncludes
+  echo "New includes: ", newIncludes
+  echo "Includes: ", includes.len
+  
+  let typesCache = 
+    includes
+      .mapIt(getAllTypesFromHeader(searchPaths, it))
+      .flatten()
+
+  let typesNoCache = 
+    includesNoCache
+      .mapIt(getAllTypesFromHeader(searchPaths, it))
+      .flatten()
+  
+  let newTypes = typesNoCache.filterIt(it notin typesCache)
+  let missingTypes = typesCache.filterIt(it notin typesNoCache)
+
+  echo "Missing types: ", missingTypes
+  echo "New types: ", newTypes
+  echo "Types: ", typesCache.len
+
+  let pchTypes = getAllPCHTypes()
+  let newPCHTypes = pchTypes.filterIt(it notin typesCache)
+  let missingPCHTypes = typesCache.filterIt(it notin pchTypes)
+
+  echo "Missing PCH types: ", missingPCHTypes
+  # echo "New PCH types: ", newPCHTypes
+  echo "PCH types: ", pchTypes.len
+  
+
+  return newSeq[string]()
+
+
