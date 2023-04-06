@@ -497,7 +497,7 @@ uClass AActorCodegen of AActor:
       let ueProject = UEProject(modules: modules)
       let pchTypes = modules.mapIt(it.types).flatten.filterIt(it.isInPCH).mapIt(it.name)
       UE_Log "PCH Types:" & $pchTypes
-      savePCHTypes(modules)
+      
 
     proc getProject() = 
       discard getProject()

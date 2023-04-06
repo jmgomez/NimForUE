@@ -490,8 +490,6 @@ proc getProject*() : UEProject =
 
     UE_Log &"Project has {project.modules.len} modules"
 
-    #we save the pch types before modules are cached. PCH Types are deduced from the module relative path 
-    savePCHTypes(project.modules)
     return project
 
 proc generateProject*(forceGeneration = false) = 

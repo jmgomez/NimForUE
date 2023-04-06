@@ -398,7 +398,7 @@ type
     isTouchEvent* {.importcpp:"bIsTouchEvent".} : bool
   FInputKeyEventArgsPtr* = ptr FInputKeyEventArgs
 
-  FInputDeviceId* {.importc .} = object
+  FInputDeviceId* {.importcpp .} = object
   EInputEvent* {.size: sizeof(uint8), importcpp, pure.} = enum
     IE_Pressed, IE_Released, IE_Repeat, IE_DoubleClick, IE_Axis, IE_MAX
 

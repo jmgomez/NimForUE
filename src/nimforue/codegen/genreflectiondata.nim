@@ -116,9 +116,6 @@ proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
   createDir(config.bindingsDir)
   let bindingsPath = (modName:string) => config.bindingsDir / modName.toLower() & ".nim"
 
-  #we save the pch types right before we discard the cached modules to avoid race conditions
-  
-  savePCHTypes(modCache.values.toSeq)
 
   let modulesToGen = modCache
                       .values

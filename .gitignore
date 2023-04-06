@@ -76,3 +76,5 @@ Source/NimForUEGame/Private/Game/
 Source/NimForUEGame/Private/Bindings/
 
 src/hostnimforue/ffigen.nim
+nimble.develop
+nimble.paths

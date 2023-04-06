@@ -115,35 +115,18 @@ proc getPCHIncludes*(useCache=true) : seq[string] =
 
   # uniquePCHIncludes
 
-proc getAllTypes*(useCache:bool=true) : seq[string] #fw (bottom)
 
-#called from genreflection data everytime the bindings are attempted to be generated, before gencppbindings
-proc savePCHTypes*(modules:seq[UEModule]) = 
-  let dir = PluginDir/".headerdata"
-  createDir(dir)
-  let path = dir/"allpchtypes.json"
-  #Is in PCH is set in UEMEta if the include is in the include list
-  let pchTypes = modules.mapIt(it.types).flatten.filterIt(it.isInPCH).mapIt(it.name)
-  let allTypes = pchTypes & getAllTypes()
+# #called from genreflection data everytime the bindings are attempted to be generated, before gencppbindings
+# proc savePCHTypes*(modules:seq[UEModule]) = 
+#   let dir = PluginDir/".headerdata"
+#   createDir(dir)
+#   let path = dir/"allpchtypes.json"
+#   #Is in PCH is set in UEMEta if the include is in the include list
+#   let pchTypes = modules.mapIt(it.types).flatten.filterIt(it.isInPCH).mapIt(it.name)
+#   let allTypes = pchTypes & getAllTypes()
 
-  saveIncludesToFile(path, allTypes.deduplicate())
+#   saveIncludesToFile(path, allTypes.deduplicate())
 
-var pchTypes  : seq[string]
-proc getAllPCHTypes*() : seq[string] =
-  {.cast(noSideEffect).}:
-    when defined(nimvm): #We can use this function at compile time OR when generating the bindings
-      if pchTypes.any(): 
-        return pchTypes
-    #TODO cache it in the macro cache. This is only accessed at compile time
-    #If the file gets too big it can be splited between structs, classes (and enums in the future)
-    let path = PluginDir/".headerdata"/"allpchtypes.json"
-    result = 
-      if fileExists(path):
-        return readFile(path).parseJson().to(seq[string])
-      else: newSeq[string]()
-
-    when defined(nimvm):
-      pchTypes = result
 
 
 proc readHeader(searchPaths:seq[string], header:string) : Option[string]  = 
@@ -197,44 +180,38 @@ proc getAllTypesFromHeader*(includePaths:seq[string], headerName:string) :  seq[
 #This try to parse types from the PCH but it's not reliable
 #It's better to use both the PCH and this ones so PCH returns this too (works for a subset of types that doesnt have a header in the uprops)
 #At some point we will parse the AST and retrieve the types from there.
-proc getAllTypes*(useCache:bool=true) : seq[string] = 
-  let searchPaths = getAllIncludePaths()
-  echo $searchPaths
-  let includes = getPCHIncludes(useCache=true)
-  let includesNoCache = getPCHIncludes(useCache=false)
-  let newIncludes = includesNoCache.filterIt(it notin includes)
-  let missingIncludes = includes.filterIt(it notin includesNoCache)
+var pchTypes {.compileTime.}  : seq[string]
+func getAllPCHTypes*(useCache:bool=true) : lent seq[string] =   
+  {.cast(noSideEffect).}:
+    if pchTypes.any(): 
+      return pchTypes
+    else: 
+      #TODO cache it in the macro cache. This is only accessed at compile time
+      #If the file gets too big it can be splited between structs, classes (and enums in the future)
+      let dir = PluginDir/".headerdata"
+      let filename =  "allpchtypes.json"
+      let path = dir/filename
+      if fileExists(path) and useCache:
+        pchTypes = readFile(path).parseJson().to(seq[string])
+      else:
+        #we search them
+        let searchPaths = getAllIncludePaths()
+        let includes = getPCHIncludes(useCache=useCache)       
+        pchTypes = 
+          includes
+            .mapIt(getAllTypesFromHeader(searchPaths, it))
+            .flatten()
+        if useCache: #first time, store the types
+          createDir(dir)
+          writeFile(path, $pchTypes.toJson())
 
-  echo "Missing includes: ", missingIncludes
-  echo "New includes: ", newIncludes
-  echo "Includes: ", includes.len
-  
-  let typesCache = 
-    includes
-      .mapIt(getAllTypesFromHeader(searchPaths, it))
-      .flatten()
+    result = pchTypes
 
-  let typesNoCache = 
-    includesNoCache
-      .mapIt(getAllTypesFromHeader(searchPaths, it))
-      .flatten()
-  
-  let newTypes = typesNoCache.filterIt(it notin typesCache)
-  let missingTypes = typesCache.filterIt(it notin typesNoCache)
+        
 
-  echo "Missing types: ", missingTypes
-  echo "New types: ", newTypes
-  echo "Types: ", typesCache.len
 
-  let pchTypes = getAllPCHTypes()
-  let newPCHTypes = pchTypes.filterIt(it.split(" ")[0] notin typesNoCache)
-  let missingPCHTypes = typesNoCache.filterIt(it notin pchTypes)
 
-  # echo "Missing PCH types: ", missingPCHTypes
-  echo "New PCH types: ", newPCHTypes
-  echo "PCH types: ", pchTypes.len
-  
 
-  return newSeq[string]()
+
 
 

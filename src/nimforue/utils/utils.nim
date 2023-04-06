@@ -41,8 +41,7 @@ func replaceFirst*[T](xs: var seq[T], fnCriteria: Criteria[T], newValue: T): seq
   let idx = firstIndexOf(xs, fnCriteria)
   xs[idx] = newValue #throw on purpose if there is no value. Handle it with types?
   xs
-
-func mapi*[T, U](xs: seq[T], fn: (T, int)->U): seq[U] =
+proc mapi*[T, U](xs: seq[T], fn: (T, int)->U): seq[U] =
   var toReturn: seq[U] = @[] #Todo how to reserve memory upfront to avoid reallocations?
   for i, x in xs:
     toReturn.add(fn(x, i))

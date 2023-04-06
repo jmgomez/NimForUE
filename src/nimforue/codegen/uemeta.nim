@@ -360,16 +360,10 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
       UE_Log &"Ignoring {name} because it is in the ignore list"
       return none(UEType)
   
-  var isInPCH = false
-  var isParentInPCH = false
-  let moduleRelativePath = cls.getModuleRelativePath()
-  if moduleRelativePath.isSome():
-    isInPCH = isModuleRelativePathInHeaders(cls.getModuleName(), moduleRelativePath.get(), pchIncludes)
-  let parentModuleRelativePath = parent.flatMap((p:UClassPtr)=>getModuleRelativePath(p))
-  if parentModuleRelativePath.isSome():
-    let p = parent.get()
-    isParentInPCH = isModuleRelativePathInHeaders(p.getModuleName(), parentModuleRelativePath.get(), pchIncludes)
- 
+  
+  let isInPCH = name in getAllPCHTypes()
+  var isParentInPCH = parentName in getAllPCHTypes()
+  
 
   if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
     some UEType(name: name, kind: uetClass, parent: parentName, 

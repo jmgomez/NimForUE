@@ -7,10 +7,10 @@ extern "C" void startNue();
 extern "C" void NimMain();
 void FNimForUEGame::StartupModule()
 {
-#if !WITH_EDITOR
-	NimMain();
-	startNue();
-#endif
+// #if !WITH_EDITOR
+// 	NimMain();
+// 	startNue();
+// #endif
 }
 
 void FNimForUEGame::ShutdownModule()

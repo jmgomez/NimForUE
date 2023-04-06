@@ -29,6 +29,8 @@ let buildSwitches* = @[
   "--ic:off",
   "--threads:off",
   "--path:$nim",
+
+  "-d:nimOldCaseObjects", #Nim 2.0 
   
   # "--hints:off",
   "--hint:XDeclaredButNotUsed:off",
