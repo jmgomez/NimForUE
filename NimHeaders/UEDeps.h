@@ -55,8 +55,6 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
-//NOTE: The includes come from NimForUEBindinds!!
-#include "AbilitySystemGlobals.h"
 
 #if WITH_EDITORONLY_DATA
   #include "Editor/UnrealEdEngine.h"
@@ -71,6 +69,8 @@
 
 //TEMP test 52
 //TODO add with ENGINE_
+//NOTE: The includes come from NimForUEBindinds!!
+#include "AbilitySystemGlobals.h"
 
 #if  ENGINE_MINOR_VERSION >= 2   
   #include "Elements/PCGExecuteBlueprint.h"

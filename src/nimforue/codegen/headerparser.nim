@@ -151,8 +151,8 @@ proc readHeader(searchPaths:seq[string], header:string) : Option[string]  =
     searchPaths
       .first(dir=>fileExists(dir/header))
       .map(dir=>readFile(dir/header))
-  if result.isNone and header.split(PathSeparator).len>1:
-    return readHeader(searchPaths, header.split(PathSeparator)[^1])
+  if result.isNone and header.split("/").len>1:    
+    return readHeader(searchPaths, header.split("/")[^1])
 
 proc getUClassesNamesFromHeaders(cppCode:string) : seq[string] =   
   let lines = cppCode.splitLines()
@@ -161,12 +161,14 @@ proc getUClassesNamesFromHeaders(cppCode:string) : seq[string] =
   #2. Next line after UCLASS 
   #Probably there is something else nto matching. But this should cover most scenarios
   #At some point we are doing full AST parsing anyways. So this is just a temporary solution
-  func getTypeSeparatingSemicolong(typ:string): seq[string] = 
+  func getTypeSeparatingSemicolon(typ:string): seq[string] = 
     var needToContains = [typ, ":" ] #only class that has a base
     for idx, line in enumerate(lines):   
       if needToContains.mapIt(line.contains(it)).foldl(a and b, true):
         let separator = if line.contains("final") : "final" else: ":"
-        let clsName = line.split(separator)[0].strip.split(" ")[^1]
+        var clsName = line.split(separator)[0].strip.split(" ")[^1]
+        if clsName.contains("final"):
+          clsName = "con final"
         result.add(clsName)
 
   func getTypeAfterUType(utype, typ:string) : seq[string] = 
@@ -175,15 +177,16 @@ proc getUClassesNamesFromHeaders(cppCode:string) : seq[string] =
         if len(lines) > idx+1:
           let nextLine = lines[idx+1]
           if nextLine.contains(typ):
-            let clsName = nextline.strip.split(" ")[^1]
+            var clsName = nextline.strip.split(" ")[^1]            
             result.add(clsName)
 
-  result = getTypeSeparatingSemicolong("class")
-  result.add(getTypeSeparatingSemicolong("struct"))
+  result = getTypeSeparatingSemicolon("class")
+  result.add(getTypeSeparatingSemicolon("struct"))
   result.add(getTypeAfterUType("UCLASS", "class"))
   result.add(getTypeAfterUType("USTRUCT", "struct"))
-
   result = result.deduplicate()
+
+
 
 proc getAllTypesFromHeader*(includePaths:seq[string], headerName:string) :  seq[string] = 
   let header = readHeader(includePaths, headerName)
@@ -196,6 +199,7 @@ proc getAllTypesFromHeader*(includePaths:seq[string], headerName:string) :  seq[
 #At some point we will parse the AST and retrieve the types from there.
 proc getAllTypes*(useCache:bool=true) : seq[string] = 
   let searchPaths = getAllIncludePaths()
+  echo $searchPaths
   let includes = getPCHIncludes(useCache=true)
   let includesNoCache = getPCHIncludes(useCache=false)
   let newIncludes = includesNoCache.filterIt(it notin includes)
@@ -223,11 +227,11 @@ proc getAllTypes*(useCache:bool=true) : seq[string] =
   echo "Types: ", typesCache.len
 
   let pchTypes = getAllPCHTypes()
-  let newPCHTypes = pchTypes.filterIt(it notin typesCache)
-  let missingPCHTypes = typesCache.filterIt(it notin pchTypes)
+  let newPCHTypes = pchTypes.filterIt(it.split(" ")[0] notin typesNoCache)
+  let missingPCHTypes = typesNoCache.filterIt(it notin pchTypes)
 
-  echo "Missing PCH types: ", missingPCHTypes
-  # echo "New PCH types: ", newPCHTypes
+  # echo "Missing PCH types: ", missingPCHTypes
+  echo "New PCH types: ", newPCHTypes
   echo "PCH types: ", pchTypes.len
   
 
