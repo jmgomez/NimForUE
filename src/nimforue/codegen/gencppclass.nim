@@ -20,7 +20,9 @@ func convertNimTypeStrToCpp(nimType:string) : string =
   of "float32": "float"
   of "float64": "double"
   else:
-    if nimType.endswith("Ptr"): nimType.removeLastLettersIfPtr() & "*"
+    if nimType.endswith("Ptr"): #and 
+      # (nimType.startsWith("U") or nimType.startsWith("A")): #Only UObject base types
+        nimType.removeLastLettersIfPtr() & "*"
     elif nimType.contains("var"): convertNimTypeStrToCpp(nimType.replace("var", "").strip()) & "&"
     elif nimType.isGeneric(): 
       nimType
@@ -149,7 +151,6 @@ func genOverride*(fn:NimNode, fnDecl : CppFunction, class:string) : NimNode =
       fn
       {.emit: toEmit.}
   result = override
-  # debugEcho result.repr
 
 #TODO change this for macro cache
 var cppHeader* {.compileTime.} = CppHeader(name: OutputHeader, includes: @["UEDeps.h"])
@@ -243,7 +244,18 @@ func removeConstFromParam(identDef : NimNode) : NimNode =
 
 
 func getCppFunctionFromNimFunc(fn : NimNode) : CppFunction =
-  let returnType = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].strVal
+  let returnType = 
+    case fn.params[0].kind:
+    of nnkEmpty: "void"
+    of nnkIdent: fn.params[0].strVal
+    of nnkBracketExpr: 
+      let generic = repr fn.params[0]      
+      generic
+    else:
+      debugEcho treeRepr fn.params[0]
+      error("Cant parse return type " & fn.params[0].kind.repr)
+      ""
+  
 
   let isConstFn = fn.pragma.children.toSeq().filterIt(it.strVal() == "constcpp").any()
   let modifiers = if isConstFn: cmConst else: cmNone
