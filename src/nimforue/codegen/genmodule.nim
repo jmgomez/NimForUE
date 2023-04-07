@@ -128,7 +128,7 @@ func genUStructImportCTypeDefBinding(ueType: UEType): NimNode =
     )
   var recList = ueType.fields
     .map(prop => nnkIdentDefs.newTree(
-        getFieldIdent(prop),
+        getFieldIdentWithPCH(ueType, prop),
         prop.getTypeNodeFromUProp(isVarContext=false),
         newEmptyNode()
       )

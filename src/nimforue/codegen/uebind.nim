@@ -570,6 +570,15 @@ func getFieldIdent*(prop:UEField) : NimNode =
   let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()
   identPublic fieldName
 
+func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField) : NimNode =  
+  let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
+  if typeDef.isInPCH:           
+    nnkPragmaExpr.newTree(
+      identPublic fieldName,
+      nnkPragma.newTree(
+        nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(prop.name))))                                    
+  else:
+    getFieldIdent(prop)
 #TODO rename this dont use single letter variables
 #TODO REFACTOR THIS. This is not simmetric at all. Either we split everything by it's type exposure or we dont split at all
 #The padding function also add noise here. 
@@ -602,20 +611,32 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
         )
       ])
 
+    
   let fields =
     case typeExposure:
     of uexDsl, uexImport:
       typeDef.fields
-            .map(prop => nnkIdentDefs.newTree(
-              [getFieldIdent(prop), 
-              prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode()]))
-
-            .foldl(a.add b, nnkRecList.newTree)
-    of uexExport: #Note will left it for refence. But if they are in PCH it dont require padding
+        .map(prop => 
+          nnkIdentDefs.newTree(
+            getFieldIdentWithPCH(typeDef, prop),
+            prop.getTypeNodeFromUProp(isVarContext=false),             
+            newEmptyNode()))
+        .foldl(a.add b, nnkRecList.newTree)
+    of uexExport: 
       var fields = nnkRecList.newTree()
       var size, offset, padId: int
       for prop in typeDef.fields:
-        var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode())
+        let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
+        var propIden = nnkIdentDefs.newTree(
+          nnkPragmaExpr.newTree(
+            ident fieldName,
+            nnkPragma.newTree(
+              ident "inject",
+              nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(prop.name)),
+            )
+          ), 
+          prop.getTypeNodeFromUProp(isVarContext=false), 
+          newEmptyNode())
 
         let offsetDelta = prop.offset - offset
         if offsetDelta > 0:
@@ -624,7 +645,7 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
           offset += offsetDelta
           size += offsetDelta
 
-        fields.add id
+        fields.add propIden
         size = offset + prop.size
         offset += prop.size
 
@@ -654,7 +675,6 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
   # debugEcho result.repr
   # debugEcho result.treeRepr
 
-
 func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode = 
   let typeName = ident(typeDef.name)
   let fields = typeDef.fields
@@ -676,11 +696,25 @@ func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode =
     result = nnkStmtList.newTree(exportFn)
 
 
-func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode =
+func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode =  
   var recList = nnkRecList.newTree()
   var size, offset, padId: int
   for prop in ueType.fields:
-    var id = nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode())
+    let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
+    let propIden = 
+      if ueType.isInPCH:
+        nnkIdentDefs.newTree(
+          nnkPragmaExpr.newTree(
+            ident fieldName,
+            nnkPragma.newTree(
+              nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(prop.name)),
+            )
+          ), 
+          prop.getTypeNodeFromUProp(isVarContext=false), 
+          newEmptyNode())
+        else: 
+          nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode())
+ 
 
     let offsetDelta = prop.offset - offset
     if offsetDelta > 0:
@@ -689,7 +723,7 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
       offset += offsetDelta
       size += offsetDelta
 
-    recList.add id
+    recList.add propIden
     size = offset + prop.size
     offset += prop.size
 
