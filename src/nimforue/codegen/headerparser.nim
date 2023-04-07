@@ -6,6 +6,11 @@ import models
 import ../utils/utils
 
 
+type
+  CppTypeInfo* = object
+    name* : string #Name of the type FSomeType USomeType
+    cppDefinitionLine : string #The line where the type is defined. This will be the body at some point
+
 proc getHeaderFromPath(path : string) : Option[string] = 
   if fileExists(path):
     some readFile(path)
@@ -137,31 +142,32 @@ proc readHeader(searchPaths:seq[string], header:string) : Option[string]  =
   if result.isNone and header.split("/").len>1:    
     return readHeader(searchPaths, header.split("/")[^1])
 
-proc getUClassesNamesFromHeaders(cppCode:string) : seq[string] =   
+proc getUClassesNamesFromHeaders(cppCode:string) : seq[CppTypeInfo] =   
   let lines = cppCode.splitLines()
   #Two cases (for UStructs and FStrucs) Need to do UEnums
   #1. via separating class ad hoc
   #2. Next line after UCLASS 
   #Probably there is something else nto matching. But this should cover most scenarios
   #At some point we are doing full AST parsing anyways. So this is just a temporary solution
-  func getTypeSeparatingSemicolon(typ:string): seq[string] = 
+  func getTypeSeparatingSemicolon(typ:string): seq[CppTypeInfo] = 
     var needToContains = [typ, ":" ] #only class that has a base
     for idx, line in enumerate(lines):   
       if needToContains.mapIt(line.contains(it)).foldl(a and b, true):
         let separator = if line.contains("final") : "final" else: ":"
-        var clsName = line.split(separator)[0].strip.split(" ")[^1]
-        if clsName.contains("final"):
-          clsName = "con final"
-        result.add(clsName)
+        var clsName = line.split(separator)[0].strip.split(" ")[^1] 
+        result.add(CppTypeInfo(name:clsName, cppDefinitionLine:line))
 
-  func getTypeAfterUType(utype, typ:string) : seq[string] = 
+  func getTypeAfterUType(utype, typ:string) : seq[CppTypeInfo] = 
     for idx, line in enumerate(lines):  
       if line.contains(utype):
         if len(lines) > idx+1:
           let nextLine = lines[idx+1]
           if nextLine.contains(typ):
-            var clsName = nextline.strip.split(" ")[^1]            
-            result.add(clsName)
+            let separator = if line.contains("final") : "final" else: ":"
+            if nextLine.contains(separator):
+              continue# captured above. This could cause picking a parent that is not defined
+            var clsName = nextline.strip.split(" ")[^1]     
+            result.add(CppTypeInfo(name:clsName, cppDefinitionLine:nextline))
 
   result = getTypeSeparatingSemicolon("class")
   result.add(getTypeSeparatingSemicolon("struct"))
@@ -171,19 +177,19 @@ proc getUClassesNamesFromHeaders(cppCode:string) : seq[string] =
 
 
 
-proc getAllTypesFromHeader*(includePaths:seq[string], headerName:string) :  seq[string] = 
+proc getAllTypesFromHeader*(includePaths:seq[string], headerName:string) :  seq[CppTypeInfo] = 
   let header = readHeader(includePaths, headerName)
   header
     .map(getUClassesNamesFromHeaders)
-    .get(newSeq[string]())
+    .get(newSeq[CppTypeInfo]())
 
 #This try to parse types from the PCH but it's not reliable
 #It's better to use both the PCH and this ones so PCH returns this too (works for a subset of types that doesnt have a header in the uprops)
 #At some point we will parse the AST and retrieve the types from there.
-var pchTypes {.compileTime.}  : seq[string]
-func getAllPCHTypes*(useCache:bool=true) : lent seq[string] =   
+var pchTypes {.compileTime.}  : Table[string, CppTypeInfo]
+func getAllPCHTypes*(useCache:bool=true) : lent Table[string, CppTypeInfo] =   
   {.cast(noSideEffect).}:
-    if pchTypes.any(): 
+    if pchTypes.len > 0:
       return pchTypes
     else: 
       #TODO cache it in the macro cache. This is only accessed at compile time
@@ -192,7 +198,7 @@ func getAllPCHTypes*(useCache:bool=true) : lent seq[string] =
       let filename =  "allpchtypes.json"
       let path = dir/filename
       if fileExists(path) and useCache:
-        pchTypes = readFile(path).parseJson().to(seq[string])
+        pchTypes = readFile(path).parseJson().to(Table[string, CppTypeInfo])#.pairs.toSeq().newTable()
       else:
         #we search them
         let searchPaths = getAllIncludePaths()
@@ -201,6 +207,9 @@ func getAllPCHTypes*(useCache:bool=true) : lent seq[string] =
           includes
             .mapIt(getAllTypesFromHeader(searchPaths, it))
             .flatten()
+            .mapIt((it.name, it))
+            .toTable()
+            
         if useCache: #first time, store the types
           createDir(dir)
           writeFile(path, $pchTypes.toJson())

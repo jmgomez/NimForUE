@@ -409,12 +409,8 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchInclude
       UE_Warn &"The struct {str} does not have StructOps therefore we cant calculate the size and alignment"
 
     
-    var isInPCH = false
-    let moduleRelativePath = str.getModuleRelativePath()
-    if moduleRelativePath.isSome():
-        isInPCH = isModuleRelativePathInHeaders(str.getModuleName(), moduleRelativePath.get(), pchIncludes)
-
-    
+    let isInPCH = name in getAllPCHTypes()
+       
     some UEType(name: name, kind: uetStruct, fields: fields, 
           isInPCH: isInPCH, moduleRelativePath: str.getModuleRelativePath().get(""), #notice moduleRelativePath is used to deduce the submodule
           metadata: metadata, size: size, alignment: alignment)

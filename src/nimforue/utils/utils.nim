@@ -221,6 +221,11 @@ template measureTime*(name: static string, body: untyped) =
   let starts = times.now()
   body
   let ends = (times.now() - starts)
-  UE_Log (name & " took " & $ends & "  seconds")
+  let msg = name & " took " & $ends & "  seconds"
+  when defined(UE_Log):
+    UE_Log msg
+  else:
+    echo msg  
+    
 
 

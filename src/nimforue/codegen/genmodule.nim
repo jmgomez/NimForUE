@@ -104,6 +104,28 @@ func genUEnumTypeDefBinding(ueType: UEType): NimNode =
 
 
 func genUStructImportCTypeDefBinding(ueType: UEType): NimNode =
+  let pragmas = 
+    (if ueType.isInPCH:     
+      nnkPragmaExpr.newTree([
+      nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+      nnkPragma.newTree(
+          ident "inject",
+          ident "inheritable",
+          ident "pure",
+          nnkPragma.newTree(ident "importcpp", ident "inheritable", ident "pure")
+        )
+      ])
+    else:
+      nnkPragmaExpr.newTree([
+      nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+      nnkPragma.newTree(
+        ident "inject",
+        ident "inheritable",
+        ident "pure",
+        nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
+      )
+      ])
+    )
   var recList = ueType.fields
     .map(prop => nnkIdentDefs.newTree(
         getFieldIdent(prop),
@@ -112,17 +134,7 @@ func genUStructImportCTypeDefBinding(ueType: UEType): NimNode =
       )
     )
     .foldl(a.add b, nnkRecList.newTree)
-  nnkTypeDef.newTree(
-    nnkPragmaExpr.newTree([
-      nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
-      nnkPragma.newTree(
-        ident "inject",
-        ident "inheritable",
-        ident "pure",
-        nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
-        nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
-    )
-  ]),
+  nnkTypeDef.newTree(pragmas,
     newEmptyNode(),
     nnkObjectTy.newTree(
       newEmptyNode(), newEmptyNode(), recList

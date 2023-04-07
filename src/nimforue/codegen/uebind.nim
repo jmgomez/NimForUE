@@ -464,8 +464,9 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
              .map(fun=>genFunc(typeDef, fun).impl))
   
   let typeDecl = 
-    if rule == uerCodeGenOnlyFields or typeDef.forwardDeclareOnly or typeDef.metadata.filterIt(it.name.toLower() == NoDeclMetadataKey.toLower()).any(): 
-      newEmptyNode()
+    if rule == uerCodeGenOnlyFields or typeDef.forwardDeclareOnly or 
+      typeDef.metadata.filterIt(it.name.toLower() == NoDeclMetadataKey.toLower()).any(): 
+        newEmptyNode()
     else: 
       let ptrName = ident typeDef.name & "Ptr"
       let parent = ident typeDef.parent
@@ -543,6 +544,8 @@ proc genDelType*(delType:UEType, exposure:UEExposure) : NimNode =
     of uedelDynScriptDelegate: "execute"
     of uedelMulticastDynScriptDelegate: "broadcast"
 
+
+
   let typ = 
     if exposure == uexImport:
       genAst(typeName, delBaseType):
@@ -584,12 +587,18 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
           nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
         )
       ])
-    of uexExport:
+    of uexExport: #Note this path is not used. TODO Remove
+      let importExportPragma =
+        if typeDef.isInPCH:
+          ident "importcpp"
+        else:
+          nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1" & suffix))
+          
       nnkPragmaExpr.newTree([
         nnkPostfix.newTree([ident "*", ident typeDef.name]),
         nnkPragma.newTree(
           ident "inject",
-          nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1" & suffix))
+          importExportPragma
         )
       ])
 
@@ -602,7 +611,7 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
               prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode()]))
 
             .foldl(a.add b, nnkRecList.newTree)
-    of uexExport: 
+    of uexExport: #Note will left it for refence. But if they are in PCH it dont require padding
       var fields = nnkRecList.newTree()
       var size, offset, padId: int
       for prop in typeDef.fields:
@@ -686,6 +695,12 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
 
   if size < ueType.size:
     recList.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(ueType.size - size), ident "byte"), newEmptyNode())
+  
+  let importExportPragma =
+    if ueType.isInPCH:
+      ident "importcpp"
+    else:
+      nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1" & "_"))
 
   nnkTypeDef.newTree(
     nnkPragmaExpr.newTree([
@@ -693,7 +708,7 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
       nnkPragma.newTree(
         ident "inject",
         ident "bycopy", #so when the struct is big enough it gets exported in the header. This can be avoided if we generate our own struct like we do for the classes 
-        nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
+        importExportPragma
       )
     ]),
     newEmptyNode(),
