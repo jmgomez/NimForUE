@@ -122,31 +122,14 @@ type UEmitable = UNimScriptStruct | UClass | UDelegateFunction | UEnum
         
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T], isFirstLoad:bool) : Option[ptr T]= 
-    # when not WithEditor:
-    #     let r = emitter.generator(pkg)
-    #     return tryUECast[T](r)
-
-    when defined withReinstantiation:
-        let reinst = true
-    else:
-        let reinst = false
-
-    if not isFirstLoad and not reinst:
-        UE_Warn "Reinstanciation is disabled."
-        return none[ptr T]()
-
-    UE_Log &"Emitter info for {emitter.ueType.name}"
-    if prev.isSome: #BUG TRACE
-        UE_Log &"Previous type is {prev.get().getName()}"
-    else:
-        UE_Log &"Previous type is none"
-    
-
+  
+    let forceReinst = emitter.ueType.hasUEMetadata(ReinstanceMetadataKey)
 
     var areEquals = prev.isSome() and prev.get().toUEType().get() == emitter.ueType
   
         
-    if areEquals: none[ptr T]()
+    if areEquals and not forceReinst: 
+        none[ptr T]()
     else: 
         prev.run prepareForReinst
         tryUECast[T](emitter.generator(pkg))

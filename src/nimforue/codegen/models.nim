@@ -25,6 +25,7 @@ const InstancedMetadataKey* = "Instanced"
 #UEType metadata
 const NoDeclMetadataKey* = "NoDecl"
 const EarlyLoadMetadataKey* = "EarlyLoad"
+const ReinstanceMetadataKey* = "Reinstance" #force the reinstantiation of a UEType
 
 type 
   CppModifiers* = enum
