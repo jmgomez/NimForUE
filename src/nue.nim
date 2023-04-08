@@ -311,7 +311,8 @@ task starteditor, "opens the editor":
 task showincludes, "Traverses UEDeps.h gathering includes and shows then in the script":
   let useCache = "usecache" in taskOptions
   let includes = getPCHIncludes(useCache)
-  log $includes
+  if "save" in taskOptions:
+    writeFile taskOptions["save"], $includes
   log $len(includes)
 
 task showtypes, "Traverses UEDeps.h looking for types (uclasses only for now)":

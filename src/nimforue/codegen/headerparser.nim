@@ -24,11 +24,11 @@ proc getIncludesFromHeader(header : string) : seq[string] =
       ("<", ""),
       (">", ""),
       ("\"", ""),
-      ("\"", ""),
+      ("\t", ""),
     ]).strip()
     
   lines
-    .filterIt(it.startsWith("#include"))
+    .filterIt(it.contains("#include")) #this may introduce incorrect includes? like in comments. 
     .map(getHeaderFromIncludeLine)
 
 func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : seq[string] = 
@@ -97,7 +97,6 @@ var pchIncludes : seq[string]
 proc getPCHIncludes*(useCache=true) : seq[string] = 
   if pchIncludes.any(): 
     return pchIncludes
-
   let dir = PluginDir/".headerdata"
   createDir(dir)
   let path = dir / "allincludes.json"
