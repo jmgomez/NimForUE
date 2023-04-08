@@ -39,7 +39,7 @@ func append*(a, b: FString): FString {.importcpp: "#.Append(#)".}
 func equals*(a, b: FString): bool {.importcpp: "#.Equals(#)".}
 
 converter toStr*(fstr :Fstring) : string {.inline.} = $ fstr
-converter toFStr*(str :string) : FString {.inline.} = f str 
+converter toFString*(str :string) : FString {.inline.} = f str 
 
 func `==`*(a, b: FString): bool = a.equals(b)
 func `==`*(a:string, b: FString): bool = a.equals(b)
@@ -47,5 +47,5 @@ func `==`*(a:FString, b: string): bool = a.equals(b)
 
 
 func `&`*(a, b: FString): FString = a.append(b)
-func `&`*(a:string, b: FString): FString = a.toFStr().append(b)
+func `&`*(a:string, b: FString): FString = a.toFString().append(b)
 func `&`*(a:FString, b: string): FString = a.append(b)
