@@ -526,10 +526,10 @@ func extractSubmodule* (path, packageName:string) : Option[string] =
     # .join()
     .head()
     
-proc getSubmodulesForTypes*(packageName:string, types:seq[UEType]): TableRef[string, seq[UEType]] = 
+proc getSubmodulesForTypes*(packageName:string, types:seq[UEType], rules: seq[UEImportRule]): TableRef[string, seq[UEType]] = 
   var subModTable = newTable[string, seq[UEType]]()
   let nMembers = types.map(countMembers).sum()
-  if nMembers < 300:
+  if nMembers < 300 or rules.anyIt(it.rule == uerSingleModule):
     let name = &"{packageName}" #remove the directory from here?
     subModTable[name] = types
     return subModTable
@@ -690,7 +690,7 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules, pchIncludes))
     .sequence()
   
-  let submodulesTable = getSubmodulesForTypes(pkg.getShortName(), initialTypes)
+  let submodulesTable = getSubmodulesForTypes(pkg.getShortName(), initialTypes, rules)
   var submodules : seq[UEModule] = @[]
   for subModuleName, submoduleTypes in submodulesTable:
     # let deps = getDepsFromTypes(subModuleName, submoduleTypes, @[])

@@ -398,7 +398,7 @@ uClass AActorCodegen of AActor:
       .map((obj: UObjectPtr) => getUETypeFrom(obj, @[], @[]))
       .sequence()
 
-      let submodules = getSubmodulesForTypes(self.moduleName, initialTypes)
+      let submodules = getSubmodulesForTypes(self.moduleName, initialTypes, @[])
       for k in submodules.keys():
         UE_Warn &"{k} => {submodules[k].len}"
         let deps = getDepsFromTypes(k, submodules[k], @[])

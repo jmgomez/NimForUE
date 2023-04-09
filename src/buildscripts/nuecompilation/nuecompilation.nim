@@ -13,7 +13,7 @@ proc compileHostMac*() =
   let common = @[
     "--cc:clang",
     "--debugger:native",
-    "--threads",
+    "--threads:off",
     "--tlsEmulation:off",
     "--app:lib",
     "--d:host",
@@ -62,7 +62,7 @@ proc compileHost*() =
  
   
   let buildFlags = @[buildSwitches].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"{nimCmd} cpp {buildFlags} --cc:vcc --passC:/EHs  --header:NimForUEFFI.h --debugger:native --threads --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
+  doAssert(execCmd(&"{nimCmd} cpp {buildFlags} --cc:vcc --passC:/EHs  --header:NimForUEFFI.h --debugger:native --threads:off --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   
   # copy header
   let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"

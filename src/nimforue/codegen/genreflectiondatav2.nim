@@ -470,6 +470,7 @@ proc getProject*() : UEProject =
 
     UE_Error "CodeGenOnly" &  $fieldsOnly
     let nonBp =  @["EnhancedInput", "GameplayAbilities"] & getGameUserConfigValue("extraNonBpModuleNames", newSeq[string]())
+    UE_Log &"Non BP modules: {nonBp}"
     proc getRulesForPkg(packageName:string) : seq[UEImportRule] = 
       let ruleBp = 
         if bpOnly and packageName notin nonBp: 

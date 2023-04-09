@@ -40,6 +40,7 @@ type
         uerIgnoreHash #ignore the hash when importing a module so always imports it. 
         uerForce #Force the import of a type. This is useful for types that are not exported by default but we want to import them anyway
         uerExcludeDeps #Module deps to exclude from the module. They are in affectTypes. Module rule only
+        uerSingleModule #makes a package be produced as a single module
     UERuleTarget* = enum 
         uertType
         uertField
@@ -209,6 +210,15 @@ moduleImportRules["Niagara"] = @[
   codegenOnly,
   
 ]
+
+
+moduleImportRules["PCG"] = @[
+  codegenOnly,
+  makeImportedRuleModule(uerSingleModule)  
+]
+
+
+
 moduleImportRules["MegascansPlugin"] = @[
   codegenOnly,
   makeImportedRuleModule(uerImportBlueprintOnly)
