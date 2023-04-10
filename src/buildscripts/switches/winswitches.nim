@@ -13,7 +13,7 @@ let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir / unrealFolder / 
 
 func getModuleName(target:string) : string = 
   if target == "guest": "NimForUE"
-  else: "NimForUE"
+  else: "NimForUEGame"
 
 proc pchObjPath(target:string) : string = 
   let module = getModuleName(target)

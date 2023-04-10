@@ -21,8 +21,12 @@ public class NimForUEGame : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 	
 		PublicDefinitions.Add("NIM_INTBITS=64");
-		
-		// PrivatePCHHeaderFile = "../../NimHeaders/nimgame.h";
+		if (Target.Platform == UnrealTargetPlatform.Win64){
+			CppStandard = CppStandardVersion.Cpp20;
+		} else {
+			CppStandard = CppStandardVersion.Cpp17;
+		}
+		PrivatePCHHeaderFile = "../../NimHeaders/nimgame.h";
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
