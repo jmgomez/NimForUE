@@ -1,4 +1,4 @@
-import std/[sequtils, strutils, strformat, sugar, macros, genasts, os, strutils]
+import std/[sequtils, strutils,tables, strformat, sugar, macros, genasts, os, strutils]
 import ../../buildscripts/nimforueconfig
 import ../codegen/[models, modulerules]
 import ../utils/[ueutils, utils]
@@ -87,7 +87,7 @@ func `$`*(cppCls: CppClassType): string = toStr(cppCls)
 
 func `$`*(cppHeader: CppHeader): string =
   let includes = cppHeader.includes.mapIt(&"#include \"{it}\"").join("\n")
-  let classes = cppHeader.classes.mapIt(it.`$`()).join("\n")
+  let classes = cppHeader.classes.values.toSeq.mapIt(it.`$`()).join("\n")
   &"""
 #pragma once
 {includes}
@@ -185,11 +185,17 @@ func toCppClass*(ueType:UEType) : CppClassType =
       CppClassType() 
 
 proc addCppClass*(class: CppClassType) =
-  
-  cppHeader.classes.add class
+  if class.name in cppHeader.classes:
+    cppHeader.classes[class.name] = class
+  else:
+    cppHeader.classes.add class.name, class
   saveHeader(cppHeader, "NimHeaders") #it would be better to do it only once
 
 
+proc addCppFunctionToClass*(className:string, fns : seq[CppFunction]) = 
+  var cls = cppHeader.classes[className]
+  cls.functions.add fns
+  addCppClass cls
 
 #notice even though the name says cpp we are converting Nim types to string here. The cpp is only to show that it has to do with the cpp generation
 #in the future this can be standalone and then we can remove the cpp part of the name

@@ -57,7 +57,7 @@ type
   CppHeader* = object
     name*: string
     includes*: seq[string]
-    classes*: seq[CppClassType]
+    classes*: Table[string, CppClassType] #name, class
 
 type
     EPropertyFlagsVal* = distinct(uint64)

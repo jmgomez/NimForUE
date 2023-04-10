@@ -689,6 +689,7 @@ macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField]()).impl
 #that share the same flags. You dont need to specify uFunc if the func is inside
 #now it only support procDef but it will support funct too 
 macro uFunctions*(body : untyped) : untyped = 
+
     # let structMetas = getMetasForType(body)
     # let ueFields = getUPropsAsFieldsForType(body)
     let metas = getMetasForType(body)
@@ -703,7 +704,12 @@ macro uFunctions*(body : untyped) : untyped =
         .filter(n=>n.kind==nnkProcDef)
         .map(procBody=>ufuncImpl(procBody, firstParam, metas).impl) #TODO add forward declar to this one too?
     
-    result = nnkStmtList.newTree allFuncs
+    let clsName = firstParam.get.uePropType.removeLastLettersIfPtr()
+    let overrides = getCppOverrides(body, clsName)  
+    addCppFunctionToClass(clsName, overrides.mapIt(it[0]))           
+
+    result = nnkStmtList.newTree allFuncs & overrides.mapIt(it[1])
+    # echo repr result
 
 macro uConstructor*(fn:untyped) : untyped = 
         #infers neccesary data as UEFields for ergonomics
@@ -845,9 +851,6 @@ func addSelfToProc(procDef:NimNode, className:string) : NimNode =
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
     procDef
 
-
-
-
 func getCppOverrides(body:NimNode, ueType:UEType) : (UEType, NimNode) = 
     let overrides = getCppOverrides(body, ueType.name)
     if not overrides.any():
@@ -861,6 +864,8 @@ func getCppOverrides(body:NimNode, ueType:UEType) : (UEType, NimNode) =
 
     (ueType, stmOverrides)
        
+
+
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
