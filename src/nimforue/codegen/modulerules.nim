@@ -214,6 +214,12 @@ moduleImportRules["Niagara"] = @[
 
 moduleImportRules["PCG"] = @[
   codegenOnly,
+   makeImportedRuleType(uerIgnore, @[
+    "APCGUnitTestDummyActor"
+  ]), 
+  makeImportedRuleField(uerIgnore, @[
+    "APCGUnitTestDummyActor"
+  ]), 
   makeImportedRuleModule(uerSingleModule)  
 ]
 
@@ -222,8 +228,7 @@ moduleImportRules["PCG"] = @[
 moduleImportRules["MegascansPlugin"] = @[
   codegenOnly,
   makeImportedRuleModule(uerImportBlueprintOnly)
-   
-  
+     
 ]
 
 moduleImportRules["CommonUI"] = @[
@@ -231,14 +236,7 @@ moduleImportRules["CommonUI"] = @[
     "FOnAssetLoaded"
   ]),  
 ]
-moduleImportRules["DungeonArchitectRuntime"] = @[
-  makeImportedRuleType(uerIgnore, @[
-    "FFlowTilemapCoord"
-  ]), 
-  makeImportedRuleField(uerIgnore, @[
-    "FFlowTilemapCoord"
-  ]),
-]
+
 
 moduleImportRules["AnimationLocomotionLibraryRuntime"] = @[
   makeImportedRuleField(uerIgnore, @[
