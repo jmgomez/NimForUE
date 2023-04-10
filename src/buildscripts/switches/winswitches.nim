@@ -12,8 +12,9 @@ let unrealFolder = if WithEditor: "UnrealEditor" else: "UnrealGame"
 let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir / unrealFolder / $config.targetConfiguration 
 
 func getModuleName(target:string) : string = 
-  if target == "guest": "NimForUE"
-  else: "NimForUEGame"
+  debugEcho "Entra en getmodulename " & target
+  if target == "game": "NimForUEGame"
+  else: "NimForUE"
 
 proc pchObjPath(target:string) : string = 
   let module = getModuleName(target)

@@ -247,8 +247,8 @@ proc compileGenerateBindings*() =
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug)].foldl(a & " " & b.join(" "), "")
 
   # let buildFlags = @[buildSwitches, targetSwitches(false), pluginPlatformSwitches(false), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
-  # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  doAssert(execCmd(&"nim  cpp {buildFlags} --linedir:off --noMain --app:staticlib --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"{nimCmd}  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  # doAssert(execCmd(&"nim  cpp {buildFlags}  --linedir:off --noMain --app:staticlib --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
   #It still generates NimMain in the header. So we need to get rid of it:
