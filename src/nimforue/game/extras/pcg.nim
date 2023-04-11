@@ -15,13 +15,22 @@ type
     inputData* {.importcpp:"InputData".} : FPCGDataCollection
     outputData* {.importcpp:"OutputData".} : FPCGDataCollection   
     # TWeakObjectPtr<UPCGComponent> SourceComponent #TODO Need to bind TWeakObjectPtr first
-    node* {.importcpp:"Node".} : UPCGNodePtr
+    node {.importcpp:"Node".} : UPCGNodePtr #node is const so we expose an accesor to avoid cpp annoying around
+
+
 
   FPCGContextPtr* = ptr FPCGContext
   FPCGElementPtr* = TSharedPtr[FSimplePCGElement] #in reality this is typedef TSharedPtr<IPCGElement, ESPMode::ThreadSafe> FPCGElementPtr; maybe we can just get rid of it and use TSharedPointer directly?
 
+proc node*(self: FPCGContextPtr): UPCGNodePtr {.importcpp: "const_cast<'0>(#->Node)".}
+
+proc getInputSettings*[T](self: FPCGContextPtr): ptr T {.importcpp: "#->GetInputSettings<'*0>()".}
+
 #notice they dont share the base type but they should be comptabile
 converter toUPCGData*(data:ptr UPCGPointData) : ptr UPCGData = ueCast[UPCGData](data)
+
+
+
 
 proc metadata*(data:UPCGPointDataPtr): ptr UPCGMetadata {.importcpp: "(#->Metadata)".}
 proc `metadata=`*(data:UPCGPointDataPtr, metadata: ptr UPCGMetadata) {.importcpp: "(#->Metadata = #)".}
@@ -46,7 +55,7 @@ proc setAttribute*[T](point: var FPCGPoint, metadata: UPCGMetadataPtr, attribute
   elif T is float64:
     point.setDoubleAttribute(metadata, attributeName, value.float)
   elif T is bool:
-    point.setBooleanAttribute(metadata, attributeName, value)  
+    point.setBoolAttribute(metadata, attributeName, value)  
   elif T is FString | string:
     point.setStringAttribute(metadata, attributeName, value)
   elif T is FQuat:
@@ -95,3 +104,9 @@ proc setStringAttribute*(point: var FPCGPoint, metadata: UPCGMetadataPtr, attrib
 
 #this function should be autobound. For reason it isnt
 proc initializeFromData*(self:UPCGPointDataPtr, data:UPCGPointDataPtr) {.importcpp: "#->InitializeFromData(#)".}
+
+
+
+#point helpers
+
+proc pos*(point: FPCGPoint): FVector = point.transform.getLocation()

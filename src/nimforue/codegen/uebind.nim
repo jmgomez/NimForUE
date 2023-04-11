@@ -283,7 +283,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
         of uedelMulticastDynScriptDelegate:
           genAst(): self.processMulticastDelegate(param.addr)
     else: genAst(clsName=newStrLitNode(clsName)): 
-      let fn {.inject, used.} = getClassByName(clsName).findFunctionByName(fnName)
+      let fn {.inject, used.} = self.getClass().findFuncByName(fnName)
       self.processEvent(fn, param.addr)
 
   let outParams = 
@@ -349,7 +349,7 @@ func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFuncti
         flags = flags | FUNC_BlueprintPure | FUNC_BlueprintCallable
     if hasMeta("BlueprintCallable"):
         flags = flags | FUNC_BlueprintCallable
-    if hasMeta("BlueprintImplementableEvent"):
+    if hasMeta("BlueprintImplementableEvent") or hasMeta("BlueprintNativeEvent"):
         flags = flags | FUNC_BlueprintEvent | FUNC_BlueprintCallable
     if hasMeta("Static"):
         flags = flags | FUNC_Static

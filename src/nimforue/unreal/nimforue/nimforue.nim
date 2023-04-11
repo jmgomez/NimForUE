@@ -33,6 +33,7 @@ proc getFPropsFromUStruct*(ustr:UStructPtr, flags=EFieldIterationFlags.None) : s
         let prop = it.get()
         xs.add prop
     xs
+#This should be an iterator    
 proc getFuncsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : seq[UFunctionPtr] = 
     var xs : seq[UFunctionPtr] = @[]
     var fieldIterator = makeTFieldIterator[UFunction](cls, flags)
@@ -47,8 +48,15 @@ proc getFuncsParamsFromClass*(cls:UClassPtr, flags=EFieldIterationFlags.None) : 
     .getFuncsFromClass(flags)
     .mapIt(it.getFPropsFromUStruct(flags))
     .foldl(a & b, newSeq[FPropertyPtr]())
+
 proc findFunctionByNameIncludingSuper*(cls : UClassPtr, name:FName) : UFunctionPtr = 
   cls.getFuncsFromClass(EFieldIterationFlags.IncludeSuper)
+    .filterIt(it.getFName() == name)
+    .head()
+    .get(nil)
+
+func findFuncByName*(cls : UClassPtr, name:FName) : UFunctionPtr = 
+  cls.getFuncsFromClass()
     .filterIt(it.getFName() == name)
     .head()
     .get(nil)

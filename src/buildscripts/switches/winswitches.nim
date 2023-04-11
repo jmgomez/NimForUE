@@ -8,14 +8,12 @@ let config = getNimForUEConfig()
 let unrealFolder = if WithEditor: "UnrealEditor" else: "UnrealGame"
 
 
-
 let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir / unrealFolder / $config.targetConfiguration 
 
 func getModuleName(target:string) : string = 
-  debugEcho "Entra en getmodulename " & target
-  if target == "game": "NimForUEGame"
-  else: "NimForUE"
-
+  # if target == "game": "NimForUEGame"
+  # else: "NimForUE"
+  "NimForUE"
 proc pchObjPath(target:string) : string = 
   let module = getModuleName(target)
   pchDir / module / &"PCH.{module}.h.obj"
@@ -38,6 +36,7 @@ proc getSdkVersion() : string =
   if fileExists(path):
     return readFile(path)
   sdkVersion
+
 proc getCompilerVersion() : string = 
   let compilerVersion = "14.34.31937"
   let path = PluginDir / "compiler_version.txt"
