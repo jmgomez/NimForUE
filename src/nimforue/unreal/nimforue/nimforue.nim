@@ -54,12 +54,12 @@ proc findFunctionByNameIncludingSuper*(cls : UClassPtr, name:FName) : UFunctionP
     .filterIt(it.getFName() == name)
     .head()
     .get(nil)
-
-func findFuncByName*(cls : UClassPtr, name:FName) : UFunctionPtr = 
-  cls.getFuncsFromClass()
-    .filterIt(it.getFName() == name)
-    .head()
-    .get(nil)
+#bound directly so we dont have to compile this with the bindings
+# func findFuncByName*(cls : UClassPtr, name:FName) : UFunctionPtr = 
+#   cls.getFuncsFromClass()
+#     .filterIt(it.getFName() == name)
+#     .head()
+#     .get(nil)
 
 proc getAllPropsOf*[T : FProperty](ustr:UStructPtr) : seq[ptr T] = 
     ustr.getFPropsFromUStruct()

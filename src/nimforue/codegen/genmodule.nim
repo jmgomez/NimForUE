@@ -437,24 +437,20 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
 
 
 
-
     let moduleImportStrTemplate = &"""
 #hash:{module.hash}
 include {preludeRelative}prelude
 when not defined(nimsuggest):
   const BindingPrefix {{.strdefine.}} = ""
   {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
-
-  
+   
 """
-
 
 
 
     let moduleExportStrTemplate = &"""
 include {preludeRelative}../prelude
-proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard
-    
+proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard    
 """
     echo &"Generating bindings for {module.name}"
     genCode(exportBindingsPath, moduleExportStrTemplate, module, genExportModuleDecl(module))
