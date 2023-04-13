@@ -94,7 +94,7 @@ type
   # UDataAsset* {.importcpp, inheritable, pure .} = object of UObject
   # UDataAssetPtr* = ptr UDataAsset
 
-  AVolume* {.importcpp, inheritable, pure .} = object of UObject
+  AVolume* {.importcpp, inheritable, pure .} = object of AActor
   AVolumePtr* = ptr AVolume
   # APhysicsVolume* {.importcpp, inheritable, pure .} = object of AVolume
   # APhysicsVolumePtr* = ptr APhysicsVolume

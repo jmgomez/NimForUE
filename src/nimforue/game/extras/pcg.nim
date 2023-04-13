@@ -22,7 +22,14 @@ type
   FPCGContextPtr* = ptr FPCGContext
   FPCGElementPtr* = TSharedPtr[FSimplePCGElement] #in reality this is typedef TSharedPtr<IPCGElement, ESPMode::ThreadSafe> FPCGElementPtr; maybe we can just get rid of it and use TSharedPointer directly?
 
+# proc inputData*(self: FPCGContextPtr): FPCGDataCollection {.importcpp: "(#->InputData)".}
+# proc `inputData=`*(self: FPCGContextPtr, data: FPCGDataCollection) {.importcpp: "(#->InputData = #)".}
+# proc outputData*(self: FPCGContextPtr): FPCGDataCollection {.importcpp: "(#->OutputData)".}
+# proc `outputData=`*(self: FPCGContextPtr, data: FPCGDataCollection) {.importcpp: "(#->OutputData = #)".}
+
 proc node*(self: FPCGContextPtr): UPCGNodePtr {.importcpp: "const_cast<'0>(#->Node)".}
+proc sourceComponent*(self: FPCGContextPtr): UPCGComponentPtr {.importcpp: "(#->SourceComponent.Get())".}
+
 
 proc getInputSettings*[T](self: FPCGContextPtr): ptr T {.importcpp: "#->GetInputSettings<'*0>()".}
 
@@ -110,3 +117,5 @@ proc initializeFromData*(self:UPCGPointDataPtr, data:UPCGPointDataPtr) {.importc
 #point helpers
 
 proc pos*(point: FPCGPoint): FVector = point.transform.getLocation()
+proc `pos=`*(point: FPCGPoint, value:FVector) =
+  point.transform.setLocation(value)
