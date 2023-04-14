@@ -16,6 +16,11 @@ public class NimForUEGame : ModuleRules
 			"NimForUEBindings",
 			"EnhancedInput", 
 			"GameplayTags",
+			"PCG",
+			"GameplayAbilities",
+			"PhysicsCore",
+			"UnrealEd",
+			"NimForUE", //DUE To reinstance bindigns. So editor only
 			
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
@@ -34,7 +39,7 @@ public class NimForUEGame : ModuleRules
 		bUseUnity = false;
 		//The lib is quite big (24MB), it may be better to just pull the files that needs to be compiled
 		// var nimMirrorBindings = Path.Combine(PluginDirectory, "Binaries", "nim", "libmaingencppbindings.a");
+		var nimMirrorBindings = Path.Combine(PluginDirectory, "Binaries", "nim", "maingencppbindings.lib");
 		// PublicAdditionalLibraries.Add(nimMirrorBindings);
-
 	}
 }

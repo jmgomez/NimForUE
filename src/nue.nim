@@ -5,6 +5,8 @@ import buildscripts/nuecompilation/nuecompilation
 import buildscripts/switches/switches
 import nimforue/utils/utils
 import nimforue/codegen/[headerparser]
+when defined(windows):
+  import  buildscripts/keyboard
 
 var taskOptions: Table[string, string]
 let config = getNimForUEConfig()
@@ -168,10 +170,11 @@ task ubuild, "Calls Unreal Build Tool for your project":
     doAssert(execCmd(cmd) == 0)
     setCurrentDir(curDir)
   except:
+    #TODO control livecoding here
     log getCurrentExceptionMsg(), lgError
     log getCurrentException().getStackTrace(), lgError
     quit(QuitFailure)
-
+    
 
 
 task game, "Builds the game lib":
@@ -182,13 +185,15 @@ task game, "Builds the game lib":
     extraSwitches.add "--linedir:off"
  
   let debug = "debug" in taskOptions
-
-  if config.withEditor:
+  let livecoding = "livecoding" in taskOptions
+  if config.withEditor and not livecoding:
     compileGame(extraSwitches, debug)
   else:
-    compileGameNonEditor(extraSwitches, debug)
-    ubuild(taskOptions)
-
+    compileGameToUEFolder(extraSwitches, debug)
+    if livecoding and isLiveCodingRunning(): 
+      triggerLiveCoding(10)
+    else:
+      ubuild(taskOptions)
 
 
 task lib, "Builds a game lib":

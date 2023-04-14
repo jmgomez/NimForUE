@@ -350,8 +350,7 @@ struct FOnSubmixSpectralAnalysisBP_;
 struct FOnSubmixEnvelopeBP_;
 struct FWorldPartitionHLODDestructionTag_;
 typedef NU8 tyArray__H8qf9bpC2ziYA2earmO8m7w[4];
-struct FTagAndValue_ {
-FName tag{};
+struct FTagAndValue_ {FName tag{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 FString value{};
 };
@@ -393,91 +392,77 @@ typedef NU8 tyEnum_EChaosBufferMode__fCVASttB31vIocb8Vj0Ilg;
 typedef NU8 tyEnum_EClusterUnionMethod__mg0Dyv49cEul9bEZypbELipQ;
 typedef NU8 tyEnum_EGeometryCollectionCacheType__KvKo9b5Zg1w9b0jRBIWbEwsQ;
 typedef NU8 tyArray__ei1f5NP9cmpUVHoe9cUYpPag[40];
-struct FClosestPhysicsObjectResult_ {
-tyArray__ei1f5NP9cmpUVHoe9cUYpPag pad_0;
+struct FClosestPhysicsObjectResult_ {tyArray__ei1f5NP9cmpUVHoe9cUYpPag pad_0;
 };
 typedef NU8 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ[3];
-struct FSolverTrailingFilterSettings_ {
-NIM_BOOL filterEnabled;
+struct FSolverTrailingFilterSettings_ {NIM_BOOL filterEnabled;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 NF32 minMass;
 NF32 minSpeed;
 NF32 minVolume;
 };
-struct FSolverBreakingFilterSettings_ {
-NIM_BOOL filterEnabled;
+struct FSolverBreakingFilterSettings_ {NIM_BOOL filterEnabled;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 NF32 minMass;
 NF32 minSpeed;
 NF32 minVolume;
 };
-struct FSolverCollisionFilterSettings_ {
-NIM_BOOL filterEnabled;
+struct FSolverCollisionFilterSettings_ {NIM_BOOL filterEnabled;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 NF32 minMass;
 NF32 minSpeed;
 NF32 minImpulse;
 };
-struct FSolverRemovalFilterSettings_ {
-NIM_BOOL filterEnabled;
+struct FSolverRemovalFilterSettings_ {NIM_BOOL filterEnabled;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 NF32 minMass;
 NF32 minVolume;
 };
 typedef NU8 tyArray__aczTGVLbkjaI8GxGYP6HtA[10];
-struct FPredictionKey_ {
-UPackageMap* predictiveConnection;
+struct FPredictionKey_ {UPackageMap* predictiveConnection;
 NI16 current;
 NI16 base;
 NIM_BOOL bIsStale;
 NIM_BOOL bIsServerInitiated;
 tyArray__aczTGVLbkjaI8GxGYP6HtA pad_0;
 };
-struct FGameplayEffectModifiedAttribute_ {
-FGameplayAttribute attribute{};
+struct FGameplayEffectModifiedAttribute_ {FGameplayAttribute attribute{};
 NF32 totalMagnitude;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 };
 typedef TArray<FGameplayEffectModifiedAttribute_> TY__WmAHIZEZ9cpN3o9aZZVtPl3g;
 typedef NU8 tyArray__qtqsWM5aXmcpMIVmvq3kAA[16];
-struct FGameplayEffectAttributeCaptureSpec_ {
-FGameplayEffectAttributeCaptureDefinition backingDefinition{};
+struct FGameplayEffectAttributeCaptureSpec_ {FGameplayEffectAttributeCaptureDefinition backingDefinition{};
 tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
 typedef TArray<FGameplayEffectAttributeCaptureSpec_> TY__bXgeBwTvh5vh69b7MH2vR5A;
 typedef NU8 tyArray__HhO8EAlttg7Yo1LAKdC6hQ[7];
-struct FGameplayEffectAttributeCaptureSpecContainer_ {
-TY__bXgeBwTvh5vh69b7MH2vR5A sourceAttributes{};
+struct FGameplayEffectAttributeCaptureSpecContainer_ {TY__bXgeBwTvh5vh69b7MH2vR5A sourceAttributes{};
 TY__bXgeBwTvh5vh69b7MH2vR5A targetAttributes{};
 NIM_BOOL bHasNonSnapshottedAttributes;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 };
 typedef NU8 tyArray__w5VB8h5K8DB3oWrO5U2wqg[64];
-struct FModifierSpec_ {
-NF32 evaluatedMagnitude;
+struct FModifierSpec_ {NF32 evaluatedMagnitude;
 };
 typedef TArray<FModifierSpec_> TY__dAyM9cmIgMF5FlX1EJvvlSQ;
 typedef NU8 tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ[1];
 typedef TSubclassOf<UGameplayAbility_> TY__DI8ISoHArYV9cXPAlxup7ow;
-struct FCurveTableRowHandle_ {
-UCurveTable_* curveTable;
+struct FCurveTableRowHandle_ {UCurveTable_* curveTable;
 FName rowName{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 };
 typedef NU8 tyArray__izDbpwaA8Rxj9b5mE6pSF7Q[24];
-struct FScalableFloat_ {
-NF32 value;
+struct FScalableFloat_ {NF32 value;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 FCurveTableRowHandle_ curve{};
 tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_1;
 };
 typedef TWeakObjectPtr<UObject>  TY__JNuX49bw2SzgYlt1yr74cAA;
 typedef NU8 tyArray__9aT9a0df87P1N8C6tT67xdfQ[80];
-struct FGameplayAbilitySpecHandle_ {
-NI32 handle;
+struct FGameplayAbilitySpecHandle_ {NI32 handle;
 };
-struct FGameplayAbilitySpecDef_ {
-TY__DI8ISoHArYV9cXPAlxup7ow ability{};
+struct FGameplayAbilitySpecDef_ {TY__DI8ISoHArYV9cXPAlxup7ow ability{};
 FScalableFloat_ levelScalableFloat{};
 NI32 inputID;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
@@ -488,8 +473,7 @@ tyArray__H8qf9bpC2ziYA2earmO8m7w pad_2;
 };
 typedef TArray<FGameplayAbilitySpecDef_> TY__Nfbibg9az9bLDonNBrt4vy4g;
 typedef NU8 tyArray__3xXgtqiphP4Saazlw9cWQFA[160];
-struct FGameplayEffectSpec_ {
-UGameplayEffect_* def;
+struct FGameplayEffectSpec_ {UGameplayEffect_* def;
 TY__WmAHIZEZ9cpN3o9aZZVtPl3g modifiedAttributes{};
 FGameplayEffectAttributeCaptureSpecContainer_ capturedRelevantAttributes{};
 tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
@@ -512,23 +496,19 @@ FGameplayEffectContextHandle effectContext{};
 NF32 level;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_5;
 };
-struct FGameplayAbilityTargetDataHandle_ {
-tyArray__ei1f5NP9cmpUVHoe9cUYpPag pad_0;
+struct FGameplayAbilityTargetDataHandle_ {tyArray__ei1f5NP9cmpUVHoe9cUYpPag pad_0;
 };
-struct FGameplayTargetDataFilterHandle_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FGameplayTargetDataFilterHandle_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
 typedef NU8 tyEnum_EGameplayAbilityActivationMode__nbzY9aqfyH4GZUnaBUGNwsQ;
 typedef NU8 tyArray__9cZQ9c8IqkFU8PfW4YTh44AQ[6];
-struct FGameplayAbilityActivationInfo_ {
-tyEnum_EGameplayAbilityActivationMode__nbzY9aqfyH4GZUnaBUGNwsQ activationMode;
+struct FGameplayAbilityActivationInfo_ {tyEnum_EGameplayAbilityActivationMode__nbzY9aqfyH4GZUnaBUGNwsQ activationMode;
 NIM_BOOL bCanBeEndedByOtherInstance;
 tyArray__9cZQ9c8IqkFU8PfW4YTh44AQ pad_0;
 FPredictionKey_ predictionKeyWhenActivated;
 };
 typedef NU8 tyArray__LblujacFIzXJBp6Y75v82Q[131];
-struct FActiveGameplayEffect_ {
-tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
+struct FActiveGameplayEffect_ {tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
 FGameplayEffectSpec_ spec{};
 FPredictionKey_ predictionKey;
 NF32 startServerWorldTime;
@@ -538,8 +518,7 @@ NIM_BOOL bIsInhibited;
 tyArray__LblujacFIzXJBp6Y75v82Q pad_1;
 };
 typedef NU8 tyEnum_EFormatArgumentType__XhNvqFUjDEW9bUNWwu9b9b6MA;
-struct FFormatArgumentData_ {
-FString argumentName{};
+struct FFormatArgumentData_ {FString argumentName{};
 tyEnum_EFormatArgumentType__XhNvqFUjDEW9bUNWwu9b9b6MA argumentValueType;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 FText argumentValue{};
@@ -552,8 +531,7 @@ typedef NU8 tyArray__bN9bddWn8oiNSHn2MqEJSZQ[2];
 typedef TArray<EObjectTypeQuery> TY__6r3nfRijJ9c5MKJaF9a9cYvbg;
 typedef TArray<AActor*> TY__kbK03O9cVTTS0GR9cjPhedTg;
 typedef NU8 tyEnum_EDrawDebugTrace__GwdwgMMvI9aB9a0MsBI3KoCg;
-struct FPredictProjectilePathParams_ {
-FVector startLocation{};
+struct FPredictProjectilePathParams_ {FVector startLocation{};
 FVector launchVelocity{};
 NIM_BOOL bTraceWithCollision;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
@@ -572,73 +550,56 @@ NF32 drawDebugTime;
 NIM_BOOL bTraceComplex;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_3;
 };
-struct FPredictProjectilePathPointData_ {
-FVector location{};
+struct FPredictProjectilePathPointData_ {FVector location{};
 FVector velocity{};
 NF32 time;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 };
 typedef TArray<FPredictProjectilePathPointData_> TY__4BgC3xXiX2Z5PS89aN9cvdNA;
-struct FPredictProjectilePathResult_ {
-TY__4BgC3xXiX2Z5PS89aN9cvdNA pathData{};
+struct FPredictProjectilePathResult_ {TY__4BgC3xXiX2Z5PS89aN9cvdNA pathData{};
 FPredictProjectilePathPointData_ lastTraceDestination{};
 FHitResult hitResult{};
 };
-struct FSlateModifierKeysState_ {
-tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
+struct FSlateModifierKeysState_ {tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
 };
-struct FDrawToRenderTargetContext_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FDrawToRenderTargetContext_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
-struct FImportanceTexture_ {
-tyArray__9aT9a0df87P1N8C6tT67xdfQ pad_0;
+struct FImportanceTexture_ {tyArray__9aT9a0df87P1N8C6tT67xdfQ pad_0;
 };
 typedef NU8 tyArray__cdsir9aPB24hAk6k77P9b9bCA[8];
-struct FCameraLensInterfaceClassSupport_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FCameraLensInterfaceClassSupport_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
 typedef NU8 tyArray__pPSgwee9cWjaxcnFhZCg7yA[192];
-struct FEventReply_ {
-tyArray__pPSgwee9cWjaxcnFhZCg7yA pad_0;
+struct FEventReply_ {tyArray__pPSgwee9cWjaxcnFhZCg7yA pad_0;
 };
-struct FInputDevicePropertyHandle_ {
-tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
+struct FInputDevicePropertyHandle_ {tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 };
 typedef NU8 tyArray__YtcvxHNKV4YiecPE9ap1mcA[20];
-struct FAnimationCurveIdentifier_ {
-tyArray__YtcvxHNKV4YiecPE9ap1mcA pad_0;
+struct FAnimationCurveIdentifier_ {tyArray__YtcvxHNKV4YiecPE9ap1mcA pad_0;
 };
-struct FAnimationAttributeIdentifier_ {
-FName name{};
+struct FAnimationAttributeIdentifier_ {FName name{};
 FName boneName{};
 NI32 boneIndex;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 UScriptStruct* scriptStruct;
 FSoftObjectPath scriptStructPath{};
 };
-struct FBoneAnimationTrack_ {
-FRawAnimSequenceTrack internalTrackData{};
+struct FBoneAnimationTrack_ {FRawAnimSequenceTrack internalTrackData{};
 NI32 boneTreeIndex;
 FName name{};
 };
-struct FForceFeedbackAttenuationSettings_ {
-tyArray__pPSgwee9cWjaxcnFhZCg7yA pad_0;
+struct FForceFeedbackAttenuationSettings_ {tyArray__pPSgwee9cWjaxcnFhZCg7yA pad_0;
 };
-struct FPoseLink_ {
-tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
+struct FPoseLink_ {tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
 };
-struct FComponentSpacePoseLink_ {
-tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
+struct FComponentSpacePoseLink_ {tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
 };
-struct FAnimDataModelNotifPayload_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FAnimDataModelNotifPayload_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
 typedef NU8 tyArray__26aQaWOzPONEXg2JYXgXsA[96];
-struct FConstraintInstanceAccessor_ {
-tyArray__26aQaWOzPONEXg2JYXgXsA pad_0;
+struct FConstraintInstanceAccessor_ {tyArray__26aQaWOzPONEXg2JYXgXsA pad_0;
 };
-struct FGameplayEventData_ {
-FGameplayTag eventTag{};
+struct FGameplayEventData_ {FGameplayTag eventTag{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 AActor* instigator;
 AActor* target;
@@ -651,8 +612,7 @@ tyArray__H8qf9bpC2ziYA2earmO8m7w pad_2;
 FGameplayAbilityTargetDataHandle_ targetData;
 };
 typedef NU8 tyArray__39cnIm4v9c7pQp5XFRxTMpFg[5];
-struct FServerAbilityRPCBatch_ {
-FGameplayAbilitySpecHandle_ abilitySpecHandle;
+struct FServerAbilityRPCBatch_ {FGameplayAbilitySpecHandle_ abilitySpecHandle;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 FPredictionKey_ predictionKey;
 FGameplayAbilityTargetDataHandle_ targetData;
@@ -662,15 +622,13 @@ NIM_BOOL started;
 tyArray__39cnIm4v9c7pQp5XFRxTMpFg pad_1;
 };
 typedef TWeakObjectPtr<UGameplayAbility_>  TY__siVZF80aeVhdiuAGOGCr7Q;
-struct FGameplayAbilityLocalAnimMontage_ {
-UAnimMontage* animMontage;
+struct FGameplayAbilityLocalAnimMontage_ {UAnimMontage* animMontage;
 NU8 playInstanceId;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 FPredictionKey_ predictionKey;
 TY__siVZF80aeVhdiuAGOGCr7Q animatingAbility{};
 };
-struct FGameplayAbilityRepAnimMontage_ {
-UAnimMontage* animMontage;
+struct FGameplayAbilityRepAnimMontage_ {UAnimMontage* animMontage;
 NF32 playRate;
 NF32 position;
 NF32 blendTime;
@@ -685,14 +643,12 @@ NU8 sectionIdToPlay;
 tyArray__39cnIm4v9c7pQp5XFRxTMpFg pad_0;
 };
 typedef TSubclassOf<UAttributeSet> TY__JVcLxy5VxXvcRj365E9bclg;
-struct FAttributeDefaults_ {
-TY__JVcLxy5VxXvcRj365E9bclg attributes{};
+struct FAttributeDefaults_ {TY__JVcLxy5VxXvcRj365E9bclg attributes{};
 UDataTable* defaultStartingTable;
 };
 typedef TSubclassOf<AActor> TY__9akcXb9b3ftlkdW8NDwR22Mg;
 typedef NU8 tyEnum_ETargetDataFilterSelf__0bLCHzq8oWhdsyxklAwILw;
-struct FGameplayTargetDataFilter_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FGameplayTargetDataFilter_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 AActor* selfActor;
 TY__9akcXb9b3ftlkdW8NDwR22Mg requiredActorClass{};
 tyEnum_ETargetDataFilterSelf__0bLCHzq8oWhdsyxklAwILw selfFilter;
@@ -702,8 +658,7 @@ tyArray__9cZQ9c8IqkFU8PfW4YTh44AQ pad_1;
 typedef NU8 tyEnum_EGameplayAbilityTargetingLocationType__aufJVwEe2F7OdxXxGhlJiA;
 typedef NU8 tyArray__akPGgPQbqzZVe609aayYXqA[15];
 typedef NU8 tyArray__YHmXll5a9bp5TA5MVvQwRow[12];
-struct FGameplayAbilityTargetingLocationInfo_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FGameplayAbilityTargetingLocationInfo_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 tyEnum_EGameplayAbilityTargetingLocationType__aufJVwEe2F7OdxXxGhlJiA locationType;
 tyArray__akPGgPQbqzZVe609aayYXqA pad_1;
 FTransform literalTransform{};
@@ -713,8 +668,7 @@ UGameplayAbility_* sourceAbility;
 FName sourceSocketName{};
 tyArray__YHmXll5a9bp5TA5MVvQwRow pad_2;
 };
-struct FActorDesc_ {
-FGuid guid{};
+struct FActorDesc_ {FGuid guid{};
 FSoftObjectPath Class{};
 FName name{};
 FName label{};
@@ -726,12 +680,10 @@ tyArray__bN9bddWn8oiNSHn2MqEJSZQ pad_0;
 FName actorPackage{};
 FName actorPath{};
 };
-struct FAnchors_ {
-FVector2D minimum{};
+struct FAnchors_ {FVector2D minimum{};
 FVector2D maximum{};
 };
-struct FGameViewportWidgetSlot_ {
-FAnchors_ anchors{};
+struct FGameViewportWidgetSlot_ {FAnchors_ anchors{};
 FMargin offsets{};
 FVector2D alignment{};
 NI32 zOrder;
@@ -1289,8 +1241,7 @@ typedef NU8 tyEnum_ECheckBoxState__EutTwxJlZ1b9c5g5Nuu8TBg;
 typedef NU8 tyEnum_ETextOverflowPolicy__g06IT6hm8l16RlCU9bX9a2FQ;
 typedef NU8 tyEnum_ETextTransformPolicy__SXDz9cpnEpQ3tioyzEES9bYQ;
 typedef NU8 tyEnum_EStyleColor__ij8fBimBMrv3Kg4EZlmw0A;
-struct FSlateBrushOutlineSettings_ {
-FVector4 cornerRadii{};
+struct FSlateBrushOutlineSettings_ {FVector4 cornerRadii{};
 FSlateColor color{};
 NF32 width;
 tyEnum_ESlateBrushRoundingType__c2G4GhS6ZVIt5PuKJk1j2w roundingType;
@@ -1298,8 +1249,7 @@ NIM_BOOL bUseBrushTransparency;
 tyArray__9cZQ9c8IqkFU8PfW4YTh44AQ pad_0;
 };
 typedef NU8 tyArray__2OatlL9b5t79c8TDf3fDsiRQ[1680];
-struct FToolBarStyle_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FToolBarStyle_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 FSlateBrush backgroundBrush{};
 FSlateBrush expandBrush{};
 FSlateBrush separatorBrush{};
@@ -1323,13 +1273,11 @@ FDeprecateSlateVector2D iconSize{};
 NIM_BOOL bShowLabels;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_3;
 };
-struct FSlateSound_ {
-UObject* resourceObject;
+struct FSlateSound_ {UObject* resourceObject;
 tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
 };
 typedef NU8 tyArray__imubzojaOiPVfv1g8EarTA[48];
-struct FSlateFontInfo_ {
-UObject* fontObject;
+struct FSlateFontInfo_ {UObject* fontObject;
 UObject* fontMaterial;
 tyArray__imubzojaOiPVfv1g8EarTA pad_0;
 FName typefaceFontName{};
@@ -1338,8 +1286,7 @@ NI32 letterSpacing;
 NF32 skewAmount;
 tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_1;
 };
-struct FSegmentedControlStyle_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FSegmentedControlStyle_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 FCheckBoxStyle controlStyle{};
 FCheckBoxStyle firstControlStyle{};
 FCheckBoxStyle lastControlStyle{};
@@ -1376,8 +1323,7 @@ typedef NU8 tyEnum_EProgressBarFillType__0JTWZtS0qqCzF6KX7p39cyA;
 typedef NU8 tyEnum_EProgressBarFillStyle__Q9bDTn2HdK9cdbodn4KZsMHA;
 typedef NU8 tyEnum_EListItemAlignment__R6LyWnpWGyDYfyPJQsyXZA;
 typedef TArray<UObject*> TY__meGclu4l9cwnqbgiIjRtfhA;
-struct FEmptyPayload_ {
-tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
+struct FEmptyPayload_ {tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
 };
 typedef TArray<FVector> TY__Bz8EFFwaAOJiUrMHOIgVGw;
 typedef TArray<FQuat> TY__r61x9a9aUIJyVmP9bIukwh3zg;
@@ -1399,8 +1345,7 @@ typedef TScriptInterface<UCameraLensEffectInterface_>  TY__hvmi1aSu7TExY3gfL1PBl
 typedef TSubclassOf<UCanvasRenderTarget2D_> TY__cyRmGPtN9aq0VukEVoX3rGg;
 typedef TArray<UCurveTable_*> TY__M4MmxYh2DRWibpvAY9b1bhg;
 typedef TArray<UDataTable*> TY__CsVeHH6fpx8ZgI6qaaSz3A;
-struct FCullDistanceSizePair_ {
-NF32 size;
+struct FCullDistanceSizePair_ {NF32 size;
 NF32 cullDistance;
 };
 typedef TArray<FCullDistanceSizePair_> TY__IqXdAzIoi9cCuZiE2VD1lMg;
@@ -1448,57 +1393,42 @@ typedef TArray<FGuid> TY__QUxJb9b3YwzTBIcUvLm2j6Q;
 typedef TArray<FActorDesc_> TY__L1uKoYpGltEdX5AMaAZBwA;
 typedef TScriptInterface<UWorldPartitionDestructibleInHLODInterface_>  TY__Z9bblV6ojuGotVTgnCjfC4Q;
 typedef TArray<FWorldPartitionStreamingQuerySource> TY__coX2EsXi9bBqBt2eQJWCxdw;
-struct FFloatRK4SpringInterpolator_ {
-char dummy;
+struct FFloatRK4SpringInterpolator_ {char dummy;
 };
-struct FVectorRK4SpringInterpolator_ {
-char dummy;
+struct FVectorRK4SpringInterpolator_ {char dummy;
 };
-struct FCanvasIcon_ {
-UTexture* texture;
+struct FCanvasIcon_ {UTexture* texture;
 NF32 u;
 NF32 v;
 NF32 uL;
 NF32 vL;
 };
-struct FAnimNodeReference_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FAnimNodeReference_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
 typedef NU8 tyArray__6qSULJVkHXjL25e22OI5AQ[136];
-struct FAnimNode_AssetPlayerRelevancyBase_ {
-tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
+struct FAnimNode_AssetPlayerRelevancyBase_ {tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
 };
-struct FSceneViewExtensionIsActiveFunctor_ {
-tyArray__26aQaWOzPONEXg2JYXgXsA pad_0;
+struct FSceneViewExtensionIsActiveFunctor_ {tyArray__26aQaWOzPONEXg2JYXgXsA pad_0;
 };
-struct FAnimExecutionContext_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FAnimExecutionContext_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
-struct FInputScaleBiasClampState_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FInputScaleBiasClampState_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
-struct FInputClampState_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FInputClampState_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
-struct FAssetCompileData_ {
-TY__JNuX49bw2SzgYlt1yr74cAA asset{};
+struct FAssetCompileData_ {TY__JNuX49bw2SzgYlt1yr74cAA asset{};
 };
 typedef NU8 tyArray__0TYgJNb2Cy78XDzz9c9a105Q[1872];
-struct FCameraShakeUpdateResult_ {
-tyArray__0TYgJNb2Cy78XDzz9c9a105Q pad_0;
+struct FCameraShakeUpdateResult_ {tyArray__0TYgJNb2Cy78XDzz9c9a105Q pad_0;
 };
-struct FFloatSpringState_ {
-tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
+struct FFloatSpringState_ {tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
 };
 typedef NU8 tyArray__sH9avbK619blGCGFZhgSDaWg[56];
-struct FVectorSpringState_ {
-tyArray__sH9avbK619blGCGFZhgSDaWg pad_0;
+struct FVectorSpringState_ {tyArray__sH9avbK619blGCGFZhgSDaWg pad_0;
 };
-struct FQuaternionSpringState_ {
-tyArray__w5VB8h5K8DB3oWrO5U2wqg pad_0;
+struct FQuaternionSpringState_ {tyArray__w5VB8h5K8DB3oWrO5U2wqg pad_0;
 };
-struct FSubsurfaceProfileStruct_ {
-FLinearColor surfaceAlbedo{};
+struct FSubsurfaceProfileStruct_ {FLinearColor surfaceAlbedo{};
 FLinearColor meanFreePathColor{};
 NF32 meanFreePathDistance;
 NF32 worldUnitScale;
@@ -1519,26 +1449,21 @@ NF32 roughness1;
 NF32 lobeMix;
 FLinearColor transmissionTintColor{};
 };
-struct FSkelMeshMergeSectionMapping_ {
-TY__TxfK2fhRJXNHttPFRcL6fA sectionIDs{};
+struct FSkelMeshMergeSectionMapping_ {TY__TxfK2fhRJXNHttPFRcL6fA sectionIDs{};
 };
-struct FSkelMeshMergeMeshUVTransforms_ {
-TY__ZRKjvD0LxpBKI8XAOc3PKg uVTransforms{};
+struct FSkelMeshMergeMeshUVTransforms_ {TY__ZRKjvD0LxpBKI8XAOc3PKg uVTransforms{};
 };
 typedef TArray<FSkelMeshMergeMeshUVTransforms_> TY__y9bIc7g2Jyd7Dw7mLIlPqLQ;
-struct FSkelMeshMergeUVTransformMapping_ {
-TY__y9bIc7g2Jyd7Dw7mLIlPqLQ uVTransformsPerMesh{};
+struct FSkelMeshMergeUVTransformMapping_ {TY__y9bIc7g2Jyd7Dw7mLIlPqLQ uVTransformsPerMesh{};
 };
-struct FBlueprintEnhancedInputActionBinding_ {
-UInputAction* inputAction;
+struct FBlueprintEnhancedInputActionBinding_ {UInputAction* inputAction;
 ETriggerEvent triggerEvent{};
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 FName functionNameToBind{};
 };
 typedef TArray<FBlueprintEnhancedInputActionBinding_> TY__thExvANNGNgDH8OkaKuR8A;
 typedef TSoftObjectPtr<UInputMappingContext_> TY__peXTHnoP9a9aHft4wbs39bp8g;
-struct FDefaultContextSetting_ {
-TY__peXTHnoP9a9aHft4wbs39bp8g inputMappingContext{};
+struct FDefaultContextSetting_ {TY__peXTHnoP9a9aHft4wbs39bp8g inputMappingContext{};
 NI32 priority;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 };
@@ -1566,8 +1491,7 @@ typedef TMap<UInputAction* COMMA FInputActionInstance>  TY__k9aNq3p033XWsku9bV9c
 typedef TMap<FKey COMMA FVector>  TY__ycORZrEHfDeQwJCU7d1PHg;
 typedef TMap<UInputAction* COMMA FInjectedInputArray>  TY__Ofsfce9bTEY1Wuud9a3bLwFQ;
 typedef TSet<UInputAction*>  TY__SVxKloj6zDI4NdPm5EhnqQ;
-struct FBlueprintInputDebugKeyDelegateBinding_ {
-FInputChord inputChord{};
+struct FBlueprintInputDebugKeyDelegateBinding_ {FInputChord inputChord{};
 EInputEvent inputKeyEvent{};
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 FName functionNameToBind{};
@@ -1592,24 +1516,20 @@ typedef TMap<NI32 COMMA FString>  TY__QJ877IzPgLt9brLepAnlabA;
 typedef TMap<FString COMMA UObject*>  TY__gVNwDuZPrClicoyBZbjZRQ;
 typedef NU8 tyEnum_EMyTestRegularEnum__z6lWgQvc4ZfzYzy9aat9c6Lw;
 typedef NU8 tyEnum_EMyTestEnumClass__ap2Iap79bGAsbaNaGs9bW08g;
-struct FMyStructTableRow_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FMyStructTableRow_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 NF32 turnRateGamepad;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_1;
 UObject* objectTest;
 };
 typedef NU8 tyEnum_EMyTestEnum__ez400sk88IahMAGJcgRJ6Q;
 typedef NU8 tyEnum_EMyTestEnum2__wQyKoDr32hbGH9b9bGZQHhew;
-struct FDynamicMulticastDelegateOneParamTest_ : public FMulticastScriptDelegate {
-};
-struct FStructToUseAsVar_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FDynamicMulticastDelegateOneParamTest_ : public FMulticastScriptDelegate {};
+struct FStructToUseAsVar_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 TY__9akcXb9b3ftlkdW8NDwR22Mg actorSubclass{};
 FDynamicMulticastDelegateOneParamTest_ del{};
 tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_1;
 };
-struct FStructToUseAsVarDelTest_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FStructToUseAsVarDelTest_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
 typedef TArray<USceneComponent*> TY__7Q1qw9bMtL8Ptbe5C3movyA;
 typedef TArray<UMaterialInterface*> TY__UxQQNE4PCeF9btDY9avFuEmA;
@@ -1617,27 +1537,23 @@ typedef TWeakObjectPtr<USkinnedMeshComponent>  TY__TroUwqr83BUH9a7zjBn89bmg;
 typedef TArray<tyEnum_ESkinCacheUsage__V24C524t9ch9arnb2IiMsokA> TY__wYMJCrtNG2j9b9bmJG11m7FA;
 typedef TArray<FSkelMeshSkinWeightInfo> TY__PF9cKY57TwRad2X4MD2NIXg;
 typedef TArray<FConstraintInstanceAccessor_> TY__JYFEBjy3RcdpO9bmahvDt9aw;
-struct FExponentialHeightFogData_ {
-NF32 fogDensity;
+struct FExponentialHeightFogData_ {NF32 fogDensity;
 NF32 fogHeightFalloff;
 NF32 fogHeightOffset;
 };
-struct FEngineShowFlagsSetting_ {
-FString showFlagName{};
+struct FEngineShowFlagsSetting_ {FString showFlagName{};
 NIM_BOOL enabled;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 };
 typedef TArray<FEngineShowFlagsSetting_> TY__AJALGMHKFGHcjpT3h8NRJw;
-struct FEquirectProps_ {
-FBox2D leftUVRect{};
+struct FEquirectProps_ {FBox2D leftUVRect{};
 FBox2D rightUVRect{};
 FVector2D leftScale{};
 FVector2D rightScale{};
 FVector2D leftBias{};
 FVector2D rightBias{};
 };
-struct FTentDistribution_ {
-NF32 tipAltitude;
+struct FTentDistribution_ {NF32 tipAltitude;
 NF32 tipValue;
 NF32 width;
 };
@@ -1646,25 +1562,21 @@ typedef TWeakObjectPtr<USceneComponent>  TY__9b9c0qopUCzSW4js0BJumMlQ;
 typedef TArray<FSoundWaveSpectralDataPerSound> TY__c2I8cKDyC9czaUeSu84CUcg;
 typedef TArray<FSoundWaveSpectralData> TY__7eS59amp9czNtrtz8r0Xjpgw;
 typedef TArray<FSoundWaveEnvelopeDataPerSound> TY__VJ3WomG9bWfW9bg7f8TWiOgQ;
-struct FInterpControlPoint_ {
-FVector positionControlPoint{};
+struct FInterpControlPoint_ {FVector positionControlPoint{};
 NIM_BOOL bPositionIsRelative;
 tyArray__akPGgPQbqzZVe609aayYXqA pad_0;
 };
 typedef TArray<FInterpControlPoint_> TY__LjHVX64yOnazUBJDmecIJA;
-struct FComponentSync_ {
-FName name{};
+struct FComponentSync_ {FName name{};
 tyEnum_ESyncOption__Wq9aDRl7DEltrSCAaJ7E7og syncOption;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 };
 typedef TArray<FComponentSync_> TY__gZurzBmXXyKQxXQIP32pOw;
-struct FLODMappingData_ {
-TY__TxfK2fhRJXNHttPFRcL6fA mapping{};
+struct FLODMappingData_ {TY__TxfK2fhRJXNHttPFRcL6fA mapping{};
 tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
 typedef TMap<FName COMMA FLODMappingData_>  TY__Kd9c9cAMNU9cwle9bA9ctAouPyQ;
-struct FMaterialSpriteElement_ {
-UMaterialInterface* material;
+struct FMaterialSpriteElement_ {UMaterialInterface* material;
 UCurveFloat* distanceToOpacityCurve;
 NIM_BOOL bSizeIsInScreenSpace;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
@@ -1675,8 +1587,7 @@ UCurveFloat* distanceToSizeCurve;
 };
 typedef TArray<FMaterialSpriteElement_> TY__Fu7t4gHlDqCFA1dFtsYkog;
 typedef TArray<NF> TY__cXi18VefLjgCunTrTLkfGw;
-struct FSplinePoint_ {
-NF32 inputKey;
+struct FSplinePoint_ {NF32 inputKey;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 FVector position{};
 FVector arriveTangent{};
@@ -1707,17 +1618,15 @@ typedef TWeakObjectPtr<UTexture2D>  TY__TJsOsj3giRybq8BLPALfug;
 typedef TArray<UPCGSpatialData*> TY__GV9bgTRIC3LTNTm8aIOqkIA;
 typedef NU8 tyEnum_EPCGUnionType__0sg8618JPVL0h3bYSIffMg;
 typedef NU8 tyEnum_EPCGUnionDensityFunction__fC33AAzYfW2IRAFukcoVRQ;
-typedef TWeakObjectPtr<AVolume>  TY__9cWPS7Sei2RV32UeoSXPGow;
+typedef TWeakObjectPtr<AVolume>  TY__C5WBk6ZJB2jIMppRl9a5zkw;
 typedef TWeakObjectPtr<UWorld>  TY__9aywsppiUJ9atOSncC9bVP09ag;
 typedef TWeakObjectPtr<UPCGComponent_>  TY__PbI9bnM9aNXYPU9amBlqzxcDQ;
-struct FPCGWorldVolumetricQueryParams_ {
-NIM_BOOL bSearchForOverlap;
+struct FPCGWorldVolumetricQueryParams_ {NIM_BOOL bSearchForOverlap;
 NIM_BOOL bIgnorePCGHits;
 NIM_BOOL bIgnoreSelfHits;
 ECollisionChannel collisionChannel{};
 };
-struct FPCGWorldRayHitQueryParams_ {
-NIM_BOOL bOverrideDefaultParams;
+struct FPCGWorldRayHitQueryParams_ {NIM_BOOL bOverrideDefaultParams;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 FVector rayOrigin{};
 FVector rayDirection{};
@@ -1728,8 +1637,7 @@ ECollisionChannel collisionChannel{};
 tyArray__39cnIm4v9c7pQp5XFRxTMpFg pad_1;
 };
 typedef NU8 tyEnum_EPCGAttributePropertySelection__mxMbik0yEVcbD9c9bv9a8owwA;
-struct FPCGAttributePropertySelector_ {
-tyEnum_EPCGAttributePropertySelection__mxMbik0yEVcbD9c9bv9a8owwA selection;
+struct FPCGAttributePropertySelector_ {tyEnum_EPCGAttributePropertySelection__mxMbik0yEVcbD9c9bv9a8owwA selection;
 FName attributeName{};
 tyEnum_EPCGPointProperties__rw7rzqyph3uFoGwyrqU9csg pointProperty;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
@@ -1755,8 +1663,7 @@ typedef NU8 tyEnum_EPCGBoundsModifierMode__GVOSg4JrpzkuFeiw5iHT2A;
 typedef NU8 tyEnum_EPCGCopyPointsInheritanceMode__u3QY9avsBwuynBLl9a6P6kgw;
 typedef NU8 tyEnum_EPCGCopyPointsMetadataInheritanceMode__hjw8Kcu9cmq9btRyVLnDTdTg;
 typedef NU8 tyEnum_EPCGMetadataTypesConstantStructStringMode__Sy9awaf9bHt9cqwEEorTdZ4yQ;
-struct FPCGMetadataTypesConstantStruct_ {
-tyEnum_EPCGMetadataTypes__g9bJkXDwk66Ch8POOsJBSEg type;
+struct FPCGMetadataTypesConstantStruct_ {tyEnum_EPCGMetadataTypes__g9bJkXDwk66Ch8POOsJBSEg type;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 tyEnum_EPCGMetadataTypesConstantStructStringMode__Sy9awaf9bHt9cqwEEorTdZ4yQ stringMode;
 NF32 floatValue;
@@ -1782,8 +1689,7 @@ tyArray__akPGgPQbqzZVe609aayYXqA pad_4;
 };
 typedef NU8 tyEnum_EPCGActorFilter__xd6p9a16K19cu0P3uD9aZyLnw;
 typedef NU8 tyEnum_EPCGActorSelection__A19aK9b9bIyF2Pyi09bvlM2SLw;
-struct FPCGActorSelectorSettings_ {
-tyEnum_EPCGActorFilter__xd6p9a16K19cu0P3uD9aZyLnw actorFilter;
+struct FPCGActorSelectorSettings_ {tyEnum_EPCGActorFilter__xd6p9a16K19cu0P3uD9aZyLnw actorFilter;
 NIM_BOOL bIncludeChildren;
 NIM_BOOL bDisableFilter;
 tyEnum_EPCGActorSelection__A19aK9b9bIyF2Pyi09bvlM2SLw actorSelection;
@@ -1809,8 +1715,7 @@ typedef TSubclassOf<UActorComponent> TY__EMMPexIt2htv9ac7xWWGtbw;
 typedef NU8 tyEnum_EPCGSelfPruningType__Rs3msIwbIBK4GyC39bc1Hjw;
 typedef NU8 tyEnum_EPCGSpawnActorOption__Nzg19cZ3Ruaf9cb85pvVjQjA;
 typedef NU8 tyEnum_EPCGSpawnActorGenerationTrigger__fG4cucW1s4fHQD1ktbsvQQ;
-struct FPCGActorPropertyOverride_ {
-FPCGAttributePropertySelector_ inputSource{};
+struct FPCGActorPropertyOverride_ {FPCGAttributePropertySelector_ inputSource{};
 FString propertyTarget{};
 };
 typedef TArray<FPCGActorPropertyOverride_> TY__xKLBeTWDyMlF04su9aoMraA;
@@ -1819,8 +1724,7 @@ typedef NU8 tyEnum_EPCGSplineSamplingMode__8vzW49bKgXl4GQZE3e72Dtg;
 typedef NU8 tyEnum_EPCGSplineSamplingDimension__hbAj0W8w9bu7rlsf9byJ9aYgg;
 typedef NU8 tyEnum_EPCGSplineSamplingFill__NXBWXV6W5Jo8xwqiwt4O0A;
 typedef NU8 tyEnum_EPCGSplineSamplingInteriorOrientation__LfiQO00Vtl1hESyCaPUWxQ;
-struct FPCGSplineSamplerParams_ {
-tyEnum_EPCGSplineSamplingMode__8vzW49bKgXl4GQZE3e72Dtg mode;
+struct FPCGSplineSamplerParams_ {tyEnum_EPCGSplineSamplingMode__8vzW49bKgXl4GQZE3e72Dtg mode;
 tyEnum_EPCGSplineSamplingDimension__hbAj0W8w9bu7rlsf9byJ9aYgg dimension;
 tyEnum_EPCGSplineSamplingFill__NXBWXV6W5Jo8xwqiwt4O0A fill;
 tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
@@ -1849,25 +1753,21 @@ typedef TSubclassOf<UPCGMeshSelectorBase_> TY__z28N9aglbyH7XZ0vyLS2Tvg;
 typedef TSubclassOf<UPCGInstancePackerBase_> TY__pnkhlx5XNLEapSerF7hq7A;
 typedef TSoftObjectPtr<UPCGComponent_> TY__JdB555ruuo1H4hkOoy87vQ;
 typedef TMap<UPCGComponent_* COMMA TY__JdB555ruuo1H4hkOoy87vQ>  TY__1ARzpSrn9ajz2xuiHZvZ6SA;
-struct FPCGLandscapeLayerWeight_ {
-FName name{};
+struct FPCGLandscapeLayerWeight_ {FName name{};
 NF32 weight;
 };
 typedef TArray<FPCGLandscapeLayerWeight_> TY__3C1oGjx6xhSmdT0iGLlwqg;
 typedef TArray<UPCGData*> TY__ik2mkdGmfvKDkWVA6Ejc7w;
-struct FPCGMatchAndSetByAttributeEntry_ {
-FPCGMetadataTypesConstantStruct_ valueToMatch{};
+struct FPCGMatchAndSetByAttributeEntry_ {FPCGMetadataTypesConstantStruct_ valueToMatch{};
 FPCGMetadataTypesConstantStruct_ value{};
 };
 typedef TArray<FPCGMatchAndSetByAttributeEntry_> TY__dO8cRGajPOVm9bZeP5qtCMQ;
-struct FPCGMatchAndSetWeightedEntry_ {
-FPCGMetadataTypesConstantStruct_ value{};
+struct FPCGMatchAndSetWeightedEntry_ {FPCGMetadataTypesConstantStruct_ value{};
 NI32 weight;
 tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
 };
 typedef TArray<FPCGMatchAndSetWeightedEntry_> TY__w1hH69aY8Vs2nUQhenyepew;
-struct FPCGMatchAndSetWeightedByCategoryEntryList_ {
-FPCGMetadataTypesConstantStruct_ categoryValue{};
+struct FPCGMatchAndSetWeightedByCategoryEntryList_ {FPCGMetadataTypesConstantStruct_ categoryValue{};
 NIM_BOOL bIsDefault;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 TY__w1hH69aY8Vs2nUQhenyepew weightedEntries{};
@@ -1877,8 +1777,7 @@ typedef TArray<FPCGMatchAndSetWeightedByCategoryEntryList_> TY__ZJxv4TPNxMQz2U7i
 typedef TSoftObjectPtr<UStaticMesh> TY__cgfzaLYkvR8gASam8GmF9aQ;
 typedef TSoftObjectPtr<UMaterialInterface> TY__s6S1etbTGDD5NQkdAHEaiA;
 typedef TArray<TY__s6S1etbTGDD5NQkdAHEaiA> TY__Zcyk57qkIPgK6SupYoPdQA;
-struct FPCGMeshInstanceList_ {
-TY__cgfzaLYkvR8gASam8GmF9aQ mesh{};
+struct FPCGMeshInstanceList_ {TY__cgfzaLYkvR8gASam8GmF9aQ mesh{};
 NIM_BOOL bOverrideCollisionProfile;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 FCollisionProfileName collisionProfile{};
@@ -1894,8 +1793,7 @@ tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_2;
 };
 typedef TArray<FPCGMeshInstanceList_> TY__chrcws6Xncp9byajS1AkSSw;
 typedef NU8 tyEnum_EPCGMeshSelectorMaterialOverrideMode__XVonjagNBrqQZ7lGt2kMtg;
-struct FPCGMeshSelectorWeightedEntry_ {
-TY__cgfzaLYkvR8gASam8GmF9aQ mesh{};
+struct FPCGMeshSelectorWeightedEntry_ {TY__cgfzaLYkvR8gASam8GmF9aQ mesh{};
 NIM_BOOL bOverrideCollisionProfile;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 FCollisionProfileName collisionProfile{};
@@ -1908,8 +1806,7 @@ NI32 worldPositionOffsetDisableDistance;
 NI32 weight;
 };
 typedef TArray<FPCGMeshSelectorWeightedEntry_> TY__Q7m2Srck8lLPPdo3FLWSmQ;
-struct FPCGWeightedByCategoryEntryList_ {
-FString categoryEntry{};
+struct FPCGWeightedByCategoryEntryList_ {FString categoryEntry{};
 NIM_BOOL isDefault;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 TY__Q7m2Srck8lLPPdo3FLWSmQ weightedMeshEntries{};
@@ -1949,19 +1846,15 @@ typedef NU8 tyEnum_EPCGExecutionPhase__9arNc9a3Q4sTqzcil2bPofYw;
 typedef NU8 tyEnum_EPCGDebugVisScaleMethod__Pnm3Oz2h4odcSwAt7YGWPw;
 typedef NU8 tyEnum_EPCGSettingsExecutionMode__Chrw4e7Ai81vHxT7oLJwng;
 typedef NU8 tyEnum_EDeterminismLevel__g6mjxt7Vfb56aSJvNGkX9cw;
-struct FPCGAttributeExtractorTestStructDepth2_ {
-NI32 intValue;
+struct FPCGAttributeExtractorTestStructDepth2_ {NI32 intValue;
 };
-struct FPCGAttributeExtractorTestStructDepth1_ {
-FPCGAttributeExtractorTestStructDepth2_ depth2Struct;
+struct FPCGAttributeExtractorTestStructDepth1_ {FPCGAttributeExtractorTestStructDepth2_ depth2Struct;
 NF32 floatValue;
 };
-struct FPCGAttributeExtractorTestStruct_ {
-FPCGAttributeExtractorTestStructDepth1_ depthStruct;
+struct FPCGAttributeExtractorTestStruct_ {FPCGAttributeExtractorTestStructDepth1_ depthStruct;
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
-struct FPCGDataTableRowToParamDataTestStruct_ {
-FName name{};
+struct FPCGDataTableRowToParamDataTestStruct_ {FName name{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 FString string{};
 NI32 i32;
@@ -1977,8 +1870,7 @@ FVector4 v4{};
 FSoftObjectPath softPath{};
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_4;
 };
-struct FPCGStaticMeshSpawnerEntry_ {
-NI32 weight;
+struct FPCGStaticMeshSpawnerEntry_ {NI32 weight;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 TY__cgfzaLYkvR8gASam8GmF9aQ mesh{};
 NIM_BOOL bOverrideCollisionProfile;
@@ -1986,23 +1878,19 @@ tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_1;
 FCollisionProfileName collisionProfile{};
 };
 typedef NU8 tyArray__7olo62xCzatsEsOL6P2XqQ[176];
-struct FPCGStaticMeshSpawnerContext_ {
-tyArray__7olo62xCzatsEsOL6P2XqQ pad_0;
+struct FPCGStaticMeshSpawnerContext_ {tyArray__7olo62xCzatsEsOL6P2XqQ pad_0;
 };
-struct FPCGPackedCustomData_ {
-NI32 numCustomDataFloats;
+struct FPCGPackedCustomData_ {NI32 numCustomDataFloats;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 TY__LZaQ4h2l9bWQPMMIHjA9cwlA customData{};
 };
 typedef NU8 tyArray__1hXbzlgLOIbL3YQQPV8rsA[104];
-struct FPCGComponentInstanceData_ {
-tyArray__1hXbzlgLOIbL3YQQPV8rsA pad_0;
+struct FPCGComponentInstanceData_ {tyArray__1hXbzlgLOIbL3YQQPV8rsA pad_0;
 TY__Ob2KLzao5wgNmhmsqpXl9bQ generatedResources{};
 UPCGComponent_* sourceComponent;
 };
 typedef TMap<FName COMMA tyEnum_EDeterminismLevel__g6mjxt7Vfb56aSJvNGkX9cw>  TY__qFr8n9cIO34ibYdLvH4BWKA;
-struct FDeterminismTestResult_ {
-FName testResultTitle{};
+struct FDeterminismTestResult_ {FName testResultTitle{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 FString testResultName{};
 NI32 seed;
@@ -2034,22 +1922,18 @@ typedef NU8 tyEnum_EUMGSequencePlayMode__9askXeyAzBaL47GR9cJT8bGA;
 typedef NU8 tyEnum_EDesignPreviewSizeMode__FsmMFGO6pksT9cx9c66XO3CQ;
 typedef NU8 tyEnum_EBindingKind__69bj9cjlS9bRECMNejM5dz06g;
 typedef NU8 tyEnum_EMouseCursor__FY9bNpeIN5v0pY46Itc7J4g;
-struct FAnchorData_ {
-FMargin offsets{};
+struct FAnchorData_ {FMargin offsets{};
 FAnchors_ anchors{};
 FVector2D alignment{};
 };
 typedef TArray<FVector2D> TY__fBi9aXEAuMMk9cMD1hVzuHSg;
-struct FSlateChildSize_ {
-NF32 value;
+struct FSlateChildSize_ {NF32 value;
 tyEnum_ESlateSizeRule__1MvHQwW2720UN9cA69alaKWg sizeRule;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 };
-struct FRadialBoxSettings_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FRadialBoxSettings_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
-struct FShapedTextOptions_ {
-tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
+struct FShapedTextOptions_ {tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
 tyEnum_ETextShapingMethod__B2dNIKUbA18LrCAmTwu1bA textShapingMethod;
 tyEnum_ETextFlowDirection__it3WpzuuPfNKE51KjghOBA textFlowDirection;
 };
@@ -2058,23 +1942,19 @@ typedef TScriptInterface<USlateTextureAtlasInterface_>  TY__ChHEiSofKQOcZRnlxAau
 typedef TSubclassOf<URichTextBlockDecorator_> TY__wB9bgWhg9b9cgeGP1bZZpMvHw;
 typedef TArray<TY__wB9bgWhg9b9cgeGP1bZZpMvHw> TY__fjyUyrp2lTh3XJrhJ8LRSQ;
 typedef NU8 tyArray__wknELTfNGbUq9aI09bLKcmWQ[240];
-struct FRichImageRow_ {
-tyArray__wknELTfNGbUq9aI09bLKcmWQ pad_0;
+struct FRichImageRow_ {tyArray__wknELTfNGbUq9aI09bLKcmWQ pad_0;
 };
 typedef TSubclassOf<UUserWidgetExtension_> TY__MF9aiABZZTdnJbCQRWxbIrg;
 typedef TArray<UUserWidgetExtension_*> TY__scxiKf9aWv3hy9bytmcQJthg;
 typedef NU8 tyArray__aU9aWOuC5AtjvRJWm9cUbeUg[28];
-struct FWidgetNavigationData_ {
-tyEnum_EUINavigationRule__Iz1Wt59cTOUGx3CXCKEd9aLQ rule;
+struct FWidgetNavigationData_ {tyEnum_EUINavigationRule__Iz1Wt59cTOUGx3CXCKEd9aLQ rule;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 FName widgetToFocus{};
 tyArray__aU9aWOuC5AtjvRJWm9cUbeUg pad_1;
 };
-struct FFieldNotificationId_ {
-FName fieldName{};
+struct FFieldNotificationId_ {FName fieldName{};
 };
-struct FWidgetTransform_ {
-FVector2D translation{};
+struct FWidgetTransform_ {FVector2D translation{};
 FVector2D scale{};
 FVector2D shear{};
 NF32 angle;
@@ -2083,8 +1963,7 @@ tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 typedef TScriptInterface<UUserListEntry_>  TY__M4mwXcspPRSAdUWKKmEmmQ;
 typedef TScriptInterface<UUserObjectListEntry_>  TY__GhlSt2m1FF0wdkWz1n7qNQ;
 typedef TSubclassOf<UDragDropOperation_> TY__zPh84RcCsFVoqOO9cBQteOA;
-struct FPaintContext_ {
-tyArray__imubzojaOiPVfv1g8EarTA pad_0;
+struct FPaintContext_ {tyArray__imubzojaOiPVfv1g8EarTA pad_0;
 };
 typedef NU8 tyEnum_EGameplayEffectGrantedAbilityRemovePolicy__mFJ2QshzmvY9aBGV9anxq9a9bw;
 typedef NU8 tyEnum_EGameplayModEvaluationChannel__0q9bDt1ZyBrecks9cZtxFluA;
@@ -2136,56 +2015,47 @@ typedef TSubclassOf<UCheatManager_> TY__gzb18rEfE25lh72hBxz6wA;
 typedef TSubclassOf<UPlayerInput> TY__9b1Wl2DWbmWU3i39cb0aYLdw;
 typedef TSubclassOf<AController> TY__KGHReoQbDEGLKq1y5YM6eQ;
 typedef TSubclassOf<ADebugCameraController_> TY__foOrAswB6Owyr0RwoeenmA;
-struct FDeviceColorData_ {
-NIM_BOOL bEnable;
+struct FDeviceColorData_ {NIM_BOOL bEnable;
 NIM_BOOL bResetAfterCompletion;
 tyArray__bN9bddWn8oiNSHn2MqEJSZQ pad_0;
 FColor lightColor{};
 };
 typedef TMap<FName COMMA FDeviceColorData_>  TY__mOpL05xw2iQakSy1XAlwfw;
-struct FDeviceColorCurveData_ {
-NIM_BOOL bEnable;
+struct FDeviceColorCurveData_ {NIM_BOOL bEnable;
 NIM_BOOL bResetAfterCompletion;
 tyArray__9cZQ9c8IqkFU8PfW4YTh44AQ pad_0;
 UCurveLinearColor_* deviceColorCurve;
 };
 typedef TMap<FName COMMA FDeviceColorCurveData_>  TY__p8Wi6T89cTmksGlyV10Mycw;
-struct FDeviceTriggerBaseData_ {
-tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
+struct FDeviceTriggerBaseData_ {tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
 NIM_BOOL bResetUponCompletion;
 };
-struct FDeviceTriggerFeedbackData_ {
-UCurveFloat* feedbackPositionCurve;
+struct FDeviceTriggerFeedbackData_ {UCurveFloat* feedbackPositionCurve;
 UCurveFloat* feedbackStrenghCurve;
 };
 typedef TMap<FName COMMA FDeviceTriggerFeedbackData_>  TY__HBpy4JXT1fKa0SBtmqqvbg;
-struct FDeviceTriggerTriggerResistanceData_ {
-NI32 startPosition;
+struct FDeviceTriggerTriggerResistanceData_ {NI32 startPosition;
 NI32 startStrengh;
 NI32 endPosition;
 NI32 endStrengh;
 };
 typedef TMap<FName COMMA FDeviceTriggerTriggerResistanceData_>  TY__dbgBQsZXRZeU0c9bvitCtFA;
-struct FDeviceTriggerTriggerVibrationData_ {
-UCurveFloat* triggerPositionCurve;
+struct FDeviceTriggerTriggerVibrationData_ {UCurveFloat* triggerPositionCurve;
 UCurveFloat* vibrationFrequencyCurve;
 UCurveFloat* vibrationAmplitudeCurve;
 };
 typedef TMap<FName COMMA FDeviceTriggerTriggerVibrationData_>  TY__0yQe9aDyyKVPv0QVddqTZAg;
-struct FAudioBasedVibrationData_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FAudioBasedVibrationData_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
 typedef TMap<FName COMMA FAudioBasedVibrationData_>  TY__bG8gCXIR8Js247Oljg5dng;
 typedef TSet<FInputDevicePropertyHandle_>  TY__AyZkHVlB2X6bv9cl4qwczAw;
-struct FHardwareDeviceIdentifier_ {
-FName inputClassName{};
+struct FHardwareDeviceIdentifier_ {FName inputClassName{};
 FName hardwareDeviceIdentifier{};
 };
 typedef TSubclassOf<UInputDeviceProperty_> TY__aqfsbs05nDl2Mv2M0XZFpg;
 typedef TArray<FInputAxisKeyMapping> TY__CLT5yrXFP3HZX5VORHV70A;
 typedef TArray<FInputActionKeyMapping> TY__LgeuiTWlJeQFCA1Wq3za9bg;
-struct FLightmassWorldInfoSettings_ {
-NF32 staticLightingLevelScale;
+struct FLightmassWorldInfoSettings_ {NF32 staticLightingLevelScale;
 NI32 numIndirectLightingBounces;
 NI32 numSkyLightingBounces;
 NF32 indirectLightingQuality;
@@ -2210,8 +2080,7 @@ NF32 occlusionExponent;
 NF32 fullyOccludedSamplesFraction;
 NF32 maxOcclusionDistance;
 };
-struct FActivateDevicePropertyParams_ {
-FPlatformUserId userId;
+struct FActivateDevicePropertyParams_ {FPlatformUserId userId;
 FInputDeviceId deviceId{};
 NIM_BOOL bLooping;
 NIM_BOOL bIgnoreTimeDilation;
@@ -2219,8 +2088,7 @@ NIM_BOOL bPlayWhilePaused;
 tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
 };
 typedef TSubclassOf<UGameplayEffect_> TY__o5lmm3YGRQTdI9c9ccmTHabQ;
-struct FAbilityTriggerData_ {
-FGameplayTag triggerTag{};
+struct FAbilityTriggerData_ {FGameplayTag triggerTag{};
 tyEnum_EGameplayAbilityTriggerSource__yeV9b8LqakJJagbdms9ac23Q triggerSource;
 tyArray__SpfepCfLRZtm9aHk9aP3FBeQ pad_0;
 };
@@ -2229,8 +2097,7 @@ typedef TWeakObjectPtr<APlayerController>  TY__vhq5SKI7p1hYzyv58A9cY6Q;
 typedef TWeakObjectPtr<UAbilitySystemComponent_>  TY__hFhEBnfnW3mNoU09cbSj9cww;
 typedef TWeakObjectPtr<USkeletalMeshComponent>  TY__F4D53XMhlqVGOJbHx4DNug;
 typedef TWeakObjectPtr<UMovementComponent_>  TY__NO68a0HthgPnreZ6T89bl7Q;
-struct FGameplayAbilityActorInfo_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FGameplayAbilityActorInfo_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 TY__TE7SDEvuZgkTXbEmJ3FW6g ownerActor{};
 TY__TE7SDEvuZgkTXbEmJ3FW6g avatarActor{};
 TY__vhq5SKI7p1hYzyv58A9cY6Q playerController{};
@@ -2242,43 +2109,36 @@ FName affectedAnimInstanceTag{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_2;
 };
 typedef TArray<FActiveGameplayEffectHandle> TY__x1jrflF2XK116qRMnTohKA;
-struct FWorldReticleParameters_ {
-FVector aOEScale{};
+struct FWorldReticleParameters_ {FVector aOEScale{};
 };
 typedef TSubclassOf<AGameplayAbilityWorldReticle_> TY__BbC1f9cl7UvV7ShysOkJw9bQ;
 typedef TArray<TY__o5lmm3YGRQTdI9c9ccmTHabQ> TY__YWxhJKhKplqKD9bzBoR0fzQ;
 typedef TArray<UGameplayEffect_*> TY__HS3GOnZWYOzZ9c6h38vBKFQ;
 typedef TSubclassOf<AGameplayAbilityTargetActor_> TY__BI8SmagfluPMTT9a6rFT3XQ;
-struct FGameplayAbilityTargetData_LocationInfo_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FGameplayAbilityTargetData_LocationInfo_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 FGameplayAbilityTargetingLocationInfo_ sourceLocation{};
 FGameplayAbilityTargetingLocationInfo_ targetLocation{};
 };
 typedef TArray<TY__TE7SDEvuZgkTXbEmJ3FW6g> TY__TYwHXrHAfgpxL3tlgCVfxA;
-struct FGameplayAbilityTargetData_ActorArray_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FGameplayAbilityTargetData_ActorArray_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 FGameplayAbilityTargetingLocationInfo_ sourceLocation{};
 TY__TYwHXrHAfgpxL3tlgCVfxA targetActorArray{};
 };
-struct FGameplayAbilityTargetData_SingleTargetHit_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FGameplayAbilityTargetData_SingleTargetHit_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 FHitResult hitResult{};
 NIM_BOOL bHitReplaced;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_1;
 };
-struct FAbilityEndedData_ {
-UGameplayAbility_* abilityThatEnded;
+struct FAbilityEndedData_ {UGameplayAbility_* abilityThatEnded;
 FGameplayAbilitySpecHandle_ abilitySpecHandle;
 NIM_BOOL bReplicateEndAbility;
 NIM_BOOL bWasCancelled;
 tyArray__bN9bddWn8oiNSHn2MqEJSZQ pad_0;
 };
-struct FAbilityTaskDebugMessage_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FAbilityTaskDebugMessage_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 FString message{};
 };
-struct FGameplayAbilitySpecHandleAndPredictionKey_ {
-FGameplayAbilitySpecHandle_ abilityHandle;
+struct FGameplayAbilitySpecHandleAndPredictionKey_ {FGameplayAbilitySpecHandle_ abilityHandle;
 NI32 predictionKeyAtCreation;
 };
 typedef TSubclassOf<UAnimNotify_> TY__JNf5Wvjeg5cqxRK9cyfRJPw;
@@ -2286,35 +2146,28 @@ typedef TSubclassOf<UAnimNotifyState_> TY__mWBoF7VeC4X20sAoMjXlVA;
 typedef TScriptInterface<UAnimationDataController>  TY__GmxQYRLn4JVnyI7Ef9c9aRsw;
 typedef TArray<FFloatCurve> TY__KUWt1ue3OVxZn07Y1DKXSA;
 typedef TArray<FTransformCurve> TY__9cM6OHIWVtEkIQ9bybSH3m0w;
-struct FAnimationCurveData_ {
-TY__KUWt1ue3OVxZn07Y1DKXSA floatCurves{};
+struct FAnimationCurveData_ {TY__KUWt1ue3OVxZn07Y1DKXSA floatCurves{};
 TY__9cM6OHIWVtEkIQ9bybSH3m0w transformCurves{};
 };
 typedef NU8 tyArray__OLmQMe9cyeh27L3PXXozplQ[184];
-struct FAttributeCurve_ {
-tyArray__OLmQMe9cyeh27L3PXXozplQ pad_0;
+struct FAttributeCurve_ {tyArray__OLmQMe9cyeh27L3PXXozplQ pad_0;
 };
-struct FAnimatedBoneAttribute_ {
-FAnimationAttributeIdentifier_ identifier{};
+struct FAnimatedBoneAttribute_ {FAnimationAttributeIdentifier_ identifier{};
 FAttributeCurve_ curve;
 };
 typedef TArray<FAnimatedBoneAttribute_> TY__uvC4hJjePbPu61EoaxB1QQ;
 typedef TSoftObjectPtr<USkeleton> TY__KIrNCXNdi1DZ0tXfl0ZD9aQ;
 typedef TArray<TY__KIrNCXNdi1DZ0tXfl0ZD9aQ> TY__DqtnNclNKsonqiNHV0i59bw;
-struct FPoseLinkBase_ {
-tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
+struct FPoseLinkBase_ {tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
 };
-struct FAnimNode_Root_ {
-tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
+struct FAnimNode_Root_ {tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
 FPoseLink_ Result;
 tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_1;
 };
-struct FInputRange_ {
-NF32 Min;
+struct FInputRange_ {NF32 Min;
 NF32 Max;
 };
-struct FInputScaleBiasClamp_ {
-NIM_BOOL bMapRange;
+struct FInputScaleBiasClamp_ {NIM_BOOL bMapRange;
 NIM_BOOL bClampResult;
 NIM_BOOL bInterpResult;
 tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
@@ -2328,124 +2181,94 @@ NF32 interpSpeedIncreasing;
 NF32 interpSpeedDecreasing;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_1;
 };
-struct FInputAlphaBoolBlend_ {
-NF32 blendInTime;
+struct FInputAlphaBoolBlend_ {NF32 blendInTime;
 NF32 blendOutTime;
 tyEnum_EAlphaBlendOption__LKIa243bVL7z35YoC4pwhg blendOption;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 UCurveFloat* customCurve;
 tyArray__imubzojaOiPVfv1g8EarTA pad_1;
 };
-struct FInputScaleBias_ {
-NF32 scale;
+struct FInputScaleBias_ {NF32 scale;
 NF32 bias;
 };
-struct FAnimNode_AssetPlayerBase_ {
-tyArray__3xXgtqiphP4Saazlw9cWQFA pad_0;
+struct FAnimNode_AssetPlayerBase_ {tyArray__3xXgtqiphP4Saazlw9cWQFA pad_0;
 NF32 blendWeight;
 NF32 internalTimeAccumulator;
 tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_1;
 };
-struct FNamedFloat_ {
-NF32 value;
+struct FNamedFloat_ {NF32 value;
 FName name{};
 };
-struct FNamedVector_ {
-FVector value{};
+struct FNamedVector_ {FVector value{};
 FName name{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 };
-struct FNamedColor_ {
-FColor value{};
+struct FNamedColor_ {FColor value{};
 FName name{};
 };
-struct FNamedTransform_ {
-FTransform value{};
+struct FNamedTransform_ {FTransform value{};
 FName name{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 };
-struct FLocalSpacePose_ {
-TY__ZRKjvD0LxpBKI8XAOc3PKg transforms{};
+struct FLocalSpacePose_ {TY__ZRKjvD0LxpBKI8XAOc3PKg transforms{};
 TY__Vq9a9bxqg8vUQ4le6Om9cQ8dQ names{};
 };
-struct FComponentSpacePose_ {
-TY__ZRKjvD0LxpBKI8XAOc3PKg transforms{};
+struct FComponentSpacePose_ {TY__ZRKjvD0LxpBKI8XAOc3PKg transforms{};
 TY__Vq9a9bxqg8vUQ4le6Om9cQ8dQ names{};
 };
-struct FBracketPayload_ {
-FString description{};
+struct FBracketPayload_ {FString description{};
 };
-struct FAnimationTrackPayload_ {
-FName name{};
+struct FAnimationTrackPayload_ {FName name{};
 };
-struct FAnimationTrackAddedPayload_ {
-tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
+struct FAnimationTrackAddedPayload_ {tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
 NI32 trackIndex;
 };
-struct FSequenceLengthChangedPayload_ {
-NF32 previousLength;
+struct FSequenceLengthChangedPayload_ {NF32 previousLength;
 NF32 t0;
 NF32 t1;
 FFrameNumber previousNumberOfFrames{};
 FFrameNumber frame0{};
 FFrameNumber frame1{};
 };
-struct FFrameRateChangedPayload_ {
-FFrameRate previousFrameRate{};
+struct FFrameRateChangedPayload_ {FFrameRate previousFrameRate{};
 };
-struct FCurvePayload_ {
-FAnimationCurveIdentifier_ identifier;
+struct FCurvePayload_ {FAnimationCurveIdentifier_ identifier;
 };
-struct FCurveScaledPayload_ {
-tyArray__YtcvxHNKV4YiecPE9ap1mcA pad_0;
+struct FCurveScaledPayload_ {tyArray__YtcvxHNKV4YiecPE9ap1mcA pad_0;
 NF32 factor;
 NF32 origin;
 };
-struct FCurveRenamedPayload_ {
-tyArray__YtcvxHNKV4YiecPE9ap1mcA pad_0;
+struct FCurveRenamedPayload_ {tyArray__YtcvxHNKV4YiecPE9ap1mcA pad_0;
 FAnimationCurveIdentifier_ newIdentifier;
 };
-struct FCurveFlagsChangedPayload_ {
-tyArray__YtcvxHNKV4YiecPE9ap1mcA pad_0;
+struct FCurveFlagsChangedPayload_ {tyArray__YtcvxHNKV4YiecPE9ap1mcA pad_0;
 NI32 oldFlags;
 };
-struct FAttributePayload_ {
-FAnimationAttributeIdentifier_ identifier{};
+struct FAttributePayload_ {FAnimationAttributeIdentifier_ identifier{};
 };
-struct FAnimNodeConstantData_ {
-tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
+struct FAnimNodeConstantData_ {tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_0;
 };
-struct FFloatAnimationAttribute_ {
-NF32 value;
+struct FFloatAnimationAttribute_ {NF32 value;
 };
-struct FIntegerAnimationAttribute_ {
-NI32 value;
+struct FIntegerAnimationAttribute_ {NI32 value;
 };
-struct FStringAnimationAttribute_ {
-FString value{};
+struct FStringAnimationAttribute_ {FString value{};
 };
-struct FTransformAnimationAttribute_ {
-FTransform value{};
+struct FTransformAnimationAttribute_ {FTransform value{};
 };
-struct FVectorAnimationAttribute_ {
-FVector value{};
+struct FVectorAnimationAttribute_ {FVector value{};
 };
-struct FQuaternionAnimationAttribute_ {
-FQuat value{};
+struct FQuaternionAnimationAttribute_ {FQuat value{};
 };
-struct FAnimNodeData_ {
-tyArray__ei1f5NP9cmpUVHoe9cUYpPag pad_0;
+struct FAnimNodeData_ {tyArray__ei1f5NP9cmpUVHoe9cUYpPag pad_0;
 };
-struct FAnimNode_ConvertComponentToLocalSpace_ {
-tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
+struct FAnimNode_ConvertComponentToLocalSpace_ {tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
 FComponentSpacePoseLink_ componentPose;
 };
-struct FAnimNode_ConvertLocalToComponentSpace_ {
-tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
+struct FAnimNode_ConvertLocalToComponentSpace_ {tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
 FPoseLink_ localPose;
 };
-struct FAnimNode_ApplyMeshSpaceAdditive_ {
-tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
+struct FAnimNode_ApplyMeshSpaceAdditive_ {tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
 FPoseLink_ base;
 FPoseLink_ additive;
 tyEnum_EAnimAlphaInputType__qqkmIhiXk03m9bkSCSRl5ZQ alphaInputType;
@@ -2461,31 +2284,24 @@ NI32 lODThreshold;
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_3;
 };
 typedef NU8 tyArray__8Q4Zf7Ql3HGDlmTJ7tdguQ[384];
-struct FAnimNode_Inertialization_ {
-tyArray__8Q4Zf7Ql3HGDlmTJ7tdguQ pad_0;
+struct FAnimNode_Inertialization_ {tyArray__8Q4Zf7Ql3HGDlmTJ7tdguQ pad_0;
 };
 typedef NU8 tyArray__cKG3vT0OC7vNRmxPTePMjw[328];
-struct FAnimNode_LinkedAnimGraph_ {
-tyArray__cKG3vT0OC7vNRmxPTePMjw pad_0;
+struct FAnimNode_LinkedAnimGraph_ {tyArray__cKG3vT0OC7vNRmxPTePMjw pad_0;
 };
 typedef NU8 tyArray__mt9a1Sp7ZofJTEUP8QsIYGw[376];
-struct FAnimNode_LinkedAnimLayer_ {
-tyArray__mt9a1Sp7ZofJTEUP8QsIYGw pad_0;
+struct FAnimNode_LinkedAnimLayer_ {tyArray__mt9a1Sp7ZofJTEUP8QsIYGw pad_0;
 };
 typedef NU8 tyArray__9aY65sZE2Ki3PrLwrA54miw[232];
-struct FAnimNode_SaveCachedPose_ {
-tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
+struct FAnimNode_SaveCachedPose_ {tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
 FPoseLink_ pose;
 tyArray__9aY65sZE2Ki3PrLwrA54miw pad_1;
 };
-struct FAnimNode_SequencePlayerBase_ {
-tyArray__pPSgwee9cWjaxcnFhZCg7yA pad_0;
+struct FAnimNode_SequencePlayerBase_ {tyArray__pPSgwee9cWjaxcnFhZCg7yA pad_0;
 };
-struct FAnimNode_SequencePlayer_ {
-tyArray__cKG3vT0OC7vNRmxPTePMjw pad_0;
+struct FAnimNode_SequencePlayer_ {tyArray__cKG3vT0OC7vNRmxPTePMjw pad_0;
 };
-struct FInputScaleBiasClampConstants_ {
-NIM_BOOL bMapRange;
+struct FInputScaleBiasClampConstants_ {NIM_BOOL bMapRange;
 NIM_BOOL bClampResult;
 NIM_BOOL bInterpResult;
 tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_0;
@@ -2499,60 +2315,49 @@ NF32 interpSpeedIncreasing;
 NF32 interpSpeedDecreasing;
 };
 typedef NU8 tyArray__ygU1vpFxYOlyRiRkLB1kJQ[280];
-struct FAnimNode_SequencePlayer_Standalone_ {
-tyArray__ygU1vpFxYOlyRiRkLB1kJQ pad_0;
+struct FAnimNode_SequencePlayer_Standalone_ {tyArray__ygU1vpFxYOlyRiRkLB1kJQ pad_0;
 };
 typedef NU8 tyArray__zc4u4RrSbA1hwf3CQE69cog[272];
 typedef NU8 tyArray__CqHFRL3DoaCjN54AqEF16g[23];
-struct FAnimNode_TransitionPoseEvaluator_ {
-tyArray__zc4u4RrSbA1hwf3CQE69cog pad_0;
+struct FAnimNode_TransitionPoseEvaluator_ {tyArray__zc4u4RrSbA1hwf3CQE69cog pad_0;
 NI32 framesToCachePose;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_1;
 tyEnum_EEvaluatorDataSource__8uWsKNkTkOBtdWA2gGoEyg dataSource;
 tyArray__CqHFRL3DoaCjN54AqEF16g pad_2;
 };
-struct FAnimNode_TransitionResult_ {
-tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
+struct FAnimNode_TransitionResult_ {tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
 NIM_BOOL bCanEnterTransition;
 tyArray__CqHFRL3DoaCjN54AqEF16g pad_1;
 };
-struct FAnimNode_SingleNode_ {
-tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
+struct FAnimNode_SingleNode_ {tyArray__6qSULJVkHXjL25e22OI5AQ pad_0;
 FPoseLink_ sourcePose;
 tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_1;
 };
-struct FCachedAnimStateData_ {
-FName stateMachineName{};
+struct FCachedAnimStateData_ {FName stateMachineName{};
 FName stateName{};
 tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
 };
 typedef TArray<FCachedAnimStateData_> TY__RSev49cSp36pj3QRpRHRmMw;
-struct FCachedAnimStateArray_ {
-TY__RSev49cSp36pj3QRpRHRmMw states{};
+struct FCachedAnimStateArray_ {TY__RSev49cSp36pj3QRpRHRmMw states{};
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
-struct FCachedAnimAssetPlayerData_ {
-FName stateMachineName{};
+struct FCachedAnimAssetPlayerData_ {FName stateMachineName{};
 FName stateName{};
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
-struct FCachedAnimRelevancyData_ {
-FName stateMachineName{};
+struct FCachedAnimRelevancyData_ {FName stateMachineName{};
 FName stateName{};
 tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
 };
-struct FCachedAnimTransitionData_ {
-FName stateMachineName{};
+struct FCachedAnimTransitionData_ {FName stateMachineName{};
 FName fromStateName{};
 FName toStateName{};
 tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
 };
-struct FNamedCurveValue_ {
-FName name{};
+struct FNamedCurveValue_ {FName name{};
 NF32 value;
 };
-struct FInputClampConstants_ {
-NIM_BOOL bClampResult;
+struct FInputClampConstants_ {NIM_BOOL bClampResult;
 NIM_BOOL bInterpResult;
 tyArray__bN9bddWn8oiNSHn2MqEJSZQ pad_0;
 NF32 clampMin;
@@ -2560,19 +2365,16 @@ NF32 clampMax;
 NF32 interpSpeedIncreasing;
 NF32 interpSpeedDecreasing;
 };
-struct FTrajectorySample_ {
-NF32 accumulatedSeconds;
+struct FTrajectorySample_ {NF32 accumulatedSeconds;
 tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
 FTransform transform{};
 FVector linearVelocity{};
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_1;
 };
 typedef TArray<FTrajectorySample_> TY__EMmcxSvhuUScoxpip56vPQ;
-struct FTrajectorySampleRange_ {
-TY__EMmcxSvhuUScoxpip56vPQ samples{};
+struct FTrajectorySampleRange_ {TY__EMmcxSvhuUScoxpip56vPQ samples{};
 };
-struct FGameplayAbilityBindInfo_ {
-tyEnum_EGameplayAbilityInputBinds__gxNBBDWDwKeEuT2YwW9bhTQ command;
+struct FGameplayAbilityBindInfo_ {tyEnum_EGameplayAbilityInputBinds__gxNBBDWDwKeEuT2YwW9bhTQ command;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 TY__DI8ISoHArYV9cXPAlxup7ow gameplayAbilityClass{};
 };
@@ -2584,8 +2386,7 @@ typedef TArray<FAttributeDefaults_> TY__SElPEbSc5uW3wbDAeOJeXw;
 typedef TArray<AGameplayAbilityTargetActor_*> TY__UmMCwJHxy5cVkk9ctXMLdwA;
 typedef NU8 tyArray__vEOa9c5qaE9ajWxR5R4zwfQg[32];
 typedef TArray<UGameplayAbility_*> TY__1iVhbK34EtpVHrTeNCGvNw;
-struct FGameplayAbilitySpec_ {
-tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
+struct FGameplayAbilitySpec_ {tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
 FGameplayAbilitySpecHandle_ handle;
 UGameplayAbility_* ability;
 NI32 level;
@@ -2605,22 +2406,19 @@ FActiveGameplayEffectHandle gameplayEffectHandle{};
 tyArray__9aT9a0df87P1N8C6tT67xdfQ pad_3;
 };
 typedef TArray<FGameplayAbilitySpec_> TY__N9bF7D6Zjtcv9ctL5GZUYLmA;
-struct FGameplayAbilitySpecContainer_ {
-tyArray__zc4u4RrSbA1hwf3CQE69cog pad_0;
+struct FGameplayAbilitySpecContainer_ {tyArray__zc4u4RrSbA1hwf3CQE69cog pad_0;
 TY__N9bF7D6Zjtcv9ctL5GZUYLmA items{};
 UAbilitySystemComponent_* owner;
 };
 typedef TArray<FActiveGameplayEffect_> TY__HzruYaUZ0LE4oBvZ1PlZqg;
 typedef NU8 tyArray__4PpmEtIl9bZsaQtIwe9aio7w[784];
-struct FActiveGameplayEffectsContainer_ {
-tyArray__cKG3vT0OC7vNRmxPTePMjw pad_0;
+struct FActiveGameplayEffectsContainer_ {tyArray__cKG3vT0OC7vNRmxPTePMjw pad_0;
 TY__HzruYaUZ0LE4oBvZ1PlZqg gameplayEffects_Internal{};
 tyArray__4PpmEtIl9bZsaQtIwe9aio7w pad_1;
 TY__HS3GOnZWYOzZ9c6h38vBKFQ applicationImmunityQueryEffects{};
 tyArray__izDbpwaA8Rxj9b5mE6pSF7Q pad_2;
 };
-struct FActiveGameplayCue_ {
-tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
+struct FActiveGameplayCue_ {tyArray__YHmXll5a9bp5TA5MVvQwRow pad_0;
 FGameplayTag gameplayCueTag{};
 FPredictionKey_ predictionKey;
 FGameplayCueParameters parameters{};
@@ -2628,28 +2426,23 @@ NIM_BOOL bPredictivelyRemoved;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_1;
 };
 typedef TArray<FActiveGameplayCue_> TY__DtwHAag3tP69csOkty9bP3JQ;
-struct FActiveGameplayCueContainer_ {
-tyArray__zc4u4RrSbA1hwf3CQE69cog pad_0;
+struct FActiveGameplayCueContainer_ {tyArray__zc4u4RrSbA1hwf3CQE69cog pad_0;
 TY__DtwHAag3tP69csOkty9bP3JQ gameplayCues{};
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_1;
 UAbilitySystemComponent_* owner;
 };
 typedef TArray<UAttributeSet*> TY__MTgP1q0moW3ktYPggh9a8TA;
-struct FReplicatedPredictionKeyItem_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FReplicatedPredictionKeyItem_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 FPredictionKey_ predictionKey;
 };
 typedef TArray<FReplicatedPredictionKeyItem_> TY__wZmESsIuvz1avnJ2qF29csQ;
-struct FReplicatedPredictionKeyMap_ {
-tyArray__zc4u4RrSbA1hwf3CQE69cog pad_0;
+struct FReplicatedPredictionKeyMap_ {tyArray__zc4u4RrSbA1hwf3CQE69cog pad_0;
 TY__wZmESsIuvz1avnJ2qF29csQ predictionKeys{};
 };
 typedef TMap<FGameplayTag COMMA NF32>  TY__UsuvlHgFUvpcHHVMn6XwRw;
-struct FActiveGameplayEffectQueryCustomMatch_Dynamic_ : public FScriptDelegate {
-};
+struct FActiveGameplayEffectQueryCustomMatch_Dynamic_ : public FScriptDelegate {};
 typedef NU8 tyArray__mwzDYI9am4Vxh5AkLmxCo9cQ[220];
-struct FGameplayEffectQuery_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FGameplayEffectQuery_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 FActiveGameplayEffectQueryCustomMatch_Dynamic_ customMatchDelegate_BP{};
 tyArray__mwzDYI9am4Vxh5AkLmxCo9cQ pad_1;
 FGameplayAttribute modifyingAttribute{};
@@ -2657,8 +2450,7 @@ UObject* effectSource;
 TY__o5lmm3YGRQTdI9c9ccmTHabQ effectDefinition{};
 tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_2;
 };
-struct FGameplayEffectSpecForRPC_ {
-UGameplayEffect_* def;
+struct FGameplayEffectSpecForRPC_ {UGameplayEffect_* def;
 TY__WmAHIZEZ9cpN3o9aZZVtPl3g modifiedAttributes{};
 FGameplayEffectContextHandle effectContext{};
 tyArray__w5VB8h5K8DB3oWrO5U2wqg pad_0;
@@ -2668,11 +2460,9 @@ NF32 abilityLevel;
 typedef TSoftClassPtr<UGameplayEffect_> TY__khlKMeIkNjMzqw2TfIXxWA;
 typedef TArray<FGameplayAttribute> TY__0e5LS6UfmhaWdcjpiaKDgQ;
 typedef TArray<FGameplayAbilitySpecHandle_> TY__jBGmxbqnyTV447L3R9bbKnQ;
-struct FGameplayCueTag_ {
-FGameplayTag gameplayCueTag{};
+struct FGameplayCueTag_ {FGameplayTag gameplayCueTag{};
 };
-struct FGameplayCueObjectLibrary_ {
-TY__myhN0u2pNczwuaOhbdYPXw paths{};
+struct FGameplayCueObjectLibrary_ {TY__myhN0u2pNczwuaOhbdYPXw paths{};
 tyArray__vEOa9c5qaE9ajWxR5R4zwfQg pad_0;
 UObjectLibrary_* actorObjectLibrary;
 UObjectLibrary_* staticObjectLibrary;
@@ -2686,8 +2476,7 @@ NIM_BOOL bHasBeenInitialized;
 typedef TArray<UClass*> TY__Oycn0Wv4Wvu5QjPDMJ4iYA;
 typedef TSubclassOf<AGameplayCueNotify_Actor_> TY__ROB2i9cysobginb5ZaB34eQ;
 typedef TArray<TY__ROB2i9cysobginb5ZaB34eQ> TY__yFf9bt3gETA9bmErFkGcaITA;
-struct FGameplayCuePendingExecute_ {
-tyArray__vEOa9c5qaE9ajWxR5R4zwfQg pad_0;
+struct FGameplayCuePendingExecute_ {tyArray__vEOa9c5qaE9ajWxR5R4zwfQg pad_0;
 FPredictionKey_ predictionKey;
 tyEnum_EGameplayCuePayloadType__QHvYj9cxEVspK3bO9cQZEMRQ payloadType;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_1;
@@ -2697,19 +2486,16 @@ FGameplayCueParameters cueParameters{};
 };
 typedef TArray<FGameplayCuePendingExecute_> TY__3EayRS3K5H6lKVUDWcwkUA;
 typedef TArray<AGameplayCueNotify_Actor_*> TY__ntaWYtDOxlmgcrRq4jKMRg;
-struct FGameplayCueNotifyActorArray_ {
-TY__ntaWYtDOxlmgcrRq4jKMRg actors{};
+struct FGameplayCueNotifyActorArray_ {TY__ntaWYtDOxlmgcrRq4jKMRg actors{};
 };
 typedef TMap<UClass* COMMA FGameplayCueNotifyActorArray_>  TY__FccDQ5AAW9cDVh9bPc9a8dGJQ;
-struct FPreallocationInfo_ {
-TY__FccDQ5AAW9cDVh9bPc9a8dGJQ preallocatedInstances{};
+struct FPreallocationInfo_ {TY__FccDQ5AAW9cDVh9bPc9a8dGJQ preallocatedInstances{};
 TY__yFf9bt3gETA9bmErFkGcaITA classesNeedingPreallocation{};
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
 typedef TArray<FPreallocationInfo_> TY__uqV1eG9a5U54FsunlxDWftQ;
 typedef TArray<tyEnum_EPhysicalSurface__5g7TGU9c5GxzehLMURCQRgA> TY__TEr2nhUmC0Z6pBsZzEVmQw;
-struct FGameplayCueNotify_SpawnCondition_ {
-tyEnum_EGameplayCueNotify_LocallyControlledSource__UF9aDiEhe4SIhTQ23RLBfdA locallyControlledSource;
+struct FGameplayCueNotify_SpawnCondition_ {tyEnum_EGameplayCueNotify_LocallyControlledSource__UF9aDiEhe4SIhTQ23RLBfdA locallyControlledSource;
 tyEnum_EGameplayCueNotify_LocallyControlledPolicy__jC51JtVaN5J4iPbI9akqTEA locallyControlledPolicy;
 tyArray__bN9bddWn8oiNSHn2MqEJSZQ pad_0;
 NF32 chanceToPlay;
@@ -2718,8 +2504,7 @@ tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_1;
 TY__TEr2nhUmC0Z6pBsZzEVmQw rejectedSurfaceTypes{};
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_2;
 };
-struct FGameplayCueNotify_PlacementInfo_ {
-FName socketName{};
+struct FGameplayCueNotify_PlacementInfo_ {FName socketName{};
 tyEnum_EGameplayCueNotify_AttachPolicy__Li75monpMAfqjkIgqWJTig attachPolicy;
 tyEnum_EAttachmentRule__YNsXxUBJiBVZPTePYxlbTA attachmentRule;
 tyArray__bN9bddWn8oiNSHn2MqEJSZQ pad_0;
@@ -2729,8 +2514,7 @@ tyArray__9cZQ9c8IqkFU8PfW4YTh44AQ pad_1;
 FRotator rotationOverride{};
 FVector scaleOverride{};
 };
-struct FGameplayCueNotify_ParticleInfo_ {
-FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
+struct FGameplayCueNotify_ParticleInfo_ {FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
 FGameplayCueNotify_PlacementInfo_ placementInfoOverride{};
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 NIM_BOOL bOverrideSpawnCondition;
@@ -2739,11 +2523,9 @@ NIM_BOOL bCastShadow;
 tyArray__39cnIm4v9c7pQp5XFRxTMpFg pad_1;
 };
 typedef TArray<FGameplayCueNotify_ParticleInfo_> TY__JPKFlIdlGkYMJ5qVPrWh9cA;
-struct FGameplayCueNotify_SoundParameterInterfaceInfo_ {
-FName stopTriggerName{};
+struct FGameplayCueNotify_SoundParameterInterfaceInfo_ {FName stopTriggerName{};
 };
-struct FGameplayCueNotify_SoundInfo_ {
-FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
+struct FGameplayCueNotify_SoundInfo_ {FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
 FGameplayCueNotify_PlacementInfo_ placementInfoOverride{};
 tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 NF32 loopingFadeOutDuration;
@@ -2755,8 +2537,7 @@ NIM_BOOL bUseSoundParameterInterface;
 tyArray__cizw9bdTN1Bzer1N9ayP9cHbQ pad_1;
 };
 typedef TArray<FGameplayCueNotify_SoundInfo_> TY__ddwBOpW9cMK7s9bvoKc1ZRHQ;
-struct FGameplayCueNotify_CameraShakeInfo_ {
-FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
+struct FGameplayCueNotify_CameraShakeInfo_ {FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
 FGameplayCueNotify_PlacementInfo_ placementInfoOverride{};
 TY__KQEDk1C09aJw5qI9c3NLtbyA cameraShake{};
 NF32 shakeScale;
@@ -2770,8 +2551,7 @@ NF32 worldInnerRadius;
 NF32 worldOuterRadius;
 NF32 worldFalloffExponent;
 };
-struct FGameplayCueNotify_CameraLensEffectInfo_ {
-FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
+struct FGameplayCueNotify_CameraLensEffectInfo_ {FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
 FGameplayCueNotify_PlacementInfo_ placementInfoOverride{};
 TY__9akcXb9b3ftlkdW8NDwR22Mg cameraLensEffect{};
 NIM_BOOL bOverrideSpawnCondition;
@@ -2782,8 +2562,7 @@ NF32 worldInnerRadius;
 NF32 worldOuterRadius;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_1;
 };
-struct FGameplayCueNotify_ForceFeedbackInfo_ {
-FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
+struct FGameplayCueNotify_ForceFeedbackInfo_ {FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
 FGameplayCueNotify_PlacementInfo_ placementInfoOverride{};
 UForceFeedbackEffect_* forceFeedbackEffect;
 FName forceFeedbackTag{};
@@ -2796,11 +2575,9 @@ tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 UForceFeedbackAttenuation_* worldAttenuation;
 };
 typedef TArray<TY__aqfsbs05nDl2Mv2M0XZFpg> TY__m7NHFYcy8yrkqPr9baQrh7A;
-struct FGameplayCueNotify_InputDevicePropertyInfo_ {
-TY__m7NHFYcy8yrkqPr9baQrh7A deviceProperties{};
+struct FGameplayCueNotify_InputDevicePropertyInfo_ {TY__m7NHFYcy8yrkqPr9baQrh7A deviceProperties{};
 };
-struct FGameplayCueNotify_DecalInfo_ {
-FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
+struct FGameplayCueNotify_DecalInfo_ {FGameplayCueNotify_SpawnCondition_ spawnConditionOverride{};
 FGameplayCueNotify_PlacementInfo_ placementInfoOverride{};
 UMaterialInterface* decalMaterial;
 FVector decalSize{};
@@ -2812,8 +2589,7 @@ NF32 fadeOutStartDelay;
 NF32 fadeOutDuration;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_1;
 };
-struct FGameplayCueNotify_BurstEffects_ {
-TY__JPKFlIdlGkYMJ5qVPrWh9cA burstParticles{};
+struct FGameplayCueNotify_BurstEffects_ {TY__JPKFlIdlGkYMJ5qVPrWh9cA burstParticles{};
 TY__ddwBOpW9cMK7s9bvoKc1ZRHQ burstSounds{};
 FGameplayCueNotify_CameraShakeInfo_ burstCameraShake{};
 FGameplayCueNotify_CameraLensEffectInfo_ burstCameraLensEffect{};
@@ -2824,8 +2600,7 @@ FGameplayCueNotify_DecalInfo_ burstDecal{};
 typedef TArray<UAudioComponent*> TY__xE9c0zpihvKbXMHhd47HI8Q;
 typedef TArray<UCameraShakeBase_*> TY__4LC6SiNHnpLyZlKgHJd4Ew;
 typedef TArray<TY__hvmi1aSu7TExY3gfL1PBlA> TY__lIY1kK6VORISVYAH9ctablg;
-struct FGameplayCueNotify_SpawnResult_ {
-TY__Qu3WcNhn1GZqsD9bMGcV3pQ fxSystemComponents{};
+struct FGameplayCueNotify_SpawnResult_ {TY__Qu3WcNhn1GZqsD9bMGcV3pQ fxSystemComponents{};
 TY__xE9c0zpihvKbXMHhd47HI8Q audioComponents{};
 TY__4LC6SiNHnpLyZlKgHJd4Ew cameraShakes{};
 TY__lIY1kK6VORISVYAH9ctablg cameraLensEffects{};
@@ -2833,16 +2608,14 @@ UForceFeedbackComponent_* forceFeedbackComponent;
 APlayerController* forceFeedbackTargetPC;
 UDecalComponent_* decalComponent;
 };
-struct FGameplayCueNotify_LoopingEffects_ {
-TY__JPKFlIdlGkYMJ5qVPrWh9cA loopingParticles{};
+struct FGameplayCueNotify_LoopingEffects_ {TY__JPKFlIdlGkYMJ5qVPrWh9cA loopingParticles{};
 TY__ddwBOpW9cMK7s9bvoKc1ZRHQ loopingSounds{};
 FGameplayCueNotify_CameraShakeInfo_ loopingCameraShake{};
 FGameplayCueNotify_CameraLensEffectInfo_ loopingCameraLensEffect{};
 FGameplayCueNotify_ForceFeedbackInfo_ loopingForceFeedback{};
 FGameplayCueNotify_InputDevicePropertyInfo_ loopingInputDevicePropertyEffect{};
 };
-struct FGameplayCueNotifyData_ {
-FGameplayTag gameplayCueTag{};
+struct FGameplayCueNotifyData_ {FGameplayTag gameplayCueTag{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 FSoftObjectPath gameplayCueNotifyObj{};
 UClass* loadedGameplayCueClass;
@@ -2850,8 +2623,7 @@ tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_1;
 };
 typedef TArray<FGameplayCueNotifyData_> TY__iipK89cMQmmOQ9bmmnPnwHwQ;
 typedef NU8 tyArray__VcfXBC9a9co86vgFc32t9cHOw[70];
-struct FAttributeBasedFloat_ {
-FScalableFloat_ coefficient{};
+struct FAttributeBasedFloat_ {FScalableFloat_ coefficient{};
 FScalableFloat_ preMultiplyAdditiveValue{};
 FScalableFloat_ postMultiplyAdditiveValue{};
 FGameplayEffectAttributeCaptureDefinition backingAttribute{};
@@ -2861,27 +2633,23 @@ tyEnum_EGameplayModEvaluationChannel__0q9bDt1ZyBrecks9cZtxFluA finalChannel;
 tyArray__VcfXBC9a9co86vgFc32t9cHOw pad_0;
 };
 typedef TSubclassOf<UGameplayModMagnitudeCalculation_> TY__yF5zqpc2DFk0uN4hFwRLqA;
-struct FCustomCalculationBasedFloat_ {
-TY__yF5zqpc2DFk0uN4hFwRLqA calculationClassMagnitude{};
+struct FCustomCalculationBasedFloat_ {TY__yF5zqpc2DFk0uN4hFwRLqA calculationClassMagnitude{};
 FScalableFloat_ coefficient{};
 FScalableFloat_ preMultiplyAdditiveValue{};
 FScalableFloat_ postMultiplyAdditiveValue{};
 FCurveTableRowHandle_ finalLookupCurve{};
 };
-struct FSetByCallerFloat_ {
-FName dataName{};
+struct FSetByCallerFloat_ {FName dataName{};
 FGameplayTag dataTag{};
 };
-struct FGameplayEffectModifierMagnitude_ {
-tyEnum_EGameplayEffectMagnitudeCalculation__ZZG9a3O09aRhyA9bY9bzuV3wXw magnitudeCalculationType;
+struct FGameplayEffectModifierMagnitude_ {tyEnum_EGameplayEffectMagnitudeCalculation__ZZG9a3O09aRhyA9bY9bzuV3wXw magnitudeCalculationType;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 FScalableFloat_ scalableFloatMagnitude{};
 FAttributeBasedFloat_ attributeBasedMagnitude{};
 FCustomCalculationBasedFloat_ customMagnitude{};
 FSetByCallerFloat_ setByCallerMagnitude{};
 };
-struct FGameplayModifierInfo_ {
-FGameplayAttribute attribute{};
+struct FGameplayModifierInfo_ {FGameplayAttribute attribute{};
 tyEnum_EGameplayModOp__v19aw0PxobwarcxLjVX9bwcQ modifierOp;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 FGameplayEffectModifierMagnitude_ modifierMagnitude{};
@@ -2892,8 +2660,7 @@ FGameplayTagRequirements targetTags{};
 };
 typedef TArray<FGameplayModifierInfo_> TY__SMXWF8IaQIMjnWJWW9aw9bWg;
 typedef TSubclassOf<UGameplayEffectExecutionCalculation_> TY__GsIcKiAhjqAVt83oOK8jgw;
-struct FGameplayEffectExecutionScopedModifierInfo_ {
-FGameplayEffectAttributeCaptureDefinition capturedAttribute{};
+struct FGameplayEffectExecutionScopedModifierInfo_ {FGameplayEffectAttributeCaptureDefinition capturedAttribute{};
 FGameplayTag transientAggregatorIdentifier{};
 tyEnum_EGameplayEffectScopedModifierAggregatorType__MQeYQSPiYnqsqfDrtk1Qxg aggregatorType;
 tyEnum_EGameplayModOp__v19aw0PxobwarcxLjVX9bwcQ modifierOp;
@@ -2905,13 +2672,11 @@ FGameplayTagRequirements sourceTags{};
 FGameplayTagRequirements targetTags{};
 };
 typedef TArray<FGameplayEffectExecutionScopedModifierInfo_> TY__6znLu50wLo6gFEyCHYeSVw;
-struct FConditionalGameplayEffect_ {
-TY__o5lmm3YGRQTdI9c9ccmTHabQ effectClass{};
+struct FConditionalGameplayEffect_ {TY__o5lmm3YGRQTdI9c9ccmTHabQ effectClass{};
 tyArray__vEOa9c5qaE9ajWxR5R4zwfQg pad_0;
 };
 typedef TArray<FConditionalGameplayEffect_> TY__iyRh6NGfBn32Zv3ywMk9bgw;
-struct FGameplayEffectExecutionDefinition_ {
-TY__GsIcKiAhjqAVt83oOK8jgw calculationClass{};
+struct FGameplayEffectExecutionDefinition_ {TY__GsIcKiAhjqAVt83oOK8jgw calculationClass{};
 tyArray__vEOa9c5qaE9ajWxR5R4zwfQg pad_0;
 TY__6znLu50wLo6gFEyCHYeSVw calculationModifiers{};
 tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_1;
@@ -2920,68 +2685,53 @@ TY__iyRh6NGfBn32Zv3ywMk9bgw conditionalGameplayEffects{};
 typedef TArray<FGameplayEffectExecutionDefinition_> TY__u78TYFr18r345jyU1USShA;
 typedef TSubclassOf<UGameplayEffectCustomApplicationRequirement_> TY__7xWcfWXhuCWwWKsJ9aygnfQ;
 typedef TArray<TY__7xWcfWXhuCWwWKsJ9aygnfQ> TY__JhMKUoilyazmRBfr9c6i9aAA;
-struct FGameplayEffectCue_ {
-FGameplayAttribute magnitudeAttribute{};
+struct FGameplayEffectCue_ {FGameplayAttribute magnitudeAttribute{};
 NF32 minLevel;
 NF32 maxLevel;
 tyArray__vEOa9c5qaE9ajWxR5R4zwfQg pad_0;
 };
 typedef TArray<FGameplayEffectCue_> TY__UjE9b8CGGMCLhKCOumAta4Q;
-struct FInheritedTagContainer_ {
-tyArray__26aQaWOzPONEXg2JYXgXsA pad_0;
+struct FInheritedTagContainer_ {tyArray__26aQaWOzPONEXg2JYXgXsA pad_0;
 };
 typedef TArray<FGameplayEffectAttributeCaptureDefinition> TY__7dBu6g16YDeBHjA4ZfidNQ;
-struct FGameplayTagReponsePair_ {
-FGameplayTag tag{};
+struct FGameplayTagReponsePair_ {FGameplayTag tag{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 TY__o5lmm3YGRQTdI9c9ccmTHabQ responseGameplayEffect{};
 TY__YWxhJKhKplqKD9bzBoR0fzQ responseGameplayEffects{};
 NI32 softCountCap;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_1;
 };
-struct FGameplayTagResponseTableEntry_ {
-FGameplayTagReponsePair_ positive{};
+struct FGameplayTagResponseTableEntry_ {FGameplayTagReponsePair_ positive{};
 FGameplayTagReponsePair_ negative{};
 };
 typedef TArray<FGameplayTagResponseTableEntry_> TY__9anH0Dz9c0Cr10xgCVjcFJzw;
-struct FPredictionKeyNetSerializerConfig_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FPredictionKeyNetSerializerConfig_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
-struct FGameplayAbilityRepAnimMontageNetSerializerConfig_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FGameplayAbilityRepAnimMontageNetSerializerConfig_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
-struct FMinimalReplicationTagCountMapNetSerializerConfig_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FMinimalReplicationTagCountMapNetSerializerConfig_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
-struct FMinimalGameplayCueReplicationProxyNetSerializerConfig_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FMinimalGameplayCueReplicationProxyNetSerializerConfig_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
-struct FGameplayEffectContextNetSerializerConfig_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FGameplayEffectContextNetSerializerConfig_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
-struct FGameplayEffectContextHandleNetSerializerConfig_ {
-tyArray__ei1f5NP9cmpUVHoe9cUYpPag pad_0;
+struct FGameplayEffectContextHandleNetSerializerConfig_ {tyArray__ei1f5NP9cmpUVHoe9cUYpPag pad_0;
 };
-struct FGameplayAbilityTargetData_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FGameplayAbilityTargetData_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
 typedef NU8 tyArray__zsrOqAc7tmot37s68VT2cQ[976];
-struct FMinimalGameplayCueReplicationProxy_ {
-tyArray__zsrOqAc7tmot37s68VT2cQ pad_0;
+struct FMinimalGameplayCueReplicationProxy_ {tyArray__zsrOqAc7tmot37s68VT2cQ pad_0;
 UAbilitySystemComponent_* owner;
 tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_1;
 };
-struct FGameplayCueTranslatorNodeIndex_ {
-NI32 index;
+struct FGameplayCueTranslatorNodeIndex_ {NI32 index;
 };
-struct FGameplayCueTranslationLink_ {
-UGameplayCueTranslator_* rulesCDO;
+struct FGameplayCueTranslationLink_ {UGameplayCueTranslator_* rulesCDO;
 tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
 typedef TArray<FGameplayCueTranslationLink_> TY__oxZWcI5p63641JFpYX1cPw;
 typedef NU8 tyArray__OquSYG9ba9cX0EVMypYKiWWQ[84];
-struct FGameplayCueTranslatorNode_ {
-TY__oxZWcI5p63641JFpYX1cPw links{};
+struct FGameplayCueTranslatorNode_ {TY__oxZWcI5p63641JFpYX1cPw links{};
 FGameplayCueTranslatorNodeIndex_ cachedIndex;
 FGameplayTag cachedGameplayTag{};
 FName cachedGameplayTagName{};
@@ -2989,30 +2739,25 @@ tyArray__OquSYG9ba9cX0EVMypYKiWWQ pad_0;
 };
 typedef TArray<FGameplayCueTranslatorNode_> TY__JtgItvMoOJTo49btMvWJ8nA;
 typedef TMap<FName COMMA FGameplayCueTranslatorNodeIndex_>  TY__Y6UrN9b20hHpFTMWbUoBRCA;
-struct FGameplayCueTranslationManager_ {
-TY__JtgItvMoOJTo49btMvWJ8nA translationLUT{};
+struct FGameplayCueTranslationManager_ {TY__JtgItvMoOJTo49btMvWJ8nA translationLUT{};
 TY__Y6UrN9b20hHpFTMWbUoBRCA translationNameToIndexMap{};
 tyArray__vEOa9c5qaE9ajWxR5R4zwfQg pad_0;
 };
 typedef NU8 tyArray__8kqbJZnWwyez8yIz1pfAfg[152];
-struct FActiveGameplayEffectQuery_ {
-tyArray__8kqbJZnWwyez8yIz1pfAfg pad_0;
+struct FActiveGameplayEffectQuery_ {tyArray__8kqbJZnWwyez8yIz1pfAfg pad_0;
 };
 typedef NU8 tyArray__MkdZYTPJCTDJaCPfmTk9bBw[248];
-struct FGameplayEffectCustomExecutionParameters_ {
-tyArray__MkdZYTPJCTDJaCPfmTk9bBw pad_0;
+struct FGameplayEffectCustomExecutionParameters_ {tyArray__MkdZYTPJCTDJaCPfmTk9bBw pad_0;
 };
 typedef TArray<FGameplayModifierEvaluatedData> TY__hx07h4c4Ei7SP4sTrnRdyA;
-struct FGameplayEffectCustomExecutionOutput_ {
-TY__hx07h4c4Ei7SP4sTrnRdyA outputModifiers{};
+struct FGameplayEffectCustomExecutionOutput_ {TY__hx07h4c4Ei7SP4sTrnRdyA outputModifiers{};
 NIM_BOOL bTriggerConditionalGameplayEffects;
 NIM_BOOL bHandledStackCountManually;
 NIM_BOOL bHandledGameplayCuesManually;
 tyArray__39cnIm4v9c7pQp5XFRxTMpFg pad_0;
 };
 typedef TArray<FFrameNumber> TY__9bxQUE9aXtSTZGmHBx1ajVhA;
-struct FMovieSceneGameplayCueKey_ {
-FGameplayCueTag_ cue{};
+struct FMovieSceneGameplayCueKey_ {FGameplayCueTag_ cue{};
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 FVector location{};
 FVector Normal{};
@@ -3026,65 +2771,52 @@ NIM_BOOL bAttachToBinding;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_2;
 };
 typedef TArray<FMovieSceneGameplayCueKey_> TY__5id0xYuFt50kJoCqeu1v0Q;
-struct FMovieSceneGameplayCueChannel_ {
-tyArray__9aT9a0df87P1N8C6tT67xdfQ pad_0;
+struct FMovieSceneGameplayCueChannel_ {tyArray__9aT9a0df87P1N8C6tT67xdfQ pad_0;
 TY__9bxQUE9aXtSTZGmHBx1ajVhA keyTimes{};
 TY__5id0xYuFt50kJoCqeu1v0Q keyValues{};
 tyArray__6qSULJVkHXjL25e22OI5AQ pad_1;
 };
 typedef TArray<FGameplayTag> TY__ZMJgErclqmQcDHkV4SsgZA;
 typedef TArray<FVector_NetQuantize> TY__LKX7LCvA3lHIPHJ3AWa9c6w;
-struct FMinimalGameplayCueReplicationProxyForNetSerializer_ {
-TY__ZMJgErclqmQcDHkV4SsgZA tags{};
+struct FMinimalGameplayCueReplicationProxyForNetSerializer_ {TY__ZMJgErclqmQcDHkV4SsgZA tags{};
 TY__LKX7LCvA3lHIPHJ3AWa9c6w locations{};
 };
-struct FMinimalReplicationTagCountMapForNetSerializer_ {
-TY__ZMJgErclqmQcDHkV4SsgZA tags{};
+struct FMinimalReplicationTagCountMapForNetSerializer_ {TY__ZMJgErclqmQcDHkV4SsgZA tags{};
 };
 typedef TSubclassOf<UCameraModifier_> TY__GYGn274MFCl9cAJqupIxNcA;
 typedef TArray<TY__GYGn274MFCl9cAJqupIxNcA> TY__9bGGmzTmY6puojW0P5hirIA;
-struct FCameraShakeStartParams_ {
-NIM_BOOL bIsRestarting;
+struct FCameraShakeStartParams_ {NIM_BOOL bIsRestarting;
 };
-struct FCameraShakeUpdateParams_ {
-NF32 deltaTime;
+struct FCameraShakeUpdateParams_ {NF32 deltaTime;
 NF32 shakeScale;
 NF32 dynamicScale;
 NF32 blendingWeight;
 FMinimalViewInfo pOV{};
 };
-struct FCameraShakeScrubParams_ {
-NF32 absoluteTime;
+struct FCameraShakeScrubParams_ {NF32 absoluteTime;
 NF32 shakeScale;
 NF32 dynamicScale;
 NF32 blendingWeight;
 FMinimalViewInfo pOV{};
 };
-struct FCameraShakeStopParams_ {
-NIM_BOOL bImmediately;
+struct FCameraShakeStopParams_ {NIM_BOOL bImmediately;
 };
-struct FCameraShakeDuration_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FCameraShakeDuration_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 };
-struct FCameraShakeInfo_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FCameraShakeInfo_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
 typedef NU8 tyArray__qnms0DSyctxftPk8tqs9bpA[392];
-struct FRuntimeVectorCurve_ {
-tyArray__qnms0DSyctxftPk8tqs9bpA pad_0;
+struct FRuntimeVectorCurve_ {tyArray__qnms0DSyctxftPk8tqs9bpA pad_0;
 };
-struct FDataDrivenConsoleVariable_ {
-tyArray__9aT9a0df87P1N8C6tT67xdfQ pad_0;
+struct FDataDrivenConsoleVariable_ {tyArray__9aT9a0df87P1N8C6tT67xdfQ pad_0;
 };
-struct FTypedElementPasteOptions_ {
-tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
+struct FTypedElementPasteOptions_ {tyArray__cdsir9aPB24hAk6k77P9b9bCA pad_0;
 NIM_BOOL bPasteAtLocation;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_1;
 FVector pasteLocation{};
 tyArray__9aT9a0df87P1N8C6tT67xdfQ pad_2;
 };
-struct FTypedElementDeletionOptions_ {
-NIM_BOOL bVerifyDeletionCanHappen;
+struct FTypedElementDeletionOptions_ {NIM_BOOL bVerifyDeletionCanHappen;
 NIM_BOOL bWarnAboutReferences;
 NIM_BOOL bWarnAboutSoftReferences;
 };
@@ -3096,14 +2828,12 @@ typedef TArray<FTextureParameterValue> TY__2e2kXW4qc0U6k9bt5o0wgDg;
 typedef TArray<FRuntimeVirtualTextureParameterValue> TY__2kfN9asIen9adfoHPjm0OHLg;
 typedef TArray<FSparseVolumeTextureParameterValue> TY__rZldDsDtIj9c5z9bC1DdMiHQ;
 typedef TArray<FFontParameterValue> TY__FGDznZ1p2MJe6xaB8q4CCQ;
-struct FVoiceSettings_ {
-USceneComponent* componentToAttachTo;
+struct FVoiceSettings_ {USceneComponent* componentToAttachTo;
 USoundAttenuation* attenuationSettings;
 USoundEffectSourcePresetChain* sourceEffectChain;
 };
 typedef TArray<FParticleSysParam> TY__hRNirpXzEmqf49cUfEqEUHQ;
-struct FSoundConcurrencySettings_ {
-NI32 maxCount;
+struct FSoundConcurrencySettings_ {NI32 maxCount;
 NIM_BOOL bLimitToOwner;
 NIM_BOOL bVolumeScaleCanRelease;
 tyEnum_EMaxConcurrentResolutionRule__EzFMbBcK6m8QM1ovJjwNrA resolutionRule;
@@ -3119,16 +2849,14 @@ typedef TArray<FSoundSubmixSendInfo> TY__mYFRCs9aMXMCd4LKh8IWtiQ;
 typedef TArray<FSoundSourceBusSendInfo> TY__E1cF89aBHPPsJaR6qT9cRcgw;
 typedef TArray<FSoundWaveCuePoint> TY__BOJ5ThsWgCz3WmPBwfzXrQ;
 typedef TArray<FSubtitleCue> TY__J5oi1L6HY7OmrYakjq3uIg;
-struct FReverbSettings_ {
-NIM_BOOL bApplyReverb;
+struct FReverbSettings_ {NIM_BOOL bApplyReverb;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 UReverbEffect_* reverbEffect;
 USoundEffectSubmixPreset_* reverbPluginEffect;
 NF32 volume;
 NF32 fadeTime;
 };
-struct FInteriorSettings_ {
-tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
+struct FInteriorSettings_ {tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 NF32 exteriorVolume;
 NF32 exteriorTime;
 NF32 exteriorLPF;
@@ -3138,15 +2866,13 @@ NF32 interiorTime;
 NF32 interiorLPF;
 NF32 interiorLPFTime;
 };
-struct FAudioVolumeSubmixSendSettings_ {
-tyEnum_EAudioVolumeLocationState__cgdNqGrtoyp23ISYdoxqLw listenerLocationState;
+struct FAudioVolumeSubmixSendSettings_ {tyEnum_EAudioVolumeLocationState__cgdNqGrtoyp23ISYdoxqLw listenerLocationState;
 tyArray__HhO8EAlttg7Yo1LAKdC6hQ pad_0;
 TY__mYFRCs9aMXMCd4LKh8IWtiQ submixSends{};
 };
 typedef TArray<FAudioVolumeSubmixSendSettings_> TY__0P3QE6CnwcQtnLUClvj1AQ;
 typedef TArray<USoundEffectSubmixPreset_*> TY__vn4YR8N1PwW0D5S5BkY6Bw;
-struct FAudioVolumeSubmixOverrideSettings_ {
-USoundSubmix_* submix;
+struct FAudioVolumeSubmixOverrideSettings_ {USoundSubmix_* submix;
 TY__vn4YR8N1PwW0D5S5BkY6Bw submixEffectChain{};
 NF32 crossfadeTime;
 tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
@@ -3154,8 +2880,7 @@ tyArray__H8qf9bpC2ziYA2earmO8m7w pad_0;
 typedef TArray<FAudioVolumeSubmixOverrideSettings_> TY__KW4wPWVxwu2sHCJkJbVpzA;
 typedef TArray<USoundClass*> TY__pVtcV5B6QAzor9cajvYb6Rw;
 typedef TArray<FPassiveSoundMixModifier> TY__gUl6WccpnVptdwE9bBR9a1YA;
-struct FSoundClassAdjuster_ {
-USoundClass* soundClassObject;
+struct FSoundClassAdjuster_ {USoundClass* soundClassObject;
 NF32 volumeAdjuster;
 NF32 pitchAdjuster;
 NF32 lowPassFilterFrequency;
@@ -3167,8 +2892,7 @@ tyArray__H8qf9bpC2ziYA2earmO8m7w pad_1;
 typedef TArray<FSoundClassAdjuster_> TY__rlPCp7fOS9bDL40uDDNAn7Q;
 typedef TArray<USoundSubmixBase_*> TY__Qd9alkOGuaEndLtq9bIq1VEg;
 typedef TArray<FSoundSubmixSpectralAnalysisBandSettings> TY__LOMy3VrBsbR5p06Yi7CKVg;
-struct FWorldPartitionHLODDestructionTag_ {
-tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
+struct FWorldPartitionHLODDestructionTag_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0;
 };
 extern "C" N_LIB_PRIVATE N_NOCONV(void, signalHandler)(int sign__4NMUcHeHK2q69bzPGQtmJdA);
 N_LIB_PRIVATE N_NIMCALL(UClass*, getClassByName)(FString className__tEhvmUv9cFMHN9bsYU9aKpaqg);
@@ -9326,8 +9050,8 @@ N_LIB_PRIVATE N_NIMCALL(void, addData_)(UPCGUnionData_* self__xOCSdR59b1mm1IMhRH
 N_LIB_PRIVATE N_NIMCALL(void, keepUPCGUnionData)(UPCGUnionData_* fake__atROIzCzpkuGazY8NMbkiA);
 N_LIB_PRIVATE N_NIMCALL(FVector*, voxelSize)(UPCGVolumeData_* obj__9agVO2Nd52aqW9ckTpGcSUzg_2);
 N_LIB_PRIVATE N_NIMCALL(void, setvoxelSize)(UPCGVolumeData_* obj__MzmmHili3kI9b9a7Zi9aeyaUQ_2, FVector val__gkBXwAiT2MPm200BOXJtEw_2);
-N_LIB_PRIVATE N_NIMCALL(TY__9cWPS7Sei2RV32UeoSXPGow, volume)(UPCGVolumeData_* obj__KRfhEUsJRcx9bTqiN9cRxaQw);
-N_LIB_PRIVATE N_NIMCALL(void, setvolume)(UPCGVolumeData_* obj__9cscVlq44XRRfSefHck0I9bA, TY__9cWPS7Sei2RV32UeoSXPGow val__38GNkv6ULC7Hphca7TR3Nw);
+N_LIB_PRIVATE N_NIMCALL(TY__C5WBk6ZJB2jIMppRl9a5zkw, volume)(UPCGVolumeData_* obj__KRfhEUsJRcx9bTqiN9cRxaQw);
+N_LIB_PRIVATE N_NIMCALL(void, setvolume)(UPCGVolumeData_* obj__9cscVlq44XRRfSefHck0I9bA, TY__C5WBk6ZJB2jIMppRl9a5zkw val__38GNkv6ULC7Hphca7TR3Nw);
 N_LIB_PRIVATE N_NIMCALL(FBox*, bounds)(UPCGVolumeData_* obj__NDoKeKrJRDsLvHzhTXL6bg_3);
 N_LIB_PRIVATE N_NIMCALL(void, setbounds)(UPCGVolumeData_* obj__IfNYSwRI9bz9clrIiRrilhjA_3, FBox val__qgK7y2mWkHyRjF15lu9aYIg_3);
 N_LIB_PRIVATE N_NIMCALL(FBox*, strictBounds)(UPCGVolumeData_* obj__6NlHqNQdaHyFI9aXz9b1sj0w);

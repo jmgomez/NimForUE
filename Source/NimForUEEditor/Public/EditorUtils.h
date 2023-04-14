@@ -30,7 +30,7 @@ public:
 	
 	static void PerformReinstance(FNimHotReload* NimHotReload);
 	TArray<UBlueprint*> GetDependentBlueprints(FNimHotReload* NimHotReload);
-	void HotReload(FNimHotReload* NimHotReload, class FReload* UnrealReload);
+	void HotReload(FNimHotReload* NimHotReload, class IReload* UnrealReload);
 	static void ReloadClass(UClass* OldClass, UClass* NewClass);
 	void ReloadClasses(FNimHotReload* NimHotReload);
 	void PostReload();

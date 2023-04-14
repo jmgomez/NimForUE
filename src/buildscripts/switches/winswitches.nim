@@ -11,9 +11,9 @@ let unrealFolder = if WithEditor: "UnrealEditor" else: "UnrealGame"
 let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir / unrealFolder / $config.targetConfiguration 
 
 func getModuleName(target:string) : string = 
-  if target == "game": "NimForUEGame"
-  else: "NimForUE"
-  # "NimForUE"
+  # if target == "game": "NimForUEGame"
+  # else: "NimForUE"
+  "NimForUE"
 proc pchObjPath(target:string) : string = 
   let module = getModuleName(target)
   pchDir / module / &"PCH.{module}.h.obj"
@@ -30,7 +30,7 @@ proc pchCompileFlags(target:string) : seq[string] =
   pchCompileFlags
 
 #The file is created from a function in host which is called from the build rules on the plugin when UBT runs
-proc getSdkVersion() : string =
+proc getSdkVersion*() : string =
   let sdkVersion = "10.0.18362.0"
   let path = PluginDir / "sdk_version.txt"
   if fileExists(path):

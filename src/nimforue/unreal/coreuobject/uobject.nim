@@ -283,6 +283,23 @@ proc getPrefixCpp*(str:UFieldPtr | UStructPtr) : FString {.importcpp:"FString(#-
 
 
 
+#UOBJECT
+proc getFName*(obj:UObjectPtr|FFieldPtr) : FName {. importcpp: "#->GetFName()" .}
+proc getFlags*(obj:UObjectPtr|FFieldPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
+proc setFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->SetFlags(#)" .}
+proc clearFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->ClearFlags(#)" .}
+
+proc addToRoot*(obj:UObjectPtr) : void {. importcpp: "#->AddToRoot()" .}
+
+proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
+proc getOuter*(obj : UObjectPtr) : UObjectPtr {. importcpp: "#->GetOuter()" .}
+proc getWorld*(obj : UObjectPtr) : UWorldPtr {. importcpp: "#->GetWorld()" .}
+
+proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
+proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
+proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
+
+
 #USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
 
@@ -293,7 +310,14 @@ proc setSuperStruct*(str, suprStruct :UStructPtr) : void {.importcpp:"#->SetSupe
 
 #UCLASS
 proc findFunctionByName*(cls : UClassPtr, name:FName) : UFunctionPtr {. importcpp: "#.FindFunctionByName(#)"}
-proc findFuncByName*(cls : UClassPtr, name:FName) : UFunctionPtr {. importcpp: "#.FindFunctionByName(#, EIncludeSuperFlag::ExcludeSuper)"}
+proc findFunctionByNameExcludeSuper*(cls : UClassPtr, name:FName) : UFunctionPtr {. importcpp: "#.FindFunctionByName(#, EIncludeSuperFlag::ExcludeSuper)"}
+proc findFuncByName*(cls : UClassPtr, name:FName) : UFunctionPtr {.inline.} = 
+    var fn = cls.findFunctionByNameExcludeSuper(name)
+    if fn.isNil(): #try again with super, this is needed in order to override. 
+        fn = cls.findFunctionByName(name)
+    UE_Error "Could not find function " & $name & " in class " & cls.getName()
+    return fn
+
 proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) : void {. importcpp: "#.AddFunctionToFunctionMap(@)"}
 proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
 proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()" .}
@@ -316,23 +340,6 @@ proc hasAddStructReferencedObjects*(str:UScriptStructPtr) : bool {.importcpp:"#-
 proc get*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 converter toUObjectPtr*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 converter fromObjectPtr*[T : UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
-
-
-#UOBJECT
-proc getFName*(obj:UObjectPtr|FFieldPtr) : FName {. importcpp: "#->GetFName()" .}
-proc getFlags*(obj:UObjectPtr|FFieldPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
-proc setFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->SetFlags(#)" .}
-proc clearFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->ClearFlags(#)" .}
-
-proc addToRoot*(obj:UObjectPtr) : void {. importcpp: "#->AddToRoot()" .}
-
-proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
-proc getOuter*(obj : UObjectPtr) : UObjectPtr {. importcpp: "#->GetOuter()" .}
-proc getWorld*(obj : UObjectPtr) : UWorldPtr {. importcpp: "#->GetWorld()" .}
-
-proc getName*(obj : UObjectPtr) : FString {. importcpp:"#->GetName()" .}
-proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
-proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
 
 
 

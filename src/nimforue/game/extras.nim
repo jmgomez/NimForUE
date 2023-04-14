@@ -1,13 +1,14 @@
 include ../unreal/prelude
 import ../unreal/core/containers/containers
 import ../codegen/[ueemit, emitter]
+
 # import ../codegen/[gencppclass]
 
 import engine/common
 import engine/gameframework
 import engine/engine
 import enhancedinput
-import std/[typetraits, options, asyncdispatch]
+import std/[typetraits, options, asyncdispatch, strformat]
 
 proc getSubsystem*[T : UEngineSubsystem]() : Option[ptr T] = 
     tryUECast[T](getEngineSubsystem(makeTSubclassOf[UEngineSubsystem](staticClass[T]())))
@@ -58,10 +59,43 @@ when WithEditor:
   proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   cast[UEEmitter](addr ueEmitter)
 
 
+import unreal/editor/editor
+
+proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) = 
+    try:
+        let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
+
+        #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
+        if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
+          reinstanceNueTypes(packageName, nimHotReload, "")
+          return;
+       
+        proc onPIEEndCallback(isSimulating:bool, packageName:string, hotReload:FNimHotReloadPtr, handle:FDelegateHandlePtr) {.cdecl.} = 
+          reinstanceNueTypes(packageName, hotReload, "", reuseHotReload)
+          onEndPIEEvent.remove(handle[])
+          deleteCpp(handle)
+          UE_LOG(&"NimUE: PIE ended, reinstanciated nue types {packageName}")
+          
+        let onPIEEndHandle = newCpp[FDelegateHandle]()
+        (onPIEEndHandle[]) = onEndPIEEvent.addStatic(onPIEEndCallback, packageName, nimHotReload, onPIEEndHandle)
+        UE_Log "Deffered reinstance of NueTypes for package: " & packageName & " after PIE ended"
+
+       
+    except Exception as e:
+        #TODO here we could send a message to the user
+        UE_Error "Nim CRASHED "
+        UE_Error e.msg
+        UE_Error e.getStackTrace()
+
+import ../buildscripts/buildscripts
 #Called from NimForUE module as entry point when we are in a non editor build
-proc startNue*() {.cdecl, exportc.} =
+proc startNue*(calledFrom:NueLoadedFrom) {.cdecl, exportc.} =
   
-  UE_Log "Start Nue CALLED" #TODO hook early load 
-  let nimHotReload = emitUStructsForPackage(getGlobalEmitter()[], "GameNim", false)
-  
- 
+  case calledFrom:
+  of nlfPostDefault:  
+    discard emitUStructsForPackage(getGlobalEmitter()[], "GameNim", emitEarlyLoadTypesOnly = false)
+  of nlfEditor:
+    emitNueTypes(getGlobalEmitter()[], "GameNim", emitEarlyLoadTypesOnly =false, reuseHotReload = true)
+  else:
+    #TODO hook early load
+    discard

@@ -59,11 +59,12 @@ void UNimForUEEngineSubsystem::LoadNimForUEHost() {
 }
 
 UNimForUEEngineSubsystem::UNimForUEEngineSubsystem() {
-	LoadNimForUEHost();
+	// LoadNimForUEHost();
 }
 
 void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+	return;
 	
 #if WITH_EDITOR
 	//Some modules use PostEngineInit but command lets only runs if PostDefault is set.
@@ -98,6 +99,7 @@ int UNimForUEEngineSubsystem::GetReloadTimesFor(FString ModuleName) {
 
 bool UNimForUEEngineSubsystem::Tick(float DeltaTime)
 {
+	return true;
 #if WITH_EDITOR
 	//If we are cooking we just skip
 	if (IsRunningCommandlet()) return true;

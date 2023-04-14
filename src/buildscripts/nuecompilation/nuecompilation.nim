@@ -176,7 +176,7 @@ proc compileGame*(extraSwitches:seq[string], withDebug:bool) =
 
 
 
-proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) = 
+proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) = 
   let gameSwitches = @[
     "-d:game",
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
@@ -202,7 +202,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} --compileOnly  --noMain -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
+  let compCmd = &"nim cpp {buildFlags} --compileOnly   -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")
@@ -223,6 +223,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
       writeFile(cppFile, cleanedCppFileContent)
     #checks if the file changed so UE doesnt compile it again:
     let filename = cppFile.extractFilename()
+   
     let cppDst = privateGameFolder / filename
     if fileExists(cppDst) and readFile(cppFile) == readFile(cppDst):
       continue
@@ -230,7 +231,7 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
       log "Will recompile " & cppDst
       copyFile(cppFile, cppDst)
 
-
+#TODO use the nimscript to check if something changes
   # removeDir(privateBindingsFolder)
   createDir(privateBindingsFolder)
   #TODO pick only the used bindings files (by collecting them at compile time)
@@ -243,10 +244,10 @@ proc compileGameNonEditor*(extraSwitches:seq[string], withDebug:bool) =
 
 
 proc compileGenerateBindings*() = 
-  let withDebug = false
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug), pluginPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
+  let withDebug = true
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug), gamePlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   doAssert(execCmd(&"{nimCmd}  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  # doAssert(execCmd(&"nim  cpp {buildFlags}   --noMain --app:staticlib --stackTrace:off --lineTrace:off --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  # doAssert(execCmd(&"nim  cpp {buildFlags}   --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
   #It still generates NimMain in the header. So we need to get rid of it:

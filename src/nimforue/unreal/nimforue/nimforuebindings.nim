@@ -245,4 +245,4 @@ proc executeTaskInTaskGraph*[T](param: T, taskFn: proc(param:T){.cdecl.}, nimMai
 proc executeCmd*(cmd, args, workingDir, stdOut, stdError: var FString) : int {.importcpp: "UReflectionHelpers::ExecuteCmd(@)".}
 
 #ReinstanceNueTypes(FString NueModule, FNimHotReload* NimHotReload, FString NimError);
-proc reinstanceNueTypes*(nueModule:FString, nimHotReload:FNimHotReloadPtr, nimError:FString) : void {.importcpp: "ReinstanceBindings::ReinstanceNueTypes(@)".}
+proc reinstanceNueTypes*(nueModule:FString, nimHotReload:FNimHotReloadPtr, nimError:FString, reuseHotReload:bool) : void {.importcpp: "ReinstanceBindings::ReinstanceNueTypes(@)".}
