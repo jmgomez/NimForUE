@@ -12,14 +12,8 @@
 #include "ReinstanceBindings.h"
 #include "Interfaces/IPluginManager.h"
 
-/*
-* type #The engine can trigger the load of a library from different places
-  NueLoadedFrom* {.size:sizeof(uint8), exportc .} = enum
-	nlfPreEngine = 0, #before the engine is loaded, when the plugin code is registered.
-	nlfPostDefault = 1, #after all modules are loaded (so all the types exists in the reflection system)
-	nlfEditor = 2 #while on the editor. 
 
- */
+
 
 void UNimForUEEngineSubsystem::LoadNimGuest(FString NimError) {
 	//Notice this function is static because it needs to be used in a FFI function.
@@ -59,12 +53,11 @@ void UNimForUEEngineSubsystem::LoadNimForUEHost() {
 }
 
 UNimForUEEngineSubsystem::UNimForUEEngineSubsystem() {
-	// LoadNimForUEHost();
+	LoadNimForUEHost();
 }
 
 void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	return;
 	
 #if WITH_EDITOR
 	//Some modules use PostEngineInit but command lets only runs if PostDefault is set.
@@ -99,7 +92,6 @@ int UNimForUEEngineSubsystem::GetReloadTimesFor(FString ModuleName) {
 
 bool UNimForUEEngineSubsystem::Tick(float DeltaTime)
 {
-	return true;
 #if WITH_EDITOR
 	//If we are cooking we just skip
 	if (IsRunningCommandlet()) return true;

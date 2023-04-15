@@ -29,7 +29,7 @@ let buildSwitches* = @[
   "--ic:off",
   "--threads:off",
   "--path:$nim",
-
+  "--parallelBuild:0",
   "-d:nimOldCaseObjects", #Nim 2.0 
   
   # "--hints:off",

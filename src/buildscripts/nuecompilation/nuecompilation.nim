@@ -202,7 +202,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} --compileOnly   -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
+  let compCmd = &"nim cpp {buildFlags} --genScript   -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")
@@ -244,9 +244,9 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
 
 
 proc compileGenerateBindings*() = 
-  let withDebug = true
+  let withDebug = false
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), gamePlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"{nimCmd}  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"{nimCmd}  cpp {buildFlags}  --noMain --noLinking --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   # doAssert(execCmd(&"nim  cpp {buildFlags}   --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)

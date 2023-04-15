@@ -1,8 +1,8 @@
 include ../unreal/prelude
 import ../unreal/core/containers/containers
 import ../codegen/[ueemit, emitter]
+import ../codegen/[gencppclass]
 
-# import ../codegen/[gencppclass]
 
 import engine/common
 import engine/gameframework
@@ -59,43 +59,62 @@ when WithEditor:
   proc getUEEmitter() : UEEmitter {.cdecl, dynlib, exportc.} =   cast[UEEmitter](addr ueEmitter)
 
 
-import unreal/editor/editor
+# import unreal/editor/editor
 
-proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) = 
-    try:
-        let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
+# proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) = 
+#     try:
+#         let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
 
-        #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
-        if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
-          reinstanceNueTypes(packageName, nimHotReload, "")
-          return;
+#         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
+#         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
+#           UE_Warn "Reinstanciating NueTypes "
+#           reinstanceNueTypes(packageName, nimHotReload, "", reuseHotReload)
+#           return;
        
-        proc onPIEEndCallback(isSimulating:bool, packageName:string, hotReload:FNimHotReloadPtr, handle:FDelegateHandlePtr) {.cdecl.} = 
-          reinstanceNueTypes(packageName, hotReload, "", reuseHotReload)
-          onEndPIEEvent.remove(handle[])
-          deleteCpp(handle)
-          UE_LOG(&"NimUE: PIE ended, reinstanciated nue types {packageName}")
+#         proc onPIEEndCallback(isSimulating:bool, packageName:string, hotReload:FNimHotReloadPtr, handle:FDelegateHandlePtr) {.cdecl.} = 
+#           reinstanceNueTypes(packageName, hotReload, "", false)#TODO change this
+#           onEndPIEEvent.remove(handle[])
+#           deleteCpp(handle)
+#           UE_LOG(&"NimUE: PIE ended, reinstanciated nue types {packageName}")
           
-        let onPIEEndHandle = newCpp[FDelegateHandle]()
-        (onPIEEndHandle[]) = onEndPIEEvent.addStatic(onPIEEndCallback, packageName, nimHotReload, onPIEEndHandle)
-        UE_Log "Deffered reinstance of NueTypes for package: " & packageName & " after PIE ended"
+#         let onPIEEndHandle = newCpp[FDelegateHandle]()
+#         (onPIEEndHandle[]) = onEndPIEEvent.addStatic(onPIEEndCallback, packageName, nimHotReload, onPIEEndHandle)
+#         UE_Log "Deffered reinstance of NueTypes for package: " & packageName & " after PIE ended"
 
        
-    except Exception as e:
-        #TODO here we could send a message to the user
-        UE_Error "Nim CRASHED "
-        UE_Error e.msg
-        UE_Error e.getStackTrace()
+#     except Exception as e:
+#         #TODO here we could send a message to the user
+#         UE_Error "Nim CRASHED "
+#         UE_Error e.msg
+#         UE_Error e.getStackTrace()
 
 import ../buildscripts/buildscripts
+import std/[dynlib, os]
+proc emitTypesInGuest(calledFrom:NueLoadedFrom) = 
+  type 
+    EmitTypesExternal = proc (emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.gcsafe, cdecl.}
+  let libDir = PluginDir / "Binaries"/"nim"/"ue"
+  let guestPath = getLastLibPath(libDir, "nimforue")
+  if guestPath.isNone():
+    UE_Error "Could not find guest lib"
+    UE_Warn "Looked at: ???" & PluginDir
+    return
+  let lib = loadLib(guestPath.get())
+  let emitTypesExternal = cast[EmitTypesExternal](lib.symAddr("emitTypesExternal"))
+  if emitTypesExternal.isNotNil():
+    emitTypesExternal(cast[UEEmitterPtr](getGlobalEmitter()), calledFrom, reuseHotReload=true)
+  
 #Called from NimForUE module as entry point when we are in a non editor build
 proc startNue*(calledFrom:NueLoadedFrom) {.cdecl, exportc.} =
-  
+  UE_Log "Reinstanciating NueTypes startNue! aqui"
   case calledFrom:
   of nlfPostDefault:  
     discard emitUStructsForPackage(getGlobalEmitter()[], "GameNim", emitEarlyLoadTypesOnly = false)
   of nlfEditor:
-    emitNueTypes(getGlobalEmitter()[], "GameNim", emitEarlyLoadTypesOnly =false, reuseHotReload = true)
+    
+    #so here it should somehow notify guest to do the reinstance
+    # emitNueTypes(getGlobalEmitter()[], "GameNim", emitEarlyLoadTypesOnly =false, reuseHotReload = false)
+    emitTypesInGuest(calledFrom)
   else:
     #TODO hook early load
     discard

@@ -70,16 +70,21 @@ proc pressReleaseKeycode(input: var Input, code: int) =
 
 type 
   Mutex  = object
-    handle: uint
+    handle: pointer
   AccessRights = uint8
 
 proc openMutex*(name: cstring): pointer {.importcpp: "OpenMutexA(MAXIMUM_ALLOWED, 0, #)".}
-
+proc closeHandle*(handle: pointer) {.importcpp: "CloseHandle(#)".}
 
 proc isLiveCodingRunning*(): bool =
   const LiveCodingMutext = r"Global\LiveCoding_E++unreal_sources+5.1Launcher+UE_5.2+Engine+Binaries+Win64+UnrealEditor.exe"
   var mutex = openMutex(LiveCodingMutext)
-  not mutex.isNil()
+  let isRunning = not mutex.isNil()
+
+  if isRunning:
+    closeHandle(mutex)
+  isRunning
+
   # result = mutex.handle != 0
 
 proc triggerLiveCoding*(waitMs:int32 = 50) =

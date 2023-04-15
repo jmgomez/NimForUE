@@ -42,7 +42,7 @@ class FNimPCGElement of FSimplePCGElement:
 uClass UPCGNimTestSettings of UPCGBaseSubgraphSettings:
   (Reinstance)
   uprops(EditAnywhere, BlueprintReadWrite):
-    myProperty2 : FString
+    myProperty4 : FString
 
   override:
     proc getDefaultNodeName() : FName {.constcpp.} = n"NimTest"

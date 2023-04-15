@@ -37,6 +37,7 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
 
   emitterPtr
 
+
 proc startNue(libPath:string)  = 
   type 
     StartNueFN = proc ():void {.gcsafe, stdcall.}
@@ -47,6 +48,9 @@ proc startNue(libPath:string)  =
   assert startNueFn.isNotNil()
 
   startNueFn()
+
+
+
 
 #Will be called from the commandlet that generates the bindigns
 proc genBindingsEntryPoint() : void {.ffi:genFilePath} = 
@@ -61,17 +65,17 @@ proc genBindingsEntryPoint() : void {.ffi:genFilePath} =
      
 
 
-proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string, emitEarlyLoadTypesOnly:bool) = 
+proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) = 
     try:
         let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
         
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
-          reinstanceNueTypes(packageName, nimHotReload, "")
+          reinstanceNueTypes(packageName, nimHotReload, "", reuseHotReload)
           return;
        
         proc onPIEEndCallback(isSimulating:bool, packageName:string, hotReload:FNimHotReloadPtr, handle:FDelegateHandlePtr) {.cdecl.} = 
-          reinstanceNueTypes(packageName, hotReload, "")
+          reinstanceNueTypes(packageName, hotReload, "", false)
           onEndPIEEvent.remove(handle[])
           deleteCpp(handle)
           UE_LOG(&"NimUE: PIE ended, reinstanciated nue types {packageName}")
@@ -95,13 +99,22 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
   try:
     case libName:
     of "nimforue": 
-        emitNueTypes(getGlobalEmitter()[], "Nim", loadedFrom == nlfPreEngine)
+        emitNueTypes(getGlobalEmitter()[], "Nim", loadedFrom == nlfPreEngine, false)
         if not isRunningCommandlet() and timesReloaded == 0: 
-          genBindingsCMD()
+          # genBindingsCMD()
+          discard
     else:
-        emitNueTypes(getEmitterFromGame(libPath)[], "GameNim",  loadedFrom == nlfPreEngine)
+        emitNueTypes(getEmitterFromGame(libPath)[], "GameNim",  loadedFrom == nlfPreEngine, false)
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
+
+
+#only GameNim types
+proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.cdecl, exportc, dynlib.} = 
+  UE_Log "Emitting types from external lib"
+  emitNueTypes(emitter[], "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
+
+
 
 
 #entry point for the game. but it will also be for other libs in the future
@@ -120,12 +133,14 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint, loadedFro
     # if $libName == "nimforue" and not isRunningCommandlet():
     #   registerVmTests() 
 
-  
 
+
+
+
+#TODO should something like this be handled by the game too? 
   #1. Works as it worked before
   #2. Make it fail by initializing everything in start
   #3. Only emmit types when no in preInit 
-
 proc onLoadingPhaseChanged(prev : NueLoadedFrom, next:NueLoadedFrom) : void {.ffi:genFilePath} = 
   UE_Log &"Loading phase changed: {prev} -> {next}"
   if prev == nlfPreEngine and next == nlfPostDefault:

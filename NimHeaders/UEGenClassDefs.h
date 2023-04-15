@@ -7,6 +7,7 @@
  #include "Modules/ModelingToolsEditorMode_NimBinding.h"
  #include "Modules/NimForUEBindings_NimBinding.h"
  #include "Modules/NimForUEEditor_NimBinding.h"
+ #include "Modules/NimForUEGame_NimBinding.h"
  #include "Modules/NimForUETest_NimBinding.h"
  #include "Modules/NimForUE_NimBinding.h"
  #include "Modules/NimTemplate_NimBinding.h"

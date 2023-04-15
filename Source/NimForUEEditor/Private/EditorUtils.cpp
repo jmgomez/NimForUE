@@ -356,7 +356,7 @@ void UEditorUtils::Tick(float DeltaTime){
 	}
 	BlueprintsWithAssetOpen = {};
 }
-void UEditorUtils::HotReload(FNimHotReload* NimHotReload, IReload* UnrealReload) {
+void UEditorUtils::HotReload(FNimHotReload* NimHotReload, IReload* UnrealReload, bool bReuseHotReload) {
 
 	PreReload(NimHotReload);
 	UAssetEditorSubsystem* AssetEditor = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
@@ -429,10 +429,13 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, IReload* UnrealReload)
 
 
 
-	//TODO send flag when no hr although this can be moved up
-	// UnrealReload->Finalize(true);
-	// UnrealReload->SetSendReloadCompleteNotification(true);
-
+	if(!bReuseHotReload) {
+		//We need to handle it in case UE doesnt handle it for us
+		FReload* HR = static_cast<FReload*>(UnrealReload);
+		HR->Finalize(true);
+		//so it doesnt trigger again
+		HR->SetSendReloadCompleteNotification(false);
+	}
 
 	//Delete prev Structs
 	for (const auto& StructToReinstancePair : NimHotReload->StructsToReinstance){

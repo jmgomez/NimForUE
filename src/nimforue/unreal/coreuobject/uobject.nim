@@ -315,7 +315,7 @@ proc findFuncByName*(cls : UClassPtr, name:FName) : UFunctionPtr {.inline.} =
     var fn = cls.findFunctionByNameExcludeSuper(name)
     if fn.isNil(): #try again with super, this is needed in order to override. 
         fn = cls.findFunctionByName(name)
-    UE_Error "Could not find function " & $name & " in class " & cls.getName()
+    # UE_Error "Could not find function " & $name & " in class " & cls.getName()
     return fn
 
 proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) : void {. importcpp: "#.AddFunctionToFunctionMap(@)"}
