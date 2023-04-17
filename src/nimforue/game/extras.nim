@@ -91,21 +91,7 @@ when WithEditor:
 import ../buildscripts/buildscripts
 import std/[dynlib, os, sequtils, sugar]
 
-proc emitTypesInGuest(calledFrom:NueLoadedFrom) = 
-  type 
-    EmitTypesExternal = proc (emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.gcsafe, cdecl.}
-  let libDir = PluginDir / "Binaries"/"nim"/"ue"
-  let guestPath = getLastLibPath(libDir, "nimforue")
-  if guestPath.isNone():
-    UE_Error "Could not find guest lib"
-    UE_Warn "Looked at: ???" & PluginDir
-    return
-  UE_Log "emit types in guest"
-  let lib = loadLib(guestPath.get())
-  let emitTypesExternal = cast[EmitTypesExternal](lib.symAddr("emitTypesExternal"))
-  if emitTypesExternal.isNotNil():
-    emitTypesExternal(cast[UEEmitterPtr](getGlobalEmitter()), calledFrom, reuseHotReload=true)
-    
+
 uClass UGameManager of UObject:  
   ufuncs(Static):
     proc reinstanceNue() =
@@ -114,6 +100,10 @@ uClass UGameManager of UObject:
       UE_Error "ueTypeChar: " & $ueTypeChar.get().ueType.fields.filterIt(it.name.contains("test"))
       # UE_Log "There you go"      
       UE_Log "Reinstanciating reinstanceNue NueTypes reinstanceNue! aqui. Ahora? va con  retraso 7"
+      
+            
+      
+      # emitTypesInGuest(nlfEditor)
       
 
 #Called from NimForUE module as entry point when we are in a non editor build
@@ -126,8 +116,27 @@ proc startNue*(calledFrom:NueLoadedFrom) {.cdecl, exportc.} =
     UE_Error "Reinstanciating NueTypes startNue! editor entra"
     #so here it should somehow notify guest to do the reinstance
     # emitNueTypes(getGlobalEmitter()[], "GameNim", emitEarlyLoadTypesOnly =false, reuseHotReload = false)
-    emitTypesInGuest(calledFrom)
+    
     # reinstanceNue()
   else:
     #TODO hook early load
     discard
+
+proc getGlobalEmitterPtr*() : UEEmitterPtr {.cdecl, exportc.} = 
+    result = cast[UEEmitterPtr](addr ueEmitter)
+proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.} = 
+  proc emitTypesInGuest(calledFrom:NueLoadedFrom, globalEmitter:UEEmitterPtr) = 
+        type 
+          EmitTypesExternal = proc (emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.gcsafe, cdecl.}
+        let libDir = PluginDir / "Binaries"/"nim"/"ue"
+        let guestPath = getLastLibPath(libDir, "nimforue")
+        if guestPath.isNone():
+          UE_Error "Could not find guest lib"
+          UE_Warn "Looked at: ???" & PluginDir
+          return
+        UE_Log "emit types in guest"
+        let lib = loadLib(guestPath.get())
+        let emitTypesExternal = cast[EmitTypesExternal](lib.symAddr("emitTypesExternal"))
+        if emitTypesExternal.isNotNil():
+          emitTypesExternal(globalEmitter, calledFrom, reuseHotReload=true)
+  emitTypesInGuest(nlfEditor, globalEmitter)

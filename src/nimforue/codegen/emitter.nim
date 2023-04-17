@@ -56,11 +56,14 @@ proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string =
 proc getGlobalEmitter*() : UEEmitter = 
     result = cast[UEEmitter](addr ueEmitter)
 
+
+
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =              
     # var emitter =  ueEmitter.emitters[ueField.typeName]
     ueEmitter.emitters[ueField.typeName].ueType.fields.add ueField
-    # if fnImpl.isSome:
-    #   ueEmitter.fnTable.add FnEmitter(fnPtr: fnImpl.get(), ueField: ueField)
+    
+    if fnImpl.isSome:
+      ueEmitter.fnTable.add FnEmitter(fnPtr: fnImpl.get(), ueField: ueField)
 
     # ueEmitter.emitters[ueField.typeName] = ueEmitter.emitters[ueField.typeName]#.replaceFirst((e:EmitterInfo)=>e.ueType.name == ueField.className, emitter)
 # 
