@@ -609,8 +609,8 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
 
   return modules
 
-
-when defined(WithEditor) or defined(vmhost):
+#todo cache to a file
+when not defined(game) or defined(vmhost):
   const dir = PluginDir / "src" / "nimforue" / "unreal" 
   const entryPoint = dir / "prelude.nim"
   # const dir = PluginDir / "src" / "nimforue" / "unreal" / "engine" 

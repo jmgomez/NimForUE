@@ -12,21 +12,22 @@ nlfCommandlet = 3 #while on the commandlet. Nothing special. Dont act different 
 
 */
 
-// extern "C" void startNue(uint8 calledFrom);
-// // void NimMain();
-//
+// extern  "C" void startNue(uint8 calledFrom);
+// void GameNimMain();
+
 // void StartNue() {
 // 	FCoreUObjectDelegates::ReloadCompleteDelegate.AddLambda([&](EReloadCompleteReason Reason) {
 // 		// BeginReload(ActiveReloadType, IReload& Interface)
 // 		UE_LOG(LogTemp, Log, TEXT("Reinstancing LC reason: $s"))
+// 		GameNimMain();
 // 		startNue(2);
-// 		
+		
 // 	});
 // 	// #if !WITH_EDITOR
-// 	// NimMain();
+// 	GameNimMain();
 // 	startNue(1);
 // 	// #endif
-// }/
+// }
 
 void UNimForUEGameEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection) {
 

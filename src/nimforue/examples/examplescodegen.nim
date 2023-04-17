@@ -106,21 +106,6 @@ uEnum EInspectType:
   Class
   Name
 
-# var ueProjectRef : ref UEProject
-# proc getProject() : UEProject = 
-#   if ueProjectRef.isNil():
-#     let ueProject =  genReflectionData(getGameModules(), getAllInstalledPlugins())
-#     ueProjectRef = new UEProject
-#     ueProjectRef[] = ueProject
-#   return ueProjectRef[]
-
-
-# const definedDeps = @["EAxis", "ECollisionChannel", "EInputEvent", "ELifetimeCondition", "ELinearConstraintMotion", "ELocalizedTextSourceCategory", "EMouseCursor", "ENetworkFailure", "ETouchIndex", "ETraceTypeQuery", "FBox", "FBox2D", "FBoxSphereBounds", "FButtonStyle", "FCheckBoxStyle", "FColor", "FCompositeFont", "FDateTime", "FDirectoryPath", "FFilePath", "FFloatRange", "FFrameNumber", "FFrameRate", "FGuid", "FHitResult", "FInputChord", "FInputDeviceId", "FInputEvent", "FInt32Interval", "FIntPoint", "FIntVector", "FInterpCurveFloat", "FInterpCurve
-# Quat", "FInterpCurveTwoVectors", "FInterpCurveVector", "FInterpCurveVector2D", "FKey", "FKeyEvent", "FLinearColor", "FMatrix", "FName", "FPlane", "FPlatformUserId", "FPrimaryAssetId", "FPrimaryAssetType", "FQualifiedFrameTime", "FQuat", "FQuat4f", "FRandomStream", "FRotator", "FScriptTypedElementHandle", "FScriptTypedElementListProxy",  "FSoftObjectPath", "FString", "FTableRowBase", "FText", "FTimecode", "FTimespan", "FTopLevelAssetPath", "FTransform", "FVector", "FVector2D", "FVector3d", "FVector3f", "FVector4", "FVector4d", "FVector4f", "FVect
-# or_NetQuantize", "FVector_NetQuantize10", "FVector_NetQuantize100", "FVector_NetQuantizeNormal", "UAudioEndpointSettingsBase", "UAudioParameterControllerInterface", "UBodySetupCore", "UClothingAssetBase", "UClothingSimulationFactory", "UClothingSimulationInteractor", "UDeveloperSettings", "UFontFaceInterface", "UFontProviderInterface", "UHandlerComponentFactory", "ULandscapeGrassType", "UMeshDescriptionBaseBulkData", "UNetObjectCountLimiterConfig", "UObjectReplicationBridge", "UOcclusionPluginSourceSettingsBase", "UPhysicsSettingsCore", "UReverbPluginSourceSettingsBase", "USoundModulatorBase",
-#  "USoundfieldEffectBase", "USoundfieldEncodingSettingsBase", "USoundfieldEndpointSettingsBase", "USourceDataOverridePluginSourceSettingsBase", "USpatializationPluginSourceSettingsBase", "UStaticMeshDescription", "UTypedElementAssetDataInterface", "UTypedElementCounterInterface", "UTypedElementHierarchyInterface", "UTypedElementObjectInterface", "UTypedElementSelectionInterface", "UTypedElementSelectionSet", "UWaveformTransformationBase", "bool", "float32", "float64", "int16", "int32", "int64", "int8", "uint16", "uint32", "uint64", "uint8"]
-
-
 
 
 #This is just for testing/exploring, it wont be an actor
@@ -130,8 +115,8 @@ uClass AActorCodegen of AActor:
     proc beginPlay() = 
       UE_Warn "Hello Begin play from actor codegen"
   uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenInspect):
-    inspect : EInspectType = Name
-    inspectName : FString = "EnhancedInputSubsystemInterface"
+    inspect : EInspectType 
+    inspectName : FString
     inspectClass : UClassPtr
     inspectActor : AActorPtr
     bOnlyBlueprint : bool 

@@ -214,19 +214,22 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
         return none(UEField)
 
   let importRule = rules.getRuleAffectingType(nimType, uerInnerClassDelegate)
+  var typeName : string
   if importRule.isSome():
     # UE_Error &"Delegate {nimType} is affected by uerInnedClassDelegate"
     #the outer of this delegate should be the same outer as the property
     #notice these delegates are not ment to be used in your our type (the name wouldnt match, it can be fixed but doesnt make sense)
-    let outerName = outer.getPrefixCpp() & outer.getName()
+    typeName = outer.getPrefixCpp() & outer.getName()
     let isEmpty = not importRule.get().onlyFor.any()
-    if isEmpty or outerName in importRule.get().onlyFor:
-      nimType = getFuncDelegateNimName(nimType, outerName)
+    if isEmpty or typeName in importRule.get().onlyFor:
+      nimType = getFuncDelegateNimName(nimType, typeName)
 
   let outerFn = tryUECast[UFunction](outer)
   var defaultValue : string  = ""
-  if outerFn.isSome(): #the default values for the params are on the metadata of the function
+  if outerFn.isSome(): #the default values for the params are on the metadata of the function    
     let ufun = outerFn.get()
+    let outerFn = ueCast[UStruct](ufun.getOuter())
+    typeName = outerFn.getPrefixCpp() & outerFn.getName()
     let supportedTypes = ["bool", "FString", "float32", "float64", "int32", "int", "FName", "FLinearColor", "FVector", "FVector2D", "FRotator"]
     let isSupportedDefault = nimType in supportedTypes or @["E", "A", "U"].filterIt(nimType.startsWith(it)).any()
     if ufun.hasMetadata(CPP_Default_MetadataKeyPrefix & prop.getName()) and isSupportedDefault: 
@@ -236,7 +239,7 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
 
   
   if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules or outerFn.isSome()):
-    var field = makeFieldAsUProp(name, nimType, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
+    var field = makeFieldAsUProp(name, nimType, typeName, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
     field.defaultParamValue = defaultValue
     return some field
   else:
@@ -471,7 +474,7 @@ func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[],  pchIncludes:seq
       # UE_Warn &"Skipping enum value {fieldName} in {name} because it collides with another field."
       continue
 
-    fields.add(makeFieldASUEnum(fieldName.removePref("_")))
+    fields.add(makeFieldASUEnum(fieldName.removePref("_"), name))
 
   for rule in rules:
     if name in rule.affectedTypes and rule.rule == uerIgnore:
@@ -803,7 +806,7 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
   #Handles attachments
   for objProp in actorCls.getAllPropsOf[:FObjectPtrProperty]():
         let comp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](objProp, actor)[])
-        UE_Log &"Comp: {comp} {objProp}"
+        # UE_Log &"Comp: {comp} {objProp}"
         if comp.isNotNil():
           if objProp.hasMetadata(AttachMetadataKey):
               #Tries to find it both, camelCase and PascalCase. Probably we should push PascalCase to UE
@@ -818,7 +821,7 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
                 comp.setupAttachment(attachToComp)
 
           else:
-              UE_Warn &"No attach metadata for {comp.getName()}"
+              UE_Warn &"No attach metadata for {comp}"
               if comp != actor.getRootComponent():
                 comp.setupAttachment(actor.getRootComponent())
 
@@ -900,7 +903,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   for field in ueType.fields:
     var field = field
     case field.kind:
-    of uefProp: discard field.emitFProperty(newCls)
+    of uefProp:      
+      discard field.emitFProperty(newCls)      
     of uefFunction:
       # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}" #notice each module emits its own functions  
       discard emitUFunction(field, ueType, newCls, getNativeFuncImplPtrFromUEField(getGlobalEmitter(), field))

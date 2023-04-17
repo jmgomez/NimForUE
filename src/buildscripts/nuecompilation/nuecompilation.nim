@@ -158,7 +158,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) =
   let entryPoint = NimGameDir/(if isGame: "game.nim" else: &"{name}/{name}.nim")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"{nimCmd} cpp {buildFlags} --app:lib   -d:withPCH --nimcache:{nimCache} {entryPoint}"
+  let compCmd = &"{nimCmd} cpp {buildFlags} --app:lib  --nimMainPrefix:Game  -d:withPCH --nimcache:{nimCache} {entryPoint}"
   # echo compCmd
   doAssert(execCmd(compCmd)==0)
   # setCurrentDir(PluginDir)
@@ -202,7 +202,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"nim cpp {buildFlags} --genScript   -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
+  let compCmd = &"nim cpp {buildFlags} --genScript --nimMainPrefix:Game   -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
   # copyFile(nimCache / "NimForUEGame.h", NimHeadersDir / "NimForUEGame.h")

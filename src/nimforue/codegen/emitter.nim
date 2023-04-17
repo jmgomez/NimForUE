@@ -5,7 +5,6 @@ import models
 import std/[sugar, tables, options, sequtils]
 import ../unreal/nimforue/[nimforuebindings]
 import ../utils/[utils, ueutils]
- 
 
 
 
@@ -30,7 +29,7 @@ type
         ueField* : UEField
 
     UEEmitterRaw* = object 
-        emitters* : seq[EmitterInfo]
+        emitters* : OrderedTable[string, EmitterInfo] #typename
         # types* : seq[UEType]
         # fnTable* : Table[UEField, Option[UFunctionNativeSignature]] 
         fnTable* : seq[FnEmitter]
@@ -48,22 +47,23 @@ proc getNativeFuncImplPtrFromUEField*(emitter: UEEmitter, ueField: UEField): Opt
             return some(ef.fnPtr)
     return none(UFunctionNativeSignature)
 
-proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string = 
-    result = $emitter.emitters
+
 
 var ueEmitter* {.compileTime.} : UEEmitterRaw = UEEmitterRaw() 
+proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string = 
+    result = $emitter.emitters.values.toSeq()
 
 proc getGlobalEmitter*() : UEEmitter = 
     result = cast[UEEmitter](addr ueEmitter)
 
-proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =  
-    var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == ueField.className).get()
-    emitter.ueType.fields.add ueField
-    if fnImpl.isSome:
-      ueEmitter.fnTable.add FnEmitter(fnPtr: fnImpl.get(), ueField: ueField)
+proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =              
+    # var emitter =  ueEmitter.emitters[ueField.typeName]
+    ueEmitter.emitters[ueField.typeName].ueType.fields.add ueField
+    # if fnImpl.isSome:
+    #   ueEmitter.fnTable.add FnEmitter(fnPtr: fnImpl.get(), ueField: ueField)
 
-    ueEmitter.emitters = ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == ueField.className, emitter)
-
+    # ueEmitter.emitters[ueField.typeName] = ueEmitter.emitters[ueField.typeName]#.replaceFirst((e:EmitterInfo)=>e.ueType.name == ueField.className, emitter)
+# 
 
 proc getEmmitedTypes*(emitter: UEEmitterRaw) : seq[UEType] = 
-    emitter.emitters.map(e=>e.ueType)
+    emitter.emitters.values.toSeq.mapIt(it.ueType)

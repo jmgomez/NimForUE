@@ -14,6 +14,7 @@
  #include "Modules/PCGEditor_NimBinding.h"
  #include "Modules/PCG_NimBinding.h"
  #include "Modules/PhysicsCore_NimBinding.h"
+ #include "Modules/ScriptableToolsEditorMode_NimBinding.h"
  #include "Modules/SlateCore_NimBinding.h"
  #include "Modules/Slate_NimBinding.h"
  #include "Modules/umg/Animation_NimBinding.h"

@@ -91,6 +91,7 @@ type
 
     UEField* = object
         name* : string
+        typeName* : string
         metadata* : seq[UEMetadata] #Notice we are using a custom metadata field to indicate if the field is delegate or not. It has to be anotated from the dsl somewhoe to (infer it from the flags or do something else? )
 
         case kind*: UEFieldKind
@@ -102,7 +103,7 @@ type
                 defaultParamValue*:string #Only valid for params. It has the UE Format
 
             of uefFunction:
-                className*:string
+                # className*:string #use typeName
                 actualFunctionName*:string #some functions are called differently on unreal (receivve, k2_ etc.)
                 #note cant use option type. If it has a returnParm it will be the first param that has CPF_ReturnParm
                 signature* : seq[UEField]
@@ -112,7 +113,7 @@ type
             of uefEnumVal:
                 discard
 
-    UEType* = object 
+    UEType* = object        
         name* : string
         fields* : seq[UEField] #it isnt called field because there is a collision with a nim type
         metadata* : seq[UEMetadata]

@@ -4,6 +4,6 @@
 class DLLEXPORT ReinstanceBindings {
 public:
 #if WITH_EDITOR
-	static void ReinstanceNueTypes(FString NueModule, FNimHotReload* NimHotReload, FString NimError, bool bReuseHotReload);
+	static void ReinstanceNueTypes(FString NueModule, struct FNimHotReload* NimHotReload, FString NimError, bool bReuseHotReload);
 #endif
 };

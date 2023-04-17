@@ -358,7 +358,7 @@ func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFuncti
     
     (flags, fnMetas)
 
-func makeUEFieldFromNimParamNode*(n:NimNode) : UEField = 
+func makeUEFieldFromNimParamNode*(typeName: string, n:NimNode) : UEField = 
     #make sure there is no var at this point, but CPF_Out
 
     var nimType = n[1].repr.strip()
@@ -388,7 +388,7 @@ func makeUEFieldFromNimParamNode*(n:NimNode) : UEField =
     if nimType.split(" ")[0] == "var":
         paramFlags = paramFlags | CPF_OutParm | CPF_ReferenceParm
         nimType = nimType.split(" ")[1]
-    makeFieldAsUPropParam(paramName, nimType, paramFlags)
+    makeFieldAsUPropParam(paramName, nimType, typeName, paramFlags)
 
 
 
@@ -397,7 +397,7 @@ func makeUEFieldFromNimParamNode*(n:NimNode) : UEField =
 #first is the param specify on ufunctions when specified one. Otherwise it will use the first
 #parameter of the function
 #returns Fn and the FirstParam (which is the class)
-proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[UEMetadata] = @[]) : (UEField,UEField) =  
+proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], typeName:string, functionsMetadata : seq[UEMetadata] = @[]) : (UEField,UEField) =  
     #this will generate a UEField for the function 
     #and then call genNativeFunction passing the body
 
@@ -412,7 +412,7 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
 
     let fields = formalParamsNode
                     .filter(n=>n.kind==nnkIdentDefs)
-                    .map(makeUEFieldFromNimParamNode)
+                    .mapIt(makeUEFieldFromNimParamNode(typeName, it))
 
 
     #For statics funcs this is also true becase they are only allow
@@ -424,7 +424,7 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], functionsMet
     let returnParam = formalParamsNode #for being void it can be empty or void
                         .first(n=>n.kind in [nnkIdent, nnkBracketExpr])
                         .flatMap((n:NimNode)=>(if n.kind==nnkIdent and n.strVal()=="void": none[NimNode]() else: some(n)))
-                        .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), CPF_Parm | CPF_ReturnParm | CPF_OutParm))
+                        .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), typeName, CPF_Parm | CPF_ReturnParm | CPF_OutParm))
     let actualParams = classParam.map(n=>fields) #if there is class param, first param would be use as actual param
                                  .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
     
@@ -768,10 +768,10 @@ proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexD
 macro genType*(typeDef : static UEType) : untyped = genTypeDecl(typeDef)
 proc ueBindImpl(clsName : string, fn: NimNode) : NimNode = 
   let clsFieldMb = 
-    if clsName!="": some makeFieldAsUProp("obj", clsName) 
+    if clsName!="": some makeFieldAsUProp("obj", clsName, clsName) 
     else: none[UEField]()
 
-  var (fnField, firstParam) = uFuncFieldFromNimNode(fn, clsFieldMb, @[])
+  var (fnField, firstParam) = uFuncFieldFromNimNode(fn, clsFieldMb, clsName, @[])
   if clsFieldMb.isSome:
     fnField.fnFlags = FUNC_Static
   #Generates a fake class form the classField. 

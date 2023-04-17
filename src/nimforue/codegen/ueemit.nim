@@ -61,7 +61,7 @@ proc updateVTableStatic*[T](prevCls:UClassPtr) : void =
 proc getFnGetForUClass[T](ueType:UEType) : UPackagePtr->UFieldPtr = 
 #    (pkg:UPackagePtr) => ueType.emitUClass(pkg, ueEmitter.fnTable, ueEmitter.clsConstructorTable.tryGet(ueType.name))
     proc toReturn (pgk:UPackagePtr) : UFieldPtr = #the UEType changes when functions are added
-        var ueType = getGlobalEmitter().emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
+        var ueType = getGlobalEmitter().emitters[ueType.name].ueType#.emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
         #SHouldnt user constructor call to the defaultConstructorStatic anyways?? 
         let clsConstructor = ueEmitter.clsConstructorTable.tryGet(ueType.name).map(x=>x.fn).get(defaultConstructorStatic[T])
         let vtableConstructor = vtableConstructorStatic[T]
@@ -69,7 +69,7 @@ proc getFnGetForUClass[T](ueType:UEType) : UPackagePtr->UFieldPtr =
     toReturn
     
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
-    ueEmitter.emitters.add(EmitterInfo(ueType:ueType, generator:fn))
+    ueEmitter.emitters[ueType.name] = EmitterInfo(ueType:ueType, generator:fn)
 
 proc addEmitterInfoForClass*[T](ueType:UEType) : void =  
     addEmitterInfo(ueType, getFnGetForUClass[T](ueType))
@@ -86,9 +86,9 @@ proc addClassConstructor*[T](clsName:string, classConstructor:UClassConstructor,
         ueEmitter.clsConstructorTable[clsName] = ctorInfo 
 
     #update type information in the constructor
-    var emitter =  ueEmitter.emitters.first(e=>e.ueType.name == clsName).get()
+    var emitter =  ueEmitter.emitters[clsName]#.first(e=>e.ueType.name == clsName).get()
     emitter.ueType.ctorSourceHash = hash
-    ueEmitter.emitters = ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == clsName, emitter)
+    ueEmitter.emitters[clsName] = emitter#ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == clsName, emitter)
 
 const ReinstSuffix = "_Reinst"
 
@@ -151,7 +151,14 @@ template registerDeleteUType(T : typedesc, package:UPackagePtr, executeAfterDele
 
 proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEEmitterRaw, package :UPackagePtr)  =    
     #iterate all UNimClasses, if they arent not reintanced already (name) and they dont exists in the type emitted this round, they must be deleted
-    let getEmitterByName = (name:FString) => emitter.emitters.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
+    let getEmitterByName = 
+      (name:FString) => 
+        (
+          if name in emitter.emitters:#.map(e=>e.ueType).first((ueType:UEType)=>ueType.name==name)
+            some emitter.emitters[name]
+          else:
+            none[EmitterInfo]()
+        )
     registerDeleteUType(UClass, package):
         hotReloadInfo.deletedClasses.add(instance)
     registerDeleteUType(UNimScriptStruct, package):
@@ -167,11 +174,11 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string, emitEar
     #/Script/PACKAGE_NAME For now {Nim, GameNim}
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
     UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()
-    UE_Log "Emit ustructs for Length " & $ueEmitter.emitters.len
+    # UE_Log "Emit ustructs for Length " & $ueEmitter.emitters.len
     var hotReloadInfo = newCpp[FNimHotReload]()
     let emitters = 
-        if emitEarlyLoadTypesOnly: ueEmitter.emitters.filterIt(it.ueType.shouldBeLoadedEarly()) 
-        else: ueEmitter.emitters 
+        if emitEarlyLoadTypesOnly: ueEmitter.emitters.values.toSeq.filterIt(it.ueType.shouldBeLoadedEarly()) 
+        else: ueEmitter.emitters.values.toSeq
 
     for emitter in emitters:
             case emitter.ueType.kind:
@@ -243,12 +250,13 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string, emitEar
     for fnEmitter in ueEmitter.fnTable:
         let funField = fnEmitter.ueField
         let fnPtr = fnEmitter.fnPtr
-        let prevFn = tryGetClassByName(funField.className.removeFirstLetter())
+        let prevFn = tryGetClassByName(funField.typeName.removeFirstLetter())
                         .flatmap((cls:UClassPtr)=>cls.findFunctionByNameWithPrefixes(funField.name))
                         .flatmap((fn:UFunctionPtr)=>tryUECast[UNimFunction](fn))
 
        
         if prevFn.isSome():
+            UE_Log "Updating function pointer " & funField.name
             let prev = prevFn.get()
             let newHash = funField.sourceHash
             # if not prev.sourceHash.equals(newHash):
@@ -284,13 +292,14 @@ proc emitUStruct(typeDef:UEType) : NimNode =
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr resulti
 
-
+import ../../buildscripts/nimforueconfig
 
 proc emitUClass(typeDef:UEType) : NimNode =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
                 addEmitterInfoForClass[name](typeDefAsNode)
+        
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
@@ -460,11 +469,11 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
             assignmentNode.run (n:NimNode)=> addPropAssignment(ueTypeName, n)
             
             if isMulticastDelegate propType:
-                makeFieldAsUPropMulDel(fieldName, propType, metas[0], metas[1])
+                makeFieldAsUPropMulDel(fieldName, propType, ueTypeName, metas[0], metas[1])
             elif isDelegate propType:
-                makeFieldAsUPropDel(fieldName, propType, metas[0], metas[1])
+                makeFieldAsUPropDel(fieldName, propType, ueTypeName, metas[0], metas[1])
             else:
-                makeFieldAsUProp(fieldName, propType, metas[0], metas[1])
+                makeFieldAsUProp(fieldName, propType, ueTypeName, metas[0], metas[1])
         
         fieldNames.map(makeUEFieldFromFieldName)
     #TODO Metas to flags
@@ -510,8 +519,8 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
     let typeParam = fnField.signature.head().get() #TODO errors
 
     #prepare for gen ast
-    let typeIdent = ident fnField.className
-    let typeLiteral = newStrLitNode fnField.className
+    let typeIdent = ident fnField.typeName
+    let typeLiteral = newStrLitNode fnField.typeName
     let selfIdent = ident typeParam.name #TODO should we force to just use self?
     let initName = ident fnField.signature[1].name #there are always two params.a
     let fnName = ident fnField.name
@@ -524,7 +533,7 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             assgnNode[0][0] = selfIdent
         assgnNode
 
-    var assignmentsNode = getPropAssignment(fnField.className).get(newEmptyNode()) #TODO error
+    var assignmentsNode = getPropAssignment(fnField.typeName).get(newEmptyNode()) #TODO error
     let assignments = 
             nnkStmtList.newTree(
                 assignmentsNode
@@ -559,7 +568,7 @@ macro uDelegate*(body:untyped) : untyped =
     let name = body[0].strVal()
     let paramsAsFields = body.toSeq()
                              .filter(n=>n.kind==nnkExprColonExpr)
-                             .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip()))
+                             .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip(), name))
     let ueType = makeUEMulDelegate(name, paramsAsFields)
     emitUDelegate(ueType)
 
@@ -570,7 +579,7 @@ macro uEnum*(name:untyped, body : untyped) : untyped =
     let metas = getMetasForType(body)
     let fields = body.toSeq().filter(n=>n.kind==nnkIdent)
                     .map(n=>n.repr.strip())
-                    .map(str=>makeFieldASUEnum(str))
+                    .map(str=>makeFieldASUEnum(str, name))
     let ueType = makeUEEnum(name, fields, metas)
     emitUEnum(ueType)
 
@@ -579,7 +588,7 @@ macro uEnum*(name:untyped, body : untyped) : untyped =
 func isBlueprintEvent(fnField:UEField) : bool = FUNC_BlueprintEvent in fnField.fnFlags
 
 func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : NimNode =
-    let ueType = UEType(name:funField.className, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
+    let ueType = UEType(name:funField.typeName, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
     let className = ident ueType.name
 
     
@@ -643,7 +652,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                 body
             innerCall
     # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())
-    let fnImplName = ident &"impl{funField.name}{funField.className}" #probably this needs to be injected so we can inspect it later
+    let fnImplName = ident &"impl{funField.name}{funField.typeName}" #probably this needs to be injected so we can inspect it later
     let selfName = ident firstParam.name
     let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName, setOutParams):        
             let fnImplName {.inject.} = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
@@ -672,10 +681,10 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
 #parameter of the function
 #Returns a tuple with the forward declaration and the actual function 
 #Notice the impl contains the actual native implementation of the
-proc ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[UEMetadata] = @[]) : tuple[fw:NimNode, impl:NimNode] = 
+proc ufuncImpl(fn:NimNode, classParam:Option[UEField], typeName : string, functionsMetadata : seq[UEMetadata] = @[]) : tuple[fw:NimNode, impl:NimNode] = 
     
-    let (fnField, firstParam) = uFuncFieldFromNimNode(fn, classParam, functionsMetadata)
-    let className = fnField.className
+    let (fnField, firstParam) = uFuncFieldFromNimNode(fn, classParam, typeName, functionsMetadata)
+    let className = fnField.typeName
 
     let (fnReprfwd, fnReprImpl) = genFunc(UEType(name:className, kind:uetClass), fnField)
     let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
@@ -683,7 +692,7 @@ proc ufuncImpl(fn:NimNode, classParam:Option[UEField], functionsMetadata : seq[U
     result =  (fnReprfwd, nnkStmtList.newTree(fnReprImpl, fnImplNode))
 
 
-macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField]()).impl
+# macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField](), "") deprecated TODO revisit
 
 #this macro is ment to be used as a block that allows you to define a bunch of ufuncs 
 #that share the same flags. You dont need to specify uFunc if the func is inside
@@ -698,11 +707,11 @@ macro uFunctions*(body : untyped) : untyped =
                     .map(n => n.children.toSeq())
                     .foldl( a & b, newSeq[NimNode]())
                     .first(n=>n.kind==nnkExprColonExpr)
-                    .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip().addPtrToUObjectIfNotPresentAlready(), CPF_None)) #notice no generic/var allowed. Only UObjects
+                    .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip().addPtrToUObjectIfNotPresentAlready(), n[1].repr.strip().removeLastLettersIfPtr(), CPF_None)) #notice no generic/var allowed. Only UObjects
                     
     let allFuncs = body.children.toSeq()
         .filter(n=>n.kind==nnkProcDef)
-        .map(procBody=>ufuncImpl(procBody, firstParam, metas).impl) #TODO add forward declar to this one too?
+        .map(procBody=>ufuncImpl(procBody, firstParam, firstParam.map(x=>x.typeName).get(), metas).impl) #TODO add forward declar to this one too?
     
     let clsName = firstParam.get.uePropType.removeLastLettersIfPtr()
     let overrides = getCppOverrides(body, clsName)  
@@ -717,7 +726,7 @@ macro uConstructor*(fn:untyped) : untyped =
                    .children
                    .toSeq()
                    .filter(n=>n.kind==nnkIdentDefs)
-                   .map(makeUEFieldFromNimParamNode)
+                   .mapIt(makeUEFieldFromNimParamNode("Constructor.Need to know the type?",it))
 
     let firstParam = params.head().get() #TODO errors
     let initializerParam = params.tail().head().get() #TODO errors
@@ -733,13 +742,13 @@ func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tupl
                     .map(fromNinNodeToMetadata)
                     .flatten()
     #TODO add first parameter
-    let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), CPF_None) #notice no generic/var allowed. Only UObjects
+    let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), ueTypeName, CPF_None) #notice no generic/var allowed. Only UObjects
    
     # debugEcho "FUNC BLOCK " & funcBlock.treeRepr()
 
     let allFuncs = funcBlock[^1].children.toSeq()
         .filterIt(it.kind==nnkProcDef)
-        .map(procBody=>ufuncImpl(procBody, firstParam, metas))
+        .map(procBody=>ufuncImpl(procBody, firstParam, firstParam.get.typeName, metas))
     
     var fws = newSeq[NimNode]()
     var impls = newSeq[NimNode]()
@@ -769,8 +778,8 @@ func genUFuncsForUClass(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode]) 
 
 func genConstructorForClass(uClassBody:NimNode, className:string, constructorBody:NimNode, initializerName:string="") : NimNode = 
   var initializerName = if initializerName == "" : "initializer" else : initializerName
-  let typeParam = makeFieldAsUPropParam("self", className)
-  let initParam = makeFieldAsUPropParam(initializerName, "FObjectInitializer")
+  let typeParam = makeFieldAsUPropParam("self", className, className)
+  let initParam = makeFieldAsUPropParam(initializerName, "FObjectInitializer", className)
   let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)
   return constructorImpl(fnField, constructorBody)
 

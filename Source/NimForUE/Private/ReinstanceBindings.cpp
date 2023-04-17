@@ -9,7 +9,6 @@
 
 
 void ReinstanceBindings::ReinstanceNueTypes(FString NueModule, FNimHotReload* NimHotReload, FString NimError, bool bReuseHotReload) {
-	
 	UNimForUEEngineSubsystem* NimForUESubsystem = GEngine->GetEngineSubsystem<UNimForUEEngineSubsystem>();
 	// bool bIsFirstLoad = !NimForUESubsystem->ReloadCounter.Contains(NueModule);
 	bool bIsFirstLoad = false;// !NimForUESubsystem->ReloadCounter.Contains(NueModule);

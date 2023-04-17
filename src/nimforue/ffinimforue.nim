@@ -4,7 +4,7 @@ include unreal/prelude
 import unreal/editor/editor
 import unreal/core/containers/containers
 import ../nimforue/codegen/[ffi,emitter, genreflectiondatav2, models, uemeta, ueemit]
-import std/[options, strformat, dynlib, os, osproc]
+import std/[options, strformat, dynlib, os, osproc, tables]
 import ../buildscripts/[nimforueconfig, buildscripts]
 
 const genFilePath* {.strdefine.} : string = ""
@@ -111,7 +111,7 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
 
 #only GameNim types
 proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.cdecl, exportc, dynlib.} = 
-  UE_Log "Emitting types from external lib"
+  UE_Log "Emitting types from external lib " & $emitter.emitters.len
   emitNueTypes(emitter[], "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
 
 

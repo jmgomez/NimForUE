@@ -10,23 +10,24 @@ import ../codegen/modulerules
 
 
 #UE META CONSTRUCTORS. Noticuee they are here because they pull type definitions from Cpp which cant be loaded in the ScriptVM
-func makeFieldAsUProp*(name, uPropType: string, flags = CPF_None, metas: seq[UEMetadata] = @[], size: int32 = 0, offset: int32 = 0): UEField =
-  UEField(kind: uefProp, name: name, uePropType: uPropType, propFlags: EPropertyFlagsVal(flags), metadata: metas, size: size, offset: offset)
+func makeFieldAsUProp*(name, uPropType, typeName: string, flags = CPF_None, metas: seq[UEMetadata] = @[], size: int32 = 0, offset: int32 = 0): UEField =
+  UEField(kind: uefProp, name: name, uePropType: uPropType, typeName:typeName, propFlags: EPropertyFlagsVal(flags), metadata: metas, size: size, offset: offset)
 
-func makeFieldAsUPropMulDel*(name, uPropType: string, flags = CPF_None, metas: seq[UEMetadata] = @[]): UEField =
-  UEField(kind: uefProp, name: name, uePropType: uPropType, propFlags: EPropertyFlagsVal(flags), metadata: @[makeUEMetadata(MulticastDelegateMetadataKey)]&metas)
+func makeFieldAsUPropMulDel*(name, uPropType, typeName: string, flags = CPF_None, metas: seq[UEMetadata] = @[]): UEField =
+  UEField(kind: uefProp, name: name, uePropType: uPropType, typeName:typeName, propFlags: EPropertyFlagsVal(flags), metadata: @[makeUEMetadata(MulticastDelegateMetadataKey)]&metas)
 
-func makeFieldAsUPropDel*(name, uPropType: string, flags = CPF_None, metas: seq[UEMetadata] = @[]): UEField =
-  UEField(kind: uefProp, name: name, uePropType: uPropType, propFlags: EPropertyFlagsVal(flags), metadata: @[makeUEMetadata(DelegateMetadataKey)]&metas)
+func makeFieldAsUPropDel*(name, uPropType, typeName: string, flags = CPF_None, metas: seq[UEMetadata] = @[]): UEField =
+  UEField(kind: uefProp, name: name, uePropType: uPropType, typeName:typeName, propFlags: EPropertyFlagsVal(flags), metadata: @[makeUEMetadata(DelegateMetadataKey)]&metas)
 
 
-func makeFieldAsUFun*(name: string, signature: seq[UEField], className: string, flags = FUNC_None, metadata: seq[UEMetadata] = @[]): UEField =
-  UEField(kind: uefFunction, name: name, signature: signature, className: className, fnFlags: EFunctionFlagsVal(flags), metadata: metadata, actualFunctionName: name)
+func makeFieldAsUFun*(name : string, signature: seq[UEField], typeName: string, flags = FUNC_None, metadata: seq[UEMetadata] = @[]): UEField =
+  UEField(kind: uefFunction, name: name, typeName: typeName, signature: signature, fnFlags: EFunctionFlagsVal(flags), metadata: metadata, actualFunctionName: name)
 
-func makeFieldAsUPropParam*(name, uPropType: string, flags = CPF_Parm): UEField =
-  UEField(kind: uefProp, name: name, uePropType: uPropType, propFlags: EPropertyFlagsVal(flags))
+func makeFieldAsUPropParam*(name, uPropType, typeName: string, flags = CPF_Parm): UEField =
+  UEField(kind: uefProp, name: name, uePropType: uPropType, typeName:typeName, propFlags: EPropertyFlagsVal(flags))
 
-func makeFieldASUEnum*(name: string): UEField = UEField(name: name, kind: uefEnumVal)
+func makeFieldASUEnum*(name, typeName: string): UEField = 
+  UEField(name: name, typeName:typeName, kind: uefEnumVal)
 
 func makeUEClass*(name, parent: string, clsFlags: EClassFlags, fields: seq[UEField], metadata: seq[UEMetadata] = @[]): UEType =
   UEType(kind: uetClass, name: name, parent: parent, clsFlags: EClassFlagsVal(clsFlags), metadata:metadata, fields: fields)
