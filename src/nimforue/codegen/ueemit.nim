@@ -9,6 +9,17 @@ import nuemacrocache
 import ../codegen/[emitter,modelconstructor, models,uemeta, uebind,gencppclass, headerparser]
 
 
+
+
+    # ueEmitter.emitters[ueField.typeName] = ueEmitter.emitters[ueField.typeName]#.replaceFirst((e:EmitterInfo)=>e.ueType.name == ueField.className, emitter)
+# 
+
+proc getEmmitedTypes*(emitter: UEEmitterPtr) : seq[UEType] = 
+    emitter.emitters.values.toSeq.mapIt(it.ueType)
+
+
+
+
 type
 
     FNimHotReloadChild* {.importcpp, header:"Guest.h".} = object of FNimHotReload
@@ -63,32 +74,32 @@ proc getFnGetForUClass[T](ueType:UEType) : UPackagePtr->UFieldPtr =
     proc toReturn (pgk:UPackagePtr) : UFieldPtr = #the UEType changes when functions are added
         var ueType = getGlobalEmitter().emitters[ueType.name].ueType#.emitters.first(x => x.ueType.name == ueType.name).map(x=>x.ueType).get()
         #SHouldnt user constructor call to the defaultConstructorStatic anyways?? 
-        let clsConstructor = ueEmitter.clsConstructorTable.tryGet(ueType.name).map(x=>x.fn).get(defaultConstructorStatic[T])
+        let clsConstructor = getGlobalEmitter().clsConstructorTable.tryGet(ueType.name).map(x=>x.fn).get(defaultConstructorStatic[T])
         let vtableConstructor = vtableConstructorStatic[T]
-        ueType.emitUClass[:T](pgk, ueEmitter.fnTable, clsConstructor, vtableConstructor)
+        ueType.emitUClass[:T](pgk, getGlobalEmitter().fnTable, clsConstructor, vtableConstructor)
     toReturn
     
 proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
-    ueEmitter.emitters[ueType.name] = EmitterInfo(ueType:ueType, generator:fn)
+    getGlobalEmitter().emitters[ueType.name] = EmitterInfo(ueType:ueType, generator:fn)
 
 proc addEmitterInfoForClass*[T](ueType:UEType) : void =  
     addEmitterInfo(ueType, getFnGetForUClass[T](ueType))
   
 proc addStructOpsWrapper*(structName : string, fn : UNimScriptStructPtr->void) = 
-    ueEmitter.setStructOpsWrapperTable.add(structName, fn)
+    getGlobalEmitter().setStructOpsWrapperTable.add(structName, fn)
 
 proc addClassConstructor*[T](clsName:string, classConstructor:UClassConstructor, hash:string) : void =  
     let ctorInfo = CtorInfo(fn:classConstructor, hash:hash, className: clsName,
         vtableConstructor: vtableConstructorStatic[T], updateVTableForType: updateVTableStatic[T])
-    if not ueEmitter.clsConstructorTable.contains(clsName):
-        ueEmitter.clsConstructorTable.add(clsName, ctorInfo)
+    if not getGlobalEmitter().clsConstructorTable.contains(clsName):
+        getGlobalEmitter().clsConstructorTable.add(clsName, ctorInfo)
     else:
-        ueEmitter.clsConstructorTable[clsName] = ctorInfo 
+        getGlobalEmitter().clsConstructorTable[clsName] = ctorInfo 
 
     #update type information in the constructor
-    var emitter =  ueEmitter.emitters[clsName]#.first(e=>e.ueType.name == clsName).get()
+    var emitter =  getGlobalEmitter().emitters[clsName]#.first(e=>e.ueType.name == clsName).get()
     emitter.ueType.ctorSourceHash = hash
-    ueEmitter.emitters[clsName] = emitter#ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == clsName, emitter)
+    getGlobalEmitter().emitters[clsName] = emitter#ueEmitter.emitters.replaceFirst((e:EmitterInfo)=>e.ueType.name == clsName, emitter)
 
 const ReinstSuffix = "_Reinst"
 
@@ -149,7 +160,7 @@ template registerDeleteUType(T : typedesc, package:UPackagePtr, executeAfterDele
             executeAfterDelete
 
 
-proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEEmitterRaw, package :UPackagePtr)  =    
+proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEEmitterPtr, package :UPackagePtr)  =    
     #iterate all UNimClasses, if they arent not reintanced already (name) and they dont exists in the type emitted this round, they must be deleted
     let getEmitterByName = 
       (name:FString) => 
@@ -170,7 +181,7 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
 
 
 #32431 
-proc emitUStructsForPackage*(ueEmitter : UEEmitterRaw, pkgName : string, emitEarlyLoadTypesOnly:bool) : FNimHotReloadPtr = 
+proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEarlyLoadTypesOnly:bool) : FNimHotReloadPtr = 
     #/Script/PACKAGE_NAME For now {Nim, GameNim}
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
     UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()

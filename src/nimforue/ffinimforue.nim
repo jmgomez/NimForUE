@@ -65,7 +65,7 @@ proc genBindingsEntryPoint() : void {.ffi:genFilePath} =
      
 
 
-proc emitNueTypes*(emitter: UEEmitterRaw, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) = 
+proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) = 
     try:
         let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
         
@@ -99,12 +99,12 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
   try:
     case libName:
     of "nimforue": 
-        emitNueTypes(getGlobalEmitter()[], "Nim", loadedFrom == nlfPreEngine, false)
+        emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
         if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
           discard
     else:
-        emitNueTypes(getEmitterFromGame(libPath)[], "GameNim",  loadedFrom == nlfPreEngine, false)
+        emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
 
@@ -112,7 +112,7 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
 #only GameNim types
 proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.cdecl, exportc, dynlib.} = 
   UE_Log "Emitting types from external lib " & $emitter.emitters.len
-  emitNueTypes(emitter[], "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
+  emitNueTypes(emitter, "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
 
 
 

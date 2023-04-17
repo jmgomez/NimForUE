@@ -28,7 +28,7 @@ type
         fnPtr* : UFunctionNativeSignature
         ueField* : UEField
 
-    UEEmitterRaw* = object 
+    UEEmitter* = object 
         emitters* : OrderedTable[string, EmitterInfo] #typename
         # types* : seq[UEType]
         # fnTable* : Table[UEField, Option[UFunctionNativeSignature]] 
@@ -37,36 +37,70 @@ type
         clsConstructorTable* : Table[string, CtorInfo]
        
         setStructOpsWrapperTable* : Table[string, UNimScriptStructPtr->void]
-    UEEmitter* = ref UEEmitterRaw
-    UEEmitterPtr* = ptr UEEmitterRaw
+    # UEEmitter* = ref UEEmitterRaw
+    UEEmitterPtr* = ptr UEEmitter
 
-
-proc getNativeFuncImplPtrFromUEField*(emitter: UEEmitter, ueField: UEField): Option[UFunctionNativeSignature] =
+proc getNativeFuncImplPtrFromUEField*(emitter: UEEmitterPtr, ueField: UEField): Option[UFunctionNativeSignature] =
     for ef in emitter.fnTable:
         if ef.ueField == ueField:
             return some(ef.fnPtr)
     return none(UFunctionNativeSignature)
 
 
-
-var ueEmitter* {.compileTime.} : UEEmitterRaw = UEEmitterRaw() 
-proc `$`*(emitter : UEEmitter | UEEmitterPtr) : string = 
+proc `$`*(emitter : UEEmitterPtr) : string = 
+    if emitter.isNil:
+        return " emitter is nil"
     result = $emitter.emitters.values.toSeq()
 
-proc getGlobalEmitter*() : UEEmitter = 
-    result = cast[UEEmitter](addr ueEmitter)
+proc initEmitter() : UEEmitterPtr = 
+    var ueEmitter : UEEmitterPtr = cast[UEEmitterPtr](alloc(sizeof(UEEmitter)))
+    var init = UEEmitter()
+    copyMem(ueEmitter, addr init, sizeof(UEEmitter))
+    return ueEmitter
 
+var emitters : Table[string, UEEmitterPtr] = initTable[string, UEEmitterPtr]()
+
+when defined(guest):
+    proc getGameEmitter*() : UEEmitterPtr {.exportc, cdecl, dynlib.} =
+        UE_Warn "asking game emitter in guest after dll call"
+        if "game" notin emitters:
+            emitters["game"] = initEmitter()
+            UE_Error "Init game emitter in guest"
+        UE_Log $emitters["game"]
+        emitters["game"]
+else:
+    import ../../buildscripts/buildscripts
+    import std/[dynlib, os, sequtils, sugar]
+
+    proc getGameEmitter*() : UEEmitterPtr = 
+        UE_Warn "asking game emitter in game before dll call"
+        UE_Log getStackTrace()
+        type 
+          GetGameEmitter = proc () : UEEmitterPtr {.gcsafe, cdecl.}
+        let libDir = PluginDir / "Binaries"/"nim"/"ue"
+        let guestPath = getLastLibPath(libDir, "nimforue")      
+        let lib = loadLib(guestPath.get())
+        let getEmitter = cast[GetGameEmitter](lib.symAddr("getGameEmitter"))
+        if getEmitter.isNil:
+          UE_Error "Could not find getGameEmitter in guest lib"
+          assert getEmitter.isNotNil()
+        getEmitter() 
+
+proc getGlobalEmitter*() : UEEmitterPtr = 
+    when defined(guest):
+        if "guest" notin emitters:            
+            emitters["guest"] = initEmitter()
+        emitters["guest"]
+    else:
+        getGameEmitter()
+
+when not defined(guest): #called from UE
+    proc getGlobalEmitterPtr*() : UEEmitterPtr {.exportc, cdecl.} = getGlobalEmitter()
 
 
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =              
     # var emitter =  ueEmitter.emitters[ueField.typeName]
-    ueEmitter.emitters[ueField.typeName].ueType.fields.add ueField
+    getGlobalEmitter().emitters[ueField.typeName].ueType.fields.add ueField
     
     if fnImpl.isSome:
-      ueEmitter.fnTable.add FnEmitter(fnPtr: fnImpl.get(), ueField: ueField)
-
-    # ueEmitter.emitters[ueField.typeName] = ueEmitter.emitters[ueField.typeName]#.replaceFirst((e:EmitterInfo)=>e.ueType.name == ueField.className, emitter)
-# 
-
-proc getEmmitedTypes*(emitter: UEEmitterRaw) : seq[UEType] = 
-    emitter.emitters.values.toSeq.mapIt(it.ueType)
+      getGlobalEmitter().fnTable.add FnEmitter(fnPtr: fnImpl.get(), ueField: ueField)
