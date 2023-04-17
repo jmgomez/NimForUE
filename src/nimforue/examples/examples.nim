@@ -15,6 +15,18 @@ import examplescodegen
 # import examplevirtualfunc
 
 
-import ueborrowexample
+# import ueborrowexample
 
-import vminteroppocexample
+# import vminteroppocexample
+include ../unreal/prelude
+
+uClass ATestExample of AActor:
+  (Reinstance)
+  uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenInspect):
+    testProp : FString = "hola"
+    inspectName : FString = "EnhancedInputSubsystemInterface"
+    otra : int
+    otra2 : int
+
+  ufunctions:
+    proc testFun() : FString = "whatever"

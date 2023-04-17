@@ -90,6 +90,7 @@ when WithEditor:
 
 import ../buildscripts/buildscripts
 import std/[dynlib, os, sequtils, sugar]
+
 proc emitTypesInGuest(calledFrom:NueLoadedFrom) = 
   type 
     EmitTypesExternal = proc (emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.gcsafe, cdecl.}
@@ -104,19 +105,17 @@ proc emitTypesInGuest(calledFrom:NueLoadedFrom) =
   let emitTypesExternal = cast[EmitTypesExternal](lib.symAddr("emitTypesExternal"))
   if emitTypesExternal.isNotNil():
     emitTypesExternal(cast[UEEmitterPtr](getGlobalEmitter()), calledFrom, reuseHotReload=true)
-
-
+    
 uClass UGameManager of UObject:  
   ufuncs(Static):
     proc reinstanceNue() =
       UE_Log "Reinstanciating esto si que si babe" & $len(ueEmitter.emitters)
       let ueTypeChar = ueEmitter.emitters.values.toSeq.first(x=>x.ueType.name.contains("Character"))
       UE_Error "ueTypeChar: " & $ueTypeChar.get().ueType.fields.filterIt(it.name.contains("test"))
-      # UE_Log "There you go"
-
-      
+      # UE_Log "There you go"      
       UE_Log "Reinstanciating reinstanceNue NueTypes reinstanceNue! aqui. Ahora? va con  retraso 7"
-      emitTypesInGuest(nlfEditor)
+      
+
 #Called from NimForUE module as entry point when we are in a non editor build
 proc startNue*(calledFrom:NueLoadedFrom) {.cdecl, exportc.} =
   UE_Log "Reinstanciating NueTypes startNue! aqui"
@@ -127,8 +126,8 @@ proc startNue*(calledFrom:NueLoadedFrom) {.cdecl, exportc.} =
     UE_Error "Reinstanciating NueTypes startNue! editor entra"
     #so here it should somehow notify guest to do the reinstance
     # emitNueTypes(getGlobalEmitter()[], "GameNim", emitEarlyLoadTypesOnly =false, reuseHotReload = false)
-    # emitTypesInGuest(calledFrom)
-    reinstanceNue()
+    emitTypesInGuest(calledFrom)
+    # reinstanceNue()
   else:
     #TODO hook early load
     discard

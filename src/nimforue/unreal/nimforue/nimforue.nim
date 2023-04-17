@@ -168,6 +168,7 @@ proc `$`*(cls:UClassPtr) : string =
 
 proc `$`*(obj:UObjectPtr) : string = 
   if obj.isNil(): return "nil"
+  # UE_Warn getStackTrace()
   obj.getName()
   
 proc repr*(obj:UObjectPtr) : string = 
