@@ -160,6 +160,7 @@ let
   GenFilePath* = PluginDir / "src" / "hostnimforue"/"ffigen.nim"
   NimGameDir* = config.gameDir / "NimForUE"
   GamePath* = getGamePathFromGameDir(config.gameDir)
+  GameName* = GamePath.split(PathSeparator)[^1].split(".")[0]
 #TODO we need to make it accesible from game/guest at compile time
 when not defined(nue):
   const WithEditor* {.booldefine.} = true

@@ -58,11 +58,12 @@ proc initEmitter() : UEEmitterPtr =
     copyMem(ueEmitter, addr init, sizeof(UEEmitter))
     return ueEmitter
 
+#emitters are stored in guest, but they wont be. Each module will control its own emitter.
+#guest though will be in charce of reinstance the types (since it can only happens in editor)
 var emitters : Table[string, UEEmitterPtr] = initTable[string, UEEmitterPtr]()
 
 when defined(guest):
     proc getGameEmitter*() : UEEmitterPtr {.exportc, cdecl, dynlib.} =
-        UE_Warn "asking game emitter in guest after dll call"
         if "game" notin emitters:
             emitters["game"] = initEmitter()
             UE_Error "Init game emitter in guest"
@@ -94,7 +95,7 @@ proc getGlobalEmitter*() : UEEmitterPtr =
     else:
         getGameEmitter()
 
-when not defined(guest): #called from UE
+when not defined(guest): #called from per module basis
     proc getGlobalEmitterPtr*() : UEEmitterPtr {.exportc, cdecl.} = getGlobalEmitter()
 
 

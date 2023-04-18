@@ -1,12 +1,13 @@
 # tooling for NimForUE
 import std / [ options, os, osproc, parseopt, sequtils, strformat, json, strutils, sugar, tables, times ]
-import buildscripts / [buildcommon, buildscripts, nimforueconfig]
+import buildscripts / [buildcommon, buildscripts, nimforueconfig, plugingenerator]
 import buildscripts/nuecompilation/nuecompilation
 import buildscripts/switches/switches
 import nimforue/utils/utils
 import nimforue/codegen/[headerparser]
 when defined(windows):
   import  buildscripts/keyboard
+
 
 var taskOptions: Table[string, string]
 let config = getNimForUEConfig()
@@ -196,6 +197,7 @@ task game, "Builds the game lib":
       ubuild(taskOptions)
 
 
+
 task lib, "Builds a game lib":
   var extraSwitches = newSeq[string]()
   if "f" in taskOptions: 
@@ -348,6 +350,12 @@ task copybuildconfiguration, "Copies the unreal build configuration from the plu
   log "Copying build configuration from " & buildConfigFile & " to " & buildConfigFileDest
   createDir(buildConfigFileDest.parentDir)
   copyFile(buildConfigFile, buildConfigFileDest)
+
+task genplugin, "Creates a plugin, by default it uses the name of the game with NUE as prefix":  
+  let pluginName = if "name" in taskOptions: taskOptions["name"] else: "Nue" & GameName
+  generatePlugin(pluginName)
+
+
 # --- End Tasks ---
 main()
 
