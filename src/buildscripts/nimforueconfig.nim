@@ -162,13 +162,13 @@ let
   GamePath* = getGamePathFromGameDir(config.gameDir)
   GameName* = GamePath.split(PathSeparator)[^1].split(".")[0]
 #TODO we need to make it accesible from game/guest at compile time
-when not defined(nue):
-  const WithEditor* {.booldefine.} = true
-else:
+when defined(nue):
   let WithEditor* = config.withEditor 
+  doAssert(GamePath != GamePathError, &"Config file error: The uproject file could not be found in {config.gameDir}. Please check that 'gameDir' points to the directory containing your uproject in '{PluginDir / getConfigFileName()}'.")
 
+else:
+  const WithEditor* {.booldefine.} = true
 
-doAssert(GamePath != GamePathError, &"Config file error: The uproject file could not be found in {config.gameDir}. Please check that 'gameDir' points to the directory containing your uproject in '{PluginDir / getConfigFileName()}'.")
 
 template codegenDir(fname, constName: untyped): untyped =
   proc fname*(config: NimForUEConfig): string =
@@ -180,8 +180,6 @@ codegenDir(bindingsDir, BindingsDir)
 codegenDir(bindingsExportedDir, BindingsExportedDir)
 codegenDir(reflectionDataDir, ReflectionDataDir)
 codegenDir(reflectionDataFilePath, ReflectionDataFilePath)
-
-
 
 
 proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =

@@ -12,5 +12,5 @@
 UCLASS()
 class NIMFORUEGAME_API UNimForUEGameEngineSubsystem : public UEngineSubsystem {
 	GENERATED_BODY()
-	void Initialize(FSubsystemCollectionBase& Collection) override;
+	// void Initialize(FSubsystemCollectionBase& Collection) override;
 };

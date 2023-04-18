@@ -95,7 +95,7 @@ proc getGlobalEmitter*() : UEEmitterPtr =
     else:
         getGameEmitter()
 
-when not defined(guest): #called from per module basis
+when not defined(guest): #called from ue
     proc getGlobalEmitterPtr*() : UEEmitterPtr {.exportc, cdecl.} = getGlobalEmitter()
 
 

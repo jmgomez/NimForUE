@@ -15,11 +15,14 @@ type
   FLevelEditorViewportClientPtr* = ptr FLevelEditorViewportClient
 
   FViewportCursorLocation* {.importcpp.} = object
+  EReloadCompleteReason* {.importcpp, size:sizeof(uint8).} = enum
+    None, HotReloadAutomatic, HotReloadManual
+  FReloadCompleteDelegate* = TMulticastDelegateOneParam[EReloadCompleteReason]
+  FOnPIEEvent* = TMulticastDelegateOneParam[bool]
 
 
 let GEditor* {.importcpp, nodecl.} : UEditorEnginePtr
 
-type FOnPIEEvent* = TMulticastDelegateOneParam[bool]
 # proc onBeginPIEEvent*() : FOnPIEEvent  {.importcpp:"(FEditorDelegates::BeginPIE)".}
 
 func isInPIE*(editor:UEditorEnginePtr) : bool = 
@@ -27,6 +30,7 @@ func isInPIE*(editor:UEditorEnginePtr) : bool =
 
 let onBeginPIEEvent* {.importcpp:"FEditorDelegates::BeginPIE", nodecl.}  : FOnPIEEvent
 let onEndPIEEvent* {.importcpp:"FEditorDelegates::EndPIE", nodecl.}  : FOnPIEEvent
+let onReloadCompleteEvent* {.importcpp:"FCoreUObjectDelegates::ReloadCompleteDelegate", nodecl.}  : FReloadCompleteDelegate
 
 proc getPieWorldContext*(editor:UEditorEnginePtr, worldPIEInstance:int32 = 0) : FWorldContextPtr {.importcpp: "#->GetPIEWorldContext(#)".}
 
