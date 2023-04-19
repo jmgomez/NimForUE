@@ -23,6 +23,7 @@
 #undef far
 #undef powerpc
 #undef unix
+struct tyObject_UEEmitter__yFEGdOoEpsg7Gf9aKb9cZKbQ;
 struct FTagAndValue_;
 struct FClosestPhysicsObjectResult_;
 struct FSolverTrailingFilterSettings_;
@@ -2897,6 +2898,7 @@ struct FWorldPartitionHLODDestructionTag_ {tyArray__qtqsWM5aXmcpMIVmvq3kAA pad_0
 extern "C" N_LIB_PRIVATE N_NOCONV(void, signalHandler)(int sign);
 N_LIB_PRIVATE N_NIMCALL(UClass*, getClassByName)(FString className);
 N_LIB_PRIVATE N_NIMCALL(UScriptStruct*, getScriptStructByName)(FString strName);
+extern "C" N_LIB_PRIVATE N_CDECL(tyObject_UEEmitter__yFEGdOoEpsg7Gf9aKb9cZKbQ*, getGlobalEmitterPtr)(void);
 N_LIB_PRIVATE N_NIMCALL(UObject*, getDefaultObjectFromClassName)(FString clsName);
 extern "C" N_LIB_PRIVATE N_NIMCALL(void, keepAssetRegistry)(void);
 N_LIB_PRIVATE N_NIMCALL(FSoftObjectPath, toSoftObjectPath_)(FAssetData& inAssetData);

@@ -4,8 +4,9 @@ include unreal/prelude
 import unreal/editor/editor
 import unreal/core/containers/containers
 import ../nimforue/codegen/[ffi,emitter, genreflectiondatav2, models, uemeta, ueemit]
-import std/[options, strformat, dynlib, os, osproc, tables]
-import ../buildscripts/[nimforueconfig, buildscripts]
+import std/[options, strformat, dynlib, os, osproc, tables, asyncdispatch]
+import ../buildscripts/[nimforueconfig, buildscripts, keyboard]
+
 
 const genFilePath* {.strdefine.} : string = ""
 
@@ -109,12 +110,35 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
 
 
-#only GameNim types
+
+proc tickPoll(deltaTime:float32) : bool {.cdecl.} =
+  try:
+    let p = getGlobalDispatcher()
+    poll(0)
+  except: 
+    discard
+  true
+#TODO extract so another file and remove handler
+proc subscribeToTick() : FTickerDelegateHandle =   
+  let tickerDel : FTickerDelegate = createStatic[bool, float32](tickPoll)
+  let handle = (getCoreTicker()[]).addTicker(tickerDel, 0)
+  handle
+
+
+
+#only GameNim types 
 proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.cdecl, exportc, dynlib.} = 
   UE_Log "Emitting types from external lib " & $emitter.emitters.len
-  # emitNueTypes(emitter, "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
+  emitNueTypes(emitter, "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
+  let tickHandle = subscribeToTick()
+  proc waitForLiveCoding() : Future[void] {.async.} =
+    #we need to wait a bit so it does something
+    await sleepAsync(100) 
+    UE_Log "Triggering now"
+    triggerLiveCoding(50)
+    removeTicker(tickHandle)
 
-
+  asyncCheck waitForLiveCoding()
 
 
 #entry point for the game. but it will also be for other libs in the future

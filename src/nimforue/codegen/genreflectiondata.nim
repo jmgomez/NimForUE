@@ -8,7 +8,7 @@ const pluginDir {.strdefine.}: string = ""
 
 proc getGameModules*(): seq[string] =
   try:        
-    let projectJson = readFile(GamePath).parseJson()
+    let projectJson = readFile(GamePath()).parseJson()
     let modules = projectJson["Modules"]
                     .mapIt(it["Name"].jsonTo(string))
                    
@@ -23,7 +23,7 @@ proc getGameModules*(): seq[string] =
 proc getAllInstalledPlugins*(): seq[string] =
   try:        
     let excludePlugins = getGameUserConfigValue("exclude", newSeq[string]())
-    let projectJson = readFile(GamePath).parseJson()
+    let projectJson = readFile(GamePath()).parseJson()
     let plugins = projectJson["Plugins"]
                     .filterIt(it["Enabled"].jsonTo(bool))
                     .mapIt(it["Name"].jsonTo(string))
