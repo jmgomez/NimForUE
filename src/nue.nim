@@ -354,7 +354,7 @@ task copybuildconfiguration, "Copies the unreal build configuration from the plu
 task genplugin, "Creates a plugin, by default it uses the name of the game with NUE as prefix":  
   let pluginName = if "name" in taskOptions: taskOptions["name"] else: "Nue" & GameName
   generatePlugin(pluginName)
-
+  ubuild(taskOptions)
 
 # --- End Tasks ---
 main()

@@ -29,7 +29,7 @@ const UPluginTemplate = """
   "Version": 1,
   "VersionName": "1.0",
   "CreatedBy": "NimForUE",
-  "EnabledByDefault" : false,
+  "EnabledByDefault" : true,
 	"CanContainContent" : false,
 	"IsBetaVersion" : false,
 	"Installed" : false,
@@ -84,16 +84,13 @@ public class $1 : ModuleRules
 		} else {
 			CppStandard = CppStandardVersion.Cpp17;
 		}
-		PrivatePCHHeaderFile = "../../NimHeaders/nimgame.h";
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
-		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
+		var nimHeadersPath = Path.Combine($2, "NimHeaders");
+    PrivatePCHHeaderFile =  Path.Combine(nimHeadersPath, "nimgame.h");
+
 		PublicIncludePaths.Add(nimHeadersPath);
 		bUseUnity = false;
-		//The lib is quite big (24MB), it may be better to just pull the files that needs to be compiled
-		// var nimMirrorBindings = Path.Combine(PluginDirectory, "Binaries", "nim", "libmaingencppbindings.a");
-		var nimMirrorBindings = Path.Combine(PluginDirectory, "Binaries", "nim", "maingencppbindings.lib");
-		// PublicAdditionalLibraries.Add(nimMirrorBindings);
 	}
 }
 """
@@ -124,40 +121,37 @@ const ModuleCppFileTemplate = """
 DEFINE_LOG_CATEGORY($1);
 
 #define LOCTEXT_NAMESPACE "FGameCorelibEditor"
-
+#define $1 1
 
 constexpr char NUEModule[] = "some_module";
-
 extern  "C" void startNue(uint8 calledFrom);
+
+
 #if WITH_EDITOR
 
 extern  "C" void* getGlobalEmitterPtr();
 extern  "C" void reinstanceFromGloabalEmitter(void* globalEmitter);
-
 #endif
 
 void GameNimMain();
-
 void StartNue() {
 #if WITH_EDITOR
-	FCoreUObjectDelegates::ReloadCompleteDelegate.AddLambda([&](EReloadCompleteReason Reason) {
-	 UE_LOG(LogTemp, Log, TEXT("Reinstancing Lib"))
-		GameNimMain();
-		reinstanceFromGloabalEmitter(getGlobalEmitterPtr());
-	});
+  FCoreUObjectDelegates::ReloadCompleteDelegate.AddLambda([&](EReloadCompleteReason Reason) {
+  UE_LOG(LogTemp, Log, TEXT("Reinstancing Lib"))
+    GameNimMain();
+    reinstanceFromGloabalEmitter(getGlobalEmitterPtr());
+  });
 #endif
-	GameNimMain();
-	startNue(1);
-	// #endif
+  GameNimMain();
+  startNue(1);
+  // #endif
 }
 
 
 
 void F$1::StartupModule()
 {
-  if (std::strcmp(NUEModule, "Bindings") != 0) {
 	  StartNue();
-  }
 }
 
 void F$1::ShutdownModule()
@@ -177,14 +171,46 @@ proc getPluginTemplateFile(name:string, modules:seq[string]) : string =
 
 proc getModuleBuildCsFile(name:string) : string =
   #Probably bindings needs a different one
-  ModuleBuildcsTemplate.format(name)
+  ModuleBuildcsTemplate.format(name, escape(PluginDir))
 
 proc getModuleHFile(name:string) : string =
   ModuleHFileTemplate.format(name)
 proc getModuleCppFile(name:string) : string =
   ModuleCppFileTemplate.format(name)
 
-proc generateModule(name:string, sourceDir:string) = 
+
+
+
+#begin cpp
+
+proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) = 
+  #TODO generate a map of what exists and what not so we can detect removals.
+  #Notice we need to copy the bindings too. Maybe we can infer somehow only what needs to be copied. 
+  #It doesnt really matter though since on the final build they will be optimized out but it may saved us 
+  #some seconds on the first build.
+  proc copyBindings() = 
+    var bindingsSrcDir = PluginDir / ".nimcache/gencppbindings"
+    for cppFile in walkFiles(bindingsSrcDir / &"*.cpp"):
+      let filename = cppFile.extractFilename()
+      if filename.contains("sbindings@sexported"):# and not (filename.contains("unrealed") or filename.contains("umgeditor")):  Should handle this in a better way TOOD
+        let pathDst = nimGeneratedCodeDir / filename
+        if not fileExists pathDst:
+          copyFile(cppFile, pathDst)
+
+  copyBindings()
+  for cppFile in walkFiles(cppSrcDir / &"*.cpp"):    
+    let filename = cppFile.extractFilename()   
+    let pathDst = nimGeneratedCodeDir / filename
+    if fileExists(pathDst) and readFile(cppFile) == readFile(pathDst):
+      continue
+    else:
+      log "Will compile " & pathDst
+      copyFile(cppFile, pathDst)        
+  
+  
+    
+
+proc generateModule(name, sourceDir:string) = 
   let moduleDir = sourceDir / name
   let privateDir = moduleDir / "Private"
   let publicDir = moduleDir / "Public"
@@ -201,12 +227,24 @@ proc generateModule(name:string, sourceDir:string) =
   writeFile(moduleHFile, getModuleHFile(name))
   writeFile(moduleBuildCsFile, getModuleBuildCsFile(name))
 
+  var cppSrcDir : string 
+  if name == "Bindings":
+    cppSrcDir = PluginDir / ".nimcache/gencppbindings"
+  else:
+    # cppSrcDir = PluginDir / &".nimcache/{name}/release"
+    cppSrcDir = PluginDir / &".nimcache/nimforuegame/release"
+  copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
+ #this is a param 
+
+
+
+
 proc generatePlugin*(name:string) =
   let uePluginDir = parentDir(PluginDir)
   let genPluginDir = uePluginDir / name
   let genPluginSourceDir = genPluginDir / "Source"
   let upluginFilePath = genPluginDir / (name & ".uplugin")
-  let modules = @["Game", "Bindings"] #notice we add bindings here.
+  let modules = @["Game"] 
 
   createDir(genPluginDir)
   createDir(genPluginSourceDir)
@@ -215,10 +253,13 @@ proc generatePlugin*(name:string) =
     generateModule(module, genPluginSourceDir)
 
 
+
+
+
 #[Steps
-1. Do the missing cpp file
-2. Toggle the module in the project file
-3. At this point ubuild should work and compile the plugin
+1.[x] Do the missing cpp file
+2. Toggle the module in the project file (not sure if it makes sense since it's autocompiled. Will try to make all scenarios to compile)
+3. [x] At this point ubuild should work and compile the plugin
 4. Compile bindings into the project.
 5. At this point uebuild should work and compile the plugin
 6. Compile the game

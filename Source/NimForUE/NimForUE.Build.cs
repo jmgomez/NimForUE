@@ -24,7 +24,6 @@ public class NimForUE : ModuleRules
         PublicDefinitions.Add("NIM_INTBITS=64");
         //PublicDefinitions.Add("NUE_GAME=0");
 
-	    PrivatePCHHeaderFile = "../../NimHeaders/nimbase.h";
 	    bEnableExceptions = true;
 	    OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 	    Console.WriteLine("Linker arguments:");
@@ -75,7 +74,10 @@ public class NimForUE : ModuleRules
 			);
 		
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
+		var PCHFile = Path.Combine(nimHeadersPath, "nimbase.h");
 		PublicIncludePaths.Add(nimHeadersPath);
+		// PrivatePCHHeaderFile = PCHFile;
+		// SharedPCHHeaderFile = PCHFile;
 		
 		if (Target.bBuildEditor)
 			AddNimForUEDev();
