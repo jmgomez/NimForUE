@@ -150,7 +150,7 @@ proc getNimForUEConfig*() : NimForUEConfig =
 # else:
 #   const PluginDir* {.strdefine.} = ""#Defined in switches. Available for all targets (Hots, Guest..)
 
-let config = getOrCreateNUEConfig()
+
 
 let
   ueLibsDir = PluginDir/"Binaries"/"nim"/"ue" #THIS WILL CHANGE BASED ON THE CURRENT CONF
@@ -158,13 +158,13 @@ let
   HostLibPath* =  ueLibsDir / getFullLibName("hostnimforue")
   GameLibPath* =  ueLibsDir / getFullLibName("game")
   GenFilePath* = PluginDir / "src" / "hostnimforue"/"ffigen.nim"
-  NimGameDir* = config.gameDir / "NimForUE"
-  GamePath* = getGamePathFromGameDir(config.gameDir)
-  GameName* = GamePath.split(PathSeparator)[^1].split(".")[0]
+proc NimGameDir*() :string = getOrCreateNUEConfig().gameDir / "NimForUE" #notice this is a proc so it's lazy loaded
+proc GamePath*() : string = getGamePathFromGameDir(getOrCreateNUEConfig().gameDir)
+proc GameName*() : string = GamePath().split(PathSeparator)[^1].split(".")[0]
 #TODO we need to make it accesible from game/guest at compile time
 when defined(nue):
-  let WithEditor* = config.withEditor 
-  doAssert(GamePath != GamePathError, &"Config file error: The uproject file could not be found in {config.gameDir}. Please check that 'gameDir' points to the directory containing your uproject in '{PluginDir / getConfigFileName()}'.")
+  let WithEditor* = getOrCreateNUEConfig().withEditor 
+  doAssert(GamePath() != GamePathError, &"Config file error: The uproject file could not be found in {getOrCreateNUEConfig().gameDir}. Please check that 'gameDir' points to the directory containing your uproject in '{PluginDir / getConfigFileName()}'.")
 
 else:
   const WithEditor* {.booldefine.} = true

@@ -72,7 +72,7 @@ proc compileGuestSyncFromPlugin*() : string =
   output
 
 proc getGameUserConfig*() : Option[JSonNode] = 
-  let path = NimGameDir / "game.json"
+  let path = NimGameDir() / "game.json"
   if fileExists(path):
     some readFile(path).parseJson()
   else:
@@ -91,7 +91,7 @@ proc executeNueTask(task: string) =
 
 proc getAllGameLibs*() : seq[string] = 
   var libs = @["game"]
-  for dir in walkDir(NimGameDir):
+  for dir in walkDir(NimGameDir()):
     let name = dir[1].split(PathSeparator)[^1]
     if fileExists(dir[1] / name & ".nim"):
       libs.add(name)

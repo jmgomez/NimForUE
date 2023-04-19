@@ -60,40 +60,45 @@ proc initEmitter() : UEEmitterPtr =
 
 #emitters are stored in guest, but they wont be. Each module will control its own emitter.
 #guest though will be in charce of reinstance the types (since it can only happens in editor)
-var emitters : Table[string, UEEmitterPtr] = initTable[string, UEEmitterPtr]()
+# var emitters : Table[string, UEEmitterPtr] = initTable[string, UEEmitterPtr]()
 
-when defined(guest):
-    proc getGameEmitter*() : UEEmitterPtr {.exportc, cdecl, dynlib.} =
-        if "game" notin emitters:
-            emitters["game"] = initEmitter()
-            UE_Error "Init game emitter in guest"
-        UE_Log $emitters["game"]
-        emitters["game"]
-else:
-    import ../../buildscripts/buildscripts
-    import std/[dynlib, os, sequtils, sugar]
+# when defined(guest):
+#     proc getGameEmitter*() : UEEmitterPtr {.exportc, cdecl, dynlib.} =
+#         if "game" notin emitters:
+#             emitters["game"] = initEmitter()
+#             UE_Error "Init game emitter in guest"
+#         UE_Log $emitters["game"]
+#         emitters["game"]
+# else:
+#     import ../../buildscripts/buildscripts
+#     import std/[dynlib, os, sequtils, sugar]
 
-    proc getGameEmitter*() : UEEmitterPtr = 
-        UE_Warn "asking game emitter in game before dll call"
-        UE_Log getStackTrace()
-        type 
-          GetGameEmitter = proc () : UEEmitterPtr {.gcsafe, cdecl.}
-        let libDir = PluginDir / "Binaries"/"nim"/"ue"
-        let guestPath = getLastLibPath(libDir, "nimforue")      
-        let lib = loadLib(guestPath.get())
-        let getEmitter = cast[GetGameEmitter](lib.symAddr("getGameEmitter"))
-        if getEmitter.isNil:
-          UE_Error "Could not find getGameEmitter in guest lib"
-          assert getEmitter.isNotNil()
-        getEmitter() 
+#     proc getGameEmitter*() : UEEmitterPtr = 
+#         UE_Warn "asking game emitter in game before dll call"
+#         UE_Log getStackTrace()
+#         type 
+#           GetGameEmitter = proc () : UEEmitterPtr {.gcsafe, cdecl.}
+#         let libDir = PluginDir / "Binaries"/"nim"/"ue"
+#         let guestPath = getLastLibPath(libDir, "nimforue")      
+#         let lib = loadLib(guestPath.get())
+#         let getEmitter = cast[GetGameEmitter](lib.symAddr("getGameEmitter"))
+#         if getEmitter.isNil:
+#           UE_Error "Could not find getGameEmitter in guest lib"
+#           assert getEmitter.isNotNil()
+#         getEmitter() 
 
+# proc getGlobalEmitter*() : UEEmitterPtr = 
+#     when defined(guest):
+#         if "guest" notin emitters:            
+#             emitters["guest"] = initEmitter()
+#         emitters["guest"]
+#     else:
+#         getGameEmitter()
+var emitter : UEEmitterPtr 
 proc getGlobalEmitter*() : UEEmitterPtr = 
-    when defined(guest):
-        if "guest" notin emitters:            
-            emitters["guest"] = initEmitter()
-        emitters["guest"]
-    else:
-        getGameEmitter()
+    if emitter.isNil:
+        emitter = initEmitter()
+    emitter
 
 when not defined(guest): #called from ue
     proc getGlobalEmitterPtr*() : UEEmitterPtr {.exportc, cdecl.} = getGlobalEmitter()

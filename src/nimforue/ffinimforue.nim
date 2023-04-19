@@ -112,7 +112,7 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
 #only GameNim types
 proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.cdecl, exportc, dynlib.} = 
   UE_Log "Emitting types from external lib " & $emitter.emitters.len
-  emitNueTypes(emitter, "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
+  # emitNueTypes(emitter, "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
 
 
 

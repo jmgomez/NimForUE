@@ -1,9 +1,11 @@
 #Host guest (which will be renamed as plugin) and the game will be compiled from this file. Nue will use functions from here. 
 #We may extrac the compilation option to another file since there are a lot of platforms. 
 
-import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
+import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times, sequtils ]
 import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 import ../switches/switches
+import nimforue/utils/utils
+
 let config = getNimForUEConfig()
 
 let nimCmd = "nim" #so we can easy switch with nim_temp
@@ -125,48 +127,44 @@ switch("path", "../Plugins/NimForUE/src/nimforue/unreal/bindings")
 switch("path","../Plugins/NimForUE/src/nimforue/game")
 switch("path","../Plugins/NimForUE/src/nimforue/")
 """
-  let gameConf = NimGameDir / "config.nims"
+  let gameConf = NimGameDir() / "config.nims"
   if not fileExists(gameConf):
     writeFile(gameConf, fileTemplate)
 
 
 proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) = 
+  var extraSwitches = extraSwitches
   let isVm = "vm" in name
-  let gameSwitches = @[
+  var gameSwitches = @[
     "-d:game",
     (if isVm: "-d:vmhost" else: ""),
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
-  ]
-  # ] & 
-  # (if defined(macos):
-  #   @[
-  #      &"-l:-L./Binaries/nim",
-  #     "-l:-lmaingencppbindings",
-  #   ]
-  # else:
-  #   @[
-  #     &"-l:{absolutePath(PluginDir)}/Binaries/nim"/"maingencppbindings.lib",
-  #   ])
+
+  ] 
+  let isCompileOnly = "compileonly" in extraSwitches
+  if isCompileOnly:
+    gameSwitches.add("--genScript")
+  else:
+    gameSwitches.add("--app:lib")
+
+  extraSwitches.remove("compileonly")
+
+
   ensureGameConfExists()
-  #We compile from the engine directory so we dont surpass the windows argument limits for the linker 
-  let engineBase = parentDir(config.engineDir)
-  # setCurrentDir(e ngineBase)
-  #TODO the final path will be relative to the engine dir this is just a hack to get it working for now
-  # var uesymbols = uesymbols.mapIt(it.replace(config.engineDir, "Engine"))
-  let nimCache = &".nimcache/{name}"/(if withDebug: "debug" else: "release")
+  
+  let nimCache = &".nimcache/{name}"/(if withDebug and not isCompileOnly: "debug" else: "release")
   let isGame = name == "game"
-  let entryPoint = NimGameDir/(if isGame: "game.nim" else: &"{name}/{name}.nim")
+  let entryPoint = NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"{nimCmd} cpp {buildFlags} --app:lib  --nimMainPrefix:Game  -d:withPCH --nimcache:{nimCache} {entryPoint}"
+  let compCmd = &"{nimCmd} cpp {buildFlags}  --nimMainPrefix:Game  -d:withPCH --nimcache:{nimCache} {entryPoint}"
   # echo compCmd
   doAssert(execCmd(compCmd)==0)
-  # setCurrentDir(PluginDir)
-  copyNimForUELibToUEDir(name)
-  #We need to make sure that gen cpp files doenst exists in editor builds
-  let privateFolder = PluginDir / "Source" / "NimForUE" / "Private" / "NimForUEGame"
-  # removeDir(privateFolder)
 
+
+  if not isCompileOnly:
+    copyNimForUELibToUEDir(name)
+  
 
 proc compileGame*(extraSwitches:seq[string], withDebug:bool) = 
   compileLib("game", extraSwitches, withDebug)
@@ -185,7 +183,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
   let bindingsDir = PluginDir / ".nimcache/gencppbindings"
   ensureGameConfExists()
   let entryPointDir = &"{PluginDir}/src/nimforue/game/"
-  let gameConf = NimGameDir / "config.nims"
+  let gameConf = NimGameDir() / "config.nims"
   copyFile(gameConf, entryPointDir / "config.nims")
   var content = readFile( entryPointDir / "config.nims").replace("../Plugins/NimForUE/src/nimforue/", "../")
   content = content & """switch("path", "../../../../../NimForUE")""" #Adds the game folder path 
@@ -198,7 +196,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
   # setCurrentDir(engineBase)
   #TODO the final path will be relative to the engine dir this is just a hack to get it working for now
   # var uesymbols = uesymbols.mapIt(it.replace(config.engineDir, "Engine"))
-  let gameFolder = NimGameDir
+  let gameFolder = NimGameDir()
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")

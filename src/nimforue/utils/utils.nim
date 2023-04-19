@@ -41,6 +41,15 @@ func replaceFirst*[T](xs: var seq[T], fnCriteria: Criteria[T], newValue: T): seq
   let idx = firstIndexOf(xs, fnCriteria)
   xs[idx] = newValue #throw on purpose if there is no value. Handle it with types?
   xs
+
+func remove*[T](xs:var seq[T], x: T) =
+  var i = 0
+  while i < len(xs):
+    if xs[i] == x:
+      xs.delete(i)
+      break     
+    inc i  
+
 proc mapi*[T, U](xs: seq[T], fn: (T, int)->U): seq[U] =
   var toReturn: seq[U] = @[] #Todo how to reserve memory upfront to avoid reallocations?
   for i, x in xs:
@@ -224,6 +233,8 @@ template measureTime*(name: static string, body: untyped) =
   let msg = name & " took " & $ends & "  seconds"
   when defined(UE_Log):
     UE_Log msg
+  elif defined(log):
+    log msg
   else:
     echo msg  
     

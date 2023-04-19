@@ -142,7 +142,7 @@ task ubuild, "Calls Unreal Build Tool for your project":
   #and just define const globals for all the paths we can deduce. The moment to do that is when supporting Game builds
 
   let curDir = getCurrentDir()
-  let uprojectFile = GamePath
+  let uprojectFile = GamePath()
   proc isTargetFile(filename:string) : bool = 
     if WithEditor: "Editor" in filename
     else: "Editor" notin filename
@@ -297,11 +297,11 @@ task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindin
 task genbindings, "Runs the Generate Bindings commandlet":
   let silent = if "silent" in taskOptions: "-silent" else: ""
   when defined windows:
-    let cmd = &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor.exe {GamePath} -run=GenerateBindings {silent} " 
+    let cmd = &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor.exe {GamePath()} -run=GenerateBindings {silent} " 
     echo "Running " & cmd
     echo execCmd(cmd)
   else:
-    let cmd = &"{config.engineDir}/Binaries/Mac//UnrealEditor.app/Contents/MacOS/UnrealEditor  {GamePath} -run=GenerateBindings {silent}"
+    let cmd = &"{config.engineDir}/Binaries/Mac//UnrealEditor.app/Contents/MacOS/UnrealEditor  {GamePath()} -run=GenerateBindings {silent}"
     discard execCmd(cmd)
 
 task genbindingsall, "Runs the Generate Bindings commandlet":
@@ -325,9 +325,9 @@ task ok, "prints ok if NUE and Host are built":
   
 task starteditor, "opens the editor":
   when defined windows:
-    discard execCmd("powershell.exe "&GamePath)
+    discard execCmd("powershell.exe "&GamePath())
   else:
-    discard execCmd("open "&GamePath)
+    discard execCmd("open "&GamePath())
 
 
 task showincludes, "Traverses UEDeps.h gathering includes and shows then in the script":
@@ -352,9 +352,24 @@ task copybuildconfiguration, "Copies the unreal build configuration from the plu
   copyFile(buildConfigFile, buildConfigFileDest)
 
 task genplugin, "Creates a plugin, by default it uses the name of the game with NUE as prefix":  
-  let pluginName = if "name" in taskOptions: taskOptions["name"] else: "Nue" & GameName
+  let pluginName = if "name" in taskOptions: taskOptions["name"] else: "Nue" & GameName()
+  measureTime "Compiling Nim code for game":
+    compileLib("game", @["compileonly", "--linedir:off"], false)
   generatePlugin(pluginName)
-  ubuild(taskOptions)
+  if isLiveCodingRunning(): #TODO this is temp
+    triggerLiveCoding(10)
+  else:
+    ubuild(taskOptions)
+
+
+task compilePluginModule, "Compiles the nim code for a module, moves into the plugin and compiles the plugin":
+  # let moduleName = taskOptions["name"]
+  compileLib("game", @["compileonly", "--linedir:off"], false)
+  copyCppToModule("game")
+  if isLiveCodingRunning(): #TODO this is temp
+    triggerLiveCoding(10)
+  else:
+    ubuild(taskOptions)
 
 # --- End Tasks ---
 main()

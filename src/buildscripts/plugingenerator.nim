@@ -69,11 +69,10 @@ public class $1 : ModuleRules
 			"NimForUEBindings",
 			"EnhancedInput", 
 			"GameplayTags",
-			"PCG",
-			"GameplayAbilities",
+			"PCG",  //TODO add only in 5.2
+			"GameplayAbilities", //TODO PCG, GameplayTags and GampleyAbilities should be optional modules
 			"PhysicsCore",
-			"UnrealEd",
-			//"NimForUE", //DUE To reinstance bindigns. So editor only
+			"UnrealEd", //TODO add only in editor
 			
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
@@ -207,8 +206,23 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
       log "Will compile " & pathDst
       copyFile(cppFile, pathDst)        
   
+
+proc copyCppToModule*(name:string) = 
+  var moduleName = name.capitalizeAscii()
+  #TODO get pluginName from the PluginStruct? 
+  #TODO reorganize the way we pull the dirs
+  let pluginName = "NueNimTemplate"
+  let uePluginDir = parentDir(PluginDir)
+  let genPluginDir = uePluginDir / pluginName
+  let genPluginSourceDir = genPluginDir / "Source"
+  let moduleDir = genPluginSourceDir / name
+  let privateDir = moduleDir / "Private"  
+  let nimGeneratedCodeDir = privateDir / "NimGeneratedCode"
   
-    
+  let cppSrcDir = PluginDir / &".nimcache/{name}/release"
+    # cppSrcDir = PluginDir / &".nimcache/nimforuegame/release"
+  copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
+
 
 proc generateModule(name, sourceDir:string) = 
   let moduleDir = sourceDir / name
@@ -227,13 +241,7 @@ proc generateModule(name, sourceDir:string) =
   writeFile(moduleHFile, getModuleHFile(name))
   writeFile(moduleBuildCsFile, getModuleBuildCsFile(name))
 
-  var cppSrcDir : string 
-  if name == "Bindings":
-    cppSrcDir = PluginDir / ".nimcache/gencppbindings"
-  else:
-    # cppSrcDir = PluginDir / &".nimcache/{name}/release"
-    cppSrcDir = PluginDir / &".nimcache/nimforuegame/release"
-  copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
+  
  #this is a param 
 
 
