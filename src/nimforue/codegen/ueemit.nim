@@ -281,7 +281,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEar
 
     
     hotReloadInfo.setShouldHotReload()
-
+    
     UE_Log $hotReloadInfo
 
     hotReloadInfo

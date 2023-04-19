@@ -4,7 +4,7 @@ include unreal/prelude
 import unreal/editor/editor
 import unreal/core/containers/containers
 import ../nimforue/codegen/[ffi,emitter, genreflectiondatav2, models, uemeta, ueemit]
-import std/[options, strformat, dynlib, os, osproc, tables, asyncdispatch]
+import std/[options, strformat, dynlib, os, osproc, tables, asyncdispatch, times]
 import ../buildscripts/[nimforueconfig, buildscripts, keyboard]
 
 
@@ -66,10 +66,11 @@ proc genBindingsEntryPoint() : void {.ffi:genFilePath} =
      
 
 
-proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) = 
+proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) : bool = 
     try:
         let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
-        
+        if not nimHotReload.bShouldHotReload:
+          return false
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
           reinstanceNueTypes(packageName, nimHotReload, "", reuseHotReload)
@@ -80,18 +81,20 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypes
           onEndPIEEvent.remove(handle[])
           deleteCpp(handle)
           UE_LOG(&"NimUE: PIE ended, reinstanciated nue types {packageName}")
-          
+
+
+
         let onPIEEndHandle = newCpp[FDelegateHandle]()
         (onPIEEndHandle[]) = onEndPIEEvent.addStatic(onPIEEndCallback, packageName, nimHotReload, onPIEEndHandle)
         UE_Log "Deffered reinstance of NueTypes for package: " & packageName & " after PIE ended"
-
+        return nimHotReload.bShouldHotReload
        
     except Exception as e:
         #TODO here we could send a message to the user
         UE_Error "Nim CRASHED "
         UE_Error e.msg
         UE_Error e.getStackTrace()
-
+        return false
 
 
 
@@ -100,12 +103,12 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
   try:
     case libName:
     of "nimforue": 
-        emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
+        discard emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
         if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
           discard
     else:
-        emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
+        discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
 
@@ -125,19 +128,22 @@ proc subscribeToTick() : FTickerDelegateHandle =
   handle
 
 
-
+var lastTimeTriggered = now()
 #only GameNim types 
 proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.cdecl, exportc, dynlib.} = 
   UE_Log "Emitting types from external lib " & $emitter.emitters.len
-  emitNueTypes(emitter, "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
+  let didHotReload = emitNueTypes(emitter, "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
+  # if not didHotReload: return #TODO review why is not working as expected (will avoid double lc when no reinstancing)
   let tickHandle = subscribeToTick()
   proc waitForLiveCoding() : Future[void] {.async.} =
+    if (now() - lastTimeTriggered).inSeconds < 1:
+      return
     #we need to wait a bit so it does something
-    await sleepAsync(100) 
+    await sleepAsync(10) 
     UE_Log "Triggering now"
     triggerLiveCoding(50)
     removeTicker(tickHandle)
-
+    lastTimeTriggered = now()
   asyncCheck waitForLiveCoding()
 
 

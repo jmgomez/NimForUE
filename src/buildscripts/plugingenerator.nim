@@ -1,5 +1,5 @@
 
-import std/[os, strformat, strutils, sequtils]
+import std/[os, strformat, strutils, sequtils, tables, hashes]
 import buildcommon, buildscripts, nimforueconfig
 
 
@@ -181,31 +181,49 @@ proc getModuleCppFile(name:string) : string =
 
 
 #begin cpp
+type CppSourceFile = object
+  name, path, content :string    
 
 proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) = 
   #TODO generate a map of what exists and what not so we can detect removals.
   #Notice we need to copy the bindings too. Maybe we can infer somehow only what needs to be copied. 
   #It doesnt really matter though since on the final build they will be optimized out but it may saved us 
   #some seconds on the first build.
-  proc copyBindings() = 
-    var bindingsSrcDir = PluginDir / ".nimcache/gencppbindings"
-    for cppFile in walkFiles(bindingsSrcDir / &"*.cpp"):
-      let filename = cppFile.extractFilename()
-      if filename.contains("sbindings@sexported"):# and not (filename.contains("unrealed") or filename.contains("umgeditor")):  Should handle this in a better way TOOD
-        let pathDst = nimGeneratedCodeDir / filename
-        if not fileExists pathDst:
-          copyFile(cppFile, pathDst)
-
-  copyBindings()
-  for cppFile in walkFiles(cppSrcDir / &"*.cpp"):    
-    let filename = cppFile.extractFilename()   
-    let pathDst = nimGeneratedCodeDir / filename
-    if fileExists(pathDst) and readFile(cppFile) == readFile(pathDst):
-      continue
-    else:
-      log "Will compile " & pathDst
-      copyFile(cppFile, pathDst)        
+  var existingFiles = initTable[string, CppSourceFile]()
+  var newFiles = initTable[string, CppSourceFile]()
+  var bindingsSrcDir = PluginDir / ".nimcache/gencppbindings"
   
+  for newFile in walkFiles(bindingsSrcDir / &"*.cpp"):
+    let filename = newFile.extractFilename()
+    if filename.contains("sbindings@sexported"):# and not (filename.contains("unrealed") or filename.contains("umgeditor")):  Should handle this in a better way TOOD
+      newFiles[filename] = CppSourceFile(name:filename, path:newFile, content: readFile(newFile))         
+  for newFile in walkFiles(cppSrcDir / &"*.cpp"):    
+    let filename = newFile.extractFilename()   
+    newFiles[filename] = CppSourceFile(name:filename, path:newFile, content: readFile(newFile))
+
+  for oldFile in walkFiles(nimGeneratedCodeDir / &"*.cpp"):
+    let filename = oldFile.extractFilename()
+    existingFiles[filename] = CppSourceFile(name:filename, path:oldFile, content: readFile(oldFile))    
+
+  log "Exisiting files: " & $existingFiles.len
+  log "New files: " & $newFiles.len
+  for newFile in newFiles.values:
+    if newFile.name in existingFiles:
+      if newFile.content != existingFiles[newFile.name].content:
+        copyFile(newFile.path, nimGeneratedCodeDir / newFile.name)
+        log "File changed: " & newFile.name
+    else:
+      copyFile(newFile.path, nimGeneratedCodeDir / newFile.name)
+      log "File added: " & newFile.name
+      
+  for oldFile in existingFiles.values:
+    if oldFile.name notin newFiles:
+      removeFile(oldFile.path)
+      log "File removed: " & oldFile.name
+      
+  #TODO removes
+  
+    
 
 proc copyCppToModule*(name:string) = 
   var moduleName = name.capitalizeAscii()

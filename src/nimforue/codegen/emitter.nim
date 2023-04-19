@@ -37,7 +37,7 @@ type
         clsConstructorTable* : Table[string, CtorInfo]
        
         setStructOpsWrapperTable* : Table[string, UNimScriptStructPtr->void]
-    # UEEmitter* = ref UEEmitterRaw
+
     UEEmitterPtr* = ptr UEEmitter
 
 proc getNativeFuncImplPtrFromUEField*(emitter: UEEmitterPtr, ueField: UEField): Option[UFunctionNativeSignature] =
