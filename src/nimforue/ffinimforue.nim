@@ -27,9 +27,9 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
     GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, stdcall.}
 
   let lib = loadLib(libPath)
-  let getEmitter = cast[GetUEEmitterFn](lib.symAddr("getUEEmitter"))
+  let getEmitter = cast[GetUEEmitterFn](lib.symAddr("getGlobalEmitterPtr"))
   
-  assert getEmitter.isNotNil()
+  assert getEmitter.isNotNil(), "getGlobalEmitterPtr is nil"
 
   let emitterPtr = getEmitter()
   assert not emitterPtr.isNil()
@@ -39,16 +39,16 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
   emitterPtr
 
 
-proc startNue(libPath:string)  = 
+proc startNue(libPath:string, calledFrom:NueLoadedFrom)  = 
   type 
-    StartNueFN = proc ():void {.gcsafe, stdcall.}
+    StartNueFN = proc ( calledFrom:NueLoadedFrom):void {.gcsafe, stdcall.}
 
   let lib = loadLib(libPath)
   let startNueFn = cast[StartNueFN](lib.symAddr("startNue"))
   
   assert startNueFn.isNotNil()
 
-  startNueFn()
+  startNueFn(calledFrom)
 
 
 
@@ -108,6 +108,8 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
           # genBindingsCMD()
           discard
     else:
+        discard
+        # startNue(libPath, loadedFrom)
         discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
