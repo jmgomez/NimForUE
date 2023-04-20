@@ -137,17 +137,19 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) =
   let isVm = "vm" in name
   var gameSwitches = @[
     "-d:game",
+    "-d:OutputHeader:" & name.capitalizeAscii() & ".h",
+    "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
 
   ] 
-  let isCompileOnly = "compileonly" in extraSwitches
+  let isCompileOnly = "--compileOnly" in extraSwitches
   if isCompileOnly:
     gameSwitches.add("--genScript")
   else:
     gameSwitches.add("--app:lib")
 
-  extraSwitches.remove("compileonly")
+  extraSwitches.remove("--compileOnly")
 
 
   ensureGameConfExists()

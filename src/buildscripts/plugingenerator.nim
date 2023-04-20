@@ -259,6 +259,7 @@ proc generateModule(name, sourceDir:string) =
   writeFile(moduleHFile, getModuleHFile(name))
   writeFile(moduleBuildCsFile, getModuleBuildCsFile(name))
 
+  copyCppToModule(name)
   
  #this is a param 
 
@@ -270,7 +271,7 @@ proc generatePlugin*(name:string) =
   let genPluginDir = uePluginDir / name
   let genPluginSourceDir = genPluginDir / "Source"
   let upluginFilePath = genPluginDir / (name & ".uplugin")
-  let modules = @["Game"] 
+  let modules = getAllGameLibs().mapIt(it.capitalizeAscii())
 
   createDir(genPluginDir)
   createDir(genPluginSourceDir)

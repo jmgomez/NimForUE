@@ -72,12 +72,7 @@ else:
      some ("", gameDir)
 
 #Dll output paths for the uclasses the user generates
-when defined(guest):
-  const OutputHeader* = "Guest.h"
-elif defined(game):
-  const OutputHeader* = "Game.h"
-else:
-  const OutputHeader* = ""
+const OutputHeader* {.strdefine.} = ""
 #[
 The file is created for first time in from this file during compilation
 Since UBT has to set some values on it, it does so through the FFI 

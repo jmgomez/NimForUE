@@ -178,39 +178,53 @@ task ubuild, "Calls Unreal Build Tool for your project":
     
 
 
-task game, "Builds the game lib":
-  var extraSwitches = newSeq[string]()
-  if "f" in taskOptions: 
-    extraSwitches.add "-f" #force 
-  if "nolinedir" in taskOptions:  
-    extraSwitches.add "--linedir:off"
+# task game, "Builds the game lib":
+#   var extraSwitches = newSeq[string]()
+#   if "f" in taskOptions: 
+#     extraSwitches.add "-f" #force 
+#   if "nolinedir" in taskOptions:  
+#     extraSwitches.add "--linedir:off"
  
-  let debug = "debug" in taskOptions
-  let livecoding = "livecoding" in taskOptions
-  if config.withEditor and not livecoding:
-    compileGame(extraSwitches, debug)
-  else:
-    compileGameToUEFolder(extraSwitches, debug)
-    if livecoding and isLiveCodingRunning(): 
-      triggerLiveCoding(10)
-    else:
-      ubuild(taskOptions)
+#   let debug = "debug" in taskOptions
+#   let livecoding = "livecoding" in taskOptions
+#   if config.withEditor and not livecoding:
+#     compileGame(extraSwitches, debug)
+#   else:
+#     compileGameToUEFolder(extraSwitches, debug)
+#     if livecoding and isLiveCodingRunning(): 
+#       triggerLiveCoding(10)
+#     else:
+#       ubuild(taskOptions)
 
 
 
 task lib, "Builds a game lib":
   var extraSwitches = newSeq[string]()
+  var withLiveCoding = false
+  var build = true
+
   if "f" in taskOptions: 
     extraSwitches.add "-f" #force 
   if "nolinedir" in taskOptions:  
     extraSwitches.add "--linedir:off"
+  if "livecoding" in taskOptions: #notice when doing non editor builds we will be doing the same process
+    withLiveCoding = true
+    extraSwitches.add "--compileOnly"
+  if "nobuild" in taskOptions:
+    build = false
 
   let debug = "debug" in taskOptions
   if "name" in taskOptions:
     let name = taskOptions["name"]
     log "Compiling lib " & name & "..."
-    assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"
+    assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"         
     compileLib(taskOptions["name"], extraSwitches, debug)
+    if withLiveCoding:
+      copyCppToModule(name.capitalizeAscii())
+      if isLiveCodingRunning() and build: 
+        triggerLiveCoding(10)
+      elif build:
+        ubuild(taskOptions)
   else:
     log "You need to specify a name for the lib. i.e. 'nue lib --name=mylib'"
  
@@ -351,25 +365,27 @@ task copybuildconfiguration, "Copies the unreal build configuration from the plu
   createDir(buildConfigFileDest.parentDir)
   copyFile(buildConfigFile, buildConfigFileDest)
 
+task rebuildmodulelibs, "Rebuilds the plugin, game and libs":
+  #remove code on the plugin 
+  taskOptions["nobuild"] = ""
+  taskOptions["livecoding"] = ""
+  let libs = getAllGameLibs()
+  log "Compiling Nim only lib " & $libs
+  for lib in getAllGameLibs():
+    taskOptions["name"] = lib   
+    lib(taskOptions)
+    copyCppToModule(lib.capitalizeAscii())
+  if isLiveCodingRunning(): 
+    triggerLiveCoding(10)
+  else:
+    ubuild(taskOptions)
+
 task genplugin, "Creates a plugin, by default it uses the name of the game with NUE as prefix":  
   let pluginName = if "name" in taskOptions: taskOptions["name"] else: "Nue" & GameName()
-  measureTime "Compiling Nim code for game":
-    compileLib("game", @["compileonly", "--linedir:off"], false)
+  #TODO replace this with a call to all libs 
   generatePlugin(pluginName)
-  if isLiveCodingRunning(): #TODO this is temp
-    triggerLiveCoding(10)
-  else:
-    ubuild(taskOptions)
+ 
 
-
-task compilePluginModule, "Compiles the nim code for a module, moves into the plugin and compiles the plugin":
-  # let moduleName = taskOptions["name"]
-  compileLib("game", @["compileonly", "--linedir:off"], false)
-  copyCppToModule("game")
-  if isLiveCodingRunning(): #TODO this is temp
-    triggerLiveCoding(10)
-  else:
-    ubuild(taskOptions)
 
 # --- End Tasks ---
 main()
