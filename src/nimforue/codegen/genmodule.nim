@@ -441,9 +441,8 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
 #hash:{module.hash}
 when not defined(nimsuggest):
   include {preludeRelative}prelude
-  const BindingPrefix {{.strdefine.}} = ""
-  {{.link: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp.obj".}}
-  # {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
+  const BindingPrefix {{.strdefine.}} = ""  
+  {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
    
 """
 

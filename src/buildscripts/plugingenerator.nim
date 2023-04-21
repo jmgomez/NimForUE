@@ -264,7 +264,12 @@ proc generateModule(name, sourceDir:string) =
  #this is a param 
 
 
-
+proc cleanGenerateCode*(name, genPluginDir:string) = 
+  let moduleDir = genPluginDir / name
+  let privateDir = moduleDir / "Private"
+  let nimGeneratedCodeDir = privateDir / "NimGeneratedCode"
+  removeDir(nimGeneratedCodeDir)
+  createDir(nimGeneratedCodeDir)
 
 proc generatePlugin*(name:string) =
   let uePluginDir = parentDir(PluginDir)
@@ -278,6 +283,8 @@ proc generatePlugin*(name:string) =
   writeFile(upluginFilePath, getPluginTemplateFile(name, modules))
   for module in modules:
     generateModule(module, genPluginSourceDir)
+
+
 
 
 
