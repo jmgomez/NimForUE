@@ -338,6 +338,7 @@ task ok, "prints ok if NUE and Host are built":
     host(taskOptions)
   
 task starteditor, "opens the editor":
+  ubuild(taskOptions)
   when defined windows:
     discard execCmd("powershell.exe "&GamePath())
   else:

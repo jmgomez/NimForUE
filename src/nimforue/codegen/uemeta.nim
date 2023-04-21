@@ -229,7 +229,7 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
   if outerFn.isSome(): #the default values for the params are on the metadata of the function    
     let ufun = outerFn.get()
     let outerFn = ueCast[UStruct](ufun.getOuter())
-    typeName = outerFn.getPrefixCpp() & outerFn.getName()
+    typeName = if outerFn.isNotNil(): outerFn.getPrefixCpp() & outerFn.getName() else: ""
     let supportedTypes = ["bool", "FString", "float32", "float64", "int32", "int", "FName", "FLinearColor", "FVector", "FVector2D", "FRotator"]
     let isSupportedDefault = nimType in supportedTypes or @["E", "A", "U"].filterIt(nimType.startsWith(it)).any()
     if ufun.hasMetadata(CPP_Default_MetadataKeyPrefix & prop.getName()) and isSupportedDefault: 
@@ -422,7 +422,7 @@ func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchInclude
     none(UEType)
 
 
-func toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
+proc toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
   let storedUEType = 
     del.getMetadata(UETypeMetadataKey)
        .flatMap((x:FString)=>tryParseJson[UEType](x))
@@ -432,7 +432,7 @@ func toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[], pchInc
   var name = del.getPrefixCpp() & del.getName()
 
   let fields = getFPropsFromUStruct(del)
-    .map(x=>toUEField(x, del, rules))
+    .mapIt(toUEField(it, del, rules))
     .sequence()
 
   let nameWithoutSuffix = name.replace(DelegateFuncSuffix, "")

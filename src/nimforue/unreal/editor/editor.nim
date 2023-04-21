@@ -20,6 +20,12 @@ type
   FReloadCompleteDelegate* = TMulticastDelegateOneParam[EReloadCompleteReason]
   FOnPIEEvent* = TMulticastDelegateOneParam[bool]
 
+  #Probably this belongs to enginetypes
+  FSceneView* {.importcpp.} = object
+  FSceneViewPtr* = ptr FSceneView
+  FSceneViewProjectionData* {.importcpp} = object
+
+
 
 let GEditor* {.importcpp, nodecl.} : UEditorEnginePtr
 
@@ -27,6 +33,10 @@ let GEditor* {.importcpp, nodecl.} : UEditorEnginePtr
 
 func isInPIE*(editor:UEditorEnginePtr) : bool = 
   editor.playWorld.isNotNil
+
+func getActiveViewport*(editor:UEditorEnginePtr) : FViewportPtr {.importcpp: "#->GetActiveViewport()".}
+#	void DeprojectFVector2D(const FVector2D& ScreenPos, FVector& out_WorldOrigin, FVector& out_WorldDirection) const;
+
 
 let onBeginPIEEvent* {.importcpp:"FEditorDelegates::BeginPIE", nodecl.}  : FOnPIEEvent
 let onEndPIEEvent* {.importcpp:"FEditorDelegates::EndPIE", nodecl.}  : FOnPIEEvent

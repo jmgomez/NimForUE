@@ -357,6 +357,10 @@ proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGe
 proc activateExternalSubsystem*(cls:UClassPtr) {.importcpp: "FObjectSubsystemCollection<UEngineSubsystem>::ActivateExternalSubsystem(#)".}
 
 
+#VIEWPORT
+proc getSizeXY*(viewport: FViewportPtr): FIntPoint {.importcpp: "#->GetSizeXY()".}
+
+
 # #TEMPORAL DYNAMIC DELEGATE THIS SHOULD BE BOUND FROM THE BINDINGS
 # type FOnQuartzCommandEventBP* {.importcpp, pure.} = object
 # type FOnQuartzMetronomeEventBP* {.importcpp, pure.} = object
@@ -424,7 +428,7 @@ type OnKeyPressedNimSignature {.exportc.} = proc (keyEventArgs:FkeyEventPtr) : v
 proc addInputKeyPresed*(self: UGameViewportClientPtr, fn : OnInputKeyEventPressedNimSignature) : FDelegateHandle =
   {.emit:"""
   auto constWrapper = [](const FInputKeyEventArgs& args, OnInputKeyEventPressedNimSignature fn){ 
-    fn(const_cast<FInputKeyEventArgs*>(&args)); 
+    fn(const_cast<FInputKeyEventArgs*>(&args)) 
     };
     handle = self->OnInputKey().AddStatic(constWrapper, fn);
   """.}

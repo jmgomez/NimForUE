@@ -74,8 +74,7 @@ func tryGet*[T](xs: seq[T], idx: int): Option[T] =
   else: some(xs[idx])
 
 #TODO use concepts to make the general case
-func sequence*[T](xs : seq[Option[T]]) : seq[T] = 
-  xs.filter((x:Option[T])=>x.isSome()).map((x:Option[T])=>x.get())
+func sequence*[T](xs : seq[Option[T]]) : seq[T] = xs.filterIt(it.isSome()).mapIt(it.get())
 
 
 func partition*[T](xs: seq[T], fn: Criteria): (seq[T], seq[T]) =
