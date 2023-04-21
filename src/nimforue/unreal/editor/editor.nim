@@ -1,4 +1,5 @@
-include  ../prelude
+when not defined(nimsuggest):
+  include  ../prelude
 import std/[options,sugar, typetraits, sequtils]
 
 
