@@ -207,6 +207,8 @@ func addOrUpdate*[K, V](self: var SomeTable[K, V], key: K, value: V) {.inline.} 
 
 #pointers
 proc isNotNil*(v : SomePointer) : bool = not v.isNil()
+proc unsafePtr*[T](t: T): ptr T {.inline.} =
+  cast[ptr T](t.unsafeAddr)
 
 #allocations
 proc newCpp*[T]() :ptr T {.importcpp:"new '*0()".}
@@ -224,7 +226,7 @@ proc tryGetJson*[T](json:JsonNode, key:string) : Option[T] =
   else: none[T]()
 
 
-#small macros
+#small macros/templates
 template measureTime*(name: static string, body: untyped) =
   let starts = times.now()
   body
@@ -236,6 +238,8 @@ template measureTime*(name: static string, body: untyped) =
     log msg
   else:
     echo msg  
-    
+
+template toVar*[T](self : ptr T) : var T = cast[var T](self)
+template toVar*[T](self : T) : var T = toVar(self.unsafePtr())
 
 

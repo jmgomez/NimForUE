@@ -17,11 +17,12 @@ type FVector*{.importcpp, inheritable,pure, bycopy .} = object
 
 
 proc makeFVector*(x, y, z: float32): FVector {.importcpp:"FVector(@)", constructor.}
+proc makeUniformFVector*(xyz: float32): FVector {.inline.} = makeFVector(xyz, xyz, xyz)
 
 proc toString*(v: FVector): FString {.importcpp:"#.ToString()"}
 
 # {.push header:"Math/Vector.h".} #Seems like variables cant be imported without the header pragma? Commented it out for PCH, worth case scenario they can be manually recreated
-# var zeroVector* {.importcpp: "FVector::ZeroVector".}: FVector
+proc zeroVector*() : FVector {.importcpp: "FVector::ZeroVector".} 
 # var upVector* {.importcpp: "FVector::UpVector".}: FVector
 # var forwardVector* {.importcpp: "FVector::ForwardVector".}: FVector
 # var rightVector* {.importcpp: "FVector::RightVector".}: FVector

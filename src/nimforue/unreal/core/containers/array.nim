@@ -45,7 +45,7 @@ iterator mitems*[T](arr: TArray[T]): var T =
   for i in 0..(arr.num()-1):
     yield arr[i.int32]
 
-func map*[T, U](xs:TArray[T], fn : T -> U) : TArray[U] = 
+proc map*[T, U](xs:TArray[T], fn : T -> U) : TArray[U] = 
   var arr = makeTArray[U]()
   arr.reserve(xs.num())
   for x in xs:

@@ -386,9 +386,9 @@ type
   FTimespan* {.importcpp.} = object
   
   FTransform* {.importcpp, bycopy.} = object
-    # scale3D* {.importcpp: "Scale3D".}: FVector
-    # translation* {.importcpp: "Translation".}: FVector
-    # rotation* {.importcpp: "Rotation".}: FQuat
+    scale3D* {.importcpp: "Scale3D".}: FVector
+    translation* {.importcpp: "Translation".}: FVector
+    rotation* {.importcpp: "Rotation".}: FQuat
 
   FTransform3d* {.importcpp.} = object
     scale3D* {.importcpp: "Scale3D".}: FVector3d
@@ -478,8 +478,6 @@ type
   EDataValidationResult* {.size: sizeof(uint8), pure.} = enum
     Invalid, Valid, NotValidated, EDataValidationResult_MAX
 
-
-
 let identity* {.importcpp: "FTransform::Identity", nodecl.}: FTransform 
 proc getTicks*(self: FDateTime): int {.importcpp: "GetTicks".}
 
@@ -506,17 +504,27 @@ func `translation=`*(self: FTransform, value: FVector) {.importcpp: "#.SetTransl
 func `rotation=`*(self: FTransform, value: FQuat) {.importcpp: "#.SetRotation(@)".}
 func `scale3D=`*(self: FTransform, value: FVector) {.importcpp: "#.SetScale3D(@)".}
 
-proc makeFTransform*(location: FVector, rotation: FQuat, scale: FVector): FTransform = 
+proc normalizeRotation*(self: FTransform) {.importcpp: "#.NormalizeRotation()".}
+
+func makeFTransform*(location: FVector, rotation: FQuat, scale: FVector): FTransform = 
   var transform = FTransform()
-  transform.location = location
-  transform.rotation = rotation
-  transform.scale3D = scale
+  transform.setLocation(location)
+  transform.setRotation(rotation)
+  transform.setScale3D(scale)
   transform
 
-
+func makeFTransform*(location: FVector): FTransform = 
+  #makes a transform with no rotation and scale
+  {.cast(noSideEffect).}:
+    var transform = identity
+    transform.setLocation(location)  
+    transform.normalizeRotation()
+    transform
 
 func `*`*(a, b: FRotator): FRotator {.importcpp: "#*#".}
 func `*`*(a, b: FQuat): FQuat {.importcpp: "#*#".}
+
+func toFVector*(self: FVector4) : FVector = makeFVector(self.x, self.y, self.z)
 
 #Asset
 proc toSoftObjectPath*(assetData:FAssetData) : FSoftObjectPath {.importcpp: "#.ToSoftObjectPath()".}
