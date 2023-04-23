@@ -57,7 +57,7 @@ type
   CppHeader* = object
     name*: string
     includes*: seq[string]
-    classes*: Table[string, CppClassType] #name, class
+    classes*: OrderedTable[string, CppClassType] #name, class
 
 type
     EPropertyFlagsVal* = distinct(uint64)
