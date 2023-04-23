@@ -80,6 +80,7 @@
 #include "PCGElement.h"
 #include "PCGComponent.h"
 #include "PCGSubgraph.h"
+#include "PCGSubsystem.h"
 #include "PCGData.h"
 #include "Data/PCGSpatialData.h"
 #endif

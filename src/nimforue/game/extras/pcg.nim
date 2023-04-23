@@ -11,21 +11,21 @@ type
 
   FPCGMetadataAttribute*[T] {.importcpp.} = object
   FPCGMetadataAttributePtr*[T] = ptr FPCGMetadataAttribute[T]
-  FPCGContext* {.inheritable, pure, importcpp .} = object #TODO manually bind it and remove it from the general types
-    inputData* {.importcpp:"InputData".} : FPCGDataCollection
-    outputData* {.importcpp:"OutputData".} : FPCGDataCollection   
-    # TWeakObjectPtr<UPCGComponent> SourceComponent #TODO Need to bind TWeakObjectPtr first
-    node {.importcpp:"Node".} : UPCGNodePtr #node is const so we expose an accesor to avoid cpp annoying around
+  # FPCGContext* {.inheritable, pure, importcpp .} = object #TODO manually bind it and remove it from the general types
+  #   inputData* {.importcpp:"InputData".} : FPCGDataCollection
+  #   outputData* {.importcpp:"OutputData".} : FPCGDataCollection   
+  #   # TWeakObjectPtr<UPCGComponent> SourceComponent #TODO Need to bind TWeakObjectPtr first
+  #   node {.importcpp:"Node".} : UPCGNodePtr #node is const so we expose an accesor to avoid cpp annoying around
 
 
 
   FPCGContextPtr* = ptr FPCGContext
   FPCGElementPtr* = TSharedPtr[FSimplePCGElement] #in reality this is typedef TSharedPtr<IPCGElement, ESPMode::ThreadSafe> FPCGElementPtr; maybe we can just get rid of it and use TSharedPointer directly?
 
-# proc inputData*(self: FPCGContextPtr): FPCGDataCollection {.importcpp: "(#->InputData)".}
-# proc `inputData=`*(self: FPCGContextPtr, data: FPCGDataCollection) {.importcpp: "(#->InputData = #)".}
-# proc outputData*(self: FPCGContextPtr): FPCGDataCollection {.importcpp: "(#->OutputData)".}
-# proc `outputData=`*(self: FPCGContextPtr, data: FPCGDataCollection) {.importcpp: "(#->OutputData = #)".}
+proc inputData*(self: FPCGContextPtr): FPCGDataCollection {.importcpp: "(#->InputData)".}
+proc `inputData=`*(self: FPCGContextPtr, data: FPCGDataCollection) {.importcpp: "(#->InputData = #)".}
+proc outputData*(self: FPCGContextPtr): FPCGDataCollection {.importcpp: "(#->OutputData)".}
+proc `outputData=`*(self: FPCGContextPtr, data: FPCGDataCollection) {.importcpp: "(#->OutputData = #)".}
 
 proc node*(self: FPCGContextPtr): UPCGNodePtr {.importcpp: "const_cast<'0>(#->Node)".}
 proc sourceComponent*(self: FPCGContextPtr): UPCGComponentPtr {.importcpp: "(#->SourceComponent.Get())".}
@@ -37,6 +37,10 @@ proc getInputSettings*[T](self: FPCGContextPtr): ptr T {.importcpp: "#->GetInput
 converter toUPCGData*(data:ptr UPCGPointData) : ptr UPCGData = ueCast[UPCGData](data)
 
 
+
+func getGraph*(self:UPCGComponentPtr) : UPCGGraphPtr {.importcpp:"#->GetGraph()".}
+proc forceNotificationForEditor*(self:UPCGGraphPtr) {.importcpp:"#->ForceNotificationForEditor()".}
+proc notifyGraphChanged*(self:UPCGSubsystemPtr) {.importcpp: "#->NotifyGraphChanged()".}
 
 
 proc metadata*(data:UPCGPointDataPtr): ptr UPCGMetadata {.importcpp: "(#->Metadata)".}
@@ -119,3 +123,5 @@ proc initializeFromData*(self:UPCGPointDataPtr, data:UPCGPointDataPtr) {.importc
 proc pos*(point: FPCGPoint): FVector = point.transform.getLocation()
 proc `pos=`*(point: FPCGPoint, value:FVector) =
   point.transform.setLocation(value)
+
+
