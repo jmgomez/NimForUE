@@ -78,6 +78,7 @@
 #include "Elements/PCGExecuteBlueprint.h"
 #include "PCGContext.h"
 #include "PCGElement.h"
+#include "PCGComponent.h"
 #include "PCGSubgraph.h"
 #include "PCGData.h"
 #include "Data/PCGSpatialData.h"

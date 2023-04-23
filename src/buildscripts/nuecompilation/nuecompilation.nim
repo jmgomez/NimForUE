@@ -152,7 +152,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) =
   extraSwitches.remove("--compileOnly")
 
 
-  ensureGameConfExists()
+  # ensureGameConfExists()
   
   let nimCache = &".nimcache/{name}"/(if withDebug and not isCompileOnly: "debug" else: "release")
   let isGame = name == "game"
@@ -246,7 +246,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
 proc compileGenerateBindings*() = 
   let withDebug = false
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), gamePlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"{nimCmd}  cpp {buildFlags}  --noMain --noLinking --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"{nimCmd}  cpp {buildFlags}  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   # doAssert(execCmd(&"nim  cpp {buildFlags}   --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
