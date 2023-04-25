@@ -366,7 +366,7 @@ task copybuildconfiguration, "Copies the unreal build configuration from the plu
   createDir(buildConfigFileDest.parentDir)
   copyFile(buildConfigFile, buildConfigFileDest)
 
-task cleanmodulelibs, "Removes the generated code from the game and libs":
+task cleanmodules, "Removes the generated code from the game and libs":
   let pluginName = if "name" in taskOptions: taskOptions["name"] else: "Nue" & GameName()
   let genPluginDir = parentDir(PluginDir) / pluginName
   let libs = getAllGameLibs()
@@ -374,9 +374,12 @@ task cleanmodulelibs, "Removes the generated code from the game and libs":
   for lib in getAllGameLibs():
     taskOptions["name"] = lib   
     removeDir(PluginDir/".nimcache"/lib)
+    log "Cleaning generate code for " & lib 
     cleanGenerateCode(lib.capitalizeAscii(), genPluginDir)
+    
 
-task rebuildmodulelibs, "Rebuilds the plugin, game and libs":
+
+task buildmodules, "Rebuilds the plugin, game and libs":
   #remove code on the plugin 
   taskOptions["nobuild"] = ""
   taskOptions["livecoding"] = ""

@@ -265,11 +265,14 @@ proc generateModule(name, sourceDir:string) =
 
 
 proc cleanGenerateCode*(name, genPluginDir:string) = 
-  let moduleDir = genPluginDir / name
+  let moduleDir = genPluginDir / "Source" / name 
   let privateDir = moduleDir / "Private"
   let nimGeneratedCodeDir = privateDir / "NimGeneratedCode"
+
   removeDir(nimGeneratedCodeDir)
   createDir(nimGeneratedCodeDir)
+  echo privateDir / name & ".cpp"
+  removeFile(privateDir / name & ".cpp")
 
 proc generatePlugin*(name:string) =
   let uePluginDir = parentDir(PluginDir)
