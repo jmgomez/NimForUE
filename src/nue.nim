@@ -220,7 +220,7 @@ task lib, "Builds a game lib":
     assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"         
     compileLib(taskOptions["name"], extraSwitches, debug)
     if withLiveCoding:
-      copyCppToModule(name.capitalizeAscii())
+      generateModule(name.capitalizeAscii())
       if isLiveCodingRunning() and build: 
         triggerLiveCoding(10)
       elif build:
@@ -388,7 +388,7 @@ task buildmodules, "Rebuilds the plugin, game and libs":
   for lib in getAllGameLibs():
     taskOptions["name"] = lib   
     lib(taskOptions)
-    copyCppToModule(lib.capitalizeAscii())
+    generateModule(lib.capitalizeAscii())
   if isLiveCodingRunning(): 
     triggerLiveCoding(10)
   else:

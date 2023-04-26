@@ -225,14 +225,9 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
   
     
 
-proc copyCppToModule*(name:string) = 
+proc copyCppToModule(name:string, genPluginSourceDir : string) = 
   var moduleName = name.capitalizeAscii()
-  #TODO get pluginName from the PluginStruct? 
-  #TODO reorganize the way we pull the dirs
-  let pluginName = "NueNimTemplate"
-  let uePluginDir = parentDir(PluginDir)
-  let genPluginDir = uePluginDir / pluginName
-  let genPluginSourceDir = genPluginDir / "Source"
+  
   let moduleDir = genPluginSourceDir / name
   let privateDir = moduleDir / "Private"  
   let nimGeneratedCodeDir = privateDir / "NimGeneratedCode"
@@ -242,8 +237,11 @@ proc copyCppToModule*(name:string) =
   copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
 
 
-proc generateModule(name, sourceDir:string) = 
-  let moduleDir = sourceDir / name
+proc generateModule*(name:string, pluginName = "NueNimTemplate") = 
+  let uePluginDir = parentDir(PluginDir)
+  let genPluginDir = uePluginDir / pluginName
+  let genPluginSourceDir = genPluginDir / "Source"
+  let moduleDir = genPluginSourceDir / name
   let privateDir = moduleDir / "Private"
   let publicDir = moduleDir / "Public"
   let nimGeneratedCodeDir = privateDir / "NimGeneratedCode"
@@ -259,7 +257,7 @@ proc generateModule(name, sourceDir:string) =
   writeFile(moduleHFile, getModuleHFile(name))
   writeFile(moduleBuildCsFile, getModuleBuildCsFile(name))
 
-  copyCppToModule(name)
+  copyCppToModule(name, genPluginSourceDir)
   
  #this is a param 
 
