@@ -7,6 +7,7 @@ func num*[T](arr:TArray[T]): Natural {.importcpp: "#.Num()" noSideEffect}
 proc remove*[T](arr:TArray[T], value:T) {.importcpp: "#.Remove(#)".}
 proc removeAt*[T](arr:TArray[T], idx:Natural) {.importcpp: "#.RemoveAt(#)".}
 proc add*[T](arr:TArray[T], value:T) {.importcpp: "#.Add(#)".}
+proc addUnique*[T](arr:TArray[T], value:T) {.importcpp: "#.AddUnique(#)".}
 proc append*[T](a, b:TArray[T]) {.importcpp: "#.Append(#)".}
 func reserve*[T](arr:TArray[T], value:Natural) {.importcpp: "#.Reserve(#)".}
 
