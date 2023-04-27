@@ -895,6 +895,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     var cppOverridesNodes : NimNode
     (ueType, cppOverridesNodes) = getCppOverrides(body, ueType)
     ueType.interfaces = interfaces
+    #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
     ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
     addCppClass(ueType.toCppClass())
     var uClassNode = emitUClass(ueType)

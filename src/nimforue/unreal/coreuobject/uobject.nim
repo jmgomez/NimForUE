@@ -282,7 +282,6 @@ proc getPrefixCpp*(str:UFieldPtr | UStructPtr) : FString {.importcpp:"FString(#-
 
 
 
-
 #UOBJECT
 proc getFName*(obj:UObjectPtr|FFieldPtr) : FName {. importcpp: "#->GetFName()" .}
 proc getFlags*(obj:UObjectPtr|FFieldPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
@@ -341,10 +340,6 @@ proc get*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 converter toUObjectPtr*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 converter fromObjectPtr*[T : UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
 
-
-
-#bool UClass::Rename( const TCHAR* InName, UObject* NewOuter, ERenameFlags Flags )
-#notice rename flags is not an enum in cpp we define it here adhoc
 type ERenameFlag* = distinct uint32
 const REN_None* = ERenameFlag(0x0000)
 const REN_DontCreateRedirectors* = ERenameFlag(0x0010)
@@ -467,8 +462,6 @@ proc makeTSubclassOf*(T: typedesc) : TSubclassOf[T] = makeTSubclassOf[T]()
 func staticSubclass*[T : UObject]() : TSubclassOf[T] = makeTSubclassOf(T)
 
 proc get*(softObj : TSubclassOf) : UClassPtr {.importcpp:"#.Get()".}
-
-
 
 
 

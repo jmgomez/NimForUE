@@ -141,7 +141,7 @@ moduleImportRules["Engine"] = @[
     "FHitResult","FActorInstanceHandle",
     #issue with a field name 
     "FTransformConstraint", 
-    "FTableRowBase",
+    "FTableRowBase", "FMaterialInput",
     "ECollisionChannel", "EObjectTypeQuery", "ETraceTypeQuery",
     "EInputEvent",
     # "UKismetMathLibrary", #issue with the funcs?,

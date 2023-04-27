@@ -283,7 +283,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
         of uedelMulticastDynScriptDelegate:
           genAst(): self.processMulticastDelegate(param.addr)
     else: genAst(clsName=newStrLitNode(clsName)): 
-      let fn {.inject, used.} = self.getClass().findFuncByName(fnName)
+      let fn {.inject, used.} = ueCast[UObject](self).getClass().findFuncByName(fnName)
       self.processEvent(fn, param.addr)
 
   let outParams = 

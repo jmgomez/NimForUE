@@ -102,17 +102,18 @@ proc saveConfig*(config:NimForUEConfig) =
   var json = toJson(config)
   writeFile(ueConfigPath, json.pretty())
 
-
+proc createConfigFromDirs(engineDir, gameDir:string) : NimForUEConfig = 
+  let defaultPlatform = when defined(windows): Win64 else: Mac
+  NimForUEConfig(engineDir: engineDir, gameDir: gameDir, withEditor:true, targetConfiguration: Development, targetPlatform: defaultPlatform)
 
 proc getOrCreateNUEConfig() : NimForUEConfig = 
   let ueConfigPath = PluginDir / getConfigFileName()
   if fileExists ueConfigPath:
     let json = parseFile(ueConfigPath)
     return json.to(NimForUEConfig)
-  let defaultPlatform = when defined(windows): Win64 else: Mac
   let conf = 
     tryGetEngineAndGameDir()
-      .map((dirs)=> NimForUEConfig(engineDir: dirs[0], gameDir: dirs[1], withEditor:true, targetConfiguration: Development, targetPlatform: defaultPlatform))
+      .map(d=>createConfigFromDirs(d[0], d[1]))
   
   if conf.isSome():
     conf.get().saveConfig()
