@@ -15,7 +15,7 @@ const GamePathError* = "Could not find the uproject file."
 const MacOsARM* = true #Change this if you want to target x86_64 on mac (TODO autodetect)
 
 
-const UEVersion* = 5.2 #TODO autodetect
+const UEVersion* = 5.1 #TODO autodetect
 
 
 when MacOsARM and UEVersion >= 5.2:
@@ -24,10 +24,10 @@ else:
   const MacPlatformDir* = "Mac/x86_64"
 
 
-when UEVersion < 5.2: #Seems they introduced ARM win support in 5.2
-  const WinPlatformDir* = "Win64"
-else:
+when UEVersion >= 5.2: #Seems they introduced ARM win support in 5.2
   const WinPlatformDir* = "Win64"/"x64"
+else:
+  const WinPlatformDir* = "Win64"
   
 
 when defined(nue) and compiles(gorgeEx("")):

@@ -96,12 +96,15 @@ proc initEmitter() : UEEmitterPtr =
 #         getGameEmitter()
 var emitter : UEEmitterPtr 
 proc getGlobalEmitter*() : UEEmitterPtr = 
+    UE_Log "CALL TO GLOBAL EMITTER"
     if emitter.isNil:
         emitter = initEmitter()
     emitter
 
 when not defined(guest): #called from ue
-    proc getGlobalEmitterPtr*() : UEEmitterPtr {.exportc, cdecl.} = getGlobalEmitter()
+    proc getGlobalEmitterPtr*() : UEEmitterPtr {.exportc, cdecl, dynlib.} = 
+        UE_Log "CALL TO GLOBAL EMITTER PTR"
+        getGlobalEmitter()
 
 
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =              

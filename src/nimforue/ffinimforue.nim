@@ -29,7 +29,10 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
   let lib = loadLib(libPath)
   let getEmitter = cast[GetUEEmitterFn](lib.symAddr("getGlobalEmitterPtr"))
   
-  assert getEmitter.isNotNil(), "getGlobalEmitterPtr is nil"
+  if getEmitter.isNil():
+    UE_Error &"getGlobalEmitterPtr is nil"
+    return nil
+  
 
   let emitterPtr = getEmitter()
   assert not emitterPtr.isNil()

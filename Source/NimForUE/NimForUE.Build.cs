@@ -76,7 +76,7 @@ public class NimForUE : ModuleRules
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
 		var PCHFile = Path.Combine(nimHeadersPath, "nimbase.h");
 		PublicIncludePaths.Add(nimHeadersPath);
-		// PrivatePCHHeaderFile = PCHFile;
+		PrivatePCHHeaderFile = PCHFile;
 		// SharedPCHHeaderFile = PCHFile;
 		
 		if (Target.bBuildEditor)
