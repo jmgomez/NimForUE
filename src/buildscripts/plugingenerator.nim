@@ -273,18 +273,23 @@ proc cleanGenerateCode*(name, genPluginDir:string) =
   removeFile(privateDir / name & ".cpp")
 
 proc generatePlugin*(name:string) =
+
   let uePluginDir = parentDir(PluginDir)
   let genPluginDir = uePluginDir / name
   let genPluginSourceDir = genPluginDir / "Source"
   let upluginFilePath = genPluginDir / (name & ".uplugin")
   let modules = getAllGameLibs().mapIt(it.capitalizeAscii())
-
-  createDir(genPluginDir)
-  createDir(genPluginSourceDir)
-  writeFile(upluginFilePath, getPluginTemplateFile(name, modules))
-  for module in modules:
-    generateModule(module, genPluginSourceDir)
-
+  log &"Generating plugin {name} with modules: {modules} in {genPluginDir}"
+  try:
+    createDir(genPluginDir)
+    createDir(genPluginSourceDir)
+    writeFile(upluginFilePath, getPluginTemplateFile(name, modules))
+    for module in modules:
+      generateModule(module, name)
+  except Exception as e:
+    log getCurrentExceptionMsg()
+    log getStackTrace()
+    
 
 
 

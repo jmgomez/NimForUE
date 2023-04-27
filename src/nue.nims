@@ -10,3 +10,5 @@ else:
 # switch("define:pluginDir", getCurrentDir())
 
 --d:nue
+--stacktrace
+--linedir
