@@ -5,8 +5,7 @@ import buildscripts/nuecompilation/nuecompilation
 import buildscripts/switches/switches
 import nimforue/utils/utils
 import nimforue/codegen/[headerparser]
-when defined(windows):
-  import  buildscripts/keyboard
+import  buildscripts/keyboard
 
 
 var taskOptions: Table[string, string]
@@ -130,7 +129,8 @@ task clean, "Clean the nimcache folder":
 task ugenproject, "Calls UE Generate Project":
   when defined(macosx):
     let uprojectFile = GamePath
-    let cmd = &"{config.engineDir}/Build/BatchFiles/Mac/GenerateProjectFiles.sh -project={uprojectFile} -game"
+    let cmd = ""
+    # let cmd = &"{config.engineDir}/Build/BatchFiles/Mac/GenerateProjectFiles.sh -project={uprojectFile} -game"
     log cmd
     doAssert(execCmd(cmd) == 0)
   else:

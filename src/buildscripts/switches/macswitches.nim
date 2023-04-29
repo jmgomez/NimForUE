@@ -31,7 +31,7 @@ let macSwitches = @[
 proc getPlatformSwitches*(withPch, withDebug : bool, target:string) : seq[string] = 
   
   let platformDir =  MacPlatformDir
-  let nueModule = if target == "game": "NimForUEGame" else: "NimForUE"
+  let nueModule = "NimForUE" # if target == "game": "NimForUEGame" else: "NimForUE"
   let pchPath = PluginDir / "Intermediate" / "Build" / platformDir / "UnrealEditor" / $config.targetConfiguration / nueModule / &"PCH.{nueModule}.h.gch"
   if withPch:
 

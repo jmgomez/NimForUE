@@ -12,7 +12,7 @@ const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
 
 const GamePathError* = "Could not find the uproject file."
 
-const MacOsARM* = true #Change this if you want to target x86_64 on mac (TODO autodetect)
+const MacOsARM* = false #Change this if you want to target x86_64 on mac (TODO autodetect)
 
 
 const UEVersion* = 5.1 #TODO autodetect

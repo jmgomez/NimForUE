@@ -101,3 +101,7 @@ when defined(windows):
     releaseKey F11
     releaseKey alt
     releaseKey ctrl
+else:
+  proc isLiveCodingRunning*(): bool = false
+  proc triggerLiveCoding*(waitMs:int32 = 50) = discard
+
