@@ -141,7 +141,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) =
     "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
-
+    "-d:ssl",
   ] 
   let isCompileOnly = "--compileOnly" in extraSwitches
   if isCompileOnly:
