@@ -140,7 +140,9 @@ task ugenproject, "Calls UE Generate Project":
 task ubuild, "Calls Unreal Build Tool for your project":
   #This logic is temporary. We are going to get of most of the config data
   #and just define const globals for all the paths we can deduce. The moment to do that is when supporting Game builds
-
+  if isLiveCodingRunning():
+    triggerLiveCoding(10)
+    return
   let curDir = getCurrentDir()
   let uprojectFile = GamePath()
   proc isTargetFile(filename:string) : bool = 
@@ -199,9 +201,10 @@ task ubuild, "Calls Unreal Build Tool for your project":
 
 
 task lib, "Builds a game lib":
+  let pluginName = if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
+
   var extraSwitches = newSeq[string]()
   var withLiveCoding = false
-  var build = true
 
   if "f" in taskOptions: 
     extraSwitches.add "-f" #force 
@@ -210,8 +213,7 @@ task lib, "Builds a game lib":
   if "livecoding" in taskOptions: #notice when doing non editor builds we will be doing the same process
     withLiveCoding = true
     extraSwitches.add "--compileOnly"
-  if "nobuild" in taskOptions:
-    build = false
+
 
   let debug = "debug" in taskOptions
   if "name" in taskOptions:
@@ -220,11 +222,8 @@ task lib, "Builds a game lib":
     assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"         
     compileLib(taskOptions["name"], extraSwitches, debug)
     if withLiveCoding:
-      generateModule(name.capitalizeAscii())
-      if isLiveCodingRunning() and build: 
-        triggerLiveCoding(10)
-      elif build:
-        ubuild(taskOptions)
+      generateModule(name.capitalizeAscii(), pluginName)
+      ubuild(taskOptions)
   else:
     log "You need to specify a name for the lib. i.e. 'nue lib --name=mylib'"
  
@@ -380,6 +379,8 @@ task cleanmodules, "Removes the generated code from the game and libs":
 
 
 task buildmodules, "Rebuilds the plugin, game and libs":
+  let pluginName = if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
+
   #remove code on the plugin 
   taskOptions["nobuild"] = ""
   taskOptions["livecoding"] = ""
@@ -388,14 +389,10 @@ task buildmodules, "Rebuilds the plugin, game and libs":
   for lib in getAllGameLibs():
     taskOptions["name"] = lib   
     lib(taskOptions)
-    generateModule(lib.capitalizeAscii())
-  if isLiveCodingRunning(): 
-    triggerLiveCoding(10)
-  else:
-    ubuild(taskOptions)
+    generateModule(lib.capitalizeAscii(), pluginName)  
 
 task genplugin, "Creates a plugin, by default it uses the name of the game with NUE as prefix":  
-  let pluginName = if "name" in taskOptions: taskOptions["name"] else: "Nue" & GameName()
+  let pluginName = if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
   #TODO replace this with a call to all libs 
   generatePlugin(pluginName)
  

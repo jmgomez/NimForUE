@@ -225,29 +225,24 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
   
     
 
-proc copyCppToModule(name:string, genPluginSourceDir : string) = 
-  var moduleName = name.capitalizeAscii()
-  
-  let moduleDir = genPluginSourceDir / name
-  let privateDir = moduleDir / "Private"  
-  let nimGeneratedCodeDir = privateDir / "NimGeneratedCode"
-  
+proc copyCppToModule(name:string, nimGeneratedCodeDir : string) =   
   let cppSrcDir = PluginDir / &".nimcache/{name}/release"
     # cppSrcDir = PluginDir / &".nimcache/nimforuegame/release"
   copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
 
 
-proc generateModule*(name:string, pluginName = "NueNimTemplate") = 
+proc generateModule*(name, pluginName : string) = 
+  let moduleName = name.capitalizeAscii()
   let uePluginDir = parentDir(PluginDir)
   let genPluginDir = uePluginDir / pluginName
   let genPluginSourceDir = genPluginDir / "Source"
-  let moduleDir = genPluginSourceDir / name
+  let moduleDir = genPluginSourceDir / moduleName
   let privateDir = moduleDir / "Private"
   let publicDir = moduleDir / "Public"
   let nimGeneratedCodeDir = privateDir / "NimGeneratedCode"
-  let moduleCppFile = privateDir / (name & ".cpp")
-  let moduleHFile = publicDir / (name & ".h")
-  let moduleBuildCsFile = moduleDir / (name & ".Build.cs")
+  let moduleCppFile = privateDir / (moduleName & ".cpp")
+  let moduleHFile = publicDir / (moduleName & ".h")
+  let moduleBuildCsFile = moduleDir / (moduleName & ".Build.cs")
 
   createDir(moduleDir)
   createDir(privateDir)
@@ -255,9 +250,9 @@ proc generateModule*(name:string, pluginName = "NueNimTemplate") =
   createDir(nimGeneratedCodeDir)
   writeFile(moduleCppFile, getModuleCppFile(name))
   writeFile(moduleHFile, getModuleHFile(name))
-  writeFile(moduleBuildCsFile, getModuleBuildCsFile(name))
-
-  copyCppToModule(name, genPluginSourceDir)
+  writeFile(moduleBuildCsFile, getModuleBuildCsFile(name))  
+  copyCppToModule(name, nimGeneratedCodeDir)
+  log &"Generated module {name} in {nimGeneratedCodeDir}"
   
  #this is a param 
 
