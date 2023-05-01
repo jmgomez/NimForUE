@@ -23,7 +23,8 @@ type
 
 proc getArg(a: VmArgs, i: int): TFullReg =
   result = a.slots[i+a.rb+1]
-  
+
+
 
 
 proc onInterpreterError(config: ConfigRef, info: TLineInfo, msg: string, severity : Severity)  {.gcsafe.}  = 
@@ -36,27 +37,28 @@ proc onInterpreterError(config: ConfigRef, info: TLineInfo, msg: string, severit
     raise (ref VMQuit)(info: info, msg: msg)
 
 
+proc uCallInteropHostImpl(a:VmArgs) {.gcsafe.} =  
+    let node : PNode = a.getArg(0).node
+    let ueCall = fromVm(UECall, node)
+    let result = ueCall.uCall()
+    UE_Warn &"uCallInterop result: {result}"
+    setResult(a, toVm(result))        
+
 
 proc implementBaseFunctions(interpreter:Interpreter) = 
   #TODO review this. Maybe even something like nimscripter can help
    #This function can be implemented with uebind directly 
-  interpreter.implementRoutine("*", "exposed", "log", proc (a: VmArgs) =
+  interpreter.implementRoutine("NimForUE", "exposed", "log", proc (a: VmArgs) =
       let msg = a.getString(0)
       UE_Log msg
       discard
     )
 
 
-  interpreter.implementRoutine("*", "exposed", "uCallInterop", proc (a: VmArgs) =
-      let ueCall = fromVm(UECall, a.getArg(0).node)
-      let result = ueCall.uCall()
-      UE_Warn &"uCallInterop result: {result}"
-      setResult(a, toVm(result))
-     
-    )
+  interpreter.implementRoutine("NimForUE", "exposed", "uCallInterop", uCallInteropHostImpl)
 
   #This function can be implemented with uebind directly 
-  interpreter.implementRoutine("*", "exposed", "getClassByNameInterop", proc (a: VmArgs) =
+  interpreter.implementRoutine("NimForUE", "exposed", "getClassByNameInterop", proc (a: VmArgs) =
       let className = a.getString(0)
       let cls = getClassByName(className)
       let classAddr = cast[int](cls)
@@ -64,7 +66,7 @@ proc implementBaseFunctions(interpreter:Interpreter) =
       discard
     )
 
-  interpreter.implementRoutine("*", "exposed", "newUObjectInterop", proc (a: VmArgs) =
+  interpreter.implementRoutine("NimForUE", "exposed", "newUObjectInterop", proc (a: VmArgs) =
       #It needs cls and owner which can be nil
       let owner = cast[UObjectPtr](getInt(a, 0))
       let cls = cast[UClassPtr](getInt(a, 1))
@@ -77,7 +79,7 @@ proc implementBaseFunctions(interpreter:Interpreter) =
     )
 
   #This function can be implemented with uebind directly 
-  interpreter.implementRoutine("*", "exposed", "getName", proc(a: VmArgs) =
+  interpreter.implementRoutine("NimForUE", "exposed", "getName", proc(a: VmArgs) =
       let actor = cast[UObjectPtr](getInt(a, 0))
       if actor.isNil():
         setResult(a, "nil")
@@ -182,7 +184,7 @@ proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) :
 
 
 proc setupBorrow(interpreter:Interpreter) = 
-  interpreter.implementRoutine("*", "exposed", "setupBorrowInterop", proc(a: VmArgs) =
+  interpreter.implementRoutine("NimForUE", "exposed", "setupBorrowInterop", proc(a: VmArgs) =
     {.cast(noSideEffect).}:
       let borrowInfo = a.getString(0).parseJson().jsonTo(UEBorrowInfo)
     
@@ -220,16 +222,14 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") :
     parentDir(currentSourcePath),
    
     ] & searchPaths,
-    defines = @[("nimscript", "true"), ("nuevm", "true")],
-
-    
+    defines = @[("nimscript", "true"), ("nuevm", "true")],    
     )
   interpreter.registerErrorHook(onInterpreterError)
   interpreter.implementBaseFunctions()
   interpreter.setupBorrow()
   userSearchPaths = searchPaths
-
-  
+  UE_Log "NimForUE VM initialized"
+  UE_Log &"Search paths: {userSearchPaths}"  
 
   interpreter
 
@@ -256,7 +256,7 @@ var lastModTime = 0.int64
 proc watchScript() : Future[void] {.async.} = 
   if not isWatching:
     return
-  let path = NimGameDir / "vm" / "script.nims"
+  let path = NimGameDir() / "vm" / "script.nims"
   if not fileExists path:
     UE_Warn "Cant find the script. Not watching"
     
@@ -306,7 +306,6 @@ proc getCurrentWorld(): UWorldPtr =
   # return world
 
 uClass ANimVM of AActor:
-
   ufunc(CallInEditor):
     proc startWatch() = 
       isWatching = true
@@ -314,6 +313,16 @@ uClass ANimVM of AActor:
 
     proc stopWatch() = 
       isWatching = false
+
+    proc initInterpreter() = 
+      #  interpreter = initInterpreter(@[parentDir(currentSourcePath)])
+       interpreter = initInterpreter(@[NimGameDir() / "vm"])
+
+    proc revalScript() =
+      if interpreter.isNotNil():
+        interpreter.evalScript()
+      else:
+        UE_Error "Interpreter not init"
 
     proc restartVM() = 
       interpreter = initInterpreter(userSearchPaths)

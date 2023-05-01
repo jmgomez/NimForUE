@@ -156,10 +156,11 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) =
   
   let nimCache = &".nimcache/{name}"/(if withDebug and not isCompileOnly: "debug" else: "release")
   let isGame = name == "game"
+  
   let entryPoint = NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim")
 
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"{nimCmd} cpp {buildFlags}  --nimMainPrefix:Game  -d:withPCH --nimcache:{nimCache} {entryPoint}"
+  let compCmd = &"{nimCmd} cpp {buildFlags}  --nimMainPrefix:{name.capitalizeAscii()}  -d:withPCH --nimcache:{nimCache} {entryPoint}"
   # echo compCmd
   doAssert(execCmd(compCmd)==0)
 

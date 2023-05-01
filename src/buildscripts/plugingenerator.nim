@@ -132,16 +132,16 @@ extern  "C" void* getGlobalEmitterPtr();
 extern  "C" void reinstanceFromGloabalEmitter(void* globalEmitter);
 #endif
 
-void GameNimMain();
+void $1NimMain();
 void StartNue() {
 #if WITH_EDITOR
   FCoreUObjectDelegates::ReloadCompleteDelegate.AddLambda([&](EReloadCompleteReason Reason) {
   UE_LOG(LogTemp, Log, TEXT("Reinstancing Lib"))
-    GameNimMain();
+    $1NimMain();
     reinstanceFromGloabalEmitter(getGlobalEmitterPtr());
   });
 #endif
-  GameNimMain();
+  $1NimMain();
   startNue(1);
   // #endif
 }
