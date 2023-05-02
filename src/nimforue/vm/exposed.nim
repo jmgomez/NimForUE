@@ -17,24 +17,23 @@ type
   # UObjectPtr* = distinct(int)
 
 
-converter myActorToActor*(actor:AMyActorPtr) : AActorPtr = AActorPtr(int(actor))
+# converter myActorToActor*(actor:AMyActorPtr) : AActorPtr = AActorPtr(int(actor))
 # converter toInt(obj:UObjectPtr) : int = UObjectPtr(obj)
 # converter toUObject*(actor:AActorPtr) : UObjectPtr = UObjectPtr(int(actor))
 # converter toUObject*(actor:AMyActorPtr) : UObjectPtr = UObjectPtr(int(actor))
 # converter toUObject*(actor:UClassPtr) : UObjectPtr = UObjectPtr(int(actor))
 
-proc isNil*(actor:UObjectPtr) : bool = int(actor) == 0
+# proc isNil*(obj:UObjectPtr) : bool = obj == nullptr
 
-proc getActorByName*(actor:AActorPtr, name:string) : AActorPtr = AActorPtr(0) #overrided
+proc getActorByName*(actor:AActorPtr, name:string) : AActorPtr = nil#AActorPtr(0) #overrided
 
-proc getWorldContext*() : AActorPtr = AActorPtr(0) #overrided
+proc getWorldContext*() : AActorPtr = nil# AActorPtr(0) #overrided
 
-let m = AMyActorPtr(0)
-discard m.getActorByName("test")
+# discard m.getActorByName("test")
 
-proc getActor*() : AActorPtr = AActorPtr(0) #overrided
-proc getName*(obj:UObjectPtr) : string = "overriden" #overrided
-
+proc getActor*() : AActorPtr = nil# AActorPtr(0) #overrided
+proc getName*(obj:int) : string = "overriden" #overrided
+proc getNameWrapper*(obj:UObjectPtr) : string = getName(cast[int](obj))
 
 
 proc uCallInterop(uCall:UECall) : Option[RuntimeField] = none(RuntimeField) #overrided no need anymore, remove interop
@@ -44,25 +43,35 @@ proc uCall*(uCall:UECall) : Option[RuntimeField] =
   # log "uCall: " & $uCall & " result: " & $result
 
 
-proc getClassByNameInterop(className:string) : UClassPtr = UClassPtr(0) #overrided
+proc getClassByNameInterop(className:string) : UClassPtr = nil#UClassPtr(0) #overrided
 proc getClassByName*(className:string) : UClassPtr = getClassByNameInterop(className)
 
-proc newUObjectInterop(owner : UObjectPtr, cls:UClassPtr) : UObjectPtr = UObjectPtr(0) #overrided
+# proc newUObjectInterop(owner : UObjectPtr, cls:UClassPtr) : UObjectPtr = UObjectPtr(0) #overrided
 
 
+# type 
+#   SomeObject* = object
+#     a : int 
+#   SomeObjectPtr* = ptr SomeObject
 
-proc newUObject*[T](owner : UObjectPtr = UObjectPtr(0)) : T = 
-  let cls = getClassByName(T.name.removeFirstLetter.removeLastLettersIfPtr())
-  let obj = newUObjectInterop(owner, cls)
-  cast[T](obj)
+# proc getSomeObjectPtr*() : SomeObjectPtr = nil 
+
+
+proc castIntToPtr*[T](address:int) : ptr T = nil
+
+
+# proc newUObject*[T](owner : UObjectPtr = UObjectPtr(0)) : T = 
+#   let cls = getClassByName(T.name.removeFirstLetter.removeLastLettersIfPtr())
+#   let obj = newUObjectInterop(owner, cls)
+#   cast[T](obj)
 
 
 
 #BORROW
-type UEBorrowInfo* = object
-  fnName*: string
-  className* : string
-  ueActualName* : string
+# type UEBorrowInfo* = object
+#   fnName*: string
+#   className* : string
+#   ueActualName* : string
 
 #eventually this will be json
 proc setupBorrowInterop*(borrowInfo:string) = discard #override

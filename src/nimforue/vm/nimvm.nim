@@ -45,6 +45,12 @@ proc uCallInteropHostImpl(a:VmArgs) {.gcsafe.} =
     setResult(a, toVm(result))        
 
 
+type 
+  SomeObject* = object
+    a : int 
+  SomeObjectPtr* = ptr SomeObject
+
+var someObject = SomeObject(a:10)
 proc implementBaseFunctions(interpreter:Interpreter) = 
   #TODO review this. Maybe even something like nimscripter can help
    #This function can be implemented with uebind directly 
@@ -77,6 +83,16 @@ proc implementBaseFunctions(interpreter:Interpreter) =
       setResult(a, objAddr)
       discard
     )
+    
+  interpreter.implementRoutine("NimForUE", "exposed", "getSomeObjectPtr", proc (a: VmArgs) =
+    let objAddr = cast[int](someObject.addr)      
+    #  let node = newIntNode()
+    setResult(a, objAddr)     
+  )
+  
+  interpreter.implementRoutine("NimForUE", "exposed", "castIntToPtr", proc (a: VmArgs) =    
+    setResult(a, getInt(a, 0))     
+  )
 
   #This function can be implemented with uebind directly 
   interpreter.implementRoutine("NimForUE", "exposed", "getName", proc(a: VmArgs) =
@@ -96,7 +112,7 @@ func getVMImplFuncName*(info : UEBorrowInfo): string = (info.fnName & "VmImpl")
 
 
 # var borrowedFns = newSeq[UFunctionNativeSignature]()
-var borrowTable = newTable[string, UEBorrowInfo]() 
+var borrowTable = initTable[string, UEBorrowInfo]() 
 
 func getBorrowKey*(fn: UFunctionPtr) : string =  fn.getOuter().getName() & fn.getName()
 

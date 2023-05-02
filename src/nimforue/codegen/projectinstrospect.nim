@@ -494,7 +494,7 @@ func nimPtrTypeToNimNode(nimType:NimType) : NimNode =
   result = 
     genAst(name, ptrType):
      type 
-      name* = distinct(int)
+      name* = ptr ptrType
   result = result[0] #removes type section   
 
 func nimEnumTypeToNimNode(nimType:NimType) : NimNode = 
@@ -562,13 +562,9 @@ func genNimPtrConverter(nimType:NimType, modules:seq[NimModule]) : NimNode =
 proc genModuleImpl(nimModule :NimModule, allModules:seq[NimModule]) : NimNode =
   let imports = nimModule.deps.mapIt(nnkImportStmt.newTree(ident it))
   let types = nnkTypeSection.newTree nimModule.types.map(genNimVMTypeImpl)
-  let converters = 
-    nimModule.types
-      .filterIt(it.kind == Pointer)
-      .mapIt(genNimPtrConverter(it, allModules))
   # let types = nimModule.types.map(genNimVMTypeImpl).filterIt(it.kind != nnkEmpty).mapIt(nnkTypeSection.newTree(it))
   result = 
-      nnkStmtList.newTree(imports & types & converters)
+      nnkStmtList.newTree(imports & types)
 
 proc genVMModuleFile(dir:string, module: NimModule, modules:seq[NimModule]) =
   # let moduleFile = dir / module.fullPath.split("src")[1] # for modDep in engineTypeDeps:
