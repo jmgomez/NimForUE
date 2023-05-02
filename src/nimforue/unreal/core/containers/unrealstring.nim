@@ -11,7 +11,7 @@ import array
 
 type
   TChar {.importcpp: "TCHAR", nodecl .} = object
-  FString* {. exportc, importcpp, nodecl, header: ueIncludes, bycopy.} = object
+  FString* {. exportc, importcpp, nodecl, bycopy.} = object
 
 # when defined(macosx):
 #   proc `=destroy`(dst: var FString) = discard

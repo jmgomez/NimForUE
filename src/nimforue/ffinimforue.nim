@@ -35,6 +35,8 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
   
 
   let emitterPtr = getEmitter()
+  if emitterPtr.isNil():
+    UE_Error "Emitter is nul"
   assert not emitterPtr.isNil()
 
   unloadPrevLib(libPath) 

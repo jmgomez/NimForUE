@@ -9,6 +9,7 @@ import nimforue/utils/utils
 let config = getNimForUEConfig()
 
 let nimCmd = "nim" #so we can easy switch with nim_temp
+# let nimCmd = "nim_temp" #so we can easy switch with nim_temp
 
 #In mac we need to do a universal 
 proc compileHostMac*() =
@@ -110,6 +111,10 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
   let guestSwitches = @[
     "-d:BindingPrefix=.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
     "-d:guest",
+    "-d:libname:guest",
+    "-d:OutputHeader:Guest.h",
+
+
 
   ]
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")

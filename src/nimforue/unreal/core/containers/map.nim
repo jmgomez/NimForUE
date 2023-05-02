@@ -7,7 +7,7 @@ type
         key* {.importcpp:"Key".}: K
         value* {.importcpp:"Value".}: V
 
-    TMap*[K, V] {.importcpp: "TMap", header:ueIncludes, bycopy} = object
+    TMap*[K, V] {.importcpp: "TMap", bycopy} = object
 
 
 proc makeTPair*[K, V](k:K, v:V) : TPair[K, V] {.importcpp: "TPair<'1, '2>(@)", constructor .}

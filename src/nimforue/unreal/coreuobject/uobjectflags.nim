@@ -1,7 +1,7 @@
 import ../../codegen/models
 import std/[genasts, macros, strutils, sugar, json, sequtils, bitops]
 
-{.pragma: importflag, importcpp, nodecl, header: ueincludes.}
+{.pragma: importflag, importcpp, nodecl.}
 
 
 

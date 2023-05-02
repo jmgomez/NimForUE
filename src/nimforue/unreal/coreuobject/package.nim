@@ -7,7 +7,7 @@ import ../../utils/utils
 import ../core/containers/[unrealstring]
 type 
 
-    UPackage* {. importcpp, header: ueIncludes  } = object of UObject
+    UPackage* {. importcpp  } = object of UObject
     UPackagePtr* = ptr UPackage
 
 func anyPackage*() : UPackagePtr {.importcpp:"(ANY_PACKAGE)".}

@@ -14,9 +14,10 @@
 #import structexampleissue
 # import examplevirtualfunc
 
+import examplerawcppvirtual
 
 # import ueborrowexample
 
 # import vminteroppocexample
-include ../unreal/prelude
+# include ../unreal/prelude
 

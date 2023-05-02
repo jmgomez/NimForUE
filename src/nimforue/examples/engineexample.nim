@@ -17,10 +17,7 @@ uStruct FNimPPSettings:# of FPostProcessSettings:
     testProperty: FString
  
 
-#This is temp
-# proc getCurrentActiveWorld() : UWorldPtr {.importcpp:"UReflectionHelpers::GetCurrentActiveWorld()", header:ueIncludes.}
-
-proc getOwner2*(obj : UActorComponentPtr): AActorPtr {.importcpp: "#->GetOwner()", header: ueIncludes.}
+proc getOwner2*(obj : UActorComponentPtr): AActorPtr {.importcpp: "#->GetOwner()".}
 
 uClass ANimEngineActor of AActor:
   (BlueprintType, Blueprintable)
