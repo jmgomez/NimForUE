@@ -23,7 +23,14 @@
 #undef unix
 struct TNimNode;
 struct TNimType;
-
+struct RootObj;
+struct TNimTypeV2;
+struct RootEffect;
+struct Exception;
+struct NimStrPayload;
+struct NimStringV2;
+struct tySequence__nkyLXcAOvqEN77Wb7C9cIAA;
+struct tySequence__nkyLXcAOvqEN77Wb7C9cIAA_Content;
 struct TSafePoint;
 struct GcFrameHeader;
 struct ForLoopStmt;
@@ -588,6 +595,7 @@ struct TNimType {	NI size;
 	tyProc__WSm2xU5ARYv9aAR4l0z9c9auQ deepcopy;
 	void* typeInfoV2;
 };
+
 struct TSafePoint {	TSafePoint* prev;
 	NI status;
 	jmp_buf context;

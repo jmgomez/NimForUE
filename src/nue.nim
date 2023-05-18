@@ -3,7 +3,7 @@ import std / [ options, os, osproc, parseopt, sequtils, strformat, json, strutil
 import buildscripts / [buildcommon, buildscripts, nimforueconfig, plugingenerator]
 import buildscripts/nuecompilation/nuecompilation
 import buildscripts/switches/switches
-import nimforue/utils/utils
+import nimforue/utils/[stringutils, utils]
 import nimforue/codegen/[headerparser]
 import  buildscripts/keyboard
 
@@ -246,28 +246,22 @@ task codegen, "Generate the bindings structure from the persisted json (TEMPORAL
   createDir(config.nimHeadersModulesDir) # we need to create the bindings folder here because we can't importc
   createDir(config.bindingsExportedDir) # we need to create the bindings folder here because we can't importc
   let buildFlags = @[buildSwitches].foldl(a & " " & b.join(" "), "")
-
   doAssert(execCmd(&"nim cpp {buildFlags} --compileonly -f --nomain --maxLoopIterationsVM:400000000 --nimcache:.nimcache/projectbindings src/nimforue/codegen/genprojectbindings.nim") == 0)
 
 task gencppbindings, "Generates the codegen and cpp bindings":
   if "only" notin taskOptions:
     codegen(taskOptions)
-  
-
-  
-  
   compileGenerateBindings()
-  let header = "#include \"UEGenBindings.h\""
-
-  # #we need to make sure nimgame.h has #include "#include "UEGenBindings.h" " in it. 
-  # let path = NimHeadersDir / "nimgame.h"
-  # var content = readFile(path)
-  # if header notin content:
-  #   content.add header
-  #   writeFile(path, content)
-
-  ubuild(taskOptions)
-
+  #since Nim 2.0 we need to clean up the produced header:
+  let headerFile = config.nimHeadersDir / "UEGenBindings.h"
+  var headerFileContents = readFile(headerFile)
+  let frm = "struct TNimTypeV2 {"
+  let to = "Exception* up;\n};"
+  headerFileContents.between(frm, to)
+    .run proc (idxs:(int, int)) =          
+          headerFileContents.delete(idxs[0]..idxs[1])
+          writeFile(headerFile, headerFileContents)
+  ubuild(taskOptions)        
 
 
 
