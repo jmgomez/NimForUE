@@ -39,7 +39,7 @@ converter toUPCGData*(data:ptr UPCGPointData) : ptr UPCGData = ueCast[UPCGData](
 
 
 func getGraph*(self:UPCGComponentPtr) : UPCGGraphPtr {.importcpp:"#->GetGraph()".}
-proc forceNotificationForEditor*(self:UPCGGraphPtr) {.importcpp:"#->ForceNotificationForEditor()".}
+# proc forceNotificationForEditor*(self:UPCGGraphPtr) {.importcpp:"#->ForceNotificationForEditor()".}
 proc notifyGraphChanged*(self:UPCGSubsystemPtr) {.importcpp: "#->NotifyGraphChanged()".}
 
 

@@ -481,13 +481,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         typeSection[0][0][^1][^1][^1] = newLit OutPutHeader 
         typeSection
       of uexExport:
-        newEmptyNode()
-        #[
-        genAst(name = ident typeDef.name, ptrName, parent):
-          type 
-            name* {.importcpp.} = object of parent #TODO OF BASE CLASS 
-            ptrName* = ptr name
-            ]#
+        newEmptyNode()       
       of uexImport:
         newEmptyNode()
 
@@ -497,13 +491,6 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         props
         funcs
   
-  when not defined(game): #TODO game should apply to all game libs
-    if typeExposure == uexExport and not typeDef.forwardDeclareOnly and typeDef.name notin NimDefinedTypesNames: 
-      #Generates a type so it's added to the header when using --header
-      #TODO dont create them for UStructs
-      let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
-        proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
-      result = nnkStmtList.newTree(result, exportFn)
 
   result.add genInterfaceConverers(typeDef)
 
@@ -666,14 +653,9 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
 
   
 
-  if typeExposure == uexExport: 
-    #Generates a type so it's added to the header when using --header
-    #TODO dont create them for UStructs
-    let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
-      proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
-    result = nnkStmtList.newTree(exportFn)
-  # debugEcho result.repr
-  # debugEcho result.treeRepr
+  if typeExposure == uexExport:  
+    result = newEmptyNode() #exportc since Nim 2.0 exports the type so nothing to do here. 
+
 
 func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode = 
   let typeName = ident(typeDef.name)
@@ -690,10 +672,7 @@ func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode =
 
 
   if typeExposure == uexExport: 
-    #Generates a type so it's added to the header when using --header
-    let exportFn = genAst(fnName= ident "keep"&typeDef.name, typeName=ident typeDef.name):
-      proc fnName(fake {.inject.} :typeName) {.exportcpp.} = discard 
-    result = nnkStmtList.newTree(exportFn)
+    result = newEmptyNode() #exportc since Nim 2.0 exports the type so nothing to do here. 
 
 
 func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode =  
@@ -740,8 +719,7 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
     nnkPragmaExpr.newTree([
       nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
       nnkPragma.newTree(
-        ident "inject",
-        ident "bycopy", #so when the struct is big enough it gets exported in the header. This can be avoided if we generate our own struct like we do for the classes 
+        ident "inject",        
         importExportPragma
       )
     ]),
