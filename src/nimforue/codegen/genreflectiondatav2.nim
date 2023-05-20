@@ -390,8 +390,9 @@ const project* = $1
 
     let nimImportBindingFile = config.bindingsDir / moduleFolder / actualModule & ".nim"
 
+    createDir(config.bindingsDir / "imported" / moduleFolder)
     createDir(config.bindingsDir / "exported" / moduleFolder)
-    createDir(config.bindingsDir / moduleFolder)
+    
     createDir(PluginDir / NimHeadersModulesDir / moduleFolder)
 
 

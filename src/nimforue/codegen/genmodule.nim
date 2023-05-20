@@ -8,45 +8,6 @@ import ../codegen/[nuemacrocache, models, modulerules, gencppclass, projectinstr
 import ../../buildscripts/nimforueconfig
 import uebind
 
-
-
-# func genUClassTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[NimNode] =
-#   let pragmas = 
-#     # if ueType.isInPCH:
-#     #   nnkPragmaExpr.newTree(
-#     #       nnkPostFix.newTree(ident "*", ident ueType.name),
-#     #       nnkPragma.newTree(ident "importcpp")
-#     #     )
-#     # else:
-#       nnkPragmaExpr.newTree(
-#           nnkPostFix.newTree(ident "*", ident ueType.name),
-#           nnkPragma.newTree(
-#             nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
-#             nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
-#         )
-#       )
-#   if rule == uerCodeGenOnlyFields:
-#     @[]
-#   else:
-#     @[
-#       # type Type* {.importcpp.} = object of Parent
-#       nnkTypeDef.newTree(
-#         pragmas,
-#         ),
-#       newEmptyNode(),
-#       nnkObjectTy.newTree(
-#         newEmptyNode(),
-#         nnkOfInherit.newTree(ident ueType.parent),
-#         newEmptyNode()
-#       ),
-#       # ptr type TypePtr* = ptr Type
-#       nnkTypeDef.newTree(
-#         nnkPostFix.newTree(ident "*", ident ueType.name & "Ptr"),
-#         newEmptyNode(),
-#         nnkPtrTy.newTree(ident ueType.name)
-#       )
-#     ]
-
 func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[NimNode] =
   let pragmas = 
     if ueType.isInPCH:
@@ -64,7 +25,6 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
             nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
         )
       )
-
       
   if rule == uerCodeGenOnlyFields or ueType.forwardDeclareOnly or ueType.name in NimDefinedTypesNames:
     @[]
@@ -194,8 +154,6 @@ proc genImportCTypeDecl*(typeDef: UEType, rule: UERule = uerNone): NimNode =
       error("Interfaces are not supported yet")
       newEmptyNode()
 
-
-
 proc genDelTypeDef*(delType: UEType, exposure: UEExposure): NimNode =
   let typeName = identPublic delType.name
 
@@ -211,10 +169,8 @@ proc genDelTypeDef*(delType: UEType, exposure: UEExposure): NimNode =
     genAst(typeName, delBaseType):
       typeName {.inject, exportcpp: "$1_".} = object of delBaseType
 
-
 proc genImportCModuleDecl*(moduleDef: UEModule): NimNode =
   result = nnkStmtList.newTree()
-
   var typeSection = nnkTypeSection.newTree()
   for typeDef in moduleDef.types:
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
@@ -228,24 +184,19 @@ proc genImportCModuleDecl*(moduleDef: UEModule): NimNode =
       of uetDelegate:
         typeSection.add genDelTypeDef(typeDef, uexImport)
       of uetInterface:
-        error("Interfaces are not supported yet")
-        
-
+        error("Interfaces are not supported yet")      
+  
   result.add typeSection
-
   for typeDef in moduleDef.types:
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
     of uetClass:
-      result.add genImportCTypeDecl(typeDef, rules)
-    # of uetDelegate: #TODO genDelFuncs
-    #     result.add genDelType(typeDef, uexImport)
+      result.add genImportCTypeDecl(typeDef, rules)    
     else:
       continue
 
 proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
   result = nnkStmtList.newTree()
-
   var typeSection = nnkTypeSection.newTree()
   for typeDef in moduleDef.types:
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
@@ -262,39 +213,27 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
       error("Interfaces are not supported yet")
 
   result.add typeSection
-  #here seems to be a good spot to emit the typetraits but what happens with the generated code if another type uses a tmap prop
-  
+  #here seems to be a good spot to emit the typetraits but what happens with the generated code if another type uses a tmap prop  
   for typeDef in moduleDef.types:
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
     of uetClass, uetStruct, uetEnum:
-      result.add genTypeDecl(typeDef, rules, uexExport)
-    #  of uetDelegate: #TODO genDelFuncs
-    #     result.add genDelType(typeDef, uexExport)
+      result.add genTypeDecl(typeDef, rules, uexExport)   
     else: continue
-
 
 #notice this is only for testing ATM the final shape probably wont be like this
 macro genUFun*(className: static string, funField: static UEField): untyped =
   let ueType = UEType(name: className, kind: uetClass) #Notice it only looks for the name and the kind (delegates)
   genFunc(ueType, funField).impl
 
-
 proc genHeaders*(moduleDef: UEModule, headersPath: string) =
-
-  
   func getParentName(uet: UEType) : string =
     #Probably isParentInPCH is a superset of validCppParents. TODO check
     uet.parent & (if uet.parent in ManuallyImportedClasses or uet.isParentInPCH: "" else: "_")
-   
-
-  
 
   proc classAsString(uet: UEType): string = 
     assert not uet.isInPCH
-    toStr(CppClassType(name: uet.name & "_", parent: getParentName(uet), kind: cckClass, isUObjectBased:true)) & "\n"
-    
-    
+    toStr(CppClassType(name: uet.name & "_", parent: getParentName(uet), kind: cckClass, isUObjectBased:true)) & "\n"        
   let classDefs = moduleDef.types
     .filterIt(it.kind == uetClass and 
       (uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it) and not it.isInPCH and not it.forwardDeclareOnly)
@@ -307,7 +246,6 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
     const bindSuffix = "_NimBinding.h"
     let name = &"{name.firstToUpper()}"
     if name.endsWith(bindSuffix): name else: name & bindSuffix
-
   func includeHeader (name: string) : string = 
     let isOneFilePkg = "/" notin moduleDef.name 
     if isOneFilePkg: &"#include \"{headerName(name)}\" \n" 
@@ -344,22 +282,22 @@ proc genHeaders*(moduleDef: UEModule, headersPath: string) =
   # if headerAsDep notin mainHeaderContent:
   writeFile(mainHeaderPath, mainHeaderContent)
 
-proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, moduleNode: NimNode) =
+proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, moduleNode: NimNode, isImporting:bool) =
   proc getImport(moduleName: string): string =
       let isOneFilePkg = "/" notin moduleDef.name
-
       var moduleName = moduleName.toLower()
       if moduleDef.name.split("/")[0] == moduleName.split("/")[0]: 
         let depName = moduleName.toLower().split("/")[^1]
         &"import {depName}"
       else:
         if isOneFilePkg: &"import {moduleName}" #we are in the same level that the module root
-        else: &"import ../{moduleName}" #we are inside a module folder and need to go up one level
+        elif isImporting:
+          &"import ../../imported/{moduleName}" #we are inside a module folder and need to go up one level
+        else:
+          &"import ../../exported/{moduleName}" #we are inside a module folder and need to go up one level
   let code =
     moduleStrTemplate &
     #"{.experimental:\"codereordering\".}\n" &
-    
-
     moduleDef.dependencies.map(getImport).join("\n") &
     repr(moduleNode)
       .multiReplace(
@@ -376,23 +314,6 @@ proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, m
     ("__DelegateSignature", ""))
   writeFile(filePath, code)
 
-macro genBindings*(moduleDef: static UEModule, exportPath: static string, importPath: static string, headersPath: static string) =
-  let moduleStrTemplate = &"""
-include ../../prelude
-when defined(macosx):
-  const BindingPrefix {{.strdefine.}} = ""
-  {{.compile: BindingPrefix&"{moduleDef.name.tolower().replace("/", "@s")}.nim.cpp".}}
-
-"""
-  # let importImportDeps = moduleDef.dependencies.mapIt("import " & it.toLower()).join("\n")
-
-  genCode(exportPath, "include ../../prelude\n", moduleDef, genExportModuleDecl(moduleDef))
-
-  genCode(importPath, moduleStrTemplate, moduleDef, genImportCModuleDecl(moduleDef))
-
-  genHeaders(moduleDef, headersPath)
-
-
 proc getModuleHashFromFile*(filePath: string): Option[string] =
   try:
     if not fileExists(filePath): return none[string]()
@@ -402,12 +323,9 @@ proc getModuleHashFromFile*(filePath: string): Option[string] =
   except:
     return none[string]()
 
-
 macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
   let bindingsDir = pluginDir / BindingsDir
-
   let nimHeadersDir = pluginDir / NimHeadersDir # need this to store forward decls of classes
-
   for module in project.modules:
     let module = module
     let isOneFilePkg = "/" notin module.name
@@ -415,44 +333,28 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let actualModule = module.name.toLower().split("/")[^1]
     let path = 
       if isOneFilePkg: actualModule
-      else: moduleFolder / actualModule
-        
-
+      else: moduleFolder / actualModule        
     let exportBindingsPath = bindingsDir / "exported" / path & ".nim"
-    let importBindingsPath = bindingsDir / path & ".nim"
+    let importBindingsPath = bindingsDir / "imported" / path & ".nim"
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
     if prevModHash == module.hash and uerIgnoreHash notin module.rules:
       echo "Skipping module: " & module.name & " as it has not changed"
       continue
-
-
-    let preludeRelative =  if isOneFilePkg: "../" else: "../../"
-
-    
-#     let moduleImportStrTemplate = &"""
-# #hash:{module.hash}
-# include {preludeRelative}prelude
-
-# """
-
-
-
+    let preludeRelative =  if isOneFilePkg: "../" else: "../../"            
     let moduleImportStrTemplate = &"""
 #hash:{module.hash}
 when not defined(nimsuggest):
-  include {preludeRelative}prelude
+  include {preludeRelative}../prelude
   const BindingPrefix {{.strdefine.}} = ""  
   {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
    
 """
-
-
     let moduleExportStrTemplate = &"""
 include {preludeRelative}../prelude
 proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard    
 """
     echo &"Generating bindings for {module.name}"
-    genCode(exportBindingsPath, moduleExportStrTemplate, module, genExportModuleDecl(module))
-    genCode(importBindingsPath, moduleImportStrTemplate, module, genImportCModuleDecl(module))
+    genCode(importBindingsPath, moduleImportStrTemplate, module, genImportCModuleDecl(module), true)
+    genCode(exportBindingsPath, moduleExportStrTemplate, module, genExportModuleDecl(module), false)
 
     genHeaders(module, nimHeadersDir)

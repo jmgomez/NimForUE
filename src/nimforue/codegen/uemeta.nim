@@ -1019,3 +1019,6 @@ proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
   fn
 
 
+  
+
+

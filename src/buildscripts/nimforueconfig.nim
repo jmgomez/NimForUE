@@ -6,6 +6,7 @@ import buildcommon
 const NimHeadersDir* = "NimHeaders"
 const NimHeadersModulesDir* = NimHeadersDir / "Modules"
 const BindingsDir* = "src"/"nimforue"/"unreal"/"bindings"
+const BindingsImportedDir* = "src"/"nimforue"/"unreal"/"bindings"/"imported"
 const BindingsExportedDir* = "src"/"nimforue"/"unreal"/"bindings"/"exported"
 const ReflectionDataDir* = "src" / ".reflectiondata"
 const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
@@ -173,6 +174,7 @@ template codegenDir(fname, constName: untyped): untyped =
 codegenDir(nimHeadersDir, NimHeadersDir)
 codegenDir(nimHeadersModulesDir, NimHeadersModulesDir)
 codegenDir(bindingsDir, BindingsDir)
+codegenDir(bindingsImportedDir, BindingsImportedDir)
 codegenDir(bindingsExportedDir, BindingsExportedDir)
 codegenDir(reflectionDataDir, ReflectionDataDir)
 codegenDir(reflectionDataFilePath, ReflectionDataFilePath)

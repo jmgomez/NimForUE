@@ -16,8 +16,8 @@ macro importAllBindings() : untyped =
   func importStmts(modName:string) : NimNode =
     genAst(module=ident modName):
       import ../unreal/bindings/exported/module
-
+  
   result = nnkStmtList.newTree(modules.map(importStmts))
-
+  # echo repr result
 
 importAllBindings()
