@@ -886,6 +886,20 @@ func getCppOverrides(body:NimNode, ueType:UEType) : (UEType, NimNode) =
        
 
 
+#[
+  ** Rework the uClass macro so it's based in pure Nim.
+   Note:
+        - Only the Type definition 
+        - Updated the bindings so they use it too. 
+        - Virtual will be at the very end
+        - After virtual we could tackle cpp interfaces
+
+    Steps:
+      1. Start from Game. Get rid of the addCppClass 
+      2. 
+
+]#
+
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
@@ -897,11 +911,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     ueType.interfaces = interfaces
     #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
     ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
-    addCppClass(ueType.toCppClass())
     var uClassNode = emitUClass(ueType)
-    
-
-
 
     #returns empty if there is no block defined
     let defaults = genDefaults(body)

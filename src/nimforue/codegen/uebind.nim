@@ -8,7 +8,6 @@ import ../codegen/[nuemacrocache, models, modelconstructor, projectinstrospect]
 import modulerules
 import ../../buildscripts/nimforueconfig #probably nimforueconfig should be removed from buildscripts
 
-import gencppclass
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 #varContexts refer to if it's allowed or not to gen var (i.e. you cant gen var in a type definition but you can in a func definition)
@@ -462,23 +461,31 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
           typeDef.fields
              .filter(prop=>prop.kind==uefFunction)
              .map(fun=>genFunc(typeDef, fun).impl))
-  
+  #TODO support C++ multiple inheritance aka UE interfaces.
+  #Notice we can also support fields now!
+  const UClassTemplate = """
+struct $1 : public $3 {
+  $1() = default;
+  $1(FVTableHelper& Helper) : $3(Helper) {}
+  $2  
+};
+      """
   let typeDecl = 
     if rule == uerCodeGenOnlyFields or typeDef.forwardDeclareOnly or 
       typeDef.metadata.filterIt(it.name.toLower() == NoDeclMetadataKey.toLower()).any(): 
         newEmptyNode()
     else: 
       let ptrName = ident typeDef.name & "Ptr"
-      let parent = ident typeDef.parent
+      let parent = ident typeDef.parent      
       case typeExposure:
       of uexDsl:
         let outputHeader = newLit OutPutHeader
         let typeSection = genAst(name = ident typeDef.name, ptrName, parent, outputHeader):
-                    type #The dsl also import types from a header that's generated at compile. This is part of the support for virtual funcs. Test.h is temporal, we are going to use the current module name.h
-                      name* {.inject, importcpp, header: "placeholer".} = object of parent #TODO OF BASE CLASS 
+                    type 
+                      name* {.inject, exportc, codegenDecl:"placeholder".} = object of parent #TODO OF BASE CLASS 
                       ptrName* {.inject.} = ptr name
         #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
-        typeSection[0][0][^1][^1][^1] = newLit OutPutHeader 
+        typeSection[0][0][^1][^1][^1] = newLit UClassTemplate  
         typeSection
       of uexExport:
         newEmptyNode()       
