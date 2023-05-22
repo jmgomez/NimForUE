@@ -8,6 +8,15 @@ import ../codegen/[nuemacrocache, models, modelconstructor, projectinstrospect]
 import modulerules
 import ../../buildscripts/nimforueconfig #probably nimforueconfig should be removed from buildscripts
 
+#TODO support C++ multiple inheritance aka UE interfaces.
+#Notice we can also support fields now!
+const UClassTemplate* = """
+struct $1 : public $3 {
+  $1() = default;
+  $1(FVTableHelper& Helper) : $3(Helper) {}
+  $2  
+};
+"""
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 #varContexts refer to if it's allowed or not to gen var (i.e. you cant gen var in a type definition but you can in a func definition)
@@ -461,15 +470,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
           typeDef.fields
              .filter(prop=>prop.kind==uefFunction)
              .map(fun=>genFunc(typeDef, fun).impl))
-  #TODO support C++ multiple inheritance aka UE interfaces.
-  #Notice we can also support fields now!
-  const UClassTemplate = """
-struct $1 : public $3 {
-  $1() = default;
-  $1(FVTableHelper& Helper) : $3(Helper) {}
-  $2  
-};
-      """
+
   let typeDecl = 
     if rule == uerCodeGenOnlyFields or typeDef.forwardDeclareOnly or 
       typeDef.metadata.filterIt(it.name.toLower() == NoDeclMetadataKey.toLower()).any(): 

@@ -4,9 +4,50 @@ import ../utils/ueutils
 
 import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
-import ../codegen/[nuemacrocache, models, modulerules, gencppclass, projectinstrospect]
+import ../codegen/[nuemacrocache, models, modulerules, projectinstrospect]
 import ../../buildscripts/nimforueconfig
 import uebind
+
+func genUClassTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq[NimNode] =
+  let pragmas = 
+    if ueType.isInPCH:
+      nnkPragmaExpr.newTree(
+          nnkPostFix.newTree(ident "*", ident ueType.name),
+          nnkPragma.newTree(ident "importcpp", ident "inheritable", ident "pure")
+        )
+    else:
+      nnkPragmaExpr.newTree(
+          nnkPostFix.newTree(ident "*", ident ueType.name),
+          nnkPragma.newTree(
+            # ident "exportc",#, newStrLitNode("$1_")), #Probably we dont need _ anymore but it be useful to see the distinction when debugging the code, if so it needs to be passed to the template
+            nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_")), 
+            ident "inheritable",
+            ident "pure",
+            # nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
+            # nnkExprColonExpr.newTree(ident "codegenDecl", ident "UClassTemplate")
+        )
+      )
+  let isNothingToDo = rule == uerCodeGenOnlyFields or ueType.forwardDeclareOnly or ueType.name in NimDefinedTypesNames
+  if isNothingToDo: @[]    
+  else:
+    @[
+      nnkTypeDef.newTree(
+        pragmas,
+        newEmptyNode(),
+        nnkObjectTy.newTree(
+          newEmptyNode(),
+          nnkOfInherit.newTree(ident ueType.parent),
+          newEmptyNode()
+        )
+      ),
+      # ptr type TypePtr* = ptr Type
+      nnkTypeDef.newTree(
+        nnkPostFix.newTree(ident "*", ident ueType.name & "Ptr"),
+        newEmptyNode(),
+        nnkPtrTy.newTree(ident ueType.name)
+      )
+    ]
+
 
 func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[NimNode] =
   let pragmas = 
@@ -19,7 +60,7 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
       nnkPragmaExpr.newTree(
           nnkPostFix.newTree(ident "*", ident ueType.name),
           nnkPragma.newTree(
-            nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")),
+            nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")), #Probably we dont need _ anymore but it be useful to see the distinction when debugging the code, if so it needs to be passed to the template
             ident "inheritable",
             ident "pure",
             nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
@@ -202,7 +243,8 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
     of uetClass:
-      typeSection.add genUClassImportTypeDefBinding(typedef, rules) #UClasses are always imported
+      # typeSection.add genUClassImportTypeDefBinding(typedef, rules) #UClasses are always imported
+      typeSection.add genUClassTypeDefBinding(typeDef, rules)
     of uetStruct:
       typeSection.add genUStructTypeDefBinding(typedef, rules)
     of uetEnum:
@@ -226,61 +268,62 @@ macro genUFun*(className: static string, funField: static UEField): untyped =
   let ueType = UEType(name: className, kind: uetClass) #Notice it only looks for the name and the kind (delegates)
   genFunc(ueType, funField).impl
 
-proc genHeaders*(moduleDef: UEModule, headersPath: string) =
-  func getParentName(uet: UEType) : string =
-    #Probably isParentInPCH is a superset of validCppParents. TODO check
-    uet.parent & (if uet.parent in ManuallyImportedClasses or uet.isParentInPCH: "" else: "_")
+# proc genHeaders*(moduleDef: UEModule, headersPath: string) =
+#   func getParentName(uet: UEType) : string =
+#     #Probably isParentInPCH is a superset of validCppParents. TODO check
+#     uet.parent & (if uet.parent in ManuallyImportedClasses or uet.isParentInPCH: "" else: "_")
 
-  proc classAsString(uet: UEType): string = 
-    assert not uet.isInPCH
-    toStr(CppClassType(name: uet.name & "_", parent: getParentName(uet), kind: cckClass, isUObjectBased:true)) & "\n"        
-  let classDefs = moduleDef.types
-    .filterIt(it.kind == uetClass and 
-      (uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it) and not it.isInPCH and not it.forwardDeclareOnly)
-    )
-    .map(classAsString)
-    # .mapIt(&"class {it.name}_ : public {getParentName(it)}{{}};\n")
-    .join()
+#   proc classAsString(uet: UEType): string = 
+#     assert not uet.isInPCH
+#     toStr(CppClassType(name: uet.name & "_", parent: getParentName(uet), kind: cckClass, isUObjectBased:true)) & "\n"        
+  
+#   let classDefs = moduleDef.types
+#     .filterIt(it.kind == uetClass and 
+#       (uerCodeGenOnlyFields != getAllMatchingRulesForType(moduleDef, it) and not it.isInPCH and not it.forwardDeclareOnly)
+#     )
+#     .map(classAsString)
+#     # .mapIt(&"class {it.name}_ : public {getParentName(it)}{{}};\n")
+#     .join()
 
-  func headerName (name: string): string =
-    const bindSuffix = "_NimBinding.h"
-    let name = &"{name.firstToUpper()}"
-    if name.endsWith(bindSuffix): name else: name & bindSuffix
-  func includeHeader (name: string) : string = 
-    let isOneFilePkg = "/" notin moduleDef.name 
-    if isOneFilePkg: &"#include \"{headerName(name)}\" \n" 
-    else: &"#include \"../{headerName(name)}\" \n"
-  let headerPath = headersPath / "Modules" / headerName(moduleDef.name)
-  let deps = moduleDef
-    .dependencies
-    .map(includeHeader)
-    .join()
-  let headerContent = &"""
-#pragma once
-#include "UEDeps.h"
-{deps}
-{classDefs}
-"""
-  writeFile(headerPath, headerContent)
-  #Main header
-  let headersAsDeps =
-    walkDirRec(headersPath / "Modules")
-    .toSeq()
-    .filterIt(it.endsWith(".h"))
+#   func headerName (name: string): string =
+#     const bindSuffix = "_NimBinding.h"
+#     let name = &"{name.firstToUpper()}"
+#     if name.endsWith(bindSuffix): name else: name & bindSuffix
+#   func includeHeader (name: string) : string = 
+#     let isOneFilePkg = "/" notin moduleDef.name 
+#     if isOneFilePkg: &"#include \"{headerName(name)}\" \n" 
+#     else: &"#include \"../{headerName(name)}\" \n"
+#   let headerPath = headersPath / "Modules" / headerName(moduleDef.name)
+#   let deps = moduleDef
+#     .dependencies
+#     .map(includeHeader)
+#     .join()
+#   let headerContent = &"""
+# #pragma once
+# #include "UEDeps.h"
+# {deps}
+# {classDefs}
+# """
+#   writeFile(headerPath, headerContent)
+#   #Main header
+#   let headersAsDeps =
+#     walkDirRec(headersPath / "Modules")
+#     .toSeq()
+#     .filterIt(it.endsWith(".h"))
    
-    .mapIt(it.split(PathSeparator & "Modules")[^1]) 
-    .mapIt(("#include \"Modules" & it & "\"").replace(PathSeparator, "/"))
-    # .map(includeHeader)
-    .join("\n ")                           #&"#include \"{headerName(name)}\" \n"
-  let mainHeaderPath = headersPath / "UEGenClassDefs.h"
-  let headerAsDep = includeHeader(moduleDef.name)
-  let mainHeaderContent = &"""
-#pragma once
-#include "UEDeps.h"
-{headersAsDeps}
-"""
-  # if headerAsDep notin mainHeaderContent:
-  writeFile(mainHeaderPath, mainHeaderContent)
+#     .mapIt(it.split(PathSeparator & "Modules")[^1]) 
+#     .mapIt(("#include \"Modules" & it & "\"").replace(PathSeparator, "/"))
+#     # .map(includeHeader)
+#     .join("\n ")                           #&"#include \"{headerName(name)}\" \n"
+#   let mainHeaderPath = headersPath / "UEGenClassDefs.h"
+#   let headerAsDep = includeHeader(moduleDef.name)
+#   let mainHeaderContent = &"""
+# #pragma once
+# #include "UEDeps.h"
+# {headersAsDeps}
+# """
+#   # if headerAsDep notin mainHeaderContent:
+#   writeFile(mainHeaderPath, mainHeaderContent)
 
 proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, moduleNode: NimNode, isImporting:bool) =
   proc getImport(moduleName: string): string =
@@ -357,4 +400,4 @@ proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard
     genCode(importBindingsPath, moduleImportStrTemplate, module, genImportCModuleDecl(module), true)
     genCode(exportBindingsPath, moduleExportStrTemplate, module, genExportModuleDecl(module), false)
 
-    genHeaders(module, nimHeadersDir)
+    # genHeaders(module, nimHeadersDir)

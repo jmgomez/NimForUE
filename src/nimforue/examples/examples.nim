@@ -14,7 +14,7 @@
 #import structexampleissue
 # import examplevirtualfunc
 
-import examplerawcppvirtual
+# import examplerawcppvirtual
 
 # import ueborrowexample
 

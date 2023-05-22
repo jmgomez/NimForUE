@@ -34,6 +34,9 @@
 #include "Engine/Public/WorldPartition/DataLayer/DataLayerInstance.h"
 #include "Engine/DamageEvents.h"
 
+#include "Engine/Private/AsyncActionLoadPrimaryAsset.h"
+
+
 #include "Misc/AutomationTest.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/UserDefinedEnum.h"
@@ -67,7 +70,6 @@
   #include "NavigationSystem.h"
 
 #endif
-
 
 //TEMP test 52
 //TODO add with ENGINE_
