@@ -871,43 +871,46 @@ func addSelfToProc(procDef:NimNode, className:string) : NimNode =
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
     procDef
 
-func getCppOverrides(body:NimNode, ueType:UEType) : (UEType, NimNode) = 
-    let overrides = getCppOverrides(body, ueType.name)
-    if not overrides.any():
-        return (ueType, newEmptyNode())
-
-    let stmOverrides = nnkStmtList.newTree()
-    var ueType = ueType
-    for (cppFunc, override) in overrides:
-        ueType.fnOverrides.add cppFunc
-        stmOverrides.add override
-
-    (ueType, stmOverrides)
-       
-
-
+func processVirtual(procDef:NimNode) : NimNode = 
 #[
-  ** Rework the uClass macro so it's based in pure Nim.
-   Note:
-        - Only the Type definition 
-        - Updated the bindings so they use it too. 
-        - Virtual will be at the very end
-        - After virtual we could tackle cpp interfaces
+    if the proc has virtual, it will fill it with the proc info:
+        - Capitilize the proc name
+        - Add const if the proc is const, same with params
+        - Add override if the proc is marked with override
+    Get rid of the pragmas. 
+    If the proc has any content in virtual, it will ignore the pragma and use the content instead 
+]#  
+    # debugEcho treeRepr procDef
 
-    Steps:
-      1. Start from Game. Get rid of the addCppClass 
-      2. 
+    let isPlainVirtual = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "virtual"
+    let isOverride = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "override"
+    let hasVirtual = procDef.pragma.toSeq.any(isPlainVirtual) #with content it will be differnt. But we are ignoring it anyways
 
-]#
+    result = procDef
+    if not hasVirtual:
+        return procDef
+
+    let hasOverride = procDef.pragma.toSeq.any(it=>it.kind == nnkIdent and it.strVal() == "override")
+    let name = procDef.name.strVal().capitalizeAscii()
+    let params = "'2 #2"
+    let override = if hasOverride: "override" else: ""
+    let virtualContent: string = &"{name}({params}) {override}"
+    let keptPragmas = procDef.pragma.toSeq
+        .filterIt(not @[isPlainVirtual(it), isOverride(it)].foldl(a or b, false))
+    let newVirtual = nnkExprColonExpr.newTree(ident "virtual", newLit virtualContent)
+    let pragmas = nnkPragma.newTree(keptPragmas & newVirtual) 
+    result.pragma = pragmas
+    # debugEcho treeRepr (pragmas)    
+
+    # debugEcho repr procDef
+    
 
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
-    var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
-    var cppOverridesNodes : NimNode
-    (ueType, cppOverridesNodes) = getCppOverrides(body, ueType)
+    var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
     ueType.interfaces = interfaces
     #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
     ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
@@ -924,12 +927,11 @@ macro uClass*(name:untyped, body : untyped) : untyped =
 
     let nimProcs = body.children.toSeq
                     .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor"])
-                    .mapIt(addSelfToProc(it, className))
+                    .mapIt(it.addSelfToProc(className).processVirtual)
 
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
-    result =  nnkStmtList.newTree(@[uClassNode] & fns & cppOverridesNodes)
-    # echo repr result
+    result =  nnkStmtList.newTree(@[uClassNode] & fns)
   
 macro uForwardDecl*(name : untyped ) : untyped = 
     let (className, parent, _) = getTypeNodeFromUClassName(name)
