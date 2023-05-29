@@ -871,6 +871,8 @@ func addSelfToProc(procDef:NimNode, className:string) : NimNode =
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
     procDef
 
+import std/[strformat, strutils]
+
 func processVirtual(procDef:NimNode) : NimNode = 
 #[
     if the proc has virtual, it will fill it with the proc info:
@@ -879,31 +881,48 @@ func processVirtual(procDef:NimNode) : NimNode =
         - Add override if the proc is marked with override
     Get rid of the pragmas. 
     If the proc has any content in virtual, it will ignore the pragma and use the content instead 
-]#  
-    # debugEcho treeRepr procDef
-
+]#   
     let isPlainVirtual = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "virtual"
     let isOverride = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "override"
-    let hasVirtual = procDef.pragma.toSeq.any(isPlainVirtual) #with content it will be differnt. But we are ignoring it anyways
+    let isConstCpp = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "constcpp"
+    let isParamConstCpp = (it:NimNode) => it.kind == nnkIdentDefs and it[0].kind == nnkPragmaExpr and 
+        it[0][^1].children.toSeq.any(isConstCpp)
+    let constParamContent = (it:NimNode) => (if isParamConstCpp(it): "const " else: "")
 
+    let hasVirtual = procDef.pragma.toSeq.any(isPlainVirtual) #with content it will be differnt. But we are ignoring it anyways
     result = procDef
     if not hasVirtual:
         return procDef
 
     let hasOverride = procDef.pragma.toSeq.any(it=>it.kind == nnkIdent and it.strVal() == "override")
-    let name = procDef.name.strVal().capitalizeAscii()
-    let params = "'2 #2"
+    let hasFnConstCpp = procDef.pragma.toSeq.any(isConstCpp)
+    let name = procDef.name.strVal().capitalizeAscii()        
+    let params = procDef
+        .params
+        .filterIt(it.kind == nnkIdentDefs)
+        .skip(1)
+        .mapi((n, idx) => "$1 '$2 #$2" % [constParamContent(n), $(idx + 2)])
+        .join(", ")
+
     let override = if hasOverride: "override" else: ""
-    let virtualContent: string = &"{name}({params}) {override}"
+    let fnConstCpp = if hasFnConstCpp: "const" else: ""
+    let virtualContent: string = &"{name}({params}) {fnConstCpp} {override}"
     let keptPragmas = procDef.pragma.toSeq
-        .filterIt(not @[isPlainVirtual(it), isOverride(it)].foldl(a or b, false))
+        .filterIt(not @[isPlainVirtual(it), isOverride(it), isConstCpp(it)].foldl(a or b, false))
     let newVirtual = nnkExprColonExpr.newTree(ident "virtual", newLit virtualContent)
     let pragmas = nnkPragma.newTree(keptPragmas & newVirtual) 
-    result.pragma = pragmas
-    # debugEcho treeRepr (pragmas)    
+    if params.len > 0:
+      var params = newSeq[NimNode]()
+      for param in procDef.params[2..^1]:
+        var param = param
+        if isParamConstCpp(param):
+          param[0][^1] = nnkPragma.newTree param[0][^1].children.toSeq.filterIt(not isConstCpp(it))   
+          debugEcho treeRepr param[0][^1]
+        params.add param
+      result[3] = nnkFormalParams.newTree(procDef.params[0..1] & params)
 
-    # debugEcho repr procDef
-    
+    result.pragma = pragmas        
+
 
 
 macro uClass*(name:untyped, body : untyped) : untyped = 

@@ -50,13 +50,17 @@ func remove*[T](xs:var seq[T], x: T) =
       break     
     inc i  
 
-proc mapi*[T, U](xs: seq[T], fn: (T, int)->U): seq[U] =
-  var toReturn: seq[U] = @[] #Todo how to reserve memory upfront to avoid reallocations?
-  for i, x in xs:
-    toReturn.add(fn(x, i))
-  toReturn
+func mapi*[T, U](xs: seq[T], fn: (T, int)->U): seq[U] =
+  {.cast(noSideEffect).}:
+    var toReturn: seq[U] = @[] #Todo how to reserve memory upfront to avoid reallocations?
+    for i, x in xs:
+      toReturn.add(fn(x, i))
+    toReturn
 
-
+func skip*[T](xs: seq[T], n: int): seq[T] =
+  if n >= len(xs): @[]
+  else: xs[n..^1]
+  
 func tap*[T](xs: seq[T], fn: (x: T)->void): seq[T] =
   for x in xs:
     fn(x)
