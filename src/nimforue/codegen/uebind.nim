@@ -8,15 +8,7 @@ import ../codegen/[nuemacrocache, models, modelconstructor, projectinstrospect]
 import modulerules
 import ../../buildscripts/nimforueconfig #probably nimforueconfig should be removed from buildscripts
 
-#TODO support C++ multiple inheritance aka UE interfaces.
-#Notice we can also support fields now!
-const UClassTemplate* = """
-struct $1 : public $3 {
-  $1() = default;
-  $1(FVTableHelper& Helper) : $3(Helper) {}
-  $2  
-};
-"""
+
 
 #Converts a UEField type into a NimNode (useful when dealing with generics)
 #varContexts refer to if it's allowed or not to gen var (i.e. you cant gen var in a type definition but you can in a func definition)
@@ -458,6 +450,19 @@ func genInterfaceConverers*(ueType:UEType) : NimNode =
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
+func getClassTemplate(typeDef: UEType) : string =
+  
+  var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
+  if cppInterfaces != "":
+    cppInterfaces = ", " & cppInterfaces
+  &"""
+struct $1 : public $3{cppInterfaces} {{
+  $1() = default;
+  $1(FVTableHelper& Helper) : $3(Helper) {{}}
+  $2  
+}};
+"""
+
 
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =
 
@@ -486,7 +491,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
                       name* {.inject, exportc, codegenDecl:"placeholder".} = object of parent #TODO OF BASE CLASS 
                       ptrName* {.inject.} = ptr name
         #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
-        typeSection[0][0][^1][^1][^1] = newLit UClassTemplate  
+        typeSection[0][0][^1][^1][^1] = newLit getClassTemplate(typeDef)  
         typeSection
       of uexExport:
         newEmptyNode()       

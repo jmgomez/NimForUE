@@ -929,11 +929,18 @@ func processVirtual(procDef: NimNode, parentName: string) : NimNode =
 
     result.pragma = pragmas   
     result.body.insert 0, generateSuper(procDef, parentName)
+    if hasFnConstCpp:
+        let selfNoConst =
+          genAst():  
+            let self {.inject.} = removeConst(self)
+        result.body.insert 0, selfNoConst
+        
 
 
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
+    echo "Interfaces ", interfaces
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    

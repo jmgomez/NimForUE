@@ -20,6 +20,9 @@
 
 #include "Engine/AssetManager.h"
 #include "Engine/DeveloperSettings.h"
+
+#include "Engine/Classes/Animation/AnimNotifies/AnimNotify.h"
+#include "Engine/Classes/Animation/AnimInstance.h"
 #include "Engine/Classes/GameFramework/Actor.h"
 #include "Engine/Classes/GameFramework/Volume.h"
 #include "Engine/Classes/GameFramework/GameSession.h"
@@ -31,9 +34,9 @@
 #include "Engine/Classes/Engine/DataTable.h"
 #include "Engine/Classes/Animation/BlendProfile.h"
 #include "Engine/Classes/Engine/SceneCapture.h"
+
 #include "Engine/Public/WorldPartition/DataLayer/DataLayerInstance.h"
 #include "Engine/DamageEvents.h"
-
 #include "Engine/Private/AsyncActionLoadPrimaryAsset.h"
 
 
@@ -75,6 +78,8 @@
 //TODO add with ENGINE_
 //NOTE: The includes come from NimForUEBindinds!!
 #include "AbilitySystemGlobals.h"
+#include "AbilitySystemComponent.h"
+#include "ABilitySystemInterface.h"
 
 #if  ENGINE_MINOR_VERSION >= 2   
 #include "Elements/PCGExecuteBlueprint.h"

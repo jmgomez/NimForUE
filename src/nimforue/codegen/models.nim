@@ -27,7 +27,7 @@ const NoDeclMetadataKey* = "NoDecl"
 const EarlyLoadMetadataKey* = "EarlyLoad"
 const ReinstanceMetadataKey* = "Reinstance" #force the reinstantiation of a UEType
 
-type 
+type #TODO get rid of this
   CppModifiers* = enum
     cmNone, cmConst
     
@@ -125,8 +125,8 @@ type
                 parent* : string
                 clsFlags*: EClassFlagsVal
                 ctorSourceHash*: string
-                interfaces* : seq[string]
-                fnOverrides* : seq[CppFunction]
+                interfaces* : seq[string] #the names of the interfaces implemented by this class. If starts with I is a cpp interface otherwise (U) it's a reflected interface. The cpp version generates the actual required cpp code
+                fnOverrides* : seq[CppFunction] #the names of theTODO Delete
                 isParentInPCH* : bool
                 forwardDeclareOnly* : bool #if the class is forward declared only. This means we dont define the class in the current module, it maybe defined (func emmited) in another module or in the PCH
             of uetStruct:
@@ -327,9 +327,7 @@ func `==`*(a, b:UEType) : bool =
         a.kind == b.kind and
         (case a.kind:
         of uetClass:
-            a.parent == b.parent and
-            a.fnOverrides == b.fnOverrides 
-
+            a.parent == b.parent
             # a.clsFlags == b.clsFlags
         of uetStruct:
             a.superStruct == b.superStruct #and

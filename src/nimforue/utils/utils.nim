@@ -60,7 +60,7 @@ func mapi*[T, U](xs: seq[T], fn: (T, int)->U): seq[U] =
 func skip*[T](xs: seq[T], n: int): seq[T] =
   if n >= len(xs): @[]
   else: xs[n..^1]
-  
+
 func tap*[T](xs: seq[T], fn: (x: T)->void): seq[T] =
   for x in xs:
     fn(x)
@@ -221,7 +221,7 @@ proc deleteCpp*[T](val : ptr T ) : void  =
   if val.isNotNil():
     deleteInteral(val)
     # val = nil
-
+proc removeConst*[T](p:ptr T) : ptr T {.importcpp: "const_cast<'0>(#)".}
 
 
 #JSON

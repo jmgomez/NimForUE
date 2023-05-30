@@ -2,7 +2,7 @@
 include ../unreal/prelude
 import ../unreal/core/containers/containers
 import ../codegen/[ueemit, emitter]
-# import ../codegen/[gencppclass]
+import ../codegen/[gencppclass]
 
 import engine/[engine, common, gameframework]
 
