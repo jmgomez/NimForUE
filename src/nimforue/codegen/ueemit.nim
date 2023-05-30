@@ -871,9 +871,16 @@ func addSelfToProc(procDef:NimNode, className:string) : NimNode =
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
     procDef
 
-import std/[strformat, strutils]
+func generateSuper(procDef: NimNode, parentName: string) : NimNode = 
+    let name = procDef.name.strVal().capitalizeAscii()
+    let parent = procDef.params[1]
+    let content = newLit &"{parentName}::{name}"
+    result = 
+      genAst(content):
+        proc super() {.importc: content, nodecl.}  
+    result.params = nnkFormalParams.newTree procDef.params.filterIt(it != parent)
 
-func processVirtual(procDef:NimNode) : NimNode = 
+func processVirtual(procDef: NimNode, parentName: string) : NimNode = 
 #[
     if the proc has virtual, it will fill it with the proc info:
         - Capitilize the proc name
@@ -917,11 +924,11 @@ func processVirtual(procDef:NimNode) : NimNode =
         var param = param
         if isParamConstCpp(param):
           param[0][^1] = nnkPragma.newTree param[0][^1].children.toSeq.filterIt(not isConstCpp(it))   
-          debugEcho treeRepr param[0][^1]
         params.add param
       result[3] = nnkFormalParams.newTree(procDef.params[0..1] & params)
 
-    result.pragma = pragmas        
+    result.pragma = pragmas   
+    result.body.insert 0, generateSuper(procDef, parentName)
 
 
 
@@ -946,7 +953,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
 
     let nimProcs = body.children.toSeq
                     .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor"])
-                    .mapIt(it.addSelfToProc(className).processVirtual)
+                    .mapIt(it.addSelfToProc(className).processVirtual(parent))
 
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
