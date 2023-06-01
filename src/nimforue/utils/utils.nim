@@ -246,4 +246,6 @@ template measureTime*(name: static string, body: untyped) =
 template toVar*[T](self : ptr T) : var T = cast[var T](self)
 template toVar*[T](self : T) : var T = toVar(self.unsafePtr())
 
-
+template safe*(body:untyped) = 
+  {.cast(noSideEffect).}:
+    body

@@ -841,7 +841,7 @@ func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags,
     for meta in classMetadata:
         if meta.name.toLower() == "config": #Game config. The rest arent supported just yet
             flags = flags or CLASS_Config
-            metas = metas.filterIt(it.name.toLower()!= "config")
+            metas = metas.filterIt(it.name.toLower() != "config")
         if meta.name.toLower() == "blueprintable":
             metas.add makeUEMetadata("IsBlueprintBase")
         if meta.name.toLower() == "editinlinenew":
@@ -860,8 +860,14 @@ proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =
         (className, parent, newSeq[string]())
     of nnkCommand:
         let parent = name[^1][0].strVal()
-        let iface = name[^1][^1][^1].strVal()
-        (className, parent, @[iface])
+        echo name[^1][^1][^1].strVal()
+        var ifaces = 
+            name[^1][^1][^1].strVal().split(",") 
+        if ifaces[0][0] == 'I':
+            ifaces.add ("U" & ifaces[0][1..^1])
+        # debugEcho $ifaces
+
+        (className, parent, ifaces)
     else:
         error("Cant parse the uClass " & repr name)
         ("", "", newSeq[string]())
@@ -939,8 +945,7 @@ func processVirtual(procDef: NimNode, parentName: string) : NimNode =
 
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
-    let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
-    echo "Interfaces ", interfaces
+    let (className, parent, interfaces) = getTypeNodeFromUClassName(name)    
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    

@@ -5,7 +5,7 @@
 
 # import examplescratchpad
 
-# import examplescodegen
+import examplescodegen
 # import examplecoreuobject
 # import engineexample
 # import editorexample
@@ -19,5 +19,12 @@
 # import ueborrowexample
 
 # import vminteroppocexample
-# include ../unreal/prelude
+include ../unreal/prelude
+
+uClass AFoo of AActor:
+  (Blueprintable)
+  uprops(EditAnywhere, BlueprintReadWrite):
+    test : FString
+  
+
 

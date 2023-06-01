@@ -783,7 +783,7 @@ proc isNimClassBase(cls: UClassPtr): bool = cls.isNimClass()
 
 
 
-proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actorCls:UClassPtr) {.cdecl.} = 
+proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actorCls:UClassPtr) {.cdecl.} =   
   #get a chance to init the parent
   let parentCls = actorCls.getSuperClass()
   if parentCls.isNimClass() or parentCls.isBpClass():
@@ -867,6 +867,8 @@ proc setGIsUCCMakeStandaloneHeaderGenerator*(value: static bool) =
 
 """.}
 
+proc uobjectCppClassStaticFunctionsForUClass(uclass: typedesc): FUObjectCppClassStaticFunctions {.importcpp:"UOBJECT_CPPCLASS_STATICFUNCTIONS_FORCLASS('1)".} 
+
 proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
  
@@ -876,21 +878,16 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   let parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
   let parent = parentCls
     .getOrRaise(&"Parent class {ueType.parent} not found fosr {ueType.name}")
-
   assetCreated(newCls)
-
   newCls.propertyLink = parent.propertyLink
   newCls.classWithin = parent.classWithin
   newCls.classConfigName = parent.classConfigName
-
   newCls.setSuperStruct(parent)
   newCls.classVTableHelperCtorCaller = vtableConstructor
-
+  newCls.cppClassStaticFunctions = uobjectCppClassStaticFunctionsForUClass(T)
   # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
   newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32)
   newCls.classCastFlags = parent.classCastFlags
-
-  
   copyMetadata(parent, newCls)
 
   newCls.markAsNimClass()
@@ -901,6 +898,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
 
 
   for field in ueType.fields:
+    assert field.typename == ueType.name
     var field = field
     case field.kind:
     of uefProp:      
@@ -915,11 +913,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   for iface in ueType.interfaces:
     let ifaceCls = getClassByName(iface.removeFirstLetter())
     if ifaceCls.isNotNil():
-      UE_Log &"Adding interface {ifaceCls.getName()} to {newCls.getName()}"
       let implementedInterface = makeFImplementedInterface(ifaceCls, 0, true)
       newCls.interfaces.add(implementedInterface)
-
-
 
   newCls.staticLink(true)
   newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)

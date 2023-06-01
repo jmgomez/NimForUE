@@ -65,7 +65,7 @@ type
     UFunctionNativeSignature* = proc (context:UObjectPtr, stack:var FFrame,  result: pointer) : void {. cdecl .}
     FImplementedInterface* {.importcpp.} = object
         class* {.importcpp:"Class".}: UClassPtr
-        
+    FUObjectCppClassStaticFunctions* {.importcpp.} = object
     UClass* {.importcpp, inheritable, pure .} = object of UStruct
         classWithin* {.importcpp:"ClassWithin".}: UClassPtr #  The required type for the outer of instances of this class */
         classConfigName* {.importcpp:"ClassConfigName".}: FName 
@@ -75,6 +75,7 @@ type
         classVTableHelperCtorCaller* {.importcpp:"ClassVTableHelperCtorCaller".}: VTableConstructor
         addReferencedObjects* {.importcpp:"AddReferencedObjects".}: UClassAddReferencedObjectsType
         interfaces* {.importcpp:"Interfaces".}: TArray[FImplementedInterface]
+        cppClassStaticFunctions* {.importcpp:"CppClassStaticFunctions".}: FUObjectCppClassStaticFunctions
 
     UClassPtr* = ptr UClass
     UInterface* {.importcpp, inheritable, pure .} = object of UObject
