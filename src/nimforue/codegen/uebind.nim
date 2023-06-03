@@ -98,6 +98,7 @@ func ueNameToNimName(propName:string) : string = #this is mostly for the autogen
 
 
   # macro ex*(a:untyped):untyped = a
+func genPropsAsRecList(ueType: UEType, rule: UERule = uerNone) : NimNode 
 
 func genProp(typeDef : UEType, prop : UEField) : NimNode = 
   let ptrName = ident typeDef.name & "Ptr"
@@ -492,12 +493,19 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
                       ptrName* {.inject.} = ptr name
         #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
         typeSection[0][0][^1][^1][^1] = newLit getClassTemplate(typeDef)  
+        # typeSection[0][^1][^1] = genPropsAsRecList(typeDef, rule)
         typeSection
       of uexExport:
         newEmptyNode()       
       of uexImport:
         newEmptyNode()
 
+  # if typeExposure == uexDsl:
+  #   result = 
+  #     genAst(typeDecl, funcs):
+  #           typeDecl          
+  #           funcs
+  # else:
   result = 
     genAst(typeDecl, props, funcs):
         typeDecl
@@ -623,35 +631,45 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
             newEmptyNode()))
         .foldl(a.add b, nnkRecList.newTree)
     of uexExport: 
-      var fields = nnkRecList.newTree()
-      var size, offset, padId: int
-      for prop in typeDef.fields:
-        let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
-        var propIden = nnkIdentDefs.newTree(
-          nnkPragmaExpr.newTree(
-            ident fieldName,
-            nnkPragma.newTree(
-              ident "inject",
-              nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(prop.name)),
-            )
-          ), 
-          prop.getTypeNodeFromUProp(isVarContext=false), 
-          newEmptyNode())
+      debugEcho &"Exporting type {typeDef.name} is in PCH {typeDef.isInPCH}"
+      if typeDef.isInPCH:
+         typeDef.fields
+          .map(prop => 
+            nnkIdentDefs.newTree(
+              getFieldIdentWithPCH(typeDef, prop),
+              prop.getTypeNodeFromUProp(isVarContext=false),             
+              newEmptyNode()))
+          .foldl(a.add b, nnkRecList.newTree)
+      else:
+        var fields = nnkRecList.newTree()
+        var size, offset, padId: int
+        for prop in typeDef.fields:
+          let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
+          var propIden = nnkIdentDefs.newTree(
+            nnkPragmaExpr.newTree(
+              ident fieldName,
+              nnkPragma.newTree(
+                ident "inject",
+                nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(prop.name)),
+              )
+            ), 
+            prop.getTypeNodeFromUProp(isVarContext=false), 
+            newEmptyNode())
 
-        let offsetDelta = prop.offset - offset
-        if offsetDelta > 0:
-          fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(offsetDelta), ident "byte"), newEmptyNode())
-          inc padId
-          offset += offsetDelta
-          size += offsetDelta
+          let offsetDelta = prop.offset - offset
+          if offsetDelta > 0:
+            fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(offsetDelta), ident "byte"), newEmptyNode())
+            inc padId
+            offset += offsetDelta
+            size += offsetDelta
 
-        fields.add propIden
-        size = offset + prop.size
-        offset += prop.size
+          fields.add propIden
+          size = offset + prop.size
+          offset += prop.size
 
-      if size < typeDef.size:
-        fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(typeDef.size - size), ident "byte"), newEmptyNode())
-      fields
+        if size < typeDef.size:
+          fields.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(typeDef.size - size), ident "byte"), newEmptyNode())
+        fields
 
   if typeDef.superStruct == "":
     result = genAst(typeName, fields):
@@ -687,8 +705,7 @@ func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode =
   if typeExposure == uexExport: 
     result = newEmptyNode() #exportc since Nim 2.0 exports the type so nothing to do here. 
 
-
-func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode =  
+func genPropsAsRecList(ueType: UEType, rule: UERule = uerNone) : NimNode =
   var recList = nnkRecList.newTree()
   var size, offset, padId: int
   for prop in ueType.fields:
@@ -709,7 +726,7 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
  
 
     let offsetDelta = prop.offset - offset
-    if offsetDelta > 0:
+    if offsetDelta > 0 and not ueType.isInPCH:
       recList.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(offsetDelta), ident "byte"), newEmptyNode())
       inc padId
       offset += offsetDelta
@@ -719,9 +736,12 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
     size = offset + prop.size
     offset += prop.size
 
-  if size < ueType.size:
+  if size < ueType.size and not ueType.isInPCH:
     recList.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(ueType.size - size), ident "byte"), newEmptyNode())
-  
+  recList
+
+func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode =  
+  let recList = genPropsAsRecList(ueType, rule)
   let importExportPragma =
     if ueType.isInPCH:
       ident "importcpp"

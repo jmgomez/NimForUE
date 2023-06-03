@@ -377,7 +377,7 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
     none(UEType)
 
 
-func toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
+proc toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[string]= @[]): Option[UEType] =
   #same as above
   let storedUEType = 
     str.getMetadata(UETypeMetadataKey)
@@ -710,7 +710,7 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
   for metadata in propField.metadata:
     prop.setMetadata(metadata.name, $metadata.value)
-    UE_Log &"Setting metadata for {propField.name} {metadata.name} {metadata.value}"
+    # UE_Log &"Setting metadata for {propField.name} {metadata.name} {metadata.value}"
   outer.addCppProperty(prop)
   prop
 
@@ -903,8 +903,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
     case field.kind:
     of uefProp:      
       discard field.emitFProperty(newCls)      
-    of uefFunction:
-      discard
+    of uefFunction:      
       # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}" #notice each module emits its own functions  
       discard emitUFunction(field, ueType, newCls, getNativeFuncImplPtrFromUEField(getGlobalEmitter(), field))
     else:

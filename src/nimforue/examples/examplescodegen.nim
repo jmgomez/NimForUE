@@ -118,6 +118,7 @@ uClass AActorCodegen of AActor:
     inspect : EInspectType 
     inspectName : FString
     inspectClass : UClassPtr
+    inspectStruct: UScriptStructPtr
     inspectActor : AActorPtr
     bOnlyBlueprint : bool 
     bUseIncludesInPCH : bool 
@@ -152,6 +153,12 @@ uClass AActorCodegen of AActor:
         UE_Error "Class is null"
         return
       UE_Log $cls
+    proc dumpScriptStruct() =
+      let struct = self.inspectStruct
+      if struct.isNil():
+        UE_Error "Struct is null"
+        return
+      UE_Log $struct
     proc dumpDefinedTypesInCode() = 
       UE_Log $NimDefinedTypesNames
     proc dumpClassAsUEType() = 

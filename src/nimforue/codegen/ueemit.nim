@@ -45,6 +45,12 @@ proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.}
   let cls = obj.getClass()
 
   let actor = tryUECast[AActor](obj)
+  var fieldIterator = makeTFieldIterator[FProperty](cls, None)
+  for it in fieldIterator: #Initializes all fields. So things like copy constructors get called. 
+    let prop = it.get() 
+    let address = prop.containerPtrToValuePtr(obj)
+    prop.initializeValue(address)
+
   if actor.isSome():
     initComponents(initializer, actor.get(), cls)
 

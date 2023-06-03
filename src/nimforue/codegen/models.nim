@@ -119,6 +119,9 @@ type
         metadata* : seq[UEMetadata]
         isInPCH* : bool #if the type is in the PCH at the time of generting the bindings. Means we can do importc directly (only for structs and classes for now. Need to figure out enums, not sure about if delegate worth the trouble, probably not)
         moduleRelativePath* : string 
+        size*: int32
+        alignment*: int32
+
         case kind*: UETypeKind
             of uetClass:
                 isInCommon* : bool #the type is part of the common module (if it's the actual type in common it also has forwardDeclareOnly set to false)
@@ -132,8 +135,6 @@ type
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal
-                size*: int32
-                alignment*: int32
                 isSuperStructInPCH* : bool
             of uetEnum:
                 discard

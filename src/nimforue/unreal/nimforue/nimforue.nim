@@ -149,25 +149,38 @@ proc isA[T:FProperty](prop:FPropertyPtr) : bool = tryCastField[T](prop).isSome()
 proc asA[T:FProperty](prop:FPropertyPtr) : ptr T = castField[T](prop)
 # when WithEditor:
   
-proc `$`*(cls:UClassPtr) : string = 
-    var str = &"Class: {cls.getName()} \n\t Parent: {cls.getSuperClass().getName()}\n\t Module:{cls.getPackage().getModuleName()} \n\t Package:{cls.getPackage().getName()} \n\t Class Flags: {cls.classFlags} \n\t Object Flags: {cls.getFlags}"
-    str = &"{str} \n\t Interfaces:"
-    for i in cls.interfaces:
-      str = &"{str}\n\t\t {i}"
-    str = &"{str} \n\t Metas:"
-    let metas = cls.getMetadataMap().toTable()
-    for key, value in metas:
-      str = &"{str}\n\t\t {key} : {value}"
+proc `$`*(str:UScriptStructPtr) : string = 
+  # "hola"
+  result = &"ScriptStruct: {str.getName()} \n\t Parent: \n\t Module:{str.getPackage().getModuleName()} \n\t Package:{str.getPackage().getName()} \n\t Struct Flags: {str.structFlags} \n\t Object Flags: {str.getFlags}"
+  # result = &"{str} \n\t Metas:"
+  # let metas = str.getMetadataMap().toTable()
+  # for key, value in metas:
+  #   result = &"{str}\n\t\t {key} : {value}"
 
-    str = &"{str} \n\t Props:"
-    for p in cls.getFPropsFromUStruct():
-      str = &"{str}\n\t\t {p}"
-      
-    str = &"{str} \n\t Funcs:"
-    let funcs = cls.getFuncsFromClass()
-    for f in funcs:
-      str = &"{str}\n\t\t {f}"
-    str
+  # result = &"{str} \n\t Props:"
+  # for p in str.getFPropsFromUStruct():
+  #   result = &"{str}\n\t\t {p}"
+  
+
+proc `$`*(cls:UClassPtr) : string = 
+  var str = &"Class: {cls.getName()} \n\t Parent: {cls.getSuperClass().getName()}\n\t Module:{cls.getPackage().getModuleName()} \n\t Package:{cls.getPackage().getName()} \n\t Class Flags: {cls.classFlags} \n\t Object Flags: {cls.getFlags}"
+  str = &"{str} \n\t Interfaces:"
+  for i in cls.interfaces:
+    str = &"{str}\n\t\t {i}"
+  str = &"{str} \n\t Metas:"
+  let metas = cls.getMetadataMap().toTable()
+  for key, value in metas:
+    str = &"{str}\n\t\t {key} : {value}"
+
+  str = &"{str} \n\t Props:"
+  for p in cls.getFPropsFromUStruct():
+    str = &"{str}\n\t\t {p}"
+    
+  str = &"{str} \n\t Funcs:"
+  let funcs = cls.getFuncsFromClass()
+  for f in funcs:
+    str = &"{str}\n\t\t {f}"
+  str
 
 proc `$`*(obj:UObjectPtr) : string = 
   if obj.isNil(): return "nil"

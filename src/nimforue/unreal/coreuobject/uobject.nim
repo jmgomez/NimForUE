@@ -326,7 +326,7 @@ proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()"
 proc assembleReferenceTokenStream*(cls:UClassPtr, bForce = false) : void {. importcpp:"#->AssembleReferenceTokenStream(@)" .}
 
 #ScriptStruct
-
+proc getSuperStruct*(str:UScriptStructPtr) : UScriptStructPtr {. importcpp:"#->GetSuperStruct()" .}
 proc hasStructOps*(str:UScriptStructPtr) : bool {.importcpp:"(#->GetCppStructOps() != nullptr)".}
 proc getAlignment*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->GetAlignment()".}
 proc getSize*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->GetSize()".}
