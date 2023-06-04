@@ -43,13 +43,14 @@ proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.}
   newInstanceInAddr[T](initializer.getObj())
   let obj = initializer.getObj()
   let cls = obj.getClass()
-
+  UE_Log &"Default constructor for {cls.getName()}"
   let actor = tryUECast[AActor](obj)
   var fieldIterator = makeTFieldIterator[FProperty](cls, None)
   for it in fieldIterator: #Initializes all fields. So things like copy constructors get called. 
     let prop = it.get() 
     let address = prop.containerPtrToValuePtr(obj)
     prop.initializeValue(address)
+    UE_Log &"[{cls.getName()}]initialzing field {prop.getName()}"
 
   if actor.isSome():
     initComponents(initializer, actor.get(), cls)
@@ -843,7 +844,7 @@ func genDefaults(body:NimNode) : Option[NimNode] =
 
 func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags, seq[UEMetadata]) = 
     var metas = classMetadata
-    var flags = (CLASS_Inherit | CLASS_ScriptInherit )#| CLASS_Native ) #| CLASS_CompiledFromBlueprint
+    var flags = (CLASS_Inherit | CLASS_Native ) #| CLASS_CompiledFromBlueprint
     for meta in classMetadata:
         if meta.name.toLower() == "config": #Game config. The rest arent supported just yet
             flags = flags or CLASS_Config
