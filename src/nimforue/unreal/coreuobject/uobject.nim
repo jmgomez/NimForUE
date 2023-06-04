@@ -84,6 +84,8 @@ type
     UScriptStruct* {.importcpp, inheritable, pure .} = object of UStruct
         structFlags* {.importcpp:"StructFlags".}: EStructFlags
     UScriptStructPtr* = ptr UScriptStruct
+    ICppStructOps {.importcpp:"UScriptStruct::ICppStructOps".} = object
+    ICppStructOpsPtr = ptr ICppStructOps
 
 
     UFunction* {.importcpp, inheritable, pure .} = object of UStruct
@@ -331,6 +333,11 @@ proc hasStructOps*(str:UScriptStructPtr) : bool {.importcpp:"(#->GetCppStructOps
 proc getAlignment*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->GetAlignment()".}
 proc getSize*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->GetSize()".}
 proc hasAddStructReferencedObjects*(str:UScriptStructPtr) : bool {.importcpp:"#->GetCppStructOps()->HasAddStructReferencedObjects()".}
+proc getCppStructOps*(str:UScriptStructPtr) : ICppStructOpsPtr {. importcpp:"#->GetCppStructOps()" .}
+#struct ops #TODO need to fill FProperty
+proc copy*(ops:ICppStructOpsPtr; dest: pointer; src: pointer; arrayDim: int32 = 1): bool {. importcpp:"#->Copy(#, #, #)" .}
+
+
 
 # proc getCppStructOps*(str:UScriptStructPtr) : ICppStructOpsPtr {. importcpp:"#->GetCppStructOps()" .}
 
