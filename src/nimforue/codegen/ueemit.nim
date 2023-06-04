@@ -983,6 +983,6 @@ macro uForwardDecl*(name : untyped ) : untyped =
     let clsPtr = ident className & "Ptr"
     genAst(clsName=ident className, clsParent = ident parent, clsPtr):
         type 
-          clsName = object of clsParent
-          clsPtr = ptr clsName
+          clsName* = object of clsParent
+          clsPtr* = ptr clsName
 
