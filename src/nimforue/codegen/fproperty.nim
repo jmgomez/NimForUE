@@ -60,7 +60,8 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         let objProp = newFObjectPtrProperty(owner, name, flags)
         objProp.setPropertyClass(cls)
         if isComponent: #regular uobject instanced are set at the dsl level on ueemit
-            objProp.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
+            objProp.setPropertyFlags(CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
+        objProp.setPropertyFlags(CPF_InstancedReference)
         objProp
     of emTSoftObjectPtr:
         let softObjProp = newFSoftObjectProperty(owner, name, flags)
@@ -70,10 +71,10 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         let structProp = newFStructProperty(owner, name, flags)
         #TODO Need to set more prop flags based on the structsOPS specs
         UE_Log "ENTRA AQUI EN LA STRUCT VAMOS A VER"
-        UE_Log $scriptStruct.structFlags
-        UE_Log $structProp.getFlags()
+        
         structProp.setScriptStruct(scriptStruct)
-        let propFlags = structProp.getPropertyFlags() | CPF_NoDestructor
+        #This is a temp workaround because since the property is virtual and has no vtable it wil crash
+        let propFlags = structProp.getPropertyFlags() | CPF_NoDestructor 
         structProp.setPropertyFlags(propFlags)
         structProp
 

@@ -43,14 +43,14 @@ proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.}
   newInstanceInAddr[T](initializer.getObj())
   let obj = initializer.getObj()
   let cls = obj.getClass()
-  UE_Log &"Default constructor for {cls.getName()}"
+#   UE_Log &"Default constructor for {cls.getName()}"
   let actor = tryUECast[AActor](obj)
   var fieldIterator = makeTFieldIterator[FProperty](cls, None)
   for it in fieldIterator: #Initializes all fields. So things like copy constructors get called. 
     let prop = it.get() 
     let address = prop.containerPtrToValuePtr(obj)
     prop.initializeValue(address)
-    UE_Log &"[{cls.getName()}]initialzing field {prop.getName()}"
+    # UE_Log &"[{cls.getName()}]initialzing field {prop.getName()}"
 
   if actor.isSome():
     initComponents(initializer, actor.get(), cls)
@@ -113,7 +113,7 @@ const ReinstSuffix = "_Reinst"
 proc prepReinst(prev:UObjectPtr) =
     const objFlags = RF_NewerVersionExists or RF_Transactional
     prev.setFlags(objFlags)
-    UE_Warn &"Reinstancing {prev.getName()}"
+    # UE_Warn &"Reinstancing {prev.getName()}"
     # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
     # prev.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32 or RF_MarkAsRootSet.uint32))
     let prevNameStr : FString =  fmt("{prev.getName()}{ReinstSuffix}")
@@ -274,7 +274,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEar
 
        
         if prevFn.isSome():
-            UE_Log "Updating function pointer " & funField.name
+            # UE_Log "Updating function pointer " & funField.name
             let prev = prevFn.get()
             let newHash = funField.sourceHash
             # if not prev.sourceHash.equals(newHash):
