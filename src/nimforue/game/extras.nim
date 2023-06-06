@@ -31,8 +31,7 @@ type
 
 
 proc tickPoll(deltaTime:float32) : bool {.cdecl.} =
-  try:
-    let p = getGlobalDispatcher()
+  try:      
     poll(0)
   except: 
     discard

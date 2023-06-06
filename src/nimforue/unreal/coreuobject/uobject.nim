@@ -57,6 +57,7 @@ type
     FFrame* {.importcpp .} = object
         code* {.importcpp:"Code".} : ptr uint8
         node* {.importcpp:"Node".} : UFunctionPtr
+        obj* {.importcpp:"Object".} : UObjectPtr
         locals* {.importcpp:"Locals".} : ptr uint8
         outParms* {.importcpp:"OutParms".} : ptr FOutParmRec
         propertyChainForCompiledIn* {.importcpp:"PropertyChainForCompiledIn".}: FFieldPtr
@@ -235,8 +236,8 @@ proc containerPtrToValuePtr*(prop:FPropertyPtr, container: pointer) : pointer {.
 #Concrete methods
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
 proc getScriptStruct*(prop:FStructPropertyPtr) : UScriptStructPtr {. importcpp: "(#->Struct)".}
-proc setPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
-proc getPropertyClass*(prop:FObjectPtrPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr) : UClassPtr {. importcpp: "(#->PropertyClass)".}
+proc setPropertyClass*(prop:FObjectPtrPropertyPtr | FObjectPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
+proc getPropertyClass*(prop:FObjectPtrPropertyPtr | FObjectPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr) : UClassPtr {. importcpp: "(#->PropertyClass)".}
 # proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
 proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "#->SetMetaClass(#)".}
 proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->SetEnum(#))".}

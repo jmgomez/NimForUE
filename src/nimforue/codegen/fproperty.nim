@@ -50,6 +50,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
             clsProp.setPropertyMetaClass(cls)
         clsProp.setPropertyClass(staticClass[UClass]())
         clsProp.setPropertyFlags(CPF_UObjectWrapper or CPF_HasGetValueTypeHash)
+        
         clsProp
     of emTSoftClassPtr:
         let clsProp = newFSoftClassProperty(owner, name, flags)
@@ -60,8 +61,8 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         let objProp = newFObjectPtrProperty(owner, name, flags)
         objProp.setPropertyClass(cls)
         if isComponent: #regular uobject instanced are set at the dsl level on ueemit
-            objProp.setPropertyFlags(CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
-        objProp.setPropertyFlags(CPF_InstancedReference)
+            objProp.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
+        
         objProp
     of emTSoftObjectPtr:
         let softObjProp = newFSoftObjectProperty(owner, name, flags)

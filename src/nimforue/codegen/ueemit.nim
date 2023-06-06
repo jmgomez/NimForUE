@@ -627,12 +627,11 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
         
         genAst(paraName, paramType, genOutParam): 
             stack.mostRecentPropertyAddress = nil
-
             #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (which we dont)
             var paraName {.inject.} : paramType #Define the param
             var paramAddr = cast[pointer](paraName.addr) #Cast the Param with   
             if not stack.code.isNil():
-                stack.step(context, paramAddr)
+                stack.step(stack.obj, paramAddr)
             else:
                 var prop = cast[FPropertyPtr](stack.propertyChainForCompiledIn)
                 stack.propertyChainForCompiledIn = stack.propertyChainForCompiledIn.next
@@ -977,7 +976,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
-  
+    
 macro uForwardDecl*(name : untyped ) : untyped = 
     let (className, parent, _) = getTypeNodeFromUClassName(name)
     let clsPtr = ident className & "Ptr"

@@ -23,7 +23,7 @@ converter ENameToFName*(ename:EName) : FName = makeFName ename
 
 proc getNumber*(name : FName) : int32 {. importcpp: "#.GetNumber()".}
 
-# proc `$`*(name:FName) : string = $name.toFString()
+proc `$`*(name:FName) : string = $name.toFString()
 
 
 proc hash*(name: FName): Hash = name.getNumber()
