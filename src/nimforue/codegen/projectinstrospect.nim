@@ -88,8 +88,6 @@ func getDepsAsModulesRec*(allModules:seq[NimModule], module:NimModule) : seq[Nim
 
 ]#
 
-
-
 func getParentHierarchy(allModules:seq[NimModule], nimType:NimType) : seq[string] = 
   if nimType.parent == "": newSeq[string]()
   else:
@@ -97,7 +95,6 @@ func getParentHierarchy(allModules:seq[NimModule], nimType:NimType) : seq[string
     if parent.isNone(): newSeq[string]()
     else:
       @[nimType.parent] & getParentHierarchy(allModules, parent.get())
-
 
 func getNameFromTypeDef(typeDef:NimNode) : string = 
   assert typeDef.kind == nnkTypeDef, "Expected nnkTypeDef got " & $typeDef.kind
@@ -172,7 +169,6 @@ func getNameFromIdentDef(identDefs:NimNode) : string =
       identDefs[0].strVal
     of nnkPostfix:
       identDefs[0][^1].strVal
-
     of nnkPragmaExpr:
       let pragmaNode = identDefs[0]
       case pragmaNode[0].kind:
@@ -198,8 +194,6 @@ func getNameFromIdentDef(identDefs:NimNode) : string =
       debugEcho treeRepr identDefs
       error &"Error in getParamFromIdentDef got {identDefs[0].kind} in identDefs name"
       quit() 
-
-
 
 func getGenericTypeName(identDefs:NimNode) : seq[NimParam] = 
   assert identDefs.kind == nnkIdentDefs, "Expected nnkIdentDefs got " & $identDefs.kind
@@ -465,7 +459,7 @@ func nimObjectTypeToNimNode(nimType:NimType) : NimNode =
   let name = ident nimType.name
   let params = nnkRecList.newTree(@[newEmptyNode(), newEmptyNode()] & nimtype.params.map(paramToIdentDefs))
   let typeParams = genGenericTypeParams(nimType)  
-
+  let parentNode = if nimType.parent == "": newEmptyNode() else: nnkOfInherit.newTree(ident nimType.parent)
   result = 
    nnkTypeDef.newTree(
     nnkPostfix.newTree(
@@ -475,9 +469,8 @@ func nimObjectTypeToNimNode(nimType:NimType) : NimNode =
     typeParams,
     # newEmptyNode(),
     nnkObjectTy.newTree(
-      newEmptyNode(),
-      newEmptyNode(),
-      # nnkOfInherit.newTree(ident nimType.parent),
+      newEmptyNode(),      
+      parentNode,
       params
     )
    )
@@ -537,16 +530,12 @@ proc genNimVMTypeImpl(nimType:NimType) : NimNode =
     debugEcho "NimTypeNotSupported type: " & $nimType.kind
     newEmptyNode()
 
-
-
-
 func genConverter(nameLit: string, parentLit:string) : NimNode =
   let name = ident nameLit
   let parent = ident parentLit & "Ptr"
   let fnName = ident &"{nameLit}To{parentLit}"
   genAst(fnName, name, parent):
     converter fnName*(self{.inject.}:name): parent = parent(int(self))
-  
   
 func genNimPtrConverter(nimType:NimType, modules:seq[NimModule]) : NimNode = 
   assert nimType.kind == Pointer
