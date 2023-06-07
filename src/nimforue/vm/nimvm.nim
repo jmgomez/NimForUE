@@ -315,11 +315,11 @@ uClass ANimVM of AActor:
     proc initInterpreter() = 
       #  interpreter = initInterpreter(@[parentDir(currentSourcePath)])
        interpreter = initInterpreter(@[NimGameDir() / "vm"])
-    proc revalScript() =
-      if interpreter.isNotNil():
-        interpreter.evalScript()
-      else:
-        UE_Error "Interpreter not init"
+    # proc revalScript() =
+    #   if interpreter.isNotNil():
+    #     interpreter.evalScript()
+    #   else:
+    #     UE_Error "Interpreter not init"
     proc restartVM() = 
       interpreter = initInterpreter(userSearchPaths)
       reloadScript()

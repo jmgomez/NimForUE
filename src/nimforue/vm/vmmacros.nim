@@ -3,6 +3,8 @@ import exposed
 import runtimefield
 import ../utils/utils
 
+
+
 proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode = 
   let argsWithFirstType =
       fn.params
@@ -21,7 +23,7 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
   let fnName = fn.name
 
   let returnTypeLit = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
-  let returnType = fn.params[0]
+  let returnType {.inject.} = fn.params[0]
 
   let uFunc = UEFunc(name:fnName.strVal(), className:clsName)
   var funcData = newLit uFunc
@@ -36,21 +38,22 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
     genAst(fnName, funcData, valNode, returnType, returnTypeLit, firstParam, isStatic):
       proc fnName() = 
         when isStatic:
-          let callData = UECall(fn: funcData, value: valNode.toRuntimeField()) #No params yet
+          let callData {.inejct.} = UECall(fn: funcData, value: valNode.toRuntimeField()) #No params yet
         else:
-          let callData = UECall(fn: funcData, value: valNode.toRuntimeField(), self: int(firstParam)) #No params yet
+          let callData {.inject.} = UECall(fn: funcData, value: valNode.toRuntimeField(), self: cast[int](firstParam)) #No params yet
+        
         let returnVal {.used.} = uCall(callData) #check return val
         # log "VM:" & $callData
-        let runtimeField = uCall(callData) #check return val
+        let runtimeField {.inject.} = uCall(callData) #check return val
         #when no return?
         when returnTypeLit != "void":
-          when returnTypeLit.endsWith("Ptr"):
-            return returnType(runtimeField.get.runtimeFieldTo(int))
+          when returnTypeLit.endsWith("Ptr"): #TODO inspect the actual type
+            return castIntToPtr returnType(runtimeField.get.runtimeFieldTo(int))
           else:
             return runtimeField.get.runtimeFieldTo(returnType)
           
   result.params = fn.params
-  log repr result
+  # log repr result
 
 
 macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn)
@@ -103,13 +106,10 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
   let vmFn = 
     genAst(funName=fnName, fnNameLit, fnVmName, fnVmNameLit, fnBody, classTypePtr, clsNameLit, returnType, returnTypeLit, injectedArgs, isStatic):
       setupBorrow(UEBorrowInfo(fnName:fnNameLit, className:clsNameLit))
-
       proc fnVmName*(callInfo{.inject.}:UECall) : RuntimeField = 
-        injectedArgs
-        # log "call info:"
-        # log $callInfo
+        injectedArgs 
         when not isStatic:
-          let self {.inject.} = classTypePtr(callInfo.self)
+          let self {.inject.} = castIntToPtr[classTypePtr](callInfo.self)
         when returnTypeLit == "void":
           fnBody
           RuntimeField() #no return
@@ -127,11 +127,6 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
 
 macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn)
 macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn)
-
-
-
-
-
 
 
 

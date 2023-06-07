@@ -1,7 +1,7 @@
 
 import std/[json, jsonutils, typetraits, strutils, tables, options]
 import runtimefield
-# import ../unreal/bindings/vm/enginetypes
+import ../unreal/bindings/vm/enginetypes
 
 
 proc log*(s:string) : void = discard #overrided
@@ -19,13 +19,6 @@ proc uCall*(uCall:UECall) : Option[RuntimeField] =
 
 # proc newUObjectInterop(owner : UObjectPtr, cls:UClassPtr) : UObjectPtr = UObjectPtr(0) #overrided
 
-
-# type 
-#   SomeObject* = object
-#     a : int 
-#   SomeObjectPtr* = ptr SomeObject
-
-# proc getSomeObjectPtr*() : SomeObjectPtr = nil 
 
 proc castIntToPtr*[T](address:int) : ptr T = nil
 
