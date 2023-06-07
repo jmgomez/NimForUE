@@ -258,6 +258,9 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") :
 
 proc reloadScript() = 
   try:
+    if interpreter.isNil():
+      interpreter = initInterpreter(@[NimGameDir() / "vm"])
+      
     measureTime "Reloading Script":
       interpreter.evalScript()
   except:
@@ -266,7 +269,7 @@ proc reloadScript() =
     UE_Error getStackTrace()
 
 var isWatching = false
-var lastModTime = 0.int64
+var lastModTime = 0
 
 
 proc watchScript() : Future[void] {.async.} = 
@@ -279,11 +282,11 @@ proc watchScript() : Future[void] {.async.} =
   # let path = parentDir(currentSourcePath) / "script.nims"
   let modTime = getLastModificationTime(path).toUnix()
   if modTime != lastModTime:
-    UE_Log "Script changed. Reloading Script"
     lastModTime = modTime
     reloadScript()
-  # else:
-  #   UE_Log "Script not changed. Not reloading"
+  else:
+    discard
+    # UE_Log "Script not changed. Not reloading"
   await sleepAsync(500)
   # UE_Log "Waiting for changes"
   return watchScript()
@@ -300,28 +303,7 @@ uClass UNimVmManager of UObject:
   At some point it will part of the UI
 ]#
 
-
-
-proc getCurrentWorld(): UWorldPtr = 
-  #TODO base on if we are playing or not will return a different world
-  #PIE not playing
-  # var world = worldContext.getWorld()
-  # if world.isNotNil():
-  #   return world
-  let levelViewports =  GEditor.getLevelViewportClients()
-  UE_Warn &"levelViewpors.len {levelViewports.len}"
-
-  for vp in levelViewports:
-    let world = vp.getWorld()
-    if world.isNotNil():
-      return world
-  return nil
-  # let levelViewport = levelViewports[0]
-  # let world = levelViewport.getWorld()
-  #TODO BP Editor
-  # return world
-
-uClass ANimVM of AActor:
+uClass ANimVM of AActor:  
   ufunc(CallInEditor):
     proc startWatch() = 
       isWatching = true
@@ -333,20 +315,12 @@ uClass ANimVM of AActor:
     proc initInterpreter() = 
       #  interpreter = initInterpreter(@[parentDir(currentSourcePath)])
        interpreter = initInterpreter(@[NimGameDir() / "vm"])
-
     proc revalScript() =
       if interpreter.isNotNil():
         interpreter.evalScript()
       else:
         UE_Error "Interpreter not init"
-
     proc restartVM() = 
       interpreter = initInterpreter(userSearchPaths)
       reloadScript()
-  ufunc(Static):
-    proc getCurrentWorldContext() : UObjectPtr = 
-      # UE_Warn "getCurrentWorldContext"
-      # return getEditorWorld()
-      # if self.isNotNil(): self
-      # else: getEditorWorld()
-      getCurrentWorld()
+  
