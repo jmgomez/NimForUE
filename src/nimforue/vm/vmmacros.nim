@@ -22,7 +22,7 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
 
   let fnName = fn.name
 
-  let returnTypeLit = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
+  let returnTypeLit {.inject.} = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
   let returnType {.inject.} = fn.params[0]
 
   let uFunc = UEFunc(name:fnName.strVal(), className:clsName)
@@ -38,11 +38,11 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
     genAst(fnName, funcData, valNode, returnType, returnTypeLit, firstParam, isStatic):
       proc fnName() = 
         when isStatic:
-          let callData {.inejct.} = UECall(fn: funcData, value: valNode.toRuntimeField()) #No params yet
+          let callData {.inject.} = UECall(fn: funcData, value: valNode.toRuntimeField()) #No params yet
         else:
           let callData {.inject.} = UECall(fn: funcData, value: valNode.toRuntimeField(), self: cast[int](firstParam)) #No params yet
         
-        let returnVal {.used.} = uCall(callData) #check return val
+        let returnVal {.used, inject.} = uCall(callData) #check return val
         # log "VM:" & $callData
         let runtimeField {.inject.} = uCall(callData) #check return val
         #when no return?
@@ -64,7 +64,7 @@ proc removeLastLettersIfPtr*(str:string) : string =
     if str.endsWith("Ptr"): str.substr(0, str.len()-4) else: str
 
 
-
+{.experimental: "dynamicBindSym".}
 proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode = 
   #TODO the first block of code it's exactly the same as bind, unify it
   let argsWithFirstType =
@@ -83,7 +83,7 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
     else: argsWithFirstType[0][1].strVal().removeLastLettersIfPtr()).removeFirstLetter()
   
   let classTypePtr = if isStatic: newEmptyNode() else: ident (argsWithFirstType[0][1].strVal())
-
+  let classType = ident classTypePtr.strVal().removeLastLettersIfPtr()
 
   let returnTypeLit = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
   let returnType = fn.params[0]
@@ -104,23 +104,22 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
   let injectedArgs = nnkStmtList.newTree(args.mapi(injectedArg))
 
   let vmFn = 
-    genAst(funName=fnName, fnNameLit, fnVmName, fnVmNameLit, fnBody, classTypePtr, clsNameLit, returnType, returnTypeLit, injectedArgs, isStatic):
+    genAst(funName=fnName, fnNameLit, fnVmName, fnVmNameLit, fnBody, classType, clsNameLit, returnType, returnTypeLit, injectedArgs, isStatic):
       setupBorrow(UEBorrowInfo(fnName:fnNameLit, className:clsNameLit))
       proc fnVmName*(callInfo{.inject.}:UECall) : RuntimeField = 
         injectedArgs 
         when not isStatic:
-          let self {.inject.} = castIntToPtr[classTypePtr](callInfo.self)
+          let self {.inject.} = castIntToPtr[classType](callInfo.self)
         when returnTypeLit == "void":
           fnBody
           RuntimeField() #no return
         else:
-          let returnVal : returnType = fnBody
+          let returnVal {.inject.} : returnType = fnBody
           returnVal.toRuntimeField()
 
   let bindFn = ueBindImpl(clsName, fn)
   result = nnkStmtList.newTree(bindFn, vmFn)
-  # log repr result
-      
+  log repr result      
 
 
 

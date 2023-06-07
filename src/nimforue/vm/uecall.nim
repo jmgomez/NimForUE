@@ -11,12 +11,14 @@ proc makeUEFunc*(name, className : string) : UEFunc =
 proc makeUECall*(fn : UEFunc, self : int, value : RuntimeField) : UECall = 
   result.fn = fn
   result.self = self
-  result.value = value
+  result.value = value 
+  result.kind = uecFunc
 
 proc makeUECall*(fn : UEFunc, self : UObjectPtr, value : RuntimeField) : UECall = 
   result.fn = fn
   result.self = cast[int](self)
   result.value = value
+  result.kind = uecFunc
 
 proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   case rtField.kind
@@ -85,12 +87,9 @@ proc getProp*(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField =
    
 func isStatic*(fn : UFunctionPtr) : bool = FUNC_Static in fn.functionFlags
 
-proc uCall*(call : UECall) : Option[RuntimeField] = 
+proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
   result = none(RuntimeField)
-  let cls = getClassByName(call.fn.className.removeFirstLetter())
-  if cls.isNil():
-    UE_Error "uCall: Class " & $call.fn.className & " not found"
-    return none(RuntimeField)
+
   let fn = cls.findFunctionByName(n call.fn.name.capitalizeAscii())
   if fn.isNil():
     UE_Error "uCall: Function " & $call.fn.name & " not found in class " & $call.fn.className
@@ -103,8 +102,6 @@ proc uCall*(call : UECall) : Option[RuntimeField] =
       cast[UObjectPtr](call.self)
 
   let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())
-
-  
   if propParams.any() or fn.doesReturn():
     var memoryBlock = alloc0(fn.parmsSize)
     let memoryBlockAddr = cast[ByteAddress](memoryBlock)    
@@ -117,16 +114,16 @@ proc uCall*(call : UECall) : Option[RuntimeField] =
         if propName notin call.value:
           UE_Warn "Param " & $propName & " not in call value"
           continue
-       
+      
         let rtField = call.value[propName]
         rtField.setProp(paramProp, memoryBlock)
 
       except:
-       UE_Error "Error setting the value in  " & $paramProp.getName()  & " for " & $fn.getName()
-       UE_Error getCurrentExceptionMsg()
-       UE_Error getStackTrace()    
+        UE_Error "Error setting the value in  " & $paramProp.getName()  & " for " & $fn.getName()
+        UE_Error getCurrentExceptionMsg()
+        UE_Error getStackTrace()    
 
- 
+
     self.processEvent(fn, memoryBlock)
 
     if fn.doesReturn():
@@ -143,5 +140,28 @@ proc uCall*(call : UECall) : Option[RuntimeField] =
     
   else: #no params no return
     self.processEvent(fn, nil)
+
+proc uCallGetProp*(call : UECall, cls:UClassPtr) : Option[RuntimeField] = 
+  assert call.kind == uecGetProp
+  let propName = call.value.getStruct()[0].getName()
+  let prop = cls.getFPropertyByName(propName)  
+  if prop.isNil():
+    UE_Error &"uCall: Property {propName} not found in class {cls.getName()}"
+    return none(RuntimeField)
+  let selfAddr = cast[ByteAddress](call.self)
+  some getProp(prop,  cast[pointer](selfAddr + prop.getOffset()))
+
+
+
+
+proc uCall*(call : UECall) : Option[RuntimeField] = 
+  let cls = getClassByName(call.getClassName.removeFirstLetter())
+  if cls.isNil():
+    UE_Error "uCall: Class " & $call.getClassName() & " not found"
+    return none(RuntimeField)
+  case call.kind:
+  of uecFunc: uCallFn(call, cls)
+  else: uCallGetProp(call, cls)
+   
 
 

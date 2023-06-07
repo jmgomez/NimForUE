@@ -11,7 +11,7 @@ import ../test/testutils
 
 
 uClass UObjectPOC of UObject:
-  (BlueprintType)
+  (BlueprintType, Reinstance)
   ufunc: 
     proc instanceFunc() = 
       UE_Log "Hola from UObjectPOC instanceFunc"
@@ -145,18 +145,22 @@ uClass ANimTestBase of AActor:
 
 uClass AActorPOCVMTest of ANimTestBase:
   (BlueprintType)
+  uprops(EditAnywhere):
+    intProp: int32 
   ufuncs(CallInEditor):
     proc testCallFuncWithNoArg() = 
-      let callData = UECall( fn: makeUEFunc("callFuncWithNoArg", "UObjectPOC"))
+      let callData = UECall(kind: uecFunc, fn: makeUEFunc("callFuncWithNoArg", "UObjectPOC"))
       discard uCall(callData)
     proc testCallFuncWithOneIntArg() =
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithOneIntArg", "UObjectPOC"),
           value: (arg: 10).toRuntimeField()
         )
       discard uCall(callData)
     proc testCallFuncWithOneStrArg() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithOneStrArg", "UObjectPOC"),
           value: (arg: "10 cadena").toRuntimeField()
         )
@@ -164,12 +168,14 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithTwoStrArg() =
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithTwoStrArg", "UObjectPOC"),
           value: (arg1: "10 cadena", arg2: "Hola").toRuntimeField()
         )
       discard uCall(callData)
     proc testCallFuncWithTwoIntArg() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithTwoIntArg", "UObjectPOC"),
           value: (arg1: 10, arg2: 10).toRuntimeField()
         )
@@ -177,6 +183,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithInt32Int64Arg() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithInt32Int64Arg", "UObjectPOC"),
           value: (arg1: 15, arg2: 10).toRuntimeField()
         )
@@ -184,6 +191,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithOneObjPtrArg() =
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithOneObjPtrArg", "UObjectPOC"),
           value: (obj: cast[int](self)).toRuntimeField()
         )
@@ -191,6 +199,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithObjPtrStrArg() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithObjPtrStrArg", "UObjectPOC"),
           value: (obj: cast[int](self), salute: "Hola").toRuntimeField()
         )
@@ -199,6 +208,7 @@ uClass AActorPOCVMTest of ANimTestBase:
     proc testCallFuncWithObjPtrArgReturnInt() =
       let expected = 10
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithObjPtrArgReturnInt", "UObjectPOC"),
           value: (obj: cast[int](self)).toRuntimeField()
         )
@@ -206,6 +216,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithObjPtrArgReturnObjPtr() =
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithObjPtrArgReturnObjPtr", "UObjectPOC"),
           value: (obj: cast[int](self)).toRuntimeField()
         )
@@ -215,6 +226,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithObjPtrArgReturnStr() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithObjPtrArgReturnStr", "UObjectPOC"),
           value: (obj: cast[int](self)).toRuntimeField()
         )
@@ -224,6 +236,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithOneFVectorArg() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithOneFVectorArg", "UObjectPOC"),
           value: (vec:FVector(x:12, y:10)).toRuntimeField()
         )
@@ -231,6 +244,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithOneArrayIntArg() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithOneArrayIntArg", "UObjectPOC"),
           value: (ints:[2, 10]).toRuntimeField()
         )
@@ -238,6 +252,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithOneArrayVectorArg() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithOneArrayVectorArg", "UObjectPOC"),
           value: (vecs:[FVector(x:12, y:10), FVector(x:12, z:1)]).toRuntimeField()
         )
@@ -245,6 +260,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithOneFVectorArgReturnFVector() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithOneFVectorArgReturnFVector", "UObjectPOC"),
           value: (vec:FVector(x:12, y:10)).toRuntimeField()
         )
@@ -252,6 +268,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallFuncWithOneFVectorArgReturnFRotator() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callFuncWithOneFVectorArgReturnFRotator", "UObjectPOC"),
           value: (vec:FVector(x:12, y:10)).toRuntimeField()
         )
@@ -259,6 +276,7 @@ uClass AActorPOCVMTest of ANimTestBase:
     
     proc testGetRightVector() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("GetRightVector", "UKismetMathLibrary"),
           value: (vec:FVector(x:12, y:10)).toRuntimeField()
         )
@@ -266,6 +284,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc testCallThatReturnsArrayInt() = 
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("callThatReturnsArrayInt", "UObjectPOC"),
           # value: ().toRuntimeField()
         )
@@ -273,6 +292,7 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     # proc test13NoStatic() = 
     #   let callData = UECall(
+          #  kind: uecFunc,
     #       fn: makeUEFunc("instanceFunc", "UObjectPOC"),
         
     #       value: (vec:FVector(x:12, y:10)).toJson(),
@@ -298,6 +318,7 @@ uClass AActorPOCVMTest of ANimTestBase:
     proc shouldReceiveFloat32() =
       let expected = 10.0
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("receiveFloat32", "UObjectPOC"),
           value: (arg: 10.0).toRuntimeField()
         )
@@ -306,14 +327,24 @@ uClass AActorPOCVMTest of ANimTestBase:
 
     proc shouldReceiveFloat64() =
       let callData = UECall(
+           kind: uecFunc,
           fn: makeUEFunc("receiveFloat64", "UObjectPOC"),
           value: (arg: 10.0).toRuntimeField()
         )
       discard uCall(callData)
-
-    # proc shouldReceiveVectorAndFloat32() =
-    #   let callData = UECall(
-    #       fn: makeUEFunc("receiveVectorAndFloat32", "UObjectPOC"),
-    #       value: (dir: FVector(x:10, y:10), scale: 10.0).toJson()
-    #     )
-    #   discard uCall(callData)
+    #props
+    proc shouldBeAbleToReadAnInt32Prop() =
+      self.intProp = 10
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (intProp: default(int32)).toRuntimeField() #Getters dont have a value.                           
+        )
+      let reply = uCall(callData)
+      if reply.isSome:
+        let val = reply.get(RuntimeField(kind:Int)).getInt()
+        if val == self.intProp:
+          UE_Log "Test passed"
+        else:
+          UE_Error "Test failed. Expected: " & $self.intProp & " got: " & $val

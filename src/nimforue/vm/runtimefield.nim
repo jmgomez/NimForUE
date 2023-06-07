@@ -16,19 +16,27 @@ type
     of Struct:
       structVal*: RuntimeStruct
     of Array: 
-      arrayVal*: seq[RuntimeField]
-    
+      arrayVal*: seq[RuntimeField]  
+
   RuntimeStruct* = seq[(string, RuntimeField)]
  
   UEFunc* = object #Light metadata we could ue UFunc but we dont want to pull all those types into the vm
     name* : string
     className* : string
-
-   
+  
+  UECallKind* = enum
+    uecFunc, uecGetProp, uecSetProp
+  
   UECall* = object
-    fn* : UEFunc 
     self* : int
     value* : RuntimeField #On uebind [name] = value #let's just do runtimeFields only for now and then we can put an object in here, although a field may contain an object
+    case kind* : UECallKind:
+    of uecFunc:
+      fn* : UEFunc    
+    else:
+      clsName*: string #TODO maybe I can just pass the clsPointer instead around
+      discard      
+    
   
   #should args be here too?
   UEBorrowInfo* = object
@@ -38,6 +46,12 @@ type
 
 
 
+func getClassName*(ueCall: UECall): string = 
+  case ueCall.kind:
+  of uecFunc:
+    return ueCall.fn.className
+  else:
+    return ueCall.clsName
 
 # func toRuntimeField*[T](value : T) : RuntimeField 
 func add*(rtField : var RuntimeField, name : string, value : RuntimeField) = 
@@ -115,6 +129,7 @@ func setArray*(rtField : var RuntimeField, value : seq[RuntimeField]) =
   else:
     raise newException(ValueError, "rtField is not an array")
 
+func getName*(strField: (string, RuntimeField)): string = strField[0]
 
 func `[]`*(rtField : RuntimeField, name : string) : RuntimeField = 
   case rtField.kind:
