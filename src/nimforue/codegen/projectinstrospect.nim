@@ -27,6 +27,7 @@ type
     ast* : string #This field is used only when generating types for the vm. Some types are replaced by an alias (i.e. FString, TArray..)
     case kind* : NimKind:
     of Object:
+      isInheritable*: bool #if the original type is marked with the pragma inheritable
       parent*: string 
       params*: seq[NimParam]
       typeParams*: seq[NimParam] #for generic objects T etc
@@ -132,7 +133,7 @@ func makeEnumNimType(typeName:string, typeDef:NimNode) : NimType =
 
   let enumFields = enumTy.children.toSeq.filterIt(it.kind != nnkEmpty).map(parseEnumField)  
   if not enumFields.any():
-    debugEcho treeRepr(typeDef)
+    # debugEcho treeRepr(typeDef)
     debugEcho typeName & " has no enum fields"
   NimType(name: typeName, kind:Enum, enumFields:enumFields, originalAst: repr(nnkTypeSection.newTree(typeDef)))
 
@@ -253,8 +254,13 @@ func getParamFromIdentDef(identDefs:NimNode) : NimParam =
 
 func makeObjNimType(typeName:string, typeDef:NimNode) : NimType = 
   let objectTyNode = typeDef[2]
-  assert objectTyNode.kind == nnkObjectTy, "Expected nnkObjectTy got " & $typeDef[2].kind
-  
+  assert objectTyNode.kind == nnkObjectTy, "Expected nnkObjectTy got " & $typeDef[2].kind  
+  let pragmas = 
+    case typeDef[0][^1].kind:
+    of nnkPragma:
+       typeDef[0][^1].children.toSeq.filterIt(it.kind == nnkIdent).mapIt(it.strVal)
+    else: @[]  
+  let isInheritable = "inheritable" in pragmas    
   let parent = 
     case objectTyNode[1].kind:
     of nnkEmpty: ""
@@ -274,12 +280,10 @@ func makeObjNimType(typeName:string, typeDef:NimNode) : NimType =
       
     else: @[]
   # if genericParams.len > 0:
-  #   debugEcho treeRepr typeDef
-      
-  
+  #   debugEcho treeRepr typeDef   
   case objectTyNode[^1].kind:
   of nnkEmpty:
-    NimType(name: typeName, kind:Object, parent:parent, typeParams:genericParams)
+    NimType(name: typeName, kind:Object, parent:parent, isInheritable: isInheritable, typeParams:genericParams)
   of nnkRecList:
     let recListNode = objectTyNode[^1]
     assert recListNode.kind == nnkRecList, "Expected nnkRecList got " & $recListNode.kind
@@ -287,7 +291,7 @@ func makeObjNimType(typeName:string, typeDef:NimNode) : NimType =
       recListNode.children.toSeq
         .filterIt(it.kind == nnkIdentDefs)
         .map(getParamFromIdentDef)    
-    NimType(name: typeName, kind:Object, parent:parent, params:params, typeParams:genericParams)
+    NimType(name: typeName, kind:Object, parent:parent, isInheritable: isInheritable, params:params, typeParams:genericParams)
   else:  
     debugEcho treeRepr typeDef
     quit()
@@ -380,26 +384,6 @@ proc paramToIdentDefs(nimParam:NimParam) : NimNode =
     newEmptyNode()
   )
 
-# dumpTree:
-  # type
-  #   Foo* = object
-  #     a*: int
-  #     b*: string
-  #   GenericFoo*[T] = object
-  #     a*: int
-  #     b*: T
-  #   GenericFoo2*[T, out Y] = object
-  #     a*: int
-  #     b*: T
-  #     c*: Foo        
-
-  #   GenericFoo3*[T:int, Y, Z : T] = object
-  #     a*: int
-  #     b*: T
-  #     c*: GenericFoo2[T, Y]    
- 
-    
-
 func genGenericTypeParams(nimType:NimType) : NimNode =
   if not nimType.typeParams.any():
     return newEmptyNode()
@@ -459,7 +443,8 @@ func nimObjectTypeToNimNode(nimType:NimType) : NimNode =
   let name = ident nimType.name
   let params = nnkRecList.newTree(@[newEmptyNode(), newEmptyNode()] & nimtype.params.map(paramToIdentDefs))
   let typeParams = genGenericTypeParams(nimType)  
-  let parentNode = if nimType.parent == "": newEmptyNode() else: nnkOfInherit.newTree(ident nimType.parent)
+  let baseType = if nimType.isInheritable: "RootObj" else: nimType.parent #Would be better to just mark the type as inheritable?
+  let parentNode = if baseType == "": newEmptyNode() else: nnkOfInherit.newTree(ident baseType)
   result = 
    nnkTypeDef.newTree(
     nnkPostfix.newTree(
@@ -566,6 +551,9 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   let typesToReplace = { 
     "FString": "type FString* = string", 
     "TArray": "type TArray*[T] = seq[T]", 
+    # "UObject": "type UObject* = object of RootObj",
+    # "FVector": "type FVector* = object of RootObj",
+    # "FField": "type FField* = object of RootObj",
   }.toTable()
 
   var engineTypesModule = modules.filterIt(it.name == "enginetypes").head.get
@@ -608,8 +596,8 @@ when not defined(game) or defined(vmhost):
   const NimDefinedTypes = NimModules.mapIt(it.types).flatten
   const NimDefinedTypesNames* = NimDefinedTypes.mapIt(it.name)
 
-  static:
-    echo $NimModules.mapIt(it.name)
+  # static:
+    # echo $NimModules.mapIt(it.name)
     # echo NimModules.filterIt(it.name == "uobjectflags")
   # quit()
 
