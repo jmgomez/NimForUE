@@ -1,7 +1,7 @@
 include ../unreal/prelude
 
 import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
-import std/[json, jsonutils, sequtils, options, sugar, enumerate, strutils]
+import std/[json, strformat, jsonutils, sequtils, options, sugar, enumerate, strutils]
 
 import ../vm/[runtimefield, uecall]
 
@@ -344,7 +344,16 @@ uClass AActorPOCVMTest of ANimTestBase:
       let reply = uCall(callData)
       if reply.isSome:
         let val = reply.get(RuntimeField(kind:Int)).getInt()
-        if val == self.intProp:
-          UE_Log "Test passed"
-        else:
-          UE_Error "Test failed. Expected: " & $self.intProp & " got: " & $val
+        check val == self.intProp
+    
+    proc shouldBeAbleToWritteAnInt32Prop() =
+      let expectedValue = 1
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (intProp: expectedValue).toRuntimeField() #Getters dont have a value.                           
+        )
+      discard uCall(callData)      
+      check expectedValue == self.intProp        
+        

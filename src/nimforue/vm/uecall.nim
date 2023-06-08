@@ -53,23 +53,23 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
       setProp(elem, innerProp, arrayHelper.getRawPtr(idx.int32))
       
 
-proc getProp*(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField = 
+proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField = 
   if prop.isInt() or prop.isObjectBased():
     result.kind = Int
-    copyMem(addr result.intVal, memoryBlock, prop.getSize())  
+    copyMem(addr result.intVal, sourceAddr, prop.getSize())  
   elif prop.isFString():
     result.kind = String
     var returnValue = f""
-    copyMem(addr returnValue, memoryBlock, prop.getSize())
+    copyMem(addr returnValue, sourceAddr, prop.getSize())
     result.stringVal = returnValue
   elif prop.isFloat():
     result.kind = Float
-    copyMem(addr result.floatVal, memoryBlock, prop.getSize())
+    copyMem(addr result.floatVal, sourceAddr, prop.getSize())
   elif prop.isStruct():
     let structProp = castField[FStructProperty](prop)
     let scriptStruct = structProp.getScriptStruct()
     let structProps = scriptStruct.getFPropsFromUStruct()
-    let structMemoryRegion = cast[ByteAddress](memoryBlock)
+    let structMemoryRegion = cast[ByteAddress](sourceAddr)
     result = RuntimeField(kind:Struct)
     for paramProp in structProps:
       let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches
@@ -78,7 +78,7 @@ proc getProp*(prop:FPropertyPtr, memoryBlock:pointer) : RuntimeField =
   elif prop.isTArray():
     let arrayProp = castField[FArrayProperty](prop)
     let innerProp = arrayProp.getInnerProp()
-    let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, memoryBlock)
+    let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, sourceAddr)
     result = RuntimeField(kind:Array)
     for idx in 0 ..< arrayHelper.num():
       result.arrayVal.add(getProp(innerProp, arrayHelper.getRawPtr(idx.int32)))
@@ -94,7 +94,6 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
   if fn.isNil():
     UE_Error "uCall: Function " & $call.fn.name & " not found in class " & $call.fn.className
     return result
-
   let self = 
     if fn.isStatic():
       getDefaultObjectFromClassName(call.fn.className.removeFirstLetter())
@@ -109,7 +108,7 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
     #TODO check return param and out params
     for paramProp in propParams:
       try:
-        UE_Log "Param prop name: " & $paramProp.getName() & " type: " & paramProp.getCppType()
+        # UE_Log "Param prop name: " & $paramProp.getName() & " type: " & paramProp.getCppType()
         let propName = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches (should we tried both?)
         if propName notin call.value:
           UE_Warn "Param " & $propName & " not in call value"
@@ -141,18 +140,21 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
   else: #no params no return
     self.processEvent(fn, nil)
 
-proc uCallGetProp*(call : UECall, cls:UClassPtr) : Option[RuntimeField] = 
-  assert call.kind == uecGetProp
-  let propName = call.value.getStruct()[0].getName()
+proc uCallProp*(call : UECall, cls:UClassPtr) : Option[RuntimeField] = 
+  assert call.kind == uecGetProp or call.kind == uecSetProp
+  let rtField = call.value
+  let propName = rtField.getStruct()[0].getName()
   let prop = cls.getFPropertyByName(propName)  
   if prop.isNil():
     UE_Error &"uCall: Property {propName} not found in class {cls.getName()}"
-    return none(RuntimeField)
+    return none(RuntimeField)  
   let selfAddr = cast[ByteAddress](call.self)
-  some getProp(prop,  cast[pointer](selfAddr + prop.getOffset()))
-
-
-
+  if call.kind == uecGetProp:
+    some getProp(prop,  cast[pointer](selfAddr + prop.getOffset()))
+  else:
+    let val = rtField[propName]       
+    val.setProp(prop, cast[pointer](selfAddr)) #Notice the offset is calculated internally when settign the prop
+    none(RuntimeField)
 
 proc uCall*(call : UECall) : Option[RuntimeField] = 
   let cls = getClassByName(call.getClassName.removeFirstLetter())
@@ -161,7 +163,4 @@ proc uCall*(call : UECall) : Option[RuntimeField] =
     return none(RuntimeField)
   case call.kind:
   of uecFunc: uCallFn(call, cls)
-  else: uCallGetProp(call, cls)
-   
-
-
+  else: uCallProp(call, cls)
