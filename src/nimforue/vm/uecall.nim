@@ -22,7 +22,7 @@ proc makeUECall*(fn : UEFunc, self : UObjectPtr, value : RuntimeField) : UECall 
 
 proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   case rtField.kind
-  of Int:
+  of Int:    
     setPropertyValue(prop, memoryBlock, rtField.getInt)
   of Bool:
     setPropertyValue(prop, memoryBlock, rtField.getBool)

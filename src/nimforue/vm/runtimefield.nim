@@ -222,10 +222,11 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
     const typeName = typeof(T).name
     const isPtr = typeName.endsWith("Ptr")
 
-    when isPtr or (T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64) :
-      result.kind = Int
+    # UE_Log &"toRuntimeField {value} {typeName}"
+    when isPtr or (T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64):
+      result.kind = Int    
       result.intVal = cast[int](value)
-    when T is bool:
+    elif T is bool:
       result.kind = Bool
       result.boolVal = value
     elif T is float | float32 | float64:

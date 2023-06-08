@@ -29,9 +29,7 @@ proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode =
   let paramsAsExpr = 
       argsWithFirstType
       .mapIt(it[0].strVal)
-      .mapIt(nnkExprColonExpr.newTree(ident it, ident it)) #(arg: arg, arg2: arg2, etc.)
-  for p in paramsAsExpr:
-    log repr p                    
+      .mapIt(nnkExprColonExpr.newTree(ident it, ident it)) #(arg: arg, arg2: arg2, etc.)                     
   let rtFieldVal = 
     case kind:
       of uecFunc:
@@ -44,7 +42,7 @@ proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode =
       of uecSetProp:
         nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
           fn.name,
-          ident "val" #setter value param name
+          argsWithFirstType[1][0] #val
         ))
   let call = 
    case kind:
