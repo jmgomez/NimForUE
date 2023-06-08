@@ -5,17 +5,20 @@ import ../utils/utils
 
 
 
-proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode = 
+
+proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode = 
   let argsWithFirstType =
       fn.params
       .filterIt(it.kind == nnkIdentDefs)
   
-  let isStatic = clsName!=""
-
-  let args = 
-    if isStatic: argsWithFirstType
-    else: argsWithFirstType[1..^1] #Remove the first arg, which is the self param
+  let isStatic = clsName!=""  
   let firstParam = if isStatic: newEmptyNode() else: argsWithFirstType[0][0]
+  let selfAssign = 
+    if isStatic: newEmptyNode() 
+    else: 
+      genAst(firstParam):
+        call.self = cast[int](firstParam)
+
   let clsName = 
     if isStatic: clsName
     else: argsWithFirstType[0][1].strVal().replace("Ptr", "")
@@ -26,38 +29,51 @@ proc ueBindImpl*(clsName : string, fn: NimNode) : NimNode =
   let returnType {.inject.} = fn.params[0]
 
   let uFunc = UEFunc(name:fnName.strVal(), className:clsName)
-  var funcData = newLit uFunc
+  # var funcData = newLit uFunc
   let paramsAsExpr = 
       argsWithFirstType
       .mapIt(it[0].strVal)
       .mapIt(nnkExprColonExpr.newTree(ident it, ident it)) #(arg: arg, arg2: arg2, etc.)
                     
-  let valNode =  nnkTupleConstr.newTree( paramsAsExpr)
-   
+  let rtFieldVal = 
+    case kind:
+      of uecFunc:
+        nnkTupleConstr.newTree(paramsAsExpr)
+      else:
+        nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
+          fnName,
+          nnkCall.newTree(ident "default", returnType)
+        ))
+  let call = 
+   case kind:
+    of uecFunc:
+      if isStatic:
+        UECall(kind: uecFunc,fn: uFunc)
+      else:
+        UECall(kind: uecFunc, fn: uFunc)
+    # of uecGetProp
+    else:
+      UECall(kind: uecGetProp, clsName: clsName)
   result = 
-    genAst(fnName, funcData, valNode, returnType, returnTypeLit, firstParam, isStatic):
-      proc fnName() = 
-        when isStatic:
-          let callData {.inject.} = UECall(fn: funcData, value: valNode.toRuntimeField()) #No params yet
-        else:
-          let callData {.inject.} = UECall(fn: funcData, value: valNode.toRuntimeField(), self: cast[int](firstParam)) #No params yet
-        
-        let returnVal {.used, inject.} = uCall(callData) #check return val
-        # log "VM:" & $callData
-        let runtimeField {.inject.} = uCall(callData) #check return val
-        #when no return?
-        when returnTypeLit != "void":
-          when returnTypeLit.endsWith("Ptr"): #TODO inspect the actual type
-            return castIntToPtr returnType(runtimeField.get.runtimeFieldTo(int))
+    genAst(fnName, selfAssign, returnType, returnTypeLit, callData=newLit call, rtFieldVal):
+      proc fnName() =         
+        var call {.inject.} = callData
+        call.value = rtFieldVal.toRuntimeField()
+        selfAssign
+        let returnVal {.used, inject.} = uCall(call) #check return val
+        when returnTypeLit != "void": #TODO simplify this
+          when returnTypeLit.endsWith("Ptr"):
+            return castIntToPtr returnType(returnVal.get.runtimeFieldTo(int))
           else:
-            return runtimeField.get.runtimeFieldTo(returnType)
+            return returnVal.get.runtimeFieldTo(returnType)
           
   result.params = fn.params
   # log repr result
 
+macro uegetter*(getter:untyped): untyped = ueBindImpl("", getter, uecGetProp) 
 
-macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn)
-macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn)
+macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn, uecFunc)
+macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn, uecFunc)
 
 #Move into utils
 proc removeLastLettersIfPtr*(str:string) : string = 
@@ -83,7 +99,7 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
     else: argsWithFirstType[0][1].strVal().removeLastLettersIfPtr()).removeFirstLetter()
   
   let classTypePtr = if isStatic: newEmptyNode() else: ident (argsWithFirstType[0][1].strVal())
-  let classType = ident classTypePtr.strVal().removeLastLettersIfPtr()
+  let classType = ident classTypePtr.strVal().removeLastLettersIfPtr() 
 
   let returnTypeLit = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
   let returnType = fn.params[0]
@@ -117,12 +133,9 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
           let returnVal {.inject.} : returnType = fnBody
           returnVal.toRuntimeField()
 
-  let bindFn = ueBindImpl(clsName, fn)
+  let bindFn = ueBindImpl(clsName, fn, uecFunc)
   result = nnkStmtList.newTree(bindFn, vmFn)
-  log repr result      
-
-
-
+  # log repr result      
 
 macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn)
 macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn)

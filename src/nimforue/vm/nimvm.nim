@@ -41,7 +41,7 @@ proc uCallInteropHostImpl(a:VmArgs) {.gcsafe.} =
     let node : PNode = a.getArg(0).node
     let ueCall = fromVm(UECall, node)
     let result = ueCall.uCall()
-    UE_Warn &"uCallInterop result: {result}"
+    # UE_Warn &"uCallInterop result: {result}"
     setResult(a, toVm(result))        
 
 

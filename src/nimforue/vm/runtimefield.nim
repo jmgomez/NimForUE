@@ -35,7 +35,7 @@ type
       fn* : UEFunc    
     else:
       clsName*: string #TODO maybe I can just pass the clsPointer instead around
-      discard      
+      
     
   
   #should args be here too?

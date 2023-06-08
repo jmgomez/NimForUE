@@ -147,13 +147,12 @@ proc uCallProp*(call : UECall, cls:UClassPtr) : Option[RuntimeField] =
   let prop = cls.getFPropertyByName(propName)  
   if prop.isNil():
     UE_Error &"uCall: Property {propName} not found in class {cls.getName()}"
-    return none(RuntimeField)  
+    return none(RuntimeField)    
   let selfAddr = cast[ByteAddress](call.self)
   if call.kind == uecGetProp:
-    some getProp(prop,  cast[pointer](selfAddr + prop.getOffset()))
+    some getProp(prop,  cast[pointer](selfAddr + prop.getOffset()))        
   else:
-    let val = rtField[propName]       
-    val.setProp(prop, cast[pointer](selfAddr)) #Notice the offset is calculated internally when settign the prop
+    rtField[propName].setProp(prop, cast[pointer](selfAddr)) #Notice the offset is calculated internally when settign the prop
     none(RuntimeField)
 
 proc uCall*(call : UECall) : Option[RuntimeField] = 
@@ -164,3 +163,5 @@ proc uCall*(call : UECall) : Option[RuntimeField] =
   case call.kind:
   of uecFunc: uCallFn(call, cls)
   else: uCallProp(call, cls)
+
+
