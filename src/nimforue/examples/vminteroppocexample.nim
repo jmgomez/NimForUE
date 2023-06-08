@@ -147,6 +147,7 @@ uClass AActorPOCVMTest of ANimTestBase:
   (BlueprintType)
   uprops(EditAnywhere):
     intProp: int32 
+    boolProp: bool
   ufuncs(CallInEditor):
     proc testCallFuncWithNoArg() = 
       let callData = UECall(kind: uecFunc, fn: makeUEFunc("callFuncWithNoArg", "UObjectPOC"))
@@ -356,4 +357,17 @@ uClass AActorPOCVMTest of ANimTestBase:
         )
       discard uCall(callData)      
       check expectedValue == self.intProp        
-        
+    
+    proc shouldBeAbleToReadABoolProp() =
+      self.boolProp = true
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (boolProp: default(bool)).toRuntimeField() #Getters dont have a value.                           
+        )
+      let reply = uCall(callData)
+      if reply.isSome:
+        let val = reply.get(RuntimeField(kind:Bool)).getBool()
+        check val == self.boolProp
+        UE_Log "Bool prop is " & $val

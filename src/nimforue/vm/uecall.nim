@@ -24,6 +24,8 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
   case rtField.kind
   of Int:
     setPropertyValue(prop, memoryBlock, rtField.getInt)
+  of Bool:
+    setPropertyValue(prop, memoryBlock, rtField.getBool)
   of Float:
     if prop.isFloat32():
       setPropertyValue(prop, memoryBlock, rtField.getFloat.float32)
@@ -57,6 +59,9 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
   if prop.isInt() or prop.isObjectBased():
     result.kind = Int
     copyMem(addr result.intVal, sourceAddr, prop.getSize())  
+  elif prop.isBool():
+    result.kind = Bool
+    copyMem(addr result.boolVal, sourceAddr, prop.getSize())
   elif prop.isFString():
     result.kind = String
     var returnValue = f""

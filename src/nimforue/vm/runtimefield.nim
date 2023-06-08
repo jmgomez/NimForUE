@@ -3,12 +3,14 @@ import std/[sequtils, options, sugar, strutils, strformat, typetraits, macros]
 
 type
   FieldKind* = enum
-    Int, Float, String, Struct, Array
+    Int, Bool, Float, String, Struct, Array
   
   RuntimeField* = object
     case kind*: FieldKind
     of Int:
       intVal*: int
+    of Bool:
+      boolVal*: bool
     of Float:
       floatVal*: float
     of String:
@@ -68,6 +70,13 @@ func getInt*(rtField : RuntimeField) : int =
   else:
     raise newException(ValueError, "rtField is not an int")
 
+func getBool*(rtField : RuntimeField) : bool = 
+  case rtField.kind:
+  of Bool:
+    return rtField.boolVal
+  else:
+    raise newException(ValueError, "rtField is not a bool")
+
 func getFloat*(rtField : RuntimeField) : float =
   case rtField.kind:
   of Float:
@@ -102,6 +111,13 @@ func setInt*(rtField : var RuntimeField, value : int) =
     rtField.intVal = value
   else:
     raise newException(ValueError, "rtField is not an int")
+
+func setBool*(rtField : var RuntimeField, value : bool) =
+  case rtField.kind:
+  of Bool:
+    rtField.boolVal = value
+  else:
+    raise newException(ValueError, "rtField is not a bool")
 
 func setFloat*(rtField : var RuntimeField, value : float) =
   case rtField.kind:
@@ -174,6 +190,9 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
       when T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 :
         # a = cast[T](b.intVal) #No cast in the vm
         value = T(rtField.intVal)
+    of Bool:
+      when T is bool:
+        value = T(rtField.boolVal)
     of Float:
       when T is float | float32 | float64:
         # a = cast[T](b.floatVal) #NO cast in the vm
@@ -206,6 +225,9 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
     when isPtr or (T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64) :
       result.kind = Int
       result.intVal = cast[int](value)
+    when T is bool:
+      result.kind = Bool
+      result.boolVal = value
     elif T is float | float32 | float64:
       result.kind = Float
       result.floatVal = value
