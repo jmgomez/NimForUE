@@ -4,8 +4,6 @@ import runtimefield
 import ../utils/utils
 
 
-
-
 proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode = 
   let argsWithFirstType =
       fn.params
@@ -23,26 +21,30 @@ proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode =
     if isStatic: clsName
     else: argsWithFirstType[0][1].strVal().replace("Ptr", "")
 
-  let fnName = fn.name
-
   let returnTypeLit {.inject.} = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
   let returnType {.inject.} = fn.params[0]
 
-  let uFunc = UEFunc(name:fnName.strVal(), className:clsName)
+  let uFunc = UEFunc(name:fn.name.strVal(), className:clsName)
   # var funcData = newLit uFunc
   let paramsAsExpr = 
       argsWithFirstType
       .mapIt(it[0].strVal)
       .mapIt(nnkExprColonExpr.newTree(ident it, ident it)) #(arg: arg, arg2: arg2, etc.)
-                    
+  for p in paramsAsExpr:
+    log repr p                    
   let rtFieldVal = 
     case kind:
       of uecFunc:
         nnkTupleConstr.newTree(paramsAsExpr)
-      else:
+      of uecGetProp:
         nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
-          fnName,
+          fn.name,
           nnkCall.newTree(ident "default", returnType)
+        ))
+      of uecSetProp:
+        nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
+          fn.name,
+          ident "val" #setter value param name
         ))
   let call = 
    case kind:
@@ -51,9 +53,16 @@ proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode =
         UECall(kind: uecFunc,fn: uFunc)
       else:
         UECall(kind: uecFunc, fn: uFunc)
-    # of uecGetProp
-    else:
-      UECall(kind: uecGetProp, clsName: clsName)
+    else:    
+      UECall(kind: kind, clsName: clsName)    
+  let fnName = 
+    case kind:
+    of uecFunc, uecgetProp: fn.name
+    else: 
+      genAst(fnName=fn.name):
+        `fnName=`
+        
+
   result = 
     genAst(fnName, selfAssign, returnType, returnTypeLit, callData=newLit call, rtFieldVal):
       proc fnName() =         
@@ -71,6 +80,7 @@ proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode =
   # log repr result
 
 macro uegetter*(getter:untyped): untyped = ueBindImpl("", getter, uecGetProp) 
+macro uesetter*(setter:untyped): untyped = ueBindImpl("", setter, uecSetProp) 
 
 macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn, uecFunc)
 macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn, uecFunc)
