@@ -61,18 +61,6 @@ The macro system is outstanding. Just to give you an idea, await/async are imple
 
 
 
-
-### Inspiration 
-
-The major inspiration is the previous NimUE plugin but NimForUE uses a radically different approach. Instead of generating C++ code, it generates a dynamic library. This allows us to use a debugger and to have quite fast hot reloading. We also plan to rely on Unreal's reflection system to automatically bind exposed APIs.
-
-We also got inspiration from the AngelScript plugin. What we like about it is how it sits on top of C++ and allows for generating Blueprint classes and functions in Editor time. We hope to not modify the Engine's sources to accomplish this. 
-
-There are more plugins out there that inspired us, (Unreal.clr, Unreal.js.. etc.). The major differentiator factor, apart from the one mentioned above, is that we don't rely on any kind of virtual machine.
-
-
-
-
 ## Examples
 The whole Cpp ThirdPersonTemplate in Nim would be like this:
 
