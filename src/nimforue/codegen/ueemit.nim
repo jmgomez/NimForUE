@@ -865,8 +865,7 @@ proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =
         let parent = name[^1].strVal()
         (className, parent, newSeq[string]())
     of nnkCommand:
-        let parent = name[^1][0].strVal()
-        echo name[^1][^1][^1].strVal()
+        let parent = name[^1][0].strVal()        
         var ifaces = 
             name[^1][^1][^1].strVal().split(",") 
         if ifaces[0][0] == 'I':

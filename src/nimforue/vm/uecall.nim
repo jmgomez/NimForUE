@@ -49,7 +49,8 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
     let arrayProp = castField[FArrayProperty](prop)
     let innerProp = arrayProp.getInnerProp()
     let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, memoryBlock)
-    arrayHelper.addUninitializedValues(rtField.getArray().len.int32)
+    # UE_Log "Array helper num: " & $arrayHelper.num()
+    arrayHelper.emptyAndAddUninitializedValues(rtField.getArray().len.int32)
  
     for idx, elem in enumerate(rtField.getArray()):
       setProp(elem, innerProp, arrayHelper.getRawPtr(idx.int32))
@@ -74,11 +75,11 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
     let structProp = castField[FStructProperty](prop)
     let scriptStruct = structProp.getScriptStruct()
     let structProps = scriptStruct.getFPropsFromUStruct()
-    let structMemoryRegion = cast[ByteAddress](sourceAddr)
+    let structMemoryRegion = cast[uint](sourceAddr)
     result = RuntimeField(kind:Struct)
     for paramProp in structProps:
       let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches
-      let value = getProp(paramProp,  cast[pointer](structMemoryRegion + paramProp.getOffset()))
+      let value = getProp(paramProp,  cast[pointer](structMemoryRegion + paramProp.getOffset().uint))
       result.structVal.add((name, value))
   elif prop.isTArray():
     let arrayProp = castField[FArrayProperty](prop)
@@ -108,7 +109,7 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
   let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())
   if propParams.any() or fn.doesReturn():
     var memoryBlock = alloc0(fn.parmsSize)
-    let memoryBlockAddr = cast[ByteAddress](memoryBlock)    
+    let memoryBlockAddr = cast[uint](memoryBlock)    
 
     #TODO check return param and out params
     for paramProp in propParams:
@@ -135,7 +136,7 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
       # let returnProp = fn.getFPropsFromUStruct().filterIt(it.getName() == call.fn.getReturnProp.get.name).head().get()
       let returnProp = fn.getReturnProperty()
       let returnOffset = fn.returnValueOffset
-      var returnMemoryRegion = memoryBlockAddr + returnOffset.int
+      var returnMemoryRegion = memoryBlockAddr + returnOffset.uint
       let returnRuntimeField = getProp(returnProp, cast[pointer](returnMemoryRegion))
       result = some(returnRuntimeField)
 
@@ -147,17 +148,19 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
 
 proc uCallProp*(call : UECall, cls:UClassPtr) : Option[RuntimeField] = 
   assert call.kind == uecGetProp or call.kind == uecSetProp
-  let rtField = call.value
-  let propName = rtField.getStruct()[0].getName()
+  let argField = call.value
+  let propName = argField.getStruct()[0].getName()
   let prop = cls.getFPropertyByName(propName)  
   if prop.isNil():
     UE_Error &"uCall: Property {propName} not found in class {cls.getName()}"
     return none(RuntimeField)    
-  let selfAddr = cast[ByteAddress](call.self)
+  let selfAddr = cast[uint](call.self)
   if call.kind == uecGetProp:
-    some getProp(prop,  cast[pointer](selfAddr + prop.getOffset()))        
+    some getProp(prop,  cast[pointer](selfAddr + prop.getOffset().uint))        
   else:
-    rtField[propName].setProp(prop, cast[pointer](selfAddr)) #Notice the offset is calculated internally when settign the prop
+    #Dont ask why but we need to add the offset of the array    
+    let offset = if argField[propName].kind == Array: prop.getOffset() else: 0   
+    argField[propName].setProp(prop, cast[pointer](selfAddr + offset.uint))
     none(RuntimeField)
 
 proc uCall*(call : UECall) : Option[RuntimeField] = 

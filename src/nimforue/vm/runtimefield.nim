@@ -105,6 +105,11 @@ func getArray*(rtField : RuntimeField) : seq[RuntimeField] =
   else:
     raise newException(ValueError, "rtField is not an array")
 
+func getArrayOf*(rtField : RuntimeField, T: typedesc) : seq[T] =  
+  rtField.getArray().mapIt(it.runtimeFieldTo(typeof(T)))
+
+func getArrayOf*[T](rtField : RuntimeField) : seq[T] = getArrayOf(rtField, T)
+
 func setInt*(rtField : var RuntimeField, value : int) = 
   case rtField.kind:
   of Int:
@@ -221,8 +226,6 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
   else:
     const typeName = typeof(T).name
     const isPtr = typeName.endsWith("Ptr")
-
-    # UE_Log &"toRuntimeField {value} {typeName}"
     when isPtr or (T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64):
       result.kind = Int    
       result.intVal = cast[int](value)
@@ -235,19 +238,21 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
     elif T is string:
       result.kind = String
       result.stringVal = value
+    elif T is (array | seq | TArray):
+      result.kind = Array
+      for val in value:
+        result.arrayVal.add(toRuntimeField(val))
     elif T is (object | tuple):
       result.kind = Struct
       for name, val in fieldPairs(value):
         result.structVal.add((name, toRuntimeField(val)))
-    elif T is (array | seq):
-      result.kind = Array
-      for val in value:
-        result.arrayVal.add(toRuntimeField(val))
     else:
       when compiles(UE_Error ""):
         UE_Error &"Unsupported {typeName} type for RuntimeField "
       else:
         debugEcho &"ERROR: Unsupported {typeName} type for RuntimeField"
-      RuntimeField()
+      RuntimeField()    
     # raise newException(ValueError, &"Unsupported {typename} type for RuntimeField ")
+    # UE_Log &"toRuntimeField {result}"
+
 func initRuntimeField*[T](value : T) : RuntimeField = toRuntimeField(value)

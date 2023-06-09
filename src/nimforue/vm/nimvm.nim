@@ -312,10 +312,10 @@ uClass ANimVM of AActor:
     proc stopWatch() = 
       isWatching = false
 
-    proc initInterpreter() = 
-      #  interpreter = initInterpreter(@[parentDir(currentSourcePath)])
-       interpreter = initInterpreter(@[NimGameDir() / "vm"])
-    # proc revalScript() =
+    # proc initInterpreter() = 
+    #   #  interpreter = initInterpreter(@[parentDir(currentSourcePath)])
+    #    interpreter = initInterpreter(@[NimGameDir() / "vm"])
+    # # proc revalScript() =
     #   if interpreter.isNotNil():
     #     interpreter.evalScript()
     #   else:

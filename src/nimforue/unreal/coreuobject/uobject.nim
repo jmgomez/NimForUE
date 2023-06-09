@@ -552,8 +552,8 @@ proc makeScriptArrayHelperInContainer*(prop:FArrayPropertyPtr, inArray: pointer)
 
 proc num*(helper : FScriptArrayHelper) : int32 {.importcpp:"#.Num()".}
 
-proc addUninitializedValues*(helper : FScriptArrayHelper, num : int32) : void {.importcpp:"#.AddValues(#)".}
-
+proc addUninitializedValues*(helper : FScriptArrayHelper, count : int32) : void {.importcpp:"#.AddValues(#)".}
+proc emptyAndAddUninitializedValues*(helper : FScriptArrayHelper, count : int32) : void {.importcpp:"#.EmptyAndAddUninitializedValues(#)".}
 #returns the index of the last added
 proc addValue*(helper : FScriptArrayHelper) : int32 {.importcpp:"#.AddValue()".}
 

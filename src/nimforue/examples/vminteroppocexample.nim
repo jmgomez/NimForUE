@@ -145,9 +145,7 @@ uClass ANimTestBase of AActor:
 
 uClass AActorPOCVMTest of ANimTestBase:
   (BlueprintType)
-  uprops(EditAnywhere):
-    intProp: int32 
-    boolProp: bool
+ 
   ufuncs(CallInEditor):
     proc testCallFuncWithNoArg() = 
       let callData = UECall(kind: uecFunc, fn: makeUEFunc("callFuncWithNoArg", "UObjectPOC"))
@@ -334,6 +332,11 @@ uClass AActorPOCVMTest of ANimTestBase:
         )
       discard uCall(callData)
     #props
+  uprops(EditAnywhere):
+    intProp: int32 
+    boolProp: bool
+    arrayProp: TArray[int]
+  ufuncs(CallInEditor):
     proc shouldBeAbleToReadAnInt32Prop() =
       self.intProp = 10
       let callData = UECall(
@@ -356,7 +359,10 @@ uClass AActorPOCVMTest of ANimTestBase:
           value: (intProp: expectedValue).toRuntimeField() #Getters dont have a value.                           
         )
       discard uCall(callData)      
-      check expectedValue == self.intProp        
+      if expectedValue == self.intProp:
+        UE_Log "Int prop is " & $self.intProp
+      else:
+        UE_Error "Int prop is " & $self.intProp & " but expected " & $expectedValue
     
     proc shouldBeAbleToReadABoolProp() =
       self.boolProp = true
@@ -371,3 +377,34 @@ uClass AActorPOCVMTest of ANimTestBase:
         let val = reply.get(RuntimeField(kind:Bool)).getBool()
         check val == self.boolProp
         UE_Log "Bool prop is " & $val
+
+    proc shouldBeAbleToReadAnArrayProp() = 
+      self.arrayProp = @[1, 2, 3, 4, 5].toTArray()
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (arrayProp: default(TArray[int])).toRuntimeField() #Getters dont have a value.                           
+        )
+      let reply = uCall(callData)
+      if reply.isSome:
+        let val = reply.get(RuntimeField(kind:Array)).getArrayOf(int).toTArray()
+        if val == self.arrayProp:
+          UE_Log "Array prop is " & $val
+        else:
+          UE_Error "Array prop is " & $val & " but expected " & $self.arrayProp
+    
+    proc shouldBeAbleToWriteAnArrayProp() = 
+      let expected = @[1, 2, 4].toTArray()
+      self.arrayProp = @[0].toTArray()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (arrayProp: expected).toRuntimeField() #Getters dont have a value.                           
+        )
+      discard uCall(callData)
+      if expected == self.arrayProp:
+        UE_Log "Array prop is " & $self.arrayProp
+      else:
+        UE_Error "Array prop is " & $self.arrayProp & " but expected " & $expected

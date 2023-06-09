@@ -427,7 +427,7 @@ func genGenericTypeParams(nimType:NimType) : NimNode =
       
     genericParams.add lastIdentDef
   
-  debugEcho treeRepr genericParams
+  # debugEcho treeRepr genericParams
 
   genericParams
 
