@@ -19,6 +19,7 @@ type
       structVal*: RuntimeStruct
     of Array: 
       arrayVal*: seq[RuntimeField]  
+    
 
   RuntimeStruct* = seq[(string, RuntimeField)]
  
@@ -182,7 +183,7 @@ func contains*(rtField : RuntimeField, name : string) : bool =
 macro getField(obj: object, fld: string): untyped =
   newDotExpr(obj, newIdentNode(fld.strVal))
 
-
+type IntBased = int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | enum
 # func toRuntimeFieldHook*[T](value : T) : RuntimeField = toRuntimeField*[T](value : T)
 proc runtimeFieldTo*(rtField : RuntimeField, T : typedesc) : T 
 proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) = 
@@ -192,7 +193,7 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
     const typeName = typeof(T).name
     case rtField.kind:
     of Int:
-      when T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 :
+      when T is IntBased:
         # a = cast[T](b.intVal) #No cast in the vm
         value = T(rtField.intVal)
     of Bool:
@@ -226,9 +227,9 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
   else:
     const typeName = typeof(T).name
     const isPtr = typeName.endsWith("Ptr")
-    when isPtr or (T is int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64):
+    when isPtr or T is IntBased:
       result.kind = Int    
-      result.intVal = cast[int](value)
+      result.intVal = when T is enum: int(value) else: cast[int](value)
     elif T is bool:
       result.kind = Bool
       result.boolVal = value

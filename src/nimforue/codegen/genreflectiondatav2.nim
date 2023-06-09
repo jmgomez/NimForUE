@@ -586,10 +586,6 @@ proc generateProject*(forceGeneration = false) =
         UE_Error &"Error fixing forward declare only types"
         UE_Error getCurrentExceptionMsg()
 
-
-
-
-
       project.modules = projectModules
       UE_Log $project.modules.mapIt( &"Mod: {it.name} Types: {it.types.len} Deps: {it.dependencies} \n")
 

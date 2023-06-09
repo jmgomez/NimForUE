@@ -57,9 +57,12 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
       
 
 proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField = 
-  if prop.isInt() or prop.isObjectBased():
-    result.kind = Int
-    copyMem(addr result.intVal, sourceAddr, prop.getSize())  
+  if prop.isInt() or prop.isObjectBased() or prop.isEnum():
+    result.kind = Int        
+    if prop.isEnum():
+      result.intVal = getPropertyValuePtr[uint8](prop, sourceAddr)[].int
+    else:
+      copyMem(addr result.intVal, sourceAddr, prop.getSize())   
   elif prop.isBool():
     result.kind = Bool
     copyMem(addr result.boolVal, sourceAddr, prop.getSize())
@@ -76,10 +79,15 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
     let scriptStruct = structProp.getScriptStruct()
     let structProps = scriptStruct.getFPropsFromUStruct()
     let structMemoryRegion = cast[uint](sourceAddr)
+    
     result = RuntimeField(kind:Struct)
-    for paramProp in structProps:
+    for paramProp in structProps:      
       let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches
+      UE_Log &"Param size {paramProp.getSize()} offset {paramProp.getOffset().uint}"
+      let ad = cast[ptr float](structMemoryRegion + paramProp.getOffset().uint)
+      UE_Log &"Addr: {ad} Value: {ad[]}"
       let value = getProp(paramProp,  cast[pointer](structMemoryRegion + paramProp.getOffset().uint))
+      UE_Log "Param prop name: " & $paramProp.getName() & " type: " & paramProp.getCppType() & " value: " & $value
       result.structVal.add((name, value))
   elif prop.isTArray():
     let arrayProp = castField[FArrayProperty](prop)
@@ -95,7 +103,6 @@ func isStatic*(fn : UFunctionPtr) : bool = FUNC_Static in fn.functionFlags
 
 proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
   result = none(RuntimeField)
-
   let fn = cls.findFunctionByName(n call.fn.name.capitalizeAscii())
   if fn.isNil():
     UE_Error "uCall: Function " & $call.fn.name & " not found in class " & $call.fn.className
@@ -110,7 +117,6 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
   if propParams.any() or fn.doesReturn():
     var memoryBlock = alloc0(fn.parmsSize)
     let memoryBlockAddr = cast[uint](memoryBlock)    
-
     #TODO check return param and out params
     for paramProp in propParams:
       try:
@@ -132,17 +138,13 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
     self.processEvent(fn, memoryBlock)
 
     if fn.doesReturn():
-      UE_Log "Does return llega aqui"
-      # let returnProp = fn.getFPropsFromUStruct().filterIt(it.getName() == call.fn.getReturnProp.get.name).head().get()
       let returnProp = fn.getReturnProperty()
       let returnOffset = fn.returnValueOffset
       var returnMemoryRegion = memoryBlockAddr + returnOffset.uint
       let returnRuntimeField = getProp(returnProp, cast[pointer](returnMemoryRegion))
       result = some(returnRuntimeField)
 
-    dealloc(memoryBlock)
-    UE_Log "Memory block deallocated.Exists ueCall"
-    
+    dealloc(memoryBlock)    
   else: #no params no return
     self.processEvent(fn, nil)
 
@@ -156,10 +158,11 @@ proc uCallProp*(call : UECall, cls:UClassPtr) : Option[RuntimeField] =
     return none(RuntimeField)    
   let selfAddr = cast[uint](call.self)
   if call.kind == uecGetProp:
-    some getProp(prop,  cast[pointer](selfAddr + prop.getOffset().uint))        
+    let offset = if argField[propName].kind == Struct: prop.getOffset() else: 0
+    some getProp(prop,  cast[pointer](selfAddr + offset.uint))        
   else:
     #Dont ask why but we need to add the offset of the array    
-    let offset = if argField[propName].kind == Array: prop.getOffset() else: 0   
+    let offset = if argField[propName].kind in [Struct, Array]: prop.getOffset() else: 0   
     argField[propName].setProp(prop, cast[pointer](selfAddr + offset.uint))
     none(RuntimeField)
 

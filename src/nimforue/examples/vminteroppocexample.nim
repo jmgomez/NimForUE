@@ -8,7 +8,16 @@ import ../vm/[runtimefield, uecall]
 import ../test/testutils
 
 
+uStruct FStructVMTest:
+  (BlueprintType)
+  uprops(EditAnywhere):
+    x: float32
+    y: float32
+    z: float32
 
+uEnum EEnumVMTest:
+  (BlueprintType)  
+  (ValueA, ValueB, ValueC)
 
 uClass UObjectPOC of UObject:
   (BlueprintType, Reinstance)
@@ -289,21 +298,7 @@ uClass AActorPOCVMTest of ANimTestBase:
         )
       UE_Log  $uCall(callData)
 
-    # proc test13NoStatic() = 
-    #   let callData = UECall(
-          #  kind: uecFunc,
-    #       fn: makeUEFunc("instanceFunc", "UObjectPOC"),
-        
-    #       value: (vec:FVector(x:12, y:10)).toJson(),
-    #       self: cast[int](self)
-    #     )
-    #   UE_Log  $uCall(callData)
-    # proc vectorToJsonTest() =
-    #   UE_Log $FVector(x:10, y:10).toJson()
-    #   let vectorScriptStruct = staticStruct(FVector)
-    #   let structProps = vectorScriptStruct.getFPropsFromUStruct()
-    #   for prop in structProps:
-    #     UE_Log $prop.getName()
+   
 
 
     proc testRuntimeFieldCanRetrieveAStructMemberByName() = 
@@ -331,11 +326,14 @@ uClass AActorPOCVMTest of ANimTestBase:
           value: (arg: 10.0).toRuntimeField()
         )
       discard uCall(callData)
-    #props
+    
   uprops(EditAnywhere):
     intProp: int32 
     boolProp: bool
     arrayProp: TArray[int]
+    structProp: FVector
+    enumProp: EEnumVMTest
+
   ufuncs(CallInEditor):
     proc shouldBeAbleToReadAnInt32Prop() =
       self.intProp = 10
@@ -343,7 +341,7 @@ uClass AActorPOCVMTest of ANimTestBase:
           kind: uecGetProp,
           self: cast[int](self),
           clsName: "AActorPOCVMTest",
-          value: (intProp: default(int32)).toRuntimeField() #Getters dont have a value.                           
+          value: (intProp: default(int32)).toRuntimeField()                       
         )
       let reply = uCall(callData)
       if reply.isSome:
@@ -356,7 +354,7 @@ uClass AActorPOCVMTest of ANimTestBase:
           kind: uecSetProp,
           self: cast[int](self),
           clsName: "AActorPOCVMTest",
-          value: (intProp: expectedValue).toRuntimeField() #Getters dont have a value.                           
+          value: (intProp: expectedValue).toRuntimeField()                        
         )
       discard uCall(callData)      
       if expectedValue == self.intProp:
@@ -370,7 +368,7 @@ uClass AActorPOCVMTest of ANimTestBase:
           kind: uecGetProp,
           self: cast[int](self),
           clsName: "AActorPOCVMTest",
-          value: (boolProp: default(bool)).toRuntimeField() #Getters dont have a value.                           
+          value: (boolProp: default(bool)).toRuntimeField()                        
         )
       let reply = uCall(callData)
       if reply.isSome:
@@ -384,11 +382,11 @@ uClass AActorPOCVMTest of ANimTestBase:
           kind: uecGetProp,
           self: cast[int](self),
           clsName: "AActorPOCVMTest",
-          value: (arrayProp: default(TArray[int])).toRuntimeField() #Getters dont have a value.                           
+          value: (arrayProp: default(TArray[int])).toRuntimeField()                           
         )
       let reply = uCall(callData)
       if reply.isSome:
-        let val = reply.get(RuntimeField(kind:Array)).getArrayOf(int).toTArray()
+        let val = reply.get(RuntimeField(kind:Array)).runtimeFieldTo(seq[int]).toTArray()
         if val == self.arrayProp:
           UE_Log "Array prop is " & $val
         else:
@@ -401,10 +399,69 @@ uClass AActorPOCVMTest of ANimTestBase:
           kind: uecSetProp,
           self: cast[int](self),
           clsName: "AActorPOCVMTest",
-          value: (arrayProp: expected).toRuntimeField() #Getters dont have a value.                           
+          value: (arrayProp: expected).toRuntimeField()                          
         )
       discard uCall(callData)
       if expected == self.arrayProp:
         UE_Log "Array prop is " & $self.arrayProp
       else:
         UE_Error "Array prop is " & $self.arrayProp & " but expected " & $expected
+
+    proc shouldBeAbleToReadAStructProp() = 
+      self.structProp = FVector(x:10, y:10, z:10)
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (structProp: default(FVector)).toRuntimeField()                     
+        )
+      let reply = uCall(callData)
+      if reply.isSome:
+        let val = reply.get(RuntimeField(kind:Struct)).runtimeFieldTo(FVector)
+        if val.x == self.structProp.x:
+          UE_Log "Struct prop is " & $val
+        else:
+          UE_Error "Struct prop is " & $val & " but expected " & $self.structProp
+
+    proc shoulsBeAbleToWriteAStructProp() = 
+      let expected = FVector(x:10, y:10, z:10)
+      self.structProp = FVector(x:0, y:0, z:0)
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (structProp: expected).toRuntimeField()                        
+        )
+      discard uCall(callData)
+      if expected.x == self.structProp.x:
+        UE_Log "Struct prop is " & $self.structProp
+      else:
+        UE_Error "Struct prop is " & $self.structProp & " but expected " & $expected
+    
+    proc shouldBeAbleToReadAnEnumProp() =
+      self.enumProp = EEnumVMTest.ValueC
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (enumProp: default(EEnumVMTest)).toRuntimeField()                        
+        )
+      let reply = uCall(callData)     
+      if reply.isSome:
+        let val = reply.get(RuntimeField(kind:Int)).runtimeFieldTo(EEnumVMTest)
+        check val == self.enumProp
+    
+    proc shouldBeAbleToWriteAnEnumProp() =
+      let expected = EEnumVMTest.ValueC
+      self.enumProp = EEnumVMTest.ValueA
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (enumProp: expected).toRuntimeField()                        
+        )
+      discard uCall(callData)
+      if expected == self.enumProp:
+        UE_Log "Enum prop is " & $self.enumProp
+      else:
+        UE_Error "Enum prop is " & $self.enumProp & " but expected " & $expected

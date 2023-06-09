@@ -27,6 +27,7 @@ func isTSet*(prop: FPropertyPtr): bool = not castField[FSetProperty](prop).isNil
 func isStruct*(prop: FPropertyPtr): bool = not castField[FStructProperty](prop).isNil()
 func isInterface*(prop: FPropertyPtr): bool = not castField[FInterfaceProperty](prop).isNil()
 func isTEnum*(prop: FPropertyPtr): bool = "TEnumAsByte" in prop.getName()
+func isEnum*(prop: FPropertyPtr): bool = castField[FEnumProperty](prop).isNotNil()
 func isTFieldPath*(prop: FPropertyPtr): bool = not castField[FFieldPathProperty](prop).isNil()
 func isTObjectPtr*(prop: string): bool = return "TObjectPtr" in prop
 func isTObjectPtr*(prop: FPropertyPtr): bool = return "TObjectPtr" in prop.getName()
