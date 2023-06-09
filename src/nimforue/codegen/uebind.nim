@@ -451,7 +451,7 @@ func genInterfaceConverers*(ueType:UEType) : NimNode =
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
-func getClassTemplate(typeDef: UEType) : string =
+func getClassTemplate*(typeDef: UEType) : string =
   
   var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":

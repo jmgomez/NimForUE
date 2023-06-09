@@ -987,12 +987,16 @@ macro uClass*(name:untyped, body : untyped) : untyped =
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
-    
-macro uForwardDecl*(name : untyped ) : untyped = 
-    let (className, parent, _) = getTypeNodeFromUClassName(name)
-    let clsPtr = ident className & "Ptr"
-    genAst(clsName=ident className, clsParent = ident parent, clsPtr):
-        type 
-          clsName* = object of clsParent
-          clsPtr* = ptr clsName
 
+macro uForwardDecl*(name : untyped ) : untyped = 
+    let (className, parentName, interfaces) = getTypeNodeFromUClassName(name)
+    let typeDef = UEType(name:className, kind:uetClass, parent:parentName, interfaces:interfaces)
+
+    let ptrName = ident className & "Ptr"
+    result = genAst(name=ident className, parent = ident parentName, ptrName):
+        type 
+            name* {.inject, exportc, codegenDecl:"placeholder".} = object of parent #TODO OF BASE CLASS 
+            ptrName* {.inject.} = ptr name
+
+    result[0][0][^1][^1][^1] = newLit getClassTemplate(typeDef)  
+    
