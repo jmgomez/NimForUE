@@ -583,6 +583,7 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
 
 
 macro uDelegate*(body:untyped) : untyped = 
+    #uDelegate FMyDelegate(str: FString, number: FString, another:int)
     let name = body[0].strVal()
     let paramsAsFields = body.toSeq()
                              .filter(n=>n.kind==nnkExprColonExpr)
@@ -592,12 +593,23 @@ macro uDelegate*(body:untyped) : untyped =
 
 
 macro uEnum*(name:untyped, body : untyped) : untyped = 
-    # echo body.treeRepr
+    #[
+        uEnum EMyEnumCreatedInDsl:
+        (BlueprintType)
+            WhateverEnumValue
+            SomethingElse
+
+    ]#
+    # echo treeRepr name
+    # echo treeRepr body           
     let name = name.strVal()
     let metas = getMetasForType(body)
-    let fields = body.toSeq().filter(n=>n.kind==nnkIdent)
-                    .map(n=>n.repr.strip())
-                    .map(str=>makeFieldASUEnum(str, name))
+    let fields = body.toSeq().filter(n=>n.kind in [nnkIdent, nnkTupleConstr])
+                    .mapIt((if it.kind == nnkIdent: @[it] else: it.children.toSeq()))
+                    .foldl(a & b)
+                    .mapIt(it.strVal())
+                    .mapIt(makeFieldASUEnum(it, name))
+
     let ueType = makeUEEnum(name, fields, metas)
     emitUEnum(ueType)
 
