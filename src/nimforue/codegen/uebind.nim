@@ -445,9 +445,9 @@ func genInterfaceConverers*(ueType:UEType) : NimNode =
     let interfaceName = ident interName
     let interfacePtrName = ident interName & "Ptr"
     let fnName = ident ueType.name & "to" & interName
-
-    genAst(fnName,typeNamePtr, interfaceName, interfacePtrName):
-      converter fnName*(self {.inject.} : typeNamePtr): interfacePtrName =  cast[interfacePtrName](self)
+    genAst(fnName,typeNamePtr, interfaceName, interfacePtrName):      
+      when not declared(fnName):
+        converter fnName*(self {.inject.} : typeNamePtr): interfacePtrName =  cast[interfacePtrName](self)
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 

@@ -318,7 +318,6 @@ proc emitUClass(typeDef:UEType) : NimNode =
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
                 addEmitterInfoForClass[name](typeDefAsNode)
         
-
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
 proc emitUDelegate(typedef:UEType) : NimNode = 
@@ -987,16 +986,11 @@ macro uClass*(name:untyped, body : untyped) : untyped =
         
     let fns = genUFuncsForUClass(body, className, nimProcs)
     result =  nnkStmtList.newTree(@[uClassNode] & fns)
-
+    # if "AActorPOCVMTest" == className:
+    #     echo repr result
 macro uForwardDecl*(name : untyped ) : untyped = 
     let (className, parentName, interfaces) = getTypeNodeFromUClassName(name)
-    let typeDef = UEType(name:className, kind:uetClass, parent:parentName, interfaces:interfaces)
-
-    let ptrName = ident className & "Ptr"
-    result = genAst(name=ident className, parent = ident parentName, ptrName):
-        type 
-            name* {.inject, exportc, codegenDecl:"placeholder".} = object of parent #TODO OF BASE CLASS 
-            ptrName* {.inject.} = ptr name
-
-    result[0][0][^1][^1][^1] = newLit getClassTemplate(typeDef)  
-    
+    var ueType = UEType(name:className, kind:uetClass, parent:parentName, interfaces:interfaces)
+    ueType.interfaces = interfaces
+    ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
+    result = emitUClass(ueType)

@@ -234,10 +234,6 @@ task rebuildlibs, "Rebuilds the plugin, game and libs":
   for lib in getAllGameLibs():
     taskOptions["name"] = lib
     lib(taskOptions)
-  
-
-
-
 
 task dumpConfig, "Displays the config variables":
   dump config
@@ -301,7 +297,7 @@ task rebuild, "Cleans and rebuilds the unreal plugin, host, guest and cpp bindin
   gencppbindings(taskOptions)
   host(taskOptions)
 
-
+#TODO: Unify all bindings related tasks into this one
 task genbindings, "Runs the Generate Bindings commandlet":
   let silent = if "silent" in taskOptions: "-silent" else: ""
   when defined windows:
@@ -365,7 +361,7 @@ task cleanmodules, "Removes the generated code from the game and libs":
   let genPluginDir = parentDir(PluginDir) / pluginName
   let libs = getAllGameLibs()
   log "Cleaning Nim only lib " & $libs
-  for lib in getAllGameLibs():
+  for lib in libs:
     taskOptions["name"] = lib   
     removeDir(PluginDir/".nimcache"/lib)
     log "Cleaning generate code for " & lib 
@@ -381,7 +377,7 @@ task buildmodules, "Rebuilds the plugin, game and libs":
   taskOptions["livecoding"] = ""
   let libs = getAllGameLibs()
   log "Compiling Nim only lib " & $libs
-  for lib in getAllGameLibs():
+  for lib in libs:
     taskOptions["name"] = lib   
     lib(taskOptions)
     generateModule(lib.capitalizeAscii(), pluginName)  
