@@ -55,9 +55,9 @@ proc toTable*[K, V](map:TMap[K, V]): Table[K, V] =
         table[key] = value
     table
 
-proc toTMap*[K, V](table:var Table[K, V]): TMap[K, V] =
+proc toTMap*[K, V](table:Table[K, V]): TMap[K, V] =
     var map = makeTMap[K, V]()
-    for k, v in table.mpairs:
+    for k, v in table.pairs:
         map.add(k, v)
     map
 

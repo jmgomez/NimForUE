@@ -70,9 +70,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         softObjProp
     of emScriptStruct:
         let structProp = newFStructProperty(owner, name, flags)
-        #TODO Need to set more prop flags based on the structsOPS specs
-        UE_Log "ENTRA AQUI EN LA STRUCT VAMOS A VER"
-        
+        #TODO Need to set more prop flags based on the structsOPS specs        
         structProp.setScriptStruct(scriptStruct)
         #This is a temp workaround because since the property is virtual and has no vtable it wil crash
         let propFlags = structProp.getPropertyFlags() | CPF_NoDestructor 

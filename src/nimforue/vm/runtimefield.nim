@@ -1,9 +1,10 @@
-import std/[sequtils, options, sugar, strutils, strformat, typetraits, macros]
-
+import std/[sequtils, options, sugar, strutils, strformat, typetraits, macros, tables, typetraits]
 
 type
+  TableMap*[K, V] = seq[(K, V)]
+
   FieldKind* = enum
-    Int, Bool, Float, String, Struct, Array
+    Int, Bool, Float, String, Struct, Array, Map
   
   RuntimeField* = object
     case kind*: FieldKind
@@ -19,8 +20,9 @@ type
       structVal*: RuntimeStruct
     of Array: 
       arrayVal*: seq[RuntimeField]  
+    of Map:
+      mapVal*: seq[(RuntimeField, RuntimeField)]
     
-
   RuntimeStruct* = seq[(string, RuntimeField)]
  
   UEFunc* = object #Light metadata we could ue UFunc but we dont want to pull all those types into the vm
@@ -48,6 +50,10 @@ type
     ueActualName* : string #in case it has Received or some other prefix
 
 
+func toTableMap*[K, V](table: Table[K, V]): seq[(K, V)] =  
+  for key, val in table:
+    result.add((key, val))
+   
 
 func getClassName*(ueCall: UECall): string = 
   case ueCall.kind:
@@ -106,10 +112,12 @@ func getArray*(rtField : RuntimeField) : seq[RuntimeField] =
   else:
     raise newException(ValueError, "rtField is not an array")
 
-func getArrayOf*(rtField : RuntimeField, T: typedesc) : seq[T] =  
-  rtField.getArray().mapIt(it.runtimeFieldTo(typeof(T)))
-
-func getArrayOf*[T](rtField : RuntimeField) : seq[T] = getArrayOf(rtField, T)
+func getMap*(rtField : RuntimeField) : seq[(RuntimeField, RuntimeField)] =
+  case rtField.kind:
+  of Map:
+    return rtField.mapVal
+  else:
+    raise newException(ValueError, "rtField is not a map")
 
 func setInt*(rtField : var RuntimeField, value : int) = 
   case rtField.kind:
@@ -138,18 +146,27 @@ func setStr*(rtField : var RuntimeField, value : string) =
     rtField.stringVal = value
   else:
     raise newException(ValueError, "rtField is not a string")
+
 func setStruct*(rtField : var RuntimeField, value : RuntimeStruct) =
   case rtField.kind:
   of Struct:
     rtField.structVal = value
   else:
     raise newException(ValueError, "rtField is not a struct")
+
 func setArray*(rtField : var RuntimeField, value : seq[RuntimeField]) =
   case rtField.kind:
   of Array:
     rtField.arrayVal = value
   else:
     raise newException(ValueError, "rtField is not an array")
+
+func setMap*(rtField : var RuntimeField, value : seq[(RuntimeField, RuntimeField)]) =
+  case rtField.kind:
+  of Map:
+    rtField.mapVal = value
+  else:
+    raise newException(ValueError, "rtField is not a map")
 
 func getName*(strField: (string, RuntimeField)): string = strField[0]
 
@@ -204,16 +221,26 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
         # a = cast[T](b.floatVal) #NO cast in the vm
         value = T(rtField.floatVal)
     of String:
-      when T is string:
+      when T is string | FString:
         value = (rtField.stringVal)
-    of Struct:
+    of Struct:      
       when T is object:
-        for fieldName, v in fieldPairs(value):
-          value.getField(fieldName) = rtField[fieldName].runtimeFieldTo(typeof(v))
+        for fieldName, v in fieldPairs(value):         
+            value.getField(fieldName) = rtField[fieldName].runtimeFieldTo(typeof(v))     
     of Array:
       when T is seq:
         for i in 0 ..< rtField.arrayVal.len:
           value.add(rtField.arrayVal[i].runtimeFieldTo(typeof(value[0])))
+    of Map:
+      when T is TableMap:
+        type K = typeof(value[0][0])
+        type V = typeof(value[0][1])                        
+        for i in 0 ..< rtField.mapVal.len:
+          let pair = rtField.mapVal[i]
+          let key = pair[0].runtimeFieldTo(K)
+          let val = pair[1].runtimeFieldTo(V)
+          value.add((key, val))
+          
         
 
 proc runtimeFieldTo*(rtField : RuntimeField, T : typedesc) : T = 
@@ -236,17 +263,21 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
     elif T is float | float32 | float64:
       result.kind = Float
       result.floatVal = value
-    elif T is string:
+    elif T is string | FString:      
       result.kind = String
       result.stringVal = value
+    elif T is TableMap:
+      result.kind = Map
+      for (key, val) in value:
+        result.mapVal.add((toRuntimeField(key), toRuntimeField(val)))
     elif T is (array | seq | TArray):
       result.kind = Array
       for val in value:
-        result.arrayVal.add(toRuntimeField(val))
+        result.arrayVal.add(toRuntimeField(val))    
     elif T is (object | tuple):
       result.kind = Struct
       for name, val in fieldPairs(value):
-        result.structVal.add((name, toRuntimeField(val)))
+        result.structVal.add((name, toRuntimeField(val)))    
     else:
       when compiles(UE_Error ""):
         UE_Error &"Unsupported {typeName} type for RuntimeField "

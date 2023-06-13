@@ -54,7 +54,8 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
  
     for idx, elem in enumerate(rtField.getArray()):
       setProp(elem, innerProp, arrayHelper.getRawPtr(idx.int32))
-      
+  of Map:
+    discard      
 
 proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField = 
   if prop.isInt() or prop.isObjectBased() or prop.isEnum():
@@ -83,11 +84,8 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
     result = RuntimeField(kind:Struct)
     for paramProp in structProps:      
       let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches
-      UE_Log &"Param size {paramProp.getSize()} offset {paramProp.getOffset().uint}"
       let ad = cast[ptr float](structMemoryRegion + paramProp.getOffset().uint)
-      UE_Log &"Addr: {ad} Value: {ad[]}"
       let value = getProp(paramProp,  cast[pointer](structMemoryRegion + paramProp.getOffset().uint))
-      UE_Log "Param prop name: " & $paramProp.getName() & " type: " & paramProp.getCppType() & " value: " & $value
       result.structVal.add((name, value))
   elif prop.isTArray():
     let arrayProp = castField[FArrayProperty](prop)
