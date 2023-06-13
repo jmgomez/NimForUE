@@ -128,6 +128,8 @@ type
     FObjectPostSaveRootContext* {.importcpp, pure.} = object
     FScriptArray* {.importcpp, pure.} = object #used only for interoping with the vm. 
     FScriptArrayHelper* {.importcpp, pure.} = object 
+    FScriptMap* {.importcpp, pure.} = object #used only for interoping with the vm.
+    FScriptMapHelper* {.importcpp, pure.} = object
 #LOGS here because we need them. Maybe they should leave in a separated file
 
 proc UE_LogInternal(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUELog(@)".}
@@ -544,18 +546,29 @@ func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] =
 func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool = field.getMetadata(key).isSome()
 
 
-
+type ScriptContainer = FScriptArrayHelper | FScriptMapHelper
 #ScriptArray
 #  FScriptArrayHelper(const FArrayProperty* InProperty, const void* InArray)
 proc makeScriptArrayHelper*(prop:FArrayPropertyPtr, inArray: pointer) : FScriptArrayHelper {.importcpp:"FScriptArrayHelper(#, #)", constructor .}
 proc makeScriptArrayHelperInContainer*(prop:FArrayPropertyPtr, inArray: pointer) : FScriptArrayHelper {.importcpp:"FScriptArrayHelper_InContainer(#, #)", constructor .}
 
-proc num*(helper : FScriptArrayHelper) : int32 {.importcpp:"#.Num()".}
+proc num*(helper: ScriptContainer) : int32 {.importcpp:"#.Num()".}
 
-proc addUninitializedValues*(helper : FScriptArrayHelper, count : int32) : void {.importcpp:"#.AddValues(#)".}
-proc emptyAndAddUninitializedValues*(helper : FScriptArrayHelper, count : int32) : void {.importcpp:"#.EmptyAndAddUninitializedValues(#)".}
+proc addUninitializedValues*(helper : ScriptContainer , count : int32) : void {.importcpp:"#.AddValues(#)".}
+proc emptyAndAddUninitializedValues*(helper : ScriptContainer, count : int32) : void {.importcpp:"#.EmptyAndAddUninitializedValues(#)".}
 #returns the index of the last added
-proc addValue*(helper : FScriptArrayHelper) : int32 {.importcpp:"#.AddValue()".}
+proc addValue*(helper: FScriptArrayHelper) : int32 {.importcpp:"#.AddValue()".}
 
 #returns the raw pointer to the value 
-proc getRawPtr*(helper : FScriptArrayHelper, idx:int32) : pointer {.importcpp:"#.GetRawPtr(#)".}
+proc getRawPtr*(helper: FScriptArrayHelper, idx:int32) : pointer {.importcpp:"#.GetRawPtr(#)".}
+
+#ScriptMap
+proc makeScriptMapHelper*(prop:FMapPropertyPtr, inMap: pointer) : FScriptMapHelper {.importcpp:"FScriptMapHelper(#, #)", constructor .}
+proc makeScriptMapHelperInContainer*(prop:FMapPropertyPtr, inMap: pointer) : FScriptMapHelper {.importcpp:"FScriptMapHelper_InContainer(#, #)", constructor .}
+
+
+proc getKeyPtr*(helper : FScriptMapHelper, idx:int32) : pointer {.importcpp:"#.GetKeyPtr(#)".}
+proc getValuePtr*(helper : FScriptMapHelper, idx:int32) : pointer {.importcpp:"#.GetValuePtr(#)".}
+
+proc getKeyProperty*(helper : FScriptMapHelper) : FPropertyPtr {.importcpp:"#.GetKeyProperty()".}
+proc getValueProperty*(helper : FScriptMapHelper) : FPropertyPtr {.importcpp:"#.GetValueProperty()".}

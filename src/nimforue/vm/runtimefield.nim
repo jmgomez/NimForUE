@@ -53,8 +53,11 @@ type
 func toTableMap*[K, V](table: Table[K, V]): seq[(K, V)] =  
   for key, val in table:
     result.add((key, val))
-   
 
+func toTable*[K, V](tableMap: TableMap[K, V]): Table[K, V] =    
+  for (key, val) in tableMap:
+    result[key] = val
+  
 func getClassName*(ueCall: UECall): string = 
   case ueCall.kind:
   of uecFunc:
@@ -240,6 +243,8 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
           let key = pair[0].runtimeFieldTo(K)
           let val = pair[1].runtimeFieldTo(V)
           value.add((key, val))
+      elif T is Table:
+        fromRuntimeField(toTableMap(value), rtField)
           
         
 
@@ -266,6 +271,8 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
     elif T is string | FString:      
       result.kind = String
       result.stringVal = value
+    elif T is Table:
+      toRuntimeField(toTableMap(value))
     elif T is TableMap:
       result.kind = Map
       for (key, val) in value:

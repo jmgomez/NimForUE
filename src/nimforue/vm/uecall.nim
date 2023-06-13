@@ -94,6 +94,16 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
     result = RuntimeField(kind:Array)
     for idx in 0 ..< arrayHelper.num():
       result.arrayVal.add(getProp(innerProp, arrayHelper.getRawPtr(idx.int32)))
+  elif prop.isTMap():
+    let mapProp = castField[FMapProperty](prop)
+    let keyProp = mapProp.getKeyProp()
+    let valueProp = mapProp.getValueProp()
+    let mapHelper = makeScriptMapHelperInContainer(mapProp, sourceAddr)
+    result = RuntimeField(kind:Map)  
+    for idx in 0 ..< mapHelper.num():
+      let key = getProp(keyProp, mapHelper.getKeyPtr(idx.int32))
+      let value = getProp(valueProp, mapHelper.getValuePtr(idx.int32))
+      result.mapVal.add((key, value))
   else:
     raise newException(ValueError, "Unknown property type")
    
@@ -156,11 +166,11 @@ proc uCallProp*(call : UECall, cls:UClassPtr) : Option[RuntimeField] =
     return none(RuntimeField)    
   let selfAddr = cast[uint](call.self)
   if call.kind == uecGetProp:
-    let offset = if argField[propName].kind == Struct: prop.getOffset() else: 0
+    let offset = if argField[propName].kind in {Struct, Map}: prop.getOffset() else: 0
     some getProp(prop,  cast[pointer](selfAddr + offset.uint))        
   else:
     #Dont ask why but we need to add the offset of the array    
-    let offset = if argField[propName].kind in [Struct, Array]: prop.getOffset() else: 0   
+    let offset = if argField[propName].kind in {Struct, Array, Map}: prop.getOffset() else: 0   
     argField[propName].setProp(prop, cast[pointer](selfAddr + offset.uint))
     none(RuntimeField)
 

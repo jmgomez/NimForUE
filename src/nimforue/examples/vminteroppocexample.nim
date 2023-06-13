@@ -1,7 +1,7 @@
 include ../unreal/prelude
 
 import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
-import std/[json, strformat, jsonutils, sequtils, options, sugar, enumerate, strutils]
+import std/[json, strformat, jsonutils, sequtils, options, sugar, enumerate, strutils, tables]
 
 import ../vm/[runtimefield, uecall]
 
@@ -333,6 +333,7 @@ uClass AActorPOCVMTest of ANimTestBase:
     arrayProp: TArray[int]
     structProp: FVector
     enumProp: EEnumVMTest
+    mapProp: TMap[int, FString]
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToReadAnInt32Prop() =
@@ -465,3 +466,22 @@ uClass AActorPOCVMTest of ANimTestBase:
         UE_Log "Enum prop is " & $self.enumProp
       else:
         UE_Error "Enum prop is " & $self.enumProp & " but expected " & $expected
+
+    proc shouldBeAbleToReadAMapProp() = 
+      let table = { 1: FString"Hola", 2: FString"Mundo"}.toTable()
+      self.mapProp = table.toTMap()
+
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: "AActorPOCVMTest",
+          value: (mapProp: default(TableMap[int, FString])).toRuntimeField()                     
+          
+        )
+      let reply = uCall(callData)
+      if reply.isSome:        
+          let val = reply.get(RuntimeField(kind:Map)).runtimeFieldTo(TableMap[int, FString]).toTable.toTMap()
+          if val == self.mapProp:
+            UE_Log "Map prop is " & $val
+          else:
+            UE_Error "Map prop is " & $val & " but expected " & $self.mapProp
