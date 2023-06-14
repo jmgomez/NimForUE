@@ -15,6 +15,14 @@ proc genBindingsEntryPoint*(): void {.exportc, cdecl, dynlib.} =
     if not fun.isNil():
       fun()
 
+proc reloadScriptGuest*() {.exportc, cdecl, dynlib.} =
+  type
+    ProcType {.inject.} = proc () {.cdecl.}
+  withLock libLock:
+    let fun {.inject.} = cast[ProcType](lib().symAddr("reloadScriptGuest"))
+    if not fun.isNil():
+      fun()
+
 proc onLibLoaded*(libName: cstring; libPath: cstring; timesReloaded: cint;
                   loadedFrom: NueLoadedFrom): void {.exportc, cdecl, dynlib.} =
   type

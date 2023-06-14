@@ -12,6 +12,7 @@ type LoggerSignature* = proc(msg:cstring) {.cdecl, gcsafe.}
 
 var logger : LoggerSignature
 
+
 proc loadNueLib*(libName, nextPath: string, loadedFrom:NueLoadedFrom) =
   var nueLib = libMap[libName]
   if nueLib.lastLoadedPath != nextPath or not nueLib.isInit:
@@ -55,7 +56,7 @@ proc checkReload*(loadedFrom:NueLoadedFrom)  = #only for nimforue (plugin)
         if mbNext.isSome():
             let nextLibName = mbNext.get()
             try:
-                loadNueLib(currentLib, nextLibName, loadedFrom)
+                loadNueLib(currentLib, nextLibName, loadedFrom)                 
             except:
                 logger("There was a problem trying to load the library: " & nextLibName)
                 logger(getCurrentExceptionMsg())
@@ -64,8 +65,15 @@ proc checkReload*(loadedFrom:NueLoadedFrom)  = #only for nimforue (plugin)
     if currentLoadPhase != loadedFrom:
         if plugin in libMap:
             let pluginLib = libMap[plugin]
-            if not pluginLib.lib.isNil():
+            if pluginLib.lib != nil:
                 onLoadingPhaseChanged(currentLoadPhase, loadedFrom)
+    let pluginLib = libMap[plugin]
+    if pluginLib.lib != nil:
+      if fileExists(scriptPath) and currentLoadPhase >= NueLoadedFrom.nlfEditor and
+        scriptLastModified < getLastModificationTime(scriptPath).toUnix():
+        reloadScriptGuest()
+        scriptLastModified = getLastModificationTime(scriptPath).toUnix()
+
     currentLoadPhase = loadedFrom
 
 {.pop.}     

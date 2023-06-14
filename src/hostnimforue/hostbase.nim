@@ -21,11 +21,15 @@ type
 
 func isInit*(lib : NueLib) : bool = lib.lib != nil
 var libMap* : Table[string, NueLib]
+var scriptPath*: string
+var scriptLastModified*: int
 
 proc start() = 
   libMap = {
     "nimforue" : NueLib(lastLoadedPath: getLastLibPath(NimForUELibDir, "nimforue").get())
   }.toTable()
+  scriptPath = NimGameDir() / "vm" / "script.nim"
+
   #Adds all game libs including game 
   let allGameLibs = getAllGameLibs()
   for libName in allGameLibs:

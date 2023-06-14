@@ -21,7 +21,7 @@ proc uCall*(uCall:UECall) : Option[RuntimeField] =
 
 
 proc castIntToPtr*[T](address:int) : ptr T = nil
-
+proc deref*[T](val: ptr T) : T = nil #only ints for now
 
 # proc newUObject*[T](owner : UObjectPtr = UObjectPtr(0)) : T = 
 #   let cls = getClassByName(T.name.removeFirstLetter.removeLastLettersIfPtr())

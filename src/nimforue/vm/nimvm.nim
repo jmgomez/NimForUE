@@ -93,6 +93,15 @@ proc implementBaseFunctions(interpreter:Interpreter) =
   interpreter.implementRoutine("NimForUE", "exposed", "castIntToPtr", proc (a: VmArgs) =    
     setResult(a, getInt(a, 0))     
   )
+  interpreter.implementRoutine("NimForUE", "exposed", "deref", proc (a: VmArgs) =    
+    let address = getInt(a, 0)
+    let valueAddr = cast[ptr int](address)
+    if valueAddr.isNotNil:
+      setResult(a, valueAddr[])     
+    else:
+      UE_Error &"deref: address is nil"
+      setResult(a, 0)
+  )
 
   #This function can be implemented with uebind directly 
   interpreter.implementRoutine("NimForUE", "exposed", "getName", proc(a: VmArgs) =
@@ -225,7 +234,7 @@ proc setupBorrow(interpreter:Interpreter) =
 
 
 var userSearchPaths : seq[string] = @[]
-proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") : Interpreter = 
+proc initInterpreter*(searchPaths:seq[string], script: string = "script.nim") : Interpreter = 
   let std = findNimStdLibCompileTime()
   interpreter = createInterpreter(script, @[
     std,
@@ -256,10 +265,11 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nims") :
 
 # var interpreter = initInterpreter(@[parentDir(currentSourcePath)])
 
-proc reloadScript() = 
+proc reloadScriptImpl() = 
   try:
     if interpreter.isNil():
-      interpreter = initInterpreter(@[NimGameDir() / "vm"])
+      measureTime "Initializing VM":
+        interpreter = initInterpreter(@[NimGameDir() / "vm"])
       
     measureTime "Reloading Script":
       interpreter.evalScript()
@@ -268,59 +278,57 @@ proc reloadScript() =
     UE_Error msg
     UE_Error getStackTrace()
 
-var isWatching = false
-var lastModTime = 0
+# var isWatching = false
+# var lastModTime = 0
 
-
-proc watchScript() : Future[void] {.async.} = 
-  if not isWatching:
-    return
-  let path = NimGameDir() / "vm" / "script.nims"
-  if not fileExists path:
-    UE_Warn "Cant find the script. Not watching"
-    
-  # let path = parentDir(currentSourcePath) / "script.nims"
-  let modTime = getLastModificationTime(path).toUnix()
-  if modTime != lastModTime:
-    lastModTime = modTime
-    reloadScript()
-  else:
-    discard
-    # UE_Log "Script not changed. Not reloading"
-  await sleepAsync(500)
-  # UE_Log "Waiting for changes"
-  return watchScript()
 
 
 #This can leave in the vm file
 uClass UNimVmManager of UObject:
-  ufuncs:#Called from the button in UE
-    proc reloadScript() = 
-      reloadScript()
+  ufuncs(Static):#Called from the button in UE
+    proc reloadScript() =       
+      reloadScriptImpl()
+
 
 #[
   Helper actor to call the vm functions from the editor
   At some point it will part of the UI
 ]#
 
+
 uClass ANimVM of AActor:  
-  ufunc(CallInEditor):
+  uprops:    
+    isWatching: bool
+    lastModTime: int
+  proc watchScript() : Future[void] {.async.} =     
+    # proc tick(deltaSeconds: float32) =
+      # UE_Log "Tick"
+      if not self.isWatching:
+        return
+      let path = NimGameDir() / "vm" / "script.nims"
+      if not fileExists path:
+        UE_Warn "Cant find the script. Not watching"
+        
+      # let path = parentDir(currentSourcePath) / "script.nims"
+      let modTime = getLastModificationTime(path).toUnix()
+      if modTime != self.lastModTime:
+        self.lastModTime = modTime
+        reloadScript()
+      else:
+        discard
+        # UE_Log "Script not changed. Not reloading"
+      # await sleepAsync(500)
+      # # UE_Log "Waiting for changes"
+      # return self.watchScript()
+  ufunc(CallInEditor, Static):
     proc startWatch() = 
-      isWatching = true
-      asyncCheck watchScript()
+      self.isWatching = true
+      asyncCheck self.watchScript()
 
     proc stopWatch() = 
-      isWatching = false
+      self.isWatching = false
 
-    # proc initInterpreter() = 
-    #   #  interpreter = initInterpreter(@[parentDir(currentSourcePath)])
-    #    interpreter = initInterpreter(@[NimGameDir() / "vm"])
-    # # proc revalScript() =
-    #   if interpreter.isNotNil():
-    #     interpreter.evalScript()
-    #   else:
-    #     UE_Error "Interpreter not init"
     proc restartVM() = 
       interpreter = initInterpreter(userSearchPaths)
       reloadScript()
-  
+

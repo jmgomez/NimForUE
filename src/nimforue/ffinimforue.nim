@@ -60,8 +60,6 @@ proc startNue(libPath:string, calledFrom:NueLoadedFrom)  =
 
 #Will be called from the commandlet that generates the bindigns
 proc genBindingsEntryPoint() : void {.ffi:genFilePath} = 
-  UE_LOG "Running genBindingsEntryPoint"
-  # execBindingGeneration(true)  
   try:
     if isRunningCommandlet(): #TODO test not cooking
       generateProject()       
@@ -119,9 +117,23 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
 
 
+import std/sugar
+#VM manager tests
+# proc reloadScript() {.uebindStatic:"UNimVmManager".} #any library that pulls nimvm will have it
+proc reloadScriptGuest() {.ffi:genFilePath.} = 
+  #todo do a silentGuard pragma where it prevent the crash in uebind and generates this:
+  let fnName {.inject, used.} = n "ReloadScript"
+  let self {.inject.} = getDefaultObjectFromClassName("NimVmManager")
+  if self.isNil():    
+    return
+  let fn {.inject, used.} = ueCast[UObject](self).getClass().findFuncByName(fnName)
+  self.processEvent(fn, nil)
+  # reloadScript()
+
 
 proc tickPoll(deltaTime:float32) : bool {.cdecl.} =
-  try:
+  try:  
+    UE_Log "Polling"
     let p = getGlobalDispatcher()
     poll(0)
   except: 
@@ -166,12 +178,7 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint, loadedFro
 
   else: #Safe to emit types here
     emitTypeFor($libName, $libPath, timesReloaded, loadedFrom)
-    # if $libName == "nimforue" and not isRunningCommandlet():
-    #   registerVmTests() 
-
-
-
-
+    
 
 #TODO should something like this be handled by the game too? 
   #1. Works as it worked before
@@ -185,4 +192,3 @@ proc onLoadingPhaseChanged(prev : NueLoadedFrom, next:NueLoadedFrom) : void {.ff
       emitTypeFor(libName, libPath, timesReloaded, next)
   
  
-
