@@ -334,6 +334,7 @@ uClass AActorPOCVMTest of ANimTestBase:
     structProp: FVector
     enumProp: EEnumVMTest
     mapProp: TMap[int, FString]
+    mapProp2: TMap[int, int]
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToReadAnInt32Prop() =
@@ -485,3 +486,53 @@ uClass AActorPOCVMTest of ANimTestBase:
             UE_Log "Map prop is " & $val
           else:
             UE_Error "Map prop is " & $val & " but expected " & $self.mapProp
+    
+   
+      # if expected == self.mapProp:
+      #   UE_Log "Map prop is " & $self.mapProp
+      # else:
+      #   UE_Error "Map prop is " & $self.mapProp & " but expected " & $expected
+
+
+# import std/[macros, genasts]
+#TODO do a nice macro that splits the call and tells you what part is wrong
+proc check(exp: bool) =
+  if not exp:
+    let msg = "Check failed: " & repr exp
+    UE_Error msg
+  else:
+    UE_Log "Check passed"
+
+
+
+uClass AUECallMapTest of ANimTestBase:
+  (BlueprintType)
+  uprops(EditAnywhere):
+    mapIntIntProp: TMap[int, int]
+    mapIntFStringProp: TMap[int, FString]
+
+  ufuncs(CallInEditor):
+    proc shouldBeAbleToWriteAMapIntIntProp() = 
+      let expected = { 1: 10, 2: 20}.toTable().toTMap()
+      self.mapIntIntProp = makeTMap[int, int]()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (mapIntIntProp: expected.toTable()).toRuntimeField()                        
+        )
+      discard uCall(callData)      
+      check expected == self.mapIntIntProp
+    
+    proc shouldBeAbleToWriteAMapIntFringProp() = 
+      let expected = { 1: f"Hola", 2: f"Mundo"}.toTable().toTMap()
+      self.mapIntFStringProp = makeTMap[int, FString]()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (mapIntFStringProp: expected.toTable()).toRuntimeField()                        
+        )
+      discard uCall(callData)      
+      check expected == self.mapIntFStringProp
+      

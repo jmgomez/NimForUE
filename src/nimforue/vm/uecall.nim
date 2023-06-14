@@ -64,7 +64,14 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
     for idx, (key, value) in enumerate(rtField.getMap()):
       helper.addDefaultValue_Invalid_NeedsRehash()    
       setProp(key, kProp, helper.getKeyPtr(idx.int32))
-      vProp.copySingleValue(helper.getValuePtr(idx.int32), value.intVal.addr)
+      case value.kind:
+        of Int:
+          vProp.copySingleValue(helper.getValuePtr(idx.int32), value.intVal.addr)
+        of String:          
+          var fstring = f value.stringVal
+          vProp.copySingleValue(helper.getValuePtr(idx.int32), fstring.addr)
+        else:
+          discard
       
 
     helper.rehash()
