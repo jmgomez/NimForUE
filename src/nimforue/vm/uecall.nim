@@ -20,6 +20,7 @@ proc makeUECall*(fn : UEFunc, self : UObjectPtr, value : RuntimeField) : UECall 
   result.value = value
   result.kind = uecFunc
 
+proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField
 proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   case rtField.kind
   of Int:    
@@ -49,13 +50,26 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
     let arrayProp = castField[FArrayProperty](prop)
     let innerProp = arrayProp.getInnerProp()
     let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, memoryBlock)
-    # UE_Log "Array helper num: " & $arrayHelper.num()
     arrayHelper.emptyAndAddUninitializedValues(rtField.getArray().len.int32)
  
     for idx, elem in enumerate(rtField.getArray()):
       setProp(elem, innerProp, arrayHelper.getRawPtr(idx.int32))
   of Map:
-    discard      
+    let mapProp = castField[FMapProperty](prop)
+    let kProp = mapProp.getKeyProp()
+    let vProp = mapProp.getValueProp()
+    let helper = makeScriptMapHelperInContainer(mapProp, memoryBlock)
+
+    helper.emptyValues(rtField.getMap().len.int32)# the size is actually the elements not the bytes
+    for idx, (key, value) in enumerate(rtField.getMap()):
+      helper.addDefaultValue_Invalid_NeedsRehash()    
+      setProp(key, kProp, helper.getKeyPtr(idx.int32))
+      vProp.copySingleValue(helper.getValuePtr(idx.int32), value.intVal.addr)
+      
+
+    helper.rehash()
+  else:
+    raise newException(ValueError, "Unknown property type")
 
 proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField = 
   if prop.isInt() or prop.isObjectBased() or prop.isEnum():

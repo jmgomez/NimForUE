@@ -129,7 +129,12 @@ type
     FScriptArray* {.importcpp, pure.} = object #used only for interoping with the vm. 
     FScriptArrayHelper* {.importcpp, pure.} = object 
     FScriptMap* {.importcpp, pure.} = object #used only for interoping with the vm.
-    FScriptMapHelper* {.importcpp, pure.} = object
+    FScriptMapHelper* {.importcpp.} = object
+    FScriptMapLayout* {.importcpp.} = object
+        #keyoffset is always 0
+        valueOffset* {.importcpp:"ValueOffset".}: int32
+
+
 #LOGS here because we need them. Maybe they should leave in a separated file
 
 proc UE_LogInternal(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUELog(@)".}
@@ -175,7 +180,7 @@ proc createDefaultSubobjectNim*[T:UObject](outer:UObjectPtr, name:FName) : ptr T
 proc getName*(prop:FFieldPtr | FFieldClassPtr) : FString {. importcpp:"#->GetName()" .}
 
 proc initializeValue*(prop:FPropertyPtr, dest: pointer) {. importcpp:"#->InitializeValue(#)" .}
-
+proc copySingleValue*(prop:FPropertyPtr, dest: pointer, src: pointer) {. importcpp:"#->CopySingleValue(@)" .}
 proc getOffsetForUFunction*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffset_ForUFunction()".}
 proc initializeValueInContainer*(prop:FPropertyPtr, container:pointer) : void {. importcpp:"#->InitializeValue_InContainer(#)".}
 
@@ -256,7 +261,7 @@ proc addCppProperty*(arrProp:FArrayPropertyPtr | FSetPropertyPtr | FMapPropertyP
 
 proc getKeyProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->KeyProp)".}
 proc getValueProp*(arrProp:FMapPropertyPtr) : FPropertyPtr {.importcpp:"(#->ValueProp)".}
-
+proc getMapLayout*(arrProp:FMapPropertyPtr) : FScriptMapLayout {.importcpp:"(#->MapLayout)".}
 
 
 proc getSignatureFunction*(delProp:DelegateProp) : UFunctionPtr {.importcpp:"(#->SignatureFunction)".}
@@ -552,10 +557,10 @@ type ScriptContainer = FScriptArrayHelper | FScriptMapHelper
 proc makeScriptArrayHelper*(prop:FArrayPropertyPtr, inArray: pointer) : FScriptArrayHelper {.importcpp:"FScriptArrayHelper(#, #)", constructor .}
 proc makeScriptArrayHelperInContainer*(prop:FArrayPropertyPtr, inArray: pointer) : FScriptArrayHelper {.importcpp:"FScriptArrayHelper_InContainer(#, #)", constructor .}
 
-proc num*(helper: ScriptContainer) : int32 {.importcpp:"#.Num()".}
+proc num*(helper: ScriptContainer | FScriptMap) : int32 {.importcpp:"#.Num()".}
 
-proc addUninitializedValues*(helper : ScriptContainer , count : int32) : void {.importcpp:"#.AddValues(#)".}
-proc emptyAndAddUninitializedValues*(helper : ScriptContainer, count : int32) : void {.importcpp:"#.EmptyAndAddUninitializedValues(#)".}
+proc addUninitializedValues*(helper : FScriptArrayHelper , count : int32) : void {.importcpp:"#.AddValues(#)".}
+proc emptyAndAddUninitializedValues*(helper : FScriptArrayHelper, count : int32) : void {.importcpp:"#.EmptyAndAddUninitializedValues(#)".}
 #returns the index of the last added
 proc addValue*(helper: FScriptArrayHelper) : int32 {.importcpp:"#.AddValue()".}
 
@@ -572,3 +577,11 @@ proc getValuePtr*(helper : FScriptMapHelper, idx:int32) : pointer {.importcpp:"#
 
 proc getKeyProperty*(helper : FScriptMapHelper) : FPropertyPtr {.importcpp:"#.GetKeyProperty()".}
 proc getValueProperty*(helper : FScriptMapHelper) : FPropertyPtr {.importcpp:"#.GetValueProperty()".}
+proc addUninitializedValue*(helper : FScriptMapHelper) : void {.importcpp:"#.AddUninitializedValue()".}
+proc emptyValues*(helper : FScriptMapHelper, stack: int32 = 0) : void {.importcpp:"#.EmptyValues(#)".} 
+proc addPair*(helper : FScriptMapHelper, key, value: pointer) : void {.importcpp:"#.AddPair(@)".}
+proc addDefaultValue_Invalid_NeedsRehash*(scriptMap: FScriptMapHelper) : void {.importcpp:"#.AddDefaultValue_Invalid_NeedsRehash()" .}
+proc rehash*(scriptMap: FScriptMapHelper) : void {.importcpp:"#.Rehash()" .}
+
+proc `=copy`*(dest: var FScriptMap, source: FScriptMap) {.error.}
+proc addUninitialized*(scriptMap: FScriptMap, layout: var FScriptMapLayout) : void {.importcpp:"#.AddUninitialized(#)".}
