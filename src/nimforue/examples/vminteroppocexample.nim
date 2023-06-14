@@ -510,6 +510,10 @@ uClass AUECallMapTest of ANimTestBase:
   uprops(EditAnywhere):
     mapIntIntProp: TMap[int, int]
     mapIntFStringProp: TMap[int, FString]
+    mapIntBoolProp: TMap[int, bool]
+    mapIntStructProp: TMap[int, FStructVMTest]
+
+    mapStringIntProp: TMap[FString, int]
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToWriteAMapIntIntProp() = 
@@ -535,4 +539,39 @@ uClass AUECallMapTest of ANimTestBase:
         )
       discard uCall(callData)      
       check expected == self.mapIntFStringProp
-      
+
+    proc shouldBeAbleToWriteAMapIntBoolProp() =
+      let expected = { 1: true, 2: false}.toTable()
+      self.mapIntBoolProp = makeTMap[int, bool]()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (mapIntBoolProp: expected).toRuntimeField()                        
+        )
+      discard uCall(callData)      
+      check expected.toTMap() == self.mapIntBoolProp    
+    
+    proc shouldBeAbleToWriteAMapStructProp() =
+      let expected = { 1: FStructVMTest(x:10, y:10, z:10), 2: FStructVMTest(x:20, y:20, z:20)}.toTable()
+      self.mapIntStructProp = makeTMap[int, FStructVMTest]()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (mapIntStructProp: expected).toRuntimeField()                        
+        )
+      discard uCall(callData)      
+      check expected.toTMap() == self.mapIntStructProp
+    
+    proc shouldBeAbleToWriteAMapStringIntProp() = 
+      let expected = { f"Hola": 10, f"Mundo": 20}.toTable().toTMap()
+      self.mapStringIntProp = makeTMap[FString, int]()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (mapStringIntProp: expected.toTable()).toRuntimeField()                        
+        )
+      discard uCall(callData)      
+      check expected == self.mapStringIntProp

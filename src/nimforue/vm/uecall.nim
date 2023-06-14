@@ -21,6 +21,22 @@ proc makeUECall*(fn : UEFunc, self : UObjectPtr, value : RuntimeField) : UECall 
   result.kind = uecFunc
 
 proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField
+proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer)
+proc setStructProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer): pointer =
+  assert rtField.kind == Struct, "Only structs can be set as structs got " & $rtField.kind
+  let structProp = castField[FStructProperty](prop)
+  let scriptStruct = structProp.getScriptStruct()
+  let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
+  var structMemoryRegion = memoryBlock
+  for paramProp in structProps:
+    let name = paramProp.getName().firstToLow()
+    if name in rtField:
+      let val = rtField[name]
+      val.setProp(paramProp, structMemoryRegion)
+    else:
+      UE_Error &"Field {name} not found in struct"
+  structMemoryRegion
+
 proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   case rtField.kind
   of Int:    
@@ -35,17 +51,7 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
   of String:
     setPropertyValue(prop, memoryBlock, makeFString rtField.getStr)
   of Struct:
-    let structProp = castField[FStructProperty](prop)
-    let scriptStruct = structProp.getScriptStruct()
-    let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
-    var structMemoryRegion = memoryBlock
-    for paramProp in structProps:
-      let name = paramProp.getName().firstToLow()
-      if name in rtField:
-        let val = rtField[name]
-        val.setProp(paramProp, structMemoryRegion)
-      else:
-        UE_Error &"Field {name} not found in struct"
+    discard setStructProp(rtField, prop, memoryBlock)
   of Array:
     let arrayProp = castField[FArrayProperty](prop)
     let innerProp = arrayProp.getInnerProp()
@@ -70,8 +76,14 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
         of String:          
           var fstring = f value.stringVal
           vProp.copySingleValue(helper.getValuePtr(idx.int32), fstring.addr)
+        of Bool:
+          vProp.copySingleValue(helper.getValuePtr(idx.int32), value.boolVal.addr)
+        of Struct:           
+            let structMemoryRegion = setStructProp(value, vProp, helper.getValuePtr(idx.int32))
+            vProp.copySingleValue(helper.getValuePtr(idx.int32), structMemoryRegion)
+
         else:
-          discard
+          setProp(key, vProp, helper.getValuePtr(idx.int32))
       
 
     helper.rehash()
