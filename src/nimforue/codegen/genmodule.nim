@@ -117,7 +117,13 @@ func genUClassVMTypeDefBindings(ueType: UEtype, rule: UERule = uerNone): seq[Nim
       )
     ]
 
-func genUEnumTypeDefBinding(ueType: UEType): NimNode =
+func genUEnumTypeDefBinding(ueType: UEType, target: CodegenTarget): NimNode =
+  let pragmas = 
+    case target:
+    of ctImport, ctExport: 
+      nnkPragma.newTree(nnkExprColonExpr.newTree(ident "size", nnkCall.newTree(ident "sizeof", ident "uint8")), ident "pure")
+    of ctVM: newEmptyNode()
+
   let enumTy = ueType.fields
     .map(f => ident f.name)
     .foldl(a.add b, nnkEnumTy.newTree)
@@ -125,7 +131,7 @@ func genUEnumTypeDefBinding(ueType: UEType): NimNode =
   nnkTypeDef.newTree(
     nnkPragmaExpr.newTree(
       nnkPostFix.newTree(ident "*", ident ueType.name),
-      nnkPragma.newTree(nnkExprColonExpr.newTree(ident "size", nnkCall.newTree(ident "sizeof", ident "uint8")), ident "pure")
+      pragmas
     ),
     newEmptyNode(),
     enumTy
@@ -263,7 +269,7 @@ proc genImportCModuleDecl*(moduleDef: UEModule): NimNode =
       of uetStruct:
         typeSection.add genUStructCodegenTypeDefBinding(typedef, ctImport)
       of uetEnum:
-        typeSection.add genUEnumTypeDefBinding(typedef)
+        typeSection.add genUEnumTypeDefBinding(typedef, ctImport)
       of uetDelegate:
         typeSection.add genDelTypeDef(typeDef, uexImport)
       of uetInterface:
@@ -289,7 +295,7 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
     of uetStruct:
       typeSection.add genUStructTypeDefBinding(typedef, rules)
     of uetEnum:
-      typeSection.add genUEnumTypeDefBinding(typedef)
+      typeSection.add genUEnumTypeDefBinding(typedef, ctExport)
     of uetDelegate:
       typeSection.add genDelTypeDef(typeDef, uexExport)
     of uetInterface:
@@ -314,6 +320,8 @@ proc genVMModuleDecl*(moduleDef: UEModule): NimNode =
       typeSection.add genUClassVMTypeDefBindings(typeDef, rules)
     of uetStruct:
       typeSection.add genUStructCodegenTypeDefBinding(typedef, ctVM)
+    of uetEnum:
+      typeSection.add genUEnumTypeDefBinding(typedef, ctVM)
     else: continue
   
   result.add typeSection

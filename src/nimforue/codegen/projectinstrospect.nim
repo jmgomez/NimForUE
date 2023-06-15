@@ -139,7 +139,6 @@ func makeEnumNimType(typeName:string, typeDef:NimNode) : NimType =
 
 func makeDistinctNimType(typeName:string, typeDef:NimNode) : NimType = 
   assert typeDef[2].kind == nnkDistinctTy, "Expected nnkDistinkTy got " & $typeDef[2].kind
-
   NimType(name: typeName, kind:Distinct, originalAst: repr(nnkTypeSection.newTree(typeDef)))
 
 func makeProcNimType(typeName:string, typeDef:NimNode) : NimType = 
@@ -203,24 +202,23 @@ func getGenericTypeName(identDefs:NimNode) : seq[NimParam] =
   ]#
   let nIdents = identDefs.children.toSeq.filterIt(it.kind == nnkIdent).len
   let nEmpty = identDefs.children.toSeq.filterIt(it.kind == nnkEmpty).len
-  let allIdentParams = nEmpty == 2  or nIdents > 3
-  
-  func getName(node:NimNode) : string = 
+  let allIdentParams = nEmpty == 2  or nIdents > 3 
+  func getName(node:NimNode) : string =    
     case node.kind:
     of nnkEmpty, nnkEnumTy: #the enum is because TEnumAsByt[T : enum]:
       ""
-    of nnkIdent:
+    of nnkIdent:      
       node.strVal
     of nnkPrefix:  #remove out/in for now
       node[^1].strVal
     else:
       error &"Error in getGenericTypeName got {node.kind}"
       ""
-  if not allIdentParams:
+  if not allIdentParams:    
     result = @[NimParam(name: getName(identDefs[0]), kind: OnlyName, strType:getName(identDefs[1]))]
   result = identDefs
     .children.toSeq
-    .filterIt(it.kind == nnkIdent)
+    .filterIt(it.kind in {nnkIdent, nnkPrefix})
     .mapIt(NimParam(kind: OnlyType, strType:getName(it)))
 
   
@@ -387,6 +385,7 @@ proc paramToIdentDefs(nimParam:NimParam) : NimNode =
 func genGenericTypeParams(nimType:NimType) : NimNode =
   if not nimType.typeParams.any():
     return newEmptyNode()
+  
 
   func genGenericType(typ:string) : NimNode = 
     if typ == "": newEmptyNode()
@@ -574,21 +573,16 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   engineTypesModule.deps = @[]
   genVMModuleFile(dir, engineTypesModule, modules)
 
-proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] = 
-  safe:
-    let nimCode = readFile(entryPoint)
-    let entryPointFileTree = parseStmt(nimCode)
-    
-    let nimRelativeFilePaths = 
-      entryPoint &
-      getAllImportsAsRelativePathsFromFileTree(entryPointFileTree)
-      .mapIt(it.absolutePath(dir) & ".nim")    
-    
-    let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
-
-    let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
-
-    return modules
+proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =   
+  let nimCode = readFile(entryPoint)
+  let entryPointFileTree = parseStmt(nimCode)  
+  let nimRelativeFilePaths = 
+    entryPoint &
+    getAllImportsAsRelativePathsFromFileTree(entryPointFileTree)
+    .mapIt(it.absolutePath(dir) & ".nim")      
+  let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
+  let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
+  return modules
 
 #todo cache to a file
 when not defined(game) or defined(vmhost):
