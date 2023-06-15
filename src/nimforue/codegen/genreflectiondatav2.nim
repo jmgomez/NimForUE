@@ -392,6 +392,7 @@ const project* = $1
 
     createDir(config.bindingsDir / "imported" / moduleFolder)
     createDir(config.bindingsDir / "exported" / moduleFolder)
+    createDir(config.bindingsDir / "vm" / moduleFolder)
     
     createDir(PluginDir / NimHeadersModulesDir / moduleFolder)
 

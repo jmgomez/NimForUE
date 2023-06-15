@@ -631,7 +631,6 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
             newEmptyNode()))
         .foldl(a.add b, nnkRecList.newTree)
     of uexExport: 
-      debugEcho &"Exporting type {typeDef.name} is in PCH {typeDef.isInPCH}"
       if typeDef.isInPCH:
          typeDef.fields
           .map(prop => 

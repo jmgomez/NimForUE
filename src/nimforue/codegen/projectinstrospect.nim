@@ -443,7 +443,7 @@ func nimObjectTypeToNimNode(nimType:NimType) : NimNode =
   let name = ident nimType.name
   let params = nnkRecList.newTree(@[newEmptyNode(), newEmptyNode()] & nimtype.params.map(paramToIdentDefs))
   let typeParams = genGenericTypeParams(nimType)  
-  let baseType = if nimType.isInheritable: "RootObj" else: nimType.parent #Would be better to just mark the type as inheritable?
+  let baseType = if nimType.isInheritable and nimType.parent == ""`: "RootObj" else: nimType.parent #Would be better to just mark the type as inheritable?
   let parentNode = if baseType == "": newEmptyNode() else: nnkOfInherit.newTree(ident baseType)
   result = 
    nnkTypeDef.newTree(
@@ -545,7 +545,12 @@ proc genVMModuleFile(dir:string, module: NimModule, modules:seq[NimModule]) =
   let moduleFile = dir / module.name & ".nim"
   discard staticExec("mkdir -p " & parentDir(moduleFile)) #TODO extract this and make it work agnostic of os and also make a pr so we dont have to deal with it 
   let moduleVMAst = genModuleImpl(module, modules)
-  writeFile(moduleFile, moduleVMAst.repr)
+  let moduleTemplate = &"""
+import std/[tables]
+
+{moduleVMAst.repr}
+"""   
+  writeFile(moduleFile, moduleTemplate)
 
 proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   let typesToReplace = { 
