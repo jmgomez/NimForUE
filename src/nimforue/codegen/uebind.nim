@@ -489,7 +489,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         let outputHeader = newLit OutPutHeader
         let typeSection = genAst(name = ident typeDef.name, ptrName, parent, outputHeader):
                     type 
-                      name* {.inject, exportc, codegenDecl:"placeholder".} = object of parent #TODO OF BASE CLASS 
+                      name* {.inject, exportc, inheritable, codegenDecl:"placeholder".} = object of parent #TODO OF BASE CLASS 
                       ptrName* {.inject.} = ptr name
         #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
         typeSection[0][0][^1][^1][^1] = newLit getClassTemplate(typeDef)  

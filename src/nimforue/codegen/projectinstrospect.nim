@@ -551,6 +551,7 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   let typesToReplace = { 
     "FString": "type FString* = string", 
     "TArray": "type TArray*[T] = seq[T]", 
+    "TMap": "type TMap*[K, V] = Table[K, V]", 
     # "UObject": "type UObject* = object of RootObj",
     # "FVector": "type FVector* = object of RootObj",
     # "FField": "type FField* = object of RootObj",

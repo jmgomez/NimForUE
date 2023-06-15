@@ -312,13 +312,13 @@ proc emitUStruct(typeDef:UEType) : NimNode =
 
 import ../../buildscripts/nimforueconfig
 
-proc emitUClass(typeDef:UEType) : NimNode =
+proc emitUClass(typeDef:UEType) : (NimNode, NimNode) =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
                 addEmitterInfoForClass[name](typeDefAsNode)
         
-    result = nnkStmtList.newTree [typeDecl, typeEmitter]
+    result = (typeDecl, typeEmitter)
 
 proc emitUDelegate(typedef:UEType) : NimNode = 
     let typeDecl = genTypeDecl(typedef)
@@ -958,9 +958,7 @@ func processVirtual(procDef: NimNode, parentName: string) : NimNode =
         result.body.insert 0, selfNoConst
         
 
-
-
-macro uClass*(name:untyped, body : untyped) : untyped = 
+proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)    
     let ueProps = getUPropsAsFieldsForType(body, className)
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
@@ -968,29 +966,54 @@ macro uClass*(name:untyped, body : untyped) : untyped =
     ueType.interfaces = interfaces
     #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
     ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
-    var uClassNode = emitUClass(ueType)
-
+    var (typeNode, addEmitterProc) = emitUClass(ueType)
+    var procNodes = nnkStmtList.newTree(addEmitterProc)
     #returns empty if there is no block defined
     let defaults = genDefaults(body)
     let declaredConstructor = genDeclaredConstructor(body, className)
     if declaredConstructor.isSome():
-        uClassNode.add declaredConstructor.get()
+        procNodes.add declaredConstructor.get()
     elif doesClassNeedsConstructor(className) or defaults.isSome():
         let defaultConstructor = genConstructorForClass(body, className, defaults.get(newEmptyNode()))
-        uClassNode.add defaultConstructor
+        procNodes.add defaultConstructor
 
     let nimProcs = body.children.toSeq
                     .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor"])
                     .mapIt(it.addSelfToProc(className).processVirtual(parent))
+    
+    var fns = genUFuncsForUClass(body, className, nimProcs)
+    fns.insert(0, procNodes)
+    result =  (typeNode, fns)
+    
 
-        
-    let fns = genUFuncsForUClass(body, className, nimProcs)
-    result =  nnkStmtList.newTree(@[uClassNode] & fns)
-    # if "AActorPOCVMTest" == className:
-    #     echo repr result
+macro uClass*(name:untyped, body : untyped) : untyped = 
+    let (uClassNode, fns) = uClassImpl(name, body)
+    nnkStmtList.newTree(@[uClassNode] & fns)
+
+macro uSection*(body: untyped): untyped = 
+    let uclasses = 
+        body.filterIt(it.kind == nnkCommand) 
+            .mapIt(uClassImpl(it[1], it[^1]))
+    var typs = newSeq[NimNode]()
+    var fns = newSeq[NimNode]()
+    for uclass in uclasses:
+        let (uClassNode, fns) = uclass
+        typs.add uClassNode
+        fns.add fns
+    #TODO allow uStructs in sections
+    #set all types in the same typesection
+    var typSection = nnkTypeSection.newTree()
+    for typ in typs:
+        let typDefs = typ[0].children.toSeq()
+        typSection.add typDefs
+    # let codeReordering = nnkStmtList.newTree nnkPragma.newTree(nnkExprColonExpr.newTree(ident "experimental", newLit "codereordering"))
+    result = nnkStmtList.newTree(@[typSection] & fns)
+
+
 macro uForwardDecl*(name : untyped ) : untyped = 
     let (className, parentName, interfaces) = getTypeNodeFromUClassName(name)
     var ueType = UEType(name:className, kind:uetClass, parent:parentName, interfaces:interfaces)
     ueType.interfaces = interfaces
     ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
-    result = emitUClass(ueType)
+    let (typNode, addEmitterProc) = emitUClass(ueType)
+    result = nnkStmtList.newTree(typNode, addEmitterProc)

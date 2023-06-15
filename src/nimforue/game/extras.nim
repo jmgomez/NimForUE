@@ -59,7 +59,7 @@ when WithEditor:
 
 
 when WithEditor:
-  import ../buildscripts/buildscripts
+  import ../../buildscripts/buildscripts
   import std/[dynlib, os, sequtils, sugar]
   # import unreal/editor/editor
 
