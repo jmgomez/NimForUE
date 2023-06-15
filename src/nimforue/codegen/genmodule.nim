@@ -8,6 +8,11 @@ import ../codegen/[nuemacrocache, models, modulerules, projectinstrospect]
 import ../../buildscripts/nimforueconfig
 import uebind
 
+type CodegenTarget = enum
+  ctImport
+  ctExport
+  ctVM
+
 func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq[NimNode] =
   let pragmas = 
     if ueType.isInPCH:
@@ -127,32 +132,45 @@ func genUEnumTypeDefBinding(ueType: UEType): NimNode =
   )
 
 
-func genUStructImportCTypeDefBinding(ueType: UEType): NimNode =
+func genUStructCodegenTypeDefBinding(ueType: UEType, target: CodegenTarget): NimNode =
+  #TODO move export here and separate it enterely from the dsl
+
   let pragmas = 
-    (if ueType.isInPCH:     
-      nnkPragmaExpr.newTree([
-      nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
-      nnkPragma.newTree(
+    case target:
+    of ctImport:
+      (if ueType.isInPCH:     
+        nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+        nnkPragma.newTree(
+            ident "inject",
+            ident "inheritable",
+            ident "pure",
+            nnkPragma.newTree(ident "importcpp", ident "inheritable", ident "pure")
+          )
+        ])
+      else:
+        nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+        nnkPragma.newTree(
           ident "inject",
           ident "inheritable",
           ident "pure",
-          nnkPragma.newTree(ident "importcpp", ident "inheritable", ident "pure")
+          nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
         )
-      ])
-    else:
-      nnkPragmaExpr.newTree([
-      nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
-      nnkPragma.newTree(
-        ident "inject",
-        ident "inheritable",
-        ident "pure",
-        nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
+        ])
       )
-      ])
-    )
+    of ctExport: newEmptyNode() #TODO
+    of ctVM:
+        nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+        nnkPragma.newTree(       
+          ident "inheritable",          
+        )
+        ])
+      
   var recList = ueType.fields
     .map(prop => nnkIdentDefs.newTree(
-        getFieldIdentWithPCH(ueType, prop),
+        getFieldIdentWithPCH(ueType, prop, target == ctImport),
         prop.getTypeNodeFromUProp(isVarContext=false),
         newEmptyNode()
       )
@@ -164,6 +182,7 @@ func genUStructImportCTypeDefBinding(ueType: UEType): NimNode =
       newEmptyNode(), newEmptyNode(), recList
     )
   )
+
 
 
 func genImportCProp(typeDef: UEType, prop: UEField): NimNode =
@@ -242,7 +261,7 @@ proc genImportCModuleDecl*(moduleDef: UEModule): NimNode =
       of uetClass:
         typeSection.add genUClassImportTypeDefBinding(typeDef, rules)
       of uetStruct:
-        typeSection.add genUStructImportCTypeDefBinding(typedef)
+        typeSection.add genUStructCodegenTypeDefBinding(typedef, ctImport)
       of uetEnum:
         typeSection.add genUEnumTypeDefBinding(typedef)
       of uetDelegate:
@@ -293,14 +312,13 @@ proc genVMModuleDecl*(moduleDef: UEModule): NimNode =
     case typeDef.kind:
     of uetClass:
       typeSection.add genUClassVMTypeDefBindings(typeDef, rules)
+    of uetStruct:
+      typeSection.add genUStructCodegenTypeDefBinding(typedef, ctVM)
     else: continue
   
   result.add typeSection
 
-type CodegenTarget = enum
-  ctImport
-  ctExport
-  ctVM
+
 
 proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, moduleNode: NimNode, target:CodegenTarget) =
   proc getImport(moduleName: string): string =
@@ -358,10 +376,11 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
       else: moduleFolder / actualModule        
     let exportBindingsPath = bindingsDir / "exported" / path & ".nim"
     let importBindingsPath = bindingsDir / "imported" / path & ".nim"
+    let vmBindingsPath = bindingsDir / "vm" / path & ".nim"
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
     if prevModHash == module.hash and uerIgnoreHash notin module.rules:
       echo "Skipping module: " & module.name & " as it has not changed"
-      continue
+      # continue
     let preludeRelative =  if isOneFilePkg: "../" else: "../../"            
     let moduleImportStrTemplate = &"""
 #hash:{module.hash}

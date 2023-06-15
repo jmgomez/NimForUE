@@ -3,6 +3,28 @@ import std/[options, strutils, sequtils, sugar, tables, json, jsonutils]
 
 type Criteria[T] = proc (t:T) : bool {.noSideEffect.}
 const PathSeparator* = when defined(windows): "\\" else: "/"
+
+
+#small macros/templates
+template measureTime*(name: static string, body: untyped) =
+  let starts = times.now()
+  body
+  let ends = (times.now() - starts)
+  let msg = name & " took " & $ends & "  seconds"
+  when defined(UE_Log):
+    UE_Log msg
+  elif defined(log):
+    log msg
+  else:
+    echo msg  
+
+template toVar*[T](self : ptr T) : var T = cast[var T](self)
+template toVar*[T](self : T) : var T = toVar(self.unsafePtr())
+
+template safe*(body:untyped) = 
+  {.cast(noSideEffect).}:
+    body
+    
 #seq
 
 func isEmpty*[T](s: seq[T]): bool = s.len == 0
@@ -62,9 +84,10 @@ func skip*[T](xs: seq[T], n: int): seq[T] =
   else: xs[n..^1]
 
 func tap*[T](xs: seq[T], fn: (x: T)->void): seq[T] =
-  for x in xs:
-    fn(x)
-  xs
+  safe:
+    for x in xs:
+      fn(x)
+    xs
 
 proc forEach*[T](xs: seq[T], fn: (x: T)->void): void =
   for x in xs:
@@ -228,24 +251,3 @@ proc removeConst*[T](p:ptr T) : ptr T {.importcpp: "const_cast<'0>(#)".}
 proc tryGetJson*[T](json:JsonNode, key:string) : Option[T] =
   if json.hasKey(key): some(json[key].jsonTo(T))
   else: none[T]()
-
-
-#small macros/templates
-template measureTime*(name: static string, body: untyped) =
-  let starts = times.now()
-  body
-  let ends = (times.now() - starts)
-  let msg = name & " took " & $ends & "  seconds"
-  when defined(UE_Log):
-    UE_Log msg
-  elif defined(log):
-    log msg
-  else:
-    echo msg  
-
-template toVar*[T](self : ptr T) : var T = cast[var T](self)
-template toVar*[T](self : T) : var T = toVar(self.unsafePtr())
-
-template safe*(body:untyped) = 
-  {.cast(noSideEffect).}:
-    body

@@ -443,7 +443,7 @@ func nimObjectTypeToNimNode(nimType:NimType) : NimNode =
   let name = ident nimType.name
   let params = nnkRecList.newTree(@[newEmptyNode(), newEmptyNode()] & nimtype.params.map(paramToIdentDefs))
   let typeParams = genGenericTypeParams(nimType)  
-  let baseType = if nimType.isInheritable and nimType.parent == ""`: "RootObj" else: nimType.parent #Would be better to just mark the type as inheritable?
+  let baseType = if nimType.isInheritable and nimType.parent == "": "RootObj" else: nimType.parent #Would be better to just mark the type as inheritable?
   let parentNode = if baseType == "": newEmptyNode() else: nnkOfInherit.newTree(ident baseType)
   result = 
    nnkTypeDef.newTree(
@@ -575,18 +575,20 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   genVMModuleFile(dir, engineTypesModule, modules)
 
 proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] = 
-  let nimCode = readFile(entryPoint)
-  let entryPointFileTree = parseStmt(nimCode)
-  
-  let nimRelativeFilePaths = 
-    entryPoint &
-    getAllImportsAsRelativePathsFromFileTree(entryPointFileTree)
-    .mapIt(it.absolutePath(dir) & ".nim")
-  let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
+  safe:
+    let nimCode = readFile(entryPoint)
+    let entryPointFileTree = parseStmt(nimCode)
+    
+    let nimRelativeFilePaths = 
+      entryPoint &
+      getAllImportsAsRelativePathsFromFileTree(entryPointFileTree)
+      .mapIt(it.absolutePath(dir) & ".nim")    
+    
+    let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
 
-  let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
+    let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
 
-  return modules
+    return modules
 
 #todo cache to a file
 when not defined(game) or defined(vmhost):

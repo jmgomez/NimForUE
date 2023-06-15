@@ -578,9 +578,9 @@ func getFieldIdent*(prop:UEField) : NimNode =
   let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()
   identPublic fieldName
 
-func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField) : NimNode =  
+func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField, isImportCpp: bool = false) : NimNode =  
   let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
-  if typeDef.isInPCH:           
+  if typeDef.isInPCH and isImportCpp:           
     nnkPragmaExpr.newTree(
       identPublic fieldName,
       nnkPragma.newTree(
