@@ -1,6 +1,10 @@
-import ../unreal/coreuobject/[uobject, nametypes, coreuobject]
-import ../unreal/core/containers/[unrealstring, map, array]
-import ../unreal/core/math/vector
+when defined(nuevm):
+    import vmtypes
+else:
+    import ../unreal/coreuobject/[uobject, nametypes, coreuobject]
+    import ../unreal/core/containers/[unrealstring, map, array]
+    import ../unreal/core/math/vector
+
 import ../codegen/models
 
 import std/[options, strutils, tables, sequtils, sugar, strscans]
@@ -58,19 +62,18 @@ proc extractKeyValueFromMapProp*(str:string) : seq[string] =
         @[appendCloseGenIfOpen(key), appendCloseGenIfOpen(value)]
     else: @[]
 
-
-
 proc removeLastLettersIfPtr*(str:string) : string = 
     if str.endsWith("Ptr"): str.substr(0, str.len()-4) else: str
 
 proc addPtrToUObjectIfNotPresentAlready*(str:string) : string = 
     if str.endsWith("Ptr"): str else: str & "Ptr"
 
-func tryUECast*[T : UObject](obj:UObjectPtr) : Option[ptr T] = 
-    if obj.isNil: none[ptr T]()
-    else: someNil(ueCast[T](obj))
+when not defined(nuevm): #TODO expose this somehow?
+    func tryUECast*[T : UObject](obj:UObjectPtr) : Option[ptr T] = 
+        if obj.isNil: none[ptr T]()
+        else: someNil(ueCast[T](obj))
 
-func tryCastField*[T : FProperty](prop:FPropertyPtr) : Option[ptr T] = someNil castField[T](prop)
+    func tryCastField*[T : FProperty](prop:FPropertyPtr) : Option[ptr T] = someNil castField[T](prop)
     
 func ueMetaToNueMeta*(ueMeta : TMap[FName, FString]) : seq[UEMetadata] = 
     var meta = newSeq[UEMetadata]()
