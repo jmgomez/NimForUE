@@ -1,7 +1,7 @@
 
 import std/[json, jsonutils, typetraits, strutils, tables, options]
 import runtimefield
-import ../unreal/bindings/vm/enginetypes
+import ../unreal/bindings/vm/vmtypes
 
 
 proc log*(s:string) : void = discard #overrided

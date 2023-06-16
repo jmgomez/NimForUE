@@ -1,10 +1,10 @@
 when defined codegen:
     type FString = string
-else:
-    include ../unreal/definitions
-
+# else:
+    
+    # include ../unreal/definitions
+import std/[strformat,json, strutils, options, sugar, sequtils, tables]
 import ../utils/utils
-import std/[times,strformat,json, strutils, options, sugar, sequtils, tables]
 
 import ../codegen/[makestrproc]
 import ../codegen/modulerules
@@ -160,12 +160,13 @@ func `$`*(a : EPropertyFlagsVal) : string {.borrow.}
 func `$`*(a : EFunctionFlagsVal) : string {.borrow.}
 func `$`*(a : EStructFlagsVal) : string {.borrow.}
 
-makeStrProc(UEMetadata)
-makeStrProc(UEField)
-makeStrProc(UEType)
-makeStrProc(UEImportRule)
-makeStrProc(UEModule)
-makeStrProc(UEProject)
+when not defined(nuevm): #TODO this doesnt belong here
+    makeStrProc(UEMetadata)
+    makeStrProc(UEField)
+    makeStrProc(UEType)
+    makeStrProc(UEImportRule)
+    makeStrProc(UEModule)
+    makeStrProc(UEProject)
 
 
 
@@ -200,17 +201,6 @@ func getAllMatchingRulesForType*(module:UEModule, ueType:UEType) : UERule =
     if rules.any(): rules[0]#.foldl(a or b, uerNone)
     else: uerNone
 
-
-
-#allocates a newUEType based on an UEType value.
-#the allocated version will be stored in the NimBase class/struct in UE so we can 
-#check what changes have been made to the type.
-proc newUETypeWith*(ueType:UEType) : ptr UEType = 
-    result = create(UEType)
-    if result.isNil():
-        raise newException(Exception, &"Failed to allocate UEType {ueType.name}")
-    result[] = ueType
-    
 proc `[]`*(metadata:seq[UEMetadata], key:string) : Option[string] = 
     metadata.first(x=>x.name==key).map(x=>x.value)
 
@@ -232,15 +222,15 @@ func shouldBeLoadedEarly*(uet:UEType) : bool = uet.hasUEMetadata(EarlyLoadMetada
 func getAllParametersWithDefaultValuesFromFunc*(fnField:UEField) : seq[UEField] =
     assert fnField.kind == uefFunction
     let names = 
-      fnField
-        .metadata
-        .filterIt(it.name.contains(CPP_Default_MetadataKeyPrefix))
-        .mapIt(it.name.replace(CPP_Default_MetadataKeyPrefix, "").firstToLow())
+        fnField
+            .metadata
+            .filterIt(it.name.contains(CPP_Default_MetadataKeyPrefix))
+            .mapIt(it.name.replace(CPP_Default_MetadataKeyPrefix, "").firstToLow())
     fnField
-      .signature
-      .filterIt(it.name in names)
+    .signature
+    .filterIt(it.name in names)
 
- 
+
 #The name is in nim format. It's transformed here.
 func getMetadataValueFromFunc*[T](fnField : UEField, name:string) : T =
     assert fnField.kind == uefFunction
@@ -272,9 +262,9 @@ func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropTy
 func shouldBeReturnedAsVar*(field:UEField) : bool =
     let typesReturnedAsVar = ["TMap", "TArray"]
     result = field.kind == uefProp and typesReturnedAsVar.any(tp => tp in field.uePropType) or
-               field.isMulticastDelegate() or 
-               field.isDelegate() or
-               field.uePropType.startsWith("F") and field.uePropType != "FString" #FStruct always starts with F. We need to enforce it in our types too.
+            field.isMulticastDelegate() or 
+            field.isDelegate() or
+            field.uePropType.startsWith("F") and field.uePropType != "FString" #FStruct always starts with F. We need to enforce it in our types too.
 
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
@@ -301,7 +291,7 @@ func compareUEPropTypes(a, b:string) : bool =
     if b in typeMap:
         b = typeMap[b]
     result = a == b
-  
+
 
 func `==`*(a, b : UEField) : bool = 
     result = a.name == b.name and

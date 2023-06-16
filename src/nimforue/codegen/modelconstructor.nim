@@ -1,11 +1,9 @@
 ##This file is temp until we move the uobjectflags into models
 ##There is a cycle between uemeta (were it initialized lived) and uebind via nimforue.nim. 
 ##The solution is to allow uobjectflags in models but then we need to get rid of 
-import ../unreal/coreuobject/uobjectflags
+import enumops
 import models
-import std/[sugar, tables, options, sequtils]
 import ../codegen/modulerules
-
 
 
 

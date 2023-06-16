@@ -247,7 +247,7 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nim") : 
     parentDir(currentSourcePath),
    
     ] & searchPaths,
-    defines = @[("nimscript", "true"), ("nuevm", "true")],    
+    defines = @[("nimscript", "true"), ("nimvm", "true"), ("nuevm", "true")],    
     )
   interpreter.registerErrorHook(onInterpreterError)
   interpreter.implementBaseFunctions()

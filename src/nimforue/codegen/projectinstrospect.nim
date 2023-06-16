@@ -541,7 +541,7 @@ proc genModuleImpl(nimModule :NimModule, allModules:seq[NimModule]) : NimNode =
 
 proc genVMModuleFile(dir:string, module: NimModule, modules:seq[NimModule]) =
   # let moduleFile = dir / module.fullPath.split("src")[1] # for modDep in engineTypeDeps:
-  let moduleFile = dir / module.name & ".nim"
+  let moduleFile = dir / "vmtypes.nim"
   discard staticExec("mkdir -p " & parentDir(moduleFile)) #TODO extract this and make it work agnostic of os and also make a pr so we dont have to deal with it 
   let moduleVMAst = genModuleImpl(module, modules)
   let moduleTemplate = &"""

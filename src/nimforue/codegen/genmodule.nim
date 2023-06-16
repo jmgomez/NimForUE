@@ -7,6 +7,7 @@ import ../unreal/coreuobject/[uobjectflags]
 import ../codegen/[nuemacrocache, models, modulerules, projectinstrospect]
 import ../../buildscripts/nimforueconfig
 import uebind
+import ../vm/vmmacros
 
 type CodegenTarget = enum
   ctImport
@@ -403,7 +404,7 @@ include {preludeRelative}../prelude
 proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard    
 """
 
-    let vmEngineTypes = if isOneFilePkg: "enginetypes" else: "../enginetypes"
+    let vmEngineTypes = if isOneFilePkg: "vmtypes" else: "../vmtypes"
     let moduleVMStrTemplate = &"""
 import {vmEngineTypes}
 """    
