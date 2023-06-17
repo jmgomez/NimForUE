@@ -1,49 +1,48 @@
-import std/[json, jsonutils, macros, genasts, options, sequtils, strutils, strformat]
+import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat]
 import exposed 
 import runtimefield
-import ../utils/utils
+import ../utils/[utils, ueutils]
+import ../codegen/[models, modelconstructor, uebindcore]
 
-
-proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode = 
-  let argsWithFirstType =
-      fn.params
-      .filterIt(it.kind == nnkIdentDefs)
-  
-  let isStatic = clsName!=""  
-  let firstParam = if isStatic: newEmptyNode() else: argsWithFirstType[0][0]
+#TODO change fn with UEFunc so I can pass it directly from the bindings. 
+proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : NimNode = 
+  assert fn.kind == uefFunction
+  let isStatic = selfParam.isNone
+  let clsName = fn.typeName   
   let selfAssign = 
     if isStatic: newEmptyNode() 
     else: 
-      genAst(firstParam):
+      genAst(firstParam = ident selfParam.get.name):
         call.self = cast[int](firstParam)
+  
+  let returnParam = fn.signature.first(isReturnParam).map(x=>x.uePropType).get("void")
 
-  let clsName = 
-    if isStatic: clsName
-    else: argsWithFirstType[0][1].strVal().replace("Ptr", "")
+  let returnType {.inject.} = ident returnParam
+  let returnTypeLit {.inject.} = newLit returnParam
 
-  let returnTypeLit {.inject.} = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
-  let returnType {.inject.} = fn.params[0]
-
-  let uFunc = UEFunc(name:fn.name.strVal(), className:clsName)
-  # var funcData = newLit uFunc
+  let uFunc = UEFunc(name: fn.name, className:clsName)
   let paramsAsExpr = 
-      argsWithFirstType
-      .mapIt(it[0].strVal)
-      .mapIt(nnkExprColonExpr.newTree(ident it, ident it)) #(arg: arg, arg2: arg2, etc.)                     
+      fn.signature      
+        .mapIt(it.name)
+        .mapIt(nnkExprColonExpr.newTree(ident it, ident it)) #(arg: arg, arg2: arg2, etc.)
+                 
   let rtFieldVal = 
     case kind:
       of uecFunc:
         nnkTupleConstr.newTree(paramsAsExpr)
-      of uecGetProp:
-        nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
-          fn.name,
-          nnkCall.newTree(ident "default", returnType)
-        ))
-      of uecSetProp:
-        nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
-          fn.name,
-          argsWithFirstType[1][0] #val
-        ))
+      else:
+        #TODO 
+        newEmptyNode()
+      # of uecGetProp:
+      #   nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
+      #     fn.name,
+      #     nnkCall.newTree(ident "default", returnType)
+      #   ))
+      # of uecSetProp:
+      #   nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
+      #     fn.name,
+      #     argsWithFirstType[1][0] #val
+      #   ))
   let call = 
    case kind:
     of uecFunc:
@@ -55,9 +54,9 @@ proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode =
       UECall(kind: kind, clsName: clsName)    
   let fnName = 
     case kind:
-    of uecFunc, uecgetProp: fn.name
+    of uecFunc, uecgetProp: ident fn.name
     else: 
-      genAst(fnName=fn.name):
+      genAst(fnName=ident fn.name):
         `fnName=`
         
 
@@ -68,20 +67,33 @@ proc ueBindImpl*(clsName : string, fn: NimNode, kind: UECallKind) : NimNode =
         call.value = rtFieldVal.toRuntimeField()
         selfAssign
         let returnVal {.used, inject.} = uCall(call) #check return val
-        when returnTypeLit != "void": #TODO simplify this
+        when returnTypeLit != "void": #TODO simplify this. For instance, doesReturn macro above
           when returnTypeLit.endsWith("Ptr"):
             return castIntToPtr returnType(returnVal.get.runtimeFieldTo(int))
           else:
             return returnVal.get.runtimeFieldTo(returnType)
-          
-  result.params = fn.params
-  # log repr result
+  result.params = genFormalParamsInFunctionSignature(fn.getFakeUETypeFromFunc(), fn)
+  
+# macro uegetter*(getter:untyped): untyped = ueBindImpl("", getter, uecGetProp) 
+# macro uesetter*(setter:untyped): untyped = ueBindImpl("", setter, uecSetProp) 
 
-macro uegetter*(getter:untyped): untyped = ueBindImpl("", getter, uecGetProp) 
-macro uesetter*(setter:untyped): untyped = ueBindImpl("", setter, uecSetProp) 
-
-macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn, uecFunc)
-macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn, uecFunc)
+macro uebind*(fn:untyped) : untyped = 
+  let clsName = 
+    if fn.params.len > 1:
+      fn.params.filterIt(it.kind == nnkIdentDefs)[0][1].strVal().removeLastLettersIfPtr()
+    else: 
+      ""
+  let clsFieldMb = 
+    if clsName!="": some makeFieldAsUProp("self", clsName & "Ptr", clsName) 
+    else: none[UEField]()
+  
+  var (ufunc, selfParam) = ufuncFieldFromNimNode(fn, clsFieldMb, clsName)  
+  ufunc.signature = ufunc.signature[1..^1] #Remove the first arg, which is the self param
+  result = ueBindImpl(ufunc, some selfParam, uecFunc)
+  log "================================================================"
+  log repr result
+  
+# macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn, uecFunc)
 
 #Move into utils
 proc removeLastLettersIfPtr*(str:string) : string = 
@@ -141,8 +153,9 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
           let returnVal {.inject.} : returnType = fnBody
           returnVal.toRuntimeField()
 
-  let bindFn = ueBindImpl(clsName, fn, uecFunc)
-  result = nnkStmtList.newTree(bindFn, vmFn)
+  # let bindFn = ueBindImpl(clsName, fn, uecFunc)
+  # result = nnkStmtList.newTree(bindFn, vmFn)
+  result = newEmptyNode()
   # log repr result      
 
 macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn)

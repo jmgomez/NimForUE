@@ -159,6 +159,8 @@ type
         FUNC_Const        = 0x40000000,  # function can be called from blueprint code, and only reads state (never writes state)
         FUNC_NetValidate    = 0x80000000,  # function must supply a _Validate implementation
         FUNC_AllFlags    = 0xFFFFFFFF
+        EFunctionFlags_Expand = int.high #this is just to being able to operate them in nim
+
     
 
 
@@ -239,6 +241,7 @@ type EClassFlags* {.importflag, size:sizeof(uint32).} = enum #TODO Test sizeof i
         CLASS_ConfigDoNotCheckDefaults = 0x40000000,
         #* Class has been consigned to oblivion as part of a blueprint recompile, and a newer version currently exists. */
         CLASS_NewerVersionExists  = 0x80000000
+        EClassFlags_Expand = int.high #this is just to being able to operate with them in nim
 
 type EClassCastFlags* {.importflag, size:sizeof(uint64).} = enum #Dont think we will ever need the values imported
         CASTCLASS_None = 0x0000000000000000
@@ -396,19 +399,13 @@ genEnumOperators(EFieldIterationFlags, uint8, false)
   
 
 
-
-
+#TODO move this to uebind core
 const CLASS_Inherit* = (CLASS_Transient | CLASS_Optional | CLASS_DefaultConfig | CLASS_Config | CLASS_PerObjectConfig | CLASS_ConfigDoNotCheckDefaults | CLASS_NotPlaceable | CLASS_Const | CLASS_HasInstancedReference | CLASS_Deprecated | CLASS_DefaultToInstanced | CLASS_GlobalUserConfig | CLASS_ProjectUserConfig | CLASS_NeedsDeferredDependencyLoading)
 const CLASS_ScriptInherit* = CLASS_Inherit | CLASS_EditInlineNew | CLASS_CollapseCategories 
-
-
 # #* Struct flags that are automatically inherited */
 const STRUCT_Inherit        = STRUCT_HasInstancedReference | STRUCT_Atomic
-
 # #* Flags that are always computed, never loaded or done with code generation */
 const STRUCT_ComputedFlags    = STRUCT_NetDeltaSerializeNative | STRUCT_NetSerializeNative | STRUCT_SerializeNative | STRUCT_PostSerializeNative | STRUCT_CopyNative | STRUCT_IsPlainOldData | STRUCT_NoDestructor | STRUCT_ZeroConstructor | STRUCT_IdenticalNative | STRUCT_AddStructReferencedObjects | STRUCT_ExportTextItemNative | STRUCT_ImportTextItemNative | STRUCT_SerializeFromMismatchedTag | STRUCT_PostScriptConstruct | STRUCT_NetSharedSerialization
-
-
 const FUNC_FuncInherit*       = (FUNC_Exec | FUNC_Event | FUNC_BlueprintCallable | FUNC_BlueprintEvent | FUNC_BlueprintAuthorityOnly | FUNC_BlueprintCosmetic | FUNC_Const)
 const FUNC_FuncOverrideMatch* = (FUNC_Exec | FUNC_Final | FUNC_Static | FUNC_Public | FUNC_Protected | FUNC_Private)
 const FUNC_NetFuncFlags*      = (FUNC_Net | FUNC_NetReliable | FUNC_NetServer | FUNC_NetClient | FUNC_NetMulticast)

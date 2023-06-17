@@ -132,7 +132,11 @@ func makeEnumNimType(typeName:string, typeDef:NimNode) : NimType =
     of nnkIdent:
       NimEnumField(name: field.strVal)
     of nnkEnumFieldDef:
-      let val = if field[1].kind == nnkIntLit: field[1].intVal else: -1
+      let val = 
+        case field[1].kind:
+        of nnkIntLit: field[1].intVal
+        of nnkDotExpr: int.high
+        else: -1
       NimEnumField(name: field[0].strVal, value: val)
     else:
       error &"Error got {field.kind} inside an enum"

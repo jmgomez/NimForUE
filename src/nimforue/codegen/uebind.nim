@@ -234,7 +234,7 @@ func getReturnProp*(funField:UEField) : Option[UEField] =  funField.signature.fi
 func doesReturn*(funField:UEField) : bool = funField.getReturnProp().isSome()
 
 
-func genFormalParamsInFunctionSignature(typeDef : UEType, funField:UEField, firstParamName:string) : NimNode = #returns (obj:UObjectPr, param:Fstring..) : FString 
+func genFormalParamsInFunctionSignature*(typeDef : UEType, funField:UEField, firstParamName:string) : NimNode = #returns (obj:UObjectPr, param:Fstring..) : FString 
 #notice the first part has to be introduced. see the final part of genFunc
   let ptrName = ident typeDef.name & (if typeDef.kind == uetDelegate: "" else: "Ptr") #Delegate dont use pointers
 
