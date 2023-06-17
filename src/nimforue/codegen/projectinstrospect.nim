@@ -17,6 +17,10 @@ type
       strType*: string #For now only this is used 
     of TypeInfo: 
       typeInfo*: NimType
+  
+  NimEnumField* = object
+    name*: string
+    value*: int = -1 #if -1 it means it's not set
 
   NimKind* = enum
     Object, Pointer, Proc, TypeClass, Distinct, Enum, None#Nonsupported types
@@ -34,7 +38,7 @@ type
     of Pointer:
       ptrType*: string #just the type name as str for now. We could do a lookup in a table
     of Enum:
-      enumFields: seq[string] 
+      enumFields: seq[NimEnumField] 
     of Proc, TypeClass, Distinct, None: #ignored for now
       discard
 
@@ -121,15 +125,18 @@ func getNameFromTypeDef(typeDef:NimNode) : string =
 func makeEnumNimType(typeName:string, typeDef:NimNode) : NimType = 
   assert typeDef[2].kind == nnkEnumTy, "Expected nnkEnumTy got " & $typeDef[2].kind
   let enumTy = typeDef[2]
-  func parseEnumField(field:NimNode) : string = #this could be improved to also have the value
+  
+  # debugEcho "The Enum is", treeRepr enumTy
+  func parseEnumField(field:NimNode) : NimEnumField = #this could be improved to also have the value
     case field.kind:
     of nnkIdent:
-      field.strVal
+      NimEnumField(name: field.strVal)
     of nnkEnumFieldDef:
-      field[0].strVal
+      let val = if field[1].kind == nnkIntLit: field[1].intVal else: -1
+      NimEnumField(name: field[0].strVal, value: val)
     else:
       error &"Error got {field.kind} inside an enum"
-      ""
+      NimEnumField()
 
   let enumFields = enumTy.children.toSeq.filterIt(it.kind != nnkEmpty).map(parseEnumField)  
   if not enumFields.any():
@@ -474,9 +481,19 @@ func nimPtrTypeToNimNode(nimType:NimType) : NimNode =
       name* = ptr ptrType
   result = result[0] #removes type section   
 
+func fromEnumField(field:NimEnumField): NimNode = 
+  if field.value > 0:
+    nnkEnumFieldDef.newTree(
+      ident field.name,
+      newLit(field.value)
+    )
+  else: ident field.name
+  
 func nimEnumTypeToNimNode(nimType:NimType) : NimNode = 
   let name = ident nimType.name
-  let enumFields = nimType.enumFields.mapIt(ident it)
+  
+      
+  let enumFields = nimType.enumFields.map(fromEnumField)
   if not enumFields.any():
     return newEmptyNode() #Enums with no fields are not supported without importc 
 
