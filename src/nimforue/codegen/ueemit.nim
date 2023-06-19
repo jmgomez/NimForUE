@@ -668,15 +668,16 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                             
     let returnParam = funField.signature.first(isReturnParam)
     let returnType = returnParam.map(it=>it.getTypeNodeFromUProp(isVarContext=false)).get(ident "void")
+    let innerName = ident funField.name #& "Inner"
     let innerCall = 
         if funField.doesReturn():
-            genAst(returnType):
-                cast[ptr returnType](returnResult)[] = inner()
-        else: nnkCall.newTree(ident "inner")
+            genAst(returnType, innerName):
+                cast[ptr returnType](returnResult)[] = innerName()
+        else: nnkCall.newTree(innerName)
         
     let innerFunction = 
-        genAst(body, returnType, innerCall): 
-            proc inner() : returnType = 
+        genAst(body, returnType, innerName, innerCall): 
+            proc innerName() : returnType = 
                 body
             innerCall
     # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())

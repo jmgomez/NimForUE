@@ -30,20 +30,17 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
   let rtFieldVal = 
     case kind:
       of uecFunc:
-        nnkTupleConstr.newTree(paramsAsExpr)
-      else:
-        #TODO 
-        newEmptyNode()
-      # of uecGetProp:
-      #   nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
-      #     fn.name,
-      #     nnkCall.newTree(ident "default", returnType)
-      #   ))
-      # of uecSetProp:
-      #   nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
-      #     fn.name,
-      #     argsWithFirstType[1][0] #val
-      #   ))
+        nnkTupleConstr.newTree(paramsAsExpr)      
+      of uecGetProp:
+        nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
+          ident fn.name.firstToLow(),
+          nnkCall.newTree(ident "default", returnType)
+        ))
+      of uecSetProp: 
+        nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
+          ident fn.name.firstToLow(),
+          ident fn.signature[0].name #val
+        ))
   let call = 
    case kind:
     of uecFunc:
@@ -53,6 +50,7 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
         UECall(kind: uecFunc, fn: uFunc)
     else:    
       UECall(kind: kind, clsName: clsName)    
+  
   let fnName = 
     case kind:
     of uecFunc, uecgetProp: ident fn.name.firstToLow()
@@ -77,12 +75,10 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
         var call {.inject.} = callData
         call.value = rtFieldVal.toRuntimeField()
         selfAssign
-        let returnVal {.used, inject.} = uCall(call) #check return val
+        let returnVal {.used, inject.} = uCall(call)
         returnBlock
   result.params = genFormalParamsInFunctionSignature(fn.getFakeUETypeFromFunc(), fn)
   
-# macro uegetter*(getter:untyped): untyped = ueBindImpl("", getter, uecGetProp) 
-# macro uesetter*(setter:untyped): untyped = ueBindImpl("", setter, uecSetProp) 
 
 proc prepareUEFieldFuncFrom(fn:NimNode): (UEField, UEField) = 
   let clsName = 
@@ -102,9 +98,21 @@ macro uebind*(fn:untyped) : untyped =
   #Remove the first arg, which is the self param
   let (ufunc, selfParam) = prepareUEFieldFuncFrom(fn)
   result = ueBindImpl(ufunc, some selfParam, uecFunc)
-  log "================================================================"
-  log repr result
+  # log "================================================================"
+  # log repr result
   
+macro uegetter*(getter:untyped): untyped = 
+  var (ufunc, selfParam) = prepareUEFieldFuncFrom(getter) 
+  log $ufunc 
+  ufunc.signature[0].isReturn = true
+  result = ueBindImpl(ufunc,some selfParam, uecGetProp) 
+  # log "================================================================"
+  # log repr result
+
+macro uesetter*(setter:untyped): untyped = 
+  var (ufunc, selfParam) = prepareUEFieldFuncFrom(setter) 
+  ueBindImpl(ufunc, some selfParam, uecSetProp) 
+
 # macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn, uecFunc)
 
 #Move into utils
