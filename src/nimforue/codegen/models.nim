@@ -101,7 +101,7 @@ type
                 size*: int32
                 offset*: int32
                 defaultParamValue*:string #Only valid for params. It has the UE Format
-
+                isReturn*: bool #needed for reliability. CPF_ReturnParam doesnt seem to work well in the vm
             of uefFunction:
                 # className*:string #use typeName
                 actualFunctionName*:string #some functions are called differently on unreal (receivve, k2_ etc.)

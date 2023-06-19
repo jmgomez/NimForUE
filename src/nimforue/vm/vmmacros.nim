@@ -23,6 +23,7 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
   let uFunc = UEFunc(name: fn.name, className:clsName)
   let paramsAsExpr = 
       fn.signature      
+        .filterIt(not it.isReturnParam())
         .mapIt(it.name)
         .mapIt(nnkExprColonExpr.newTree(ident it, ident it)) #(arg: arg, arg2: arg2, etc.)
                  
@@ -54,30 +55,36 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
       UECall(kind: kind, clsName: clsName)    
   let fnName = 
     case kind:
-    of uecFunc, uecgetProp: ident fn.name
+    of uecFunc, uecgetProp: ident fn.name.firstToLow()
     else: 
-      genAst(fnName=ident fn.name):
-        `fnName=`
-        
+      genAst(fnName=ident fn.name.firstToLow()):
+        `fnName=`  
+
+  let returnBlock = 
+    if fn.doesReturn():
+      if fn.getReturnProp.get.name.endsWith("Ptr"):
+        genAst(returnTypeLit=returnTypeLit, returnType=returnType):
+          return castIntToPtr returnType(returnVal.get.runtimeFieldTo(int))
+      else:
+        genAst(returnTypeLit=returnTypeLit, returnType=returnType):
+          return returnVal.get.runtimeFieldTo(returnType)
+    else: newEmptyNode()
+
 
   result = 
-    genAst(fnName, selfAssign, returnType, returnTypeLit, callData=newLit call, rtFieldVal):
+    genAst(fnName, selfAssign, returnBlock, callData=newLit call, rtFieldVal):
       proc fnName() =         
         var call {.inject.} = callData
         call.value = rtFieldVal.toRuntimeField()
         selfAssign
         let returnVal {.used, inject.} = uCall(call) #check return val
-        when returnTypeLit != "void": #TODO simplify this. For instance, doesReturn macro above
-          when returnTypeLit.endsWith("Ptr"):
-            return castIntToPtr returnType(returnVal.get.runtimeFieldTo(int))
-          else:
-            return returnVal.get.runtimeFieldTo(returnType)
+        returnBlock
   result.params = genFormalParamsInFunctionSignature(fn.getFakeUETypeFromFunc(), fn)
   
 # macro uegetter*(getter:untyped): untyped = ueBindImpl("", getter, uecGetProp) 
 # macro uesetter*(setter:untyped): untyped = ueBindImpl("", setter, uecSetProp) 
 
-macro uebind*(fn:untyped) : untyped = 
+proc prepareUEFieldFuncFrom(fn:NimNode): (UEField, UEField) = 
   let clsName = 
     if fn.params.len > 1:
       fn.params.filterIt(it.kind == nnkIdentDefs)[0][1].strVal().removeLastLettersIfPtr()
@@ -88,7 +95,12 @@ macro uebind*(fn:untyped) : untyped =
     else: none[UEField]()
   
   var (ufunc, selfParam) = ufuncFieldFromNimNode(fn, clsFieldMb, clsName)  
-  ufunc.signature = ufunc.signature[1..^1] #Remove the first arg, which is the self param
+  ufunc.signature = ufunc.signature[1..^1]
+  (ufunc, selfParam)
+
+macro uebind*(fn:untyped) : untyped = 
+  #Remove the first arg, which is the self param
+  let (ufunc, selfParam) = prepareUEFieldFuncFrom(fn)
   result = ueBindImpl(ufunc, some selfParam, uecFunc)
   log "================================================================"
   log repr result
@@ -102,7 +114,7 @@ proc removeLastLettersIfPtr*(str:string) : string =
 
 {.experimental: "dynamicBindSym".}
 proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode = 
-  #TODO the first block of code it's exactly the same as bind, unify it
+  #TODO: integrate UEField approach 
   let argsWithFirstType =
     fn.params
     .filterIt(it.kind == nnkIdentDefs)
@@ -153,10 +165,10 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
           let returnVal {.inject.} : returnType = fnBody
           returnVal.toRuntimeField()
 
-  # let bindFn = ueBindImpl(clsName, fn, uecFunc)
-  # result = nnkStmtList.newTree(bindFn, vmFn)
-  result = newEmptyNode()
-  # log repr result      
+  let (ufunc, selfParam) = prepareUEFieldFuncFrom(fn)
+  let bindFn = ueBindImpl(ufunc, some selfParam, uecFunc)
+  result = nnkStmtList.newTree(bindFn, vmFn)
+  
 
 macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn)
 macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn)

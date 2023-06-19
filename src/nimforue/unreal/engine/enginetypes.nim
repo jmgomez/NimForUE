@@ -326,7 +326,9 @@ proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.impo
 #   let prop  = getClassByName("Actor").getFPropertyByName(
 #       "RootComponent")
 #   getPropertyValuePtr[USceneComponentPtr](prop, obj)[]
-
+proc getCppName*(obj : UClassPtr) : FString = 
+  let prefix = if obj.isChildOf(staticClass(AActor)): "A" else: "U"
+  prefix & obj.getName()
 
 proc setRootComponent*(actor : AActorPtr, newRootComponent : USceneComponentPtr): bool {.importcpp: "#->SetRootComponent(#)".}
 proc getRootComponent*(actor : AActorPtr): USceneComponentPtr {.importcpp: "#->GetRootComponent()".}

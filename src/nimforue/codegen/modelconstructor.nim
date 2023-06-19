@@ -24,6 +24,9 @@ func makeFieldAsUFun*(name : string, signature: seq[UEField], typeName: string, 
 func makeFieldAsUPropParam*(name, uPropType, typeName: string, flags = CPF_Parm): UEField =
   UEField(kind: uefProp, name: name, uePropType: uPropType, typeName:typeName, propFlags: EPropertyFlagsVal(flags))
 
+func makeFieldAsUPropReturnParam*(name, uPropType, typeName: string, flags = CPF_Parm): UEField =
+  UEField(kind: uefProp, name: name, uePropType: uPropType, typeName:typeName, propFlags: EPropertyFlagsVal(flags), isReturn: true)
+
 func makeFieldASUEnum*(name, typeName: string): UEField = 
   UEField(name: name, typeName:typeName, kind: uefEnumVal)
 
@@ -44,7 +47,7 @@ func makeUEModule*(name: string, types: seq[UEType], rules: seq[UEImportRule] = 
 
 
 
-func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in field.propFlags)
+func isReturnParam*(field:UEField) : bool = (CPF_ReturnParm in EPropertyFlags(field.propFlags)) or field.isReturn #TODO refactor the code to remove this. Probably it will worth to introduce our own nim flags for it
 func isOutParam*(field:UEField) : bool = (CPF_OutParm in field.propFlags) and not field.isReturnParam()
 func isRefParam*(field:UEField) : bool = (CPF_ReferenceParm in field.propFlags)
 func isConstParam*(field:UEField) : bool = (CPF_ConstParm in field.propFlags)

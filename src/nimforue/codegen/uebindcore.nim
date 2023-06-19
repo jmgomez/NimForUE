@@ -186,7 +186,7 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], typeName:str
     let returnParam = formalParamsNode #for being void it can be empty or void
                         .first(n=>n.kind in [nnkIdent, nnkBracketExpr])
                         .flatMap((n:NimNode)=>(if n.kind==nnkIdent and n.strVal()=="void": none[NimNode]() else: some(n)))
-                        .map(n=>makeFieldAsUPropParam("returnValue", n.repr.strip(), typeName, CPF_Parm | CPF_ReturnParm | CPF_OutParm))
+                        .map(n=>makeFieldAsUPropReturnParam("returnValue", n.repr.strip(), typeName, CPF_Parm | CPF_ReturnParm | CPF_OutParm))
     let actualParams = classParam.map(n=>fields) #if there is class param, first param would be use as actual param
                                  .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
     

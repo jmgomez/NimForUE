@@ -91,39 +91,37 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
     raise newException(ValueError, "Unknown property type")
 
 proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField = 
-  if prop.isInt() or prop.isObjectBased() or prop.isEnum():
+  proc sourceAddrWithOffset() : pointer = cast[pointer](cast[uint](sourceAddr) + prop.getOffset().uint)
+  if prop.isInt() or prop.isObjectBased() or prop.isEnum():    
     result.kind = Int        
     if prop.isEnum():
       result.intVal = getPropertyValuePtr[uint8](prop, sourceAddr)[].int
     else:
-      copyMem(addr result.intVal, sourceAddr, prop.getSize())   
+      copyMem(addr result.intVal, sourceAddrWithOffset(), prop.getSize())
+
   elif prop.isBool():
     result.kind = Bool
-    copyMem(addr result.boolVal, sourceAddr, prop.getSize())
+    copyMem(addr result.boolVal, sourceAddrWithOffset(), prop.getSize())
   elif prop.isFString():
-    result.kind = String
-    var returnValue = f""
-    copyMem(addr returnValue, sourceAddr, prop.getSize())
-    result.stringVal = returnValue
+    result.kind = String  
+    var sourceAddr = cast[pointer](cast[int](sourceAddr))  
+    result.stringVal = getPropertyValuePtr[FString](prop, sourceAddr)[]    
   elif prop.isFloat():
     result.kind = Float
-    copyMem(addr result.floatVal, sourceAddr, prop.getSize())
+    copyMem(addr result.floatVal, sourceAddrWithOffset(), prop.getSize())
   elif prop.isStruct():
     let structProp = castField[FStructProperty](prop)
     let scriptStruct = structProp.getScriptStruct()
     let structProps = scriptStruct.getFPropsFromUStruct()
-    let structMemoryRegion = cast[uint](sourceAddr)
-    
     result = RuntimeField(kind:Struct)
     for paramProp in structProps:      
-      let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches
-      let ad = cast[ptr float](structMemoryRegion + paramProp.getOffset().uint)
-      let value = getProp(paramProp,  cast[pointer](structMemoryRegion + paramProp.getOffset().uint))
+      let name = paramProp.getName().firstToLow() #So when we parse the type in the vm it matches      
+      let value = getProp(paramProp, sourceAddrWithOffset())
       result.structVal.add((name, value))
   elif prop.isTArray():
     let arrayProp = castField[FArrayProperty](prop)
     let innerProp = arrayProp.getInnerProp()
-    let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, sourceAddr)
+    let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, sourceAddrWithOffset())
     result = RuntimeField(kind:Array)
     for idx in 0 ..< arrayHelper.num():
       result.arrayVal.add(getProp(innerProp, arrayHelper.getRawPtr(idx.int32)))
@@ -131,7 +129,7 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
     let mapProp = castField[FMapProperty](prop)
     let keyProp = mapProp.getKeyProp()
     let valueProp = mapProp.getValueProp()
-    let mapHelper = makeScriptMapHelperInContainer(mapProp, sourceAddr)
+    let mapHelper = makeScriptMapHelperInContainer(mapProp, sourceAddrWithOffset())
     result = RuntimeField(kind:Map)  
     for idx in 0 ..< mapHelper.num():
       let key = getProp(keyProp, mapHelper.getKeyPtr(idx.int32))
@@ -198,9 +196,8 @@ proc uCallProp*(call : UECall, cls:UClassPtr) : Option[RuntimeField] =
     UE_Error &"uCall: Property {propName} not found in class {cls.getName()}"
     return none(RuntimeField)    
   let selfAddr = cast[uint](call.self)
-  if call.kind == uecGetProp:
-    let offset = if argField[propName].kind in {Struct, Map}: prop.getOffset() else: 0
-    some getProp(prop,  cast[pointer](selfAddr + offset.uint))        
+  if call.kind == uecGetProp:        
+    some getProp(prop,  cast[pointer](selfAddr))        
   else:
     #Dont ask why but we need to add the offset of the array    
     let offset = if argField[propName].kind in {Struct, Array, Map}: prop.getOffset() else: 0   

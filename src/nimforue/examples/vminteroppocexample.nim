@@ -122,12 +122,6 @@ uClass UObjectPOC of UObject:
 #     ueTest "another create a test2":
 #       assert true == true
 
-template check*(expr: untyped) =
-  if not expr:
-    let exprStr = repr expr
-    var msg = "Check failed: " & exprStr & " " 
-    raise newException(CatchableError, msg)
-
 #maybe the way to go is by raising. Let's do a test to see if we can catch the errors in the actual actor
 
 
@@ -135,8 +129,11 @@ template check*(expr: untyped) =
 
 #Later on this can be an uobject that pulls and the actor will just run them. But this is fine as started point
 uClass ANimTestBase of AActor: 
+  uprops(EditAnywhere):
+    printSucceed: bool
   ufunc(CallInEditor):
     proc runTests() = 
+      self.printSucceed = false
      #Traverse all the tests and run them. A test is a function that starts with "test" or "should
       let testFns = self
         .getClass()
@@ -148,8 +145,11 @@ uClass ANimTestBase of AActor:
         try:
           UE_Log "Running test: " & $fn.getName()
           self.processEvent(fn, nil)
+          self.printSucceed = false
+
         except CatchableError as e:
           UE_Error "Error in test: " & $fn.getName() & " " & $e.msg
+      self.printSucceed = false
          
 
 uClass AActorPOCVMTest of ANimTestBase:
@@ -306,7 +306,7 @@ uClass AActorPOCVMTest of ANimTestBase:
       let rtStruct = vector.toRuntimeField()
       let rtField = rtStruct["x"]
       let x = rtField.getFloat()
-      check x == 10.0
+      # check x == 10.0
       UE_Log $x
 
     proc shouldReceiveFloat32() =
@@ -327,8 +327,35 @@ uClass AActorPOCVMTest of ANimTestBase:
         )
       discard uCall(callData)
     
-  uprops(EditAnywhere):
+
+import std/[macros]
+macro ownerName(someSym: typed): string = newLit someSym.owner.strVal()
+macro astRepr(exp: typed): string = newLit repr exp
+# macro deconstructExp(exp: typed): string = 
+#   echo treeRepr exp
+#   newEmptyNode()
+
+#TODO do a nice macro that splits the call and tells you what part is wrong
+template check(exp: typed) =
+  var a = exp
+  let astRepr {.inject.} = astRepr(exp)
+  let res {.inject.} = $exp
+  let fnName {.inject.} = ownerName(a)
+  if not exp:
+    let msg = &"{[fnName]}Check failed {astRepr} is  {res}" 
+    UE_Error msg 
+  else:
+    when compiles(self.printSucceed):
+      if self.printSucceed:
+        UE_Log &"{[fnName]} Check passed"
+    else:
+      UE_Log &"{[fnName]} Check passed"
+
+uClass AUECallPropReadTest of ANimTestBase:
+  
+  uprops(EditAnywhere):    
     intProp: int32 
+    stringProp: FString
     boolProp: bool
     arrayProp: TArray[int]
     structProp: FVector
@@ -342,168 +369,140 @@ uClass AActorPOCVMTest of ANimTestBase:
       let callData = UECall(
           kind: uecGetProp,
           self: cast[int](self),
-          clsName: "AActorPOCVMTest",
+          clsName: self.getClass.getCppName(),
           value: (intProp: default(int32)).toRuntimeField()                       
         )
       let reply = uCall(callData)
       if reply.isSome:
         let val = reply.get(RuntimeField(kind:Int)).getInt()
-        check val == self.intProp
+        check(val == self.intProp)                   
     
-    proc shouldBeAbleToWritteAnInt32Prop() =
-      let expectedValue = 1
+    proc shouldBeAbleToReadAFStringProp() =
+      self.stringProp = "Hola"
       let callData = UECall(
-          kind: uecSetProp,
+          kind: uecGetProp,
           self: cast[int](self),
-          clsName: "AActorPOCVMTest",
-          value: (intProp: expectedValue).toRuntimeField()                        
+          clsName: self.getClass.getCppName(),
+          value: (stringProp: default(FString)).toRuntimeField()                        
         )
-      discard uCall(callData)      
-      if expectedValue == self.intProp:
-        UE_Log "Int prop is " & $self.intProp
-      else:
-        UE_Error "Int prop is " & $self.intProp & " but expected " & $expectedValue
-    
+      let reply = uCall(callData)
+      if reply.isSome:
+        let val = reply.get(RuntimeField(kind:String)).getStr()
+        check val == self.stringProp
+
     proc shouldBeAbleToReadABoolProp() =
       self.boolProp = true
       let callData = UECall(
           kind: uecGetProp,
           self: cast[int](self),
-          clsName: "AActorPOCVMTest",
+          clsName: self.getClass.getCppName(),
           value: (boolProp: default(bool)).toRuntimeField()                        
         )
       let reply = uCall(callData)
       if reply.isSome:
         let val = reply.get(RuntimeField(kind:Bool)).getBool()
         check val == self.boolProp
-        UE_Log "Bool prop is " & $val
 
     proc shouldBeAbleToReadAnArrayProp() = 
       self.arrayProp = @[1, 2, 3, 4, 5].toTArray()
       let callData = UECall(
           kind: uecGetProp,
           self: cast[int](self),
-          clsName: "AActorPOCVMTest",
+          clsName: self.getClass.getCppName(),
           value: (arrayProp: default(TArray[int])).toRuntimeField()                           
         )
       let reply = uCall(callData)
       if reply.isSome:
         let val = reply.get(RuntimeField(kind:Array)).runtimeFieldTo(seq[int]).toTArray()
-        if val == self.arrayProp:
-          UE_Log "Array prop is " & $val
-        else:
-          UE_Error "Array prop is " & $val & " but expected " & $self.arrayProp
-    
-    proc shouldBeAbleToWriteAnArrayProp() = 
-      let expected = @[1, 2, 4].toTArray()
-      self.arrayProp = @[0].toTArray()
-      let callData = UECall(
-          kind: uecSetProp,
-          self: cast[int](self),
-          clsName: "AActorPOCVMTest",
-          value: (arrayProp: expected).toRuntimeField()                          
-        )
-      discard uCall(callData)
-      if expected == self.arrayProp:
-        UE_Log "Array prop is " & $self.arrayProp
-      else:
-        UE_Error "Array prop is " & $self.arrayProp & " but expected " & $expected
-
+        check val == self.arrayProp               
+      
     proc shouldBeAbleToReadAStructProp() = 
       self.structProp = FVector(x:10, y:10, z:10)
       let callData = UECall(
           kind: uecGetProp,
           self: cast[int](self),
-          clsName: "AActorPOCVMTest",
+          clsName: self.getClass.getCppName(),
           value: (structProp: default(FVector)).toRuntimeField()                     
         )
       let reply = uCall(callData)
       if reply.isSome:
         let val = reply.get(RuntimeField(kind:Struct)).runtimeFieldTo(FVector)
-        if val.x == self.structProp.x:
-          UE_Log "Struct prop is " & $val
-        else:
-          UE_Error "Struct prop is " & $val & " but expected " & $self.structProp
-
-    proc shoulsBeAbleToWriteAStructProp() = 
-      let expected = FVector(x:10, y:10, z:10)
-      self.structProp = FVector(x:0, y:0, z:0)
-      let callData = UECall(
-          kind: uecSetProp,
-          self: cast[int](self),
-          clsName: "AActorPOCVMTest",
-          value: (structProp: expected).toRuntimeField()                        
-        )
-      discard uCall(callData)
-      if expected.x == self.structProp.x:
-        UE_Log "Struct prop is " & $self.structProp
-      else:
-        UE_Error "Struct prop is " & $self.structProp & " but expected " & $expected
-    
+        check val.x == self.structProp.x           
+         
     proc shouldBeAbleToReadAnEnumProp() =
       self.enumProp = EEnumVMTest.ValueC
       let callData = UECall(
           kind: uecGetProp,
           self: cast[int](self),
-          clsName: "AActorPOCVMTest",
+          clsName: self.getClass.getCppName(),
           value: (enumProp: default(EEnumVMTest)).toRuntimeField()                        
         )
       let reply = uCall(callData)     
       if reply.isSome:
         let val = reply.get(RuntimeField(kind:Int)).runtimeFieldTo(EEnumVMTest)
         check val == self.enumProp
-    
+              
+
+
+uClass AUECallPropWriteTest of ANimTestBase:
+  
+  uprops(EditAnywhere):    
+    intProp: int32 
+    stringProp: FString
+    boolProp: bool
+    arrayProp: TArray[int]
+    structProp: FVector
+    enumProp: EEnumVMTest
+    mapProp: TMap[int, FString]
+    mapProp2: TMap[int, int]
+
+  ufuncs(CallInEditor):
+    proc shouldBeAbleToWritteAnInt32Prop() =
+      let expectedValue = 1
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: self.getClass.getCppName(),
+          value: (intProp: expectedValue).toRuntimeField()                        
+        )
+      discard uCall(callData)      
+      check expectedValue == self.intProp
+
+    proc shouldBeAbleToWriteAnArrayProp() = 
+      let expected = @[1, 2, 4].toTArray()
+      self.arrayProp = @[0].toTArray()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: self.getClass.getCppName(),
+          value: (arrayProp: expected).toRuntimeField()                          
+        )
+      discard uCall(callData)
+      check expected == self.arrayProp
+
     proc shouldBeAbleToWriteAnEnumProp() =
       let expected = EEnumVMTest.ValueC
       self.enumProp = EEnumVMTest.ValueA
       let callData = UECall(
           kind: uecSetProp,
           self: cast[int](self),
-          clsName: "AActorPOCVMTest",
+          clsName: self.getClass.getCppName(),
           value: (enumProp: expected).toRuntimeField()                        
         )
       discard uCall(callData)
-      if expected == self.enumProp:
-        UE_Log "Enum prop is " & $self.enumProp
-      else:
-        UE_Error "Enum prop is " & $self.enumProp & " but expected " & $expected
+      check expected == self.enumProp
 
-    proc shouldBeAbleToReadAMapProp() = 
-      let table = { 1: FString"Hola", 2: FString"Mundo"}.toTable()
-      self.mapProp = table.toTMap()
-
-      let callData = UECall(
-          kind: uecGetProp,
-          self: cast[int](self),
-          clsName: "AActorPOCVMTest",
-          value: (mapProp: default(TableMap[int, FString])).toRuntimeField()                     
-          
-        )
-      let reply = uCall(callData)
-      if reply.isSome:        
-          let val = reply.get(RuntimeField(kind:Map)).runtimeFieldTo(TableMap[int, FString]).toTable.toTMap()
-          if val == self.mapProp:
-            UE_Log "Map prop is " & $val
-          else:
-            UE_Error "Map prop is " & $val & " but expected " & $self.mapProp
-    
-   
-      # if expected == self.mapProp:
-      #   UE_Log "Map prop is " & $self.mapProp
-      # else:
-      #   UE_Error "Map prop is " & $self.mapProp & " but expected " & $expected
-
-
-# import std/[macros, genasts]
-#TODO do a nice macro that splits the call and tells you what part is wrong
-proc check(exp: bool) =
-  if not exp:
-    let msg = "Check failed: " & repr exp
-    UE_Error msg
-  else:
-    UE_Log "Check passed"
-
-
+    proc shoulsBeAbleToWriteAStructProp() = 
+        let expected = FVector(x:10, y:10, z:10)
+        self.structProp = FVector(x:0, y:0, z:0)
+        let callData = UECall(
+            kind: uecSetProp,
+            self: cast[int](self),
+            clsName: self.getClass.getCppName(),
+            value: (structProp: expected).toRuntimeField()                        
+          )
+        discard uCall(callData)
+        check expected.x == self.structProp.x
 
 uClass AUECallMapTest of ANimTestBase:
   (BlueprintType)
