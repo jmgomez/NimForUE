@@ -15,10 +15,7 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
       genAst(firstParam = ident selfParam.get.name):
         call.self = cast[int](firstParam)
   
-  let returnParam = fn.signature.first(isReturnParam).map(x=>x.uePropType).get("void")
-
-  let returnType {.inject.} = ident returnParam
-  let returnTypeLit {.inject.} = newLit returnParam
+  let returnType = fn.signature.first(isReturnParam).map(x=>getTypeNodeFromUProp(x, false)).get(ident "void")
 
   let uFunc = UEFunc(name: fn.name, className:clsName)
   let paramsAsExpr = 
@@ -61,10 +58,10 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
   let returnBlock = 
     if fn.doesReturn():
       if fn.getReturnProp.get.name.endsWith("Ptr"):
-        genAst(returnTypeLit=returnTypeLit, returnType=returnType):
+        genAst(returnType):
           return castIntToPtr returnType(returnVal.get.runtimeFieldTo(int))
       else:
-        genAst(returnTypeLit=returnTypeLit, returnType=returnType):
+        genAst(returnType):
           return returnVal.get.runtimeFieldTo(returnType)
     else: newEmptyNode()
 
@@ -103,15 +100,20 @@ macro uebind*(fn:untyped) : untyped =
   
 macro uegetter*(getter:untyped): untyped = 
   var (ufunc, selfParam) = prepareUEFieldFuncFrom(getter) 
-  log $ufunc 
   ufunc.signature[0].isReturn = true
   result = ueBindImpl(ufunc,some selfParam, uecGetProp) 
   # log "================================================================"
-  # log repr result
+  # log &"\n{repr result}"
+  # log &"\n{treeRepr result}"
+
 
 macro uesetter*(setter:untyped): untyped = 
   var (ufunc, selfParam) = prepareUEFieldFuncFrom(setter) 
-  ueBindImpl(ufunc, some selfParam, uecSetProp) 
+  # log "usetter"
+  log $ufunc
+  result = ueBindImpl(ufunc, some selfParam, uecSetProp) 
+  # log &"\n{repr result}"
+  # log &"\n{treeRepr result}"
 
 # macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn, uecFunc)
 
