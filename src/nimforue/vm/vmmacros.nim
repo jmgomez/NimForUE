@@ -1,8 +1,12 @@
 import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat]
-import exposed 
+when defined nuevm:
+  import exposed 
 import runtimefield
 import ../utils/[utils, ueutils]
 import ../codegen/[models, modelconstructor, uebindcore]
+
+when not defined(log):
+  proc log(str: string) = echo str
 
 #TODO change fn with UEFunc so I can pass it directly from the bindings. 
 proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : NimNode = 
