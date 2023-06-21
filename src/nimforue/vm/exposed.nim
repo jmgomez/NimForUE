@@ -7,6 +7,7 @@ import ../unreal/bindings/vm/vmtypes
 proc log*(s:string) : void = discard #overrided
 
 
+
 proc uCallInterop(uCall:UECall) : Option[RuntimeField] = none(RuntimeField) #overrided no need anymore, remove interop
 
 proc uCall*(uCall:UECall) : Option[RuntimeField] = 
@@ -41,4 +42,5 @@ proc setupBorrowInterop*(borrowInfo:string) = discard #override
 proc setupBorrow*(borrowInfo:UEBorrowInfo) = setupBorrowInterop($borrowInfo.toJson())
 
 
-
+#TODO this functions may be automatically generated down the road
+proc makeFName*(str:string) : FName = str

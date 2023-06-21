@@ -1,6 +1,6 @@
 include ../definitions
 import ../core/math/vector
-import ../coreuobject/[uobject, coreuobject, nametypes, tsoftobjectptr]
+import ../coreuobject/[uobject, coreuobject, nametypes, tsoftobjectptr, scriptdelegates]
 import ../nimforue/nimforuebindings
 import ../core/[delegates]
 import ../core/containers/[unrealstring]

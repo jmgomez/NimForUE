@@ -1,4 +1,5 @@
-import std/[sequtils, options, sugar, strutils, strformat, typetraits, macros, tables, typetraits]
+import std/[strutils, strformat, macros, tables, typetraits]
+import ../utils/utils
 
 type
   TableMap*[K, V] = seq[(K, V)]
@@ -50,7 +51,7 @@ type
     ueActualName* : string #in case it has Received or some other prefix
 
 
-func toTableMap*[K, V](table: Table[K, V]): seq[(K, V)] =  
+func toTableMap*[K, V](table: Table[K, V]): seq[(K, V)] =      
   for key, val in table:
     result.add((key, val))
 
@@ -209,8 +210,7 @@ proc runtimeFieldTo*(rtField : RuntimeField, T : typedesc) : T
 proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) = 
   when compiles(fromRuntimeFieldHook(val,rtField)): 
     fromRuntimeFieldHook(a, rtField)
-  else:
-    const typeName = typeof(T).name
+  else:   
     case rtField.kind:
     of Int:
       when T is IntBased:
@@ -256,10 +256,8 @@ proc runtimeFieldTo*(rtField : RuntimeField, T : typedesc) : T =
 proc toRuntimeField*[T](value : T) : RuntimeField = 
   when compiles(toRuntimeFieldHook(value)): 
     return toRuntimeFieldHook(value)
-  else:
-    const typeName = typeof(T).name
-    const isPtr = typeName.endsWith("Ptr")
-    when isPtr or T is IntBased:
+  else:       
+    when T is ptr or T is IntBased:
       result.kind = Int    
       result.intVal = when T is enum: int(value) else: cast[int](value)
     elif T is bool:
@@ -282,7 +280,7 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
       for val in value:
         result.arrayVal.add(toRuntimeField(val))    
     elif T is (object | tuple):
-      result.kind = Struct
+      result.kind = Struct      
       for name, val in fieldPairs(value):
         result.structVal.add((name, toRuntimeField(val)))    
     else:

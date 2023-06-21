@@ -139,6 +139,23 @@ func genUEnumTypeDefBinding(ueType: UEType, target: CodegenTarget): NimNode =
   )
 
 
+func genDelegateVMTypeDefBinding(ueType: UEType, target: CodegenTarget): NimNode =
+  let pragmas = nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+        nnkPragma.newTree(       
+          ident "inheritable",          
+        )
+        ])
+  nnkTypeDef.newTree(
+        pragmas,
+        newEmptyNode(),
+        nnkObjectTy.newTree(
+          newEmptyNode(),
+          nnkOfInherit.newTree(ident "FMulticastScriptDelegate"),
+          newEmptyNode()
+        )
+      )
+  
 func genUStructCodegenTypeDefBinding(ueType: UEType, target: CodegenTarget): NimNode =
   #TODO move export here and separate it enterely from the dsl
 
@@ -207,6 +224,7 @@ func genImportCProp(typeDef: UEType, prop: UEField): NimNode =
     genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, setPropertyName, typeNodeAsReturnValue):
       proc `propIdent`*(obj {.inject.}: ptrName): typeNodeAsReturnValue {.importcpp: "$1(@)", header: "UEGenBindings.h".}
       proc `propIdent=`*(obj {.inject.}: ptrName, val {.inject.}: typeNode): void {.importcpp: setPropertyName, header: "UEGenBindings.h".}
+
 
 
 func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
@@ -323,9 +341,17 @@ proc genVMModuleDecl*(moduleDef: UEModule): NimNode =
       typeSection.add genUStructCodegenTypeDefBinding(typedef, ctVM)
     of uetEnum:
       typeSection.add genUEnumTypeDefBinding(typedef, ctVM)
+    of uetDelegate:
+      typeSection.add genDelegateVMTypeDefBinding(typeDef, ctVM)
     else: continue
   
   result.add typeSection
+  for typeDef in moduleDef.types:
+    let rules = moduleDef.getAllMatchingRulesForType(typeDef)
+    case typeDef.kind:
+    of uetClass:
+      result.add genUCalls(typeDef)
+    else: continue
 
 
 
@@ -405,8 +431,12 @@ proc keep{module.name.replace("/", "")}() {{.exportc.}} = discard
 """
 
     let vmEngineTypes = if isOneFilePkg: "vmtypes" else: "../vmtypes"
+    let runtimeFields = (if isOneFilePkg: "" else: "../") & "../../../vm/[runtimefield, exposed]"
     let moduleVMStrTemplate = &"""
+import std/[options]
+import utils/[ueutils]
 import {vmEngineTypes}
+import {runtimeFields}
 """    
 
     echo &"Generating bindings for {module.name}"

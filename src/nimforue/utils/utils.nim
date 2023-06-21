@@ -251,3 +251,10 @@ proc removeConst*[T](p:ptr T) : ptr T {.importcpp: "const_cast<'0>(#)".}
 proc tryGetJson*[T](json:JsonNode, key:string) : Option[T] =
   if json.hasKey(key): some(json[key].jsonTo(T))
   else: none[T]()
+
+
+
+#comp time utils
+proc objectLen*(T: typedesc[object]) : int =  
+  for field in default(T).fields:    
+    inc result

@@ -9,7 +9,7 @@ else:
 
 func getTypeNodeFromUProp*(prop : UEField, isVarContext:bool) : NimNode 
 
-func ueNameToNimName(propName:string) : string = #this is mostly for the autogen types
+func ueNameToNimName*(propName:string) : string = #this is mostly for the autogen types
     let reservedKeywords = ["object", "method", "type", "interface", "var", "in", "out", "end", "bLock", "from"] 
     let reservedToCapitalize = ["bool", "enum", "else", "new", "template", "continue", "int"]
     let startsWithUnderscore = propName[0] == '_'

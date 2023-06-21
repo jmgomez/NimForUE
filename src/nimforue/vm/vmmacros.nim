@@ -25,7 +25,7 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
   let paramsAsExpr = 
       fn.signature      
         .filterIt(not it.isReturnParam())
-        .mapIt(it.name)
+        .mapIt(it.name.firstToLow.ueNameToNimName())
         .mapIt(nnkExprColonExpr.newTree(ident it, ident it)) #(arg: arg, arg2: arg2, etc.)
                  
   let rtFieldVal = 
@@ -34,12 +34,12 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
         nnkTupleConstr.newTree(paramsAsExpr)      
       of uecGetProp:
         nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
-          ident fn.name.firstToLow(),
+          ident fn.name.firstToLow.ueNameToNimName(),
           nnkCall.newTree(ident "default", returnType)
         ))
       of uecSetProp: 
         nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
-          ident fn.name.firstToLow(),
+          ident fn.name.firstToLow.ueNameToNimName(),
           ident fn.signature[0].name #val
         ))
   let call = 
@@ -126,7 +126,38 @@ proc removeLastLettersIfPtr*(str:string) : string =
     if str.endsWith("Ptr"): str.substr(0, str.len()-4) else: str
 
 
-{.experimental: "dynamicBindSym".}
+func isAllowedField*(field:UEField) : bool = 
+  const skipTypes = ["TScriptInterface", "TMap", "TSet"]
+  result = not skipTypes.mapIt(field.uePropType.contains(it)).foldl(a or b, false) and
+    not field.isOutParam()
+  if not result:
+    debugEcho &"[VM Bindings] Skipping field in {field.typeName} {field.name}: {field.uePropType} "
+
+
+proc genUCalls*(typeDef : UEType) : NimNode = 
+  #returns a list with all functions and props for a given type
+  assert typeDef.kind == uetClass
+  result = nnkStmtList.newTree()
+  for field in typeDef.fields:
+    let firstParam = some makeFieldAsUProp("self", typeDef.name & "Ptr", typeDef.name)
+    case field.kind:
+      of uefProp:
+        if not isAllowedField(field): continue
+        let propName = field.name.firstToLow.ueNameToNimName()                
+        let getterFn = makeFieldAsUFun(propName, @[makeFieldAsUPropReturnParam("toReturn", field.uePropType, typeDef.name)], typeDef.name)
+        let setterFn = makeFieldAsUFun(field.name.firstToLow(), @[makeFieldAsUPropParam("value", field.uePropType, typeDef.name)], typeDef.name) 
+        result.add(ueBindImpl(getterFn, firstParam, uecGetProp))
+        result.add(ueBindImpl(setterFn, firstParam, uecSetProp))
+      of uefFunction:
+        let isAllowed = field.signature.map(isAllowedField).foldl(a and b, true)
+        if not isAllowed: continue
+        if field.isStatic:
+          result.add(ueBindImpl(field, none(UEField), uecFunc))
+        else:
+          result.add(ueBindImpl(field, firstParam, uecFunc))
+      else: continue
+
+
 proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode = 
   #TODO: integrate UEField approach 
   let argsWithFirstType =
@@ -138,7 +169,6 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
   let args = 
     if isStatic: argsWithFirstType
     else: argsWithFirstType[1..^1] #Remove the first arg, which is the self param
-  let firstParam = if isStatic: newEmptyNode() else: argsWithFirstType[0][0]
  
   let clsNameLit = 
     (if isStatic: clsName
