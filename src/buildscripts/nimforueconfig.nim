@@ -8,6 +8,7 @@ const NimHeadersModulesDir* = NimHeadersDir / "Modules"
 const BindingsDir* = "src"/"nimforue"/"unreal"/"bindings"
 const BindingsImportedDir* = "src"/"nimforue"/"unreal"/"bindings"/"imported"
 const BindingsExportedDir* = "src"/"nimforue"/"unreal"/"bindings"/"exported"
+const BindingsVMDir* = "src"/"nimforue"/"unreal"/"bindings"/"vm"
 const ReflectionDataDir* = "src" / ".reflectiondata"
 const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
 

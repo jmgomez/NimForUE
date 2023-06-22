@@ -527,6 +527,7 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     let ueFields = getUPropsAsFieldsForType(body, structTypeName)
     let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
     let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
+    addVMType ueType
     emitUStruct(ueType) 
 
 
@@ -588,6 +589,7 @@ macro uDelegate*(body:untyped) : untyped =
                              .filter(n=>n.kind==nnkExprColonExpr)
                              .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip(), name))
     let ueType = makeUEMulDelegate(name, paramsAsFields)
+    addVMType ueType
     emitUDelegate(ueType)
 
 
@@ -610,6 +612,7 @@ macro uEnum*(name:untyped, body : untyped) : untyped =
                     .mapIt(makeFieldASUEnum(it, name))
 
     let ueType = makeUEEnum(name, fields, metas)
+    addVMType ueType
     emitUEnum(ueType)
 
 
@@ -967,6 +970,7 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
     ueType.interfaces = interfaces
     #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
     ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
+    addVMType ueType
     var (typeNode, addEmitterProc) = emitUClass(ueType)
     var procNodes = nnkStmtList.newTree(addEmitterProc)
     #returns empty if there is no block defined

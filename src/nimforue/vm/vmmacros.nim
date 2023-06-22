@@ -1,12 +1,22 @@
-import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat]
+import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat, os]
 when defined nuevm:
   import exposed 
+else:
+  import ../../buildscripts/nimforueconfig
 import runtimefield
 import ../utils/[utils, ueutils]
-import ../codegen/[models, modelconstructor, uebindcore]
+import ../codegen/[models, modelconstructor, uebindcore, nuemacrocache]
 
 when not defined(log):
   proc log(str: string) = echo str
+
+
+
+type CodegenTarget* = enum
+  ctImport
+  ctExport
+  ctVM
+
 
 #TODO change fn with UEFunc so I can pass it directly from the bindings. 
 proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : NimNode = 
@@ -134,6 +144,119 @@ func isAllowedField*(field:UEField) : bool =
     debugEcho &"[VM Bindings] Skipping field in {field.typeName} {field.name}: {field.uePropType} "
 
 
+func genUEnumTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =
+  let pragmas = 
+    case target:
+    of ctImport, ctExport: 
+      nnkPragma.newTree(nnkExprColonExpr.newTree(ident "size", nnkCall.newTree(ident "sizeof", ident "uint8")), ident "pure")
+    of ctVM: newEmptyNode()
+
+  let enumTy = ueType.fields
+    .map(f => ident f.name)
+    .foldl(a.add b, nnkEnumTy.newTree)
+  enumTy.insert(0, newEmptyNode()) #required empty node in enums
+  nnkTypeDef.newTree(
+    nnkPragmaExpr.newTree(
+      nnkPostFix.newTree(ident "*", ident ueType.name),
+      pragmas
+    ),
+    newEmptyNode(),
+    enumTy
+  )
+
+
+  
+func genUStructCodegenTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =
+  #TODO move export here and separate it enterely from the dsl
+
+  let pragmas = 
+    case target:
+    of ctImport:
+      (if ueType.isInPCH:     
+        nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+        nnkPragma.newTree(
+            ident "inject",
+            ident "inheritable",
+            ident "pure",
+            nnkPragma.newTree(ident "importcpp", ident "inheritable", ident "pure")
+          )
+        ])
+      else:
+        nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+        nnkPragma.newTree(
+          ident "inject",
+          ident "inheritable",
+          ident "pure",
+          nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
+        )
+        ])
+      )
+    of ctExport: newEmptyNode() #TODO
+    of ctVM:
+        nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+        nnkPragma.newTree(       
+          ident "inheritable",          
+        )
+        ])
+      
+  var recList = ueType.fields
+    .map(prop => nnkIdentDefs.newTree(
+        getFieldIdentWithPCH(ueType, prop, target == ctImport),
+        prop.getTypeNodeFromUProp(isVarContext=false),
+        newEmptyNode()
+      )
+    )
+    .foldl(a.add b, nnkRecList.newTree)
+  nnkTypeDef.newTree(pragmas,
+    newEmptyNode(),
+    nnkObjectTy.newTree(
+      newEmptyNode(), newEmptyNode(), recList
+    )
+  )
+
+
+func genDelegateVMTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =
+  let pragmas = nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
+        nnkPragma.newTree(       
+          ident "inheritable",          
+        )
+        ])
+  nnkTypeDef.newTree(
+        pragmas,
+        newEmptyNode(),
+        nnkObjectTy.newTree(
+          newEmptyNode(),
+          nnkOfInherit.newTree(ident "FMulticastScriptDelegate"),
+          newEmptyNode()
+        )
+      )
+
+func genVMClassTypeDef*(typeDef: UEType): seq[NimNode] = 
+  assert typeDef.kind == uetClass
+  #Does not generate the type section. Just the typeDef
+  @[
+    # type Type* = object of Parent
+    nnkTypeDef.newTree(
+      nnkPostFix.newTree(ident "*", ident typeDef.name),
+      newEmptyNode(),
+      nnkObjectTy.newTree(
+        newEmptyNode(),
+        nnkOfInherit.newTree(ident typeDef.parent),
+        newEmptyNode()
+      )
+    ),
+    # ptr type TypePtr* = ptr Type
+    nnkTypeDef.newTree(
+      nnkPostFix.newTree(ident "*", ident typeDef.name & "Ptr"),
+      newEmptyNode(),
+      nnkPtrTy.newTree(ident typeDef.name)
+    )
+  ]
+
 proc genUCalls*(typeDef : UEType) : NimNode = 
   #returns a list with all functions and props for a given type
   assert typeDef.kind == uetClass
@@ -218,6 +341,33 @@ macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn)
 macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn)
 
 
+
+func ueTypeToVMNode(uet: UEType) : seq[NimNode] = 
+  case uet.kind:
+  of uetClass: genVMClassTypeDef(uet)
+  of uetStruct: @[genUStructCodegenTypeDefBinding(uet, ctVM)]
+  of uetEnum: @[genUEnumTypeDefBinding(uet, ctVM)]
+  of uetDelegate: @[genDelegateVMTypeDefBinding(uet, ctVM)]
+  else: @[newEmptyNode()]
+
+macro emitVMTypes*() = 
+  let ueTypes = getVMTypes()  
+  var typeSection = nnkTypeSection.newTree()
+  typeSection.add(
+    ueTypes
+    .map(ueTypeToVMNode)
+    .foldl(a & b, newSeq[NimNode]()))
+
+  let content = 
+    repr nnkStmtList.newTree(typeSection & 
+      ueTypes
+      .filterIt(it.kind == uetClass)
+      .map(genUCalls)
+      .foldl(a & b, newSeq[NimNode]()))
+
+  const libname {.strdefine.} = ""
+  let path = BindingsVMDir / libname & ".nim"
+  writeFile(path, content)
 
 
 

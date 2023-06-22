@@ -258,3 +258,5 @@ proc tryGetJson*[T](json:JsonNode, key:string) : Option[T] =
 proc objectLen*(T: typedesc[object]) : int =  
   for field in default(T).fields:    
     inc result
+
+

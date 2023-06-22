@@ -18,6 +18,17 @@ func ueNameToNimName*(propName:string) : string = #this is mostly for the autoge
     elif propName == "result": "Result"
     else: propName
 
+
+func nimToCppConflictsFreeName*(propName:string) : string = 
+  let reservedCppKeywords = ["template", "operator", "enum", "struct", 
+    "normal", "networkMask", "shadow", "id", "fraction", "bIsCaseSensitive", #they collide on mac with the apple frameworks
+    "namespace", "min", "max", "default", "new", "else"]
+  let strictReserved = ["class"]
+  if propName in strictReserved: &"{propName.capitalizeASCII()}" 
+  elif propName in reservedCppKeywords:  propName.firstToUpper() 
+  else: propName
+
+
 func isStatic*(funField:UEField) : bool = (FUNC_Static in funField.fnFlags)
 func getReturnProp*(funField:UEField) : Option[UEField] =  funField.signature.filter(isReturnParam).head()
 func doesReturn*(funField:UEField) : bool = funField.getReturnProp().isSome()
@@ -257,3 +268,18 @@ func genFormalParamsInFunctionSignature*(typeDef : UEType, funField:UEField, fir
 func getFakeUETypeFromFunc*(fn:UEField): UEType = 
   assert fn.kind == uefFunction
   UEType(name: fn.typeName, kind: uetClass)
+
+func getFieldIdent*(prop:UEField) : NimNode = 
+  let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()
+  identPublic fieldName
+
+
+func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField, isImportCpp: bool = false) : NimNode =  
+  let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
+  if typeDef.isInPCH and isImportCpp:           
+    nnkPragmaExpr.newTree(
+      identPublic fieldName,
+      nnkPragma.newTree(
+        nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(prop.name))))                                    
+  else:
+    getFieldIdent(prop)

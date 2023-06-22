@@ -1,6 +1,6 @@
 
 import ../utils/utils
-import std/[times,strformat,json, strutils, options, sugar, sequtils, macros, macrocache, tables]
+import std/[times,strformat,json, jsonutils, strutils, options, sugar, sequtils, macros, macrocache, tables]
 
 import ../codegen/models
 
@@ -8,7 +8,7 @@ import ../codegen/models
 const mcMulDelegates = CacheSeq"multicastDelegates"
 const mcDelegates = CacheSeq"delegates"
 
-
+const mcVMTypes = CacheSeq"vmTypes"
 
 func contains(cs: CacheSeq, node:NimNode) : bool = 
     for n in cs:
@@ -50,3 +50,12 @@ func getPropAssignment*(typeName:string) : Option[NimNode] =
 
 func doesClassNeedsConstructor*(typeName:string) : bool = 
     mcPropAssignmentsTable.hasKey(typeName)
+
+
+proc addVMType*(typeName:UEType) = 
+    mcVMTypes.add(newStrLitNode $typeName.toJson())
+
+proc getVMTypes*() : seq[UEType] =     
+    for uet in mcVMTypes:
+      result.add parseJson(uet.strVal).jsonTo(UEType)
+    

@@ -266,6 +266,20 @@ func shouldBeReturnedAsVar*(field:UEField) : bool =
             field.isDelegate() or
             field.uePropType.startsWith("F") and field.uePropType != "FString" #FStruct always starts with F. We need to enforce it in our types too.
 
+type ValFlags = EPropertyFlagsVal | EFunctionFlagsVal | EClassFlagsVal | EStructFlagsVal
+
+import std/[macros, typetraits]
+
+proc newLit*(arg: EPropertyFlagsVal): NimNode =
+  result = nnkCall.newTree(ident typeof(arg).name,  newIntLitNode(arg.int))
+  
+proc newLit*(arg: EFunctionFlagsVal): NimNode =
+  result = nnkCall.newTree(ident typeof(arg).name,  newIntLitNode(arg.int))
+
+proc newLit*(arg: EStructFlagsVal): NimNode =
+  result = nnkCall.newTree(ident typeof(arg).name,  newIntLitNode(arg.int))
+  
+
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
 func `==`*(a, b : EFunctionFlagsVal) : bool {.borrow.}
 # func `==`*(a, b : EClassFlagsVal) : bool {.borrow.}
@@ -326,4 +340,3 @@ func `==`*(a, b:UEType) : bool =
         of uetEnum: true
         of uetInterface: true
         of uetDelegate: true))
-

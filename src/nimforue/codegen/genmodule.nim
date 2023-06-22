@@ -9,10 +9,7 @@ import ../../buildscripts/nimforueconfig
 import uebind
 import ../vm/vmmacros
 
-type CodegenTarget = enum
-  ctImport
-  ctExport
-  ctVM
+
 
 func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq[NimNode] =
   let pragmas = 
@@ -96,116 +93,9 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
     ]
 
 func genUClassVMTypeDefBindings(ueType: UEtype, rule: UERule = uerNone): seq[NimNode] = 
-  if rule == uerCodeGenOnlyFields or ueType.forwardDeclareOnly or ueType.name in NimDefinedTypesNames:
-    @[]
-  else:
-    @[
-      # type Type* = object of Parent
-      nnkTypeDef.newTree(
-        nnkPostFix.newTree(ident "*", ident ueType.name),
-        newEmptyNode(),
-        nnkObjectTy.newTree(
-          newEmptyNode(),
-          nnkOfInherit.newTree(ident ueType.parent),
-          newEmptyNode()
-        )
-      ),
-      # ptr type TypePtr* = ptr Type
-      nnkTypeDef.newTree(
-        nnkPostFix.newTree(ident "*", ident ueType.name & "Ptr"),
-        newEmptyNode(),
-        nnkPtrTy.newTree(ident ueType.name)
-      )
-    ]
-
-func genUEnumTypeDefBinding(ueType: UEType, target: CodegenTarget): NimNode =
-  let pragmas = 
-    case target:
-    of ctImport, ctExport: 
-      nnkPragma.newTree(nnkExprColonExpr.newTree(ident "size", nnkCall.newTree(ident "sizeof", ident "uint8")), ident "pure")
-    of ctVM: newEmptyNode()
-
-  let enumTy = ueType.fields
-    .map(f => ident f.name)
-    .foldl(a.add b, nnkEnumTy.newTree)
-  enumTy.insert(0, newEmptyNode()) #required empty node in enums
-  nnkTypeDef.newTree(
-    nnkPragmaExpr.newTree(
-      nnkPostFix.newTree(ident "*", ident ueType.name),
-      pragmas
-    ),
-    newEmptyNode(),
-    enumTy
-  )
-
-
-func genDelegateVMTypeDefBinding(ueType: UEType, target: CodegenTarget): NimNode =
-  let pragmas = nnkPragmaExpr.newTree([
-        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
-        nnkPragma.newTree(       
-          ident "inheritable",          
-        )
-        ])
-  nnkTypeDef.newTree(
-        pragmas,
-        newEmptyNode(),
-        nnkObjectTy.newTree(
-          newEmptyNode(),
-          nnkOfInherit.newTree(ident "FMulticastScriptDelegate"),
-          newEmptyNode()
-        )
-      )
-  
-func genUStructCodegenTypeDefBinding(ueType: UEType, target: CodegenTarget): NimNode =
-  #TODO move export here and separate it enterely from the dsl
-
-  let pragmas = 
-    case target:
-    of ctImport:
-      (if ueType.isInPCH:     
-        nnkPragmaExpr.newTree([
-        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
-        nnkPragma.newTree(
-            ident "inject",
-            ident "inheritable",
-            ident "pure",
-            nnkPragma.newTree(ident "importcpp", ident "inheritable", ident "pure")
-          )
-        ])
-      else:
-        nnkPragmaExpr.newTree([
-        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
-        nnkPragma.newTree(
-          ident "inject",
-          ident "inheritable",
-          ident "pure",
-          nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
-        )
-        ])
-      )
-    of ctExport: newEmptyNode() #TODO
-    of ctVM:
-        nnkPragmaExpr.newTree([
-        nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
-        nnkPragma.newTree(       
-          ident "inheritable",          
-        )
-        ])
-      
-  var recList = ueType.fields
-    .map(prop => nnkIdentDefs.newTree(
-        getFieldIdentWithPCH(ueType, prop, target == ctImport),
-        prop.getTypeNodeFromUProp(isVarContext=false),
-        newEmptyNode()
-      )
-    )
-    .foldl(a.add b, nnkRecList.newTree)
-  nnkTypeDef.newTree(pragmas,
-    newEmptyNode(),
-    nnkObjectTy.newTree(
-      newEmptyNode(), newEmptyNode(), recList
-    )
-  )
+  if rule == uerCodeGenOnlyFields or ueType.forwardDeclareOnly or 
+    ueType.name in NimDefinedTypesNames: @[]
+  else: genVMClassTypeDef(ueType)
 
 
 
