@@ -1,5 +1,4 @@
-import std/[strutils, strformat, macros, tables, typetraits]
-import ../utils/utils
+import std/[strformat, macros, tables]
 
 type
   TableMap*[K, V] = seq[(K, V)]

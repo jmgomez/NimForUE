@@ -6,8 +6,7 @@ else:
     import ../unreal/core/math/vector
 
 import ../codegen/models
-
-import std/[options, strutils, tables, sequtils, sugar, strscans]
+import std/[options, strutils, tables, sugar, strscans]
 import utils
 
 const DelegateFuncSuffix* = "__DelegateSignature"

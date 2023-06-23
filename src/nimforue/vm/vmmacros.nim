@@ -1,8 +1,10 @@
-import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat, os]
+import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat]
 when defined nuevm:
   import exposed 
 else:
+  import std/[os]
   import ../../buildscripts/nimforueconfig
+  
 import runtimefield
 import ../utils/[utils, ueutils]
 import ../codegen/[models, modelconstructor, uebindcore, nuemacrocache]
@@ -64,10 +66,10 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
   
   let fnName = 
     case kind:
-    of uecFunc, uecgetProp: ident fn.name.firstToLow()
+    of uecFunc, uecgetProp: identPublic fn.name.firstToLow()
     else: 
       genAst(fnName=ident fn.name.firstToLow()):
-        `fnName=`  
+        `fnName=*`  
 
   let returnBlock = 
     if fn.doesReturn():
@@ -203,6 +205,7 @@ func genUStructCodegenTypeDefBinding*(ueType: UEType, target: CodegenTarget): Ni
         ])
       
   var recList = ueType.fields
+    .filter(isAllowedField)
     .map(prop => nnkIdentDefs.newTree(
         getFieldIdentWithPCH(ueType, prop, target == ctImport),
         prop.getTypeNodeFromUProp(isVarContext=false),
@@ -366,6 +369,10 @@ macro emitVMTypes*() =
       .foldl(a & b, newSeq[NimNode]()))
 
   const libname {.strdefine.} = ""
+  when defined(nuevm):
+    const BindingsVMDir = "" 
+    proc `/`(a: string, b: string): string = ""
+    
   let path = BindingsVMDir / libname & ".nim"
   writeFile(path, content)
 
