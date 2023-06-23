@@ -191,4 +191,16 @@ proc onLoadingPhaseChanged(prev : NueLoadedFrom, next:NueLoadedFrom) : void {.ff
       UE_Log &"Emitting types for {libName}"
       emitTypeFor(libName, libPath, timesReloaded, next)
   
- 
+
+import std/[json, jsonutils]
+import vm/vmmacros
+import codegen/models
+
+#VM
+uClass UVmHelpers of UObject:
+  ufuncs():
+    proc emitVMUEtype(uetJson: FString) = 
+      let ueType = uetJson.parseJson.jsonTo(UEType)
+      UE_Warn &"Emitting type {ueType.name}"
+
+emitVMTypes()

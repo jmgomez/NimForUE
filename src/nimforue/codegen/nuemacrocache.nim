@@ -7,7 +7,7 @@ const mcMulDelegates = CacheSeq"multicastDelegates"
 const mcDelegates = CacheSeq"delegates"
 
 const mcVMTypes = CacheSeq"vmTypes"
-
+const mcVMUFuncs = CacheSeq"vmUFuncs" #since ufuncs are detached from types we keep track them here. 
 func contains(cs: CacheSeq, node:NimNode) : bool = 
     for n in cs:
         if n == node: return true
@@ -49,11 +49,32 @@ func getPropAssignment*(typeName:string) : Option[NimNode] =
 func doesClassNeedsConstructor*(typeName:string) : bool = 
     mcPropAssignmentsTable.hasKey(typeName)
 
-
 proc addVMType*(typeName:UEType) = 
     mcVMTypes.add(newStrLitNode $typeName.toJson())
+
+proc addVMUFunc*(ufun:UEField) = 
+    mcVMUFuncs.add(newStrLitNode $ufun.toJson())
+    #stores a seq of funcs. So each type has a key with them all. 
+    # if mcVMUFuncs.hasKey(ufun.typeName):      
+    #     var fns = mcVMUFuncs[ufun.typeName].repr.parseJson.jsonTo(seq[UEField])
+    #     fns.add ufun
+    #     mcVMUFuncs[ufun.typeName] = newStrLitNode $fns.toJson()
+    # else:
+    #     mcVMUFuncs[ufun.typeName] = nnkStmtList.newTree newStrLitNode $(@[ufun].toJson())
+    
 
 proc getVMTypes*() : seq[UEType] =     
     for uet in mcVMTypes:
       result.add parseJson(uet.strVal).jsonTo(UEType)
+    var fns: seq[UEField]
+    for uef in mcVMUFuncs:
+      fns.add parseJson(uef.strVal).jsonTo(UEField)
+      
+    for uet in result.mitems:
+      if uet.kind == uetClass: #I know this sucks, but do you know what sucks more? Nim's macrocache API.
+        for fn in fns:
+          if fn.typeName == uet.name:
+            uet.fields.add(fn)
+        
+      
     

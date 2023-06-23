@@ -21,10 +21,10 @@ import examplescodegen
 import vminteroppocexample
 include ../unreal/prelude
 
-uClass AFoo of AActor:
-  (Blueprintable)
-  uprops(EditAnywhere, BlueprintReadWrite):
-    test : FString
+# uClass AFoo of AActor:
+#   (Blueprintable)
+#   uprops(EditAnywhere, BlueprintReadWrite):
+#     test : FString
   
 
 

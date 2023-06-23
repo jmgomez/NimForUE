@@ -697,7 +697,8 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
 
     var funField = funField
     funField.sourceHash = $hash(repr fnImpl)
-
+    safe:
+        addVmUFunc(funField)
     if funField.isBlueprintEvent(): #blueprint events doesnt have a body
         genAst(fnImpl, funField = newLit funField): 
             addEmitterInfo(funField, none[UFunctionNativeSignature]())
@@ -976,7 +977,7 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
     #returns empty if there is no block defined
     let defaults = genDefaults(body)
     let declaredConstructor = genDeclaredConstructor(body, className)
-    if declaredConstructor.isSome():
+    if declaredConstructor.isSome(): #TODO now that Nim support constructors maybe it's a good time to revisit this. 
         procNodes.add declaredConstructor.get()
     elif doesClassNeedsConstructor(className) or defaults.isSome():
         let defaultConstructor = genConstructorForClass(body, className, defaults.get(newEmptyNode()))

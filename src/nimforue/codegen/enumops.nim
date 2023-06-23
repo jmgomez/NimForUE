@@ -1,11 +1,11 @@
 import std/[sequtils, macros, genasts, json, bitops, strutils]
 import models
-when not defined(nuevm):
+when defined(nuevm):
+  import vmtypes
+  export vmtypes    
+else:
   import ../unreal/coreuobject/uobjectflags
   export uobjectflags
-else:
-  import vmtypes
-  export vmtypes
 
 when defined(nuevm):
   macro genEnumOperators(eSym, typSym:typed, genValConverters : static bool = true) : untyped = 

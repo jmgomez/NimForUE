@@ -1,10 +1,10 @@
 import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat]
 when defined nuevm:
-  import exposed 
+  import exposed
 else:
   import std/[os]
-  import ../../buildscripts/nimforueconfig
-  
+  import ../../buildscripts/nimforueconfig  
+
 import runtimefield
 import ../utils/[utils, ueutils]
 import ../codegen/[models, modelconstructor, uebindcore, nuemacrocache]
@@ -68,8 +68,8 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
     case kind:
     of uecFunc, uecgetProp: identPublic fn.name.firstToLow()
     else: 
-      genAst(fnName=ident fn.name.firstToLow()):
-        `fnName=*`  
+      identPublic &"`{fn.name.firstToLow()}=`"
+        
 
   let returnBlock = 
     if fn.doesReturn():
@@ -126,7 +126,7 @@ macro uegetter*(getter:untyped): untyped =
 macro uesetter*(setter:untyped): untyped = 
   var (ufunc, selfParam) = prepareUEFieldFuncFrom(setter) 
   # log "usetter"
-  log $ufunc
+  # log $ufunc
   result = ueBindImpl(ufunc, some selfParam, uecSetProp) 
   # log &"\n{repr result}"
   # log &"\n{treeRepr result}"
@@ -284,7 +284,7 @@ proc genUCalls*(typeDef : UEType) : NimNode =
       else: continue
 
 
-proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode = 
+proc ueBorrowImpl(clsName : string, fn: NimNode, genUCall:bool) : NimNode = 
   #TODO: integrate UEField approach 
   let argsWithFirstType =
     fn.params
@@ -336,12 +336,15 @@ proc ueBorrowImpl(clsName : string, fn: NimNode) : NimNode =
           returnVal.toRuntimeField()
 
   let (ufunc, selfParam) = prepareUEFieldFuncFrom(fn)
-  let bindFn = ueBindImpl(ufunc, some selfParam, uecFunc)
-  result = nnkStmtList.newTree(bindFn, vmFn)
+  let bindFn = ueBindImpl(ufunc, some selfParam, uecFunc)  
+  result = nnkStmtList.newTree()
+  if genUCall: result.add(bindFn)
+  result.add(vmFn)
   
 
-macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn)
-macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn)
+macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn, false)
+
+macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn, false)
 
 
 
@@ -372,7 +375,7 @@ macro emitVMTypes*() =
   when defined(nuevm):
     const BindingsVMDir = "" 
     proc `/`(a: string, b: string): string = ""
-    
+
   let path = BindingsVMDir / libname & ".nim"
   writeFile(path, content)
 

@@ -3,6 +3,10 @@
 ##The solution is to allow uobjectflags in models but then we need to get rid of 
 import enumops
 import models
+when defined(nuevm):
+  import vmtypes
+else:
+  import ../unreal/coreuobject/uobjectflags
 import ../codegen/modulerules
 
 
