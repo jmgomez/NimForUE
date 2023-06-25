@@ -1,13 +1,15 @@
-include ../unreal/prelude
+# include ../unreal/prelude
 import std/[times, strformat, tables, json, bitops, jsonUtils, strutils, options, sugar, algorithm, sequtils, hashes, typetraits]
-import fproperty
-import models
-import modelconstructor #For some odd reason (a cycle in the mod probably) if this is not included but imported the make* arent visible here?
+import ../unreal/core/containers/[unrealstring, array, map, set]
+import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype, tsoftobjectptr, nametypes, scriptdelegates, uobjectglobals, metadata]
+import ../unreal/nimforue/[nimforuebindings, nimforue]
+import ../utils/[utils, ueutils]
+import ../unreal/engine/[enginetypes, world]
+import ../unreal/runtime/[assetregistry]
+import fproperty, models, modelconstructor, emitter, modulerules, headerparser
+
 export models
-import emitter
-import ../codegen/modulerules
-import ../codegen/modelconstructor
-import headerparser
+
 const fnPrefixes* = @["", "Receive", "K2_", "BP_"]
 
 

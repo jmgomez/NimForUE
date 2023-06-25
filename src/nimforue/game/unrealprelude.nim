@@ -1,4 +1,4 @@
-import ../codegen/[ueemit, emitter]
+import ../codegen/[ueemit, emitter, umacros]
 import ../unreal/nimforue/[nimforuebindings, nimforue]
 import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype,tsoftobjectptr, 
     nametypes, scriptdelegates, uobjectglobals, metadata]

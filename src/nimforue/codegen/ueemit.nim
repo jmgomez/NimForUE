@@ -1,4 +1,3 @@
-# include ../unreal/prelude
 import std/[sugar, macros, algorithm, strutils, strformat, tables, times, genasts, sequtils, options, hashes]
 import ../unreal/coreuobject/[uobject, package, uobjectglobals, nametypes]
 import ../unreal/core/containers/[unrealstring, array, map]
@@ -6,7 +5,7 @@ import ../unreal/nimforue/[nimforue, nimforuebindings]
 import ../unreal/engine/enginetypes
 import ../utils/[utils, ueutils]
 import nuemacrocache
-import ../codegen/[emitter,modelconstructor, models,uemeta, uebind,gencppclass, headerparser]
+import ../codegen/[emitter,modelconstructor, models, uemeta, uebind,gencppclass, headerparser]
 
 
 
@@ -331,10 +330,11 @@ proc emitUDelegate(typedef:UEType) : NimNode =
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
-proc emitUEnum(typedef:UEType) : NimNode = 
+proc emitUEnum*(typedef:UEType) : NimNode = 
     let typeDecl = genTypeDecl(typedef)
     
     let typeEmitter = genAst(name=ident typedef.name, typeDefAsNode=newLit typedef): #defers the execution
+                discard
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUEnum(typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
@@ -594,27 +594,27 @@ macro uDelegate*(body:untyped) : untyped =
     emitUDelegate(ueType)
 
 
-macro uEnum*(name:untyped, body : untyped) : untyped = 
-    #[
-        uEnum EMyEnumCreatedInDsl:
-        (BlueprintType)
-            WhateverEnumValue
-            SomethingElse
+# macro uEnum*(name:untyped, body : untyped) : untyped = 
+#     #[
+#         uEnum EMyEnumCreatedInDsl:
+#         (BlueprintType)
+#             WhateverEnumValue
+#             SomethingElse
 
-    ]#
-    # echo treeRepr name
-    # echo treeRepr body           
-    let name = name.strVal()
-    let metas = getMetasForType(body)
-    let fields = body.toSeq().filter(n=>n.kind in [nnkIdent, nnkTupleConstr])
-                    .mapIt((if it.kind == nnkIdent: @[it] else: it.children.toSeq()))
-                    .foldl(a & b)
-                    .mapIt(it.strVal())
-                    .mapIt(makeFieldASUEnum(it, name))
+#     ]#
+#     # echo treeRepr name
+#     # echo treeRepr body           
+#     let name = name.strVal()
+#     let metas = getMetasForType(body)
+#     let fields = body.toSeq().filter(n=>n.kind in [nnkIdent, nnkTupleConstr])
+#                     .mapIt((if it.kind == nnkIdent: @[it] else: it.children.toSeq()))
+#                     .foldl(a & b)
+#                     .mapIt(it.strVal())
+#                     .mapIt(makeFieldASUEnum(it, name))
 
-    let ueType = makeUEEnum(name, fields, metas)
-    addVMType ueType
-    result = emitUEnum(ueType)
+#     let ueType = makeUEEnum(name, fields, metas)
+#     addVMType ueType
+#     result = emitUEnum(ueType)
 
 
 

@@ -346,8 +346,6 @@ macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn, false)
 
 macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn, false)
 
-
-
 func ueTypeToVMNode(uet: UEType) : seq[NimNode] = 
   case uet.kind:
   of uetClass: genVMClassTypeDef(uet)

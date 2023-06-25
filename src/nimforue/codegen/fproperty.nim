@@ -1,8 +1,13 @@
 
-include ../unreal/prelude
+# include ../unreal/prelude
+
 import std/[times,strformat, strutils, options, sugar, algorithm, sequtils]
 import models
-
+import ../unreal/core/containers/[unrealstring, array, map, set]
+import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype, tsoftobjectptr, nametypes, scriptdelegates, uobjectglobals, metadata]
+import ../unreal/nimforue/[nimforuebindings, nimforue]
+import ../utils/[utils, ueutils]
+import ../unreal/engine/[enginetypes, world]
 const propObjFlags = RF_Public | RF_Transient | RF_MarkAsNative
 
 #Forward declare
