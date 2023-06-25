@@ -283,3 +283,35 @@ func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField, isImportCpp: bool = fa
         nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(prop.name))))                                    
   else:
     getFieldIdent(prop)
+
+#UEEMit
+func fromNinNodeToMetadata(node : NimNode) : seq[UEMetadata] =
+    case node.kind:
+    of nnkIdent:
+        @[makeUEMetadata(node.strVal())]
+    of nnkExprEqExpr:
+        let key = node[0].strVal()
+        case node[1].kind:
+        of nnkIdent, nnkStrLit:
+            @[makeUEMetadata(key, node[1].strVal())]
+        of nnkTupleConstr: #Meta=(MetaVal1, MetaVal2)
+            @[makeUEMetadata(key, node[1][0].strVal()),
+              makeUEMetadata(key, node[1][1].strVal())]
+        else:
+            error("Invalid metadata node " & repr node)
+            @[]
+    of nnkAsgn:
+        @[makeUEMetadata(node[0].strVal(), node[1].strVal())]
+    else:
+        debugEcho treeRepr node
+        error("Invalid metadata node " & repr node)
+        @[]
+
+func getMetasForType*(body:NimNode) : seq[UEMetadata] {.compiletime.} = 
+    body.toSeq()
+        .filterIt(it.kind==nnkPar or it.kind == nnkTupleConstr)
+        .mapIt(it.children.toSeq())
+        .flatten()
+        .filterIt(it.kind!=nnkExprColonExpr)
+        .map(fromNinNodeToMetadata)
+        .flatten()

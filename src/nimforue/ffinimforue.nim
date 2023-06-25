@@ -73,6 +73,7 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypes
     try:
         let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
         if not nimHotReload.bShouldHotReload:
+          UE_Log "Nothing to re/instance"
           return false
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
@@ -196,11 +197,38 @@ import std/[json, jsonutils]
 import vm/vmmacros
 import codegen/models
 
+uEnum EEnumGuestSomethingElse: 
+  (BlueprintType)
+  Value1
+  Value2
+  Value3
+
+uEnum EMyEnumCreatedInDsl:
+    (BlueprintType)
+    WhateverEnumValue
+    SomethingElse
+
+uStruct FTestGuest:
+  (BlueprintType)
+  uprop(EditAnywhere, BlueprintReadWrite):
+    testInt : int32
+
 #VM
 uClass UVmHelpers of UObject:
-  ufuncs():
-    proc emitVMUEtype(uetJson: FString) = 
-      let ueType = uetJson.parseJson.jsonTo(UEType)
-      UE_Warn &"Emitting type {ueType.name}"
+  ufuncs(Static):
+    proc emitType(uetJson: FString) = 
+      let types = uetJson.parseJson.jsonTo(seq[UEType])
+      #emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
+      let emitter = initEmitter() #TODO deallocate after wards or use a ref and cast it back to a ptr
+      for typeDef in types:
+        var typeDef = typeDef
+        case typeDef.kind:
+        of uetEnum:
+          UE_Log "Emitting enum " & typeDef.name
+          UE_Warn $typeDef
+          addEmitterInfo(typeDef, (package:UPackagePtr) => emitUEnum(typeDef, package), emitter)
+        else: continue
+      # UE_Log $ueTyp
+      discard emitNueTypes(emitter, "GameNim", false, false)
 
 emitVMTypes()

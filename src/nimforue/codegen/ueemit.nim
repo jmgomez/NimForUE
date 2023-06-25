@@ -86,8 +86,8 @@ proc getFnGetForUClass[T](ueType:UEType) : UPackagePtr->UFieldPtr =
         ueType.emitUClass[:T](pgk, getGlobalEmitter().fnTable, clsConstructor, vtableConstructor)
     toReturn
     
-proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr) : void =  
-    getGlobalEmitter().emitters[ueType.name] = EmitterInfo(ueType:ueType, generator:fn)
+proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr, emitter: UEEmitterPtr = getGlobalEmitter()) : void =  
+    emitter.emitters[ueType.name] = EmitterInfo(ueType:ueType, generator:fn)
 
 proc addEmitterInfoForClass*[T](ueType:UEType) : void =  
     addEmitterInfo(ueType, getFnGetForUClass[T](ueType))
@@ -246,7 +246,8 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEar
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
                 let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr, not wasAlreadyLoaded)
-
+                
+                UE_Log &"?Emitting enum {prevEnumPtr} {newEnumPtr}"
                 if prevEnumPtr.isNone() and newEnumPtr.isSome():
                     hotReloadInfo.newEnums.add(newEnumPtr.get())
                 if prevEnumPtr.isSome() and newEnumPtr.isSome():
@@ -613,7 +614,8 @@ macro uEnum*(name:untyped, body : untyped) : untyped =
 
     let ueType = makeUEEnum(name, fields, metas)
     addVMType ueType
-    emitUEnum(ueType)
+    result = emitUEnum(ueType)
+
 
 
 

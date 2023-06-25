@@ -52,7 +52,7 @@ proc `$`*(emitter : UEEmitterPtr) : string =
         return " emitter is nil"
     result = $emitter.emitters.values.toSeq()
 
-proc initEmitter() : UEEmitterPtr = 
+proc initEmitter*() : UEEmitterPtr = #Notice there is a global emitter that never gets deallocated. If you want to create another, you must deallocate it manually.
     var ueEmitter : UEEmitterPtr = cast[UEEmitterPtr](alloc(sizeof(UEEmitter)))
     var init = UEEmitter()
     copyMem(ueEmitter, addr init, sizeof(UEEmitter))
