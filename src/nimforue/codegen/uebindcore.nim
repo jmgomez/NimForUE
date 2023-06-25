@@ -72,7 +72,7 @@ func identPublic*(name:string) : NimNode = nnkPostfix.newTree([ident "*", ident 
 #returns for each param a type definition node
 #the functions that it receives as param is used with ident/identWithInject/ etc. to make fields public or injected
 #isGeneratingType 
-func signatureAsNode(funField:UEField, identFn : string->NimNode, isDefaultValueContext:bool) : seq[NimNode] =  
+func signatureAsNode*(funField:UEField, identFn : string->NimNode, isDefaultValueContext:bool) : seq[NimNode] =  
   proc getDefaultParamValue(param:UEField) : NimNode = 
     func makeFnCall(fnName, val:string) : NimNode = nnkCall.newTree(ident fnName, newLit val)
     if param.defaultParamValue == "" or not isDefaultValueContext: newEmptyNode()

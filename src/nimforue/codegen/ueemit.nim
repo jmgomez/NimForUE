@@ -5,7 +5,7 @@ import ../unreal/nimforue/[nimforue, nimforuebindings]
 import ../unreal/engine/enginetypes
 import ../utils/[utils, ueutils]
 import nuemacrocache
-import ../codegen/[emitter,modelconstructor, models, uemeta, uebind,gencppclass, headerparser]
+import ../codegen/[emitter,modelconstructor, models, uemeta, uebind,gencppclass, headerparser, uebindcore]
 
 
 

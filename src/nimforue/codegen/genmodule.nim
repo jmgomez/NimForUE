@@ -6,7 +6,7 @@ import ../utils/utils
 import ../unreal/coreuobject/[uobjectflags]
 import ../codegen/[nuemacrocache, models, modulerules, projectinstrospect]
 import ../../buildscripts/nimforueconfig
-import uebind
+import uebind, uebindcore
 import ../vm/vmmacros
 
 
