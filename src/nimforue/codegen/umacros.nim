@@ -1,6 +1,5 @@
 import std/[sequtils, macros, genasts, sugar, json, jsonutils]
 import uebindcore, models, modelconstructor
-
 import ../utils/[ueutils,utils]
 
 when defined(nuevm):
@@ -9,6 +8,8 @@ when defined(nuevm):
   include guest
 else:
   import ueemit, nuemacrocache
+  import ../unreal/coreuobject/uobjectflags
+ 
 
 # import ueemit
 
@@ -31,4 +32,29 @@ macro uEnum*(name:untyped, body : untyped): untyped =
       addVMType ueType 
       result = emitUEnum(ueType)
 
- 
+    
+macro uStruct*(name:untyped, body : untyped) : untyped = 
+    var superStruct = ""
+    var structTypeName = ""
+    case name.kind
+    of nnkIdent:
+        structTypeName = name.strVal()
+    of nnkInfix:
+        superStruct = name[^1].strVal()
+        structTypeName = name[1].strVal()
+    else:
+        error("Invalid node for struct name " & repr(name) & " " & $ name.kind)
+
+    let structMetas = getMetasForType(body)
+    let ueFields = getUPropsAsFieldsForType(body, structTypeName)
+    let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
+    let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
+    when defined nuevm:
+      let types = @[ueType]    
+      # emitType($(types.toJson()))  #TODO needs structOps to be implemented
+      result = nnkTypeSection.newTree  
+      #TODO gen types
+    else:
+      addVMType ueType 
+      result = emitUStruct(ueType) 
+      echo $ueType

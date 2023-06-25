@@ -298,14 +298,15 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEar
 
 
 
-proc emitUStruct(typeDef:UEType) : NimNode =
+proc emitUStruct*(typeDef:UEType) : NimNode =
     var ueType = typeDef #the generated type must be reversed to match declaration order because the props where picked in the reversed order
     ueType.fields = ueType.fields.reversed()
     let typeDecl = genTypeDecl(ueType)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, structName=newStrLitNode(typeDef.name)): #defers the execution
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUStruct[name](typeDefAsNode, package))
-                addStructOpsWrapper(structName, (str:UNimScriptStructPtr) => setCppStructOpFor[name](str, nil))
+                when name is not void:
+                    addStructOpsWrapper(structName, (str:UNimScriptStructPtr) => setCppStructOpFor[name](str, nil))
     
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr resulti
@@ -505,31 +506,12 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
     ueFields
 
 
-func getUPropsAsFieldsForType(body:NimNode, ueTypeName:string) : seq[UEField]  = 
+func getUPropsAsFieldsForType*(body:NimNode, ueTypeName:string) : seq[UEField]  = 
     body.toSeq()
         .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ValidUProps)
         .map(n=>fromUPropNodeToField(n, ueTypeName))
         .flatten()
         .reversed()
-    
-macro uStruct*(name:untyped, body : untyped) : untyped = 
-    var superStruct = ""
-    var structTypeName = ""
-    case name.kind
-    of nnkIdent:
-        structTypeName = name.strVal()
-    of nnkInfix:
-        superStruct = name[^1].strVal()
-        structTypeName = name[1].strVal()
-    else:
-        error("Invalid node for struct name " & repr(name) & " " & $ name.kind)
-
-    let structMetas = getMetasForType(body)
-    let ueFields = getUPropsAsFieldsForType(body, structTypeName)
-    let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
-    let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
-    addVMType ueType
-    emitUStruct(ueType) 
 
 
 

@@ -950,26 +950,26 @@ proc newScriptStruct[T](package: UPackagePtr, name:FString, flags:EObjectFlags, 
 
 
 proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
-  UE_Log &"Struct emited {ueType.name}"
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
   var superStruct : UScriptStructPtr
-  if ueType.superStruct.len > 0:
+  if ueType.superStruct.len > 0: #TODO dont allow inherit in VM (void T)    
     let parent = someNil(getUTypeByName[UScriptStruct](ueType.superStruct.removeFirstLetter()))
     superStruct = parent.getOrRaise(&"Parent struct {ueType.superStruct} not found for {ueType.name}")
   
-  # let scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
-  #SuperStructs not supported but this is the way to support them
-  let scriptStruct = newScriptStruct[T](package, f ueType.name.removeFirstLetter(), objClsFlags, superStruct, sizeof(T).int32, alignof(T).int32, T())
+  var scriptStruct: UNimScriptStructPtr
+  when T is void:
+    scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+    #TODO struct ops?
+  else:
+    scriptStruct = newScriptStruct[T](package, f ueType.name.removeFirstLetter(), objClsFlags, superStruct, sizeof(T).int32, alignof(T).int32, T())    
+    setCppStructOpFor[T](scriptStruct, nil)
 
   for metadata in ueType.metadata:
-    scriptStruct.setMetadata(metadata.name, $metadata.value)
-
-  scriptStruct.assetCreated()
-  
+      scriptStruct.setMetadata(metadata.name, $metadata.value)
+  scriptStruct.assetCreated()    
   for field in ueType.fields:
-    discard field.emitFProperty(scriptStruct)
+      discard field.emitFProperty(scriptStruct)
 
-  setCppStructOpFor[T](scriptStruct, nil)
   UE_Log &"Struct emited {scriptStruct.getName()}"
   setGIsUCCMakeStandaloneHeaderGenerator(true)
   scriptStruct.bindType()
@@ -977,7 +977,6 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   setGIsUCCMakeStandaloneHeaderGenerator(false)
 
   scriptStruct.setMetadata(UETypeMetadataKey, $ueType.toJson())
-  UE_Log &"Ssale?"
   scriptStruct
 
 proc emitUStruct*[T](ueType: UEType, package: string): UFieldPtr =

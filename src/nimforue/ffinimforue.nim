@@ -38,7 +38,6 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
   if emitterPtr.isNil():
     UE_Error "Emitter is nul"
   assert not emitterPtr.isNil()
-
   unloadPrevLib(libPath) 
 
   emitterPtr
@@ -212,6 +211,7 @@ uStruct FTestGuest:
   (BlueprintType)
   uprop(EditAnywhere, BlueprintReadWrite):
     testInt : int32
+    testInt2 : int32
 
 #VM
 uClass UVmHelpers of UObject:
@@ -223,10 +223,11 @@ uClass UVmHelpers of UObject:
       for typeDef in types:
         var typeDef = typeDef
         case typeDef.kind:
-        of uetEnum:
-          UE_Log "Emitting enum " & typeDef.name
-          UE_Warn $typeDef
+        of uetEnum:         
           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUEnum(typeDef, package), emitter)
+        of uetStruct:
+          addEmitterInfo(typeDef, (package:UPackagePtr) => emitUStruct[void](typeDef, package), emitter)
+
         else: continue
       # UE_Log $ueTyp
       discard emitNueTypes(emitter, "GameNim", false, false)
