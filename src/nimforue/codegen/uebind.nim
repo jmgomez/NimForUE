@@ -7,7 +7,6 @@ import nuemacrocache, models, modelconstructor, projectinstrospect, uebindcore
 import modulerules
 import ../../buildscripts/nimforueconfig #probably nimforueconfig should be removed from buildscripts
 
-
   # macro ex*(a:untyped):untyped = a
 func genPropsAsRecList(ueType: UEType, rule: UERule = uerNone) : NimNode 
 

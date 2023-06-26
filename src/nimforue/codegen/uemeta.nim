@@ -6,9 +6,9 @@ import ../unreal/nimforue/[nimforuebindings, nimforue]
 import ../utils/[utils, ueutils]
 import ../unreal/engine/[enginetypes, world]
 import ../unreal/runtime/[assetregistry]
-import fproperty, models, modelconstructor, emitter, modulerules, headerparser
+import fproperty, models, modelconstructor, emitter, modulerules, headerparser, enumops
 
-export models
+# export models
 
 const fnPrefixes* = @["", "Receive", "K2_", "BP_"]
 
@@ -874,10 +874,10 @@ proc uobjectCppClassStaticFunctionsForUClass(uclass: typedesc): FUObjectCppClass
 
 proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
- 
-  let newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))
+    
+  
+  let newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))  
   newCls.setClassConstructor(clsConstructor)
-
   let parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
   let parent = parentCls
     .getOrRaise(&"Parent class {ueType.parent} not found fosr {ueType.name}")
@@ -887,7 +887,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.classConfigName = parent.classConfigName
   newCls.setSuperStruct(parent)
   newCls.classVTableHelperCtorCaller = vtableConstructor
-  newCls.cppClassStaticFunctions = uobjectCppClassStaticFunctionsForUClass(T)
+  when T is not void:
+    newCls.cppClassStaticFunctions = uobjectCppClassStaticFunctionsForUClass(T)
   # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
   newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32)
   newCls.classCastFlags = parent.classCastFlags

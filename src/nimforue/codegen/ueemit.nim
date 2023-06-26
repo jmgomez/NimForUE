@@ -313,7 +313,7 @@ proc emitUStruct*(typeDef:UEType) : NimNode =
 
 import ../../buildscripts/nimforueconfig
 
-proc emitUClass(typeDef:UEType) : (NimNode, NimNode) =
+proc emitUClass*(typeDef:UEType) : (NimNode, NimNode) =
     let typeDecl = genTypeDecl(typeDef)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
@@ -340,178 +340,6 @@ proc emitUEnum*(typedef:UEType) : NimNode =
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
 
-
-#iterate childrens and returns a sequence fo them
-func childrenAsSeq*(node:NimNode) : seq[NimNode] =
-    var nodes : seq[NimNode] = @[]
-    for n in node:
-        nodes.add n
-    nodes
-    
- 
-
-
-func fromNinNodeToMetadata(node : NimNode) : seq[UEMetadata] =
-    case node.kind:
-    of nnkIdent:
-        @[makeUEMetadata(node.strVal())]
-    of nnkExprEqExpr:
-        let key = node[0].strVal()
-        case node[1].kind:
-        of nnkIdent, nnkStrLit:
-            @[makeUEMetadata(key, node[1].strVal())]
-        of nnkTupleConstr: #Meta=(MetaVal1, MetaVal2)
-            @[makeUEMetadata(key, node[1][0].strVal()),
-              makeUEMetadata(key, node[1][1].strVal())]
-        else:
-            error("Invalid metadata node " & repr node)
-            @[]
-    of nnkAsgn:
-        @[makeUEMetadata(node[0].strVal(), node[1].strVal())]
-    else:
-        debugEcho treeRepr node
-        error("Invalid metadata node " & repr node)
-        @[]
-
-func getMetasForType(body:NimNode) : seq[UEMetadata] {.compiletime.} = 
-    body.toSeq()
-        .filterIt(it.kind==nnkPar or it.kind == nnkTupleConstr)
-        .mapIt(it.children.toSeq())
-        .flatten()
-        .filterIt(it.kind!=nnkExprColonExpr)
-        .map(fromNinNodeToMetadata)
-        .flatten()
-
-#some metas (so far only uprops)
-#we need to remove some metas that may be incorrectly added as flags
-#The issue is that some flags require some metas to be set as well
-#so this is were they are synced
-func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeName:string) : (EPropertyFlags, seq[UEMetadata]) = 
-    var flags : EPropertyFlags = CPF_NativeAccessSpecifierPublic
-    var metadata : seq[UEMetadata] = preMetas
-    
-    #TODO THROW ERROR WHEN NON MULTICAST AND USE MC ONLY
-    # var flags : EPropertyFlags = CPF_None
-    #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
-    #TODO all the bodies simetric with funcs and classes (at least the signature is)
-    for m in metadata.mapIt(it.name):
-        if m == "BlueprintReadOnly":
-            flags = flags | CPF_BlueprintVisible | CPF_BlueprintReadOnly
-        if m == "BlueprintReadWrite":
-            flags = flags | CPF_BlueprintVisible
-
-        if m in ["EditAnywhere", "VisibleAnywhere"]:
-            flags = flags | CPF_Edit
-        if m == "ExposeOnSpawn":
-                flags = flags | CPF_ExposeOnSpawn
-        if m == "VisibleAnywhere": 
-                flags = flags | CPF_DisableEditOnInstance
-        if m == "Transient":
-                flags = flags | CPF_Transient
-        if m == "BlueprintAssignable":
-                flags = flags | CPF_BlueprintAssignable | CPF_BlueprintVisible
-        if m == "BlueprintCallable":
-                flags = flags | CPF_BlueprintCallable
-        if m.toLower() == "config":
-                flags = flags | CPF_Config  
-        if m.toLower() == InstancedMetadataKey.toLower():
-                flags = flags | CPF_ContainsInstancedReference
-                metadata.add makeUEMetadata("EditInline")
-            #Notice this is only required in the unlikely case that the user wants to use a delegate that is not exposed to Blueprint in any way
-        #TODO CPF_BlueprintAuthorityOnly is only for MC
-    
-    let flagsThatShouldNotBeMeta = ["config", "BlueprintReadOnly", "BlueprintWriteOnly", "BlueprintReadWrite", "EditAnywhere", "VisibleAnywhere", "Transient", "BlueprintAssignable", "BlueprintCallable"]
-    for f in flagsThatShouldNotBeMeta:
-        metadata = metadata.filterIt(it.name.toLower() != f.toLower())
-
-  
-
-    if not metadata.any(m => m.name == CategoryMetadataKey):
-       metadata.add(makeUEMetadata(CategoryMetadataKey, ueTypeName.removeFirstLetter()))
-
-      #Attach accepts a second parameter which is the socket
-    if metadata.filterIt(it.name == AttachMetadataKey).len > 1:
-        let (attachs, metas) = metadata.partition((m:UEMetadata) => m.name == AttachMetadataKey)
-        metadata = metas & @[attachs[0], makeUEMetadata(SocketMetadataKey, attachs[1].value)]
-    (flags, metadata)
-
-const ValidUprops = ["uprop", "uprops", "uproperty", "uproperties"]
-
-func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] = 
-
-    let validNodesForMetas = [nnkIdent, nnkExprEqExpr]
-    let metasAsNodes = node.childrenAsSeq()
-                    .filterIt(it.kind in validNodesForMetas or (it.kind == nnkIdent and it.strVal().toLower() notin ValidUprops))
-    let ueMetas = metasAsNodes.map(fromNinNodeToMetadata).flatten().tail()
-    let metas = metasAsNodes
-                    .filterIt(it.kind == nnkIdent)
-                    .mapIt(it.strVal())
-                    .fromStringAsMetaToFlag(ueMetas, ueTypeName)
-
-
-    proc nodeToUEField (n: NimNode)  : seq[UEField] = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
-        let fieldNames = 
-            case n[0].kind:
-            of nnkIdent:
-                @[n[0].strVal()]
-            of nnkTupleConstr:
-                n[0].children.toSeq().filterIt(it.kind == nnkIdent).mapIt(it.strVal())
-              
-            else:
-                error("Invalid node for field " & repr(n) & " " & $ n.kind)
-                @[]
-
-        proc makeUEFieldFromFieldName(fieldName:string) : UEField = 
-            var fieldName = fieldName
-            #stores the assignment but without the first ident on the dot expression as we dont know it yet
-            func prepareAssignmentForLaterUsage(propName:string, right:NimNode) : NimNode = #to show intent
-                nnkAsgn.newTree(
-                    nnkDotExpr.newTree( #left
-                        #here goes the var sets when generating the constructor, i.e. self, this what ever the user wants
-                        ident propName
-                    ), 
-                    right
-                )
-            let assignmentNode = n[1].children.toSeq()
-                                    .first(n=>n.kind == nnkAsgn)
-                                    .map(n=>prepareAssignmentForLaterUsage(fieldName, n[^1]))
-
-            var propType = if assignmentNode.isSome(): n[1][0][0].repr 
-                        else: 
-                            case n.kind:
-                            of nnkIdent: n[1].repr.strip() #regular prop
-                            of nnkCall:          
-                                repr(n[^1][0]).strip() #(prop1,.., propn) : type
-                            else: 
-                                error("Invalid node for field " & repr(n) & " " & $ n.kind)
-                                ""
-            assignmentNode.run (n:NimNode)=> addPropAssignment(ueTypeName, n)
-            
-            if isMulticastDelegate propType:
-                makeFieldAsUPropMulDel(fieldName, propType, ueTypeName, metas[0], metas[1])
-            elif isDelegate propType:
-                makeFieldAsUPropDel(fieldName, propType, ueTypeName, metas[0], metas[1])
-            else:
-                makeFieldAsUProp(fieldName, propType, ueTypeName, metas[0], metas[1])
-        
-        fieldNames.map(makeUEFieldFromFieldName)
-    #TODO Metas to flags
-    let ueFields = node.childrenAsSeq()
-                   .filter(n=>n.kind==nnkStmtList)
-                   .head()
-                   .map(childrenAsSeq)
-                   .get(@[])
-                   .map(nodeToUEField)
-                   .flatten()
-    ueFields
-
-
-func getUPropsAsFieldsForType*(body:NimNode, ueTypeName:string) : seq[UEField]  = 
-    body.toSeq()
-        .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ValidUProps)
-        .map(n=>fromUPropNodeToField(n, ueTypeName))
-        .flatten()
-        .reversed()
 
 
 
@@ -709,7 +537,7 @@ proc ufuncImpl(fn:NimNode, classParam:Option[UEField], typeName : string, functi
     result =  (fnReprfwd, nnkStmtList.newTree(fnReprImpl, fnImplNode))
 
 
-# macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField](), "") deprecated TODO revisit
+# macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField](), "") #deprecated TODO revisit
 
 #this macro is ment to be used as a block that allows you to define a bunch of ufuncs 
 #that share the same flags. You dont need to specify uFunc if the func is inside
@@ -779,7 +607,7 @@ func getForwardDeclarationForProc(fn:NimNode) : NimNode =
    result[^1] = newEmptyNode() 
 
 #At this point the fws are reduced into a nnkStmtList and the same with the nodes
-func genUFuncsForUClass(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode]) : NimNode = 
+func genUFuncsForUClass*(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode]) : NimNode = 
     let fnBlocks = body.toSeq()
                        .filter(n=>n.kind == nnkCall and 
                             n[0].strVal().toLower() in ["ufunc", "ufuncs", "ufunction", "ufunctions"])
@@ -793,14 +621,14 @@ func genUFuncsForUClass(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode]) 
         impls.add impl #impl is a nnkStmtList
     result = nnkStmtList.newTree(fws &  nimProcs & impls )
 
-func genConstructorForClass(uClassBody:NimNode, className:string, constructorBody:NimNode, initializerName:string="") : NimNode = 
+func genConstructorForClass*(uClassBody:NimNode, className:string, constructorBody:NimNode, initializerName:string="") : NimNode = 
   var initializerName = if initializerName == "" : "initializer" else : initializerName
   let typeParam = makeFieldAsUPropParam("self", className, className)
   let initParam = makeFieldAsUPropParam(initializerName, "FObjectInitializer", className)
   let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)
   return constructorImpl(fnField, constructorBody)
 
-func genDeclaredConstructor(body:NimNode, className:string) : Option[NimNode] = 
+func genDeclaredConstructor*(body:NimNode, className:string) : Option[NimNode] = 
 
   let constructorBlock = 
     body.toSeq()
@@ -821,7 +649,7 @@ func genDeclaredConstructor(body:NimNode, className:string) : Option[NimNode] =
     
 
  
-func genDefaults(body:NimNode) : Option[NimNode] = 
+func genDefaults*(body:NimNode) : Option[NimNode] = 
     func replaceFirstIdentWithSelfDotExpr(assignment:NimNode) : NimNode = 
         case assignment[0].kind:
         of nnkIdent: assignment.kind.newTree(nnkDotExpr.newTree(ident "self", assignment[0]) & assignment[1..^1])
@@ -841,44 +669,7 @@ func genDefaults(body:NimNode) : Option[NimNode] =
         )
 
 
-func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags, seq[UEMetadata]) = 
-    var metas = classMetadata
-    var flags = (CLASS_Inherit | CLASS_Native ) #| CLASS_CompiledFromBlueprint
-    for meta in classMetadata:
-        if meta.name.toLower() == "config": #Game config. The rest arent supported just yet
-            flags = flags or CLASS_Config
-            metas = metas.filterIt(it.name.toLower() != "config")
-        if meta.name.toLower() == "blueprintable":
-            metas.add makeUEMetadata("IsBlueprintBase")
-        if meta.name.toLower() == "editinlinenew":
-            flags = flags or CLASS_EditInlineNew
-    (flags, metas)
-
-proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) = 
-    if name.toSeq().len() < 3:
-        error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
-    let className = name[1].strVal()
-    #Register the class as emitted for us so we can generate the cpp for it and suport vfuncs
-    emittedClasses.add className
-    case name[^1].kind:
-    of nnkIdent: 
-        let parent = name[^1].strVal()
-        (className, parent, newSeq[string]())
-    of nnkCommand:
-        let parent = name[^1][0].strVal()        
-        var ifaces = 
-            name[^1][^1][^1].strVal().split(",") 
-        if ifaces[0][0] == 'I':
-            ifaces.add ("U" & ifaces[0][1..^1])
-        # debugEcho $ifaces
-
-        (className, parent, ifaces)
-    else:
-        error("Cant parse the uClass " & repr name)
-        ("", "", newSeq[string]())
- 
-
-func addSelfToProc(procDef:NimNode, className:string) : NimNode = 
+func addSelfToProc*(procDef:NimNode, className:string) : NimNode = 
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
     procDef
 
@@ -891,7 +682,7 @@ func generateSuper(procDef: NimNode, parentName: string) : NimNode =
         proc super() {.importc: content, nodecl.}  
     result.params = nnkFormalParams.newTree procDef.params.filterIt(it != parent)
 
-func processVirtual(procDef: NimNode, parentName: string) : NimNode = 
+func processVirtual*(procDef: NimNode, parentName: string) : NimNode = 
 #[
     if the proc has virtual, it will fill it with the proc info:
         - Capitilize the proc name
@@ -946,64 +737,3 @@ func processVirtual(procDef: NimNode, parentName: string) : NimNode =
             let self {.inject.} = removeConst(self)
         result.body.insert 0, selfNoConst
         
-
-proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) = 
-    let (className, parent, interfaces) = getTypeNodeFromUClassName(name)    
-    let ueProps = getUPropsAsFieldsForType(body, className)
-    let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
-    var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
-    ueType.interfaces = interfaces
-    #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
-    ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
-    addVMType ueType
-    var (typeNode, addEmitterProc) = emitUClass(ueType)
-    var procNodes = nnkStmtList.newTree(addEmitterProc)
-    #returns empty if there is no block defined
-    let defaults = genDefaults(body)
-    let declaredConstructor = genDeclaredConstructor(body, className)
-    if declaredConstructor.isSome(): #TODO now that Nim support constructors maybe it's a good time to revisit this. 
-        procNodes.add declaredConstructor.get()
-    elif doesClassNeedsConstructor(className) or defaults.isSome():
-        let defaultConstructor = genConstructorForClass(body, className, defaults.get(newEmptyNode()))
-        procNodes.add defaultConstructor
-
-    let nimProcs = body.children.toSeq
-                    .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor"])
-                    .mapIt(it.addSelfToProc(className).processVirtual(parent))
-    
-    var fns = genUFuncsForUClass(body, className, nimProcs)
-    fns.insert(0, procNodes)
-    result =  (typeNode, fns)
-    
-
-macro uClass*(name:untyped, body : untyped) : untyped = 
-    let (uClassNode, fns) = uClassImpl(name, body)
-    nnkStmtList.newTree(@[uClassNode] & fns)
-
-macro uSection*(body: untyped): untyped = 
-    let uclasses = 
-        body.filterIt(it.kind == nnkCommand) 
-            .mapIt(uClassImpl(it[1], it[^1]))
-    var typs = newSeq[NimNode]()
-    var fns = newSeq[NimNode]()
-    for uclass in uclasses:
-        let (uClassNode, fns) = uclass
-        typs.add uClassNode
-        fns.add fns
-    #TODO allow uStructs in sections
-    #set all types in the same typesection
-    var typSection = nnkTypeSection.newTree()
-    for typ in typs:
-        let typDefs = typ[0].children.toSeq()
-        typSection.add typDefs
-    # let codeReordering = nnkStmtList.newTree nnkPragma.newTree(nnkExprColonExpr.newTree(ident "experimental", newLit "codereordering"))
-    result = nnkStmtList.newTree(@[typSection] & fns)
-
-
-macro uForwardDecl*(name : untyped ) : untyped = 
-    let (className, parentName, interfaces) = getTypeNodeFromUClassName(name)
-    var ueType = UEType(name:className, kind:uetClass, parent:parentName, interfaces:interfaces)
-    ueType.interfaces = interfaces
-    ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
-    let (typNode, addEmitterProc) = emitUClass(ueType)
-    result = nnkStmtList.newTree(typNode, addEmitterProc)

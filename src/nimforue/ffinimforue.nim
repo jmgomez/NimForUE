@@ -207,13 +207,8 @@ uEnum EMyEnumCreatedInDsl:
     WhateverEnumValue
     SomethingElse
 
-uStruct FTestGuest:
-  (BlueprintType)
-  uprop(EditAnywhere, BlueprintReadWrite):
-    testInt : int32
-    testInt2 : int32
 
-#VM
+# VM
 uClass UVmHelpers of UObject:
   ufuncs(Static):
     proc emitType(uetJson: FString) = 
@@ -223,6 +218,9 @@ uClass UVmHelpers of UObject:
       for typeDef in types:
         var typeDef = typeDef
         case typeDef.kind:
+        of uetClass:
+          #This may cause issues as it is a whole new path. Native uses addEmitterInfoForClass
+          addEmitterInfo(typeDef, (package:UPackagePtr) => emitUClass[void](typeDef, package, @[], nil, nil), emitter)
         of uetEnum:         
           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUEnum(typeDef, package), emitter)
         of uetStruct:
@@ -231,5 +229,11 @@ uClass UVmHelpers of UObject:
         else: continue
       # UE_Log $ueTyp
       discard emitNueTypes(emitter, "GameNim", false, false)
+
+
+uClass UAnother of UObject:
+  uprops():
+    testInt : int32
+    testInt2 : int32
 
 emitVMTypes()

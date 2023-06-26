@@ -265,7 +265,9 @@ proc genUCalls*(typeDef : UEType) : NimNode =
   assert typeDef.kind == uetClass
   result = nnkStmtList.newTree()
   for field in typeDef.fields:
+    log "entra en field "
     let firstParam = some makeFieldAsUProp("self", typeDef.name & "Ptr", typeDef.name)
+    log $firstParam
     case field.kind:
       of uefProp:
         if not isAllowedField(field): continue

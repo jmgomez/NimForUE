@@ -1,4 +1,4 @@
-import std/[sequtils, macros, genasts, json, bitops, strutils]
+import std/[macros, genasts, json, bitops, sequtils, strutils]
 import models
 when defined(nuevm):
   import vmtypes
@@ -80,7 +80,6 @@ when defined(nuevm):
   # template rank*[T:enum | int](a : T) : int = (when a is int: a else: symbolRank(a)) #TODO test if the values match. 
   # # template `|`*[A, B:enum | int](a: A, b: B): enum = (rank(a) + rank(b))
   # template `or`*[A, B:enum | int](a: A, b: B): enum =  a | b
-
 
 
   const CLASS_Inherit* = (CLASS_Transient | CLASS_Optional | CLASS_DefaultConfig | CLASS_Config | CLASS_PerObjectConfig | CLASS_ConfigDoNotCheckDefaults | CLASS_NotPlaceable | CLASS_Const | CLASS_HasInstancedReference | CLASS_Deprecated | CLASS_DefaultToInstanced | CLASS_GlobalUserConfig | CLASS_ProjectUserConfig | CLASS_NeedsDeferredDependencyLoading)

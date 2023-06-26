@@ -1,11 +1,15 @@
-import enumops
-import models, modelconstructor
-import std/[strformat, sequtils, macros, options, sugar, strutils, genasts]
+
+import models, modelconstructor, enumops
+import std/[strformat, sequtils, macros, options, sugar, strutils, genasts, algorithm]
 import ../utils/[utils, ueutils]
+from nuemacrocache import addPropAssignment, isMulticastDelegate, isDelegate
+
 when not defined(nuevm):
   import ../unreal/coreuobject/uobjectflags
 else:
   import vmtypes
+
+
 
 func getTypeNodeFromUProp*(prop : UEField, isVarContext:bool) : NimNode 
 
@@ -29,7 +33,7 @@ func nimToCppConflictsFreeName*(propName:string) : string =
   else: propName
 
 
-func isStatic*(funField:UEField) : bool = (FUNC_Static in funField.fnFlags)
+func isStatic*(funField:UEField) : bool = FUNC_Static in funField.fnFlags and funField.fnFlags.int != 0
 func getReturnProp*(funField:UEField) : Option[UEField] =  funField.signature.filter(isReturnParam).head()
 func doesReturn*(funField:UEField) : bool = funField.getReturnProp().isSome()
 
@@ -285,7 +289,7 @@ func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField, isImportCpp: bool = fa
     getFieldIdent(prop)
 
 #UEEMit
-func fromNinNodeToMetadata(node : NimNode) : seq[UEMetadata] =
+func fromNinNodeToMetadata*(node : NimNode) : seq[UEMetadata] =
     case node.kind:
     of nnkIdent:
         @[makeUEMetadata(node.strVal())]
@@ -307,6 +311,15 @@ func fromNinNodeToMetadata(node : NimNode) : seq[UEMetadata] =
         error("Invalid metadata node " & repr node)
         @[]
 
+#iterate childrens and returns a sequence fo them
+func childrenAsSeq*(node:NimNode) : seq[NimNode] =
+    var nodes : seq[NimNode] = @[]
+    for n in node:
+        nodes.add n
+    nodes
+    
+ 
+
 func getMetasForType*(body:NimNode) : seq[UEMetadata] {.compiletime.} = 
     body.toSeq()
         .filterIt(it.kind==nnkPar or it.kind == nnkTupleConstr)
@@ -315,3 +328,134 @@ func getMetasForType*(body:NimNode) : seq[UEMetadata] {.compiletime.} =
         .filterIt(it.kind!=nnkExprColonExpr)
         .map(fromNinNodeToMetadata)
         .flatten()
+
+#some metas (so far only uprops)
+#we need to remove some metas that may be incorrectly added as flags
+#The issue is that some flags require some metas to be set as well
+#so this is were they are synced
+func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeName:string) : (EPropertyFlags, seq[UEMetadata]) = 
+    var flags : EPropertyFlags = CPF_NativeAccessSpecifierPublic
+    var metadata : seq[UEMetadata] = preMetas
+    
+    #TODO THROW ERROR WHEN NON MULTICAST AND USE MC ONLY
+    # var flags : EPropertyFlags = CPF_None
+    #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
+    #TODO all the bodies simetric with funcs and classes (at least the signature is)
+    for m in metadata.mapIt(it.name):
+        if m == "BlueprintReadOnly":
+            flags = flags | CPF_BlueprintVisible | CPF_BlueprintReadOnly
+        if m == "BlueprintReadWrite":
+            flags = flags | CPF_BlueprintVisible
+
+        if m in ["EditAnywhere", "VisibleAnywhere"]:
+            flags = flags | CPF_Edit
+        if m == "ExposeOnSpawn":
+                flags = flags | CPF_ExposeOnSpawn
+        if m == "VisibleAnywhere": 
+                flags = flags | CPF_DisableEditOnInstance
+        if m == "Transient":
+                flags = flags | CPF_Transient
+        if m == "BlueprintAssignable":
+                flags = flags | CPF_BlueprintAssignable | CPF_BlueprintVisible
+        if m == "BlueprintCallable":
+                flags = flags | CPF_BlueprintCallable
+        if m.toLower() == "config":
+                flags = flags | CPF_Config  
+        if m.toLower() == InstancedMetadataKey.toLower():
+                flags = flags | CPF_ContainsInstancedReference
+                metadata.add makeUEMetadata("EditInline")
+            #Notice this is only required in the unlikely case that the user wants to use a delegate that is not exposed to Blueprint in any way
+        #TODO CPF_BlueprintAuthorityOnly is only for MC
+    
+    let flagsThatShouldNotBeMeta = ["config", "BlueprintReadOnly", "BlueprintWriteOnly", "BlueprintReadWrite", "EditAnywhere", "VisibleAnywhere", "Transient", "BlueprintAssignable", "BlueprintCallable"]
+    for f in flagsThatShouldNotBeMeta:
+        metadata = metadata.filterIt(it.name.toLower() != f.toLower())
+
+  
+
+    if not metadata.any(m => m.name == CategoryMetadataKey):
+       metadata.add(makeUEMetadata(CategoryMetadataKey, ueTypeName.removeFirstLetter()))
+
+      #Attach accepts a second parameter which is the socket
+    if metadata.filterIt(it.name == AttachMetadataKey).len > 1:
+        let (attachs, metas) = metadata.partition((m:UEMetadata) => m.name == AttachMetadataKey)
+        metadata = metas & @[attachs[0], makeUEMetadata(SocketMetadataKey, attachs[1].value)]
+    (flags, metadata)
+
+const ValidUprops = ["uprop", "uprops", "uproperty", "uproperties"]
+
+func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] = 
+
+    let validNodesForMetas = [nnkIdent, nnkExprEqExpr]
+    let metasAsNodes = node.childrenAsSeq()
+                    .filterIt(it.kind in validNodesForMetas or (it.kind == nnkIdent and it.strVal().toLower() notin ValidUprops))
+    let ueMetas = metasAsNodes.map(fromNinNodeToMetadata).flatten().tail()
+    let metas = metasAsNodes
+                    .filterIt(it.kind == nnkIdent)
+                    .mapIt(it.strVal())
+                    .fromStringAsMetaToFlag(ueMetas, ueTypeName)
+
+
+    proc nodeToUEField (n: NimNode)  : seq[UEField] = #TODO see how to get the type implementation to discriminate between uProp and  uDelegate
+        let fieldNames = 
+            case n[0].kind:
+            of nnkIdent:
+                @[n[0].strVal()]
+            of nnkTupleConstr:
+                n[0].children.toSeq().filterIt(it.kind == nnkIdent).mapIt(it.strVal())
+              
+            else:
+                error("Invalid node for field " & repr(n) & " " & $ n.kind)
+                @[]
+
+        proc makeUEFieldFromFieldName(fieldName:string) : UEField = 
+            var fieldName = fieldName
+            #stores the assignment but without the first ident on the dot expression as we dont know it yet
+            func prepareAssignmentForLaterUsage(propName:string, right:NimNode) : NimNode = #to show intent
+                nnkAsgn.newTree(
+                    nnkDotExpr.newTree( #left
+                        #here goes the var sets when generating the constructor, i.e. self, this what ever the user wants
+                        ident propName
+                    ), 
+                    right
+                )
+            let assignmentNode = n[1].children.toSeq()
+                                    .first(n=>n.kind == nnkAsgn)
+                                    .map(n=>prepareAssignmentForLaterUsage(fieldName, n[^1]))
+
+            var propType = if assignmentNode.isSome(): n[1][0][0].repr 
+                        else: 
+                            case n.kind:
+                            of nnkIdent: n[1].repr.strip() #regular prop
+                            of nnkCall:          
+                                repr(n[^1][0]).strip() #(prop1,.., propn) : type
+                            else: 
+                                error("Invalid node for field " & repr(n) & " " & $ n.kind)
+                                ""
+            assignmentNode.run (n:NimNode)=> addPropAssignment(ueTypeName, n)
+            
+            if isMulticastDelegate propType:
+                makeFieldAsUPropMulDel(fieldName, propType, ueTypeName, metas[0], metas[1])
+            elif isDelegate propType:
+                makeFieldAsUPropDel(fieldName, propType, ueTypeName, metas[0], metas[1])
+            else:
+                makeFieldAsUProp(fieldName, propType, ueTypeName, metas[0], metas[1])
+        
+        fieldNames.map(makeUEFieldFromFieldName)
+    #TODO Metas to flags
+    let ueFields = node.childrenAsSeq()
+                   .filter(n=>n.kind==nnkStmtList)
+                   .head()
+                   .map(childrenAsSeq)
+                   .get(@[])
+                   .map(nodeToUEField)
+                   .flatten()
+    ueFields
+
+
+func getUPropsAsFieldsForType*(body:NimNode, ueTypeName:string) : seq[UEField]  = 
+    body.toSeq()
+        .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ValidUProps)
+        .map(n=>fromUPropNodeToField(n, ueTypeName))
+        .flatten()
+        .reversed()

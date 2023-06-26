@@ -24,8 +24,13 @@ type
 proc getArg(a: VmArgs, i: int): TFullReg =
   result = a.slots[i+a.rb+1]
 
-
-
+template measureTime*(name: static string, body: untyped) =
+  let starts = times.now()
+  body
+  let ends = (times.now() - starts)
+  let msg = name & " took " & $ends & "  seconds"
+  UE_Log msg
+ 
 
 proc onInterpreterError(config: ConfigRef, info: TLineInfo, msg: string, severity : Severity)  {.gcsafe.}  = 
   if severity == Severity.Error and config.error_counter >= config.error_max:
@@ -253,7 +258,7 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nim") : 
   interpreter.implementBaseFunctions()
   interpreter.setupBorrow()
   userSearchPaths = searchPaths
-  UE_Log "NimForUE VM initialized"
+  UE_Log &"NimForUE VM initialized"
   UE_Log &"Search paths: {userSearchPaths}"  
 
   interpreter
@@ -329,6 +334,8 @@ uClass ANimVM of AActor:
       self.isWatching = false
 
     proc restartVM() = 
-      interpreter = initInterpreter(userSearchPaths)
+      measureTime "Initializing VM":
+        interpreter = initInterpreter(@[NimGameDir() / "vm"])
+      # interpreter = initInterpreter(userSearchPaths)
       reloadScript()
 

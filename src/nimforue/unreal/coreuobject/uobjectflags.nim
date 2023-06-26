@@ -399,7 +399,7 @@ genEnumOperators(EFieldIterationFlags, uint8, false)
   
 
 
-#TODO move this to uebind core
+#This should be in enumops. For some reason they arent being pickup
 const CLASS_Inherit* = (CLASS_Transient | CLASS_Optional | CLASS_DefaultConfig | CLASS_Config | CLASS_PerObjectConfig | CLASS_ConfigDoNotCheckDefaults | CLASS_NotPlaceable | CLASS_Const | CLASS_HasInstancedReference | CLASS_Deprecated | CLASS_DefaultToInstanced | CLASS_GlobalUserConfig | CLASS_ProjectUserConfig | CLASS_NeedsDeferredDependencyLoading)
 const CLASS_ScriptInherit* = CLASS_Inherit | CLASS_EditInlineNew | CLASS_CollapseCategories 
 # #* Struct flags that are automatically inherited */
