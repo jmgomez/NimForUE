@@ -105,10 +105,13 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
       let types = @[ueType]    
       emitType($(types.toJson()))       
       let typeSection = nnkTypeSection.newTree(genVMClassTypeDef(ueType))
-      # let members = 
-      # result = (nnkStmtList.newTree(typeSection, genUCalls(ueType)), newEmptyNode())
-      result = (typeSection, newEmptyNode())
-      log repr result
+      let ueTypeNode = 
+        genAst(name=ident &"{className}UEType", ueType=newLit ueType):
+          let name {.inject.} = ueType
+
+      var members = genUCalls(ueType) 
+      members.add ueTypeNode
+      result = (typeSection, members)
 
     else:
       #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
