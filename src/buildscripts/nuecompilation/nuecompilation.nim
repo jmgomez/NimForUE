@@ -137,7 +137,7 @@ switch("path","../Plugins/NimForUE/src/nimforue/")
     writeFile(gameConf, fileTemplate)
 
 
-proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) = 
+proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:bool) = 
   var extraSwitches = extraSwitches
   let isVm = "vm" in name
   var gameSwitches = @[
@@ -163,9 +163,9 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) =
   let isGame = name == "game"
   
   let entryPoint = NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim")
-
+  let releaseFlag = if withRelease: "-d:danger" else: ""
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"{nimCmd} cpp {buildFlags}  --nimMainPrefix:{name.capitalizeAscii()}  -d:withPCH --nimcache:{nimCache} {entryPoint}"
+  let compCmd = &"{nimCmd} cpp {buildFlags} {releaseFlag}  --nimMainPrefix:{name.capitalizeAscii()}  -d:withPCH --nimcache:{nimCache} {entryPoint}"
   # echo compCmd
   doAssert(execCmd(compCmd)==0)
 
@@ -174,8 +174,8 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug:bool) =
     copyNimForUELibToUEDir(name)
   
 
-proc compileGame*(extraSwitches:seq[string], withDebug:bool) = 
-  compileLib("game", extraSwitches, withDebug)
+proc compileGame*(extraSwitches:seq[string], withDebug, withRelease:bool) = 
+  compileLib("game", extraSwitches, withDebug, withRelease)
 
 
 
