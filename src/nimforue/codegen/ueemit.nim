@@ -526,15 +526,15 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
 #parameter of the function
 #Returns a tuple with the forward declaration and the actual function 
 #Notice the impl contains the actual native implementation of the
-proc ufuncImpl(fn:NimNode, classParam:Option[UEField], typeName : string, functionsMetadata : seq[UEMetadata] = @[]) : tuple[fw:NimNode, impl:NimNode] = 
-    
-    let (fnField, firstParam) = uFuncFieldFromNimNode(fn, classParam, typeName, functionsMetadata)
-    let className = fnField.typeName
+proc ufuncImpl*(fn:NimNode, classParam:Option[UEField], typeName : string, functionsMetadata : seq[UEMetadata] = @[]) : tuple[fw:NimNode, impl:NimNode, fnField: UEField] = 
+  let (fnField, firstParam) = uFuncFieldFromNimNode(fn, classParam, typeName, functionsMetadata)
+  let className = fnField.typeName
+  let (fnReprfwd, fnReprImpl) = genFunc(UEType(name:className, kind:uetClass), fnField)
+  let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
 
-    let (fnReprfwd, fnReprImpl) = genFunc(UEType(name:className, kind:uetClass), fnField)
-    let fnImplNode = genNativeFunction(firstParam, fnField, fn.body)
+  result =  (fnReprfwd, nnkStmtList.newTree(fnReprImpl, fnImplNode), fnField)
 
-    result =  (fnReprfwd, nnkStmtList.newTree(fnReprImpl, fnImplNode))
+
 
 
 # macro ufunc*(fn:untyped) : untyped = ufuncImpl(fn, none[UEField](), "") #deprecated TODO revisit
@@ -578,48 +578,6 @@ macro uConstructor*(fn:untyped) : untyped =
 
     let fnField = makeFieldAsUFun(fn.name.strVal(), params, firstParam.uePropType.removeLastLettersIfPtr())
     constructorImpl(fnField, fn.body)
-
-#Returns a tuple with the list of forward declaration for the block and the actual functions impl
-func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tuple[fws:seq[NimNode], impl:NimNode, metas:seq[UEMetadata]] = 
-    let metas = funcBlock.childrenAsSeq()
-                    .tail() #skip ufunc and variations
-                    .filterIt(it.kind==nnkIdent or it.kind==nnkExprEqExpr)
-                    .map(fromNinNodeToMetadata)
-                    .flatten()
-    #TODO add first parameter
-    let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), ueTypeName, CPF_None) #notice no generic/var allowed. Only UObjects
-   
-    # debugEcho "FUNC BLOCK " & funcBlock.treeRepr()
-
-    let allFuncs = funcBlock[^1].children.toSeq()
-        .filterIt(it.kind==nnkProcDef)
-        .map(procBody=>ufuncImpl(procBody, firstParam, firstParam.get.typeName, metas))
-    
-    var fws = newSeq[NimNode]()
-    var impls = newSeq[NimNode]()
-    for (fw, impl) in allFuncs:
-        fws.add fw
-        impls.add impl
-    result = (fws, nnkStmtList.newTree(impls), metas)
-
-func getForwardDeclarationForProc(fn:NimNode) : NimNode = 
-   result = nnkProcDef.newTree(fn[0..^1])
-   result[^1] = newEmptyNode() 
-
-#At this point the fws are reduced into a nnkStmtList and the same with the nodes
-func genUFuncsForUClass*(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode]) : NimNode = 
-    let fnBlocks = body.toSeq()
-                       .filter(n=>n.kind == nnkCall and 
-                            n[0].strVal().toLower() in ["ufunc", "ufuncs", "ufunction", "ufunctions"])
-
-    let fns = fnBlocks.map(fnBlock=>funcBlockToFunctionInUClass(fnBlock, ueTypeName))
-    let procFws =nimProcs.map(getForwardDeclarationForProc) #Not used there is a internal error: environment misses: self
-    var fws = newSeq[NimNode]() 
-    var impls = newSeq[NimNode]()
-    for (fw, impl, metas) in fns:
-        fws = fws & fw 
-        impls.add impl #impl is a nnkStmtList
-    result = nnkStmtList.newTree(fws &  nimProcs & impls )
 
 func genConstructorForClass*(uClassBody:NimNode, className:string, constructorBody:NimNode, initializerName:string="") : NimNode = 
   var initializerName = if initializerName == "" : "initializer" else : initializerName

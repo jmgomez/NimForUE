@@ -64,6 +64,8 @@ type EPropertyFlags* {. importflag, size:sizeof(uint64).} = enum
         CPF_NativeAccessSpecifierPrivate  = 0x0040000000000000,  #< Private native access specifier
         CPF_SkipSerialization        = 0x0080000000000000,  
 
+        CPF_Expand = int.high
+
 
 
 type 

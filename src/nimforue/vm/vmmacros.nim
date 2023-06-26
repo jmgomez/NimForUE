@@ -133,9 +133,6 @@ macro uesetter*(setter:untyped): untyped =
 
 # macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn, uecFunc)
 
-#Move into utils
-proc removeLastLettersIfPtr*(str:string) : string = 
-    if str.endsWith("Ptr"): str.substr(0, str.len()-4) else: str
 
 
 func isAllowedField*(field:UEField) : bool = 
@@ -265,7 +262,6 @@ proc genUCalls*(typeDef : UEType) : NimNode =
   assert typeDef.kind == uetClass
   result = nnkStmtList.newTree()
   for field in typeDef.fields:
-    log "entra en field "
     let firstParam = some makeFieldAsUProp("self", typeDef.name & "Ptr", typeDef.name)
     log $firstParam
     case field.kind:
@@ -286,7 +282,7 @@ proc genUCalls*(typeDef : UEType) : NimNode =
       else: continue
 
 
-proc ueBorrowImpl(clsName : string, fn: NimNode, genUCall:bool) : NimNode = 
+proc ueBorrowImpl*(clsName : string, fn: NimNode) : NimNode = 
   #TODO: integrate UEField approach 
   let argsWithFirstType =
     fn.params
@@ -340,13 +336,12 @@ proc ueBorrowImpl(clsName : string, fn: NimNode, genUCall:bool) : NimNode =
   let (ufunc, selfParam) = prepareUEFieldFuncFrom(fn)
   let bindFn = ueBindImpl(ufunc, some selfParam, uecFunc)  
   result = nnkStmtList.newTree()
-  if genUCall: result.add(bindFn)
   result.add(vmFn)
   
 
-macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn, false)
+macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn)
 
-macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn, false)
+macro ueborrowStatic*(clsName : static string, fn:untyped) : untyped = ueBorrowImpl(clsName, fn)
 
 func ueTypeToVMNode(uet: UEType) : seq[NimNode] = 
   case uet.kind:
@@ -355,6 +350,18 @@ func ueTypeToVMNode(uet: UEType) : seq[NimNode] =
   of uetEnum: @[genUEnumTypeDefBinding(uet, ctVM)]
   of uetDelegate: @[genDelegateVMTypeDefBinding(uet, ctVM)]
   else: @[newEmptyNode()]
+
+#equivalent to the same function in uemit. but for the vm
+#calls for the bindings ubindimpl and ueborrowimpl for the implementation
+proc ufuncImpl*(fn:NimNode, classParam:Option[UEField], typeName : string, functionsMetadata : seq[UEMetadata] = @[]) : tuple[fw:NimNode, impl:NimNode, fn: UEField] = 
+  let (fnField, selfParam) = uFuncFieldFromNimNode(fn, classParam, typeName, functionsMetadata)
+  var fn = fn
+  fn.params = genFormalParamsInFunctionSignature(fnField.getFakeUETypeFromFunc(), fnField, "self")
+  let fnReprImpl = ueBindImpl(fnField, some selfParam, uecFunc)
+  #TODO forwardDecalre
+  let fnReprfwd = newEmptyNode()
+  let fnImplNode = ueBorrowImpl("", fn)
+  result =  (fnReprfwd, nnkStmtList.newTree(fnReprImpl, fnImplNode), fnField)
 
 macro emitVMTypes*() = 
   let ueTypes = getVMTypes()  

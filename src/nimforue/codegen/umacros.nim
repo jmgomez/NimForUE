@@ -93,6 +93,49 @@ proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =
         error("Cant parse the uClass " & repr name)
         ("", "", newSeq[string]())
 
+#Returns a tuple with the list of forward declaration for the block and the actual functions impl
+func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tuple[fws:seq[NimNode], impl:NimNode, metas:seq[UEMetadata], fnFields: seq[UEField]] = 
+    let metas = funcBlock.childrenAsSeq()
+                    .tail() #skip ufunc and variations
+                    .filterIt(it.kind==nnkIdent or it.kind==nnkExprEqExpr)
+                    .map(fromNinNodeToMetadata)
+                    .flatten()
+    #TODO add first parameter
+    let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), ueTypeName, CPF_None) #notice no generic/var allowed. Only UObjects
+    let allFuncs = funcBlock[^1].children.toSeq()
+      .filterIt(it.kind==nnkProcDef)
+      .map(procBody=>ufuncImpl(procBody, firstParam, firstParam.get.typeName, metas))
+    
+    var fws = newSeq[NimNode]()
+    var impls = newSeq[NimNode]()
+    var fnFields = newSeq[UEField]()
+    for (fw, impl, fnField) in allFuncs:
+        fws.add fw
+        impls.add impl
+        fnFields.add fnField
+    result = (fws, nnkStmtList.newTree(impls), metas, fnFields)
+
+func getForwardDeclarationForProc(fn:NimNode) : NimNode = 
+   result = nnkProcDef.newTree(fn[0..^1])
+   result[^1] = newEmptyNode() 
+
+#At this point the fws are reduced into a nnkStmtList and the same with the nodes
+func genUFuncsForUClass*(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode]) : (NimNode, seq[UEField]) = 
+    let fnBlocks = body.toSeq()
+                       .filter(n=>n.kind == nnkCall and 
+                            n[0].strVal().toLower() in ["ufunc", "ufuncs", "ufunction", "ufunctions"])
+
+    let fns = fnBlocks.map(fnBlock=>funcBlockToFunctionInUClass(fnBlock, ueTypeName))
+    let procFws =nimProcs.map(getForwardDeclarationForProc) #Not used there is a internal error: environment misses: self
+    var fws = newSeq[NimNode]() 
+    var impls = newSeq[NimNode]()
+    var fnFields = newSeq[UEField]()
+    for (fw, impl, metas, newfnFields) in fns:
+      fws = fws & fw 
+      impls.add impl #impl is a nnkStmtList
+      fnFields.add newfnFields
+    result = (nnkStmtList.newTree(fws &  nimProcs & impls ), fnFields)
+
 
 
 proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) = 
@@ -102,17 +145,15 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
     ueType.interfaces = interfaces
     when defined nuevm:
-      let types = @[ueType]    
-      emitType($(types.toJson()))       
-      let typeSection = nnkTypeSection.newTree(genVMClassTypeDef(ueType))
-      let ueTypeNode = 
-        genAst(name=ident &"{className}UEType", ueType=newLit ueType):
-          let name {.inject.} = ueType
-
+           
+      let typeSection = nnkTypeSection.newTree(genVMClassTypeDef(ueType))      
       var members = genUCalls(ueType) 
-      members.add ueTypeNode
+      var (fns, fnFields) = genUFuncsForUClass(body, className, @[])      
+      members.add fns
       result = (typeSection, members)
-
+      ueType.fields.add fnFields
+      let types = @[ueType]    
+      emitType($(types.toJson()))        
     else:
       #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
       ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
@@ -132,7 +173,7 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
                       .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor"])
                       .mapIt(it.addSelfToProc(className).processVirtual(parent))
       
-      var fns = genUFuncsForUClass(body, className, nimProcs)
+      var (fns,_) = genUFuncsForUClass(body, className, nimProcs)
       fns.insert(0, procNodes)
       result =  (typeNode, fns)
 

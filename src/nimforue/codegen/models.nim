@@ -271,13 +271,13 @@ type ValFlags = EPropertyFlagsVal | EFunctionFlagsVal | EClassFlagsVal | EStruct
 import std/[macros, typetraits]
 
 proc newLit*(arg: EPropertyFlagsVal): NimNode =
-  result = nnkCall.newTree(ident typeof(arg).name,  newIntLitNode(arg.int))
+  result = nnkCall.newTree(ident typeof(arg).name,  newLit(arg.uint64))
   
 proc newLit*(arg: EFunctionFlagsVal): NimNode =
-  result = nnkCall.newTree(ident typeof(arg).name,  newIntLitNode(arg.int))
+  result = nnkCall.newTree(ident typeof(arg).name,  newLit(arg.uint64))
 
 proc newLit*(arg: EStructFlagsVal): NimNode =
-  result = nnkCall.newTree(ident typeof(arg).name,  newIntLitNode(arg.int))
+  result = nnkCall.newTree(ident typeof(arg).name,  newLit(arg.uint64))
   
 
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}
