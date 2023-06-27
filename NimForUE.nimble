@@ -16,11 +16,6 @@ let buildNueCmd = "nim cpp -p:./ -d:danger  --nimcache:./.nimcache/nue src/nue.n
 task nue, "Build the NimForUE tool":
   exec buildNueCmd
 
-task setup, "Setups the plugin":
-  exec buildNueCmd
-  exec "nimble ok"
-  exec "./nue setup"
-
 
 task ok, "Make sure NUE and Host are built at least once (ment to be called for UBT)":
   let (output, _) = gorgeEx("./nue ok")

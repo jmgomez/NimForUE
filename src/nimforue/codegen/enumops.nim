@@ -93,3 +93,17 @@ when defined(nuevm):
   const FUNC_FuncOverrideMatch* = (FUNC_Exec | FUNC_Final | FUNC_Static | FUNC_Public | FUNC_Protected | FUNC_Private)
   const FUNC_NetFuncFlags*      = (FUNC_Net | FUNC_NetReliable | FUNC_NetServer | FUNC_NetClient | FUNC_NetMulticast)
   const FUNC_AccessSpecifiers*  = (FUNC_Public | FUNC_Private | FUNC_Protected)
+
+
+
+
+import std/[macros, typetraits]
+
+proc newLit*(arg: EPropertyFlagsVal): NimNode =
+  result = nnkCall.newTree(ident typeof(arg).name,  newLit(arg.uint64))
+  
+proc newLit*(arg: EFunctionFlagsVal): NimNode =
+  result = nnkCall.newTree(ident typeof(arg).name,  newLit(arg.uint64))
+
+proc newLit*(arg: EStructFlagsVal): NimNode =
+  result = nnkCall.newTree(ident typeof(arg).name,  newLit(arg.uint64))

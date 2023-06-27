@@ -1,8 +1,6 @@
 when defined codegen:
     type FString = string
-# else:
-    
-    # include ../unreal/definitions
+
 import std/[strformat,json, strutils, options, sugar, sequtils, tables]
 import ../utils/utils
 
@@ -268,16 +266,6 @@ func shouldBeReturnedAsVar*(field:UEField) : bool =
 
 type ValFlags = EPropertyFlagsVal | EFunctionFlagsVal | EClassFlagsVal | EStructFlagsVal
 
-import std/[macros, typetraits]
-
-proc newLit*(arg: EPropertyFlagsVal): NimNode =
-  result = nnkCall.newTree(ident typeof(arg).name,  newLit(arg.uint64))
-  
-proc newLit*(arg: EFunctionFlagsVal): NimNode =
-  result = nnkCall.newTree(ident typeof(arg).name,  newLit(arg.uint64))
-
-proc newLit*(arg: EStructFlagsVal): NimNode =
-  result = nnkCall.newTree(ident typeof(arg).name,  newLit(arg.uint64))
   
 
 func `==`*(a, b : EPropertyFlagsVal) : bool {.borrow.}

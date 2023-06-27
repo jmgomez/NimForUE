@@ -314,12 +314,6 @@ task genbindingsall, "Runs the Generate Bindings commandlet":
   genbindings(taskOptions)
   gencppbindings(taskOptions)
 
-task setup, "Setups the plugin by building the initial tasks in order":
-  ubuild(taskOptions)
-  guest(taskOptions)
-  genbindingsall(taskOptions)
-  rebuildlibs(taskOptions)
-
 
 task ok, "prints ok if NUE and Host are built":
   if fileExists(HostLibPath):
@@ -327,6 +321,14 @@ task ok, "prints ok if NUE and Host are built":
   else:
     log "host not built"
     host(taskOptions)
+
+
+task setup, "Setups the plugin by building the initial tasks in order":
+  ubuild(taskOptions)
+  guest(taskOptions)
+  genbindingsall(taskOptions)
+  rebuildlibs(taskOptions)
+
   
 task starteditor, "opens the editor":
   ubuild(taskOptions)
@@ -391,5 +393,5 @@ task genplugin, "Creates a plugin, by default it uses the name of the game with 
 
 
 # --- End Tasks ---
+ok(taskOptions)
 main()
-
