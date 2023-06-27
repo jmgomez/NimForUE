@@ -93,7 +93,7 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
   result.params = genFormalParamsInFunctionSignature(fn.getFakeUETypeFromFunc(), fn)
   
 
-proc prepareUEFieldFuncFrom(fn:NimNode): (UEField, UEField) = 
+proc prepareUEFieldFuncFrom*(fn:NimNode): (UEField, UEField) = 
   let clsName = 
     if fn.params.len > 1:
       fn.params.filterIt(it.kind == nnkIdentDefs)[0][1].strVal().removeLastLettersIfPtr()
@@ -282,6 +282,8 @@ proc genUCalls*(typeDef : UEType) : NimNode =
       else: continue
 
 
+proc treeRepr*(xs: seq[NimNode]) : string = xs.map(treeRepr).join("\n")
+
 proc ueBorrowImpl*(clsName : string, fn: NimNode) : NimNode = 
   #TODO: integrate UEField approach 
   let argsWithFirstType =
@@ -310,10 +312,13 @@ proc ueBorrowImpl*(clsName : string, fn: NimNode) : NimNode =
   let fnVmName = ident fnNameLit & "VmImpl"
   let fnVmNameLit = fnNameLit & "VmImpl"
 
-  func injectedArg(arg:NimNode, idx:int) : NimNode = 
-    let argName = arg[0]
-    let argNameLit = argName.strVal()
-    let argType = arg[1]
+  func injectedArg(arg:NimNode, idx:int) : NimNode =        
+    # raise newException(Exception, &"Node is {arg.kind} with tree:\n {treeRepr arg}")    
+    let (argName, argNameLit, argType) = 
+      case arg[0].kind:
+      of nnkIdent: (arg[0], arg[0].strVal, arg[1])
+      of nnkPragmaExpr: (arg[0][0], arg[0][0].strVal, arg[1])
+      else: raise newException(Exception, &"Node is {arg.kind} with tree:\n {treeRepr arg}")    
     genAst(argName, argNameLit, argType):
       let argName {.inject.} = callInfo.value[argNameLit].runtimeFieldTo(argType)
   
@@ -333,11 +338,8 @@ proc ueBorrowImpl*(clsName : string, fn: NimNode) : NimNode =
           let returnVal {.inject.} : returnType = fnBody
           returnVal.toRuntimeField()
 
-  let (ufunc, selfParam) = prepareUEFieldFuncFrom(fn)
-  let bindFn = ueBindImpl(ufunc, some selfParam, uecFunc)  
-  result = nnkStmtList.newTree()
-  result.add(vmFn)
-  
+  # raise newException(Exception, &"tree:\n {repr vmFn}")    
+  result = nnkStmtList.newTree vmFn
 
 macro ueborrow*(fn:untyped) : untyped = ueBorrowImpl("", fn)
 
@@ -362,6 +364,7 @@ proc ufuncImpl*(fn:NimNode, classParam:Option[UEField], typeName : string, funct
   let fnReprfwd = newEmptyNode()
   let fnImplNode = ueBorrowImpl("", fn)
   result =  (fnReprfwd, nnkStmtList.newTree(fnReprImpl, fnImplNode), fnField)
+  
 
 macro emitVMTypes*() = 
   let ueTypes = getVMTypes()  
