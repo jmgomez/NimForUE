@@ -95,7 +95,7 @@ proc implementBaseFunctions(interpreter:Interpreter) =
     setResult(a, objAddr)     
   )
   
-  interpreter.implementRoutine("NimForUE", "exposed", "castIntToPtr", proc (a: VmArgs) =    
+  interpreter.implementRoutine("NimForUE", "corevm", "castIntToPtr", proc (a: VmArgs) =    
     setResult(a, getInt(a, 0))     
   )
   interpreter.implementRoutine("NimForUE", "exposed", "deref", proc (a: VmArgs) =    

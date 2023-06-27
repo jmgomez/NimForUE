@@ -302,6 +302,7 @@ proc clearFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#
 proc addToRoot*(obj:UObjectPtr) : void {. importcpp: "#->AddToRoot()" .}
 
 proc getClass*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
+proc getClassImpl*(obj : UObjectPtr) : UClassPtr {. importcpp: "#->GetClass()" .}
 proc getOuter*(obj : UObjectPtr) : UObjectPtr {. importcpp: "#->GetOuter()" .}
 proc getWorld*(obj : UObjectPtr) : UWorldPtr {. importcpp: "#->GetWorld()" .}
 

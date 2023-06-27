@@ -2,8 +2,8 @@
 import std/[json, jsonutils, typetraits, strutils, tables, options]
 import runtimefield
 import ../unreal/bindings/vm/vmtypes
-import ../codegen/[models]
-
+import corevm
+export corevm
 
 proc log*(s:string) : void = discard #overrided
 
@@ -22,7 +22,6 @@ proc uCall*(uCall:UECall) : Option[RuntimeField] =
 # proc newUObjectInterop(owner : UObjectPtr, cls:UClassPtr) : UObjectPtr = UObjectPtr(0) #overrided
 
 
-proc castIntToPtr*[T](address:int) : ptr T = nil
 proc deref*[T](val: ptr T) : T = nil #only ints for now
 
 # proc newUObject*[T](owner : UObjectPtr = UObjectPtr(0)) : T = 

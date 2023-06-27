@@ -51,6 +51,9 @@ uClass UObjectPOC of UObject:
       UE_Log "Object addr: " & $cast[int](obj)
       10
     proc callFuncWithObjPtrArgReturnObjPtr(obj:UObjectPtr) : UObjectPtr = 
+      if obj.isNil():
+        UE_Error "Object is nil"
+        return nil
       UE_Log "Object name: " & $obj.getName() 
       obj
     proc callFuncWithObjPtrArgReturnStr(obj:UObjectPtr) : FString = 
@@ -229,8 +232,10 @@ uClass AActorPOCVMTest of ANimTestBase:
           value: (obj: cast[int](self)).toRuntimeField()
         )
       let objAddr = uCall(callData).get(RuntimeField(kind:Int)).getInt()
+      UE_Log &"Returned object addr is {objAddr}"
       let obj = cast[UObjectPtr](objAddr)
-      UE_Log $obj
+      # if obj.isNotNil:
+      #   UE_Log $obj
 
     proc testCallFuncWithObjPtrArgReturnStr() = 
       let callData = UECall(

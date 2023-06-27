@@ -229,7 +229,20 @@ uClass UVmHelpers of UObject:
         else: continue
       # UE_Log $ueTyp
       discard emitNueTypes(emitter, "GameNim", false, false)
-
+    
+    proc getDefaultUObject(cls:UClassPtr) : UObjectPtr =  cls.getDefaultObject()
+    
+    proc getUClass(obj: UObjectPtr) : UClassPtr = 
+      UE_Log &"Getting class for {obj.getName()}"
+      result = uobject.getClassImpl(obj)
+      if result.isNil():
+        UE_Warn "Class is nil"
+      else:
+        UE_Log &"Class is {result.getName()}"
+    proc getName(obj: UObjectPtr) : FString = 
+      if obj.isNil:
+        return "Nil object"
+      else: $getFName(obj)
 
 uClass UAnother of UObject:
   uprops():

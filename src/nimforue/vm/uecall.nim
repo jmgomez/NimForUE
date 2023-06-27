@@ -180,7 +180,7 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
       let returnProp = fn.getReturnProperty()
       let returnOffset = fn.returnValueOffset
       var returnMemoryRegion = memoryBlockAddr + returnOffset.uint
-      let returnRuntimeField = getProp(returnProp, cast[pointer](returnMemoryRegion))
+      let returnRuntimeField = getProp(returnProp, cast[pointer](memoryBlockAddr))
       result = some(returnRuntimeField)
 
     dealloc(memoryBlock)    

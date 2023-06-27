@@ -7,7 +7,7 @@ from nuemacrocache import addPropAssignment, isMulticastDelegate, isDelegate
 when not defined(nuevm):
   import ../unreal/coreuobject/uobjectflags
 else:
-  import vmtypes
+  import vmtypes, exposed
 
 
 
@@ -64,7 +64,7 @@ func identWithInjectPublicAnd*(name, anotherPragma:string) : NimNode =
 
     ])
 
-func identWithInject*(name:string) : NimNode = 
+func identWithInject*(name:string) : NimNode {.compileTime.} = 
   nnkPragmaExpr.newTree([
     ident name,
     nnkPragma.newTree(ident "inject")])

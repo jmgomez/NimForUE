@@ -1,5 +1,6 @@
 import std/[strformat, macros, tables]
-
+when defined nuevm:
+  import corevm
 type
   TableMap*[K, V] = seq[(K, V)]
 
@@ -200,21 +201,27 @@ func contains*(rtField : RuntimeField, name : string) : bool =
     raise newException(ValueError, "rtField is not a struct")
 
 
-macro getField(obj: object, fld: string): untyped =
+macro getField*(obj: object, fld: string): untyped =
   newDotExpr(obj, newIdentNode(fld.strVal))
 
 type IntBased = int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | enum
 # func toRuntimeFieldHook*[T](value : T) : RuntimeField = toRuntimeField*[T](value : T)
 proc runtimeFieldTo*(rtField : RuntimeField, T : typedesc) : T 
+
 proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) = 
-  when compiles(fromRuntimeFieldHook(val,rtField)): 
-    fromRuntimeFieldHook(a, rtField)
+  when compiles(fromRuntimeFieldHook(value,rtField)): 
+    fromRuntimeFieldHook(value, rtField)
   else:   
     case rtField.kind:
     of Int:
-      when T is IntBased:
+      when T is IntBased:        
         # a = cast[T](b.intVal) #No cast in the vm
         value = T(rtField.intVal)
+      when T is ptr:
+        when defined nuevm:
+          value = castIntToPtr[typeof((default(T)[]))](rtField.intVal)
+        else:
+          value = cast[T](rtField.intVal)        
     of Bool:
       when T is bool:
         value = T(rtField.boolVal)
