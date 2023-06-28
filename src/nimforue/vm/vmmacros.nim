@@ -68,8 +68,13 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
     case kind:
     of uecFunc, uecgetProp: identPublic fn.name.firstToLow()
     else: 
-      identPublic &"`{fn.name.firstToLow()}=`"
-        
+      nnkPostfix.newTree(
+        ident "*",
+        nnkAccQuoted.newTree(
+          ident fn.name.firstToLow(),
+          ident "="
+        )
+      )
 
   let returnBlock = 
     if fn.doesReturn():
@@ -324,19 +329,24 @@ proc ueBorrowImpl*(clsName : string, fn: NimNode) : NimNode =
   
   let injectedArgs = nnkStmtList.newTree(args.mapi(injectedArg))
 
+  let returnBlock = 
+    if returnTypeLit == "void":
+      genAst(fnBody):
+        fnBody
+        RuntimeField()
+    else:
+      genAst(fnBody, returnType):
+        let returnVal {.inject.} : returnType = fnBody
+        returnVal.toRuntimeField()        
+
   let vmFn = 
-    genAst(funName=fnName, fnNameLit, fnVmName, fnVmNameLit, fnBody, classType, clsNameLit, returnType, returnTypeLit, injectedArgs, isStatic):
+    genAst(funName=fnName, fnNameLit, fnVmName, fnVmNameLit, returnBlock, classType, clsNameLit, returnType, returnTypeLit, injectedArgs, isStatic):
       setupBorrow(UEBorrowInfo(fnName:fnNameLit, className:clsNameLit))
       proc fnVmName*(callInfo{.inject.}:UECall) : RuntimeField = 
         injectedArgs 
         when not isStatic:
           let self {.inject.} = castIntToPtr[classType](callInfo.self)
-        when returnTypeLit == "void":
-          fnBody
-          RuntimeField() #no return
-        else:
-          let returnVal {.inject.} : returnType = fnBody
-          returnVal.toRuntimeField()
+        returnBlock
 
   # raise newException(Exception, &"tree:\n {repr vmFn}")    
   result = nnkStmtList.newTree vmFn
