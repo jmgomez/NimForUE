@@ -2,7 +2,7 @@
 import models, modelconstructor, enumops
 import std/[strformat, sequtils, macros, options, sugar, strutils, genasts, algorithm]
 import ../utils/[utils, ueutils]
-from nuemacrocache import addPropAssignment, isMulticastDelegate, isDelegate
+from nuemacrocache import addPropAssignment, isMulticastDelegate, isDelegate, getPropAssignment
 
 when not defined(nuevm):
   import ../unreal/coreuobject/uobjectflags
@@ -432,7 +432,7 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
                             else: 
                                 error("Invalid node for field " & repr(n) & " " & $ n.kind)
                                 ""
-            assignmentNode.run (n:NimNode)=> addPropAssignment(ueTypeName, n)
+            assignmentNode.run (n:NimNode) => addPropAssignment(ueTypeName, n)
             
             if isMulticastDelegate propType:
                 makeFieldAsUPropMulDel(fieldName, propType, ueTypeName, metas[0], metas[1])
@@ -459,3 +459,24 @@ func getUPropsAsFieldsForType*(body:NimNode, ueTypeName:string) : seq[UEField]  
         .map(n=>fromUPropNodeToField(n, ueTypeName))
         .flatten()
         .reversed()
+
+
+func getPropAssigments*(typeName: string, selfName: string): NimNode =
+  #returns a block with self.prop = prop for all uprops block for a given type
+    let selfIdent = ident selfName
+    #gets the UEType and expands the assignments for the nodes that has cachedNodes implemented
+    func insertReferenceToSelfInAssignmentNode(assgnNode:NimNode) : NimNode = 
+        if assgnNode[0].len()==1: #if there is any insert it. Otherwise, replace the existing one (user has a defined a custom constructor)
+            assgnNode[0].insert(0, selfIdent)
+        else:
+            assgnNode[0][0] = selfIdent
+        assgnNode
+
+    var assignmentsNode = getPropAssignment(typeName).get(newEmptyNode()) #TODO error
+
+    nnkStmtList.newTree(
+        assignmentsNode
+            .children
+            .toSeq()
+            .map(insertReferenceToSelfInAssignmentNode)
+    ) 

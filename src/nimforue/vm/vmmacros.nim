@@ -305,7 +305,7 @@ proc ueBorrowImpl*(clsName : string, fn: NimNode) : NimNode =
     (if isStatic: clsName
     else: argsWithFirstType[0][1].strVal().removeLastLettersIfPtr()).removeFirstLetter()
   
-  let classTypePtr = if isStatic: newEmptyNode() else: ident (argsWithFirstType[0][1].strVal())
+  let classTypePtr = if isStatic: ident clsName else: ident (argsWithFirstType[0][1].strVal())
   let classType = ident classTypePtr.strVal().removeLastLettersIfPtr() 
 
   let returnTypeLit = if fn.params[0].kind == nnkEmpty: "void" else: fn.params[0].repr()
@@ -375,6 +375,22 @@ proc ufuncImpl*(fn:NimNode, classParam:Option[UEField], typeName : string, funct
   let fnImplNode = ueBorrowImpl("", fn)
   result =  (fnReprfwd, nnkStmtList.newTree(fnReprImpl, fnImplNode), fnField)
   
+
+proc addVMConstructor*(uet: var UEType, assigments: NimNode): NimNode = 
+  let fnField = makeFieldAsUFun(VMDefaultConstructor, @[], uet.name, metadata= @[makeUEMetadata("Static")])
+  uet.fields.add fnField
+  let fnName = identPublic VMDefaultConstructor
+  let selfType = ident uet.name & "Ptr"
+  let fn = genAst(fnName, selfType, assigments):
+    proc fnName(self {.inject.}: selfType) = 
+      let cdo {.inject.} = cast[selfType](self.getUClass.getDefaultUObject())
+      vmmacros.log "constructor executed"
+      assigments
+  let fnReprImpl = ueBindImpl(fnField, none(UEField), uecFunc)
+  let borrow = ueBorrowImpl(uet.name, fn)
+  result = borrow
+
+
 
 macro emitVMTypes*() = 
   let ueTypes = getVMTypes()  

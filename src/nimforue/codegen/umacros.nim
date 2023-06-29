@@ -144,18 +144,20 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
     ueType.interfaces = interfaces
-    when defined nuevm:
-           
+    when defined nuevm:           
       let typeSection = nnkTypeSection.newTree(genVMClassTypeDef(ueType))      
       var members = genUCalls(ueType) 
       var (fns, fnFields) = genUFuncsForUClass(body, className, @[])      
       members.add fns
-      ueType.fields.add fnFields
+      ueType.fields.add fnFields      
+      members.add addVmConstructor(ueType, getPropAssigments(ueType.name, "cdo"))      
       let types = @[ueType]    
-      let emissionAst = #lets delay the emission so we have time to register the constructor in the borrow map
-        genAst(json = newLit $(types.toJson())):
-          emitType(json)  
-      members.add emissionAst
+      emitType($types.toJson())
+      #TODO another delayed call 
+    #   let emissionAst = #lets delay the emission so we have time to register the constructor in the borrow map
+    #     genAst(json = newLit $(types.toJson())):
+    #       emitType(json)  
+    #   members.add emissionAst
       result = (typeSection, members)
 
     else:

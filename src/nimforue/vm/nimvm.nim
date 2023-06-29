@@ -201,7 +201,6 @@ proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) :
 
         #ahora solo hay un entero
       let ueCallNode = makeUECall(makeUEFunc(borrowInfo.fnName, borrowInfo.className), context, argsAsRtField).toVm()
-
       let res = interpreter.callRoutine(vmFn, [ueCallNode])
 
       let returnProp = fn.getReturnProperty()
@@ -240,14 +239,19 @@ proc implementNativeFunc(borrowInfo: UEBorrowInfo) =
 proc setupBorrow(interpreter:Interpreter) = 
   interpreter.implementRoutine("NimForUE", "exposed", "setupBorrowInterop", proc(a: VmArgs) =
     safe:
-      var borrowInfo = a.getString(0).parseJson().jsonTo(UEBorrowInfo)
-      if borrowInfo.isVmDefaultConstructor(): #we need to delay it, it will be resumed after the constructor is loaded.
-        UE_Log "delaying default constructor implemention:"
-        borrowInfo.isDelayed = true
-        borrowTable.addOrUpdate(borrowInfo.getBorrowKey(), borrowInfo)
-        return
-
+      var borrowInfo = a.getString(0).parseJson().jsonTo(UEBorrowInfo)              
       implementNativeFunc(borrowInfo)
+      if borrowInfo.isVmDefaultConstructor(): #we need to call the constructor right away
+        let vmFn = interpreter.selectRoutine(borrowInfo.getVMImplFuncName)
+        if vmFn.isNil():
+          UE_Error &"script does not export a proc of the name: {borrowInfo.fnName}"
+          UE_Log &"All exported funcs: {borrowTable}"
+          return
+        let cdo = getClassByName(borrowInfo.className).getDefaultObject()
+        var args = RuntimeField(kind:Struct)
+        args.add("self", cdo.toRuntimeField())
+        let ueCallNode = makeUECall(makeUEFunc(borrowInfo.fnName, borrowInfo.className), cdo, args).toVm()
+        let res = interpreter.callRoutine(vmFn, [ueCallNode])      
   )
 
 

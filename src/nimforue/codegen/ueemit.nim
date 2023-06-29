@@ -354,22 +354,7 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
     let initName = ident fnField.signature[1].name #there are always two params.a
     let fnName = ident fnField.name
 
-    #gets the UEType and expands the assignments for the nodes that has cachedNodes implemented
-    func insertReferenceToSelfInAssignmentNode(assgnNode:NimNode) : NimNode = 
-        if assgnNode[0].len()==1: #if there is any insert it. Otherwise, replace the existing one (user has a defined a custom constructor)
-            assgnNode[0].insert(0, selfIdent)
-        else:
-            assgnNode[0][0] = selfIdent
-        assgnNode
-
-    var assignmentsNode = getPropAssignment(fnField.typeName).get(newEmptyNode()) #TODO error
-    let assignments = 
-            nnkStmtList.newTree(
-                assignmentsNode
-                    .children
-                    .toSeq()
-                    .map(insertReferenceToSelfInAssignmentNode)
-            )
+    let assignments = getPropAssigments(fnField.typeName, typeParam.name)
     let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assignments, initName):
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
             defaultConstructorStatic[typeIdent](initName)
