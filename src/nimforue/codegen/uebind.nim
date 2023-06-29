@@ -190,7 +190,7 @@ func getClassTemplate*(typeDef: UEType) : string =
   &"""
 struct $1 : public $3{cppInterfaces} {{
   $1() = default;
-  $1(FVTableHelper& Helper) : $3(Helper) {{}}
+  $1(FVTableHelper& Helper) : $3() {{}}
   $2  
 }};
 """

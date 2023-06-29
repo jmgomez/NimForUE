@@ -66,7 +66,7 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
             nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")), #Probably we dont need _ anymore but it be useful to see the distinction when debugging the code, if so it needs to be passed to the template
             ident "inheritable",
             ident "pure",
-            nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
+            nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
         )
       )
       
@@ -305,7 +305,7 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
     if prevModHash == module.hash and uerIgnoreHash notin module.rules:
       echo "Skipping module: " & module.name & " as it has not changed"
-      # continue
+      continue
     let preludeRelative =  if isOneFilePkg: "../" else: "../../"            
     let moduleImportStrTemplate = &"""
 #hash:{module.hash}

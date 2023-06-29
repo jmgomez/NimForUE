@@ -10,7 +10,7 @@ import ../utils/[utils, ueutils]
 import ../codegen/[models, modelconstructor, uebindcore, nuemacrocache]
 
 when not defined(log):
-  proc log(str: string) = echo str
+  proc log(str: string) = discard #echo str
 
 
 
