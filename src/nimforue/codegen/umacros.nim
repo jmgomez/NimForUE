@@ -150,10 +150,14 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
       var members = genUCalls(ueType) 
       var (fns, fnFields) = genUFuncsForUClass(body, className, @[])      
       members.add fns
-      result = (typeSection, members)
       ueType.fields.add fnFields
       let types = @[ueType]    
-      emitType($(types.toJson()))        
+      let emissionAst = #lets delay the emission so we have time to register the constructor in the borrow map
+        genAst(json = newLit $(types.toJson())):
+          emitType(json)  
+      members.add emissionAst
+      result = (typeSection, members)
+
     else:
       #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
       ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
@@ -179,7 +183,8 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (uClassNode, fns) = uClassImpl(name, body)
-    nnkStmtList.newTree(@[uClassNode] & fns)
+    result = nnkStmtList.newTree(@[uClassNode] & fns)
+    # log repr result
     
 
 macro uSection*(body: untyped): untyped = 

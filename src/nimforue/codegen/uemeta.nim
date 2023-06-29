@@ -871,12 +871,35 @@ proc setGIsUCCMakeStandaloneHeaderGenerator*(value: static bool) =
 """.}
 
 proc uobjectCppClassStaticFunctionsForUClass(uclass: typedesc): FUObjectCppClassStaticFunctions {.importcpp:"UOBJECT_CPPCLASS_STATICFUNCTIONS_FORCLASS('1)".} 
+import ../vm/runtimefield
+proc vmConstructor*(objectInitializer:var FObjectInitializer) : void {.cdecl.} = 
+  #TODO check for comps etc. First iteration is just defaults
+  UE_Log "Calling vmConstructor"
+  callSuperConstructor(objectInitializer)
+  let obj = objectInitializer.getObj()
+  let uFn = obj.getClass.findFunctionByName(makeFName("vmdefaultconstructor"))
+  if uFn.isNotNil():
+    if uFn.getNativeFunc().isNil(): 
+      let name = uFn.getName()
+      if name.toLower() == VMDefaultConstructor:
+        let borrowInfo: FString = $UEBorrowInfo(fnName: VMDefaultConstructor, className: obj.getClass.getName()).toJson()
+        if callStaticUFunction("NimVmManager", "implementDelayedBorrow", borrowInfo.addr):
+          UE_Log "Borrow should be setup now (Guest), calling vmdefaultconstructor"
+          obj.processEvent(uFn, nil)
+        else:
+          UE_Warn "No native function found for vmdefaultconstructor"
+    else:
+      UE_Warn "Calling constructor in the vm"    
+      obj.processEvent(uFn, nil)
+  else:
+    UE_Warn "No vmdefaultconstructor found"
+  
 
 proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
     
   
-  let newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))  
+  let newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))   
   newCls.setClassConstructor(clsConstructor)
   let parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
   let parent = parentCls

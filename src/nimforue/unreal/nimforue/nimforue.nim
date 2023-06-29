@@ -3,7 +3,7 @@ import ../core/containers/[unrealstring, map, array]
 import nimforuebindings
 import std/[strformat, options]
 include ../definitions
-import ../../codegen/[models,uebind, emitter]
+import ../../codegen/[models,]
 
 import ../../utils/[utils, ueutils]
 import ../engine/enginetypes
@@ -87,8 +87,8 @@ iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr =
         yield super
 
 func isBPClass*(cls:UClassPtr) : bool =
-    safe:
-      UE_Log getStackTrace()
+    # safe:
+      # UE_Log getStackTrace()
     result = (CLASS_CompiledFromBlueprint.uint32 and cls.classFlags.uint32) != 0
     UE_Warn &"isBpClass called for {cls.getName() } and result is {result}"
     
@@ -106,6 +106,20 @@ proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FProperty
 
 
 
+proc callStaticUFunction*(clsName, fnName: string, args:pointer): bool = 
+  #dynamically calls a ufunction
+  #args is Params. See exported for an example  
+  let fnName = n fnName
+  let self {.inject.} = getDefaultObjectFromClassName(clsName)
+  if self.isNil():
+     false
+  else:
+    let fn {.inject, used.} = ueCast[UObject](self).getClass().findFuncByName(fnName)
+    if fn.isNil():
+      false
+    else:
+      self.processEvent(fn, args)
+      true
 
 
 

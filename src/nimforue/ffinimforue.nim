@@ -120,15 +120,9 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
 import std/sugar
 #VM manager tests
 # proc reloadScript() {.uebindStatic:"UNimVmManager".} #any library that pulls nimvm will have it
-proc reloadScriptGuest() {.ffi:genFilePath.} = 
-  #todo do a silentGuard pragma where it prevent the crash in uebind and generates this:
-  let fnName {.inject, used.} = n "ReloadScript"
-  let self {.inject.} = getDefaultObjectFromClassName("NimVmManager")
-  if self.isNil():    
-    return
-  let fn {.inject, used.} = ueCast[UObject](self).getClass().findFuncByName(fnName)
-  self.processEvent(fn, nil)
-  # reloadScript()
+
+proc reloadScriptGuest() {.ffi:genFilePath.} =   
+  discard callStaticUFunction("NimVmManager", "ReloadScript", nil)  
 
 
 proc tickPoll(deltaTime:float32) : bool {.cdecl.} =
@@ -220,7 +214,7 @@ uClass UVmHelpers of UObject:
         case typeDef.kind:
         of uetClass:
           #This may cause issues as it is a whole new path. Native uses addEmitterInfoForClass
-          addEmitterInfo(typeDef, (package:UPackagePtr) => emitUClass[void](typeDef, package, @[], nil, nil), emitter)
+          addEmitterInfo(typeDef, (package:UPackagePtr) => emitUClass[void](typeDef, package, @[], vmConstructor, nil), emitter)
         of uetEnum:         
           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUEnum(typeDef, package), emitter)
         of uetStruct:

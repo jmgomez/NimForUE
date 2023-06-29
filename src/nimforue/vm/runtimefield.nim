@@ -49,7 +49,10 @@ type
     fnName*: string #nimName 
     className* : string
     ueActualName* : string #in case it has Received or some other prefix
+    isDelayed*: bool #only used for vmdefaultconstructor. When true means there is no native implementation yet as the class doesnt exist when calling setup borrow
 
+const VMDefaultConstructor* = "vmdefaultconstructor"
+func isVMDefaultConstructor*(borrowInfo: UEBorrowInfo): bool = borrowInfo.fnName == VMDefaultConstructor
 
 func toTableMap*[K, V](table: Table[K, V]): seq[(K, V)] =      
   for key, val in table:

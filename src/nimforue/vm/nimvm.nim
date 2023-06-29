@@ -4,13 +4,14 @@ import ../unreal/editor/editor
 import ../../buildscripts/[nimforueconfig]
 import ../unreal/core/containers/containers
 
-import std/[os, times, asyncdispatch, json, jsonutils, tables]
+import std/[os, times, asyncdispatch, json, jsonutils, tables, hashes]
 import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
 
 import compiler / [ast, nimeval, vmdef, vm, llstream, types, lineinfos]
 import compiler/options as copt
 import ../vm/[uecall, runtimefield, vmconversion]
 import ../codegen/[uemeta, projectinstrospect]
+import ../utils/utils
 
 const engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head.get
 const vmBindingsDir = PluginDir / "src" / "nimforue" / "unreal" / "bindings" / "vm"
@@ -124,12 +125,14 @@ proc implementBaseFunctions(interpreter:Interpreter) =
 
 func getVMImplFuncName*(info : UEBorrowInfo): string = (info.fnName & "VmImpl")
 
-
 # var borrowedFns = newSeq[UFunctionNativeSignature]()
-var borrowTable = initTable[string, UEBorrowInfo]() 
-
-func getBorrowKey*(fn: UFunctionPtr) : string =  fn.getOuter().getName() & fn.getName()
-
+type BorrowKey = distinct string
+proc hash(key: BorrowKey): Hash {.borrow.}
+proc `==`(a, b: BorrowKey): bool {.borrow.}
+proc `$`(key: BorrowKey): string {.borrow.}
+var borrowTable = initTable[BorrowKey, UEBorrowInfo]() 
+func getBorrowKey*(fn: UFunctionPtr): BorrowKey =  BorrowKey($(fn.getOuter().getName() & fn.getName())) #ClassNoPrefix_FuncName
+func getBorrowKey*(borrow: UEBorrowInfo): BorrowKey = BorrowKey(borrow.className & borrow.fnName.capitalizeAscii()) #Note this is not reliable as it doesnt account for prefixes. It's only used for the vmconstructor
 #[
   [] Functions are being replaced, we need to store them with a table. 
 ]#
@@ -212,29 +215,39 @@ proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) :
     #TODO return value
 
 
+proc implementNativeFunc(borrowInfo: UEBorrowInfo) = 
+  safe: 
+    #Extract func here
+    #At this point it will be the last added or not because it can be updated
+    #But let's assume it's the case (we could use a stack or just store the last one separatedly)
+    let cls = getClassByName(borrowInfo.className)
+    if cls.isNil():
+      UE_Error &"could not find class {borrowInfo.className}"
+
+      return
+
+    let ueBorrowUFunc = cls.findFunctionByNameWithPrefixes(borrowInfo.fnName.capitalizeAscii())
+    if ueBorrowUFunc.isNone(): 
+        UE_Error &"could not find function { borrowInfo.fnName} in class {borrowInfo.className}"
+        return
+    
+    let borrowKey = ueBorrowUFunc.get.getBorrowKey()
+    borrowTable.addOrUpdate(borrowKey, borrowInfo)
+    UE_Log &"Borrow is Setup!Borrowing {borrowInfo.fnName} from {borrowInfo.className}"
+    #notice we could store the prev version to restore it later on 
+    ueBorrowUFunc.get.setNativeFunc((cast[FNativeFuncPtr](borrowImpl)))
 
 proc setupBorrow(interpreter:Interpreter) = 
   interpreter.implementRoutine("NimForUE", "exposed", "setupBorrowInterop", proc(a: VmArgs) =
-    {.cast(noSideEffect).}:
-      let borrowInfo = a.getString(0).parseJson().jsonTo(UEBorrowInfo)
-    
-      
-      #At this point it will be the last added or not because it can be updated
-      #But let's assume it's the case (we could use a stack or just store the last one separatedly)
-      let cls = getClassByName(borrowInfo.className)
-      if cls.isNil():
-        UE_Error &"could not find class {borrowInfo.className}"
+    safe:
+      var borrowInfo = a.getString(0).parseJson().jsonTo(UEBorrowInfo)
+      if borrowInfo.isVmDefaultConstructor(): #we need to delay it, it will be resumed after the constructor is loaded.
+        UE_Log "delaying default constructor implemention:"
+        borrowInfo.isDelayed = true
+        borrowTable.addOrUpdate(borrowInfo.getBorrowKey(), borrowInfo)
         return
 
-      let ueBorrowUFunc = cls.findFunctionByNameWithPrefixes(borrowInfo.fnName.capitalizeAscii())
-      if ueBorrowUFunc.isNone(): 
-          UE_Error &"could not find function { borrowInfo.fnName} in class {borrowInfo.className}"
-          return
-      
-      let borrowKey = ueBorrowUFunc.get.getBorrowKey()
-      borrowTable.addOrUpdate(borrowKey, borrowInfo)
-      #notice we could store the prev version to restore it later on 
-      ueBorrowUFunc.get.setNativeFunc((cast[FNativeFuncPtr](borrowImpl)))
+      implementNativeFunc(borrowInfo)
   )
 
 
@@ -293,7 +306,9 @@ uClass UNimVmManager of UObject:
   ufuncs(Static):#Called from the button in UE
     proc reloadScript() =       
       reloadScriptImpl()
-
+    proc implementDelayedBorrow(borrowStr: FString) = 
+      let borrowInfo = parseJson(borrowStr).jsonTo(UEBorrowInfo)
+      implementNativeFunc(borrowInfo)
 
 #[
   Helper actor to call the vm functions from the editor
