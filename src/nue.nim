@@ -315,12 +315,6 @@ task genbindingsall, "Runs the Generate Bindings commandlet":
   gencppbindings(taskOptions)
 
 
-task ok, "prints ok if NUE and Host are built":
-  if fileExists(HostLibPath):
-    log "ok host built"
-  else:
-    log "host not built"
-    host(taskOptions)
 
 
 task setup, "Setups the plugin by building the initial tasks in order":
@@ -348,8 +342,23 @@ task showincludes, "Traverses UEDeps.h gathering includes and shows then in the 
 task showtypes, "Traverses UEDeps.h looking for types (uclasses only for now)":
   let useCache = "usecache" in taskOptions
   let types = getAllPCHTypes(useCache)
-  log $len(types)
+  log &"There are {len(types)} PCH types"
 
+
+
+task ok, "prints ok if NUE and Host are built":
+  if fileExists(HostLibPath):
+    log "ok host built"
+  else:
+    log "host not built"
+    host(taskOptions)
+  let pchTypes = "./headerdata/allpchtypes.json"
+  if fileExists(pchTypes):
+    log "ok pch types generated"
+  else:
+    log "Needs to generate pch types"    
+    taskOptions["usecache"] = "true"
+    showtypes(taskOptions)
 
 task copybuildconfiguration, "Copies the unreal build configuration from the plugin to APPData/Roaming/Unreal Engine/BuildConfiguration":
   let buildConfigFile = PluginDir / "BuildConfiguration.xml"
