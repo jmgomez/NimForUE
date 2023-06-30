@@ -154,6 +154,9 @@ type
     UEProject* = object
         modules* : seq[UEModule]
 
+const CommonModule* = "Engine/Common"
+func isCommon*(module: UEModule): bool = module.name == CommonModule
+
 func `$`*(a : EPropertyFlagsVal) : string {.borrow.}
 func `$`*(a : EFunctionFlagsVal) : string {.borrow.}
 func `$`*(a : EStructFlagsVal) : string {.borrow.}

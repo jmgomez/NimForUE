@@ -182,15 +182,15 @@ func genInterfaceConverers*(ueType:UEType) : NimNode =
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
-func getClassTemplate*(typeDef: UEType) : string =
-  
+func getClassTemplate*(typeDef: UEType ) : string =  
   var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":
     cppInterfaces = ", " & cppInterfaces
+  
   &"""
 struct $1 : public $3{cppInterfaces} {{
   $1() = default;
-  $1(FVTableHelper& Helper) : $3() {{}}
+  $1(FVTableHelper& Helper) : $3(Helper) {{}}
   $2  
 }};
 """

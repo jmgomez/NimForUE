@@ -20,7 +20,7 @@ uEnum EEnumVMTest:
   (ValueA, ValueB, ValueC)
 
 uClass UObjectPOC of UObject:
-  (BlueprintType, Reinstance)
+  (BlueprintType)
   ufunc: 
     proc instanceFunc() = 
       UE_Log "Hola from UObjectPOC instanceFunc"

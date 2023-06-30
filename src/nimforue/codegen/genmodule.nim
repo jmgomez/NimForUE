@@ -23,7 +23,8 @@ func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq
           nnkPostFix.newTree(ident "*", ident ueType.name),
           nnkPragma.newTree(
             # ident "exportc",#, newStrLitNode("$1_")), #Probably we dont need _ anymore but it be useful to see the distinction when debugging the code, if so it needs to be passed to the template
-            nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_")), 
+            nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_")),             
+            nnkExprColonExpr.newTree(ident "codegenDecl", newStrLitNode ueType.getClassTemplate()), 
             ident "inheritable",
             ident "pure",
             # nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))
@@ -193,6 +194,19 @@ proc genImportCModuleDecl*(moduleDef: UEModule): NimNode =
     else:
       continue
 
+
+#TODO at some point use it generated uClasses too
+proc makeVTableConstructor*(uet: UEType): NimNode = 
+  assert uet.kind == uetClass
+  let fnName = ident "make" & uet.name.capitalizeAscii()
+  let typ = ident uet.name
+  let suffix = if uet.isParentInPCH or uet.parent in ManuallyImportedClasses: ""
+               else: "_"
+  let ctorContent = newLit &"""$1('1& #1):{uet.parent}{suffix}(#1)"""
+  genAst(fnName, typ, ctorContent):
+    proc fnName(helper{.inject.} : FVTableHelper): typ {.constructor:ctorContent.} = 
+      discard
+
 proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
   result = nnkStmtList.newTree()
   var typeSection = nnkTypeSection.newTree()
@@ -215,7 +229,10 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
     of uetClass, uetStruct, uetEnum:
-      result.add genTypeDecl(typeDef, rules, uexExport)   
+      result.add genTypeDecl(typeDef, rules, uexExport)      
+      # if typeDef.kind == uetClass and not typeDef.isInPCH: 
+        # if (moduleDef.isCommon and typeDef.isInCommon) or (not moduleDef.isCommon and not typeDef.forwardDeclareOnly):          
+        #   result.add makeVTableConstructor(typeDef)   
     else: continue
 
 proc genVMModuleDecl*(moduleDef: UEModule): NimNode =
@@ -237,7 +254,6 @@ proc genVMModuleDecl*(moduleDef: UEModule): NimNode =
   
   result.add typeSection
   for typeDef in moduleDef.types:
-    let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
     of uetClass:
       result.add genUCalls(typeDef)
@@ -290,7 +306,6 @@ proc getModuleHashFromFile*(filePath: string): Option[string] =
 
 macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
   let bindingsDir = pluginDir / BindingsDir
-  let nimHeadersDir = pluginDir / NimHeadersDir # need this to store forward decls of classes
   for module in project.modules:
     let module = module
     let isOneFilePkg = "/" notin module.name
@@ -305,7 +320,7 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
     if prevModHash == module.hash and uerIgnoreHash notin module.rules:
       echo "Skipping module: " & module.name & " as it has not changed"
-      continue
+      # continue
     let preludeRelative =  if isOneFilePkg: "../" else: "../../"            
     let moduleImportStrTemplate = &"""
 #hash:{module.hash}
@@ -329,7 +344,7 @@ import {vmEngineTypes}
 import {runtimeFields}
 """    
 
-    echo &"Generating bindings for {module.name}"
+    echo &"Generating bindings for {module.name}."
     genCode(importBindingsPath, moduleImportStrTemplate, module, genImportCModuleDecl(module), ctImport)
     genCode(exportBindingsPath, moduleExportStrTemplate, module, genExportModuleDecl(module), ctExport)
     genCode(vmBindingsPath, moduleVMStrTemplate, module, genVMModuleDecl(module), ctVM)

@@ -144,8 +144,8 @@ func isAllowedField*(field:UEField) : bool =
   const skipTypes = ["TScriptInterface", "TMap", "TSet"]
   result = not skipTypes.mapIt(field.uePropType.contains(it)).foldl(a or b, false) and
     not field.isOutParam()
-  if not result:
-    debugEcho &"[VM Bindings] Skipping field in {field.typeName} {field.name}: {field.uePropType} "
+  # if not result:
+    # debugEcho &"[VM Bindings] Skipping field in {field.typeName} {field.name}: {field.uePropType} "
 
 
 func genUEnumTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =

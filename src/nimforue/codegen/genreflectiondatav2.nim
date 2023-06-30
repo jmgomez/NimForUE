@@ -505,7 +505,7 @@ proc generateProject*(forceGeneration = false) =
       
       # measureTime "generateUEProject":
       #   project = generateUEProject(getProject())
-      var commonModule = UEModule(name: "Engine/Common")
+      var commonModule = UEModule(name: CommonModule)
       
 
       var typeDefs = getTypeDefinitions(project.modules, commonModule)

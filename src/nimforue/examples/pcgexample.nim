@@ -40,7 +40,6 @@ class FNimPCGElement of FSimplePCGElement:
       true
 
 uClass UPCGNimTestSettings of UPCGBaseSubgraphSettings:
-  (Reinstance)
   uprops(EditAnywhere, BlueprintReadWrite):
     myProperty4 : FString
 
