@@ -1,4 +1,4 @@
-import std/[options, strutils, sequtils, sugar, tables, json, jsonutils]
+import std/[options, strutils, sequtils, sugar, tables, json, jsonutils, macros]
 #NOTE Do not include UE Types here
 
 type Criteria[T] = proc (t:T) : bool {.noSideEffect.}
@@ -17,6 +17,8 @@ template measureTime*(name: static string, body: untyped) =
     log msg
   else:
     echo msg  
+
+proc treeRepr*(xs: seq[NimNode]): string = xs.mapIt(treeRepr(it)).join("\n")
 
 template toVar*[T](self : ptr T) : var T = cast[var T](self)
 template toVar*[T](self : T) : var T = toVar(self.unsafePtr())

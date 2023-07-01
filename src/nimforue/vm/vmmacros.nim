@@ -286,9 +286,6 @@ proc genUCalls*(typeDef : UEType) : NimNode =
           result.add(ueBindImpl(field, firstParam, uecFunc))
       else: continue
 
-
-proc treeRepr*(xs: seq[NimNode]) : string = xs.map(treeRepr).join("\n")
-
 proc ueBorrowImpl*(clsName : string, fn: NimNode) : NimNode = 
   #TODO: integrate UEField approach 
   let argsWithFirstType =

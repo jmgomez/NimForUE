@@ -228,11 +228,18 @@ uClass UVmHelpers of UObject:
     
     proc getUClass(obj: UObjectPtr) : UClassPtr = 
       result = uobject.getClassImpl(obj)
-     
-    proc getName(obj: UObjectPtr) : FString = 
-      if obj.isNil:
-        return "Nil object"
-      else: $getFName(obj)
+
+
+
+proc testExposed(obj:UObjectPtr): FString = obj.getName()
+
+uClass UGuestFunctionLibrary of UObject:
+  discard
+
+uFunctions:
+  (self:UGuestFunctionLibraryPtr, Static) #you must specify the type and any shared meta like this.
+  proc getName(obj:UObjectPtr): FString = uobject.getName(obj)
+
 
 uClass UAnother of UObject:
   uprops():

@@ -545,7 +545,6 @@ macro uFunctions*(body : untyped) : untyped =
     
     let clsName = firstParam.get.uePropType.removeLastLettersIfPtr()
     let overrides = getCppOverrides(body, clsName)  
-    addCppFunctionToClass(clsName, overrides.mapIt(it[0]))           
 
     result = nnkStmtList.newTree allFuncs & overrides.mapIt(it[1])
     # echo repr result

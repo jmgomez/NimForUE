@@ -41,10 +41,22 @@ type
       enumFields: seq[NimEnumField] 
     of Proc, TypeClass, Distinct, None: #ignored for now
       discard
+  NimFunctionKind* = enum
+    Proc, Func #Method
+  
+  #ignore generic for now as I only want this first iteration to work with the vm/engine via the reflection system
+  NimFunction* = object
+    name*: string
+    module*: string
+    kind*: NimFunctionKind
+    ast*: string
+    params*: seq[NimParam] 
+    returnType*: string #no empty string allowed. empty type would be void
 
   NimModule* = object
     name*: string
     types*: seq[NimType]
+    functions*: seq[NimFunction]
     fullPath*: string
     ast:string
     deps : seq[string] #relative path to module
@@ -234,7 +246,7 @@ func getGenericTypeName(identDefs:NimNode) : seq[NimParam] =
 
   
 
-func getParamFromIdentDef(identDefs:NimNode) : NimParam =
+func getParamFromIdentDef(identDefs:NimNode): Option[NimParam] =
   assert identDefs.kind == nnkIdentDefs, "Expected nnkIdentDefs got " & $identDefs.kind
 
   let name = getNameFromIdentDef(identDefs)
@@ -253,12 +265,29 @@ func getParamFromIdentDef(identDefs:NimNode) : NimParam =
       # identDefs[^2][0].strVal  
     of nnkProcTy:
       "proc():void" #Not supported as param yet but we do validate it  
+    of nnkEmpty:
+      #this means it is an infered from the value: arg = value. So we are fucked
+      return none(NimParam)
+    of nnkVarTy:
+      case identDefs[^2][0].kind:
+      of nnkBracketExpr:
+        repr identDefs[^2][0]
+      else:
+        identDefs[^2][0].strVal
+    of nnkInfix:
+      #probably a type class, let's just take the first we found for now. In the future this should open the function so there are more than one version or maybe just allow them     
+      identDefs[^2]
+        .findChild(it.kind == nnkIdent and it.strVal != "|").strVal()
+    of nnkCommand:
+      #sink?
+      identDefs[^2][1].strVal
+
     else:
       debugEcho treeRepr identDefs
+      debugEcho repr identDefs
       error &"Error in getParamFromIdentDef got {identDefs[^2].kind} in identDefs type"
       ""
-  
-  return NimParam(name: name, kind:OnlyName, strType:typ)
+  return some NimParam(name: name, kind:OnlyName, strType:typ)
 
 
 func makeObjNimType(typeName:string, typeDef:NimNode) : NimType = 
@@ -300,6 +329,7 @@ func makeObjNimType(typeName:string, typeDef:NimNode) : NimType =
       recListNode.children.toSeq
         .filterIt(it.kind == nnkIdentDefs)
         .map(getParamFromIdentDef)    
+        .sequence()
     NimType(name: typeName, kind:Object, parent:parent, isInheritable: isInheritable, params:params, typeParams:genericParams)
   else:  
     debugEcho treeRepr typeDef
@@ -344,8 +374,30 @@ func typeSectionToTypeDefs(typeSection: NimNode) : seq[NimNode] =
     .toSeq
     .filterIt(it.kind == nnkTypeDef)
 
+func getAllFunctions(nimNode: NimNode): seq[NimNode] = 
+  nimNode
+    .children
+    .toSeq
+    .filterIt(it.kind in {nnkProcDef, nnkFuncDef})
 
-
+func makeNimFunction(nimNode: NimNode, modName: string): NimFunction = 
+  assert nimNode.kind in {nnkProcDef, nnkFuncDef}
+  let name = nimNode.name.strVal
+  let kind = 
+    case nimNode.kind:
+    of nnkProcDef: NimFunctionKind.Proc
+    of nnkFuncDef: NimFunctionKind.Func
+    else: NimFunctionKind.Proc
+  
+  let returnType = if nimNode.params[0].kind == nnkEmpty: "void" else: repr nimNode.params[0] #should be equivalent to makeStringParam as it is only the type
+  
+  let params = 
+      nimNode.params
+      .filterIt(it.kind == nnkIdentDefs)
+      .map(getParamFromIdentDef)
+      .sequence()
+  let ast = treeRepr nimNode  
+  NimFunction(name: name, module: modName, kind: kind, params:params, returnType: returnType, ast:ast)
 
 proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] = 
   func parseImportBracketsPaths(path:string) : seq[string] = 
@@ -358,8 +410,7 @@ proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] =
     fileTree
       .children
         .toSeq
-        .filterIt(it.kind in [nnkImportStmt]) #, nnkIncludeStmt])
-        
+        .filterIt(it.kind in [nnkImportStmt]) #, nnkIncludeStmt])        
         .mapIt(parseImportBracketsPaths(repr it[0]))
         .flatten
         .mapIt(it.split("/").mapIt(strip(it)).join("/")) #clean spaces
@@ -367,7 +418,6 @@ proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] =
   imports
     .filterIt("std/" notin it ) #no std until we handle search paths
     .filterIt("/models" notin it) #ignore models (uetype) for now
-
 
 proc createModuleFrom(fullPath:string, fileTree:NimNode) : NimModule = 
   let name = fullPath.split(PathSeparator)[^1].split(".")[0]
@@ -378,8 +428,14 @@ proc createModuleFrom(fullPath:string, fileTree:NimNode) : NimModule =
       .flatten
       .map(typeDefToNimType)
 
+  let funcs = 
+    fileTree
+    .getAllFunctions()
+    .mapIt(makeNimFunction(it, name))
+    
+
   let deps = fileTree.getAllImportsAsRelativePathsFromFileTree().mapIt(it.replace("//", "/"))
-  NimModule(name:name, fullPath:fullPath, types: types, ast:repr fileTree, deps:deps)
+  NimModule(name:name, fullPath:fullPath, types: types, functions: funcs, ast:repr fileTree, deps:deps)
 
 
 
@@ -605,6 +661,8 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
     .mapIt(it.absolutePath(dir) & ".nim")      
   let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
   let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
+  let funcs = modules.mapIt(it.functions).flatten().mapIt(it.name)
+  # debugEcho &"There are {funcs.len} functions {funcs}"
   return modules
 
 #todo cache to a file
