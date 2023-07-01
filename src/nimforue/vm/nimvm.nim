@@ -15,6 +15,7 @@ import ../utils/utils
 
 const engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head.get
 const vmBindingsDir = PluginDir / "src" / "nimforue" / "unreal" / "bindings" / "vm"
+
 static:
   genVMModuleFiles(vmBindingsDir, NimModules) 
 
@@ -43,11 +44,12 @@ proc onInterpreterError(config: ConfigRef, info: TLineInfo, msg: string, severit
     raise (ref VMQuit)(info: info, msg: msg)
 
 
-proc uCallInteropHostImpl(a:VmArgs) {.gcsafe.} =  
+proc uCallInteropHostImpl(a:VmArgs) =  
+  safe:
     let node : PNode = a.getArg(0).node
     let ueCall = fromVm(UECall, node)
     let result = ueCall.uCall()
-    # UE_Warn &"uCallInterop result: {result}"
+    # UE_Warn &"uCallInterop result: {result}"    
     setResult(a, toVm(result))        
 
 
@@ -139,6 +141,7 @@ func getBorrowKey*(borrow: UEBorrowInfo): BorrowKey = BorrowKey(borrow.className
 
 
 var interpreter : Interpreter #needs to be global so it can be accesed from cdecl
+var isInterpreterInit: bool
 
 proc getValueFromPropInFn[T](context: UObjectPtr, stack: var FFrame) : T = 
   #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (which we dont)
@@ -256,7 +259,7 @@ proc setupBorrow(interpreter:Interpreter) =
 
 
 var userSearchPaths : seq[string] = @[]
-proc initInterpreter*(searchPaths:seq[string], script: string = "script.nim") : Interpreter = 
+proc initInterpreterImpl(searchPaths:seq[string], script: string = "script.nim") : Interpreter = 
   let std = findNimStdLibCompileTime()
   interpreter = createInterpreter(script, @[
     std,
@@ -280,19 +283,36 @@ proc initInterpreter*(searchPaths:seq[string], script: string = "script.nim") : 
 
   interpreter
 
+proc evalString(intr: Interpreter; code: string) =
+  let stream = llStreamOpen(code)
+  intr.evalScript(stream)
+  llStreamClose(stream)
 
+proc initInterpreter() {.cdecl.} =   
+  measureTime "Initializing VM in background thread":
+    interpreter = initInterpreterImpl(@[NimGameDir() / "vm"])
+    let initCode = """
+import std/[strformat, sequtils, macros, tables, options, sugar, strutils, genasts, json, jsonutils, bitops, typetraits]
+import engine/[common, components, gameframework, engine, camera]
+import gameplayabilities/[abilities, gameplayabilities, enums]
+import enhancedinput
+import utils/[ueutils,utils]
+  """
+    interpreter.evalString(initCode)
 
+proc onInterpreterInit() {.cdecl.} = 
+  isInterpreterInit = true
+  interpreter.evalScript()
 
-#VM MAIN
-
-# var interpreter = initInterpreter(@[parentDir(currentSourcePath)])
+proc initInterpreterInAnotherThread() =   
+  executeTaskInBackgroundThread(initInterpreter, onInterpreterInit)
 
 proc reloadScriptImpl() = 
-  try:
-    if interpreter.isNil():
-      measureTime "Initializing VM":
-        interpreter = initInterpreter(@[NimGameDir() / "vm"])
-      
+  if not isInterpreterInit:
+    UE_Warn "VM not initialized yet."
+    initInterpreterInAnotherThread()
+    return
+  try:    
     measureTime "Reloading Script":
       interpreter.evalScript()
   except:
@@ -304,7 +324,6 @@ proc reloadScriptImpl() =
 # var lastModTime = 0
 
 
-
 #This can leave in the vm file
 uClass UNimVmManager of UObject:
   ufuncs(Static):#Called from the button in UE
@@ -313,48 +332,23 @@ uClass UNimVmManager of UObject:
     proc implementDelayedBorrow(borrowStr: FString) = 
       let borrowInfo = parseJson(borrowStr).jsonTo(UEBorrowInfo)
       implementNativeFunc(borrowInfo)
-
+    proc init() = 
+      initInterpreterInAnotherThread()
 #[
   Helper actor to call the vm functions from the editor
   At some point it will part of the UI
 ]#
 
 
-uClass ANimVM of AActor:  
-  uprops:    
-    isWatching: bool
-    lastModTime: int
-  proc watchScript() : Future[void] {.async.} =     
-    # proc tick(deltaSeconds: float32) =
-      # UE_Log "Tick"
-      if not self.isWatching:
-        return
-      let path = NimGameDir() / "vm" / "script.nims"
-      if not fileExists path:
-        UE_Warn "Cant find the script. Not watching"
-        
-      # let path = parentDir(currentSourcePath) / "script.nims"
-      let modTime = getLastModificationTime(path).toUnix()
-      if modTime != self.lastModTime:
-        self.lastModTime = modTime
-        reloadScript()
-      else:
-        discard
-        # UE_Log "Script not changed. Not reloading"
-      # await sleepAsync(500)
-      # # UE_Log "Waiting for changes"
-      # return self.watchScript()
-  ufunc(CallInEditor, Static):
-    proc startWatch() = 
-      self.isWatching = true
-      asyncCheck self.watchScript()
+uClass ANimVM of AActor:    
 
-    proc stopWatch() = 
-      self.isWatching = false
+  ufunc(CallInEditor, Static):    
+    proc evalOnly() = 
+      measureTime "Reloading Script":
+        reloadScriptImpl()
+    proc restartVM() =       
+      isInterpreterInit = false
+      initInterpreterInAnotherThread()
 
-    proc restartVM() = 
-      measureTime "Initializing VM":
-        interpreter = initInterpreter(@[NimGameDir() / "vm"])
-      # interpreter = initInterpreter(userSearchPaths)
-      reloadScript()
+
 

@@ -241,6 +241,11 @@ proc `$`*(hr:FNimHotReloadPtr) : string =
 
 
 proc executeTaskInTaskGraph*[T](param: T, taskFn: proc(param:T){.cdecl.}, nimMain:proc(){.cdecl.}) {.importcpp: "UReflectionHelpers::ExecuteTaskInTaskGraph<'1>(#, #)".}
+#[
+    The task to run in another thread
+    The callback when it completes in the mainthread
+]#
+proc executeTaskInBackgroundThread*(taskFn: proc(){.cdecl.}, callback: proc(){.cdecl.}) {.importcpp: "UReflectionHelpers::ExecuteTaskInBackgroundThread(@)".}
 
 #static int ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOut, FString& StdError);
 proc executeCmd*(cmd, args, workingDir, stdOut, stdError: var FString) : int {.importcpp: "UReflectionHelpers::ExecuteCmd(@)".}

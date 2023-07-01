@@ -112,12 +112,21 @@ public:
 
 	static UPackage* CreateNimPackage(FString PackageShortName);
 	template<typename T>
-	static void ExecuteTaskInTaskGraph(T Param, void (*taskFn)(T), void(*NimMain)()) { //TODO set NimMain as part of the global state
+	static void ExecuteTaskInTaskGraph(T Param, void (*taskFn)(T), void(*NimMain)()) { 
 		Async(EAsyncExecution::ThreadPool, [&] {
-			NimMain();
+			// NimMain();
 			taskFn(Param);
 		});
 	}
+	static void ExecuteTaskInBackgroundThread(void (*taskFn)(), void (*callback)()) {
+		AsyncTask(ENamedThreads::AnyThread, [taskFn, callback] {
+			taskFn();
+			AsyncTask(ENamedThreads::GameThread, [callback] {
+				callback();
+			});
+		});
+	}
+	
 
 	static int ExecuteCmd(FString& Cmd, FString& Args, FString& WorkingDir, FString& StdOut, FString& StdError);
 

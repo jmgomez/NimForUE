@@ -109,7 +109,7 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
         discard emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
         if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
-          discard
+          discard   
     else:
         if not isRunningCommandlet():
           discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)

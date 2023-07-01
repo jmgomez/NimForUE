@@ -137,7 +137,7 @@ switch("path","../Plugins/NimForUE/src/nimforue/")
     writeFile(gameConf, fileTemplate)
 
 
-proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:bool) = 
+proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:bool, withThreads = false) = 
   var extraSwitches = extraSwitches
   let isVm = "vm" in name
   var gameSwitches = @[
@@ -164,8 +164,9 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
   
   let entryPoint = NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim")
   let releaseFlag = if withRelease: "-d:danger" else: ""
+  let threadFlag = if withThreads: "--threads:on" else: "" #off by default (switches)
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"{nimCmd} cpp {buildFlags} {releaseFlag}  --nimMainPrefix:{name.capitalizeAscii()}  -d:withPCH --nimcache:{nimCache} {entryPoint}"
+  let compCmd = &"{nimCmd} cpp {buildFlags} {releaseFlag} {threadFlag}  --nimMainPrefix:{name.capitalizeAscii()}  -d:withPCH --nimcache:{nimCache} {entryPoint}"
   # echo compCmd
   doAssert(execCmd(compCmd)==0)
 

@@ -10,7 +10,7 @@ template measureTime*(name: static string, body: untyped) =
   let starts = times.now()
   body
   let ends = (times.now() - starts)
-  let msg = name & " took " & $ends & "  seconds"
+  let msg = name & " took " & $ends
   when defined(UE_Log):
     UE_Log msg
   elif defined(log):
