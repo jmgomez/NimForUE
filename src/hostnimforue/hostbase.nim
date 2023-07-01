@@ -28,7 +28,7 @@ proc start() =
   libMap = {
     "nimforue" : NueLib(lastLoadedPath: getLastLibPath(NimForUELibDir, "nimforue").get())
   }.toTable()
-  scriptPath = NimGameDir() / "vm" / "script.nim"
+  scriptPath = NimGameDir() / "vm" / "scratchpad.nim"
 
   #Adds all game libs including game 
   let allGameLibs = getAllGameLibs()

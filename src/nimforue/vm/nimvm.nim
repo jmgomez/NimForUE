@@ -259,7 +259,7 @@ proc setupBorrow(interpreter:Interpreter) =
 
 
 var userSearchPaths : seq[string] = @[]
-proc initInterpreterImpl(searchPaths:seq[string], script: string = "script.nim") : Interpreter = 
+proc initInterpreterImpl(searchPaths:seq[string], script: string = "scratchpad.nim") : Interpreter = 
   let std = findNimStdLibCompileTime()
   interpreter = createInterpreter(script, @[
     std,
@@ -289,7 +289,7 @@ proc evalString(intr: Interpreter; code: string) =
   llStreamClose(stream)
 
 proc initInterpreter() {.cdecl.} =   
-  measureTime "Initializing VM in background thread":
+  measureTime "Initializing VM modules in background thread":
     interpreter = initInterpreterImpl(@[NimGameDir() / "vm"])
     let initCode = """
 import std/[strformat, sequtils, macros, tables, options, sugar, strutils, genasts, json, jsonutils, bitops, typetraits]
@@ -309,7 +309,7 @@ proc initInterpreterInAnotherThread() =
 
 proc reloadScriptImpl() = 
   if not isInterpreterInit:
-    UE_Warn "VM not initialized yet."
+    UE_Warn "VM not initialized yet, will init it now:"
     initInterpreterInAnotherThread()
     return
   try:    
