@@ -326,7 +326,7 @@ proc forceGarbageCollection*(engine:UEnginePtr, bFullPurge: bool = false) {.impo
 #   let prop  = getClassByName("Actor").getFPropertyByName(
 #       "RootComponent")
 #   getPropertyValuePtr[USceneComponentPtr](prop, obj)[]
-proc getCppName*(obj : UClassPtr) : FString = 
+proc getCppName*(obj : UClassPtr) : FString {.ureflect.} = 
   let prefix = if obj.isChildOf(staticClass(AActor)): "A" else: "U"
   prefix & obj.getName()
 
@@ -353,7 +353,7 @@ func getActor*(hitResult: FHitResult): AActorPtr {.importcpp: "#.GetActor()".}
 proc isTickFunctionRegistered*(self: FActorTickFunction): bool {.importcpp: "#.IsTickFunctionRegistered()".}  
 ##ENGINE
 #UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const
-proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)".} 
+proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)", ureflect.} 
 let GEngine* = getEngine()
 proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGetWorldErrorMode) : UWorldPtr  
   {.importcpp: "#->GetWorldFromContextObject(#, #)".}

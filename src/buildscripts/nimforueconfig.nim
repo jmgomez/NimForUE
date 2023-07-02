@@ -111,7 +111,7 @@ proc createConfigFromDirs(engineDir, gameDir:string) : NimForUEConfig =
 proc getOrCreateNUEConfig() : NimForUEConfig = 
   let ueConfigPath = PluginDir / getConfigFileName()
   if fileExists ueConfigPath:
-    let json = parseFile(ueConfigPath)
+    let json = readFile(ueConfigPath).parseJson()
     return json.to(NimForUEConfig)
   let conf = 
     tryGetEngineAndGameDir()

@@ -51,6 +51,7 @@ type
     kind*: NimFunctionKind
     ast*: string
     params*: seq[NimParam] 
+    pragmas*: seq[string] 
     returnType*: string #no empty string allowed. empty type would be void
 
   NimModule* = object
@@ -80,6 +81,8 @@ func `==`*[T:NimType](x, y: T): bool =
     x.ptrType == y.ptrType
   of Proc, TypeClass, Distinct, Enum, None: #ignored for now
     true)
+
+func isUReflect*(fn: NimFunction): bool = "ureflect" in fn.pragmas
 
 func getTypeFromModule*(modules:seq[NimModule], typeName:string) : Option[NimType] = 
   for module in modules:
@@ -392,12 +395,18 @@ func makeNimFunction(nimNode: NimNode, modName: string): NimFunction =
   let returnType = if nimNode.params[0].kind == nnkEmpty: "void" else: repr nimNode.params[0] #should be equivalent to makeStringParam as it is only the type
   
   let params = 
-      nimNode.params
+      nimNode
+      .params
       .filterIt(it.kind == nnkIdentDefs)
       .map(getParamFromIdentDef)
       .sequence()
-  let ast = treeRepr nimNode  
-  NimFunction(name: name, module: modName, kind: kind, params:params, returnType: returnType, ast:ast)
+  let pragmas = 
+      nimNode
+      .pragma
+      .mapIt(repr it)
+  let ast = repr nimNode  
+  NimFunction(name: name, module: modName, kind: kind, params:params, pragmas: pragmas, returnType: returnType, ast:ast)
+
 
 proc getAllImportsAsRelativePathsFromFileTree*(fileTree:NimNode) : seq[string] = 
   func parseImportBracketsPaths(path:string) : seq[string] = 
@@ -628,6 +637,33 @@ import std/[tables]
 """   
   writeFile(moduleFile, moduleTemplate)
 
+proc funcToUEReflectedWrapper(fn: NimFunction): string = 
+  #outputs: proc getName(self: UObject): string = uobject.getName(self)
+  # proc fnName(paramsWithTypes): string = moduleName.fnName(params)
+  
+  var fnNode = fn.ast.parseStmt()[0]
+  fnNode[0] = ident fn.name #remove *
+  fnNode[4] = newEmptyNode() #pragmas
+  fnNode[^1] = newEmptyNode() #body
+  let signature = repr fnNode
+  let paramValues = fn.params.mapIt(it.name).join(", ")
+  &"{signature} = {fn.module}.{fn.name}({paramValues})"
+  
+
+proc genVMFunctionLibrary(funcs: seq[NimFunction]) = 
+  let file = NimGameDir() / "vm" / "vmlibrary.nim"
+  let libTemplate = """
+include unrealprelude
+import vm/vmmacros
+uClass UVMFunctionLibrary of UObject:
+  ufuncs(BlueprintCallable, Static):
+    $1
+
+emitVMTypes()
+"""
+  let fns = funcs.map(funcToUEReflectedWrapper).join("\n    ")
+  writeFile(file, libTemplate % fns)
+
 proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   let typesToReplace = { 
     "FString": "type FString* = string", 
@@ -648,9 +684,12 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
     if t.name in typesToReplace:
       let ast = typesToReplace[t.name]
       vmTypesDeps[idx].ast = ast
-  engineTypesModule.types = vmTypesDeps & engineTypesModule.types
+  engineTypesModule.types = vmTypesDeps & engineTypesModule.types  
   engineTypesModule.deps = @[]
   genVMModuleFile(dir, engineTypesModule, modules)
+  #funcs 
+  let funcs = modules.mapIt(it.functions).flatten.filter(isUReflect)
+  # genVMFunctionLibrary(funcs)
 
 proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =   
   let nimCode = readFile(entryPoint)
@@ -661,8 +700,6 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
     .mapIt(it.absolutePath(dir) & ".nim")      
   let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
   let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
-  let funcs = modules.mapIt(it.functions).flatten().mapIt(it.name)
-  # debugEcho &"There are {funcs.len} functions {funcs}"
   return modules
 
 #todo cache to a file
