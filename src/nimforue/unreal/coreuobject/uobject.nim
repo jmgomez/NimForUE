@@ -430,7 +430,11 @@ proc staticClass*(T:typedesc) : UClassPtr = staticClass[T]()
 proc staticStruct*[T]() : UScriptStructPtr = 
     let structName : FString = typeof(T).name.substr(1) 
     getScriptStructByName(structName) 
+
+proc Class*[T : typedesc](t:T): UClassPtr = staticClass[t]()
+
 proc staticStruct*(T:typedesc) : UScriptStructPtr = staticStruct[T]()
+proc Struct*[T : typedesc](t:T) : UScriptStructPtr = staticStruct[t]()
 
 
 proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
@@ -476,7 +480,6 @@ proc makeObjectFinder*[T](objectToFind : FString) : FObjectFinder[T]{.importcpp:
 proc makeTSubclassOf*[T](cls:UClassPtr) : TSubclassOf[T] {. importcpp: "TSubclassOf<'*0>(#)", constructor.}
 proc makeTSubclassOf*[T : UObject]() : TSubclassOf[T] = makeTSubclassOf[T](staticClass(T))
 proc makeTSubclassOf*(T: typedesc) : TSubclassOf[T] = makeTSubclassOf[T]()
-func staticSubclass*[T : UObject]() : TSubclassOf[T] = makeTSubclassOf(T)
 
 proc get*(softObj : TSubclassOf) : UClassPtr {.importcpp:"#.Get()".}
 

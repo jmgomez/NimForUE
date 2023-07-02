@@ -158,6 +158,8 @@ proc toClass*[T : UObject ](val: TSubclassOf[T]): UClassPtr =
 
 proc staticSubclass*[T]() : TSubclassOf[T] = makeTSubClassOf[T](staticClass[T]())
 proc staticSubclass*(T:typedesc) : TSubclassOf[T] = makeTSubClassOf[T](staticClass[T]())
+proc Subclass*[T : typedesc](t:T) : TSubclassOf[t] = makeTSubClassOf[t](staticClass[t]())
+
 
 proc getDefaultObject*[T:UObject]() : ptr T =
     let cls = staticClass[T]()
