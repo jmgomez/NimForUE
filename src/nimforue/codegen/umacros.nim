@@ -100,7 +100,6 @@ func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tupl
                     .filterIt(it.kind==nnkIdent or it.kind==nnkExprEqExpr)
                     .map(fromNinNodeToMetadata)
                     .flatten()
-    #TODO add first parameter
     let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), ueTypeName, CPF_None) #notice no generic/var allowed. Only UObjects
     let allFuncs = funcBlock[^1].children.toSeq()
       .filterIt(it.kind==nnkProcDef)

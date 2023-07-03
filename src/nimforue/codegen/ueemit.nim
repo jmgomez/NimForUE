@@ -61,7 +61,7 @@ proc setVTable*(obj : UObjectPtr, newVTable:pointer) : void {. importcpp: "((*(v
 
 
 proc updateVTable*(prevCls:UClassPtr, newVTable:pointer) : void =
-  let oldVTable = prevCls.getDefaultObject().getVTable()
+  let oldVTable = getDefaultObject(prevCls).getVTable()
   var objIter = makeFRawObjectIterator()
   for it in objIter.items():
     let obj = it.get()
@@ -481,7 +481,8 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                 body
             innerCall
     # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())
-    let fnImplName = ident &"impl{funField.name}{funField.typeName}" #probably this needs to be injected so we can inspect it later
+    let signatureAsStr = funField.signature.mapIt(it.typeName).join("_")
+    let fnImplName = ident &"impl{funField.name}{funField.typeName}{signatureAsStr}" #probably this needs to be injected so we can inspect it later
     let selfName = ident firstParam.name
     let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName, setOutParams):        
             let fnImplName {.inject.} = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
@@ -556,6 +557,7 @@ macro uConstructor*(fn:untyped) : untyped =
                    .toSeq()
                    .filter(n=>n.kind==nnkIdentDefs)
                    .mapIt(makeUEFieldFromNimParamNode("Constructor.Need to know the type?",it))
+                   .flatten()
 
     let firstParam = params.head().get() #TODO errors
     let initializerParam = params.tail().head().get() #TODO errors

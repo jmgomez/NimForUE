@@ -140,16 +140,16 @@ func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFuncti
     
     (flags, fnMetas)
 
-func makeUEFieldFromNimParamNode*(typeName: string, n:NimNode) : UEField = 
+func makeUEFieldFromNimParamNode*(typeName: string, n:NimNode) : seq[UEField] = 
     #make sure there is no var at this point, but CPF_Out
-
-    var nimType = n[1].repr.strip()
-    let paramName = 
-      case n[0].kind:
+    var nimType = n[^2].repr.strip()
+    var paramNames: seq[string]
+    for p in n[0..^3]:
+      case p.kind:
       of nnkPragmaExpr:
-        n[0][0].strVal()
+        paramNames.add p[0].strVal()
       else:            
-        n[0].strVal()
+        paramNames.add p.strVal()
 
     var paramFlags = 
       case n[0].kind:
@@ -170,9 +170,7 @@ func makeUEFieldFromNimParamNode*(typeName: string, n:NimNode) : UEField =
     if nimType.split(" ")[0] == "var":
         paramFlags = paramFlags | CPF_OutParm | CPF_ReferenceParm
         nimType = nimType.split(" ")[1]
-    makeFieldAsUPropParam(paramName, nimType, typeName, paramFlags)
-
-
+    paramNames.mapIt(makeFieldAsUPropParam(it, nimType, typeName, paramFlags))
 
 proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], typeName:string, functionsMetadata : seq[UEMetadata] = @[]) : (UEField,UEField) =  
     #this will generate a UEField for the function 
@@ -185,11 +183,11 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], typeName:str
                              .head()
                              .get(newEmptyNode()) #throw error?
                              .children
-                             .toSeq()
-
+                             .toSeq()    
     let fields = formalParamsNode
                     .filter(n=>n.kind==nnkIdentDefs)
                     .mapIt(makeUEFieldFromNimParamNode(typeName, it))
+                    .flatten()
 
 
     #For statics funcs this is also true becase they are only allow
@@ -231,7 +229,7 @@ func getTypeNodeFromUProp*(prop : UEField, isVarContext:bool) : NimNode =
           else: ident(it.strip())))
         
     result = nnkBracketExpr.newTree((ident genericType) & innerTypes)
-
+  
   case prop.kind:
     of uefProp:
       let typeNode =  
