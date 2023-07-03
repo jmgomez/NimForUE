@@ -227,7 +227,7 @@ uClass UVmHelpers of UObject:
     proc getDefaultUObject(cls:UClassPtr) : UObjectPtr =  cls.getDefaultObject()
     
     proc getUClass(obj: UObjectPtr) : UClassPtr = 
-      result = uobject.getClassImpl(obj)
+      result = uobject.getClass(obj)
 
 
 
