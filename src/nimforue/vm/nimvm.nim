@@ -4,7 +4,7 @@ import ../unreal/editor/editor
 import ../../buildscripts/[nimforueconfig]
 import ../unreal/core/containers/containers
 
-import std/[os, times, asyncdispatch, json, jsonutils, tables, hashes]
+import std/[os, times, asyncdispatch, json, jsonutils, tables, hashes, locks]
 import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
 
 import compiler / [ast, nimeval, vmdef, vm, llstream, types, lineinfos]
@@ -139,9 +139,13 @@ func getBorrowKey*(borrow: UEBorrowInfo): BorrowKey = BorrowKey(borrow.className
   [] Functions are being replaced, we need to store them with a table. 
 ]#
 
+type InterpreterState = enum
+  isNotInitialized
+  isInitializing
+  isInitialized
 
 var interpreter : Interpreter #needs to be global so it can be accesed from cdecl
-var isInterpreterInit: bool
+var interpreterState: InterpreterState
 
 proc getValueFromPropInFn[T](context: UObjectPtr, stack: var FFrame) : T = 
   #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (which we dont)
@@ -279,7 +283,7 @@ import utils/[ueutils,utils]
     interpreter.evalString(initCode)
 
 proc onInterpreterInit() {.cdecl.} = 
-  isInterpreterInit = true
+  interpreterState = isInitialized
   try:
     interpreter.evalScript()
   except CatchableError:
@@ -287,34 +291,42 @@ proc onInterpreterInit() {.cdecl.} =
     UE_Error msg
     UE_Error getStackTrace()
 
-proc initInterpreterInAnotherThread() =   
+proc initInterpreterInAnotherThread() =
+  assert interpreterState == isNotInitialized
+  interpreterState = isInitializing   
   executeTaskInBackgroundThread(initInterpreter, onInterpreterInit)
 
-proc reloadScriptImpl() = 
-  if not isInterpreterInit:
-    UE_Warn "VM not initialized yet, will init it now:"
+proc reloadScriptImpl() =
+  UE_Log &"Reloading Script with " & $interpreterState 
+  case interpreterState:
+  of isNotInitialized:
     initInterpreterInAnotherThread()
     return
-  try:    
-    measureTime "Reloading Script":
-      interpreter.evalScript()
-  except:
-    let msg = getCurrentExceptionMsg()
-    UE_Error msg
-    UE_Error getStackTrace()
-
-# var isWatching = false
-# var lastModTime = 0
-
+  of isInitializing: 
+    return
+  of isInitialized:
+    try:    
+      measureTime "Reloading Script":
+        interpreter.evalScript()
+    except:
+      let msg = getCurrentExceptionMsg()
+      UE_Error msg
+      UE_Error getStackTrace()
 
 #This can leave in the vm file
 uClass UNimVmManager of UObject:
   ufuncs(Static):#Called from the button in UE
-    proc reloadScript() =       
-      reloadScriptImpl()
+    proc reloadScript() =    
+      case interpreterState:
+      of isInitialized:
+        reloadScriptImpl()
+      else: discard                 
     proc implementDelayedBorrow(borrowStr: FString) = 
-      let borrowInfo = parseJson(borrowStr).jsonTo(UEBorrowInfo)
-      implementNativeFunc(borrowInfo)
+      case interpreterState:
+      of isInitialized:
+        let borrowInfo = parseJson(borrowStr).jsonTo(UEBorrowInfo)
+        implementNativeFunc(borrowInfo)
+      else: discard        
     proc init() = 
       initInterpreterInAnotherThread()
 #[
@@ -330,7 +342,7 @@ uClass ANimVM of AActor:
       measureTime "Reloading Script":
         reloadScriptImpl()
     proc restartVM() =       
-      isInterpreterInit = false
+      interpreterState = isNotInitialized
       initInterpreterInAnotherThread()
 
 
