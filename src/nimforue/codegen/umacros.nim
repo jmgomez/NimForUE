@@ -181,7 +181,7 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
       
       var (fns,_) = genUFuncsForUClass(body, className, nimProcs)
       fns.insert(0, procNodes)
-      result =  (typeNode, fns)
+      result =  (typeNode, fns)    
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (uClassNode, fns) = uClassImpl(name, body)

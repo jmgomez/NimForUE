@@ -405,11 +405,14 @@ macro emitVMTypes*() =
       .foldl(a & b, newSeq[NimNode]()))
 
   const libname {.strdefine.} = ""
+  var lib = libname
+  if libname == "vm": #to prevent users from include "vm" and drag in the wrong file
+    lib = "vmfuncs"
   when defined(nuevm):
     const BindingsVMDir = "" 
     proc `/`(a: string, b: string): string = ""
 
-  let path = BindingsVMDir / libname & ".nim"
+  let path = BindingsVMDir / lib & ".nim"
   writeFile(path, content)
 
 

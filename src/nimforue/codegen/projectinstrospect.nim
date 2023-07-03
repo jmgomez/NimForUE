@@ -689,7 +689,7 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   genVMModuleFile(dir, engineTypesModule, modules)
   #funcs 
   let funcs = modules.mapIt(it.functions).flatten.filter(isUReflect)
-  # genVMFunctionLibrary(funcs)
+  genVMFunctionLibrary(funcs)
 
 proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =   
   let nimCode = readFile(entryPoint)
