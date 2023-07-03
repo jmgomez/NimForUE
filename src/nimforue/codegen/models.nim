@@ -261,7 +261,7 @@ func isDelegate*(field:UEField) : bool = hasUEMetadata(field, DelegateMetadataKe
 func isGeneric*(field:UEField) : bool = field.kind == uefProp and field.uePropType.contains("[")
 
 func shouldBeReturnedAsVar*(field:UEField) : bool =
-    let typesReturnedAsVar = ["TMap", "TArray"]
+    let typesReturnedAsVar = ["TMap", "TArray", "TSet"]
     result = field.kind == uefProp and typesReturnedAsVar.any(tp => tp in field.uePropType) or
             field.isMulticastDelegate() or 
             field.isDelegate() or
