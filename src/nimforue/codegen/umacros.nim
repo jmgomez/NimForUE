@@ -102,7 +102,7 @@ func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tupl
                     .flatten()
     let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), ueTypeName, CPF_None) #notice no generic/var allowed. Only UObjects
     let allFuncs = funcBlock[^1].children.toSeq()
-      .filterIt(it.kind==nnkProcDef)
+      .filterIt(it.kind in {nnkProcDef, nnkFuncDef})
       .map(procBody=>ufuncImpl(procBody, firstParam, firstParam.get.typeName, metas))
     
     var fws = newSeq[NimNode]()

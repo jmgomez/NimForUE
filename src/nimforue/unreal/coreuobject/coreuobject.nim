@@ -479,32 +479,32 @@ type
     Invalid, Valid, NotValidated, EDataValidationResult_MAX
 
 let identity* {.importcpp: "FTransform::Identity", nodecl.}: FTransform 
-proc getTicks*(self: FDateTime): int {.importcpp: "GetTicks".}
+proc getTicks*(dt: FDateTime): int {.importcpp: "GetTicks".}
 
-func getLocation*(self: FTransform): FVector {.importcpp: "#.GetLocation()".}
-func getTranslation*(self: FTransform): FVector {.importcpp: "#.GetTranslation()".}
-func getRotation*(self: FTransform): FQuat {.importcpp: "#.GetRotation()".}
-func getScale3D*(self: FTransform): FVector {.importcpp: "#.GetScale3D()".}
-func getUnitAxis*(self: FTransform, axis: EAxis): FVector {.importcpp: "#.GetUnitAxis(@)".}
-func toString*(self: FTransform): FString {.importcpp: "#.ToString()".}
-func `$`*(self: FTransform): string = $self.toString()
+func getLocation*(tr: FTransform): FVector {.importcpp: "#.GetLocation()".}
+func getTranslation*(tr: FTransform): FVector {.importcpp: "#.GetTranslation()".}
+func getRotation*(tr: FTransform): FQuat {.importcpp: "#.GetRotation()".}
+func getScale3D*(tr: FTransform): FVector {.importcpp: "#.GetScale3D()".}
+func getUnitAxis*(tr: FTransform, axis: EAxis): FVector {.importcpp: "#.GetUnitAxis(@)".}
+func toString*(tr: FTransform): FString {.importcpp: "#.ToString()".}
+func `$`*(tr: FTransform): string = $tr.toString()
 
-proc setLocation*(self: FTransform, value: FVector) {.importcpp: "#.SetLocation(@)".}
-proc setTranslation*(self: FTransform, value: FVector) {.importcpp: "#.SetTranslation(@)".}
-proc setRotation*(self: FTransform, value: FQuat) {.importcpp: "#.SetRotation(@)".}
-proc setScale3D*(self: FTransform, value: FVector) {.importcpp: "#.SetScale3D(@)".}
+proc setLocation*(tr: FTransform, value: FVector) {.importcpp: "#.SetLocation(@)".}
+proc setTranslation*(tr: FTransform, value: FVector) {.importcpp: "#.SetTranslation(@)".}
+proc setRotation*(tr: FTransform, value: FQuat) {.importcpp: "#.SetRotation(@)".}
+proc setScale3D*(tr: FTransform, value: FVector) {.importcpp: "#.SetScale3D(@)".}
 
-func location*(self: FTransform): FVector {.importcpp: "#.GetLocation()".}
-func translation*(self: FTransform): FVector {.importcpp: "#.GetTranslation()".}
-func rotation*(self: FTransform): FQuat {.importcpp: "#.GetRotation()".}
-func scale3D*(self: FTransform): FVector {.importcpp: "#.GetScale3D()".}
+func location*(tr: FTransform): FVector {.importcpp: "#.GetLocation()".}
+func translation*(tr: FTransform): FVector {.importcpp: "#.GetTranslation()".}
+func rotation*(tr: FTransform): FQuat {.importcpp: "#.GetRotation()".}
+func scale3D*(tr: FTransform): FVector {.importcpp: "#.GetScale3D()".}
 
-func `location=`*(self: FTransform, value: FVector) {.importcpp: "#.SetLocation(@)".}
-func `translation=`*(self: FTransform, value: FVector) {.importcpp: "#.SetTranslation(@)".}
-func `rotation=`*(self: FTransform, value: FQuat) {.importcpp: "#.SetRotation(@)".}
-func `scale3D=`*(self: FTransform, value: FVector) {.importcpp: "#.SetScale3D(@)".}
+func `location=`*(tr: FTransform, value: FVector) {.importcpp: "#.SetLocation(@)".}
+func `translation=`*(tr: FTransform, value: FVector) {.importcpp: "#.SetTranslation(@)".}
+func `rotation=`*(tr: FTransform, value: FQuat) {.importcpp: "#.SetRotation(@)".}
+func `scale3D=`*(tr: FTransform, value: FVector) {.importcpp: "#.SetScale3D(@)".}
 
-proc normalizeRotation*(self: FTransform) {.importcpp: "#.NormalizeRotation()".}
+proc normalizeRotation*(tr: FTransform) {.importcpp: "#.NormalizeRotation()".}
 
 func makeFTransform*(location: FVector, rotation: FQuat, scale: FVector): FTransform = 
   var transform = FTransform()
@@ -524,7 +524,7 @@ func makeFTransform*(location: FVector): FTransform =
 func `*`*(a, b: FRotator): FRotator {.importcpp: "#*#".}
 func `*`*(a, b: FQuat): FQuat {.importcpp: "#*#".}
 
-func toFVector*(self: FVector4) : FVector = makeFVector(self.x, self.y, self.z)
+func toFVector*(v: FVector4) : FVector = makeFVector(v.x, v.y, v.z)
 
 #Asset
 proc toSoftObjectPath*(assetData:FAssetData) : FSoftObjectPath {.importcpp: "#.ToSoftObjectPath()".}

@@ -350,7 +350,7 @@ type EGetWorldErrorMode* {.importcpp, size: sizeof(uint8).} = enum
 
 #ACTOR CPP and related 
 func getActor*(hitResult: FHitResult): AActorPtr {.importcpp: "#.GetActor()".}
-proc isTickFunctionRegistered*(self: FActorTickFunction): bool {.importcpp: "#.IsTickFunctionRegistered()".}  
+proc isTickFunctionRegistered*(tickFn: FActorTickFunction): bool {.importcpp: "#.IsTickFunctionRegistered()".}  
 ##ENGINE
 #UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const
 proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)", ureflect.} 
@@ -372,7 +372,7 @@ proc getSizeXY*(viewport: FViewportPtr): FIntPoint {.importcpp: "#->GetSizeXY()"
 
 #Asset should put those in uobject?
 proc makeFTopLevelAssetPath*(path: FString) : FTopLevelAssetPath {.importcpp: "FTopLevelAssetPath(#)", constructor.}
-proc getClassPathName*(self: UClassPtr): FTopLevelAssetPath {.importcpp: "#->GetClassPathName()".}
+proc getClassPathName*(cls: UClassPtr): FTopLevelAssetPath {.importcpp: "#->GetClassPathName()".}
 
 # INPUT ACTION. This should live in another place.
 type 
@@ -425,7 +425,7 @@ func axis3D*(input : FInputActionValue) : FVector {.importcpp: "#.Get<FVector>()
 
 
 type FOnInputKeySignature* = TMulticastDelegateOneParam[FInputKeyEventArgsPtr]
-proc onInputKey*(self: UGameViewportClientPtr) : FOnInputKeySignature  {.importcpp: "#->OnInputKey()".}
+proc onInputKey*(viewport: UGameViewportClientPtr) : FOnInputKeySignature  {.importcpp: "#->OnInputKey()".}
 type OnInputKeyEventPressedNimSignature {.exportc.} = proc (keyEventArgs:FInputKeyEventArgsPtr) : void {.cdecl.}
 type OnKeyPressedNimSignature {.exportc.} = proc (keyEventArgs:FkeyEventPtr) : void {.cdecl.}
 

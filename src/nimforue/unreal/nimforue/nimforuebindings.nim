@@ -120,7 +120,6 @@ proc getAllModuleDepsForPlugin*(pluginName:FString) : TArray[FString] {.importcp
 #3. Cache
 proc tryGetClassByName*(className:FString) : Option[UClassPtr] = someNil(getClassByName(className))
 
-proc getScriptStructByName*(structName:FString) : UScriptStructPtr = getUTypeByName[UScriptStruct](structName)
 proc getUStructByName*(structName:FString) : UStructPtr = getUTypeByName[UStruct](structName)
 
 proc newUObject*[T:UObject](owner:UObjectPtr, name:FName) : ptr T = 

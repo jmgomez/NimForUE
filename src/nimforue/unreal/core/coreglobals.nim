@@ -8,4 +8,4 @@ let GIsPlayInEditorWorld* {.importcpp, nodecl.} : bool
 
 
 
-proc isRunningCommandlet*() : bool {.importcpp:"IsRunningCommandlet" .}
+proc isRunningCommandlet*() : bool {.importcpp:"(IsRunningCommandlet)" .}

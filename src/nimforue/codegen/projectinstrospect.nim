@@ -6,6 +6,9 @@ import std/[strformat, enumerate, tables, hashes, options, sugar, json, strutils
 when not defined(nuevm):
   import std/[os]
   import ../../buildscripts/nimforueconfig
+const PrimitiveTypes* = @[ 
+  "bool", "float32", "float64", "int16", "int32", "int64", "int8", "uint16", "uint32", "uint64", "uint8"
+]
 
 type
   NimParamKind* = enum
@@ -249,10 +252,15 @@ func getGenericTypeName(identDefs:NimNode) : seq[NimParam] =
 
   
 
-func getParamFromIdentDef(identDefs:NimNode): Option[NimParam] =
+func getParamFromIdentDef(identDefs:NimNode): seq[NimParam] =
   assert identDefs.kind == nnkIdentDefs, "Expected nnkIdentDefs got " & $identDefs.kind
 
-  let name = getNameFromIdentDef(identDefs)
+  var names = @[getNameFromIdentDef(identDefs)]
+  #comma separated params in procs
+  names.add( 
+    identDefs[1..^3]
+      .filterIt(it.kind == nnkIdent)
+      .mapIt(it.strVal()))
   let typ = 
     case identDefs[^2].kind:
     of nnkIdent:
@@ -270,7 +278,7 @@ func getParamFromIdentDef(identDefs:NimNode): Option[NimParam] =
       "proc():void" #Not supported as param yet but we do validate it  
     of nnkEmpty:
       #this means it is an infered from the value: arg = value. So we are fucked
-      return none(NimParam)
+      return @[]
     of nnkVarTy:
       case identDefs[^2][0].kind:
       of nnkBracketExpr:
@@ -290,7 +298,7 @@ func getParamFromIdentDef(identDefs:NimNode): Option[NimParam] =
       debugEcho repr identDefs
       error &"Error in getParamFromIdentDef got {identDefs[^2].kind} in identDefs type"
       ""
-  return some NimParam(name: name, kind:OnlyName, strType:typ)
+  return names.mapIt(NimParam(name: it, kind:OnlyName, strType:typ))
 
 
 func makeObjNimType(typeName:string, typeDef:NimNode) : NimType = 
@@ -332,7 +340,7 @@ func makeObjNimType(typeName:string, typeDef:NimNode) : NimType =
       recListNode.children.toSeq
         .filterIt(it.kind == nnkIdentDefs)
         .map(getParamFromIdentDef)    
-        .sequence()
+        .flatten()
     NimType(name: typeName, kind:Object, parent:parent, isInheritable: isInheritable, params:params, typeParams:genericParams)
   else:  
     debugEcho treeRepr typeDef
@@ -378,10 +386,12 @@ func typeSectionToTypeDefs(typeSection: NimNode) : seq[NimNode] =
     .filterIt(it.kind == nnkTypeDef)
 
 func getAllFunctions(nimNode: NimNode): seq[NimNode] = 
-  nimNode
-    .children
-    .toSeq
-    .filterIt(it.kind in {nnkProcDef, nnkFuncDef})
+  result =
+    nimNode
+      .children
+      .toSeq
+      .filterIt(it.kind in {nnkProcDef, nnkFuncDef} and it[0].kind == nnkPostfix and it[0][0].strVal == "*")
+  
 
 func makeNimFunction(nimNode: NimNode, modName: string): NimFunction = 
   assert nimNode.kind in {nnkProcDef, nnkFuncDef}
@@ -399,7 +409,7 @@ func makeNimFunction(nimNode: NimNode, modName: string): NimFunction =
       .params
       .filterIt(it.kind == nnkIdentDefs)
       .map(getParamFromIdentDef)
-      .sequence()
+      .flatten()
   let pragmas = 
       nimNode
       .pragma
@@ -637,20 +647,22 @@ import std/[tables]
 """   
   writeFile(moduleFile, moduleTemplate)
 
-proc funcToUEReflectedWrapper(fn: NimFunction): string = 
-  #outputs: proc getName(self: UObject): string = uobject.getName(self)
-  # proc fnName(paramsWithTypes): string = moduleName.fnName(params)
-  
+func getProcHeader(fn:NimFunction): string = 
   var fnNode = fn.ast.parseStmt()[0]
   fnNode[0] = ident fn.name #remove *
   fnNode[4] = newEmptyNode() #pragmas
   fnNode[^1] = newEmptyNode() #body
-  let signature = repr fnNode
+  repr fnNode
+
+proc funcToUEReflectedWrapper(fn: NimFunction): string = 
+  #outputs: proc getName(self: UObject): string = uobject.getName(self)
+  # proc fnName(paramsWithTypes): string = moduleName.fnName(params)    
   let paramValues = fn.params.mapIt(it.name).join(", ")
-  &"{signature} = {fn.module}.{fn.name}({paramValues})"
+  &"{getProcHeader(fn)} = {fn.module}.{fn.name}({paramValues})"
   
 
 proc genVMFunctionLibrary(funcs: seq[NimFunction]) = 
+  return
   let file = NimGameDir() / "vm" / "vmlibrary.nim"
   let libTemplate = """
 include unrealprelude
@@ -663,6 +675,45 @@ emitVMTypes()
 """
   let fns = funcs.map(funcToUEReflectedWrapper).join("\n    ")
   writeFile(file, libTemplate % fns)
+
+const unsupportedTypes = ["FNimTestBase", "FClassFinder", 
+"FActorTickFunction", "FStaticConstructObjectParameters",
+"FRawObjectIterator", "FFrame", "FScriptArrayHelper", "FDelegateHandle",
+"FTopLevelAssetPath",
+"FScriptMap", "FOnInputKeySignature", "FScriptMapHelper"]
+
+const unsupportedFns = [
+  "BroadcastAsset","HasStructOps", "GetAlignment", "GetSize", "HasAddStructReferencedObjects",
+  "GetSuperStruct", "FromFString", "FromFName", "ToFString", "ToText", "IsRunningCommandlet", "AssetCreated",
+  
+]
+func supportsUEReflection(p:string): bool = 
+  if p in unsupportedTypes: return false
+  (p.startswith("F") and not p.endsWith("Ptr")) or 
+  p in PrimitiveTypes or
+  (p.endsWith("Ptr") and p[0] in {'U', 'A'}) or
+  p == "void" or
+  ["TArray"].any(container=>container in p) #TODO add TSet and TMap once fully supported
+
+func supportsUEReflection(p:NimParam): bool = 
+  case p.kind:
+  of OnlyName:
+    supportsUEReflection(p.strType)
+  else:
+    false
+    # raise newException(Execption, "Shouldnt reach this point as all params should be OnlyName")
+
+    # newException("Shoudnt reach this point as all params should be OnlyName", Exception)
+
+func supportsUEReflection(fn:NimFunction): bool = 
+  if fn.name.capitalizeAscii() in unsupportedFns: return false
+  let node = fn.ast.parseStmt()[0]
+  
+  if node[0][1].kind == nnkAccQuoted: return false #ufuncs doesnt support quotes    
+  if fn.name.len <= 2 or
+    ["[", "|", "="].any(ch => ch in fn.getProcHeader())
+  : return false #review later
+  fn.params.all(supportsUEReflection) and fn.returnType.supportsUEReflection()
 
 proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   let typesToReplace = { 
@@ -688,7 +739,7 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   engineTypesModule.deps = @[]
   genVMModuleFile(dir, engineTypesModule, modules)
   #funcs 
-  let funcs = modules.mapIt(it.functions).flatten.filter(isUReflect)
+  let funcs = modules.mapIt(it.functions).flatten.filter(supportsUEReflection)
   genVMFunctionLibrary(funcs)
 
 proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =   
@@ -721,6 +772,3 @@ when not defined(game) or defined(vmhost):
     # echo NimModules.filterIt(it.name == "uobjectflags")
   # quit()
 
-const PrimitiveTypes* = @[ 
-  "bool", "float32", "float64", "int16", "int32", "int64", "int8", "uint16", "uint32", "uint64", "uint8"
-]

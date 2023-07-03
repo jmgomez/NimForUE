@@ -447,7 +447,7 @@ proc isChildOf*[C:UStruct, P:UStruct] : bool = isChildOf(staticClass[C](), stati
 
 proc isA*[T:UObject](obj:UObjectPtr) : bool = obj.isA(staticClass(T))
    
-proc isCDO*(self : UObjectPtr) : bool = RF_ClassDefaultObject in self.getFlags()
+proc isCDO*(obj : UObjectPtr) : bool = RF_ClassDefaultObject in obj.getFlags()
 # Iterators
 iterator UObjects*() : UObjectPtr =
   var objIter = makeFRawObjectIterator()

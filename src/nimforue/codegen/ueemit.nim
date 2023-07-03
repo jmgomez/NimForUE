@@ -481,7 +481,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
                 body
             innerCall
     # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())
-    let signatureAsStr = funField.signature.mapIt(it.typeName).join("_")
+    let signatureAsStr = funField.signature.mapIt(it.uePropType).join("_")
     let fnImplName = ident &"impl{funField.name}{funField.typeName}{signatureAsStr}" #probably this needs to be injected so we can inspect it later
     let selfName = ident firstParam.name
     let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName, setOutParams):        
