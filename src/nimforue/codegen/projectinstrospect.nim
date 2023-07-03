@@ -662,7 +662,6 @@ proc funcToUEReflectedWrapper(fn: NimFunction): string =
   
 
 proc genVMFunctionLibrary(funcs: seq[NimFunction]) = 
-  return
   let file = NimGameDir() / "vm" / "vmlibrary.nim"
   let libTemplate = """
 include unrealprelude
@@ -676,15 +675,16 @@ emitVMTypes()
   let fns = funcs.map(funcToUEReflectedWrapper).join("\n    ")
   writeFile(file, libTemplate % fns)
 
-const unsupportedTypes = ["FNimTestBase", "FClassFinder", 
-"FActorTickFunction", "FStaticConstructObjectParameters",
-"FRawObjectIterator", "FFrame", "FScriptArrayHelper", "FDelegateHandle",
-"FTopLevelAssetPath",
+const unsupportedTypes = ["FNimTestBase", "FClassFinder",
+"FActorTickFunction", "FStaticConstructObjectParameters", "FScriptDelegate",
+"FRawObjectIterator", "FFrame", "FScriptArrayHelper", "FDelegateHandle", "FMulticastScriptDelegate",
+"FTopLevelAssetPath", "FObjectInitializer", "FFieldVariant",
 "FScriptMap", "FOnInputKeySignature", "FScriptMapHelper"]
 
 const unsupportedFns = [
   "BroadcastAsset","HasStructOps", "GetAlignment", "GetSize", "HasAddStructReferencedObjects",
   "GetSuperStruct", "FromFString", "FromFName", "ToFString", "ToText", "IsRunningCommandlet", "AssetCreated",
+  "ZeroVector", "GetCppName"
   
 ]
 func supportsUEReflection(p:string): bool = 
