@@ -175,34 +175,12 @@ proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) :
       
       var argsAsRtField = RuntimeField(kind:Struct)
       let propParams = fn.getFPropsFromUStruct().filterIt(it != fn.getReturnProperty())  
-    #   for prop in propParams:
-    #     let propName = prop.getName().firstToLow()
-    #     let nimTypeStr = getNimTypeAsStr(prop, context).toJson()
-
-    #     if prop.isInt() or prop.isObjectBased(): #ints a pointers 
-    #       args.add(propName, getValueFromPropInFn[int](context, stack).toRuntimeField())
-    #     if prop.isFloat():
-    #       args.add(propName, getValueFromPropInFn[float](context, stack).toRuntimeField())
-        
-    #     if prop.isStruct():
-    #       let structProp = castField[FStructProperty](prop)
-    #       let scriptStruct = structProp.getScriptStruct()
-    #       let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
-    #       if structProps.any():                     
-    #         let structValPtr = getValueFromPropInFn[pointer](context, stack) #TODO stepIn should be enough
-    #         args.add(structProp.getName(), getProp(structProp, stack.mostRecentPropertyAddress))# getValueFromPropMemoryBlock(structProp, cast[ByteAddress](stack.mostRecentPropertyAddress))
-    #       else:
-    #          UE_Warn &" {scriptStruct.getName()} struct `{propName}` prop doesnt have any props"    
-
-
       for prop in propParams:
         discard getValueFromPropInFn[pointer](context, stack) #step in (review)
         let argName = prop.getName().firstToLow()
         let rtArg = getProp(prop, stack.mostRecentPropertyAddress)
         argsAsRtField.add(argName, rtArg)
 
-
-        #ahora solo hay un entero
       let ueCallNode = makeUECall(makeUEFunc(borrowInfo.fnName, borrowInfo.className), context, argsAsRtField).toVm()
       let res = interpreter.callRoutine(vmFn, [ueCallNode])
 
@@ -302,7 +280,12 @@ import utils/[ueutils,utils]
 
 proc onInterpreterInit() {.cdecl.} = 
   isInterpreterInit = true
-  interpreter.evalScript()
+  try:
+    interpreter.evalScript()
+  except CatchableError:
+    let msg = getCurrentExceptionMsg()
+    UE_Error msg
+    UE_Error getStackTrace()
 
 proc initInterpreterInAnotherThread() =   
   executeTaskInBackgroundThread(initInterpreter, onInterpreterInit)

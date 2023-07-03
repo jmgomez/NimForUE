@@ -407,7 +407,7 @@ macro emitVMTypes*() =
   const libname {.strdefine.} = ""
   var lib = libname
   if libname == "vm": #to prevent users from include "vm" and drag in the wrong file
-    lib = "vmfuncs"
+    lib = "vmfunctionlibrary"
   when defined(nuevm):
     const BindingsVMDir = "" 
     proc `/`(a: string, b: string): string = ""
