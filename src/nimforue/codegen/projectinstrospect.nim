@@ -662,12 +662,13 @@ proc funcToUEReflectedWrapper(fn: NimFunction): string =
   
 
 proc genVMFunctionLibrary(funcs: seq[NimFunction]) = 
+  
   let file = NimGameDir() / "vm" / "vmlibrary.nim"
   let libTemplate = """
 include unrealprelude
 import vm/vmmacros
 uClass UVMFunctionLibrary of UObject:
-  ufuncs(BlueprintCallable, Static):
+  ufuncs(Static):
     $1
 
 emitVMTypes()
@@ -739,7 +740,7 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
   engineTypesModule.deps = @[]
   genVMModuleFile(dir, engineTypesModule, modules)
   #funcs 
-  let funcs = modules.mapIt(it.functions).flatten.filter(supportsUEReflection)
+  let funcs = modules.mapIt(it.functions).flatten.filter(isUReflect)
   genVMFunctionLibrary(funcs)
 
 proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =   

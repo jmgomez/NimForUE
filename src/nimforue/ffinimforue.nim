@@ -195,6 +195,8 @@ uEnum EEnumGuestSomethingElse:
   Value1
   Value2
   Value3
+  Value4
+  Value5
 
 uEnum EMyEnumCreatedInDsl:
     (BlueprintType)
@@ -203,11 +205,11 @@ uEnum EMyEnumCreatedInDsl:
 
 
 # VM
+#TODO refactor the vm so emitType is only called once. 
 uClass UVmHelpers of UObject:
   ufuncs(Static):
     proc emitType(uetJson: FString) = 
       let types = uetJson.parseJson.jsonTo(seq[UEType])
-      UE_Log &"Emit type called {types}"
       #emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
       let emitter = initEmitter() #TODO deallocate after wards or use a ref and cast it back to a ptr
       for typeDef in types:
@@ -219,9 +221,7 @@ uClass UVmHelpers of UObject:
         of uetEnum:         
           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUEnum(typeDef, package), emitter)
         of uetStruct:
-          UE_Log "Entra por aqui con " & $typeDef
           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUStruct[void](typeDef, package), emitter)
-
         else: continue
       # UE_Log $ueTyp
       discard emitNueTypes(emitter, "GameNim", false, false)
