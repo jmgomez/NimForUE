@@ -60,7 +60,7 @@ proc startNue(libPath:string, calledFrom:NueLoadedFrom)  =
 #Will be called from the commandlet that generates the bindigns
 proc genBindingsEntryPoint() : void {.ffi:genFilePath} = 
   try:
-    if isRunningCommandlet(): #TODO test not cooking
+    if IsRunningCommandlet: #TODO test not cooking
       generateProject()       
   except:
     UE_Error &"Error in genBindingsEntryPoint: {getCurrentExceptionMsg()}"
@@ -107,11 +107,11 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
     case libName:
     of "nimforue": 
         discard emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
-        if not isRunningCommandlet() and timesReloaded == 0: 
+        if not IsRunningCommandlet and timesReloaded == 0: 
           # genBindingsCMD()
           discard   
     else:
-        if not isRunningCommandlet():
+        if not IsRunningCommandlet:
           discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
@@ -207,6 +207,7 @@ uClass UVmHelpers of UObject:
   ufuncs(Static):
     proc emitType(uetJson: FString) = 
       let types = uetJson.parseJson.jsonTo(seq[UEType])
+      UE_Log &"Emit type called {types}"
       #emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
       let emitter = initEmitter() #TODO deallocate after wards or use a ref and cast it back to a ptr
       for typeDef in types:
@@ -218,6 +219,7 @@ uClass UVmHelpers of UObject:
         of uetEnum:         
           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUEnum(typeDef, package), emitter)
         of uetStruct:
+          UE_Log "Entra por aqui con " & $typeDef
           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUStruct[void](typeDef, package), emitter)
 
         else: continue

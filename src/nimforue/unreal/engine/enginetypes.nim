@@ -275,8 +275,8 @@ type
   # UDataLayer* {.importcpp, inheritable, pure .} = object of UObject
   # UDataLayerPtr* = ptr UDataLayer
   
-  # UUserDefinedStruct* {.importcpp, inheritable, pure .} = object of UScriptStruct
-  # UUserDefinedStructPtr* = ptr UUserDefinedStruct
+  UUserDefinedStruct* {.importcpp, inheritable, pure .} = object of UScriptStruct
+  UUserDefinedStructPtr* = ptr UUserDefinedStruct
   UNavigationSystemModuleConfig* {.importcpp, inheritable, pure .} = object of UObject
   UNavigationSystemModuleConfigPtr* = ptr UNavigationSystemModuleConfig
   UNavigationSystemConfig* {.importcpp, inheritable, pure .} = object of UObject

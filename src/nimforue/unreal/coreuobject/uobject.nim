@@ -342,6 +342,7 @@ proc getAlignment*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps
 proc getSize*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->GetSize()".}
 proc hasAddStructReferencedObjects*(str:UScriptStructPtr) : bool {.importcpp:"#->GetCppStructOps()->HasAddStructReferencedObjects()".}
 proc getCppStructOps*(str:UScriptStructPtr) : ICppStructOpsPtr {. importcpp:"#->GetCppStructOps()" .}
+proc prepareCppStructOps*(str:UScriptStructPtr) : void {. importcpp:"#->PrepareCppStructOps()" .}
 #struct ops #TODO need to fill FProperty
 proc copy*(ops:ICppStructOpsPtr; dest: pointer; src: pointer; arrayDim: int32 = 1): bool {. importcpp:"#->Copy(#, #, #)" .}
 

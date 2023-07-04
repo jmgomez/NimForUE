@@ -971,13 +971,13 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
     let parent = someNil(getUTypeByName[UScriptStruct](ueType.superStruct.removeFirstLetter()))
     superStruct = parent.getOrRaise(&"Parent struct {ueType.superStruct} not found for {ueType.name}")
   
-  var scriptStruct: UNimScriptStructPtr
+  var scriptStruct: UScriptStructPtr
   when T is void:
-    scriptStruct = newUObject[UNimScriptStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
-    #TODO struct ops?
-  else:
+    scriptStruct = newUObject[UUserDefinedStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
+    scriptStruct.prepareCppStructOps()
+  else: #UNimScriptStruct
     scriptStruct = newScriptStruct[T](package, f ueType.name.removeFirstLetter(), objClsFlags, superStruct, sizeof(T).int32, alignof(T).int32, T())    
-    setCppStructOpFor[T](scriptStruct, nil)
+    ueCast[UNimScriptStruct](scriptStruct).setCppStructOpFor[:T](nil)
 
   for metadata in ueType.metadata:
       scriptStruct.setMetadata(metadata.name, $metadata.value)
@@ -985,11 +985,11 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   for field in ueType.fields:
       discard field.emitFProperty(scriptStruct)
 
-  UE_Log &"Struct emited {scriptStruct.getName()}"
-  setGIsUCCMakeStandaloneHeaderGenerator(true)
-  scriptStruct.bindType()
-  scriptStruct.staticLink(true)
-  setGIsUCCMakeStandaloneHeaderGenerator(false)
+  when not T is void:
+    setGIsUCCMakeStandaloneHeaderGenerator(true)
+    scriptStruct.bindType()
+    scriptStruct.staticLink(true)
+    setGIsUCCMakeStandaloneHeaderGenerator(false)
 
   scriptStruct.setMetadata(UETypeMetadataKey, $ueType.toJson())
   scriptStruct

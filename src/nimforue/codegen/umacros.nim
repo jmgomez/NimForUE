@@ -51,9 +51,8 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
     when defined nuevm:
       let types = @[ueType]    
-      # emitType($(types.toJson()))  #TODO needs structOps to be implemented
-      result = nnkTypeSection.newTree  
-      #TODO gen types
+      emitType($(types.toJson()))  #TODO needs structOps to be implemented
+      result = nnkTypeSection.newTree(genUStructCodegenTypeDefBinding(ueType, ctVM))      
     else:
       addVMType ueType 
       result = emitUStruct(ueType) 

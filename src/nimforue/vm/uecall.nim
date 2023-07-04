@@ -142,7 +142,7 @@ func isStatic*(fn : UFunctionPtr) : bool = FUNC_Static in fn.functionFlags
 
 proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
   result = none(RuntimeField)
-  let fn = cls.findFunctionByName(n call.fn.name.capitalizeAscii())
+  let fn = cls.findFunctionByNameWithPrefixes(call.fn.name.capitalizeAscii()).get(nil)
   if fn.isNil():
     UE_Error "uCall: Function " & $call.fn.name & " not found in class " & $call.fn.className
     return result

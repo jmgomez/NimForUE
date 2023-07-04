@@ -283,9 +283,9 @@ import utils/[ueutils,utils]
     interpreter.evalString(initCode)
 
 proc onInterpreterInit() {.cdecl.} = 
-  interpreterState = isInitialized
   try:
     interpreter.evalScript()
+    interpreterState = isInitialized
   except CatchableError:
     let msg = getCurrentExceptionMsg()
     UE_Error msg
@@ -316,11 +316,8 @@ proc reloadScriptImpl() =
 #This can leave in the vm file
 uClass UNimVmManager of UObject:
   ufuncs(Static):#Called from the button in UE
-    proc reloadScript() =    
-      case interpreterState:
-      of isInitialized:
-        reloadScriptImpl()
-      else: discard                 
+    proc reloadScript() =   
+      reloadScriptImpl()      
     proc implementDelayedBorrow(borrowStr: FString) = 
       case interpreterState:
       of isInitialized:
