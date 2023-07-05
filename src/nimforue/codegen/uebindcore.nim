@@ -13,9 +13,11 @@ else:
 
 func getTypeNodeFromUProp*(prop : UEField, isVarContext:bool) : NimNode 
 
+const NimReservedKeywords* = @["object", "method", "type", "interface", "var", "in", "out", "end", "bLock", "from"] 
+const NimReservedToCapitalize* =  @["bool", "enum", "else", "new", "template", "continue", "int"]
 func ueNameToNimName*(propName:string) : string = #this is mostly for the autogen types
-    let reservedKeywords = ["object", "method", "type", "interface", "var", "in", "out", "end", "bLock", "from"] 
-    let reservedToCapitalize = ["bool", "enum", "else", "new", "template", "continue", "int"]
+    let reservedKeywords = NimReservedKeywords
+    let reservedToCapitalize = NimReservedToCapitalize
     let startsWithUnderscore = propName[0] == '_'
     if propName in reservedKeywords or startsWithUnderscore: &"`{propName}`" 
     elif propName in reservedToCapitalize: propName.capitalizeAscii()

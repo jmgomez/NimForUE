@@ -178,7 +178,7 @@ proc uCallFn*(call: UECall, cls: UClassPtr): UECallResult =
       result = UECallResult(value: some(returnRuntimeField))
     #set the out params
     for outProp in propParams.filter(isOutParam):
-      result.outParams.add(outProp.getName(), getProp(outProp, memoryBlock))     
+      result.outParams.add(outProp.getName().firstToLow(), getProp(outProp, memoryBlock))     
     
     dealloc(memoryBlock)    
   else: #no params no return

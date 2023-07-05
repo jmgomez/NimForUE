@@ -90,8 +90,8 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
     else: newEmptyNode()
   
   func setOutParam(outParam: UEField): NimNode = 
-    let name = ident outParam.name
-    let nameLit = newLit outParam.name
+    let name = ident outParam.name.firstToLow()
+    let nameLit = newLit outParam.name.firstToLow()
     result = 
       genAst(name, nameLit):
         name = returnVal.outParams[nameLit].runtimeFieldTo(typeof(name))
@@ -160,11 +160,13 @@ macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped =
 
 
 func isAllowedField*(field:UEField) : bool = 
-  const skipTypes = ["TScriptInterface", "TMap", "TSet"]
-  result = not skipTypes.mapIt(field.uePropType.contains(it)).foldl(a or b, false) and
-    not field.isOutParam()
-  # if not result:
-    # debugEcho &"[VM Bindings] Skipping field in {field.typeName} {field.name}: {field.uePropType} "
+  safe:
+    const skipTypes = ["TScriptInterface", "TMap", "TSet"]
+    result = 
+      not skipTypes.mapIt(field.uePropType.contains(it)).foldl(a or b, false) and 
+      field.name.tolower() notin NimReservedKeywords & NimReservedToCapitalize & @["result"] #TODO generate appropiate code for both
+    # if not result:
+    #   debugEcho &"[VM Bindings] Skipping field in {field.typeName} {field.name}: {field.uePropType} "
 
 
 func genUEnumTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =
@@ -400,7 +402,7 @@ proc addVMConstructor*(uet: var UEType, assigments: NimNode): NimNode =
   let fn = genAst(fnName, selfType, assigments):
     proc fnName(self {.inject.}: selfType) = 
       let cdo {.inject.} = cast[selfType](self.getUClass.getDefaultUObject())
-      vmmacros.log "constructor executed"
+      # vmmacros.log "constructor executed"
       assigments
   let fnReprImpl = ueBindImpl(fnField, none(UEField), uecFunc)
   let borrow = ueBorrowImpl(uet.name, fn)
