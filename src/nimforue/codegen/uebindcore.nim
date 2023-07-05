@@ -162,22 +162,16 @@ func makeUEFieldFromNimParamNode*(typeName: string, n:NimNode) : seq[UEField] =
           if isConst:
             flags = flags or CPF_ConstParm #will leave it for refs but notice that ref params are actually ignore when checking funcs (see GetDefaultIgnoredSignatureCompatibilityFlags )
           if isOut:
-            # flags = flags or CPF_OutParm #out params are also set when var (see below)
-            #TODO refactor enum macros so they use bitops (otherwise it wont work in nuevm)
-            flags = (bitor(flags.int, CPF_OutParm.int)).EPropertyFlags
+            flags = flags or CPF_OutParm
           flags
           
         else:    
           CPF_Parm
       
-    if nimType.split(" ")[0] == "var":
-        log "pasa por aqui con " & nimType & " " & $paramFlags.int
-        paramFlags = bitor(paramFlags.int, CPF_OutParm.int, CPF_ReferenceParm.int).EPropertyFlags
-        
+    if nimType.split(" ")[0] == "var":        
+        paramFlags = paramFlags or CPF_OutParm or CPF_ReferenceParm     
         nimType = nimType.split(" ")[1]
-    result = paramNames.mapIt(makeFieldAsUPropParam(it, nimType, typeName, paramFlags))
-    for p in result:
-      log &"{p.name} {p.uePropType} is out {p.isOutParam()}"
+    result = paramNames.mapIt(makeFieldAsUPropParam(it, nimType, typeName, paramFlags))          
 
 proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], typeName:string, functionsMetadata : seq[UEMetadata] = @[]) : (UEField,UEField) =  
     #this will generate a UEField for the function 
