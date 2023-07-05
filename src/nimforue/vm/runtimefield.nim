@@ -44,7 +44,7 @@ type
   
   UECallResult* = object
     value*: Option[RuntimeField]
-    outParams*: seq[RuntimeField]
+    outParams*: RuntimeField = RuntimeField(kind: Struct)
           
   #should args be here too?
   UEBorrowInfo* = object

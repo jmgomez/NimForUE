@@ -4,7 +4,7 @@ include unreal/prelude
 import unreal/editor/editor
 import unreal/core/containers/containers
 import ../nimforue/codegen/[ffi,emitter, genreflectiondatav2, models, uemeta, ueemit]
-import std/[options, strformat, dynlib, os, osproc, tables, asyncdispatch, times]
+import std/[options, strformat, dynlib, os, osproc, tables, asyncdispatch, times, json, jsonutils]
 import ../buildscripts/[nimforueconfig, buildscripts, keyboard]
 
 
@@ -186,9 +186,6 @@ proc onLoadingPhaseChanged(prev : NueLoadedFrom, next:NueLoadedFrom) : void {.ff
       emitTypeFor(libName, libPath, timesReloaded, next)
   
 
-import std/[json, jsonutils]
-import vm/vmmacros
-import codegen/models
 
 uEnum EEnumGuestSomethingElse: 
   (BlueprintType)
@@ -225,27 +222,4 @@ uClass UVmHelpers of UObject:
         else: continue
       # UE_Log $ueTyp
       discard emitNueTypes(emitter, "GameNim", false, false)
-    
-    proc getDefaultUObject(cls:UClassPtr) : UObjectPtr =  cls.getDefaultObject()
-    
-    proc getUClass(obj: UObjectPtr) : UClassPtr = 
-      result = uobject.getClass(obj)
-
-
-
-proc testExposed(obj:UObjectPtr): FString = obj.getName()
-
-uClass UGuestFunctionLibrary of UObject:
-  discard
-
-uFunctions:
-  (self:UGuestFunctionLibraryPtr, Static) #you must specify the type and any shared meta like this.
-  proc getName(obj:UObjectPtr): FString = uobject.getName(obj)
-
-
-uClass UAnother of UObject:
-  uprops():
-    testInt : int32
-    testInt2 : int32
-
-emitVMTypes()
+  

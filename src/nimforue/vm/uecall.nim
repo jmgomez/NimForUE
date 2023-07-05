@@ -174,11 +174,12 @@ proc uCallFn*(call: UECall, cls: UClassPtr): UECallResult =
 
     if fn.doesReturn():
       let returnProp = fn.getReturnProperty()
-      let returnOffset = fn.returnValueOffset
-      var returnMemoryRegion = memoryBlockAddr + returnOffset.uint
       let returnRuntimeField = getProp(returnProp, cast[pointer](memoryBlockAddr))
       result = UECallResult(value: some(returnRuntimeField))
-
+    #set the out params
+    for outProp in propParams.filter(isOutParam):
+      result.outParams.add(outProp.getName(), getProp(outProp, memoryBlock))     
+    
     dealloc(memoryBlock)    
   else: #no params no return
     self.processEvent(fn, nil)

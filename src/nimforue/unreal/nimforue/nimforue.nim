@@ -101,9 +101,9 @@ func getFirstCppClass*(cls:UClassPtr) : UClassPtr =
 
 proc getPropsWithFlags*(fn:UFunctionPtr, flag:EPropertyFlags) : TArray[FPropertyPtr] = 
     let isIn = (p:FPropertyPtr) => flag in p.getPropertyFlags()
-
     getFPropertiesFrom(fn).filter(isIn)
 
+proc isOutParam*(prop:FPropertyPtr) : bool = CPF_OutParm in prop.getPropertyFlags()
 
 
 proc callStaticUFunction*(clsName, fnName: string, args:pointer): bool = 
