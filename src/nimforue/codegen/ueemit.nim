@@ -423,6 +423,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     
     proc genParamArgFor(param:UEField) : NimNode = 
         let paraName = ident param.name
+        let paraNameAddr = ident param.name & "Addr"
         
         let genOutParam = 
             if param.isOutParam:
@@ -436,25 +437,28 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
 
         let paramType = param.getTypeNodeFromUProp(isVarContext=false)# param.uePropType
         
-        genAst(paraName, paramType, genOutParam): 
+        genAst(paraName, paraNameAddr, paramType, genOutParam, isOut=newLit param.isOutParam): 
             stack.mostRecentPropertyAddress = nil
             #does the same thing as StepCompiledIn but you dont need to know the type of the Fproperty upfront (which we dont)
             var paraName {.inject.} : paramType #Define the param
-            var paramAddr = cast[pointer](paraName.addr) #Cast the Param with   
+            var paraNameAddr = cast[pointer](paraName.addr) #Cast the Param with   
+            when isOut:                    
+                paraNameAddr = stack.outParms.propAddr
+                paraName = cast[ptr paramType](paraNameAddr)[]
             if not stack.code.isNil():
-                stack.step(stack.obj, paramAddr)
-            else:
+                stack.step(stack.obj, paraNameAddr)                          # stack.outParms = stack.outParms.nextOutParm
+            else:                
                 var prop = cast[FPropertyPtr](stack.propertyChainForCompiledIn)
-                stack.propertyChainForCompiledIn = stack.propertyChainForCompiledIn.next
-                stepExplicitProperty(stack, paramAddr, prop)
+                stack.propertyChainForCompiledIn = stack.propertyChainForCompiledIn.next                
+                stepExplicitProperty(stack, paraNameAddr, prop)
             genOutParam
             
     
     proc genSetOutParams(param:UEField) : NimNode = 
         let paraName = ident param.name
         let paramType = param.getTypeNodeFromUProp(isVarContext=false)# param.uePropType
-        genAst(paraName, paramType, outAddr=ident(param.name & "Out")): 
-                cast[ptr paramType](outAddr)[] = paraName
+        genAst(paraName, paramType, outAddr=ident(param.name & "Out")):                 
+            cast[ptr paramType](outAddr)[] = paraName
 
 
 
@@ -498,13 +502,13 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     safe:
         addVmUFunc(funField)
     if funField.isBlueprintEvent(): #blueprint events doesnt have a body
-        genAst(fnImpl, funField = newLit funField): 
-            addEmitterInfo(funField, none[UFunctionNativeSignature]())
+        result = genAst(fnImpl, funField = newLit funField): 
+                    addEmitterInfo(funField, none[UFunctionNativeSignature]())
     else:
-        genAst(fnImplName,fnImpl, funField = newLit funField): 
-            fnImpl
-            addEmitterInfo(funField, some fnImplName)
-    
+        result = genAst(fnImplName,fnImpl, funField = newLit funField): 
+                    fnImpl
+                    addEmitterInfo(funField, some fnImplName)
+       
 
 
 
