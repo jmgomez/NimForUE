@@ -2,6 +2,7 @@ import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat
 when defined nuevm:
   import exposed  
   import vmtypes
+  import codegen/enumops
 else:
   import std/[os]
   import ../../buildscripts/nimforueconfig  
@@ -87,16 +88,27 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
         genAst(returnType):
           return returnVal.get.runtimeFieldTo(returnType)
     else: newEmptyNode()
+  
+  func setOutParam(outParam: UEField): NimNode = 
+    let name = ident outParam.name
+    let nameLit = newLit outParam.name
+    result = 
+      genAst(name, nameLit):
+        name = returnVal.outParams[nameLit].runtimeFieldTo(typeof(name))
 
-
+  let setOutParamsBlock = 
+    nnkStmtList.newTree(fn.signature.filter(isOutParam).map(setOutParam))
+  
   result = 
-    genAst(fnName, selfAssign, returnBlock, callData=newLit call, rtFieldVal):
+    genAst(fnName, selfAssign, returnBlock, setOutParamsBlock, callData=newLit call, rtFieldVal):
       proc fnName() =         
         var call {.inject.} = callData
         call.value = rtFieldVal.toRuntimeField()
         selfAssign
         let returnVal {.used, inject.} = uCall(call)
+        setOutParamsBlock
         returnBlock
+
   result.params = genFormalParamsInFunctionSignature(fn.getFakeUETypeFromFunc(), fn)
   
 
@@ -142,7 +154,7 @@ macro uebind*(fn:untyped) : untyped =
   
 macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = 
   var (ufunc, _) = prepareUEFieldFuncFrom(fn, clsName)  
-  ufunc.fnFlags = bitor(ufunc.fnFlags.int, FUNC_Static.int).EFunctionFlags
+  ufunc.fnFlags = ufunc.fnFlags or FUNC_Static
   result = ueBindImpl(ufunc, none(UEField), uecFunc)
 
 

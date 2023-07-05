@@ -20,7 +20,7 @@ when defined(nuevm):
       let content = newLit(enumFields.mapIt((it[0].strVal, uint64(it[1].intVal()))))
     
       result = genAst(name, eSym, typ, content):
-          proc `or`*(a, b : name) : name =  name(typ(ord(a)) or typ(ord(b)))
+          proc `or`*(a, b : name) : name =  bitor(a.uint64, b.uint64).name
 
           proc `||`*(a, b : name) : name {.importcpp:"#|#".}
           proc `&&`*(a, b : name) : name {.importcpp:"#&#".}
@@ -29,12 +29,13 @@ when defined(nuevm):
           proc `|`*(a, b : name) : name =  a or b
               # cast[name](bitor(cast[typ](a),cast[typ](b)))
 
-          proc `and`*(a, b : name) : name = name(typ(ord(a)) and typ(ord(b)))
+          proc `and`*(a, b : name) : name = bitand(a.uint64, b.uint64).name
+          # proc `and`*(a, b : name) : name = name(typ(ord(a)) and typ(ord(b)))
           
           proc `&`*(a, b : name) : name {.importcpp:"#&#".}
               # cast[name](bitand(cast[typ](a),cast[typ](b)))
           
-          proc contains*(a,b:name) : bool = (a and b) == a #returns true if used like flag in flags 
+          proc contains*(a,b:name) : bool = bitand(a.uint64, b.uint64).uint64 > 0  #returns true if used like flag in flags 
 
           proc fromJsonHook*(self: var name, jsonNode: JsonNode) =
               self = name(jsonNode.getInt()) #we need to this via the int cast otherwise combinations wont work. int should be big enough
