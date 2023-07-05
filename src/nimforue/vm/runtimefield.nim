@@ -1,4 +1,4 @@
-import std/[strformat, macros, tables]
+import std/[strformat, macros, tables, options]
 when defined nuevm:
   import corevm
 type
@@ -41,9 +41,11 @@ type
       fn* : UEFunc    
     else:
       clsName*: string #TODO maybe I can just pass the clsPointer instead around
-      
-    
   
+  UECallResult* = object
+    value*: Option[RuntimeField]
+    outParams*: seq[RuntimeField]
+          
   #should args be here too?
   UEBorrowInfo* = object
     fnName*: string #nimName 
@@ -53,6 +55,12 @@ type
 
 const VMDefaultConstructor* = "vmdefaultconstructor"
 func isVMDefaultConstructor*(borrowInfo: UEBorrowInfo): bool = borrowInfo.fnName == VMDefaultConstructor
+
+
+proc get*(self: UECallResult): lent RuntimeField {.inline.} = self.value.get()
+proc get*(self:UECallResult, otherwise: RuntimeField): RuntimeField {.inline.} = self.value.get(otherwise)
+
+    
 
 func toTableMap*[K, V](table: Table[K, V]): seq[(K, V)] =      
   for key, val in table:

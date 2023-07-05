@@ -317,7 +317,8 @@ proc reloadScriptImpl() =
 uClass UNimVmManager of UObject:
   ufuncs(Static):#Called from the button in UE
     proc reloadScript() =   
-      reloadScriptImpl()      
+      reloadScriptImpl() 
+           
     proc implementDelayedBorrow(borrowStr: FString) = 
       case interpreterState:
       of isInitialized:

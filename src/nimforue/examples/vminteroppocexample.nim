@@ -7,6 +7,10 @@ import ../vm/[runtimefield, uecall]
 
 import ../test/testutils
 
+#Primero coger el parametro.
+#Luego devolverlo en el out
+#luego uecall
+
 
 uStruct FStructVMTest:
   (BlueprintType)
@@ -20,14 +24,17 @@ uEnum EEnumVMTest:
   (ValueA, ValueB, ValueC)
 
 uClass UObjectPOC of UObject:
-  (BlueprintType)
+  (BlueprintType, Reinstance)
   ufunc: 
     proc instanceFunc() = 
       UE_Log "Hola from UObjectPOC instanceFunc"
 
     proc instanceFuncWithOneArgAndReturnTest(arg : int) : FVector = FVector(x:arg.float32, y:arg.float32, z:arg.float32)
 
-  ufuncs(Static):    
+  ufuncs(Static):   
+    proc callWithOutArg(res: var int) : int = 
+      res = res + 20
+      UE_Log &"Inside callWithOutArg {res}"
     proc callFuncWithNoArg() = 
       UE_Log "Hola from UObjectPOC"
     proc callFuncWithOneIntArg(arg : int) = 
@@ -162,6 +169,18 @@ uClass AActorPOCVMTest of ANimTestBase:
     proc testCallFuncWithNoArg() = 
       let callData = UECall(kind: uecFunc, fn: makeUEFunc("callFuncWithNoArg", "UObjectPOC"))
       discard uCall(callData)
+    proc testCallWithOutArg() = 
+        let callData = UECall(
+            kind: uecFunc,
+            fn: makeUEFunc("callWithOutArg", "UObjectPOC"),
+            value: (res: 1).toRuntimeField()
+          )        
+        let res =  uCall(callData)
+        UE_Log $res
+    # var test = 2
+    # discard callWithOutArg(1, test, 2)
+    # UE_Log "the value afterwards is " & $test
+
     proc testCallFuncWithOneIntArg() =
       let callData = UECall(
            kind: uecFunc,
@@ -377,10 +396,9 @@ uClass AUECallPropReadTest of ANimTestBase:
           clsName: self.getClass.getCppName(),
           value: (intProp: default(int32)).toRuntimeField()                       
         )
-      let reply = uCall(callData)
-      if reply.isSome:
-        let val = reply.get(RuntimeField(kind:Int)).getInt()
-        check(val == self.intProp)                   
+      let reply = uCall(callData)    
+      let val = reply.get(RuntimeField(kind:Int)).getInt()
+      check(val == self.intProp)                   
     
     proc shouldBeAbleToReadAFStringProp() =
       self.stringProp = "Hola"
@@ -390,10 +408,9 @@ uClass AUECallPropReadTest of ANimTestBase:
           clsName: self.getClass.getCppName(),
           value: (stringProp: default(FString)).toRuntimeField()                        
         )
-      let reply = uCall(callData)
-      if reply.isSome:
-        let val = reply.get(RuntimeField(kind:String)).getStr()
-        check val == self.stringProp
+      let reply = uCall(callData)      
+      let val = reply.get(RuntimeField(kind:String)).getStr()
+      check val == self.stringProp
 
     proc shouldBeAbleToReadABoolProp() =
       self.boolProp = true
@@ -403,10 +420,9 @@ uClass AUECallPropReadTest of ANimTestBase:
           clsName: self.getClass.getCppName(),
           value: (boolProp: default(bool)).toRuntimeField()                        
         )
-      let reply = uCall(callData)
-      if reply.isSome:
-        let val = reply.get(RuntimeField(kind:Bool)).getBool()
-        check val == self.boolProp
+      let reply = uCall(callData)      
+      let val = reply.get(RuntimeField(kind:Bool)).getBool()
+      check val == self.boolProp
 
     proc shouldBeAbleToReadAnArrayProp() = 
       self.arrayProp = @[1, 2, 3, 4, 5].toTArray()
@@ -417,9 +433,8 @@ uClass AUECallPropReadTest of ANimTestBase:
           value: (arrayProp: default(TArray[int])).toRuntimeField()                           
         )
       let reply = uCall(callData)
-      if reply.isSome:
-        let val = reply.get(RuntimeField(kind:Array)).runtimeFieldTo(seq[int]).toTArray()
-        check val == self.arrayProp               
+      let val = reply.get(RuntimeField(kind:Array)).runtimeFieldTo(seq[int]).toTArray()
+      check val == self.arrayProp               
       
     proc shouldBeAbleToReadAStructProp() = 
       self.structProp = FVector(x:10, y:10, z:10)
@@ -429,10 +444,9 @@ uClass AUECallPropReadTest of ANimTestBase:
           clsName: self.getClass.getCppName(),
           value: (structProp: default(FVector)).toRuntimeField()                     
         )
-      let reply = uCall(callData)
-      if reply.isSome:
-        let val = reply.get(RuntimeField(kind:Struct)).runtimeFieldTo(FVector)
-        check val.x == self.structProp.x           
+      let reply = uCall(callData)      
+      let val = reply.get(RuntimeField(kind:Struct)).runtimeFieldTo(FVector)
+      check val.x == self.structProp.x           
          
     proc shouldBeAbleToReadAnEnumProp() =
       self.enumProp = EEnumVMTest.ValueC
@@ -442,10 +456,9 @@ uClass AUECallPropReadTest of ANimTestBase:
           clsName: self.getClass.getCppName(),
           value: (enumProp: default(EEnumVMTest)).toRuntimeField()                        
         )
-      let reply = uCall(callData)     
-      if reply.isSome:
-        let val = reply.get(RuntimeField(kind:Int)).runtimeFieldTo(EEnumVMTest)
-        check val == self.enumProp
+      let reply = uCall(callData)           
+      let val = reply.get(RuntimeField(kind:Int)).runtimeFieldTo(EEnumVMTest)
+      check val == self.enumProp
               
 
 

@@ -9,10 +9,9 @@ proc log*(s:string) : void = discard #overrided
 
 
 
-proc uCallInterop(uCall:UECall) : Option[RuntimeField] = none(RuntimeField) #overrided no need anymore, remove interop
+proc uCallInterop(uCall:UECall) : UECallResult = UECallResult() #overrided no need anymore, remove interop
 
-proc uCall*(uCall:UECall) : Option[RuntimeField] = 
-  result = uCallInterop(uCall)
+proc uCall*(uCall:UECall) : UECallResult = uCallInterop(uCall) 
   # log "uCall: " & $uCall & " result: " & $result
 
 

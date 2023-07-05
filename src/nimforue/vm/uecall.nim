@@ -83,12 +83,9 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
             vProp.copySingleValue(helper.getValuePtr(idx.int32), structMemoryRegion)
 
         else:
-          setProp(key, vProp, helper.getValuePtr(idx.int32))
-      
-
+          setProp(key, vProp, helper.getValuePtr(idx.int32))      
     helper.rehash()
-  else:
-    raise newException(ValueError, "Unknown property type")
+
 
 proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField = 
   proc sourceAddrWithOffset() : pointer = cast[pointer](cast[uint](sourceAddr) + prop.getOffset().uint)
@@ -140,8 +137,7 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
    
 func isStatic*(fn : UFunctionPtr) : bool = FUNC_Static in fn.functionFlags
 
-proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
-  result = none(RuntimeField)
+proc uCallFn*(call: UECall, cls: UClassPtr): UECallResult =
   let fn = cls.findFunctionByNameWithPrefixes(call.fn.name.capitalizeAscii()).get(nil)
   if fn.isNil():
     UE_Error "uCall: Function " & $call.fn.name & " not found in class " & $call.fn.className
@@ -181,7 +177,7 @@ proc uCallFn*(call: UECall, cls: UClassPtr): Option[RuntimeField] =
       let returnOffset = fn.returnValueOffset
       var returnMemoryRegion = memoryBlockAddr + returnOffset.uint
       let returnRuntimeField = getProp(returnProp, cast[pointer](memoryBlockAddr))
-      result = some(returnRuntimeField)
+      result = UECallResult(value: some(returnRuntimeField))
 
     dealloc(memoryBlock)    
   else: #no params no return
@@ -204,13 +200,13 @@ proc uCallProp*(call : UECall, cls:UClassPtr) : Option[RuntimeField] =
     argField[propName].setProp(prop, cast[pointer](selfAddr + offset.uint))
     none(RuntimeField)
 
-proc uCall*(call : UECall) : Option[RuntimeField] = 
+proc uCall*(call : UECall) : UECallResult = 
   let cls = getClassByName(call.getClassName.removeFirstLetter())
   if cls.isNil():
     UE_Error "uCall: Class " & $call.getClassName() & " not found"
-    return none(RuntimeField)
+    return UECallResult()
   case call.kind:
   of uecFunc: uCallFn(call, cls)
-  else: uCallProp(call, cls)
+  else: UECallResult(value:uCallProp(call, cls))
 
 
