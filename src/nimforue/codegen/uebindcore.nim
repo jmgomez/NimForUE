@@ -1,6 +1,6 @@
 
 import models, modelconstructor, enumops
-import std/[strformat, sequtils, macros, options, sugar, strutils, genasts, algorithm]
+import std/[strformat, sequtils, macros, options, sugar, strutils, genasts, algorithm, bitops]
 import ../utils/[utils, ueutils]
 from nuemacrocache import addPropAssignment, isMulticastDelegate, isDelegate, getPropAssignment
 
@@ -33,7 +33,8 @@ func nimToCppConflictsFreeName*(propName:string) : string =
   else: propName
 
 
-func isStatic*(funField:UEField) : bool = FUNC_Static in funField.fnFlags and funField.fnFlags.int != 0
+func isStatic*(funField:UEField) : bool = bitand(FUNC_Static.int, funField.fnFlags.int) > 0
+
 func getReturnProp*(funField:UEField) : Option[UEField] =  funField.signature.filter(isReturnParam).head()
 func doesReturn*(funField:UEField) : bool = funField.getReturnProp().isSome()
 

@@ -28,13 +28,13 @@ uClass UObjectPOC of UObject:
   ufunc: 
     proc instanceFunc() = 
       UE_Log "Hola from UObjectPOC instanceFunc"
-
     proc instanceFuncWithOneArgAndReturnTest(arg : int) : FVector = FVector(x:arg.float32, y:arg.float32, z:arg.float32)
 
   ufuncs(Static):   
     proc callWithOutArg(res: var int) : int = 
       res = res + 20
       UE_Log &"Inside callWithOutArg {res}"
+      10
     proc callFuncWithNoArg() = 
       UE_Log "Hola from UObjectPOC"
     proc callFuncWithOneIntArg(arg : int) = 

@@ -1,10 +1,12 @@
-import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat]
+import std/[json, sugar, macros, genasts, options, sequtils, strutils, strformat, bitops]
 when defined nuevm:
-  import exposed
+  import exposed  
+  import vmtypes
 else:
   import std/[os]
   import ../../buildscripts/nimforueconfig  
-
+  import ../unreal/coreuobject/uobjectflags
+ 
 import runtimefield
 import ../utils/[utils, ueutils]
 import ../codegen/[models, modelconstructor, uebindcore, nuemacrocache]
@@ -98,27 +100,22 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
   result.params = genFormalParamsInFunctionSignature(fn.getFakeUETypeFromFunc(), fn)
   
 
-proc prepareUEFieldFuncFrom*(fn:NimNode): (UEField, UEField) = 
+proc prepareUEFieldFuncFrom*(fn:NimNode, inClsName:string =""): (UEField, UEField) = 
   let clsName = 
-    if fn.params.len > 1:
+    if fn.params.len > 1 and inClsName == "":
       fn.params.filterIt(it.kind == nnkIdentDefs)[0][1].strVal().removeLastLettersIfPtr()
-    else: 
-      ""
+    else: inClsName
+      
   let clsFieldMb = 
-    if clsName!="": some makeFieldAsUProp("self", clsName & "Ptr", clsName) 
+    if inClsName != "": some makeFieldAsUProp("self", clsName & "Ptr", clsName) 
     else: none[UEField]()
   
   var (ufunc, selfParam) = ufuncFieldFromNimNode(fn, clsFieldMb, clsName)  
-  ufunc.signature = ufunc.signature[1..^1]
-  (ufunc, selfParam)
+  if ufunc.isStatic:
+    ufunc.signature = ufunc.signature[1..^1]
+  if clsName != "":(ufunc, selfParam)
+  else: (ufunc, UEField())
 
-macro uebind*(fn:untyped) : untyped = 
-  #Remove the first arg, which is the self param
-  let (ufunc, selfParam) = prepareUEFieldFuncFrom(fn)
-  result = ueBindImpl(ufunc, some selfParam, uecFunc)
-  # log "================================================================"
-  # log repr result
-  
 macro uegetter*(getter:untyped): untyped = 
   var (ufunc, selfParam) = prepareUEFieldFuncFrom(getter) 
   ufunc.signature[0].isReturn = true
@@ -136,7 +133,17 @@ macro uesetter*(setter:untyped): untyped =
   # log &"\n{repr result}"
   # log &"\n{treeRepr result}"
 
-# macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn, uecFunc)
+macro uebind*(fn:untyped) : untyped = 
+  #Remove the first arg, which is the self param
+  let (ufunc, selfParam) = prepareUEFieldFuncFrom(fn)
+  result = ueBindImpl(ufunc, some selfParam, uecFunc)
+  # log "================================================================"
+  # log repr result
+  
+macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = 
+  var (ufunc, _) = prepareUEFieldFuncFrom(fn, clsName)  
+  ufunc.fnFlags = bitor(ufunc.fnFlags.int, FUNC_Static.int).EFunctionFlags
+  result = ueBindImpl(ufunc, none(UEField), uecFunc)
 
 
 

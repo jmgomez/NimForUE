@@ -284,8 +284,8 @@ import utils/[ueutils,utils]
 
 proc onInterpreterInit() {.cdecl.} = 
   try:
-    interpreter.evalScript()
     interpreterState = isInitialized
+    interpreter.evalScript()
   except CatchableError:
     let msg = getCurrentExceptionMsg()
     UE_Error msg
