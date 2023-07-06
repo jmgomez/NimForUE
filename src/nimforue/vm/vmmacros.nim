@@ -401,7 +401,7 @@ proc addVMConstructor*(uet: var UEType, assigments: NimNode): NimNode =
   let selfType = ident uet.name & "Ptr"
   let fn = genAst(fnName, selfType, assigments):
     proc fnName(self {.inject.}: selfType) = 
-      let cdo {.inject.} = cast[selfType](self.getUClass.getDefaultUObject())
+      let cdo {.inject.} = cast[selfType](self.getClass.getDefaultObject())
       # vmmacros.log "constructor executed"
       assigments
   let fnReprImpl = ueBindImpl(fnField, none(UEField), uecFunc)
