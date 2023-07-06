@@ -428,6 +428,7 @@ log "Hello World!"
   writeFile(scratchpadFile, scratchpadTemplate)
   log "vm module created"
   taskOptions["name"] = "vm"
+  taskOptions["release"] = ""
   lib(taskOptions)
 
 
