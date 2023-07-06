@@ -35,6 +35,9 @@ uClass UObjectPOC of UObject:
       res = res + 20
       UE_Log &"Inside callWithOutArg {res}"
       10
+    proc callWithOutHitArg(res: var FHitResult) = 
+      res.distance = 100
+      discard
     proc callFuncWithNoArg() = 
       UE_Log "Hola from UObjectPOC"
     proc callFuncWithOneIntArg(arg : int) = 
@@ -169,14 +172,26 @@ uClass AActorPOCVMTest of ANimTestBase:
     proc testCallFuncWithNoArg() = 
       let callData = UECall(kind: uecFunc, fn: makeUEFunc("callFuncWithNoArg", "UObjectPOC"))
       discard uCall(callData)
+    
     proc testCallWithOutArg() = 
-        let callData = UECall(
-            kind: uecFunc,
-            fn: makeUEFunc("callWithOutArg", "UObjectPOC"),
-            value: (res: 1).toRuntimeField()
-          )        
-        let res =  uCall(callData)
-        UE_Log $res
+      let callData = UECall(
+          kind: uecFunc,
+          fn: makeUEFunc("callWithOutArg", "UObjectPOC"),
+          value: (res: 1).toRuntimeField()
+        )        
+      let res =  uCall(callData)
+      UE_Log $res
+    
+    proc testCallWithOutHitArg() = 
+      let hit = FHitResult()
+      let callData = UECall(
+          kind: uecFunc,
+          fn: makeUEFunc("callWithOutHitArg", "UObjectPOC"),
+          value: (res: hit).toRuntimeField()
+        )        
+      let res =  uCall(callData)
+      UE_Log $res
+      
     # var test = 2
     # discard callWithOutArg(1, test, 2)
     # UE_Log "the value afterwards is " & $test
@@ -361,19 +376,20 @@ macro astRepr(exp: typed): string = newLit repr exp
 
 #TODO do a nice macro that splits the call and tells you what part is wrong
 template check(exp: typed) =
-  var a = exp
-  let astRepr {.inject.} = astRepr(exp)
-  let res {.inject.} = $exp
-  let fnName {.inject.} = ownerName(a)
-  if not exp:
-    let msg = &"{[fnName]}Check failed {astRepr} is  {res}" 
-    UE_Error msg 
-  else:
-    when compiles(self.printSucceed):
-      if self.printSucceed:
-        UE_Log &"{[fnName]} Check passed"
+  block:
+    var a = exp
+    let astRepr {.inject.} = astRepr(exp)
+    let res {.inject.} = $exp
+    let fnName {.inject.} = ownerName(a)
+    if not exp:
+      let msg = &"{[fnName]}Check failed {astRepr} is  {res}" 
+      UE_Error msg 
     else:
-      UE_Log &"{[fnName]} Check passed"
+      when compiles(self.printSucceed):
+        if self.printSucceed:
+          UE_Log &"{[fnName]} Check passed"
+      else:
+        UE_Log &"{[fnName]} Check passed"
 
 
 
@@ -390,9 +406,9 @@ uClass AUECallPropReadTest of ANimTestBase:
     arrayProp: TArray[int]
     structProp: FVector
     enumProp: EEnumVMTest
-    mapProp: TMap[int, FString]
-    mapProp2: TMap[int, int]
     nameProp: FName
+    vectorProp: FVector
+    hitProp: FHitResult
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToReadAnInt32Prop() =
@@ -479,8 +495,46 @@ uClass AUECallPropReadTest of ANimTestBase:
       let val = reply.get(RuntimeField(kind:Int)).getInt()
       let name = makeFName(val)
       check name == self.nameProp
-              
 
+    proc shouldBeAbleToWriteAVectorProp() =
+      self.vectorProp = FVector(x:10, y:10, z:10)
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: self.getClass.getCppName(),
+          value: (vectorProp: default(FVector)).toRuntimeField()                        
+        )
+      let reply = uCall(callData)
+      let val = reply.get(RuntimeField(kind:Struct)).runtimeFieldTo(FVector)
+      check val.x == self.vectorProp.x
+     
+    proc shouldBeAbleToReadAHitProp() =       
+      self.hitProp = FHitResult()
+      self.hitProp.bBlockingHit = true
+      self.hitProp.distance = 100
+
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: self.getClass.getCppName(),
+          value: (hitProp: default(FHitResult)).toRuntimeField()                        
+        )
+      let reply = uCall(callData)      
+
+      let val = reply.get.runtimeFieldTo(FHitResult)
+      check val == self.hitProp
+      UE_Log $val
+              
+#[ 
+  (kind: Struct, structVal: @[("faceIndex", (kind: Int, intVal: 0)), ("time", (kind: Float, floatVal: 5.26354424712089e-315)), ("distance", (kind: Float, floatVal: 5.535528570914047e-315)), ("location", (kind: Struct, structVal: @[])), ("impactPoint", (kind: Struct, structVal: @[])), ("normal", (kind: Struct, structVal: @[])), ("impactNormal", (kind: Struct, structVal: @[])), ("traceStart", (kind: Struct, structVal: @[])), ("traceEnd", (kind: Struct, structVal: @[])), ("penetrationDepth", (kind: Float, floatVal: 0.0)), ("myItem", (kind: Int
+, intVal: 4294967295)), ("item", (kind: Int, intVal: 0)), ("elementIndex", (kind: Int, intVal: 0)), ("bBlockingHit", (kind: Bool, boolVal: true)), ("bStartPenetrating", (kind: Bool, boolVal: true)), ("physMaterial", (kind: Int, intVal: 0)), ("hitObjectHandle", (kind: Struct, structVal: @[("actor", (kind: Int, intVal: 0))])), ("component", (kind: Int, intVal: 0)), ("boneName", (kind: Int, intVal: 0)), ("myBoneName", (kind: Int, intVal: 0))])
+
+
+ (kind: Struct, structVal: @[("faceIndex", (kind: Int, intVal: 0)), ("time", (kind: Float, floatVal: 1.0)), ("distance", (kind: Float, floatVal: 100.0)), ("normal", (kind: Struct, structVal: @[("x", (kind: Float, floatVal: 0.0)), ("y", (kind: Float, floatVal: 0.0)), ("z", (kind: Float, floatVal: 0.0))])), ("impactNormal", (kind: Struct, structVal: @[("x", (kind: Float, floatVal: 0.0)), ("y", (kind: Float, floatVal: 0.0)), ("z", (kind: Float, floatVal: 0.0))])), ("penetrationDepth", (kind: Float, floatVal: 0.0)), ("myItem", (kind: Int,
+ intVal: -1)), ("item", (kind: Int, intVal: 0)), ("elementIndex", (kind: Int, intVal: 0)), ("bBlockingHit", (kind: Bool, boolVal: true)), ("bStartPenetrating", (kind: Bool, boolVal: false)), ("boneName", (kind: Int, intVal: 0)), ("myBoneName", (kind: Int, intVal: 0))])
+
+(faceIndex: 0, time: 1.0, distance: 100.0, normal: (x: 0.0, y: 0.0, z: 0.0), impactNormal: (x: 0.0, y: 0.0, z: 0.0), penetrationDepth: 0.0, myItem: -1, item: 0, elementIndex: 0, bBlockingHit: true, bStartPenetrating: false, boneName: None, myBoneName: None)
+]#
 
 uClass AUECallPropWriteTest of ANimTestBase:
   
@@ -494,6 +548,7 @@ uClass AUECallPropWriteTest of ANimTestBase:
     mapProp: TMap[int, FString]
     mapProp2: TMap[int, int]
     nameProp: FName
+    hitProp: FHitResult
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToWritteAnInt32Prop() =
@@ -554,6 +609,24 @@ uClass AUECallPropWriteTest of ANimTestBase:
         )
       discard uCall(callData)      
       check expected == self.nameProp
+
+    proc shouldBeAbleToWriteAHitProp() =
+      let expected = FHitResult(bBlockingHit: true, distance: 100)      
+      self.hitProp = FHitResult()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (hitProp: expected).toRuntimeField()                        
+        )
+      discard uCall(callData)
+      UE_Log $self.hitProp
+      UE_Log $expected
+      
+      UE_Error &"Distance is {self.hitprop.distance} and expected {expected.distance}"
+      check expected.distance == self.hitProp.distance
+      check expected.bBlockingHit == self.hitProp.bBlockingHit
+
     
 
 

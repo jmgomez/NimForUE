@@ -25,7 +25,7 @@ proc makeFName*(val: int): FName =
   let entry = fromUnstableInt(val.uint32).getEntry()
   makeFName getPlainNameString(entry)
 
-proc toInt*(name: FName): int = 
+converter toInt*(name: FName): int = #it's a converter so we dont have to import unnecessery stuff in the vm as it is FName = int
   let entry = getDisplayIndex(name)
   toUnstableInt(entry).int
 

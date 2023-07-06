@@ -42,7 +42,7 @@ proc setupBorrow*(borrowInfo:UEBorrowInfo) = setupBorrowInterop($borrowInfo.toJs
 
 
 #TODO this functions may be automatically generated down the road
-proc makeFName*(str:string) : FName = str
+proc makeFName*(str:string) : FName = default(FName)
 
 
 

@@ -29,13 +29,15 @@ proc setStructProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:poi
   let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
   var structMemoryRegion = memoryBlock
   for paramProp in structProps:
-    let name = paramProp.getName()
-    if name.firstToLow() in rtField:
-      let val = rtField[name.firstToLow()]
+    let name = paramProp.getName().firstToLow()
+    if name in rtField:
+      let val = rtField[name]
       val.setProp(paramProp, structMemoryRegion)
     else:
-      UE_Error &"Field {name} not found in struct"
-      UE_Warn $rtField
+      if prop.getCPPType() notin ["FHitResult"]: #we know we lack a few props for hitresult
+        
+        UE_Error &"Field {name} not found in struct. Struct was {prop.getCppType()}"
+        UE_Warn $rtField
   structMemoryRegion
 
 proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
@@ -113,6 +115,8 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
     result.kind = Float
     copyMem(addr result.floatVal, sourceAddrWithOffset(), prop.getSize())
   elif prop.isStruct():
+    if prop.getCppType() == "FHitResult":
+      return  getPropertyValuePtr[FHitResult](prop, sourceAddr)[].toRuntimeField() #TODO generalize this. 
     let structProp = castField[FStructProperty](prop)
     let scriptStruct = structProp.getScriptStruct()
     let structProps = scriptStruct.getFPropsFromUStruct()
@@ -183,9 +187,15 @@ proc uCallFn*(call: UECall, cls: UClassPtr): UECallResult =
       let returnProp = fn.getReturnProperty()
       let returnRuntimeField = getProp(returnProp, cast[pointer](memoryBlockAddr))
       result = UECallResult(value: some(returnRuntimeField))
+    result.outParams = RuntimeField(kind:Struct)
     #set the out params
     for outProp in propParams.filter(isOutParam):
-      result.outParams.add(outProp.getName().firstToLow(), getProp(outProp, memoryBlock))     
+      try:      
+        result.outParams.add(outProp.getName().firstToLow(), getProp(outProp, memoryBlock))     
+      except CatchableError:
+        UE_Error "Error getting the value in  " & $outProp.getName()  & " for " & $fn.getName()
+        UE_Error getCurrentExceptionMsg()
+        UE_Error getStackTrace()
     
     dealloc(memoryBlock)    
   else: #no params no return

@@ -128,12 +128,12 @@ type
     faceIndex* {.importcpp: "FaceIndex".}: int32
     time* {.importcpp: "Time".}: float32
     distance* {.importcpp: "Distance".}: float32
-    # location* {.importcpp: "Location".}: FVector_NetQuantize
-    # impactPoint* {.importcpp: "ImpactPoint".}: FVector_NetQuantize
+    location* {.importcpp: "Location".}: FVector_NetQuantize
+    impactPoint* {.importcpp: "ImpactPoint".}: FVector_NetQuantize
     normal* {.importcpp: "Normal".}: FVector_NetQuantizeNormal
     impactNormal* {.importcpp: "ImpactNormal".}: FVector_NetQuantizeNormal
-    # traceStart* {.importcpp: "TraceStart".}: FVector_NetQuantize
-    # traceEnd* {.importcpp: "TraceEnd".}: FVector_NetQuantize
+    traceStart* {.importcpp: "TraceStart".}: FVector_NetQuantize
+    traceEnd* {.importcpp: "TraceEnd".}: FVector_NetQuantize
     penetrationDepth* {.importcpp: "PenetrationDepth".}: float32
     myItem* {.importcpp: "MyItem".}: int32
     item* {.importcpp: "Item".}: int32
@@ -141,7 +141,7 @@ type
     bBlockingHit* {.importcpp: "bBlockingHit".}: bool
     bStartPenetrating* {.importcpp: "bStartPenetrating".}: bool
     # physMaterial* {.importcpp: "PhysMaterial".}: UPhysicalMaterialPtr 
-    hitObjectHandle* {.importcpp: "HitObjectHandle".}: FActorInstanceHandle 
+    # hitObjectHandle* {.importcpp: "HitObjectHandle".}: FActorInstanceHandle 
     # component* {.importcpp: "Component".}: TWeakObjectPtr[UPrimitiveComponentPtr]
     boneName* {.importcpp: "BoneName".}: FName
     myBoneName* {.importcpp: "MyBoneName".}: FName
@@ -211,6 +211,7 @@ type
   UGameViewportClientPtr* = ptr UGameViewportClient
 
   FActorInstanceHandle* {.importcpp .} = object
+    # actor* {.importcpp:"Actor".}: TWeakObjectPtr[AActor]
 
   # UNetObjectPrioritizerConfig* {.importcpp .} = object of UObject
   # UReplicationBridge* {.importcpp .} = object of UObject
@@ -287,7 +288,6 @@ type
   # FKConvexElem* {.importcpp .} = object
 
   # FRichCurve* {.importcpp .} = object
-type
   # FSlateBrush*  = object
     
   FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
@@ -307,6 +307,9 @@ type
   # FTextBlockStyle* {.importcpp.} = object
 
    
+
+proc toString*(hit: FHitResult): FString {.importcpp: "#.ToString()" .}
+proc `$`*(hit: FHitResult): string = hit.toString()
 
 proc getWorld*(worldContext: FWorldContextPtr): UWorldPtr {.importcpp: "#->World()".}
 
@@ -350,6 +353,7 @@ type EGetWorldErrorMode* {.importcpp, size: sizeof(uint8).} = enum
 
 #ACTOR CPP and related 
 func getActor*(hitResult: FHitResult): AActorPtr {.importcpp: "#.GetActor()".}
+func actor*(handle: FActorInstanceHandle): AActorPtr {.importcpp: "#.FetchActor()".}
 proc isTickFunctionRegistered*(tickFn: FActorTickFunction): bool {.importcpp: "#.IsTickFunctionRegistered()".}  
 ##ENGINE
 #UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const

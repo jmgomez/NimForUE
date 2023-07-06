@@ -85,8 +85,9 @@ func add*(rtField : var RuntimeField, name : string, value : RuntimeField) =
   case rtField.kind:
   of Struct:
     rtField.structVal.add((name, value))
-  else:
-    raise newException(ValueError, "rtField is not a struct")
+  else:    
+    safe:
+      raise newException(ValueError, &"rtField is not a struct. It's {rtField.kind}. Trying to add name: {name} with value: {value} To {rtField}")
 
 func getInt*(rtField : RuntimeField) : int = 
   case rtField.kind:
@@ -283,7 +284,7 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
       result.intVal = when T is enum: int(value) else: cast[int](value)
     elif T is FName:
       result.kind = Int
-      result.intVal = value.toInt()
+      result.intVal = value
     elif T is bool:
       result.kind = Bool
       result.boolVal = value
