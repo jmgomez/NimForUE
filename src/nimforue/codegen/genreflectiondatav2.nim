@@ -497,7 +497,7 @@ proc getProject*() : UEProject =
 
 proc generateProject*(forceGeneration = false) = 
     if not forceGeneration:
-      if not IsRunningCommandlet:
+      if not isRunningCommandlet():
         return
     
     measureTime "Generate Project":  

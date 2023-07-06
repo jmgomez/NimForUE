@@ -60,7 +60,7 @@ proc startNue(libPath:string, calledFrom:NueLoadedFrom)  =
 #Will be called from the commandlet that generates the bindigns
 proc genBindingsEntryPoint() : void {.ffi:genFilePath} = 
   try:
-    if IsRunningCommandlet: #TODO test not cooking
+    if isRunningCommandlet(): #TODO test not cooking
       generateProject()       
   except:
     UE_Error &"Error in genBindingsEntryPoint: {getCurrentExceptionMsg()}"
@@ -107,11 +107,11 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
     case libName:
     of "nimforue": 
         discard emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
-        if not IsRunningCommandlet and timesReloaded == 0: 
+        if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
           discard   
     else:
-        if not IsRunningCommandlet:
+        if not isRunningCommandlet():
           discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
