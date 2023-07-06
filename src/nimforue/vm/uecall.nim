@@ -29,18 +29,22 @@ proc setStructProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:poi
   let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
   var structMemoryRegion = memoryBlock
   for paramProp in structProps:
-    let name = paramProp.getName().firstToLow()
-    if name in rtField:
-      let val = rtField[name]
+    let name = paramProp.getName()
+    if name.firstToLow() in rtField:
+      let val = rtField[name.firstToLow()]
       val.setProp(paramProp, structMemoryRegion)
     else:
       UE_Error &"Field {name} not found in struct"
+      UE_Warn $rtField
   structMemoryRegion
 
 proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
   case rtField.kind
   of Int:    
-    setPropertyValue(prop, memoryBlock, rtField.getInt)
+    if prop.isFName():
+      setPropertyValue[FName](prop, memoryBlock, makeFName(rtField.intVal))
+    else:
+      setPropertyValue(prop, memoryBlock, rtField.getInt)
   of Bool:
     setPropertyValue(prop, memoryBlock, rtField.getBool)
   of Float:
@@ -89,7 +93,9 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
 
 proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField = 
   proc sourceAddrWithOffset() : pointer = cast[pointer](cast[uint](sourceAddr) + prop.getOffset().uint)
-  if prop.isInt() or prop.isObjectBased() or prop.isEnum():    
+  if prop.isInt() or prop.isObjectBased() or prop.isEnum() or 
+    prop.isFName() or
+    prop.isByte() or prop.getCppType().contains("TWeakObjectPtr"): #TODO improve this last one   
     result.kind = Int        
     if prop.isEnum():
       result.intVal = getPropertyValuePtr[uint8](prop, sourceAddr)[].int
@@ -133,7 +139,8 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
       let value = getProp(valueProp, mapHelper.getValuePtr(idx.int32))
       result.mapVal.add((key, value))
   else:
-    raise newException(ValueError, "Unknown property type")
+    UE_Error &"Unknown property type: {prop.getName()} {prop.getCppType()}"
+    raise newException(ValueError, &"Unknown property type: {prop.getName()} {prop.getCppType()}")
    
 func isStatic*(fn : UFunctionPtr) : bool = FUNC_Static in fn.functionFlags
 

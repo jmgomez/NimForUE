@@ -375,6 +375,12 @@ template check(exp: typed) =
     else:
       UE_Log &"{[fnName]} Check passed"
 
+
+
+
+
+# proc makeFromLoaded*(entry: FNameEntryId): FName {.importcpp:"FNameHelper::MakeFromLoaded(FNameEntrySerialized(#))".}
+
 uClass AUECallPropReadTest of ANimTestBase:
   
   uprops(EditAnywhere):    
@@ -386,6 +392,7 @@ uClass AUECallPropReadTest of ANimTestBase:
     enumProp: EEnumVMTest
     mapProp: TMap[int, FString]
     mapProp2: TMap[int, int]
+    nameProp: FName
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToReadAnInt32Prop() =
@@ -459,6 +466,19 @@ uClass AUECallPropReadTest of ANimTestBase:
       let reply = uCall(callData)           
       let val = reply.get(RuntimeField(kind:Int)).runtimeFieldTo(EEnumVMTest)
       check val == self.enumProp
+    
+    proc shouldBeAbleToReadANameProp() = 
+      self.nameProp = n"Hola"
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: self.getClass.getCppName(),
+          value: (nameProp: default(FName)).toRuntimeField()                        
+        )
+      let reply = uCall(callData)      
+      let val = reply.get(RuntimeField(kind:Int)).getInt()
+      let name = makeFName(val)
+      check name == self.nameProp
               
 
 
@@ -473,6 +493,7 @@ uClass AUECallPropWriteTest of ANimTestBase:
     enumProp: EEnumVMTest
     mapProp: TMap[int, FString]
     mapProp2: TMap[int, int]
+    nameProp: FName
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToWritteAnInt32Prop() =
@@ -521,6 +542,22 @@ uClass AUECallPropWriteTest of ANimTestBase:
           )
         discard uCall(callData)
         check expected.x == self.structProp.x
+    
+    proc shouldBeAbleToWriteANameProp() = 
+      let expected = n"Hola"
+      self.nameProp = n""
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (nameProp: expected).toRuntimeField()                        
+        )
+      discard uCall(callData)      
+      check expected == self.nameProp
+    
+
+
+
 
 uClass AUECallMapTest of ANimTestBase:
   (BlueprintType)
@@ -529,7 +566,6 @@ uClass AUECallMapTest of ANimTestBase:
     mapIntFStringProp: TMap[int, FString]
     mapIntBoolProp: TMap[int, bool]
     mapIntStructProp: TMap[int, FStructVMTest]
-
     mapStringIntProp: TMap[FString, int]
 
   ufuncs(CallInEditor):
@@ -592,3 +628,4 @@ uClass AUECallMapTest of ANimTestBase:
         )
       discard uCall(callData)      
       check expected == self.mapStringIntProp
+    

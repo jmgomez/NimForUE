@@ -164,7 +164,7 @@ func isAllowedField*(field:UEField) : bool =
     const skipTypes = ["TScriptInterface", "TMap", "TSet"]
     result = 
       not skipTypes.mapIt(field.uePropType.contains(it)).foldl(a or b, false) and 
-      field.name.tolower() notin NimReservedKeywords & NimReservedToCapitalize & @["result"] #TODO generate appropiate code for both
+      field.name.tolower() notin (NimReservedKeywords & NimReservedToCapitalize & @["result"]) #TODO generate appropiate code for both
     # if not result:
     #   debugEcho &"[VM Bindings] Skipping field in {field.typeName} {field.name}: {field.uePropType} "
 

@@ -1,6 +1,9 @@
 import std/[strformat, macros, tables, options]
+import ../utils/utils
 when defined nuevm:
   import corevm
+else:
+  import ../unreal/coreuobject/nametypes
 type
   TableMap*[K, V] = seq[(K, V)]
 
@@ -189,7 +192,7 @@ func `[]`*(rtField : RuntimeField, name : string) : RuntimeField =
   case rtField.kind:
   of Struct:
     for (key, value) in rtField.structVal:
-      if key == name:
+      if key == name.firstToLow():
         return value
     raise newException(ValueError, "Field " & name & " not found in struct")
   else:
@@ -226,9 +229,10 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
     case rtField.kind:
     of Int:
       when T is IntBased:        
-        # a = cast[T](b.intVal) #No cast in the vm
         value = T(rtField.intVal)
-      when T is ptr:
+      elif T is FName:
+        value = makeFName(rtField.intVal)
+      elif T is ptr:
         when defined nuevm:
           value = castIntToPtr[typeof((default(T)[]))](rtField.intVal)
         else:
@@ -277,6 +281,9 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
     when T is ptr or T is IntBased:
       result.kind = Int    
       result.intVal = when T is enum: int(value) else: cast[int](value)
+    elif T is FName:
+      result.kind = Int
+      result.intVal = value.toInt()
     elif T is bool:
       result.kind = Bool
       result.boolVal = value

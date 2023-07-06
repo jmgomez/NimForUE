@@ -21,7 +21,13 @@ func isFloat*(prop: FPropertyPtr): bool = castField[FFloatProperty](prop).isNotN
 func isFloat32*(prop: FPropertyPtr): bool = castField[FFloatProperty](prop).isNotNil()
 func isBool*(prop: FPropertyPtr): bool = castField[FBoolProperty](prop).isNotNil()
 #any kind of int
-func isInt*(prop: FPropertyPtr): bool = castField[FIntProperty](prop).isNotNil() or castField[FInt16Property](prop).isNotNil() or castField[FInt64Property](prop).isNotNil() or castField[FInt8Property](prop).isNotNil() or castField[FUInt16Property](prop).isNotNil() or castField[FUInt32Property](prop).isNotNil() or castField[FUInt64Property](prop).isNotNil()
+func isInt*(prop: FPropertyPtr): bool = 
+  castField[FIntProperty](prop).isNotNil() or castField[FInt16Property](prop).isNotNil() or 
+  castField[FInt64Property](prop).isNotNil() or castField[FInt8Property](prop).isNotNil() or 
+  castField[FUInt16Property](prop).isNotNil() or castField[FUInt32Property](prop).isNotNil() or 
+  castField[FUInt64Property](prop).isNotNil()
+func isByte*(prop: FPropertyPtr): bool = castField[FByteProperty](prop).isNotNil()
+func isFName*(prop: FPropertyPtr): bool = castField[FNameProperty](prop).isNotNil()
 #object or cls props
 func isObjectBased*(prop : FPropertyPtr) : bool = castField[FObjectProperty](prop).isNotNil()
 func isTMap*(prop: FPropertyPtr): bool = not castField[FMapProperty](prop).isNil()
