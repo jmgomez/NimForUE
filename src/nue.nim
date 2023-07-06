@@ -405,6 +405,31 @@ task genplugin, "Creates a plugin, by default it uses the name of the game with 
   generatePlugin(pluginName)
  
 
+task setupvm, "Creates the vm module library and adds a scratchup to it": 
+  let dir = NimGameDir() / "vm"
+  let vmFile = dir / "vm.nim"
+  let scratchpadFile = dir / "scratchpad.nim"
+  if fileExists(NimGameDir() / "vm" / "vm.nim"):
+    log "vm module already exists"
+    return
+  const vmTemplate = """
+include unrealprelude
+import vm/nimvm
+import vmlibrary
+"""
+  const scratchpadTemplate = """
+include vmprelude
+log "Hello World!"
+
+"""
+
+  createDir(dir)
+  writeFile(vmFile, vmTemplate)
+  writeFile(scratchpadFile, scratchpadTemplate)
+  log "vm module created"
+  taskOptions["name"] = "vm"
+  lib(taskOptions)
+
 
 # --- End Tasks ---
 ok(taskOptions)

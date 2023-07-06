@@ -8,4 +8,6 @@ import vmtypes #todo maybe move this to somewhere else so it's in the path witho
 import vmmacros
 import runtimefield
 import codegen/[models, uebindcore, modelconstructor, enumops, umacros]
+include vmfunctionlibrary
+
 
