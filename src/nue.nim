@@ -151,7 +151,7 @@ task ubuild, "Calls Unreal Build Tool for your project":
 
   let walkPattern = config.gameDir & "/Source/*.Target.cs"
   let targetFiles = walkPattern.walkFiles.toSeq().filter(isTargetFile)
-  echo $targetFiles
+  log "Targe files: " &  $targetFiles
   #left for reference in case new way doest work with 5.1 logic
 # let target = targetFiles[0].split(".")[0].split(PathSeparator)[^1] #i.e " NimForUEDemoEditor "
 
@@ -162,7 +162,7 @@ task ubuild, "Calls Unreal Build Tool for your project":
     setCurrentDir(config.engineDir)
     let buildCmd =  
       case config.targetPlatform
-        of Win64: r"Build\BatchFiles\Build.bat"
+        of Win64: "Build" / "BatchFiles" / "Build.bat"
         of Mac: "./Build/BatchFiles/Mac/Build.sh" # untested
       
 
@@ -360,7 +360,10 @@ task ok, "prints ok if NUE and Host are built":
   else:
     log "Needs to generate pch types"    
     taskOptions["usecache"] = "true"
-    showtypes(taskOptions)
+    showtypes(taskOptions)  
+  createDir(BindingsVMDir)
+  if not fileExists(BindingsVMDir / "guest.nim"):
+    writeFile(BindingsVMDir / "guest.nim", "")
 
 task copybuildconfiguration, "Copies the unreal build configuration from the plugin to APPData/Roaming/Unreal Engine/BuildConfiguration":
   let buildConfigFile = PluginDir / "BuildConfiguration.xml"
