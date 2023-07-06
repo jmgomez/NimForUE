@@ -427,8 +427,10 @@ log "Hello World!"
   writeFile(vmFile, vmTemplate)
   writeFile(scratchpadFile, scratchpadTemplate)
   log "vm module created"
+  compilePlugin(@[], true)
+
   taskOptions["name"] = "vm"
-  taskOptions["release"] = ""
+  taskOptions["release"] = ""  
   lib(taskOptions)
 
 
