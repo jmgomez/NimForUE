@@ -427,7 +427,9 @@ log "Hello World!"
   writeFile(vmFile, vmTemplate)
   writeFile(scratchpadFile, scratchpadTemplate)
   log "vm module created"
+  guest(taskOptions)
   taskOptions["name"] = "vm"
+  taskOptions["release"] = ""  
   lib(taskOptions)
 
 
