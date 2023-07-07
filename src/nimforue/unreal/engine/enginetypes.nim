@@ -3,7 +3,7 @@ import ../core/math/vector
 import ../coreuobject/[uobject, coreuobject, nametypes, tsoftobjectptr, scriptdelegates]
 import ../nimforue/nimforuebindings
 import ../core/[delegates]
-import ../core/containers/[unrealstring]
+import ../core/containers/[unrealstring, array]
 
 
 type 
@@ -195,7 +195,12 @@ type
   FPlatformUserId* {.importc .} = object
   FTopLevelAssetPath* {.importc .} = object
 
-  FARFilter* {.importc .} = object
+  FARFilter* {.importcpp .} = object
+    packageNames* {.importcpp:"PackageNames".}: TArray[FName] # the filter component for package names
+    packagePaths* {.importcpp:"PackagePaths".}: TArray[FString] # The filter component for package paths 
+    classNames* {.importcpp:"ClassNames".}: TArray[FName] # The filter component for class names (Deprecated 5.1)
+    classPaths* {.importcpp:"ClassPaths".}: TArray[FTopLevelAssetPath] # 	/** The filter component for class path names. Instances of the specified classes, but not subclasses (by default), will be included. Derived classes will be included only if bRecursiveClasses is true. */
+    bRecursiveClasses {.importcpp:"bRecursiveClasses".}: bool # Whether or not to include derived classes of those specified in ClassNames
 
 
   EInputDeviceConnectionState* {.importc, pure .} = enum
