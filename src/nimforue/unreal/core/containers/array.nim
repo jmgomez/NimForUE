@@ -16,9 +16,10 @@ func reserve*[T](arr:TArray[T], value:Natural) {.importcpp: "#.Reserve(#)".}
 # proc `[]=`*[T](arr:TArray[T], i: int, val : T)  {. inline  .} = arr[i.int32] = val why this doesnt work like so?
 
 
-func makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor, nodecl.}
-func makeTArray*[T](a : T, args:varargs[T]): TArray[T] = 
+func makeTArray*[T](): TArray[T] {.importcpp: "'0(@)", constructor.}
+func makeTArray*[T](a:T, args:varargs[T]): TArray[T] =
   result = makeTArray[T]()
+  result.reserve(args.len.int32 + 1)
   result.add a
   for arg in args:
     result.add arg

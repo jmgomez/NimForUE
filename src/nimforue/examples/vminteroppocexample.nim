@@ -410,6 +410,7 @@ uClass AUECallPropReadTest of ANimTestBase:
     vectorProp: FVector
     hitProp: FHitResult
     textProp: FText
+    setProp: TSet[int]
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToReadAnInt32Prop() =
@@ -538,6 +539,19 @@ uClass AUECallPropReadTest of ANimTestBase:
       let val = reply.get.runtimeFieldTo(FText)
       check val == self.textProp
       UE_Log $val
+    
+    proc shouldBeAbleToReadASetProp() = 
+      self.setProp = makeTSet(2, 1, 5)
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: self.getClass.getCppName(),
+          value: (setProp: default(TSet[int])).toRuntimeField()                        
+        )
+      let reply = uCall(callData)
+      UE_Log $reply
+      # let val = reply.get.runtimeFieldTo(TSet[int])
+      # check val == self.setProp
               
 #[ 
   (kind: Struct, structVal: @[("faceIndex", (kind: Int, intVal: 0)), ("time", (kind: Float, floatVal: 5.26354424712089e-315)), ("distance", (kind: Float, floatVal: 5.535528570914047e-315)), ("location", (kind: Struct, structVal: @[])), ("impactPoint", (kind: Struct, structVal: @[])), ("normal", (kind: Struct, structVal: @[])), ("impactNormal", (kind: Struct, structVal: @[])), ("traceStart", (kind: Struct, structVal: @[])), ("traceEnd", (kind: Struct, structVal: @[])), ("penetrationDepth", (kind: Float, floatVal: 0.0)), ("myItem", (kind: Int
@@ -564,6 +578,7 @@ uClass AUECallPropWriteTest of ANimTestBase:
     nameProp: FName
     hitProp: FHitResult
     textProp: FText
+    setProp: TSet[int]
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToWritteAnInt32Prop() =
@@ -654,6 +669,18 @@ uClass AUECallPropWriteTest of ANimTestBase:
         )
       discard uCall(callData)      
       check expected == self.textProp
+    
+    proc shouldBeAbleToWriteASetProp() = 
+      let expected = makeTSet(2, 1, 5)
+      self.setProp = makeTSet[int]()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (setProp: expected).toRuntimeField()                        
+        )
+      discard uCall(callData)      
+      check expected == self.setProp
 
 
 

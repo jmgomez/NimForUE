@@ -133,7 +133,8 @@ type
     FScriptMapLayout* {.importcpp.} = object
         #keyoffset is always 0
         valueOffset* {.importcpp:"ValueOffset".}: int32
-
+    FScriptSet* {.importcpp.} = object
+    FScriptSetHelper* {.importcpp.} = object
 
 #LOGS here because we need them. Maybe they should leave in a separated file
 
@@ -250,6 +251,8 @@ proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propC
 proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->SetEnum(#))".}
 
 proc getElementProp*(setProp:FSetPropertyPtr) : FPropertyPtr {.importcpp:"(#->ElementProp)".}
+proc getElementPtr*(setProp:FSetPropertyPtr, inSet: pointer, idx:int32) : pointer {.importcpp:"#->GetElementPtr(@)".}
+proc getNum*(setProp: FSetPropertyPtr, inSet: pointer): int32 {.importcpp:"#->GetNum(@)".}
 proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
 proc setInnerProp*(arrProp:FArrayPropertyPtr, innerProp:FPropertyPtr) : void {.importcpp:"(#->Inner=#)".}
 proc getInterfaceClass*(interfaceProp:FInterfacePropertyPtr) : UClassPtr {.importcpp:"(#->InterfaceClass)".}
@@ -581,11 +584,16 @@ proc getValuePtr*(helper : FScriptMapHelper, idx:int32) : pointer {.importcpp:"#
 
 proc getKeyProperty*(helper : FScriptMapHelper) : FPropertyPtr {.importcpp:"#.GetKeyProperty()".}
 proc getValueProperty*(helper : FScriptMapHelper) : FPropertyPtr {.importcpp:"#.GetValueProperty()".}
-proc addUninitializedValue*(helper : FScriptMapHelper) : void {.importcpp:"#.AddUninitializedValue()".}
+proc addUninitializedValue*(helper : FScriptMapHelper | FScriptSetHelper) : void {.importcpp:"#.AddUninitializedValue()".}
 proc emptyValues*(helper : FScriptMapHelper, stack: int32 = 0) : void {.importcpp:"#.EmptyValues(#)".} 
 proc addPair*(helper : FScriptMapHelper, key, value: pointer) : void {.importcpp:"#.AddPair(@)".}
 proc addDefaultValue_Invalid_NeedsRehash*(scriptMap: FScriptMapHelper) : void {.importcpp:"#.AddDefaultValue_Invalid_NeedsRehash()" .}
-proc rehash*(scriptMap: FScriptMapHelper) : void {.importcpp:"#.Rehash()" .}
+proc rehash*(scriptMap: FScriptMapHelper | FScriptSetHelper) : void {.importcpp:"#.Rehash()" .}
 
 proc `=copy`*(dest: var FScriptMap, source: FScriptMap) {.error.}
 proc addUninitialized*(scriptMap: FScriptMap, layout: var FScriptMapLayout) : void {.importcpp:"#.AddUninitialized(#)".}
+
+#ScriptSet
+proc makeScriptSetHelper*(prop:FSetPropertyPtr, inSet: pointer) : FScriptSetHelper {.importcpp:"FScriptSetHelper(#, #)", constructor .}
+proc emptyElements*(helper : FScriptSetHelper, stack: int32 = 0) : void {.importcpp:"#.EmptyElements(#)".}
+# proc addElement*(helper : FScriptSetHelper, element: pointer) : void {.importcpp:"#.AddElement(@)".}

@@ -65,13 +65,26 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
   of Struct:
     discard setStructProp(rtField, prop, memoryBlock)
   of Array:
-    let arrayProp = castField[FArrayProperty](prop)
-    let innerProp = arrayProp.getInnerProp()
-    let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, memoryBlock)
-    arrayHelper.emptyAndAddUninitializedValues(rtField.getArray().len.int32)
- 
-    for idx, elem in enumerate(rtField.getArray()):
-      setProp(elem, innerProp, arrayHelper.getRawPtr(idx.int32))
+    if prop.isTArray():
+      let arrayProp = castField[FArrayProperty](prop)
+      let innerProp = arrayProp.getInnerProp()
+      let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, memoryBlock)
+      arrayHelper.emptyAndAddUninitializedValues(rtField.getArray().len.int32)
+      for idx, elem in enumerate(rtField.getArray()):
+        setProp(elem, innerProp, arrayHelper.getRawPtr(idx.int32))
+
+    elif prop.isTSet():
+      let setProp = castField[FSetProperty](prop)
+      let elementProp = setProp.getElementProp()
+      let setHelper = makeScriptSetHelper(setProp, memoryBlock)
+      setHelper.emptyElements()
+      for idx, elem in enumerate(rtField.getArray()):
+        setHelper.addUninitializedValue()
+        setProp(elem, elementProp, setProp.getElementPtr(memoryBlock, idx.int32))
+      setHelper.rehash()
+    else:
+      UE_Error &"Unknown array type {prop.getCppType()}"
+      raise newException(ValueError, &"Unknown array type {prop.getCppType()}")
   of Map:
     let mapProp = castField[FMapProperty](prop)
     let kProp = mapProp.getKeyProp()
@@ -93,7 +106,6 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
         of Struct:           
             let structMemoryRegion = setStructProp(value, vProp, helper.getValuePtr(idx.int32))
             vProp.copySingleValue(helper.getValuePtr(idx.int32), structMemoryRegion)
-
         else:
           setProp(key, vProp, helper.getValuePtr(idx.int32))      
     helper.rehash()
@@ -142,6 +154,13 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
     result = RuntimeField(kind:Array)
     for idx in 0 ..< arrayHelper.num():
       result.arrayVal.add(getProp(innerProp, arrayHelper.getRawPtr(idx.int32)))
+  elif prop.isTSet():
+    let setAddr = sourceAddrWithOffset()
+    let setProp = castField[FSetProperty](prop)
+    let elementProp = setProp.getElementProp()
+    result = RuntimeField(kind:Array)
+    for idx in 0 ..< setProp.getNum(setAddr):
+      result.arrayVal.add(getProp(elementProp, setProp.getElementPtr(setAddr, idx)))
   elif prop.isTMap():
     let mapProp = castField[FMapProperty](prop)
     let keyProp = mapProp.getKeyProp()
@@ -153,7 +172,7 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
       let value = getProp(valueProp, mapHelper.getValuePtr(idx.int32))
       result.mapVal.add((key, value))
   else:
-    UE_Error &"Unknown property type: {prop.getName()} {prop.getCppType()}"
+    UE_Error &"Unknown property type: {prop.getName()} of Cpp type: {prop.getCppType()}"
     raise newException(ValueError, &"Unknown property type: {prop.getName()} {prop.getCppType()}")
    
 func isStatic*(fn : UFunctionPtr) : bool = FUNC_Static in fn.functionFlags

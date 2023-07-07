@@ -23,7 +23,7 @@ type
       stringVal*: string
     of Struct:
       structVal*: RuntimeStruct
-    of Array: 
+    of Array: #sets are also arrays
       arrayVal*: seq[RuntimeField]  
     of Map:
       mapVal*: seq[(RuntimeField, RuntimeField)]
@@ -303,7 +303,7 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
       result.kind = Map
       for (key, val) in value:
         result.mapVal.add((toRuntimeField(key), toRuntimeField(val)))
-    elif T is (array | seq | TArray):
+    elif T is (array | seq | TArray | TSet):
       result.kind = Array
       for val in value:
         result.arrayVal.add(toRuntimeField(val))    
