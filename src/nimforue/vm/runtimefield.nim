@@ -217,6 +217,14 @@ func contains*(rtField : RuntimeField, name : string) : bool =
     raise newException(ValueError, "rtField is not a struct")
 
 
+iterator items*(rtField : RuntimeField) : (string, RuntimeField) = 
+  case rtField.kind:
+  of Struct:
+    for (key, value) in rtField.structVal:
+      yield (key, value)
+  else:
+    raise newException(ValueError, "rtField is not a struct")
+
 macro getField*(obj: object, fld: string): untyped =
   newDotExpr(obj, newIdentNode(fld.strVal))
 
@@ -244,8 +252,7 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
         value = T(rtField.boolVal)
     of Float:
       when T is float | float32 | float64:
-        # a = cast[T](b.floatVal) #NO cast in the vm
-        value = T(rtField.floatVal)
+        value = T(rtField.floatVal)  # a = cast[T](b.floatVal) #NO cast in the vm
     of String:
       when T is string | FString:
         value = rtField.stringVal

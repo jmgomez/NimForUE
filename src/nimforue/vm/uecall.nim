@@ -28,16 +28,11 @@ proc setStructProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:poi
   let scriptStruct = structProp.getScriptStruct()
   let structProps = scriptStruct.getFPropsFromUStruct() #Lets just do this here before making it recursive
   var structMemoryRegion = memoryBlock
-  for paramProp in structProps:
-    let name = paramProp.getName().firstToLow()
-    if name in rtField:
-      let val = rtField[name]
-      val.setProp(paramProp, structMemoryRegion)
-    else:
-      if prop.getCPPType() notin ["FHitResult"]: #we know we lack a few props for hitresult
-        
-        UE_Error &"Field {name} not found in struct. Struct was {prop.getCppType()}"
-        UE_Warn $rtField
+  for (name, val) in rtField:
+    for prop in structProps:
+      if name in [prop.getName(), prop.getName.firstToLow()]:
+        val.setProp(prop, structMemoryRegion)
+
   structMemoryRegion
 
 proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) =
