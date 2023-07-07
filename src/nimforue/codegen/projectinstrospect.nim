@@ -723,6 +723,7 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
     "TMap": "type TMap*[K, V] = Table[K, V]", 
     "UClass": "type UClass* = object of UStruct",
     "FName": "type FName* = int",
+    "FText": "type FText* = distinct(string)",
     # "UObject": "type UObject* = object of RootObj",
     # "FVector": "type FVector* = object of RootObj",
     # "FField": "type FField* = object of RootObj",

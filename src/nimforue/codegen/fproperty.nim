@@ -182,6 +182,8 @@ proc newBasicProperty(owner : FFieldVariant, propField:UEField, propType:string,
         someFProp newFDoubleProperty(owner, name, propObjFlags)
     elif propType == "FName": 
         someFProp newFNameProperty(owner, name, propObjFlags)
+    elif propType == "FText": 
+        someFProp newFTextProperty(owner, name, propObjFlags)
     else:
         none[FPropertyPtr]()
 
@@ -189,7 +191,7 @@ func isBasicProperty*(nimTypeName: string) : bool =
     nimTypeName in [
         "FString", "bool", "int8", "int16", "int32", "int64", "int", 
         "byte", "uint16", "uint32", "uint64", "float32", "float", "float64", 
-        "FName"
+        "FName", "FText"
     ]
 
 

@@ -172,7 +172,7 @@ uClass AActorPOCVMTest of ANimTestBase:
     proc testCallFuncWithNoArg() = 
       let callData = UECall(kind: uecFunc, fn: makeUEFunc("callFuncWithNoArg", "UObjectPOC"))
       discard uCall(callData)
-    
+
     proc testCallWithOutArg() = 
       let callData = UECall(
           kind: uecFunc,
@@ -409,6 +409,7 @@ uClass AUECallPropReadTest of ANimTestBase:
     nameProp: FName
     vectorProp: FVector
     hitProp: FHitResult
+    textProp: FText
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToReadAnInt32Prop() =
@@ -524,6 +525,19 @@ uClass AUECallPropReadTest of ANimTestBase:
       let val = reply.get.runtimeFieldTo(FHitResult)
       check val == self.hitProp
       UE_Log $val
+    
+    proc shouldBeAbleToReadATextProp() = 
+      self.textProp = "hola".toText()
+      let callData = UECall(
+          kind: uecGetProp,
+          self: cast[int](self),
+          clsName: self.getClass.getCppName(),
+          value: (textProp: default(FText)).toRuntimeField()                        
+        )
+      let reply = uCall(callData)      
+      let val = reply.get.runtimeFieldTo(FText)
+      check val == self.textProp
+      UE_Log $val
               
 #[ 
   (kind: Struct, structVal: @[("faceIndex", (kind: Int, intVal: 0)), ("time", (kind: Float, floatVal: 5.26354424712089e-315)), ("distance", (kind: Float, floatVal: 5.535528570914047e-315)), ("location", (kind: Struct, structVal: @[])), ("impactPoint", (kind: Struct, structVal: @[])), ("normal", (kind: Struct, structVal: @[])), ("impactNormal", (kind: Struct, structVal: @[])), ("traceStart", (kind: Struct, structVal: @[])), ("traceEnd", (kind: Struct, structVal: @[])), ("penetrationDepth", (kind: Float, floatVal: 0.0)), ("myItem", (kind: Int
@@ -549,6 +563,7 @@ uClass AUECallPropWriteTest of ANimTestBase:
     mapProp2: TMap[int, int]
     nameProp: FName
     hitProp: FHitResult
+    textProp: FText
 
   ufuncs(CallInEditor):
     proc shouldBeAbleToWritteAnInt32Prop() =
@@ -599,7 +614,7 @@ uClass AUECallPropWriteTest of ANimTestBase:
         check expected.x == self.structProp.x
     
     proc shouldBeAbleToWriteANameProp() = 
-      let expected = n"Hola"
+      let expected = n"Hola" 
       self.nameProp = n""
       let callData = UECall(
           kind: uecSetProp,
@@ -628,7 +643,17 @@ uClass AUECallPropWriteTest of ANimTestBase:
       check expected.bBlockingHit == self.hitProp.bBlockingHit
 
     
-
+    proc shouldBeAbleToWriteATextProp() = 
+      let expected = "hola".toText()
+      self.textProp = "empty".toText()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (textProp: expected).toRuntimeField()                        
+        )
+      discard uCall(callData)      
+      check expected == self.textProp
 
 
 

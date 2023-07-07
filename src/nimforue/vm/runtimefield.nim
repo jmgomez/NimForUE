@@ -4,6 +4,7 @@ when defined nuevm:
   import corevm
 else:
   import ../unreal/coreuobject/nametypes
+  import ../unreal/core/ftext
 type
   TableMap*[K, V] = seq[(K, V)]
 
@@ -247,7 +248,9 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
         value = T(rtField.floatVal)
     of String:
       when T is string | FString:
-        value = (rtField.stringVal)
+        value = rtField.stringVal
+      elif T is FText:
+        value = rtField.stringVal.toText()      
     of Struct:      
       when T is object:
         for fieldName, v in fieldPairs(value):         
@@ -294,6 +297,9 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
     elif T is string | FString:      
       result.kind = String
       result.stringVal = value
+    elif T is FText:
+      result.kind = String
+      result.stringVal = value.toFString()
     elif T is Table:
       toRuntimeField(toTableMap(value))
     elif T is TableMap:

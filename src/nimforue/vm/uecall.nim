@@ -55,7 +55,13 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
     else:
       setPropertyValue(prop, memoryBlock, rtField.getFloat)
   of String:
-    setPropertyValue(prop, memoryBlock, makeFString rtField.getStr)
+    if prop.isFString():
+      setPropertyValue(prop, memoryBlock, makeFString rtField.getStr)
+    elif prop.isFText():
+      setPropertyValue(prop, memoryBlock, rtField.getStr.toText())
+    else:
+      UE_Error &"Unknown string type {prop.getCppType()}"
+      raise newException(ValueError, &"Unknown string type {prop.getCppType()}")
   of Struct:
     discard setStructProp(rtField, prop, memoryBlock)
   of Array:
@@ -110,7 +116,11 @@ proc getProp*(prop:FPropertyPtr, sourceAddr:pointer) : RuntimeField =
   elif prop.isFString():
     result.kind = String  
     var sourceAddr = cast[pointer](cast[int](sourceAddr))  
-    result.stringVal = getPropertyValuePtr[FString](prop, sourceAddr)[]    
+    result.stringVal = getPropertyValuePtr[FString](prop, sourceAddr)[]   
+  elif prop.isFText():
+    result.kind = String
+    var sourceAddr = cast[pointer](cast[int](sourceAddr))  
+    result.stringVal = getPropertyValuePtr[FText](prop, sourceAddr)[].toFString() 
   elif prop.isFloat():
     result.kind = Float
     copyMem(addr result.floatVal, sourceAddrWithOffset(), prop.getSize())

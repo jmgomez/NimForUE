@@ -231,7 +231,7 @@ bindFProperty([
         "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty", 
         "FMapProperty", "FDelegateProperty", "FSetProperty", "FInterfaceProperty",
         "FMulticastDelegateProperty", #It seems to be abstract. Review Sparse vs Inline
-        "FMulticastInlineDelegateProperty", "FFieldPathProperty",
+        "FMulticastInlineDelegateProperty", "FFieldPathProperty", "FTextProperty"
         
         ])
 

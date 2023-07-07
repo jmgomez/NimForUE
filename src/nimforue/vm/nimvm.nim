@@ -111,15 +111,16 @@ proc implementBaseFunctions(interpreter:Interpreter) =
       setResult(a, 0)
   )
 
-  #This function can be implemented with uebind directly 
-  interpreter.implementRoutine("NimForUE", "exposed", "getName", proc(a: VmArgs) =
-      let actor = cast[UObjectPtr](getInt(a, 0))
-      if actor.isNil():
-        setResult(a, "nil")
-      else:
-        setResult(a, actor.getName())
-      # setResult(a, $actor.getName())
-    )
+  #These function can be implemented with uebind directly 
+  interpreter.implementRoutine("NimForUE", "exposed", "makeFName", proc(a: VmArgs) =
+    let str = getString(a, 0)
+    setResult(a, makeFName(str).toInt())      
+  )
+  interpreter.implementRoutine("NimForUE", "exposed", "toFString", proc(a: VmArgs) =
+    let n = getInt(a, 0)
+    setResult(a, makeFName(n).toFString())      
+  )
+  
 
 
 
