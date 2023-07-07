@@ -644,6 +644,9 @@ proc genVMModuleFile(dir:string, module: NimModule, modules:seq[NimModule]) =
 import std/[tables]
 
 {moduleVMAst.repr}
+
+import corevm
+export corevm
 """   
   writeFile(moduleFile, moduleTemplate)
 
@@ -722,7 +725,7 @@ proc genVMModuleFiles*(dir:string, modules: seq[NimModule]) =
     "TArray": "type TArray*[T] = seq[T]", 
     "TMap": "type TMap*[K, V] = Table[K, V]", 
     "UClass": "type UClass* = object of UStruct",
-    "FName": "type FName* = int",
+    "FName": "type FName* = distinct(int)",
     "FText": "type FText* = distinct(string)",
     # "UObject": "type UObject* = object of RootObj",
     # "FVector": "type FVector* = object of RootObj",

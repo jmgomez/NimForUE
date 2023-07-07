@@ -98,9 +98,7 @@ proc implementBaseFunctions(interpreter:Interpreter) =
     setResult(a, objAddr)     
   )
   
-  interpreter.implementRoutine("NimForUE", "corevm", "castIntToPtr", proc (a: VmArgs) =    
-    setResult(a, getInt(a, 0))     
-  )
+
   interpreter.implementRoutine("NimForUE", "exposed", "deref", proc (a: VmArgs) =    
     let address = getInt(a, 0)
     let valueAddr = cast[ptr int](address)
@@ -111,12 +109,15 @@ proc implementBaseFunctions(interpreter:Interpreter) =
       setResult(a, 0)
   )
 
+  interpreter.implementRoutine("NimForUE", "corevm", "castIntToPtr", proc (a: VmArgs) =    
+    setResult(a, getInt(a, 0))     
+  )
   #These function can be implemented with uebind directly 
-  interpreter.implementRoutine("NimForUE", "exposed", "makeFName", proc(a: VmArgs) =
+  interpreter.implementRoutine("NimForUE", "corevm", "makeFName", proc(a: VmArgs) =
     let str = getString(a, 0)
     setResult(a, makeFName(str).toInt())      
   )
-  interpreter.implementRoutine("NimForUE", "exposed", "toFString", proc(a: VmArgs) =
+  interpreter.implementRoutine("NimForUE", "corevm", "toFString", proc(a: VmArgs) =
     let n = getInt(a, 0)
     setResult(a, makeFName(n).toFString())      
   )

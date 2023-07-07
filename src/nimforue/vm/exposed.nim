@@ -41,10 +41,6 @@ proc setupBorrowInterop*(borrowInfo:string) = discard #override
 proc setupBorrow*(borrowInfo:UEBorrowInfo) = setupBorrowInterop($borrowInfo.toJson())
 
 
-#TODO this functions may be automatically generated down the road
-proc makeFName*(str:string): FName = default(FName)
-proc toFString*(name:FName): FString = default(FString)
-
 
 
 #TODO move this to uebind core

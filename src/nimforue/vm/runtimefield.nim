@@ -282,12 +282,9 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
   when compiles(toRuntimeFieldHook(value)): 
     return toRuntimeFieldHook(value)
   else:       
-    when T is ptr or T is IntBased:
+    when T is ptr or T is IntBased or T is FName:
       result.kind = Int    
-      result.intVal = when T is enum: int(value) else: cast[int](value)
-    elif T is FName:
-      result.kind = Int
-      result.intVal = value
+      result.intVal = when T is enum or T is FName: int(value) else: cast[int](value)    
     elif T is bool:
       result.kind = Bool
       result.boolVal = value
