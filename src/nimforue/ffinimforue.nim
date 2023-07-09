@@ -8,6 +8,10 @@ import std/[options, strformat, dynlib, os, osproc, tables, asyncdispatch, times
 import ../buildscripts/[nimforueconfig, buildscripts, keyboard]
 
 
+const withEngineBindings = fileExists(BindingsImportedDir/"engine"/"engine.nim")
+when withEngineBindings:
+  import unreal/bindings/imported/assetregistry
+
 const genFilePath* {.strdefine.} : string = ""
 
 var prevGameLib : Option[string]
@@ -68,6 +72,27 @@ proc genBindingsEntryPoint() : void {.ffi:genFilePath} =
      
 
 
+proc compileBps(emitter:UEEmitterPtr) = 
+  var classPaths = makeTArray[FTopLevelAssetPath]()
+  for e in emitter[].emitters.values:
+    let uet = e.ueType
+    if uet.kind != uetClass or UETypeMetadataKey notin uet.metadata: continue
+    let cls = getClassByName(uet.name)  
+    let assetPath = cls.getClassPathName()
+    classPaths.add(assetPath)
+
+  var farFilter = FARFilter(bRecursiveClasses: true, classPaths: classPaths)
+  var assets: TArray[FAssetData]
+  when withEngineBindings:
+    getBlueprintAssets(farFilter, assets)
+
+  for asset in assets:
+    let path = asset.objectPath
+    let bp = loadObject[UBlueprint](nil, path.toFString())
+    if bp.isNotNil: 
+      UE_Log &"Compiling blueprint {bp.getName()}"
+      bp.compileBlueprint()
+
 proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) : bool = 
     try:
         let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
@@ -77,10 +102,12 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypes
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
           reinstanceNueTypes(packageName, nimHotReload, "", reuseHotReload)
+          compileBps(emitter)
           return;
        
-        proc onPIEEndCallback(isSimulating:bool, packageName:string, hotReload:FNimHotReloadPtr, handle:FDelegateHandlePtr) {.cdecl.} = 
+        proc onPIEEndCallback(isSimulating:bool, packageName:string, hotReload:FNimHotReloadPtr, handle:FDelegateHandlePtr, emitter: UEEmitterPtr) {.cdecl.} = 
           reinstanceNueTypes(packageName, hotReload, "", false)
+          compileBps(emitter)
           onEndPIEEvent.remove(handle[])
           deleteCpp(handle)
           UE_LOG(&"NimUE: PIE ended, reinstanciated nue types {packageName}")
@@ -88,7 +115,7 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypes
 
 
         let onPIEEndHandle = newCpp[FDelegateHandle]()
-        (onPIEEndHandle[]) = onEndPIEEvent.addStatic(onPIEEndCallback, packageName, nimHotReload, onPIEEndHandle)
+        (onPIEEndHandle[]) = onEndPIEEvent.addStatic(onPIEEndCallback, packageName, nimHotReload, onPIEEndHandle, emitter)
         UE_Log "Deffered reinstance of NueTypes for package: " & packageName & " after PIE ended"
         return nimHotReload.bShouldHotReload
        

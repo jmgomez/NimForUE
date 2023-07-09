@@ -90,6 +90,7 @@ proc `$`*(cursorLocation:FViewportCursorLocation) : string =
   "Origin: " & $cursorLocation.getOrigin() & " Direction: " & $cursorLocation.getDirection() & " CursorPos: " & $cursorLocation.getCursorPos()
 
 
+proc compileBlueprint*(bp: UBlueprintPtr) {.importcpp: "FKismetEditorUtilities::CompileBlueprint(#)", header:"Kismet2/KismetEditorUtilities.h".}
 
 
   #[

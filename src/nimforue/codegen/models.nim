@@ -24,6 +24,7 @@ const InstancedMetadataKey* = "Instanced"
 const NoDeclMetadataKey* = "NoDecl"
 const EarlyLoadMetadataKey* = "EarlyLoad"
 const ReinstanceMetadataKey* = "Reinstance" #force the reinstantiation of a UEType
+const CompileBPMetadataKey* = "CompileBP" #recompile all childs even if nothing changes
 
 type #TODO get rid of this
   CppModifiers* = enum
@@ -130,6 +131,8 @@ type
                 fnOverrides* : seq[CppFunction] #the names of theTODO Delete
                 isParentInPCH* : bool
                 forwardDeclareOnly* : bool #if the class is forward declared only. This means we dont define the class in the current module, it maybe defined (func emmited) in another module or in the PCH
+                
+                
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal

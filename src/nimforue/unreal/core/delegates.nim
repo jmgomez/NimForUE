@@ -34,6 +34,7 @@ proc addStatic*[T](del: TMulticastDelegateOneParam[T], fn : proc(v:T) {.cdecl.})
 proc addStatic*[T, P](del: TMulticastDelegateOneParam[T], fn : proc(v:T, v2:P) {.cdecl.}, v2:P) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
 proc addStatic*[T, P, P2](del: TMulticastDelegateOneParam[T], fn : proc(v:T, v2:P, v3:P2) {.cdecl.}, v2:P, v3:P2) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
 proc addStatic*[T, P, P2, P4](del: TMulticastDelegateOneParam[T], fn : proc(v:T, v2:P, v3:P2, v4:P4) {.cdecl.}, v2:P, v3:P2, v:P4) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
+proc addStatic*[T, P, P2, P4, P5](del: TMulticastDelegateOneParam[T], fn : proc(v:T, v2:P, v3:P2, v4:P4, v5:P5) {.cdecl.}, v2:P, v3:P2, v:P4, v5:P5) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
 
 proc remove*[T](del: TMulticastDelegateOneParam[T], handle : FDelegateHandle) {.importcpp:"#.Remove(#)"}
 

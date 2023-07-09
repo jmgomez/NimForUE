@@ -186,10 +186,11 @@ func getClassTemplate*(typeDef: UEType ) : string =
   var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":
     cppInterfaces = ", " & cppInterfaces
-  
+
+#The constructor is called internally in emittypes
   &"""
 struct $1 : public $3{cppInterfaces} {{
-  $1() = default;
+  $1()=default;
   $1(FVTableHelper& Helper) : $3(Helper) {{}}
   $2  
 }};

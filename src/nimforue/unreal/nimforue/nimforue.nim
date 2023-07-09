@@ -86,11 +86,9 @@ iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr =
         super = super.getSuperClass()
         yield super
 
-func isBPClass*(cls:UClassPtr) : bool =
-    # safe:
-      # UE_Log getStackTrace()
+func isBPClass*(cls:UClassPtr) : bool =    
     result = (CLASS_CompiledFromBlueprint.uint32 and cls.classFlags.uint32) != 0
-    UE_Warn &"isBpClass called for {cls.getName() } and result is {result}"
+    # UE_Warn &"isBpClass called for {cls.getName() } and result is {result}"
     
 
 func getFirstCppClass*(cls:UClassPtr) : UClassPtr =

@@ -31,18 +31,21 @@ const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNim
 
 #	return new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), NAME_None, RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) TClass(Helper);
 proc newInstanceInAddr*[T](obj:UObjectPtr, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*2".} 
+
 proc newInstanceWithVTableHelper*[T](helper : var FVTableHelper, fake : ptr T = nil) : UObjectPtr {.importcpp: "new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), FName(), RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) '*2(#)".} 
   
 
 proc vtableConstructorStatic*[T](helper : var FVTableHelper): UObjectPtr {.cdecl.} = 
   newInstanceWithVTableHelper[T](helper)
-#It seems we dont need to call super anymore since we are calling the cpp default constructor
+
 proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
-#   {.emit: "#include \"Guest.h\"".}
   newInstanceInAddr[T](initializer.getObj())
   let obj = initializer.getObj()
   let cls = obj.getClass()
-#   UE_Log &"Default constructor for {cls.getName()}"
+  #call super for the needed types (TODO a type table lookup). A needed type would be those that doesnt have default constructors
+  let superCpp = cls.getFirstCppClass()
+  if superCpp.getName() == "UserWidget":     
+    superCpp.classConstructor(initializer)
   let actor = tryUECast[AActor](obj)
   var fieldIterator = makeTFieldIterator[FProperty](cls, None)
   for it in fieldIterator: #Initializes all fields. So things like copy constructors get called. 
