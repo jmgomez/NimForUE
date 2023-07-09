@@ -1,4 +1,5 @@
 include ../definitions
+import std/[strformat]
 import ../core/math/vector
 import ../coreuobject/[uobject, coreuobject, nametypes, tsoftobjectptr, scriptdelegates]
 import ../nimforue/nimforuebindings
@@ -202,7 +203,7 @@ type
     packagePaths* {.importcpp:"PackagePaths".}: TArray[FString] # The filter component for package paths 
     classNames* {.importcpp:"ClassNames".}: TArray[FName] # The filter component for class names (Deprecated 5.1)
     classPaths* {.importcpp:"ClassPaths".}: TArray[FTopLevelAssetPath] # 	/** The filter component for class path names. Instances of the specified classes, but not subclasses (by default), will be included. Derived classes will be included only if bRecursiveClasses is true. */
-    bRecursiveClasses {.importcpp:"bRecursiveClasses".}: bool # Whether or not to include derived classes of those specified in ClassNames
+    bRecursiveClasses* {.importcpp:"bRecursiveClasses".}: bool # Whether or not to include derived classes of those specified in ClassNames
 
 
   EInputDeviceConnectionState* {.importc, pure .} = enum
@@ -388,6 +389,7 @@ proc makeFTopLevelAssetPath*(inPacakge, inAssetName: FString) : FTopLevelAssetPa
 proc getClassPathName*(cls: UClassPtr): FTopLevelAssetPath {.importcpp: "#->GetClassPathName()", ureflect, .}
 proc getPackageName*(assetPath: FTopLevelAssetPath): FName {.importcpp: "#.GetPackageName()", .}
 proc getAssetName*(assetPath: FTopLevelAssetPath): FName {.importcpp: "#.GetAssetName()", .}
+proc `$`*(assetPath: FTopLevelAssetPath): string = &"Package Name: {assetPath.getPackageName()} Asset Name: {assetPath.getAssetName()}"
 # INPUT ACTION. This should live in another place.
 type 
   ETriggerEvent* {.importcpp, size: sizeof(uint8), pure.} = enum

@@ -160,6 +160,7 @@ template UE_Error*(msg: FString): untyped =
   let meta = "[$1:$2]: " % [pos.filename, $pos.line]
   UE_ErrorInteral(meta & msg)
 
+template log*(msg: FString) = UE_Log(msg)
 
 proc getDefaultObject*(fieldClass:FFieldClassPtr) : FFieldPtr {.importcpp:"#->GetDefaultObject()" .}
 
