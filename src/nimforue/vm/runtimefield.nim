@@ -58,8 +58,8 @@ type
     isDelayed*: bool #only used for vmdefaultconstructor. When true means there is no native implementation yet as the class doesnt exist when calling setup borrow
 
 const VMDefaultConstructor* = "vmdefaultconstructor"
-func isVMDefaultConstructor*(borrowInfo: UEBorrowInfo): bool = borrowInfo.fnName == VMDefaultConstructor
-
+func isVMDefaultConstructor*(borrowInfo: UEBorrowInfo): bool = borrowInfo.fnName == borrowInfo.className & VMDefaultConstructor
+func makeVMDefaultConstructorName*(className: string): string = className & VMDefaultConstructor
 
 proc get*(self: UECallResult): lent RuntimeField {.inline.} = self.value.get()
 proc get*(self:UECallResult, otherwise: RuntimeField): RuntimeField {.inline.} = self.value.get(otherwise)

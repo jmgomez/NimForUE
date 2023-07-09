@@ -883,9 +883,9 @@ proc vmConstructor*(objectInitializer:var FObjectInitializer) : void {.cdecl.} =
   
   callSuperConstructor(objectInitializer)
   let obj = objectInitializer.getObj()
-  let uFn = obj.getClass.findFunctionByName(makeFName(VMDefaultConstructor))
+  let uFn = obj.getClass.findFunctionByName(makeFName(makeVMDefaultConstructorName(obj.getClass.getName())))
   if uFn.isNotNil():
-    let borrowInfo: FString = $UEBorrowInfo(fnName: VMDefaultConstructor, className: obj.getClass.getName()).toJson()
+    let borrowInfo: FString = $UEBorrowInfo(fnName: makeVMDefaultConstructorName(obj.getClass.getName()), className: obj.getClass.getName()).toJson()
     let wasSuccess = callStaticUFunction("NimVmManager", "implementDelayedBorrow", borrowInfo.addr)
     # UE_Log &"Borrow should be setup now (Guest), calling vmdefaultconstructor Success: {wasSuccess}"
     obj.processEvent(uFn, nil)   

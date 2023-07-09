@@ -395,9 +395,10 @@ proc ufuncImpl*(fn:NimNode, classParam:Option[UEField], typeName : string, funct
   
 
 proc addVMConstructor*(uet: var UEType, assigments: NimNode): NimNode = 
-  let fnField = makeFieldAsUFun(VMDefaultConstructor, @[], uet.name, metadata= @[makeUEMetadata("Static")])
+  let constructorName = makeVMDefaultConstructorName(uet.name.removeFirstLetter())
+  let fnField = makeFieldAsUFun(constructorName, @[], uet.name, metadata= @[makeUEMetadata("Static")])
   uet.fields.add fnField
-  let fnName = identPublic VMDefaultConstructor
+  let fnName = identPublic constructorName
   let selfType = ident uet.name & "Ptr"
   let fn = genAst(fnName, selfType, assigments):
     proc fnName(self {.inject.}: selfType) = 

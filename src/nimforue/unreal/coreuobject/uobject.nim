@@ -422,8 +422,8 @@ iterator items*(ustr: UStructPtr): FFieldPtr =
 #CONSTRUCTOR HELPERS
 proc getUTypeByName*[T :UObject](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
 proc tryGetUTypeByName*[T :UObject](typeName:FString) : Option[ptr T] = someNil getUTypeByName[T](typeName)
-proc getClassByName*(className:FString) : UClassPtr {.exportcpp.} = getUTypeByName[UClass](className)
-proc getScriptStructByName*(strName:FString) : UScriptStructPtr {.exportcpp.} = getUTypeByName[UScriptStruct](strName)
+proc getClassByName*(className:FString) : UClassPtr {.exportcpp, ureflect.} = getUTypeByName[UClass](className)
+proc getScriptStructByName*(strName:FString) : UScriptStructPtr {.exportcpp, ureflect.} = getUTypeByName[UScriptStruct](strName)
 
 proc staticClass*[T:UObject]() : UClassPtr = #TODO we should autogen a function and call it instead of searching
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)

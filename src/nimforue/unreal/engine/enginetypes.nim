@@ -194,6 +194,8 @@ type
 
   FPlatformUserId* {.importc .} = object
   FTopLevelAssetPath* {.importc .} = object
+    packageName: FName #this props exists only in the ReflectionSystem (NoExportTypes.h). The mirror cpp type has them private. So dont use them from native Nim (there are funcitons exposed)
+    assetName: FName
 
   FARFilter* {.importcpp .} = object
     packageNames* {.importcpp:"PackageNames".}: TArray[FName] # the filter component for package names
@@ -380,9 +382,12 @@ proc getSizeXY*(viewport: FViewportPtr): FIntPoint {.importcpp: "#->GetSizeXY()"
 
 
 #Asset should put those in uobject?
-proc makeFTopLevelAssetPath*(path: FString) : FTopLevelAssetPath {.importcpp: "FTopLevelAssetPath(#)", constructor.}
-proc getClassPathName*(cls: UClassPtr): FTopLevelAssetPath {.importcpp: "#->GetClassPathName()".}
-
+proc makeFTopLevelAssetPath*(path: FString) : FTopLevelAssetPath {.importcpp: "FTopLevelAssetPath(#)", constructor, .}
+proc makeFTopLevelAssetPath*(inPacakge, inAssetName: FName) : FTopLevelAssetPath {.importcpp: "FTopLevelAssetPath(@)", constructor, .}
+proc makeFTopLevelAssetPath*(inPacakge, inAssetName: FString) : FTopLevelAssetPath {. .} = makeFTopLevelAssetPath(n inPacakge, n inAssetName)
+proc getClassPathName*(cls: UClassPtr): FTopLevelAssetPath {.importcpp: "#->GetClassPathName()", ureflect, .}
+proc getPackageName*(assetPath: FTopLevelAssetPath): FName {.importcpp: "#.GetPackageName()", .}
+proc getAssetName*(assetPath: FTopLevelAssetPath): FName {.importcpp: "#.GetAssetName()", .}
 # INPUT ACTION. This should live in another place.
 type 
   ETriggerEvent* {.importcpp, size: sizeof(uint8), pure.} = enum
