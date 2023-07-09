@@ -21,7 +21,8 @@ proc getDisplayIndex*(name: FName): FNameEntryId {.importcpp:"#.GetDisplayIndex(
 
 proc makeFName*(str: FString) : FName {. importcpp: "FName(#) " constructor.}
 proc makeFName(name: EName) : FName {. importcpp: "FName(#) " constructor.}
-proc makeFName*(val: int): FName = 
+
+proc nameFromInt*(val: int): FName = 
   let entry = fromUnstableInt(val.uint32).getEntry()
   makeFName getPlainNameString(entry)
 

@@ -241,7 +241,7 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
       when T is IntBased:        
         value = T(rtField.intVal)
       elif T is FName:
-        value = makeFName(rtField.intVal)
+        value = nameFromInt(rtField.intVal)
       elif T is ptr:
         when defined nuevm:
           value = castIntToPtr[typeof((default(T)[]))](rtField.intVal)

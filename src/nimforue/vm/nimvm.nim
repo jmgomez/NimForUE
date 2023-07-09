@@ -116,10 +116,14 @@ proc implementBaseFunctions(interpreter:Interpreter) =
   interpreter.implementRoutine("NimForUE", "corevm", "makeFName", proc(a: VmArgs) =
     let str = getString(a, 0)
     setResult(a, makeFName(str).toInt())      
+  ) 
+  interpreter.implementRoutine("NimForUE", "corevm", "nameFromInt", proc(a: VmArgs) =
+    let n = getInt(a, 0)
+    setResult(a, nameFromInt(n).toInt())      
   )
   interpreter.implementRoutine("NimForUE", "corevm", "toFString", proc(a: VmArgs) =
     let n = getInt(a, 0)
-    setResult(a, makeFName(n).toFString())      
+    setResult(a, nameFromInt(n).toFString())      
   )
   
 

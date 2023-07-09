@@ -39,7 +39,7 @@ proc setProp*(rtField : RuntimeField, prop : FPropertyPtr, memoryBlock:pointer) 
   case rtField.kind
   of Int:    
     if prop.isFName():
-      setPropertyValue[FName](prop, memoryBlock, makeFName(rtField.intVal))
+      setPropertyValue[FName](prop, memoryBlock, nameFromInt(rtField.intVal))
     else:
       setPropertyValue(prop, memoryBlock, rtField.getInt)
   of Bool:

@@ -495,7 +495,7 @@ uClass AUECallPropReadTest of ANimTestBase:
         )
       let reply = uCall(callData)      
       let val = reply.get(RuntimeField(kind:Int)).getInt()
-      let name = makeFName(val)
+      let name = nameFromInt(val)
       check name == self.nameProp
 
     proc shouldBeAbleToWriteAVectorProp() =
