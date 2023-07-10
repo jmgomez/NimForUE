@@ -42,7 +42,12 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
         .filterIt(not it.isReturnParam())
         .mapIt(it.name.firstToLow.ueNameToNimName())
         .mapIt(nnkExprColonExpr.newTree(ident it, ident it)) #(arg: arg, arg2: arg2, etc.)
-                 
+
+  let defaultValue =
+    genAst(returnType):
+      when returnType is ptr: 0
+      else: default returnType
+
   let rtFieldVal = 
     case kind:
       of uecFunc:
@@ -50,7 +55,8 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
       of uecGetProp:
         nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
           ident fn.name.firstToLow.ueNameToNimName(),
-          nnkCall.newTree(ident "default", returnType)
+          defaultValue
+          # nnkCall.newTree(ident "default", returnType)
         ))
       of uecSetProp: 
         nnkTupleConstr.newTree(nnkExprColonExpr.newTree(
@@ -81,12 +87,17 @@ proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : Ni
 
   let returnBlock = 
     if fn.doesReturn():
-      if fn.getReturnProp.get.name.endsWith("Ptr"):
+      # if fn.getReturnProp.get.name.endsWith("Ptr"):
         genAst(returnType):
-          return castIntToPtr returnType(returnVal.get.runtimeFieldTo(int))
-      else:
-        genAst(returnType):
-          return returnVal.get.runtimeFieldTo(returnType)
+          # return castIntToPtr returnType(returnVal.get.runtimeFieldTo(int))
+          when returnType is ptr:
+            if returnVal.get.intVal == 0: return nil
+            else: return cast[returnType](returnVal.get.intVal)
+          else:
+            return returnVal.get.runtimeFieldTo(returnType)
+      # else:
+      #   genAst(returnType):
+      #     return returnVal.get.runtimeFieldTo(returnType)
     else: newEmptyNode()
   
   func setOutParam(outParam: UEField): NimNode = 

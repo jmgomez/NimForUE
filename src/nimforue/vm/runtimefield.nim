@@ -1,4 +1,4 @@
-import std/[strformat, macros, tables, options]
+import std/[strformat, macros, tables, options, typetraits]
 import ../utils/utils
 when defined nuevm:
   import corevm
@@ -244,7 +244,7 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
         value = nameFromInt(rtField.intVal)
       elif T is ptr:
         when defined nuevm:
-          value = castIntToPtr[typeof((default(T)[]))](rtField.intVal)
+          value = castIntToPtr[T.pointerBase](rtField.intVal)         
         else:
           value = cast[T](rtField.intVal)        
     of Bool:
