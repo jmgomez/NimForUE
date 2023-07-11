@@ -21,7 +21,6 @@ let ueincludes* = getUEHeadersIncludePaths(config).map(headerPath => "-t:-I" & e
 let uesymbols* = getUESymbols(config).map(symbolPath => "-l:" & escape(quotes(symbolPath)))
 
 let buildSwitches* = @[
-  "--nimBasePattern:nuebase.h",
   "--outdir:./Binaries/nim/",
   "--mm:orc",
   "--backend:cpp",
@@ -42,13 +41,13 @@ let buildSwitches* = @[
   "-d:withReinstantiation",
   "-d:genFilePath:" & quotes(GenFilePath),
   "-d:pluginDir:" & quotes(PluginDir),
-  "-d:withEditor:" & $WithEditor
-
+  "-d:withEditor:" & $WithEditor,
 ]
 
 #Probably this needs to be platform specific as well
 proc targetSwitches*(withDebug: bool): seq[string] =
-  case config.targetConfiguration:
+  result = 
+    case config.targetConfiguration:
     of Debug, Development:
       var ts = @["--opt:none"]
       if withDebug:
@@ -61,7 +60,11 @@ proc targetSwitches*(withDebug: bool): seq[string] =
         
       ts & @["--stacktrace:on", "--linedir:on"]
     of Shipping: @["--danger"]
-  
+  result.add @[
+    "--nimBasePattern:nuebase.h",
+    "--cincludes:" & quotes(PluginDir / "NimHeaders")
+  ]
+
 
 proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, true, "")
 proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "guest") 

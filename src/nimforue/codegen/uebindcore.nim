@@ -183,13 +183,11 @@ func makeUEFieldFromNimParamNode*(typeName: string, n:NimNode) : seq[UEField] =
         let typ = n[1].strVal
         if typ == "bool": n[^1].strVal.capitalizeAscii()
         #TODO FStructs here. The support will be limited though 
-        else:
-          log treeRepr n
-          error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
-          ""
+        else:          
+            error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
+            ""
       else:
         safe:
-          log treeRepr n
           error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
         ""
     var paramMetadata = newSeq[UEMetadata]()
