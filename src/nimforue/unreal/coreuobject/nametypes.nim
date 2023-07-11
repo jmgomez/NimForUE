@@ -32,6 +32,7 @@ converter toInt*(name: FName): int = #it's a converter so we dont have to import
 
 proc n*(str:FString) : FName {. inline .} = makeFName(str)
 proc toFString*(name : FName) : FString {. importcpp: "#.ToString()".}
+proc nameToFString*(name : FName) : FString {. importcpp: "#.ToString()".} #needed for the vm
 
 converter ENameToFName*(ename:EName) : FName = makeFName ename       
 

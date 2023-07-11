@@ -76,15 +76,18 @@ proc compileBps(emitter:UEEmitterPtr) =
   var classPaths = makeTArray[FTopLevelAssetPath]()
   for e in emitter[].emitters.values:
     let uet = e.ueType
-    if uet.kind != uetClass or UETypeMetadataKey notin uet.metadata: continue
-    let cls = getClassByName(uet.name)  
+    if uet.kind != uetClass or CompileBPMetadataKey notin uet.metadata: continue    
+    let cls = getClassByName(uet.name.removeFirstLetter())  
     let assetPath = cls.getClassPathName()
     classPaths.add(assetPath)
 
   var farFilter = FARFilter(bRecursiveClasses: true, classPaths: classPaths)
   var assets: TArray[FAssetData]
+  
   when withEngineBindings:
-    getBlueprintAssets(farFilter, assets)
+    if classPaths.len > 0:
+      getBlueprintAssets(farFilter, assets)
+    else: UE_Log "No compileBps assets found"
 
   for asset in assets:
     let path = asset.objectPath
@@ -249,4 +252,5 @@ uClass UVmHelpers of UObject:
         else: continue
       # UE_Log $ueTyp
       discard emitNueTypes(emitter, "GameNim", false, false)
+      compileBps(emitter)
   

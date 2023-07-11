@@ -7,6 +7,7 @@ type FText* {. importcpp, bycopy.} = object
 proc fromFString*(str: FString) : FText {. importcpp:"FText::FromString(#)".}
 proc fromFName*(str: FName) : FText {. importcpp:"FText::FromName(#)".}
 proc toFString*(text:FText) : FString {. importcpp:"#.ToString()", ureflect.}
+proc textToFString*(text:FText) : FString {. importcpp:"#.ToString()", ureflect.}
 
 
 proc toText*(str: FString) : FText {. importcpp:"FText::FromString(#)", ureflect .}

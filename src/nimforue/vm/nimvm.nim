@@ -109,8 +109,16 @@ proc implementBaseFunctions(interpreter:Interpreter) =
       setResult(a, 0)
   )
 
-  interpreter.implementRoutine("NimForUE", "corevm", "castIntToPtr", proc (a: VmArgs) =    
-    setResult(a, getInt(a, 0))     
+  interpreter.implementRoutine("NimForUE", "corevm", "castIntToPtr", proc (a: VmArgs) = 
+    let p = cast[pointer](getInt(a, 0))
+    if p.isNil():
+      setResult(a, newNode(nkNilLit))     
+    else:
+      var node = newIntNode(nkIntLit, a.getInt(0))
+      node.flags.incl nfIsPtr
+
+      # node.intVal = a.getInt(0)
+      setResult(a,  a.getInt(0))
   )
   #These function can be implemented with uebind directly 
   interpreter.implementRoutine("NimForUE", "corevm", "makeFName", proc(a: VmArgs) =
@@ -121,7 +129,7 @@ proc implementBaseFunctions(interpreter:Interpreter) =
     let n = getInt(a, 0)
     setResult(a, nameFromInt(n).toInt())      
   )
-  interpreter.implementRoutine("NimForUE", "corevm", "toFString", proc(a: VmArgs) =
+  interpreter.implementRoutine("NimForUE", "corevm", "nametoFString", proc(a: VmArgs) =
     let n = getInt(a, 0)
     setResult(a, nameFromInt(n).toFString())      
   )

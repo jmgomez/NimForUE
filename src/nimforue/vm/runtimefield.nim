@@ -243,8 +243,9 @@ proc fromRuntimeField*[T](value: var T, rtField: RuntimeField) =
       elif T is FName:
         value = nameFromInt(rtField.intVal)
       elif T is ptr:
-        when defined nuevm:
-          value = castIntToPtr[T.pointerBase](rtField.intVal)         
+        when defined nuevm:          
+          value = if rtField.intVal == 0: nil else: cast[T](rtField.intVal)
+          # castIntToPtr[T.pointerBase](rtField.intVal)         
         else:
           value = cast[T](rtField.intVal)        
     of Bool:
@@ -303,7 +304,7 @@ proc toRuntimeField*[T](value : T) : RuntimeField =
       result.stringVal = value
     elif T is FText:
       result.kind = String
-      result.stringVal = value.toFString()
+      result.stringVal = value.textToFString()
     elif T is Table:
       toRuntimeField(toTableMap(value))
     elif T is TableMap:
