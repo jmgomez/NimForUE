@@ -22,8 +22,6 @@ __AVR__
 
 
 
-#include "UEDeps.h"
-
 #if defined(__clang__)
   #pragma clang diagnostic ignored "-Warray-bounds"
   #pragma clang diagnostic ignored "-Wignored-attributes"

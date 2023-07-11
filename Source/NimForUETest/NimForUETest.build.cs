@@ -16,8 +16,8 @@ public class NimForUETest : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
 		PublicIncludePaths.Add(nimHeadersPath);
-		var PCHFile = Path.Combine(nimHeadersPath, "nimgame.h");
-		PrivatePCHHeaderFile = PCHFile;
+		// var PCHFile = Path.Combine(nimHeadersPath, "nuebase.h");
+		// PrivatePCHHeaderFile = PCHFile;
 		bUseUnity = false;
 		PublicDefinitions.Add("NIM_INTBITS=64");
 

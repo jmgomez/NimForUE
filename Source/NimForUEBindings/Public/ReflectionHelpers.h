@@ -121,6 +121,7 @@ public:
 	static void ExecuteTaskInBackgroundThread(void (*taskFn)(), void (*callback)()) {
 		AsyncTask(ENamedThreads::AnyThread, [taskFn, callback] {
 			taskFn();
+
 			AsyncTask(ENamedThreads::GameThread, [callback] {
 				callback();
 			});

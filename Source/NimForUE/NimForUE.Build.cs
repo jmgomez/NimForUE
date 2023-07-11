@@ -10,7 +10,20 @@ using UnrealBuildTool;
 public class NimForUE : ModuleRules
 {
 	//Bind a few methods to set the EngineDir, Platform, etc.
+	[DllImport("hostnimforue")]
+	public static extern void setWinCompilerSettings(string sdkVersion, string compilerVersion, string toolchainDir);
+
+	[DllImport("libhostnimforue")]
+	public static extern void setUEConfig(string engineDir,string conf,string platform, bool withEditor);
+
+	[DllImport("hostnimforue")]
+	static extern IntPtr getNimBaseHeaderPath();
 	
+	
+	//WIN ONLY
+	[DllImport("kernel32.dll")]
+	static extern bool SetDllDirectory(string lpPathName);
+
 	public NimForUE(ReadOnlyTargetRules Target) : base(Target) {
 	    PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		if (Target.Platform == UnrealTargetPlatform.Win64){
@@ -74,29 +87,22 @@ public class NimForUE : ModuleRules
 			);
 		
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
-		var PCHFile = Path.Combine(nimHeadersPath, "nimbase.h");
+		var PCHFile = Path.Combine(nimHeadersPath, "nuebase.h");
 		PublicIncludePaths.Add(nimHeadersPath);
 		PrivatePCHHeaderFile = PCHFile;
 		// SharedPCHHeaderFile = PCHFile;
-		
-		if (Target.bBuildEditor)
+
+		if (Target.bBuildEditor) {
 			AddNimForUEDev();
+			PublicIncludePaths.Add(Marshal.PtrToStringAnsi(getNimBaseHeaderPath()));
+		}
 		
-		// bStrictConformanceMode = true;
+		
 		bUseUnity = false;
 	}
 
 
-	[DllImport("hostnimforue")]
-	public static extern void setWinCompilerSettings(string sdkVersion, string compilerVersion, string toolchainDir);
-
-	[DllImport("libhostnimforue")]
-	public static extern void setUEConfig(string engineDir,string conf,string platform, bool withEditor);
 	
-	//WIN ONLY
-	[DllImport("kernel32.dll")]
-	static extern bool SetDllDirectory(string lpPathName);
-
 	void NimbleSetup() {
 		var processInfo = new ProcessStartInfo();
 		processInfo.WorkingDirectory = PluginDirectory;
@@ -162,6 +168,7 @@ public class NimForUE : ModuleRules
 			//TODO Print JSON Here
 			
 		}
+
 	}
 	
 

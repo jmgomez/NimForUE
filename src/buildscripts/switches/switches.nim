@@ -21,6 +21,7 @@ let ueincludes* = getUEHeadersIncludePaths(config).map(headerPath => "-t:-I" & e
 let uesymbols* = getUESymbols(config).map(symbolPath => "-l:" & escape(quotes(symbolPath)))
 
 let buildSwitches* = @[
+  "--nimBasePattern:nuebase.h",
   "--outdir:./Binaries/nim/",
   "--mm:orc",
   "--backend:cpp",
