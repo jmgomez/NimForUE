@@ -25,8 +25,8 @@ func makeFieldAsUPropDel*(name, uPropType, typeName: string, flags = CPF_None, m
 func makeFieldAsUFun*(name : string, signature: seq[UEField], typeName: string, flags = FUNC_None, metadata: seq[UEMetadata] = @[]): UEField =
   UEField(kind: uefFunction, name: name, typeName: typeName, signature: signature, fnFlags: EFunctionFlagsVal(flags), metadata: metadata, actualFunctionName: name)
 
-func makeFieldAsUPropParam*(name, uPropType, typeName: string, flags = CPF_Parm): UEField =
-  UEField(kind: uefProp, name: name, uePropType: uPropType, typeName:typeName, propFlags: EPropertyFlagsVal(flags))
+func makeFieldAsUPropParam*(name, uPropType, typeName: string, flags = CPF_Parm, paramMetadata: seq[UEMetadata] = @[], defaultVal = ""): UEField =
+  UEField(kind: uefProp, name: name, uePropType: uPropType, typeName:typeName, propFlags: EPropertyFlagsVal(flags), metadata: paramMetadata, defaultParamValue: defaultVal)
 
 func makeFieldAsUPropReturnParam*(name, uPropType, typeName: string, flags = CPF_Parm): UEField =
   UEField(kind: uefProp, name: name, uePropType: uPropType, typeName:typeName, propFlags: EPropertyFlagsVal(flags), isReturn: true)

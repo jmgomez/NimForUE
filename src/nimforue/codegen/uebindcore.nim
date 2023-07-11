@@ -173,8 +173,31 @@ func makeUEFieldFromNimParamNode*(typeName: string, n:NimNode) : seq[UEField] =
     if nimType.split(" ")[0] == "var":        
         paramFlags = paramFlags or CPF_OutParm or CPF_ReferenceParm     
         nimType = nimType.split(" ")[1]
-    result = paramNames.mapIt(makeFieldAsUPropParam(it, nimType, typeName, paramFlags))          
-
+    let defaultValue = 
+      case n[^1].kind:
+      of nnkEmpty: ""
+      of nnkIntLit..nnkInt64Lit: $n[^1].intVal
+      of nnkFloatLit..nnkFloat128Lit: $n[^1].floatVal
+      of nnkStrLit: n[^1].strVal
+      of nnkIdent:
+        let typ = n[1].strVal
+        if typ == "bool": n[^1].strVal.capitalizeAscii()
+        #TODO FStructs here. The support will be limited though 
+        else:
+          log treeRepr n
+          error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
+          ""
+      else:
+        safe:
+          log treeRepr n
+          error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
+        ""
+    var paramMetadata = newSeq[UEMetadata]()
+    if defaultValue != "":
+      paramMetadata.add(paramNames.mapIt(makeUEMetadata(CPP_Default_MetadataKeyPrefix & it, defaultValue)))    
+    result = paramNames.mapIt(makeFieldAsUPropParam(it, nimType, typeName, paramFlags, paramMetadata))   
+    
+   
 proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], typeName:string, functionsMetadata : seq[UEMetadata] = @[]) : (UEField,UEField) =  
     #this will generate a UEField for the function 
     #and then call genNativeFunction passing the body
@@ -207,11 +230,9 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], typeName:str
                                  .get(fields.tail()) & returnParam.map(f => @[f]).get(@[])
     
     
-    var flagMetas = getFunctionFlags(fn, functionsMetadata)
+    var flagMetas = getFunctionFlags(fn, functionsMetadata & fields.mapIt(it.metadata).flatten()) #default param values
     if actualParams.any(isOutParam):
-        flagMetas[0] = flagMetas[0] or FUNC_HasOutParms
-
-
+        flagMetas[0] = flagMetas[0] or FUNC_HasOutParms 
     let fnField = makeFieldAsUFun(fnName, actualParams, className, flagMetas[0], flagMetas[1])
     (fnField, firstParam)
 
