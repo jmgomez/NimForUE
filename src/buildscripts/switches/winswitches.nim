@@ -99,7 +99,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool, target:string
     # "--printPath",
     # "--command:./nue echotask --test",
     # "--vccversion:0" #$ & getCompilerVersion()
-  ] & (if UEVersion >= 5.2: 
+  ] & (if UEVersion() >= 5.2: 
         @[
           "/Zc:__cplusplus"
         

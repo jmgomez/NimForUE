@@ -2,6 +2,14 @@ import std/[json, jsonutils, os, strutils, genasts, sequtils, strformat, sugar, 
 import ../nimforue/utils/utils
 import buildcommon
 
+#[
+TODO this file does too many things and it's imported from too many places
+  It should be split in three files:
+    - nimforuedefines.nim
+    - nimforueconfig.nim
+    - nimforuecppsymbols.nim
+]#
+
 # codegen paths
 const NimHeadersDir* = "NimHeaders"
 const NimHeadersModulesDir* = NimHeadersDir / "Modules"
@@ -17,20 +25,6 @@ const GamePathError* = "Could not find the uproject file."
 const MacOsARM* = false #Change this if you want to target x86_64 on mac (TODO autodetect)
 
 
-const UEVersion* = 5.2 #TODO autodetect
-
-
-when MacOsARM and UEVersion >= 5.2:
-  const MacPlatformDir* = "Mac/arm64"
-else:
-  const MacPlatformDir* = "Mac/x86_64"
-
-
-when UEVersion >= 5.2: #Seems they introduced ARM win support in 5.2
-  const WinPlatformDir* = "Win64"/"x64"
-else:
-  const WinPlatformDir* = "Win64"
-  
 
 when defined(nue) and compiles(gorgeEx("")):
 
@@ -47,8 +41,36 @@ else:
   const PluginDir* {.strdefine.} = ""#Defined in switches. Available for all targets (Hots, Guest..)
 
 
-proc getGamePathFromGameDir*(gameDir:string) : string = 
-  (gameDir / "*.uproject").walkFiles.toSeq().head().get(GamePathError)
+proc getGamePathFromGameDir*() : string =
+  let gameDir = absolutePath(PluginDir/".."/"..", PluginDir)
+  walkDir(gameDir)
+    .toSeq    
+    .filterIt(it[1].endsWith(".uproject"))
+    .mapIt(it[1])
+    .head()
+    .get(GamePathError)
+  # (gameDir / "*.uproject").walkFiles.toSeq().head().get(GamePathError)
+
+
+
+proc UEVersion*() : float = #defers the execution until it's needed  
+  let uprojectFile = getGamePathFromGameDir()
+  let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
+  parseFloat(engineAssociation)  
+  
+
+
+when MacOsARM and UEVersion() >= 5.2:
+  const MacPlatformDir* = "Mac/arm64"
+else:
+  const MacPlatformDir* = "Mac/x86_64"
+
+
+when UEVersion() >= 5.2: #Seems they introduced ARM win support in 5.2
+  const WinPlatformDir* = "Win64"/"x64"
+else:
+  const WinPlatformDir* = "Win64"
+  
 
 when defined windows:
   import std/registry
@@ -60,7 +82,7 @@ when defined windows:
     try:
       #We assume we are inside the game plugin folder when no json is available
       let gameDir = absolutePath(PluginDir/".."/"..")
-      let uprojectFile = getGamePathFromGameDir(gameDir)
+      let uprojectFile = getGamePathFromGameDir()
       let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
       let engineDir = getEnginePathFromRegistry(engineAssociation)
       some (engineDir / "Engine", gameDir)
@@ -157,7 +179,7 @@ let
   GameLibPath* =  ueLibsDir / getFullLibName("game")
   GenFilePath* = PluginDir / "src" / "hostnimforue"/"ffigen.nim"
 proc NimGameDir*() :string = getOrCreateNUEConfig().gameDir / "NimForUE" #notice this is a proc so it's lazy loaded
-proc GamePath*() : string = getGamePathFromGameDir(getOrCreateNUEConfig().gameDir)
+proc GamePath*() : string = getGamePathFromGameDir()
 proc GameName*() : string = GamePath().split(PathSeparator)[^1].split(".")[0]
 #TODO we need to make it accesible from game/guest at compile time
 when defined(nue):
