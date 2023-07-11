@@ -48,6 +48,8 @@
 #include "UObject/UObjectAllocator.h"
 #include "UObject/ObjectSaveContext.h"
 
+
+
 //NimForUEBindingsHeaders.h
 #include "NimForUEBindingsHeaders.h"
 #include "../Source/NimForUE/Public/NimForUEHeaders.h"
@@ -73,7 +75,7 @@
   #include "NavigationSystem.h"
 
 #endif
-
+#include "Components/Widget.h"
 //TEMP test 52
 //TODO add with ENGINE_
 //NOTE: The includes come from NimForUEBindinds!!
