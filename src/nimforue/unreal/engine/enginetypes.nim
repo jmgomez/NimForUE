@@ -263,8 +263,8 @@ type
   # UPhysicalMaterialMaskPtr* = ptr UPhysicalMaterialMask
   # UHLODLayer* {.importcpp, inheritable, pure .} = object of UObject
   # UHLODLayerPtr* = ptr UHLODLayer
-  # USoundBase* {.importcpp, inheritable, pure .} = object of UObject
-  # USoundBasePtr* = ptr USoundBase
+  USoundBase* {.importcpp, inheritable, pure .} = object of UObject
+  USoundBasePtr* = ptr USoundBase
   UMaterialInterface* {.importcpp, inheritable, pure .} = object of UObject
   UMaterialInterfacePtr* = ptr UMaterialInterface
   # USubsurfaceProfile* {.importcpp, inheritable, pure .} = object of UObject
@@ -296,8 +296,8 @@ type
   # FKConvexElem* {.importcpp .} = object
 
   # FRichCurve* {.importcpp .} = object
-  # FSlateBrush*  = object
-    
+  UWidget* {.importcpp, inheritable, pure .} = object of UObject
+  UWidgetPtr* = ptr UWidget
   FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
     # bIsDynamicallyLoaded*: uint8
     # imageType*: ESlateBrushImageType

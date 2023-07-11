@@ -292,8 +292,9 @@ func removeDepFrom(uet:UEType, cleanedDepTypeName:string) : UEType =
       if uet.superStruct == cleanedDepTypeName:
         uet.superstruct = "" #Removes the parent (even though we are nto generating it yet)
     of uetClass:
-      if uet.parent == cleanedDepTypeName:
+      if uet.parent == cleanedDepTypeName and uet.parent notin ["UGameplayTask", "UWidget", "USoundBase"]:
         #TODO: We could get the first parent from the reflection system
+        UE_Log &"Removing parent from {uet.name} was {uet.parent}"
         uet.parent =
           if uet.parent[0] == 'A': "AActor"
           else: "UObject"
