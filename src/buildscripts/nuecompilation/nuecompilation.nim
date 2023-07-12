@@ -21,7 +21,7 @@ proc compileHostMac*() =
     "--tlsEmulation:off",
     "--app:lib",
     "--d:host",
-    "--header:NimForUEFFI.h",
+    # "--header:NimForUEFFI.h",
   ]
   let macArmSwitches = @[
     "--putenv:MACOSX_DEPLOYMENT_TARGET=10.15",
@@ -42,10 +42,10 @@ proc compileHostMac*() =
   let lipoCmd = &"lipo -create {armOutDir}/libhostnimforue.dylib {x86OutDir}/libhostnimforue.dylib -output Binaries/nim/libhostnimforue.dylib"
   doAssert(execCmd(lipoCmd) == 0)
   # copy header
-  let ffiHeaderSrc = ".nimcache/hostarm/NimForUEFFI.h"
-  let ffiHeaderDest = "NimHeaders" / "NimForUEFFI.h"
-  copyFile(ffiHeaderSrc, ffiHeaderDest)
-  log("Copied " & ffiHeaderSrc & " to " & ffiHeaderDest)
+  # let ffiHeaderSrc = ".nimcache/hostarm/NimForUEFFI.h"
+  # let ffiHeaderDest = "NimHeaders" / "NimForUEFFI.h"
+  # copyFile(ffiHeaderSrc, ffiHeaderDest)
+  # log("Copied " & ffiHeaderSrc & " to " & ffiHeaderDest)
   let libDir = "./Binaries/nim"
   let libDirUE = libDir / "ue"
   createDir(libDirUE)
@@ -66,13 +66,13 @@ proc compileHost*() =
  
   
   let buildFlags = @[buildSwitches].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"{nimCmd} cpp {buildFlags} --cc:vcc --passC:/EHs  --header:NimForUEFFI.h --debugger:native --threads:off --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
+  doAssert(execCmd(&"{nimCmd} cpp {buildFlags} --cc:vcc --passC:/EHs  --debugger:native --threads:off --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   
   # copy header
-  let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
-  let ffiHeaderDest = "NimHeaders" / "NimForUEFFI.h"
-  copyFile(ffiHeaderSrc, ffiHeaderDest)
-  log("Copied " & ffiHeaderSrc & " to " & ffiHeaderDest)
+  # let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
+  # let ffiHeaderDest = "NimHeaders" / "NimForUEFFI.h"
+  # copyFile(ffiHeaderSrc, ffiHeaderDest)
+  # log("Copied " & ffiHeaderSrc & " to " & ffiHeaderDest)
 
   # copy lib
   let libDir = "./Binaries/nim"

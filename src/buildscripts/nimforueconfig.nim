@@ -54,6 +54,7 @@ proc getGamePathFromGameDir*() : string =
 
 
 proc UEVersion*() : float = #defers the execution until it's needed  
+  return 5.2
   let uprojectFile = getGamePathFromGameDir()
   let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
   parseFloat(engineAssociation)  

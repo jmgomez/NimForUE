@@ -313,7 +313,8 @@ type
     ImageSize*: FVector2D
   # FMovieSceneSequenceID* {.importcpp.} = object
   # FTextBlockStyle* {.importcpp.} = object
-
+  UGameplayTask* {.importcpp, inheritable, pure .} = object of UObject #Needed because of force moving it to common.
+  UGameplayTaskPtr* = ptr UGameplayTask
    
 
 proc toString*(hit: FHitResult): FString {.importcpp: "#.ToString()" .}

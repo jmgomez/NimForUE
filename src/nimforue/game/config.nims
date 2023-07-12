@@ -6,4 +6,4 @@
 --path:"../Plugins/NimForUE/src"
 --path:"../Plugins/NimForUE/src/nimforue"
 --path:"../Plugins/NimForUE/src/nimforue/unreal"
---path:"../Plugins/NimForUE/src/nimforue/unreal/bindings"
+--path:"../Plugins/NimForUE/src/nimforue/unreal/bindings/imported"
