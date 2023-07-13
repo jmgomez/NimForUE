@@ -36,14 +36,7 @@ proc setWinCompilerSettings(sdkVersion, compilerVersion, toolchainDir:cstring) =
     writeFile(PluginDir/"compiler_version.txt", $compilerVersion)
     writeFile(PluginDir/"toolchain_dir.txt", $toolchainDir)
 
-
-let test: string  = "hola"
 proc getNimBaseHeaderPath(): cstring = querySetting(libPath).cstring
-    # var cfoo: cstring
-    # cfoo = cast[cstring](alloc(foo.len))
-    # copyMem(addr cfoo[0], addr foo[0], foo.len)
-    # cfoo
-    
 
 proc setUEConfig(engineDir, conf, platform : cstring, withEditor:bool)=
     #TODO add witheditor

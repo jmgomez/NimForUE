@@ -19,7 +19,7 @@ __TINYC__
 __clang__
 __AVR__
 */
-
+#pragma once
 
 
 #if defined(__clang__)

@@ -21,6 +21,7 @@ proc compileHostMac*() =
     "--tlsEmulation:off",
     "--app:lib",
     "--d:host",
+    "--nimBasePattern:nimbasenue.h"
     # "--header:NimForUEFFI.h",
   ]
   let macArmSwitches = @[
@@ -64,9 +65,12 @@ proc compileHostMac*() =
 
 proc compileHost*() = 
  
-  
-  let buildFlags = @[buildSwitches].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"{nimCmd} cpp {buildFlags} --cc:vcc --passC:/EHs  --debugger:native --threads:off --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
+  let hostSwitches = @[
+    "--nimBasePattern:nimbasenue.h"
+    
+  ]
+  let buildFlags = @[buildSwitches & hostSwitches].foldl(a & " " & b.join(" "), "")
+  doAssert(execCmd(&"{nimCmd} cpp {buildFlags}  --cc:vcc --passC:/EHs  --debugger:native --threads:off --tlsEmulation:off --app:lib --d:host --nimcache:.nimcache/host src/hostnimforue/hostnimforue.nim") == 0)
   
   # copy header
   # let ffiHeaderSrc = ".nimcache/host/NimForUEFFI.h"
