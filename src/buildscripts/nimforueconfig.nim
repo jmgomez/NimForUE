@@ -22,7 +22,7 @@ const ReflectionDataFilePath* = ReflectionDataDir / "ueproject.nim"
 
 const GamePathError* = "Could not find the uproject file."
 
-const MacOsARM* = false #Change this if you want to target x86_64 on mac (TODO autodetect)
+const MacOsARM* = true #Change this if you want to target x86_64 on mac (TODO autodetect)
 
 
 
@@ -54,7 +54,6 @@ proc getGamePathFromGameDir*() : string =
 
 
 proc UEVersion*() : float = #defers the execution until it's needed  
-  return 5.2
   let uprojectFile = getGamePathFromGameDir()
   let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
   parseFloat(engineAssociation)  
