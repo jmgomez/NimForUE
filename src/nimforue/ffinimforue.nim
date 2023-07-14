@@ -9,8 +9,8 @@ import ../buildscripts/[nimforueconfig, buildscripts, keyboard]
 
 
 const withEngineBindings = fileExists(BindingsImportedDir/"engine"/"engine.nim")
-when withEngineBindings:
-  import unreal/bindings/imported/assetregistry
+# when withEngineBindings:
+#   import unreal/bindings/imported/assetregistry
 
 const genFilePath* {.strdefine.} : string = ""
 
@@ -84,10 +84,10 @@ proc compileBps(emitter:UEEmitterPtr) =
   var farFilter = FARFilter(bRecursiveClasses: true, classPaths: classPaths)
   var assets: TArray[FAssetData]
   
-  when withEngineBindings:
-    if classPaths.len > 0:
-      getBlueprintAssets(farFilter, assets)
-    else: UE_Log "No compileBps assets found"
+  # when withEngineBindings:
+  #   if classPaths.len > 0:
+  #     getBlueprintAssets(farFilter, assets)
+  #   else: UE_Log "No compileBps assets found"
 
   for asset in assets:
     let path = asset.objectPath
