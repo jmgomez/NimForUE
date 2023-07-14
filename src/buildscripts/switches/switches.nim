@@ -31,7 +31,7 @@ let buildSwitches* = @[
   "--path:$nim",
   "--parallelBuild:0",
   "-d:nimOldCaseObjects", #Nim 2.0 
-  
+
   # "--hints:off",
   "--hint:XDeclaredButNotUsed:off",
   "--hint:Name:off",
@@ -42,6 +42,7 @@ let buildSwitches* = @[
   "-d:genFilePath:" & quotes(GenFilePath),
   "-d:pluginDir:" & quotes(PluginDir),
   "-d:withEditor:" & $WithEditor,
+  "--cincludes:" & quotes(PluginDir / "NimHeaders")
 ]
 
 #Probably this needs to be platform specific as well
@@ -62,7 +63,6 @@ proc targetSwitches*(withDebug: bool): seq[string] =
     of Shipping: @["--danger"]
   result.add @[
     "--nimBasePattern:nuebase.h",
-    "--cincludes:" & quotes(PluginDir / "NimHeaders")
   ]
 
 
