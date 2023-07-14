@@ -513,6 +513,14 @@ func makeFTransform*(location: FVector, rotation: FQuat, scale: FVector): FTrans
   transform.setScale3D(scale)
   transform
 
+func makeFTransform*(location: FVector, rotation: FQuat): FTransform = 
+  #makes a transform with no rotation and scale
+  {.cast(noSideEffect).}:
+    var transform = identity
+    transform.setLocation(location)  
+    transform.setRotation(rotation)
+    transform
+
 func makeFTransform*(location: FVector): FTransform = 
   #makes a transform with no rotation and scale
   {.cast(noSideEffect).}:
