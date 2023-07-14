@@ -471,7 +471,6 @@ proc getProject*() : UEProject =
     let bpOnlyRules = makeImportedRuleModule(uerImportBlueprintOnly)
     let fieldsOnly =  makeImportedRuleType(uerCodeGenOnlyFields, ManuallyImportedClasses & NimDefinedTypesNames) 
 
-    UE_Error "CodeGenOnly" &  $fieldsOnly
     let nonBp =  @["EnhancedInput", "GameplayAbilities"] & getGameUserConfigValue("extraNonBpModuleNames", newSeq[string]())
     UE_Log &"Non BP modules: {nonBp}"
     proc getRulesForPkg(packageName:string) : seq[UEImportRule] = 
@@ -494,7 +493,7 @@ proc getProject*() : UEProject =
 
     UE_Log &"Project has {project.modules.len} modules"
 
-    return project
+  return project
 
 proc generateProject*(forceGeneration = false) = 
     if not forceGeneration:

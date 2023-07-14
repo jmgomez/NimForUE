@@ -984,6 +984,7 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
     scriptStruct = newUObject[UUserDefinedStruct](package, makeFName(ueType.name.removeFirstLetter()), objClsFlags)
     scriptStruct.prepareCppStructOps()
   else: #UNimScriptStruct
+    log &"Emits script struct {ueType.name}"
     scriptStruct = newScriptStruct[T](package, f ueType.name.removeFirstLetter(), objClsFlags, superStruct, sizeof(T).int32, alignof(T).int32, T())    
     ueCast[UNimScriptStruct](scriptStruct).setCppStructOpFor[:T](nil)
 

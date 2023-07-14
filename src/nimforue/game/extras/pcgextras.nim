@@ -1,7 +1,6 @@
 include unrealprelude
- 
-import ../bindings/pcg
-
+import pcg
+export pcg
 #TODO Review valid T and check them at compile time. 
 type 
   IPCGElement* {.importcpp.} = object

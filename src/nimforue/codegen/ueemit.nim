@@ -44,7 +44,7 @@ proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.}
   let cls = obj.getClass()
   #call super for the needed types (TODO a type table lookup). A needed type would be those that doesnt have default constructors
   let superCpp = cls.getFirstCppClass()
-  if superCpp.getName() == "UserWidget":     
+  if superCpp.getName() in ["UserWidget"]:     
     superCpp.classConstructor(initializer)
   let actor = tryUECast[AActor](obj)
   var fieldIterator = makeTFieldIterator[FProperty](cls, None)
@@ -137,24 +137,16 @@ proc prepareForReinst(prevUEnum : UNimEnumPtr) =
     # prevUEnum.markNewVersionExists()
     prepReinst(prevUEnum)
 
-
-type UEmitable = UNimScriptStruct | UClass | UDelegateFunction | UEnum
-        
+type UEmitable = UNimScriptStruct | UClass | UDelegateFunction | UEnum    
 #emit the type only if one doesn't exist already and if it's different
 proc emitUStructInPackage[T : UEmitable ](pkg: UPackagePtr, emitter:EmitterInfo, prev:Option[ptr T], isFirstLoad:bool) : Option[ptr T]= 
-  
     let forceReinst = emitter.ueType.hasUEMetadata(ReinstanceMetadataKey)
-
     var areEquals = prev.isSome() and prev.get().toUEType().get() == emitter.ueType
-  
-        
     if areEquals and not forceReinst: 
         none[ptr T]()
     else: 
         prev.run prepareForReinst
         tryUECast[T](emitter.generator(pkg))
-
-
 
 template registerDeleteUType(T : typedesc, package:UPackagePtr, executeAfterDelete:untyped) = 
      for instance {.inject.} in getAllObjectsFromPackage[T](package):
@@ -167,7 +159,6 @@ template registerDeleteUType(T : typedesc, package:UPackagePtr, executeAfterDele
         if getEmitterByName(clsName).isNone():
             UE_Warn &"No emitter found for {clsName}"
             executeAfterDelete
-
 
 proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEEmitterPtr, package :UPackagePtr)  =    
     #iterate all UNimClasses, if they arent not reintanced already (name) and they dont exists in the type emitted this round, they must be deleted
@@ -187,7 +178,6 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
         hotReloadInfo.deletedDelegatesFunctions.add(instance)
     registerDeleteUType(UNimEnum, package):
         hotReloadInfo.deletedEnums.add(instance)
-
 
 #32431 
 proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEarlyLoadTypesOnly:bool) : FNimHotReloadPtr = 
