@@ -166,6 +166,7 @@ template UE_Error*(msg: FString): untyped =
 template log*(msg: FString) = UE_Log(msg)
 
 proc getDefaultObject*(fieldClass:FFieldClassPtr) : FFieldPtr {.importcpp:"#->GetDefaultObject()" .}
+proc getDefaultObject*(fieldClass:UObjectPtr, createIfNeeded: bool) : UObjectPtr {.importcpp:"#->GetDefaultObject(#)" .}
 
 proc makeFImplementedInterface*(class: UClassPtr, offset:int32 = 0, implementedByK2:bool = true) : FImplementedInterface {.importcpp:"FImplementedInterface(@)", constructor.}
 

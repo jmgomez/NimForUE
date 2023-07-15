@@ -14,23 +14,23 @@ import ../codegen/[emitter,modelconstructor, models, uemeta, uebind,gencppclass,
 # 
 
 proc getEmmitedTypes*(emitter: UEEmitterPtr) : seq[UEType] = 
-    emitter.emitters.values.toSeq.mapIt(it.ueType)
+  emitter.emitters.values.toSeq.mapIt(it.ueType)
 
 
 
 
 type
-
-    FNimHotReloadChild* {.importcpp, header:"Guest.h".} = object of FNimHotReload
+  FNimHotReloadChild* {.importcpp, header:"Guest.h".} = object of FNimHotReload
 
 const getNumberMeta = CppFunction(name: "GetNumber", returnType: "int", params: @[])
 
 const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNimHotReload", functions: @[], kind: cckStruct)
 
-
+import std/typetraits
 
 #	return new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), NAME_None, RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) TClass(Helper);
 proc newInstanceInAddr*[T](obj:UObjectPtr, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*2".} 
+proc newInstanceInAddrWithInit*[T](obj:UObjectPtr, init: var FObjectInitializer, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*2(const_cast<FObjectInitializer&>(#))".} 
 
 proc newInstanceWithVTableHelper*[T](helper : var FVTableHelper, fake : ptr T = nil) : UObjectPtr {.importcpp: "new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), FName(), RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) '*2(#)".} 
   
@@ -39,24 +39,25 @@ proc vtableConstructorStatic*[T](helper : var FVTableHelper): UObjectPtr {.cdecl
   newInstanceWithVTableHelper[T](helper)
 
 proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
-  newInstanceInAddr[T](initializer.getObj())
   let obj = initializer.getObj()
+  const typeName = typeof(T).name
+
+  newInstanceInAddr[T](initializer.getObj())
   let cls = obj.getClass()
-  #call super for the needed types (TODO a type table lookup). A needed type would be those that doesnt have default constructors
+    #call super for the needed types (TODO a type table lookup). A needed type would be those that doesnt have default constructors
   let superCpp = cls.getFirstCppClass()
   if superCpp.getName() in ["UserWidget"]:     
-    superCpp.classConstructor(initializer)
+      superCpp.classConstructor(initializer)
+  
+  
   let actor = tryUECast[AActor](obj)
-  var fieldIterator = makeTFieldIterator[FProperty](cls, None)
-  for it in fieldIterator: #Initializes all fields. So things like copy constructors get called. 
-    let prop = it.get() 
-    let address = prop.containerPtrToValuePtr(obj)
-    prop.initializeValue(address)
-    # UE_Log &"[{cls.getName()}]initialzing field {prop.getName()}"
-
   if actor.isSome():
     initComponents(initializer, actor.get(), cls)
-
+  var fieldIterator = makeTFieldIterator[FProperty](initializer.getObj.getClass(), None)
+  for it in fieldIterator: #Initializes all fields. So things like copy constructors get called. 
+      let prop = it.get() 
+      let address = prop.containerPtrToValuePtr(obj)
+      prop.initializeValue(address)
 
 
 proc getVTable*(obj : UObjectPtr) : pointer {. importcpp: "*(void**)#".}

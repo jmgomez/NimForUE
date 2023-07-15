@@ -186,11 +186,12 @@ func getClassTemplate*(typeDef: UEType ) : string =
   var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":
     cppInterfaces = ", " & cppInterfaces
+  let defaultCtor = if typeDef.hasObjInitCtor: "" else: "$1()=default;" #the default ctor will be autogen by Nim (dsl only, TODO make sure only dsl types do this). Also not used so far (it may be needed down the road)
 
 #The constructor is called internally in emittypes
   &"""
 struct $1 : public $3{cppInterfaces} {{
-  $1()=default;
+  {defaultCtor}
   $1(FVTableHelper& Helper) : $3(Helper) {{}}
   $2  
 }};

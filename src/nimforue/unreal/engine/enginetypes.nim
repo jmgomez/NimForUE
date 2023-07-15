@@ -315,6 +315,8 @@ type
   # FTextBlockStyle* {.importcpp.} = object
   UGameplayTask* {.importcpp, inheritable, pure .} = object of UObject #Needed because of force moving it to common.
   UGameplayTaskPtr* = ptr UGameplayTask
+  UAbilityTask* {.importcpp, inheritable, pure .} = object of UGameplayTask
+  UAbilityTaskPtr* = ptr UAbilityTask
    
 
 proc toString*(hit: FHitResult): FString {.importcpp: "#.ToString()" .}

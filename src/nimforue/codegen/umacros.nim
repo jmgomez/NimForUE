@@ -143,6 +143,7 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
     ueType.interfaces = interfaces
+
     when defined nuevm:           
       let typeSection = nnkTypeSection.newTree(genVMClassTypeDef(ueType))      
       var members = genUCalls(ueType) 
@@ -180,6 +181,11 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
       
       var (fns,_) = genUFuncsForUClass(body, className, nimProcs)
       fns.insert(0, procNodes)
+      if ueType.hasObjInitCtor: #Note not used so far. Left in here because it may be needed.
+        let ctorContent = newLit &"{className}(const '1& #1) : {ueType.parent}(#1)"
+        let initCtor = genAst(cls = ident className, ctorContent):
+            proc fakeConstructor(init: FObjectInitializer): cls {.constructor: ctorContent .} = discard
+        fns.add(initCtor)
       result =  (typeNode, fns)    
 
 macro uClass*(name:untyped, body : untyped) : untyped = 

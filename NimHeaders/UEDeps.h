@@ -82,6 +82,7 @@
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystemComponent.h"
 #include "ABilitySystemInterface.h"
+#include "Abilities/Tasks/AbilityTask.h"
 
 #if  ENGINE_MINOR_VERSION >= 2   
 #include "Elements/PCGExecuteBlueprint.h"
