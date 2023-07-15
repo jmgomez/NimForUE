@@ -16,6 +16,9 @@ type
         next*  {.importcpp:"Next".} : ptr FField
     FFieldPtr* = ptr FField 
     FProperty* {. importcpp, inheritable,  pure.} = object of FField 
+        elementSize* {.importcpp:"ElementSize".} : int32
+        repNotifyFunc* {.importcpp:"RepNotifyFunc".} : FName
+
     FPropertyPtr* = ptr FProperty
     FFieldClass* {. importcpp, inheritable, pure .} = object
     FFieldClassPtr* = ptr FFieldClass
@@ -189,6 +192,11 @@ proc initializeValueInContainer*(prop:FPropertyPtr, container:pointer) : void {.
 proc getSize*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetSize()".}
 proc getMinAlignment*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetMinAlignment()".}
 proc getOffset*(prop:FPropertyPtr) : int32 {. importcpp:"#->GetOffset_ForInternal()".}
+proc setOffset*(prop:FPropertyPtr, offset:int32) : void =
+    #Offset is right before repNotifyFunc so the address is 
+    let offsetAddr = cast[int](prop) + offsetOf(FProperty, repNotifyFunc) - sizeOf(int32)
+    (cast[ptr int32](offsetAddr))[] = offset
+
 
 proc setPropertyFlags*(prop:FPropertyPtr, flags:EPropertyFlags) : void {. importcpp:"#->SetPropertyFlags(#)".}
 proc getPropertyFlags*(prop:FPropertyPtr) : EPropertyFlags {. importcpp:"#->GetPropertyFlags()".}

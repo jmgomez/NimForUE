@@ -95,6 +95,7 @@ public class NimForUE : ModuleRules
 		if (Target.bBuildEditor) {
 			AddNimForUEDev();
 			// PublicIncludePaths.Add(Marshal.PtrToStringAnsi(getNimBaseHeaderPath()));
+			// PublicIncludePaths.Add("/Volumes/Store/Nim/lib");
 		}
 		
 		

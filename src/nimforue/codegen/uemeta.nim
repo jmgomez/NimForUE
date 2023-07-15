@@ -971,6 +971,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
 proc newScriptStruct[T](package: UPackagePtr, name:FString, flags:EObjectFlags, super:UScriptStructPtr, size:int32, align:int32, fake:T) : UNimScriptStructPtr {.importcpp: 
   "new(EC_InternalUseOnlyConstructor, #, *#, #) UNimScriptStruct(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
 
+import std/[macros, genasts]
+
 
 proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
@@ -992,7 +994,13 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
       scriptStruct.setMetadata(metadata.name, $metadata.value)
   scriptStruct.assetCreated()    
   for field in ueType.fields:
-      discard field.emitFProperty(scriptStruct)
+    let prop = field.emitFProperty(scriptStruct)
+    when T is not void:
+      for nam, val in default(T).fieldPairs:
+        if nam == field.name:
+          prop.setOffset(offsetOfFromStr(T, nam).int32)
+          break
+     
 
   when not T is void:
     setGIsUCCMakeStandaloneHeaderGenerator(true)

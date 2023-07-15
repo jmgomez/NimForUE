@@ -56,6 +56,7 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     else:
       addVMType ueType 
       result = emitUStruct(ueType) 
+    # echo repr result
 
 
 func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags, seq[UEMetadata]) = 

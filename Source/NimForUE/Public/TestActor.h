@@ -19,6 +19,15 @@ struct FMyStructTableRow : public FTableRowBase {
 };
 
 
+USTRUCT(BlueprintType)
+struct FCppStruct {
+	GENERATED_BODY()
+		UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float TurnRateGamepad;
+		UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	 	bool bTest;
+};
+
 UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent))
 class UMyTestActorComponent : public UActorComponent {
 	GENERATED_BODY()

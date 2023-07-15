@@ -43,6 +43,7 @@ let buildSwitches* = @[
   "-d:pluginDir:" & quotes(PluginDir),
   "-d:withEditor:" & $WithEditor,
   "--cincludes:" & quotes(PluginDir / "NimHeaders")
+  
 ]
 
 #Probably this needs to be platform specific as well

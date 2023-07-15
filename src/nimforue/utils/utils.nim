@@ -1,4 +1,4 @@
-import std/[options, strutils, sequtils, sugar, tables, json, jsonutils, macros]
+import std/[options, strutils, sequtils, sugar, tables, json, jsonutils, macros, genasts]
 #NOTE Do not include UE Types here
 
 type Criteria[T] = proc (t:T) : bool {.noSideEffect.}
@@ -17,6 +17,10 @@ template measureTime*(name: static string, body: untyped) =
     log msg
   else:
     echo msg  
+
+macro offsetOfFromStr*(T: typedesc, name:static string) : untyped = 
+  genAst(T, name=ident name):
+    offsetOf(T, name)
 
 proc treeRepr*(xs: seq[NimNode]): string = xs.mapIt(treeRepr(it)).join("\n")
 

@@ -24,6 +24,7 @@ let macSwitches = @[
   "-t:-Wno-macro-redefined",
   "-t:-Wno-duplicate-decl-specifier",
   "-t:-mincremental-linker-compatible",
+  "-u:nimEmulateOverflowChecks",
 ] & (if MacOsARM: macArmSwitches else: @[])
 
 
