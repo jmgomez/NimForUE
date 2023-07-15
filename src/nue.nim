@@ -128,9 +128,8 @@ task clean, "Clean the nimcache folder":
 
 task ugenproject, "Calls UE Generate Project":
   when defined(macosx):
-    let uprojectFile = GamePath
-    let cmd = ""
-    # let cmd = &"{config.engineDir}/Build/BatchFiles/Mac/GenerateProjectFiles.sh -project={uprojectFile} -game"
+    let uprojectFile = GamePath()
+    let cmd = &"{config.engineDir}/Build/BatchFiles/Mac/GenerateProjectFiles.sh -project={uprojectFile} -game"
     log cmd
     doAssert(execCmd(cmd) == 0)
   else:
