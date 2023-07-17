@@ -5,11 +5,12 @@ type TSet*[out T] {.importcpp.} = object
 
 func num*[T](s:TSet[T]): int32 {.importcpp: "#.Num()" .}
 func len*[T](s:TSet[T]): int32 {.importcpp: "#.Num()" .}
-proc remove*[T](s:TSet[T], value:T) {.importcpp: "#.Remove(#)".}
-proc add*[T](s:TSet[T], value:T) {.importcpp: "#.Add(#)".}
-proc findOrAdd*[T](s:TSet[T], value:T) : T {.importcpp: "#.FindOrAdd(#)".}
-func reserve*[T](s:TSet[T], value:int32) {.importcpp: "#.Reserve(#)".}
-proc toArray*[T](s:TSet[T]) : TArray[T] {.importcpp: "#.Array()" .}
+func remove*[T](s:TSet[T], element:T) {.importcpp: "#.Remove(#)".}
+func add*[T](s:TSet[T], element:T) {.importcpp: "#.Add(#)".}
+func findOrAdd*[T](s:TSet[T], element:T) : T {.importcpp: "#.FindOrAdd(#)".}
+func reserve*[T](s:TSet[T], element:int32) {.importcpp: "#.Reserve(#)".}
+func toArray*[T](s:TSet[T]) : TArray[T] {.importcpp: "#.Array()" .}
+func contains*[T](s:TSet[T], element: T): bool {.importcpp: "#.Contains(#)"}
 
 func makeTSet*[T](): TSet[T] {.importcpp: "'0()", constructor .}
 func makeTSet*[T](args:TArray[T]): TSet[T] {.importcpp: "'0(#)", constructor .}

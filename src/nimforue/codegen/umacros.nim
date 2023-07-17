@@ -143,6 +143,7 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
     let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
     ueType.interfaces = interfaces
+    ueType.hasObjInitCtor = NeedsObjectInitializerCtorMetadataKey in ueType.metadata
 
     when defined nuevm:           
       let typeSection = nnkTypeSection.newTree(genVMClassTypeDef(ueType))      
