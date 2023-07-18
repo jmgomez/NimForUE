@@ -135,7 +135,7 @@ func `$`*(prop:FPropertyPtr):string=
   if prop.isNil(): 
     return "nil"
   let meta = prop.getMetadataMap()
-  &"Prop: {prop.getName()} CppType: {prop.getCppType()} Flags: {prop.getPropertyFlags()} Metadata: {meta}"
+  &"Prop: {prop.getName()} CppType: {prop.getCppType()} Offset: {prop.getOffset()} Flags: {prop.getPropertyFlags()} Metadata: {meta}"
 
 
     

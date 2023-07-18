@@ -1,6 +1,6 @@
 include ../unreal/prelude
 
-import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
+import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta, umacros]
 import std/[json, strformat, jsonutils, sequtils, options, sugar, enumerate, strutils, tables]
 
 import ../vm/[runtimefield, uecall]
