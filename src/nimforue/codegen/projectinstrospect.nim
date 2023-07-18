@@ -761,20 +761,21 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
 
 #todo cache to a file
 when not defined(game) or defined(vmhost):
-  const dir = PluginDir / "src" / "nimforue" / "unreal" 
-  const entryPoint = dir / "prelude.nim"
-  # const dir = PluginDir / "src" / "nimforue" / "unreal" / "engine" 
-  # const entryPoint = dir / "enginetypes.nim"
-  
-  assert PluginDir != ""
-  const NimModules* = getAllModulesFrom(dir, entryPoint) & 
-    getAllModulesFrom(dir / "coreuobject", dir / "coreuobject" / "uobjectflags.nim"  ) 
+  when not defined(nimcheck):
+    const dir = PluginDir / "src" / "nimforue" / "unreal" 
+    const entryPoint = dir / "prelude.nim"
+    # const dir = PluginDir / "src" / "nimforue" / "unreal" / "engine" 
+    # const entryPoint = dir / "enginetypes.nim"
+    
+    assert PluginDir != ""
+    const NimModules* = getAllModulesFrom(dir, entryPoint) & 
+      getAllModulesFrom(dir / "coreuobject", dir / "coreuobject" / "uobjectflags.nim"  ) 
 
-  const NimDefinedTypes = NimModules.mapIt(it.types).flatten
-  const NimDefinedTypesNames* = NimDefinedTypes.mapIt(it.name)
+    const NimDefinedTypes = NimModules.mapIt(it.types).flatten
+    const NimDefinedTypesNames* = NimDefinedTypes.mapIt(it.name)
 
-  # static:
-    # echo $NimModules.mapIt(it.name)
-    # echo NimModules.filterIt(it.name == "uobjectflags")
-  # quit()
+    # static:
+      # echo $NimModules.mapIt(it.name)
+      # echo NimModules.filterIt(it.name == "uobjectflags")
+    # quit()
 

@@ -324,7 +324,7 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let preludeRelative =  if isOneFilePkg: "../" else: "../../"            
     let moduleImportStrTemplate = &"""
 #hash:{module.hash}
-when not defined(nimsuggest):
+when not defined(nimsuggest) and not defined(nimcheck):
   include {preludeRelative}../prelude
   const BindingPrefix {{.strdefine.}} = ""  
   {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}

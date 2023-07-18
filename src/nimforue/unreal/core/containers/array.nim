@@ -70,7 +70,11 @@ func toSeq*[T](arr:TArray[T]) : seq[T] =
     xs.add x
   xs
 
-
+func contains*[T](arr:TArray[T], value:T): bool = 
+  for x in arr:
+    if x == value:
+      return true
+  false
 
 func `$`*[T](arr:TArray[T]) : string = $toSeq(arr)
 func `&`*[T](a, b:TArray[T]) : TArray[T] = 

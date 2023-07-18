@@ -72,6 +72,9 @@ when not defined(nuevm): #TODO expose this somehow?
         if obj.isNil: none[ptr T]()
         else: someNil(ueCast[T](obj))
 
+    func tryUECast*(src:UObjectPtr, T: typedesc) : ptr T = tryUECast[T](src)
+
+
     func tryCastField*[T : FProperty](prop:FPropertyPtr) : Option[ptr T] = someNil castField[T](prop)
     
 func ueMetaToNueMeta*(ueMeta : TMap[FName, FString]) : seq[UEMetadata] = 

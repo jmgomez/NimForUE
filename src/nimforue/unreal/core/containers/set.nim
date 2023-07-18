@@ -9,7 +9,7 @@ func remove*[T](s:TSet[T], element:T) {.importcpp: "#.Remove(#)".}
 func add*[T](s:TSet[T], element:T) {.importcpp: "#.Add(#)".}
 func findOrAdd*[T](s:TSet[T], element:T) : T {.importcpp: "#.FindOrAdd(#)".}
 func reserve*[T](s:TSet[T], element:int32) {.importcpp: "#.Reserve(#)".}
-func toArray*[T](s:TSet[T]) : TArray[T] {.importcpp: "#.Array()" .}
+func toTArray*[T](s:TSet[T]) : TArray[T] {.importcpp: "#.Array()" .}
 func contains*[T](s:TSet[T], element: T): bool {.importcpp: "#.Contains(#)"}
 
 func makeTSet*[T](): TSet[T] {.importcpp: "'0()", constructor .}
@@ -23,6 +23,6 @@ func makeTSet*[T](a:T, args:varargs[T]): TSet[T] =
 
 iterator items*[T](s: TSet[T]): T =
   #TODO bind the Iterator instead. 
-  let arr = s.toArray()  
+  let arr = s.toTArray()  
   for i in 0..(arr.num()-1):
     yield arr[i.int32]
