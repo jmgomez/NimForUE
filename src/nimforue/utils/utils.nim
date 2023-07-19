@@ -11,12 +11,8 @@ template measureTime*(name: static string, body: untyped) =
   body
   let ends = (times.now() - starts)
   let msg = name & " took " & $ends
-  when defined(UE_Log):
-    UE_Log msg
-  elif defined(log):
-    log msg
-  else:
-    echo msg  
+
+  log msg
 
 macro offsetOfFromStr*(T: typedesc, name:static string) : untyped = 
   genAst(T, name=ident name):

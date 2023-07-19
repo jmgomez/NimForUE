@@ -12,12 +12,9 @@ import ../unreal/runtime/[assetregistry]
 import ../utils/[utils, ueutils]
 import extras
 
-import engine/common
-import engine/components
-import engine/camera
-import engine/engine
-import engine/gameframework
-import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
+import engine/[common, components, camera, engine, gameframework, enums]
+
+import std/[strutils, options, tables, sequtils, strformat, strutils, sugar, times]
 include ../unreal/definitions
 
 

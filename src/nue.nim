@@ -254,8 +254,9 @@ task gencppbindings, "Generates the codegen and cpp bindings":
   #since Nim 2.0 we need to clean up the produced header:
   let headerFile = config.nimHeadersDir / "UEGenBindings.h"
   var headerFileContents = readFile(headerFile)
-  let frm = "struct TNimTypeV2 {"
-  let to = "Exception* up;\n};"
+  let frm = "struct TNimNode {"
+  # let to = "Exception* up;\n};"
+  let to = "char dummy;\n};" #ForLoopStmt
   headerFileContents.between(frm, to)
     .run proc (idxs:(int, int)) =          
           headerFileContents.delete(idxs[0]..idxs[1])
