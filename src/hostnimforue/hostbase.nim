@@ -22,7 +22,7 @@ type
 func isInit*(lib : NueLib) : bool = lib.lib != nil
 var libMap* : Table[string, NueLib]
 var scriptPath*: string
-var scriptLastModified*: int
+var scriptLastModified*: int64
 
 proc start() = 
   libMap = {
