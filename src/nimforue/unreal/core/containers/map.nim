@@ -21,12 +21,13 @@ proc add*[K, V](map : TMap[K, V], pair:TPair[K, V]) : void  {.importcpp: "#.Add(
 proc add*[K, V](map : TMap[K, V], k:K, v:V) : void  {.importcpp: "#.Add(@)", .}
 proc remove*[K, V](map : TMap[K, V], k:K) : void  {.importcpp: "#.Remove(@)", .}
 
-proc num*[K, V](arr:TMap[K, V]): int32 {.importcpp: "#.Num()" noSideEffect}
-proc len*[K, V](arr:TMap[K, V]): int = arr.num()
+func num*[K, V](map:TMap[K, V]): int32 {.importcpp: "#.Num()" }
+func len*[K, V](arr:TMap[K, V]): int = arr.num()
 
-proc contains*[K, V](arr:TMap[K, V], key:K): bool {.importcpp: "#.Contains(#)" noSideEffect}
-proc hasKey*[K, V](arr:TMap[K, V], key:K): bool {.importcpp: "#.Contains(#)" noSideEffect}
-
+func contains*[K, V](map:TMap[K, V], key:K): bool {.importcpp: "#.Contains(#)" }
+func hasKey*[K, V](map:TMap[K, V], key:K): bool {.importcpp: "#.Contains(#)" }
+func empty*[K, V](map:TMap[K, V], expectedElems: int32 = 0) {.importcpp: "#.Empty(#)" }
+func clear*[K, V](map:TMap[K, V]) {.inline.} = map.empty()
 
 proc `[]`*[K, V](map:TMap[K, V], key: K): var V {. importcpp: "#[#]",  noSideEffect.}
 proc `[]=`*[K, V](map:TMap[K, V], key: K, val : V)  {. importcpp: "#[#]=#",  }

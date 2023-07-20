@@ -10,7 +10,7 @@ import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
 import compiler / [ast, nimeval, vmdef, vm, llstream, types, lineinfos]
 import compiler/options as copt
 import ../vm/[uecall, runtimefield, vmconversion]
-import ../codegen/[uemeta, projectinstrospect]
+import ../codegen/[uemeta, projectinstrospect, umacros]
 import ../utils/utils
 
 const engineTypesModule = NimModules.filterIt(it.name == "enginetypes").head.get
