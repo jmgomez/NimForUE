@@ -47,18 +47,17 @@ proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.}
     #call super for the needed types (TODO a type table lookup). A needed type would be those that doesnt have default constructors
   let superCpp = cls.getFirstCppClass()
   if superCpp.getName() in ["UserWidget"]:     
-      superCpp.classConstructor(initializer)
+    superCpp.classConstructor(initializer)
   
-  
-  let actor = tryUECast[AActor](obj)
-  if actor.isSome():
-    initComponents(initializer, actor.get(), cls)
   var fieldIterator = makeTFieldIterator[FProperty](initializer.getObj.getClass(), None)
   for it in fieldIterator: #Initializes all fields. So things like copy constructors get called. 
       let prop = it.get() 
       let address = prop.containerPtrToValuePtr(obj)
       prop.initializeValue(address)
 
+  let actor = tryUECast[AActor](obj)
+  if actor.isSome():
+    initComponents(initializer, actor.get(), cls)
 
 proc getVTable*(obj : UObjectPtr) : pointer {. importcpp: "*(void**)#".}
 proc setVTable*(obj : UObjectPtr, newVTable:pointer) : void {. importcpp: "((*(void**)#)=(#))".}

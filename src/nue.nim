@@ -306,7 +306,8 @@ task genbindings, "Runs the Generate Bindings commandlet":
   when defined windows:
     let cmd = &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor.exe {GamePath()} -run=GenerateBindings {silent} " 
     echo "Running " & cmd
-    echo execCmd(cmd)
+    let outPut = execProcess(cmd, getCurrentDir())
+    echo outPut.replace("\n", "") #for some reason it will output a new line per character otherwise
   else:
     let cmd = &"{config.engineDir}/Binaries/Mac//UnrealEditor.app/Contents/MacOS/UnrealEditor  {GamePath()} -run=GenerateBindings {silent}"
     discard execCmd(cmd)
