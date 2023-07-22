@@ -1,7 +1,7 @@
 include ../../definitions
 import std/[sugar]
 
-type TArray*[out T] {.importcpp, bycopy } = object
+type TArray*[out T] {.importcpp } = object
 
 func num*[T](arr:TArray[T]): Natural {.importcpp: "#.Num()" noSideEffect}
 proc remove*[T](arr:TArray[T], value:T) {.importcpp: "#.Remove(#)".}
@@ -10,6 +10,7 @@ proc add*[T](arr:TArray[T], value:T) {.importcpp: "#.Add(#)".}
 proc addUnique*[T](arr:TArray[T], value:T) {.importcpp: "#.AddUnique(#)".}
 proc append*[T](a, b:TArray[T]) {.importcpp: "#.Append(#)".}
 func reserve*[T](arr:TArray[T], value:Natural) {.importcpp: "#.Reserve(#)".}
+
 
 # proc `[]`*[T](arr:TArray[T], i: int): var T {. inline, noSideEffect.} = arr[i.int32]
 

@@ -44,12 +44,13 @@ func any*[T](xs: seq[T]): bool = len(xs) != 0
 func any*[T](xs: seq[T], fn: T->bool): bool = xs.filter(fn).any()
 func all*[T](xs: seq[T], fn: T->bool): bool = xs.filter(fn).len() == xs.len()
 
-func firstIndexOf*[T](xs: seq[T], fn: Criteria[T]): int =
+func firstIndexOf*[T](xs: seq[T], fn: proc (t:T) : bool): int =
   var i = 0
   while i < len(xs):
-    if fn(xs[i]):
-      return i
-    inc i
+    safe: 
+      if fn(xs[i]):
+        return i
+      inc i
   -1
 
 func first*[T](xs: seq[T], fn: T->bool): Option[T] = xs.filter(fn).head()
