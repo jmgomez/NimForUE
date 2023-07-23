@@ -3,11 +3,11 @@ import std/[sequtils, tables]
 
 import array
 type 
-    TPair*[K, V] {.importcpp:"TPair",  bycopy .} = object
+    TPair*[K, V] {.importcpp:"TPair" .} = object
         key* {.importcpp:"Key".}: K
         value* {.importcpp:"Value".}: V
 
-    TMap*[K, V] {.importcpp: "TMap", bycopy} = object
+    TMap*[K, V] {.importcpp: "TMap"} = object
 
 
 proc makeTPair*[K, V](k:K, v:V) : TPair[K, V] {.importcpp: "TPair<'1, '2>(@)", constructor .}

@@ -88,8 +88,11 @@ type
     UScriptStruct* {.importcpp, inheritable, pure .} = object of UStruct
         structFlags* {.importcpp:"StructFlags".}: EStructFlags
     UScriptStructPtr* = ptr UScriptStruct
-    ICppStructOps {.importcpp:"UScriptStruct::ICppStructOps".} = object
+    ICppStructOps {.importcpp:"UScriptStruct::$1".} = object
     ICppStructOpsPtr = ptr ICppStructOps
+    FCapabilities* {.importcpp:"UScriptStruct::ICppStructOps::$1".} = object
+      computedPropertyFlags* {.importcpp:"ComputedPropertyFlags".} : EPropertyFlags
+
 
 
     UFunction* {.importcpp, inheritable, pure .} = object of UStruct
@@ -140,6 +143,7 @@ type
     FScriptSetHelper* {.importcpp.} = object
 
 #LOGS here because we need them. Maybe they should leave in a separated file
+
 
 proc UE_LogInternal(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUELog(@)".}
 proc UE_WarnInternal(msg: FString) : void {.importcpp: "UReflectionHelpers::NimForUEWarn(@)".}
@@ -358,8 +362,7 @@ proc getCppStructOps*(str:UScriptStructPtr) : ICppStructOpsPtr {. importcpp:"#->
 proc prepareCppStructOps*(str:UScriptStructPtr) : void {. importcpp:"#->PrepareCppStructOps()" .}
 #struct ops #TODO need to fill FProperty
 proc copy*(ops:ICppStructOpsPtr; dest: pointer; src: pointer; arrayDim: int32 = 1): bool {. importcpp:"#->Copy(#, #, #)" .}
-
-
+func getCapabilities*(ops:ICppStructOpsPtr): FCapabilities {. importcpp:"#->GetCapabilities()" .}
 
 # proc getCppStructOps*(str:UScriptStructPtr) : ICppStructOpsPtr {. importcpp:"#->GetCppStructOps()" .}
 

@@ -78,7 +78,10 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         #TODO Need to set more prop flags based on the structsOPS specs        
         structProp.setScriptStruct(scriptStruct)
         #This is a temp workaround because since the property is virtual and has no vtable it wil crash
-        let propFlags = structProp.getPropertyFlags() | CPF_NoDestructor 
+        var propFlags = structProp.getPropertyFlags()
+        if scriptStruct.hasStructOps():
+            propFlags = propFlags | scriptStruct.getCppStructOps.getCapabilities.computedPropertyFlags
+            UE_Log "Setting prop flags for " & scriptStruct.getName() & " to " & $propFlags
         structProp.setPropertyFlags(propFlags)
         structProp
 
