@@ -346,6 +346,7 @@ proc getCppName*(obj : UClassPtr) : FString {.ureflect.} =
 
 proc setRootComponent*(actor : AActorPtr, newRootComponent : USceneComponentPtr): bool {.importcpp: "#->SetRootComponent(#)".}
 proc getRootComponent*(actor : AActorPtr): USceneComponentPtr {.importcpp: "#->GetRootComponent()".}
+proc finishAndRegisterComponent*(actor : AActorPtr, comp: UActorComponentPtr) {.importcpp: "#->FinishAndRegisterComponent(#)".}
   # void SetActorHiddenInGame(bool bNewHidden);
 proc setupAttachment*(obj, inParent : USceneComponentPtr, inSocketName : FName = ENone) {.importcpp: "#->SetupAttachment(@)".}
 proc registerComponent*(obj : UActorComponentPtr) {.importcpp: "#->RegisterComponent()".}

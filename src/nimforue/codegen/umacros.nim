@@ -202,17 +202,20 @@ macro uSection*(body: untyped): untyped =
     var typs = newSeq[NimNode]()
     var fns = newSeq[NimNode]()
     for uclass in uclasses:
-        let (uClassNode, fns) = uclass
+        let (uClassNode, funcs) = uclass
         typs.add uClassNode
-        fns.add fns
+        fns.add funcs
     #TODO allow uStructs in sections
     #set all types in the same typesection
+    var uprops = nnkStmtList.newTree()
     var typSection = nnkTypeSection.newTree()
     for typ in typs:
         let typDefs = typ[0].children.toSeq()
         typSection.add typDefs
+        uprops.add typ[1..^1]
     # let codeReordering = nnkStmtList.newTree nnkPragma.newTree(nnkExprColonExpr.newTree(ident "experimental", newLit "codereordering"))
-    result = nnkStmtList.newTree(@[typSection] & fns)
+    result = nnkStmtList.newTree(@[typSection] & uprops & fns)
+    # echo repr result
 
 
 when not defined nuevm:
