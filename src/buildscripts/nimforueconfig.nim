@@ -132,7 +132,7 @@ proc createConfigFromDirs(engineDir, gameDir:string) : NimForUEConfig =
   let defaultPlatform = when defined(windows): Win64 else: Mac
   NimForUEConfig(engineDir: engineDir, gameDir: gameDir, withEditor:true, targetConfiguration: Development, targetPlatform: defaultPlatform)
 
-proc getOrCreateNUEConfig() : NimForUEConfig = 
+proc getOrCreateNUEConfig*() : NimForUEConfig = 
   let ueConfigPath = PluginDir / getConfigFileName()
   if fileExists ueConfigPath:
     let json = readFile(ueConfigPath).parseJson()

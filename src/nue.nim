@@ -434,6 +434,16 @@ log "Hello World!"
   taskOptions["release"] = ""  
   lib(taskOptions)
 
+task macossetup, "Optional setup for MacOs so both project can live in the same folder":
+  #Manually create the GameMacOs folder #=
+  #Manyally copy (uproject) 
+  #create syslinks (Config, Content, Plugins, Source)
+  let sourceDir = getOrCreateNUEConfig().gameDir.parentDir()
+  let dstDir = getOrCreateNUEConfig().gameDir
+  for dir in ["NimForUE", "Config", "Content", "Plugins", "Source"]:
+    log &"Creating symlink for {sourceDir / dir} to {dstDir / dir}"
+    createSymlink(sourceDir / dir, dstDir / dir)
+
 
 # --- End Tasks ---
 ok(taskOptions)

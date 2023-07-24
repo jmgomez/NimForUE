@@ -106,7 +106,6 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
         let self {.inject.} = nimforue.getDefaultObjectFromClassName(clsName)
     else: newEmptyNode()
 
-  
   let processFn = 
     case typeDef.kind:
     of uetDelegate:

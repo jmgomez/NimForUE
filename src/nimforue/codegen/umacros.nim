@@ -217,7 +217,6 @@ macro uSection*(body: untyped): untyped =
     result = nnkStmtList.newTree(@[typSection] & uprops & fns)
     # echo repr result
 
-
 when not defined nuevm:
   macro uForwardDecl*(name : untyped ) : untyped = 
       let (className, parentName, interfaces) = getTypeNodeFromUClassName(name)
