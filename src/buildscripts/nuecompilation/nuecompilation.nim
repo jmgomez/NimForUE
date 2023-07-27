@@ -11,6 +11,11 @@ let config = getNimForUEConfig()
 let nimCmd = "nim" #so we can easy switch with nim_temp
 # let nimCmd = "nim_temp" #so we can easy switch with nim_temp
 
+func getBaseNimCacheDir(folderName:string): string =
+  let platformDir = 
+    when defined windows: "win"
+    else: "mac"
+  &".nimcache/{folderName}/{platformDir}/"
 
 #In mac we need to do a universal 
 proc compileHostMac*() =
@@ -112,18 +117,17 @@ proc compileHost*() =
 
 
 proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
+  
   generateFFIGenFile(config)
   let guestSwitches = @[
     "-d:BindingPrefix=.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
     "-d:guest",
     "-d:libname:guest",
     "-d:OutputHeader:Guest.h",
-
-
-
   ]
+  let nimcacheDir = getBaseNimCacheDir("guest")
   let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")
-  let compCmd = &"{nimCmd} cpp {buildFlags} --app:lib --d:genffi -d:withPCH --nimcache:.nimcache/guest src/nimforue.nim"
+  let compCmd = &"{nimCmd} cpp {buildFlags} --app:lib --d:genffi -d:withPCH --nimcache:{nimcacheDir} src/nimforue.nim"
   doAssert(execCmd(compCmd)==0)
   
   copyNimForUELibToUEDir("nimforue")
@@ -200,7 +204,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
 
   ensureGameConfExists()
   
-  let nimCache = &".nimcache/{name}"/(if withDebug and not isCompileOnly: "debug" else: "release")
+  let nimCache = getBaseNimCacheDir(name)/(if withDebug and not isCompileOnly: "debug" else: "release")
   let isGame = name == "game"
   
   let entryPoint = NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim")
