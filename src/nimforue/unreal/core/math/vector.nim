@@ -29,11 +29,12 @@ proc zeroVector*() : FVector {.importcpp: "FVector::ZeroVector".}
 # {.pop.}
 
 
-func `+`*(a,b: FVector): FVector {.importcpp:"# + #", noSideEffect.}
-func `-`*(a,b: FVector): FVector {.importcpp:"# - #", noSideEffect.}
-func `*`*(a : SomeFloat | SomeNumber, b: FVector): FVector {.importcpp:"# * #", noSideEffect.}
-func `*`*(a : FVector, b: SomeNumber | SomeFloat): FVector {.importcpp:"# * #", noSideEffect.}
-func `==`*(a,b: FVector): bool {.importcpp:"# == #", noSideEffect.}
+func `+`*(a,b: FVector): FVector {.importcpp:"# + #".}
+func `-`*(a,b: FVector): FVector {.importcpp:"# - #".}
+func `*`*(a : SomeFloat | SomeNumber, b: FVector): FVector {.importcpp:"# * #".}
+func `*`*(a : FVector, b: SomeNumber | SomeFloat): FVector {.importcpp:"# * #".}
+# func `==`*(a,b: FVector): bool {.importcpp:"FVector::Equals(@)".}
+# func `==`*(a,b: FVector): bool = a.x == b.x and a.y == b.y and a.z == b.z
 
 
 

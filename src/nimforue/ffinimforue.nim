@@ -93,7 +93,7 @@ proc compileBps(emitter:UEEmitterPtr) =
     let bp = loadObject[UBlueprint](nil, path.toFString())
     if bp.isNotNil: 
       UE_Log &"Compiling blueprint {bp.getName()}"
-      bp.compileBlueprint()
+      # bp.compileBlueprint()
 
 proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) : bool = 
     try:
@@ -150,7 +150,8 @@ import std/sugar
 #VM manager tests
 # proc reloadScript() {.uebindStatic:"UNimVmManager".} #any library that pulls nimvm will have it
 
-proc reloadScriptGuest() {.ffi:genFilePath.} =   
+proc reloadScriptGuest() {.ffi:genFilePath.} = 
+  return  
   discard callStaticUFunction("NimVmManager", "ReloadScript", nil)  
 
 

@@ -385,7 +385,7 @@ type
 
   FTimespan* {.importcpp.} = object
   
-  FTransform* {.importcpp, bycopy.} = object
+  FTransform* {.importcpp.} = object
     scale3D* {.importcpp: "Scale3D".}: FVector
     translation* {.importcpp: "Translation".}: FVector
     rotation* {.importcpp: "Rotation".}: FQuat
@@ -400,7 +400,7 @@ type
     translation* {.importcpp: "Translation".}: FVector3f
     rotation* {.importcpp: "Rotation".}: FQuat4f
 
-  FVector4* {.importcpp, bycopy.} = object
+  FVector4* {.importcpp.} = object
     w* {.importcpp: "W".}: float64 
     z* {.importcpp: "Z".}: float64 
     y* {.importcpp: "Y".}: float64 
