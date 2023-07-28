@@ -33,3 +33,5 @@ proc spawnActorWith*[T : AActor](world:UWorldPtr, class:UClassPtr, transform: FT
   #useful when you want to use a Nim derived class in bp
   let actor = spawnActor(world, class, unsafeAddr transform, spawnParameters)
   ueCast[T](actor)
+
+proc getGameViewPort*(uworld:UWorldPtr) : UGameViewportClientPtr {. importcpp:"#->GetGameViewport()" .}

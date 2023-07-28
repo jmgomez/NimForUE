@@ -9,7 +9,7 @@ type
     playWorld* {.importcpp: "PlayWorld".} : UWorldPtr
     editorWorld* {.importcpp: "EditorWorld".} : UWorldPtr
   UEditorEnginePtr* = ptr UEditorEngine
-  FEditorViewportClient* {.importcpp, inheritable.} = object
+  FEditorViewportClient* {.importcpp, inheritable.} = object of FViewportClient
     viewport* {.importcpp: "Viewport".} : FViewportPtr
   FEditorViewportClientPtr* = ptr FEditorViewportClient
   FLevelEditorViewportClient* {.importcpp.} = object of FEditorViewportClient
@@ -49,8 +49,8 @@ proc getAllViewportClients*(editor:UEditorEnginePtr) : TArray[FEditorViewportCli
 proc getLevelViewportClients*(editor:UEditorEnginePtr) : TArray[FLevelEditorViewportClientPtr] {.importcpp: "#->GetLevelViewportClients()".}
 
 proc getWorld*(viewportClient:FEditorViewportClientPtr) : UWorldPtr {.importcpp: "#->GetWorld()".}
-
-proc getGameViewPort*(uworld:UWorldPtr) : UGameViewportClientPtr {. importcpp:"#->GetGameViewport()" .}
+proc getClientAsEditorViewportClient*(viewport: FViewportPtr): FEditorViewportClientPtr = 
+  cast[FEditorViewportClientPtr](viewport.getClient())
 
 proc getEditorWorld*() : UWorldPtr =
   #notice this wont give you the appropiated world when there are multiple viewports

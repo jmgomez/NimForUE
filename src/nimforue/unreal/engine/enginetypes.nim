@@ -212,8 +212,12 @@ type
 
   FObjectPreSaveContext* {.importcpp.} = object
 
-  FViewport* {.importcpp .} = object
+  FViewport* {.importcpp, inheritable .} = object
   FViewportPtr* = ptr FViewport
+  FSceneViewport* {.importcpp, inheritable .} = object of FViewport
+  FSceneViewportPtr* = ptr FSceneViewport
+  FViewportClient* {.importcpp, inheritable .} = object of UObject
+  FViewportClientPtr* = ptr FViewportClient
 
   UGameViewportClient* {.importcpp, inheritable, pure .} = object of UObject
   UGameViewportClientPtr* = ptr UGameViewportClient
@@ -379,8 +383,15 @@ proc activateExternalSubsystem*(cls:UClassPtr) {.importcpp: "FObjectSubsystemCol
 
 #VIEWPORT
 proc getSizeXY*(viewport: FViewportPtr): FIntPoint {.importcpp: "#->GetSizeXY()".}
-
-
+proc getMousePos*(viewport: FViewportPtr, mousePos: var FIntPoint, bLocalPosition: bool = true) {.importcpp: "#->GetMousePos(@)".}
+proc hasFocus*(viewport: FViewportPtr): bool {.importcpp: "#->HasFocus()".}
+proc getDesiredAspectRatio*(viewport: FViewportPtr): float32 {.importcpp: "#->GetDesiredAspectRatio()".}
+proc keyState*(viewport: FViewportPtr, key: FKey): bool {.importcpp: "#->KeyState(#)".}#true if pressed false otherwise (lol!)
+func isKeyPressed*(viewport: FViewportPtr, key: FKey): bool {.importcpp: "#->KeyState(#)".}
+proc isCtrlDown*(viewport: FViewportPtr): bool {.importcpp: "#->IsCtrlDown()".}
+proc isShiftDown*(viewport: FViewportPtr): bool {.importcpp: "#->IsShiftDown()".}
+proc isAltDown*(viewport: FViewportPtr): bool {.importcpp: "#->IsAltDown()".}
+proc getClient*(viewport: FViewportPtr): FViewportClientPtr {.importcpp: "#->GetClient()".}
 # #TEMPORAL DYNAMIC DELEGATE THIS SHOULD BE BOUND FROM THE BINDINGS
 # type FOnQuartzCommandEventBP* {.importcpp, pure.} = object
 # type FOnQuartzMetronomeEventBP* {.importcpp, pure.} = object
@@ -429,6 +440,11 @@ type
   FInputDeviceId* {.importcpp .} = object
   EInputEvent* {.size: sizeof(uint8), importcpp, pure.} = enum
     IE_Pressed, IE_Released, IE_Repeat, IE_DoubleClick, IE_Axis, IE_MAX
+
+
+func makeFKey*(keyName: FName) : FKey {.importcpp: "FKey(#)", constructor, .}
+func getFName*(key: FKey) : FName {.importcpp: "#.GetFName()", .}
+func `$`*(key: FKey): string = $key.getFName()
 
 func getKey*(self: FKeyEventPtr) : FKey {.importcpp: "#->GetKey()".}
 func getCharacter*(self: FKeyEventPtr) : char {.importcpp: "#->GetCharacter()".}
