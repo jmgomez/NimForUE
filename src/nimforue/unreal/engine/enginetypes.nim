@@ -3,7 +3,7 @@ import std/[strformat]
 import ../core/math/vector
 import ../coreuobject/[uobject, coreuobject, nametypes, tsoftobjectptr, scriptdelegates]
 import ../nimforue/nimforuebindings
-import ../core/[delegates]
+import ../core/[delegates, templates]
 import ../core/containers/[unrealstring, array, set]
 
 
@@ -300,6 +300,8 @@ type
   # FKConvexElem* {.importcpp .} = object
 
   # FRichCurve* {.importcpp .} = object
+  SWidget* {.importcpp, inheritable, pure .} = object
+  SWidgetPtr* = ptr SWidget
   UWidget* {.importcpp, inheritable, pure .} = object of UObject
   UWidgetPtr* = ptr UWidget
   FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
@@ -395,6 +397,9 @@ proc getClient*(viewport: FViewportPtr): FViewportClientPtr {.importcpp: "#->Get
 # #TEMPORAL DYNAMIC DELEGATE THIS SHOULD BE BOUND FROM THE BINDINGS
 # type FOnQuartzCommandEventBP* {.importcpp, pure.} = object
 # type FOnQuartzMetronomeEventBP* {.importcpp, pure.} = object
+
+#UWidget and CoreSlate stuff not bound
+proc takeWidget(widget: UWidgetPtr): TSharedRef[SWidget] {.importcpp: "#->TakeWidget()".}
 
 
 #Asset should put those in uobject?

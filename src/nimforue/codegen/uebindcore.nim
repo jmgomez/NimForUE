@@ -35,7 +35,8 @@ func nimToCppConflictsFreeName*(propName:string) : string =
   else: propName
 
 
-func isStatic*(funField:UEField) : bool = bitand(FUNC_Static.int, funField.fnFlags.int) > 0
+func isStatic*(funField:UEField) : bool = 
+  bitand(FUNC_Static.int, funField.fnFlags.int) > 0 or "Static" in funField.metadata
 
 func getReturnProp*(funField:UEField) : Option[UEField] =  funField.signature.filter(isReturnParam).head()
 func doesReturn*(funField:UEField) : bool = funField.getReturnProp().isSome()
@@ -137,6 +138,7 @@ func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFuncti
     if hasMeta("BlueprintImplementableEvent") or hasMeta("BlueprintNativeEvent"):
         flags = flags | FUNC_BlueprintEvent | FUNC_BlueprintCallable
     if hasMeta("Static"):
+      when not defined(nuevm): #: illegal conversion from '-1' to '[0..9223372036854775807]'
         flags = flags | FUNC_Static
     if not hasMeta("Category"):
         fnMetas.add(makeUEMetadata("Category", "Default"))

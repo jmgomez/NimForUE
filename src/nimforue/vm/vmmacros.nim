@@ -26,10 +26,12 @@ type CodegenTarget* = enum
 #TODO change fn with UEFunc so I can pass it directly from the bindings. 
 proc ueBindImpl*(fn: UEField, selfParam: Option[UEField], kind: UECallKind) : NimNode = 
   assert fn.kind == uefFunction
-  let isStatic = selfParam.isNone
+  let isStatic =  selfParam.isNone() or "Static" in fn.metadata
   let clsName = fn.typeName   
+  
   let selfAssign = 
-    if isStatic: newEmptyNode() 
+    if isStatic: 
+      newEmptyNode()
     else: 
       genAst(firstParam = ident selfParam.get.name):
         call.self = cast[int](firstParam)
@@ -164,7 +166,8 @@ macro uebind*(fn:untyped) : untyped =
   # log repr result
   
 macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = 
-  var (ufunc, _) = prepareUEFieldFuncFrom(fn, clsName)  
+  var (ufunc, _) = prepareUEFieldFuncFrom(fn, clsName)
+  ufunc.metadata.add makeUEMetadata "Static"
   ufunc.fnFlags = ufunc.fnFlags or FUNC_Static
   result = ueBindImpl(ufunc, none(UEField), uecFunc)
 
@@ -300,7 +303,6 @@ proc genUCalls*(typeDef : UEType) : NimNode =
   result = nnkStmtList.newTree()
   for field in typeDef.fields:
     let firstParam = some makeFieldAsUProp("self", typeDef.name & "Ptr", typeDef.name)
-    log $firstParam
     case field.kind:
       of uefProp:
         if not isAllowedField(field): continue

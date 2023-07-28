@@ -151,7 +151,7 @@ import std/sugar
 # proc reloadScript() {.uebindStatic:"UNimVmManager".} #any library that pulls nimvm will have it
 
 proc reloadScriptGuest() {.ffi:genFilePath.} = 
-  return  
+  # return  
   discard callStaticUFunction("NimVmManager", "ReloadScript", nil)  
 
 
@@ -243,6 +243,15 @@ uClass UVmHelpers of UObject:
         var typeDef = typeDef
         case typeDef.kind:
         of uetClass:
+          var typeDef = typeDef
+          #last chance to fix the typedef comming from the vm
+          for field in typeDef.fields.mitems:
+            if field.kind != uefFunction: continue
+            if "Static" in field.metadata: 
+              field.fnFlags = field.fnFlags or FUNC_Static
+
+
+
           #This may cause issues as it is a whole new path. Native uses addEmitterInfoForClass
           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUClass[void](typeDef, package, @[], vmConstructor, nil), emitter)
         of uetEnum:         
