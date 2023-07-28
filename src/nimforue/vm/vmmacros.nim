@@ -136,8 +136,6 @@ proc prepareUEFieldFuncFrom*(fn:NimNode, inClsName:string =""): (UEField, UEFiel
     else: none[UEField]()
   
   var (ufunc, selfParam) = ufuncFieldFromNimNode(fn, clsFieldMb, clsName)  
-  if ufunc.isStatic:
-    ufunc.signature = ufunc.signature[1..^1]
   if clsName != "":(ufunc, selfParam)
   else: (ufunc, UEField())
 
@@ -403,7 +401,9 @@ proc ufuncImpl*(fn:NimNode, classParam:Option[UEField], typeName : string, funct
   let fnReprImpl = ueBindImpl(fnField, some selfParam, uecFunc)
   #TODO forwardDecalre
   let fnReprfwd = newEmptyNode()
-  let fnImplNode = ueBorrowImpl("", fn)
+  #this is beyond bad but "" means not static in ueBorrow. TODO REFACTOR!
+  let clsName = if fnField.isStatic: typeName else: ""
+  let fnImplNode = ueBorrowImpl(clsName, fn)
   result =  (fnReprfwd, nnkStmtList.newTree(fnReprImpl, fnImplNode), fnField)
   
 
