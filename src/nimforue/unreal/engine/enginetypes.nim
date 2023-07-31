@@ -141,9 +141,9 @@ type
     elementIndex* {.importcpp: "ElementIndex".}: uint8
     bBlockingHit* {.importcpp: "bBlockingHit".}: bool
     bStartPenetrating* {.importcpp: "bStartPenetrating".}: bool
-    # physMaterial* {.importcpp: "PhysMaterial".}: UPhysicalMaterialPtr 
+    physMaterial* {.importcpp: "PhysMaterial".}: TWeakObjectPtr[UPhysicalMaterial]
     # hitObjectHandle* {.importcpp: "HitObjectHandle".}: FActorInstanceHandle 
-    # component* {.importcpp: "Component".}: TWeakObjectPtr[UPrimitiveComponentPtr]
+    component* {.importcpp: "Component".}: TWeakObjectPtr[UPrimitiveComponent]
     boneName* {.importcpp: "BoneName".}: FName
     myBoneName* {.importcpp: "MyBoneName".}: FName
 
@@ -390,16 +390,16 @@ proc hasFocus*(viewport: FViewportPtr): bool {.importcpp: "#->HasFocus()".}
 proc getDesiredAspectRatio*(viewport: FViewportPtr): float32 {.importcpp: "#->GetDesiredAspectRatio()".}
 proc keyState*(viewport: FViewportPtr, key: FKey): bool {.importcpp: "#->KeyState(#)".}#true if pressed false otherwise (lol!)
 func isKeyPressed*(viewport: FViewportPtr, key: FKey): bool {.importcpp: "#->KeyState(#)".}
-proc isCtrlDown*(viewport: FViewportPtr): bool {.importcpp: "#->IsCtrlDown()".}
-proc isShiftDown*(viewport: FViewportPtr): bool {.importcpp: "#->IsShiftDown()".}
-proc isAltDown*(viewport: FViewportPtr): bool {.importcpp: "#->IsAltDown()".}
+proc isCtrlDown*(viewport: FViewportPtr): bool {.importcpp: "IsCtrlDown(#)".}
+proc isShiftDown*(viewport: FViewportPtr): bool {.importcpp: "IsShiftDown(#)".}
+proc isAltDown*(viewport: FViewportPtr): bool {.importcpp: "IsAltDown(#)".}
 proc getClient*(viewport: FViewportPtr): FViewportClientPtr {.importcpp: "#->GetClient()".}
 # #TEMPORAL DYNAMIC DELEGATE THIS SHOULD BE BOUND FROM THE BINDINGS
 # type FOnQuartzCommandEventBP* {.importcpp, pure.} = object
 # type FOnQuartzMetronomeEventBP* {.importcpp, pure.} = object
 
 #UWidget and CoreSlate stuff not bound
-proc takeWidget(widget: UWidgetPtr): TSharedRef[SWidget] {.importcpp: "#->TakeWidget()".}
+proc takeWidget*(widget: UWidgetPtr): TSharedRef[SWidget] {.importcpp: "#->TakeWidget()".}
 
 
 #Asset should put those in uobject?
@@ -542,5 +542,6 @@ type
     TraceTypeQuery_MAX, ETraceTypeQuery_MAX
 
 converter toObjectType*(collisionChannel:ECollisionChannel) : EObjectTypeQuery {.importcpp: "UEngineTypes::ConvertToObjectType(@)".}
+converter toTraceType*(collisionChannel:ECollisionChannel) : ETraceTypeQuery {.importcpp: "UEngineTypes::ConvertToTraceType(@)".}
 
 

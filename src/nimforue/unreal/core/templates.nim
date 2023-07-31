@@ -10,6 +10,9 @@ type
   TSharedPtr*[T] {.importcpp.} = object 
     mode* {.importcpp: "Mode".} : ESPMode
 
+  TWeakObjectPtr*[T] {.importcpp.} = object
+
+  TSmartPtr[T] = TSharedPtr[T] | TSharedRef[T] | TWeakObjectPtr[T]
 
 
 
@@ -18,4 +21,5 @@ func makeShared*[T](): TSharedPtr[T] {.importcpp: "MakeShared<'*0>()".}
 func makeShared*[T](pointr : ptr T) : TSharedPtr[T] {.importcpp: "TSharedPtr<'*0>(#)", constructor.}
 
 
-func get*[T](sharedPtr : TSharedPtr[T]) : ptr T {.importcpp: "#.Get()".}
+func get*[T](sharedPtr : TSmartPtr[T]) : ptr T {.importcpp: "#.Get()".}
+func isValid*[T](sharedPtr : TSmartPtr[T]) : bool {.importcpp: "#.IsValid()".}
