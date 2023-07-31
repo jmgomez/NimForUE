@@ -78,10 +78,12 @@ proc getGameUserConfig*() : Option[JSonNode] =
   else:
     none[JSonNode]()
 
-proc getGameUserConfigValue*[T](key: string, default:T) : T =
+proc tryGetGameUserConfigValue*[T](key: string) : Option[T] =
   getGameUserConfig()
     .flatMap((config:JsonNode)=>tryGetJson[T](config, key))
-    .get(default)
+
+proc getGameUserConfigValue*[T](key: string, default:T) : T =
+  tryGetGameUserConfigValue[T](key).get(default)
 
 
 proc executeNueTask(task: string) =

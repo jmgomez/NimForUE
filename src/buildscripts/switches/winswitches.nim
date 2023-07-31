@@ -95,15 +95,18 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool, target:string
     "/MP",
     # "--sdkversion:10.0.18362.0" #for nim vcc wrapper. It sets the SDK to match the unreal one. This could be extracted from UBT if it causes issues down the road
     "--sdkversion:" & getSdkVersion(),
+    # "--verbose",
     # "--noCommand",
     # "--printPath",
     # "--command:./nue echotask --test",
-    # "--vccversion:0" #$ & getCompilerVersion()
+    # "--vctoolset:14.33.31629"# & getCompilerVersion() #get it from the config as primary source
+    # "--vccversion:143"# & getCompilerVersion()
   ] & (if UEVersion() >= 5.2: 
         @[
           "/Zc:__cplusplus"
         
         ] else: @[])
+   
 
   result &= (if withDebug: 
               @["/Od", "/Z7"] 
@@ -111,6 +114,11 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool, target:string
               @["/O2"])
   if withPch: 
     result &= pchCompileFlags(target)
+  
+  
+  result &= tryGetGameUserConfigValue[string]("vctoolset")
+    .map(x => @["--vctoolset:" & x])
+    .get(newSeq[string]())
 
 
  
