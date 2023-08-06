@@ -995,14 +995,8 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   scriptStruct.assetCreated()    
   for field in ueType.fields:
     let prop = field.emitFProperty(scriptStruct)
-    when T is not void:
-      for nam, val in default(T).fieldPairs:
-        if nam == field.name:
-          prop.setOffset(offsetOfFromStr(T, nam).int32)
-          break
-     
-
-  when not T is void:
+    
+  when T is not void:
     setGIsUCCMakeStandaloneHeaderGenerator(true)
     scriptStruct.bindType()
     scriptStruct.staticLink(true)
