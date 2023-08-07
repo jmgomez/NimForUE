@@ -177,7 +177,7 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
           procNodes.add defaultConstructor
 
       let nimProcs = body.children.toSeq
-                      .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor"])
+                      .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor", ueType.name])
                       .mapIt(it.addSelfToProc(className).processVirtual(parent))
       
       var (fns,_) = genUFuncsForUClass(body, className, nimProcs)
@@ -188,6 +188,31 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
             proc fakeConstructor(init: FObjectInitializer): cls {.constructor: ctorContent .} = discard
         fns.add(initCtor)
       result =  (typeNode, fns)    
+
+
+
+proc genRawCppTypeImpl(name, body : NimNode) : NimNode =     
+  let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
+  let nimProcs = body.children.toSeq
+    .filterIt(it.kind in [nnkProcDef, nnkFuncDef])
+    .mapIt(it.addSelfToProc(className).processVirtual(parent))
+
+  for prc in nimProcs:
+    prc[0] = identPublic prc[0].strVal()
+
+  let  
+    typeName = ident className
+    typeNamePtr = ident $className & "Ptr"
+    typeParent = ident parent
+    typeDefs=
+      genAst(typeName, typeNamePtr, typeParent):
+        type 
+          typeName = object of typeParent
+          typeNamePtr = ptr typeName
+
+  result = newStmtList(typeDefs & nimProcs) 
+
+macro class*(name, body): untyped = genRawCppTypeImpl(name, body)
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (uClassNode, fns) = uClassImpl(name, body)

@@ -26,6 +26,14 @@ type
   FSceneViewPtr* = ptr FSceneView
   FSceneViewProjectionData* {.importcpp} = object
 
+  FAssetTypeActions_Base* {.importcpp, inheritable.} = object
+  FAssetTypeActions_BasePtr* = ptr FAssetTypeActions_Base
+  IAssetTools* {.importcpp.} = object
+  IAssetToolsPtr* = ptr IAssetTools  
+
+  EAssetTypeCategories* = enum
+    None, Basic, Animation, Materials, Sounds, Physics, UI, Misc = 64, Gameplay, Blueprint, Media, Textures
+
 
 
 let GEditor* {.importcpp, nodecl.} : UEditorEnginePtr
@@ -105,3 +113,8 @@ proc `$`*(cursorLocation:FViewportCursorLocation) : string =
             Section.AddEntry(LaunchPadEntry);
         }
   ]#
+
+#TODO expose FModuleManager
+proc loadAssetTools*() : IAssetToolsPtr {.importcpp: "&FModuleManager::LoadModuleChecked<FAssetToolsModule>(\"AssetTools\").Get()".}
+
+proc registerAssetTypeActions*(assetTools:IAssetToolsPtr, newActions:TSharedRef[FAssetTypeActions_Base]) {.importcpp: "#->RegisterAssetTypeActions(#)".}
