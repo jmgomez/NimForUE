@@ -635,10 +635,15 @@ func processVirtual*(procDef: NimNode, parentName: string) : NimNode =
     let isPlainVirtual = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "virtual"
     let isOverride = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "override"
     let isConstCpp = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "constcpp"
+    let isByRef = (it:NimNode) => it.kind == nnkIdent and it.strVal.toLower == "byref"
     let isParamConstCpp = (it:NimNode) => it.kind == nnkIdentDefs and it[0].kind == nnkPragmaExpr and 
         it[0][^1].children.toSeq.any(isConstCpp)
     let constParamContent = (it:NimNode) => (if isParamConstCpp(it): "const " else: "")
-
+    
+    let isParamRef = (it:NimNode) => it.kind == nnkIdentDefs and it[0].kind == nnkPragmaExpr and 
+        it[0][^1].children.toSeq.any(isByRef)
+    let byRefParamContent = (it:NimNode) => (if isParamRef(it): "& " else: "")
+    
     let hasVirtual = procDef.pragma.toSeq.any(isPlainVirtual) #with content it will be differnt. But we are ignoring it anyways
     result = procDef
     if not hasVirtual:
@@ -651,7 +656,7 @@ func processVirtual*(procDef: NimNode, parentName: string) : NimNode =
         .params
         .filterIt(it.kind == nnkIdentDefs)
         .skip(1)
-        .mapi((n, idx) => "$1 '$2 #$2" % [constParamContent(n), $(idx + 2)])
+        .mapi((n, idx) => "$1 '$3 $2 #$3" % [constParamContent(n), byRefParamContent(n), $(idx + 2)])
         .join(", ")
 
     let override = if hasOverride: "override" else: ""
