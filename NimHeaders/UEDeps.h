@@ -71,8 +71,12 @@
   #include "Editor/UnrealEd/Public/Editor.h"
   #include "Editor/UnrealEd/Public/EditorViewportClient.h"
   #include "Editor/UnrealEd/Public/LevelEditorViewport.h"
+  #include "Factories/Factory.h"
 
   #include "NavigationSystem.h"
+
+  //asset tools
+  #include "AssetTypeActions_Base.h"
 
 #endif
 #include "Components/Widget.h"
