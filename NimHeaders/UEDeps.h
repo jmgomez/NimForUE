@@ -73,13 +73,20 @@
   #include "Editor/UnrealEd/Public/LevelEditorViewport.h"
   #include "Factories/Factory.h"
 
+  #include "WorkflowOrientedApp/WorkflowTabManager.h"
+  #include "WorkflowOrientedApp/WorkflowTabFactory.h"
+
   #include "NavigationSystem.h"
 
   //asset tools
   #include "AssetTypeActions_Base.h"
 
 #endif
+
+//Slate
 #include "Components/Widget.h"
+#include "Widgets/Docking/SDockTab.h"
+
 //TEMP test 52
 //TODO add with ENGINE_
 //NOTE: The includes come from NimForUEBindinds!!

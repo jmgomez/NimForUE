@@ -50,6 +50,8 @@ public class NimForUE : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] { 
 			"GameplayAbilities",
 			"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", 
+			"Slate",
+			"SlateCore",
 		
 		});
 
@@ -66,8 +68,7 @@ public class NimForUE : ModuleRules
 			new string[] {
 				"CoreUObject",
 				"Engine",
-				"Slate",
-				"SlateCore",
+				
 
 				"NimForUEBindings",
 				

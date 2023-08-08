@@ -671,7 +671,7 @@ func processVirtual*(procDef: NimNode, parentName: string) : NimNode =
       for param in procDef.params[2..^1]:
         var param = param
         if isParamConstCpp(param):
-          param[0][^1] = nnkPragma.newTree param[0][^1].children.toSeq.filterIt(not isConstCpp(it))   
+          param[0][^1] = nnkPragma.newTree param[0][^1].children.toSeq.filterIt(not isConstCpp(it) and not isByRef(it))   
         params.add param
       result[3] = nnkFormalParams.newTree(procDef.params[0..1] & params)
 
