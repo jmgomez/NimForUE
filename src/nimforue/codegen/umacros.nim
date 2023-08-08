@@ -191,11 +191,31 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
 
 
 
+func fromCallNodeToIdentDenf(n: NimNode): NimNode = 
+  assert n.kind == nnkCall
+  let name = n[0] #first always match #Although we could make it public here
+  let typ = 
+    if n[1][0].kind in [nnkBracketExpr, nnkIdent]: #n[1] is StmtList always
+      n[1][0]
+    else:
+      error "Unexpected type of field. Expected ident or bracketExpr got " & $n[1][0].kind
+      newEmptyNode()
+  let pragms = newEmptyNode() #no pragmas for now
+  nnkIdentDefs.newTree(name, typ, pragms)
+
+
 proc genRawCppTypeImpl(name, body : NimNode) : NimNode =     
   let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
   let nimProcs = body.children.toSeq
     .filterIt(it.kind in [nnkProcDef, nnkFuncDef])
     .mapIt(it.addSelfToProc(className).processVirtual(parent))
+
+  #Call is equivalent with identDefs
+  let nimFields = body.children.toSeq
+    .filterIt(it.kind == nnkCall)
+    .map(fromCallNodeToIdentDenf)
+  
+  let recList = nnkRecList.newTree(nimFields)
 
   for prc in nimProcs:
     prc[0] = identPublic prc[0].strVal()
@@ -207,17 +227,21 @@ proc genRawCppTypeImpl(name, body : NimNode) : NimNode =
     typeDefs=
       genAst(typeName, typeNamePtr, typeParent):
         type 
-          typeName = object of typeParent
+          typeName {.exportcpp.} = object of typeParent
           typeNamePtr = ptr typeName
+  typeDefs[0][2][2] = recList #set the fields
 
   result = newStmtList(typeDefs & nimProcs) 
+  # echo repr result
+  # echo treeRepr body
+
 
 macro class*(name, body): untyped = genRawCppTypeImpl(name, body)
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
     let (uClassNode, fns) = uClassImpl(name, body)
     result = nnkStmtList.newTree(@[uClassNode] & fns)
-    # log repr result
+    #  repr result
     
 
 macro uSection*(body: untyped): untyped = 
@@ -240,7 +264,6 @@ macro uSection*(body: untyped): untyped =
         uprops.add typ[1..^1]
     # let codeReordering = nnkStmtList.newTree nnkPragma.newTree(nnkExprColonExpr.newTree(ident "experimental", newLit "codereordering"))
     result = nnkStmtList.newTree(@[typSection] & uprops & fns)
-    # echo repr result
 
 when not defined nuevm:
   macro uForwardDecl*(name : untyped ) : untyped = 
