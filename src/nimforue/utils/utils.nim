@@ -18,6 +18,15 @@ macro offsetOfFromStr*(T: typedesc, name:static string) : untyped =
   genAst(T, name=ident name):
     offsetOf(T, name)
 
+macro noresult*(prc:untyped) = 
+  assert prc.kind == nnkProcDef
+  prc.addPragma(ident "asmnostackframe")
+  prc.body = 
+    genAst(exp=prc.body): 
+      let res {.inject.} = exp
+      {.emit: "return res;".}
+  prc
+
 proc treeRepr*(xs: seq[NimNode]): string = xs.mapIt(treeRepr(it)).join("\n")
 
 template toVar*[T](self : ptr T) : var T = cast[var T](self)
