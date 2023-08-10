@@ -251,9 +251,11 @@ macro uSection*(body: untyped): untyped =
     let classes = 
         body.filterIt(it.kind == nnkCommand and it[0].strVal() == "class")
             .mapIt(genRawCppTypeImpl(it[1], it[^1]))
-    # echo treeRepr body
-    var typSection = nnkTypeSection.newTree()
-    var fns = newSeq[NimNode]()
+  
+    let userTypes = body.filterIt(it.kind == nnkTypeSection).mapIt(it.children.toSeq()).flatten()
+    let userProcs = body.filterIt(it.kind in [nnkProcDef, nnkFuncDef]) 
+    var typSection = nnkTypeSection.newTree(userTypes)
+    var fns = userProcs
     
     var uClassesTypsHelper = newSeq[NimNode]()
     for uclass in uclasses:
@@ -279,6 +281,8 @@ macro uSection*(body: untyped): untyped =
         let typDefs = typ[0].children.toSeq()
         typSection.add typDefs
         uprops.add typ[1..^1] #shouldnt this be only for uClasses?
+    
+    #TODO forward declare all procs
 
     result = nnkStmtList.newTree(@[typSection] & uprops & fns)
 
