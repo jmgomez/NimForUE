@@ -246,23 +246,40 @@ macro uClass*(name:untyped, body : untyped) : untyped =
 
 macro uSection*(body: untyped): untyped = 
     let uclasses = 
-        body.filterIt(it.kind == nnkCommand) 
+        body.filterIt(it.kind == nnkCommand and it[0].strVal() == "uClass")
             .mapIt(uClassImpl(it[1], it[^1]))
-    var typs = newSeq[NimNode]()
+    let classes = 
+        body.filterIt(it.kind == nnkCommand and it[0].strVal() == "class")
+            .mapIt(genRawCppTypeImpl(it[1], it[^1]))
+    # echo treeRepr body
+    var typSection = nnkTypeSection.newTree()
     var fns = newSeq[NimNode]()
+    
+    var uClassesTypsHelper = newSeq[NimNode]()
     for uclass in uclasses:
-        let (uClassNode, funcs) = uclass
-        typs.add uClassNode
-        fns.add funcs
+      let (uClassNode, funcs) = uclass
+      uClassesTypsHelper.add uClassNode
+      fns.add funcs
+
+    for class in classes: 
+      let types =  
+        class
+         .children.toSeq
+         .filterIt(it.kind == nnkTypeSection)
+         .head()
+         .map(section=>section.children.toSeq())
+         .get(newSeq[NimNode]())
+      typSection.add types
+      fns.add class.children.toSeq.filterIt(it.kind == nnkProcDef)
+
     #TODO allow uStructs in sections
     #set all types in the same typesection
     var uprops = nnkStmtList.newTree()
-    var typSection = nnkTypeSection.newTree()
-    for typ in typs:
+    for typ in uClassesTypsHelper:
         let typDefs = typ[0].children.toSeq()
         typSection.add typDefs
-        uprops.add typ[1..^1]
-    # let codeReordering = nnkStmtList.newTree nnkPragma.newTree(nnkExprColonExpr.newTree(ident "experimental", newLit "codereordering"))
+        uprops.add typ[1..^1] #shouldnt this be only for uClasses?
+
     result = nnkStmtList.newTree(@[typSection] & uprops & fns)
 
 when not defined nuevm:
