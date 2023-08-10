@@ -623,7 +623,7 @@ func generateSuper(procDef: NimNode, parentName: string) : NimNode =
         proc super() {.importc: content, nodecl.}  
     result.params = nnkFormalParams.newTree procDef.params.filterIt(it != parent)
 
-func processVirtual*(procDef: NimNode, parentName: string) : NimNode = 
+func processVirtual*(procDef: NimNode, parentName: string = "", overrideName: string = "") : NimNode = 
 #[
     if the proc has virtual, it will fill it with the proc info:
         - Capitilize the proc name
@@ -633,6 +633,7 @@ func processVirtual*(procDef: NimNode, parentName: string) : NimNode =
     If the proc has any content in virtual, it will ignore the pragma and use the content instead 
 ]#   
     let isPlainVirtual = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "virtual"
+    let isPlainMember = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "member"
     let isOverride = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "override"
     let isConstCpp = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "constcpp"
     let isByRef = (it:NimNode) => it.kind == nnkIdent and it.strVal.toLower == "byref"
@@ -644,14 +645,18 @@ func processVirtual*(procDef: NimNode, parentName: string) : NimNode =
         it[0][^1].children.toSeq.any(isByRef)
     let byRefParamContent = (it:NimNode) => (if isParamRef(it): "& " else: "")
     
-    let hasVirtual = procDef.pragma.toSeq.any(isPlainVirtual) #with content it will be differnt. But we are ignoring it anyways
+    let hasVirtual = procDef.pragma.toSeq.any(x => isPlainVirtual(x) or isPlainMember(x)) #with content it will be differnt. But we are ignoring it anyways
     result = procDef
     if not hasVirtual:
         return procDef
-
+    let hasMember = procDef.pragma.toSeq.any(isPlainMember)
+    let pragmaIdent = ident (if hasMember: "member" else: "virtual")
     let hasOverride = procDef.pragma.toSeq.any(it=>it.kind == nnkIdent and it.strVal() == "override")
     let hasFnConstCpp = procDef.pragma.toSeq.any(isConstCpp)
-    let name = procDef.name.strVal().capitalizeAscii()        
+    let name = 
+        if overrideName == "":
+            procDef.name.strVal().capitalizeAscii()        
+        else: overrideName
     let params = procDef
         .params
         .filterIt(it.kind == nnkIdentDefs)
@@ -663,8 +668,8 @@ func processVirtual*(procDef: NimNode, parentName: string) : NimNode =
     let fnConstCpp = if hasFnConstCpp: "const" else: ""
     let virtualContent: string = &"{name}({params}) {fnConstCpp} {override}"
     let keptPragmas = procDef.pragma.toSeq
-        .filterIt(not @[isPlainVirtual(it), isOverride(it), isConstCpp(it)].foldl(a or b, false))
-    let newVirtual = nnkExprColonExpr.newTree(ident "virtual", newLit virtualContent)
+        .filterIt(not @[isPlainVirtual(it), isOverride(it), isConstCpp(it), isPlainMember(it)].foldl(a or b, false))
+    let newVirtual = nnkExprColonExpr.newTree(pragmaIdent, newLit virtualContent)
     let pragmas = nnkPragma.newTree(keptPragmas & newVirtual) 
     if params.len > 0:
       var params = newSeq[NimNode]()
@@ -676,7 +681,9 @@ func processVirtual*(procDef: NimNode, parentName: string) : NimNode =
       result[3] = nnkFormalParams.newTree(procDef.params[0..1] & params)
 
     result.pragma = pragmas   
-    result.body.insert 0, generateSuper(procDef, parentName)
+    if not hasMember:
+        assert parentName != "", "virtual functions must have a parent"
+        result.body.insert 0, generateSuper(procDef, parentName)
     if hasFnConstCpp:
         let selfNoConst =
           genAst():  

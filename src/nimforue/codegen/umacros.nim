@@ -189,7 +189,10 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
         fns.add(initCtor)
       result =  (typeNode, fns)    
 
-
+macro uClass*(name:untyped, body : untyped) : untyped = 
+  let (uClassNode, fns) = uClassImpl(name, body)
+  result = nnkStmtList.newTree(@[uClassNode] & fns)
+  #  repr result
 
 func fromCallNodeToIdentDenf(n: NimNode): NimNode = 
   assert n.kind == nnkCall
@@ -238,20 +241,55 @@ proc genRawCppTypeImpl(name, body : NimNode) : NimNode =
 
 macro class*(name, body): untyped = genRawCppTypeImpl(name, body)
 
-macro uClass*(name:untyped, body : untyped) : untyped = 
-    let (uClassNode, fns) = uClassImpl(name, body)
-    result = nnkStmtList.newTree(@[uClassNode] & fns)
-    #  repr result
+func functorImpl(body: NimNode): NimNode = 
+  var prc = body.filterIt(it.kind == nnkProcDef).head().get()
+  let captures = 
+    nnkRecList.newTree(
+      body
+      .filterIt(it.kind == nnkBracket)
+      .head.get(newEmptyNode())
+      .mapIt(nnkIdentDefs.newTree(identPublic(it[0].strVal()), it[1], newEmptyNode()))
+    )
+  let name = ident prc.name.strVal.capitalizeAscii()
+  prc.name = ident "invoke"
+  prc.addPragma ident "member"
+  prc =
+   prc
+    .addSelfToProc(name.strVal())
+    .processVirtual(overrideName = "operator()")
+
+  let typ = genAst(name, namePtr = ident name.strVal() & "Ptr"):
+    type 
+      name* = object
+      namePtr* = ptr name
+  typ[0][^1][^1] = captures
+  result = nnkStmtList.newTree(typ, prc)
+  debugEcho repr result
+
+macro functor*(body: untyped): untyped = 
+  #[
+  (TODO: consider adding an invokation section)
+  Produces:
+    type
+    NimFunctor = object
+      self: FTileGridAssetEditorPtr
+  proc invoke(f: NimFunctor, args: FSpawnTabArgs): TSharedRef[SDockTab] {.member:"operator ()(const '2& #2)", noresult .} = 
+    let dockerTab = sNew[SDockTab]()
+    discard dockerTab.setContent(f.self.detailsView.toSharedRef())
+    dockerTab
+  ]#
+  result = functorImpl(body)  
+
+
+
     
 
 macro uSection*(body: untyped): untyped = 
-    let uclasses = 
-        body.filterIt(it.kind == nnkCommand and it[0].strVal() == "uClass")
-            .mapIt(uClassImpl(it[1], it[^1]))
-    let classes = 
-        body.filterIt(it.kind == nnkCommand and it[0].strVal() == "class")
-            .mapIt(genRawCppTypeImpl(it[1], it[^1]))
-  
+    func getFromBody(body:NimNode, name: string): seq[NimNode] = body.filterIt(it.kind in [nnkCommand, nnkCall] and it[0].strVal() == name)
+    let uclasses = body.getFromBody("uClass").mapIt(uClassImpl(it[1], it[^1]))
+    let classes = body.getFromBody("class").mapIt(genRawCppTypeImpl(it[1], it[^1]))
+    let functors = body.getFromBody("functor").mapIt(functorImpl(it[^1]))
+
     let userTypes = body.filterIt(it.kind == nnkTypeSection).mapIt(it.children.toSeq()).flatten()
     let userProcs = body.filterIt(it.kind in [nnkProcDef, nnkFuncDef]) 
     var typSection = nnkTypeSection.newTree(userTypes)
@@ -263,7 +301,7 @@ macro uSection*(body: untyped): untyped =
       uClassesTypsHelper.add uClassNode
       fns.add funcs
 
-    for class in classes: 
+    for class in classes & functors: 
       let types =  
         class
          .children.toSeq
@@ -272,7 +310,7 @@ macro uSection*(body: untyped): untyped =
          .map(section=>section.children.toSeq())
          .get(newSeq[NimNode]())
       typSection.add types
-      fns.add class.children.toSeq.filterIt(it.kind == nnkProcDef)
+      fns.add class.children.toSeq.filterIt(it.kind in [nnkProcDef, nnkFuncDef])
 
     #TODO allow uStructs in sections
     #set all types in the same typesection
@@ -283,14 +321,13 @@ macro uSection*(body: untyped): untyped =
         uprops.add typ[1..^1] #shouldnt this be only for uClasses?
     
     #TODO forward declare all procs
-
     result = nnkStmtList.newTree(@[typSection] & uprops & fns)
 
 when not defined nuevm:
   macro uForwardDecl*(name : untyped ) : untyped = 
-      let (className, parentName, interfaces) = getTypeNodeFromUClassName(name)
-      var ueType = UEType(name:className, kind:uetClass, parent:parentName, interfaces:interfaces)
-      ueType.interfaces = interfaces
-      ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
-      let (typNode, addEmitterProc) = emitUClass(ueType)
-      result = nnkStmtList.newTree(typNode, addEmitterProc)
+    let (className, parentName, interfaces) = getTypeNodeFromUClassName(name)
+    var ueType = UEType(name:className, kind:uetClass, parent:parentName, interfaces:interfaces)
+    ueType.interfaces = interfaces
+    ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
+    let (typNode, addEmitterProc) = emitUClass(ueType)
+    result = nnkStmtList.newTree(typNode, addEmitterProc)
