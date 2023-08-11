@@ -37,3 +37,4 @@ proc makeUniqueObjectName*(outer : UObjectPtr, class : UClassPtr, inbaseName : F
 #TODO bind ELoadFlags
 
 proc loadObject*[T : UObject](outer : UObjectPtr, name : FString, filename : FString = "", loadFlags : uint32 = 0) : ptr T {.importcpp:"LoadObject<'*0>(#, *#, *#, @)".}
+

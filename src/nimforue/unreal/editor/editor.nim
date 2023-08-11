@@ -30,6 +30,7 @@ type
   FAssetTypeActions_BasePtr* = ptr FAssetTypeActions_Base
   IAssetTools* {.importcpp.} = object
   IAssetToolsPtr* = ptr IAssetTools  
+  
 
   EAssetTypeCategories* = enum
     None, Basic, Animation, Materials, Sounds, Physics, UI, Misc = 64, Gameplay, Blueprint, Media, Textures
@@ -114,7 +115,8 @@ proc `$`*(cursorLocation:FViewportCursorLocation) : string =
         }
   ]#
 
-#TODO expose FModuleManager
+
+proc loadModulePtr*[T](name: FName): ptr T {.importcpp:"FModuleManager::LoadModulePtr<'*0>(#)".} #This should be part of EngineTypes
 proc loadAssetTools*() : IAssetToolsPtr {.importcpp: "&FModuleManager::LoadModuleChecked<FAssetToolsModule>(\"AssetTools\").Get()".}
 
 proc registerAssetTypeActions*(assetTools:IAssetToolsPtr, newActions:TSharedRef[FAssetTypeActions_Base]) {.importcpp: "#->RegisterAssetTypeActions(#)".}

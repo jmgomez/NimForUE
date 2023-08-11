@@ -66,7 +66,10 @@ type
   # UShapeComponentPtr* = ptr UShapeComponent
   # UChildActorComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
   # UChildActorComponentPtr* = ptr UChildActorComponent
-  UBlueprint* {.importcpp, inheritable, pure .} = object of UObject
+  UBlueprintCore* {.importcpp, inheritable, pure .} = object of UObject
+    generatedClass* {.importcpp:"GeneratedClass"}: TSubclassOf[UBlueprintGeneratedClassPtr]
+  UBlueprintCorePtr* = ptr UBlueprintCore
+  UBlueprint* {.importcpp, inheritable, pure .} = object of UBlueprintCore
   UBlueprintPtr* = ptr UBlueprint
 
 
@@ -411,6 +414,10 @@ proc getPackageName*(assetPath: FTopLevelAssetPath): FName {.importcpp: "#.GetPa
 proc getAssetName*(assetPath: FTopLevelAssetPath): FName {.importcpp: "#.GetAssetName()", .}
 proc `$`*(assetPath: FTopLevelAssetPath): string = &"Package Name: {assetPath.getPackageName()} Asset Name: {assetPath.getAssetName()}"
 # INPUT ACTION. This should live in another place.
+
+proc getBlueprintClass*(blueprint: UBlueprintPtr): UClassPtr {.importcpp: "#->GetBlueprintClass()", ureflect, .}
+proc getParentClass*(blueprint: UBlueprintPtr): TSubclassOf[UObject] {.importcpp: "#->ParentClass", ureflect, .}
+
 type 
   ETriggerEvent* {.importcpp, size: sizeof(uint8), pure.} = enum
     None, Triggered, Started, Ongoing, Canceled, Completed, ETriggerEvent_MAX

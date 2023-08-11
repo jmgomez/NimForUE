@@ -44,3 +44,7 @@ proc addStatic*[R, T, P](del: TDelegateRetOneParam[R, T], fn : proc(v:T, p:P) : 
 proc createStatic*[R, T](fn : proc(v:T) : bool {.cdecl.}) : TDelegateRetOneParam[R, T] {.importcpp:"TDelegate<bool(float)>::CreateStatic(@)".}
 proc createStatic*[R, T, P](fn : proc(v:T, p:P) : bool {.cdecl.}, p:P) : TDelegateRetOneParam[R, T] {.importcpp:"TDelegate<bool(float)>::CreateStatic(@)".}
 
+#Notice this is needed because we cant express the signature of some delegates without hacks (mostly due to const) in Nim
+#So you bind the delegate as a regular type and then you pass over a functor to this function and voila!
+proc createLambda*[T](functor: object): T {.importcpp:"'0::CreateLambda(#)" .}
+
