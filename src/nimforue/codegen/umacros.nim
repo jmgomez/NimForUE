@@ -264,7 +264,7 @@ func functorImpl(body: NimNode): NimNode =
       namePtr* = ptr name
   typ[0][^1][^1] = captures
   result = nnkStmtList.newTree(typ, prc)
-  debugEcho repr result
+  # debugEcho repr result
 
 macro functor*(body: untyped): untyped = 
   #[

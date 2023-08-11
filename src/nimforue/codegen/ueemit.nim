@@ -611,6 +611,12 @@ func genDefaults*(body:NimNode) : Option[NimNode] =
 
 
 func addSelfToProc*(procDef:NimNode, className:string) : NimNode = 
+    if procDef.pragma.toSeq.any(it=>it.kind == nnkIdent and it.strVal() == "constructor"):
+        let assignSelf = 
+          genAst(): 
+           let self {.inject.} = this
+        procDef.body.insert(0, assignSelf)
+        return procDef
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
     procDef
 
