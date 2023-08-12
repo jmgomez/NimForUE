@@ -292,6 +292,12 @@ func getParamFromIdentDef(identDefs:NimNode): seq[NimParam] =
     of nnkCommand:
       #sink?
       identDefs[^2][1].strVal
+    
+    of nnkObjectTy:
+      if identDefs[0].strVal == "functor":
+        return @[]
+      error &"Error in getParamFromIdentDef got {identDefs[^2].kind} in identDefs type"
+      ""
 
     else:
       debugEcho treeRepr identDefs

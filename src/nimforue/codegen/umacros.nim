@@ -281,7 +281,9 @@ macro functor*(body: untyped): untyped =
   result = functorImpl(body)  
 
 
-
+dumpTree:
+  proc forwardTest(a:int):void
+  proc forwardTest(a:int):void = echo ""
     
 
 macro uSection*(body: untyped): untyped = 
@@ -299,7 +301,10 @@ macro uSection*(body: untyped): untyped =
     for uclass in uclasses:
       let (uClassNode, funcs) = uclass
       uClassesTypsHelper.add uClassNode
-      fns.add funcs
+      for fn in funcs:
+        if fn.kind in [nnkProcDef, nnkFuncDef] and fn[^1].len() > 0: #we dont put forward declares here
+          echo "adding " & fn.name.strVal
+          fns.add fn   
 
     for class in classes & functors: 
       let types =  
@@ -316,12 +321,18 @@ macro uSection*(body: untyped): untyped =
     #set all types in the same typesection
     var uprops = nnkStmtList.newTree()
     for typ in uClassesTypsHelper:
-        let typDefs = typ[0].children.toSeq()
-        typSection.add typDefs
-        uprops.add typ[1..^1] #shouldnt this be only for uClasses?
+      let typDefs = typ[0].children.toSeq()
+      typSection.add typDefs
+      uprops.add typ[1..^1] #shouldnt this be only for uClasses?
     
-    #TODO forward declare all procs
-    result = nnkStmtList.newTree(@[typSection] & uprops & fns)
+    var forwards = newSeq[NimNode]()
+    for fn in fns:
+      let forward = copyNimTree(fn)
+      forward[^1] = newEmptyNode()
+      forwards.add forward
+
+    # echo treeRepr forwards
+    result = nnkStmtList.newTree(@[typSection] & uprops & forwards & fns)
 
 when not defined nuevm:
   macro uForwardDecl*(name : untyped ) : untyped = 

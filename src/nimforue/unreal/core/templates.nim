@@ -28,3 +28,7 @@ func isValid*[T](sharedPtr : TSmartPtr[T]) : bool {.importcpp: "#.IsValid()".}
 func toSharedRef*[T](sharedPtr : TSharedPtr[T]) : TSharedRef[T] {.importcpp: "#.ToSharedRef()".}
 func toSharedPtr*[T](sharedRef : TSharedRef[T]) : TSharedPtr[T] {.importcpp: "#.ToSharedPtr()".}
 
+
+# {.experimental: "dotOperators".}
+
+# proc `.`*[T](sharedPtr : TSmartPtr[T]) : ptr T {.importcpp: "#->".}
