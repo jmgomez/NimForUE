@@ -1,7 +1,7 @@
 when not defined(nimsuggest):
   include  ../prelude
 import std/[options,sugar, typetraits, sequtils]
-
+import ../../game/extras/ui
 
 
 type 
@@ -11,9 +11,12 @@ type
   UEditorEnginePtr* = ptr UEditorEngine
   FEditorViewportClient* {.importcpp, inheritable.} = object of FViewportClient
     viewport* {.importcpp: "Viewport".} : FViewportPtr
+    previewScene* {.importcpp: "PreviewScene".} : FPreviewScenePtr
   FEditorViewportClientPtr* = ptr FEditorViewportClient
   FLevelEditorViewportClient* {.importcpp.} = object of FEditorViewportClient
   FLevelEditorViewportClientPtr* = ptr FLevelEditorViewportClient
+  FEditorModeTools* {.importcpp.} = object
+  FEditorModeToolsPtr* = ptr FEditorModeTools
 
   FViewportCursorLocation* {.importcpp.} = object
   EReloadCompleteReason* {.importcpp, size:sizeof(uint8).} = enum
@@ -35,6 +38,62 @@ type
   EAssetTypeCategories* = enum
     None, Basic, Animation, Materials, Sounds, Physics, UI, Misc = 64, Gameplay, Blueprint, Media, Textures
 
+  FWorkflowTabFactory* {.importcpp, inheritable.} = object 
+    tabLabel {.importcpp:"TabLabel".} : FText
+  FWorkflowTabFactoryPtr* = ptr FWorkflowTabFactory
+  FWorkflowTabSpawnInfo* {.importcpp, bycopy, inheritable.} = object
+  FWorkflowTabSpawnInfoPtr* = ptr FWorkflowTabSpawnInfo
+  FTabManager* {.importcpp, inheritable.} = object
+  FTabManagerPtr* = ptr FTabManager
+  FTabManagerLayout* {.importcpp:"FTabManager::FLayout", inheritable.} = object #what is the base class?
+  FTabManagerLayoutNode* {.importcpp:"FTabManager::FLayoutNode", inheritable.} = object
+  FTabManagerArea* {.importcpp:"FTabManager::FArea", inheritable.} = object of FTabManagerLayoutNode
+  FTabManagerStack* {.importcpp:"FTabManager::FStack", inheritable.} = object of FTabManagerLayoutNode
+  FTabManagerSplitter* {.importcpp:"FTabManager::FSplitter", inheritable.} = object 
+  FSpawnTabArgs* {.importcpp, inheritable, bycopy.} = object
+  FTabSpawnerEntry* {.importcpp, inheritable.} = object
+    # tabId {.importcpp:"TabId".} : FName
+    discard
+
+
+  ETabState* {.importcpp:"ETabState::Type".} = enum
+    OpenedTab, ClosedTab, SidebarTab
+
+  IToolkitHost* {.importcpp, inheritable.} = object
+  IToolkitHostPtr* = ptr IToolkitHost
+  IDetailsView* {.importcpp, inheritable.} = object of SCompoundWidget
+  IDetailsViewPtr* = ptr IDetailsView
+  FPropertyEditorModule* {.importcpp, inheritable.} = object
+  FPropertyEditorModulePtr* = ptr FPropertyEditorModule
+  FDetailsViewArgs* {.importcpp, inheritable.} = object
+    bAllowSearch* {.importcpp:"bAllowSearch".} : bool
+    bHideSelectionTip* {.importcpp:"bHideSelectionTip".} : bool
+    bLockable* {.importcpp:"bLockable".} : bool
+
+  FPreviewScene* {.importcpp, inheritable.} = object
+  FPreviewScenePtr* = ptr FPreviewScene
+  ConstructionValues* {.importcpp:"FPreviewScene::$1", inheritable.} = object
+    lightRotation* {.importcpp:"LightRotation".} : FRotator
+    lightBrightness* {.importcpp:"LightBrightness".} : float32
+
+  SEditorViewport* {.importcpp, inheritable.} = object of SCompoundWidget
+  SEditorViewportPtr* = ptr SEditorViewport
+  SAssetEditorViewport* {.importcpp, inheritable.} = object of SEditorViewport
+  SAssetEditorViewportPtr* = ptr SAssetEditorViewport
+  SAssetEditorViewportFArguments* {.importcpp:"SAssetEditorViewport::FArguments", inheritable.} = object
+  FAssetEditorViewportConstructionArgs* {.importcpp.} = object
+
+  ICommonEditorViewportToolbarInfoProvider* {.importcpp, inheritable.} = object 
+
+  FAssetEditorToolkit* {.importcpp, inheritable.} = object
+  FAssetEditorToolkitPtr* = ptr FAssetEditorToolkit
+  #this should be in EngineTypes I guess
+
+  FOnSpawnTab* {.importcpp.} = object# TDelegateRetOneParam[TSharedRef[SDockTab], FSpawnTabArgs]
+
+#TODO before moving on make the parser work with the enums!
+  EOrientation* {.size: sizeof(uint8), importcpp, pure.} = enum
+    Orient_Horizontal, Orient_Vertical, Orient_MAX
 
 
 let GEditor* {.importcpp, nodecl.} : UEditorEnginePtr
@@ -120,3 +179,35 @@ proc loadModulePtr*[T](name: FName): ptr T {.importcpp:"FModuleManager::LoadModu
 proc loadAssetTools*() : IAssetToolsPtr {.importcpp: "&FModuleManager::LoadModuleChecked<FAssetToolsModule>(\"AssetTools\").Get()".}
 
 proc registerAssetTypeActions*(assetTools:IAssetToolsPtr, newActions:TSharedRef[FAssetTypeActions_Base]) {.importcpp: "#->RegisterAssetTypeActions(#)".}
+
+
+
+proc initAssetEditor*(self:FAssetEditorToolkitPtr, mode: EToolkitMode, initToolkitHost {.byref.}: TSharedPtr[IToolkitHost], appIdentifier: FName,
+                     standaloneDefaultLayout: TSharedRef[FTabManagerLayout], bCreateDefaultStandaloneMenu: bool,
+                      bCreateDefaultToolbar: bool, objToEdit: UObjectPtr, bInIsToolbarFocusable = false,
+                      bInUseSmallToolbarIcons = false) {.importcpp:"#->InitAssetEditor(@)".}
+
+
+proc createDetailView*(self: FPropertyEditorModulePtr, args: FDetailsViewArgs): TSharedPtr[IDetailsView] {.importcpp:"#->CreateDetailView(#)" .}
+proc setObject*(self: TSharedPtr[IDetailsView], obj: UObjectPtr) {.importcpp:"#->SetObject(#)" .}
+
+#Need to find a generic way to deal with attributes but this should work for now
+proc label*(self: TSharedRef[SDockTab], text: FText): TSharedRef[SDockTab] {.importcpp:"#.Label(#)" .} #TODO this is wrong
+
+proc addArea*(self: TSharedRef[FTabManagerLayout], area: TSharedRef[FTabManagerArea]): TSharedRef[FTabManagerLayout] {.importcpp:"#->AddArea(#)" .}
+proc newPrimaryArea*(): TSharedRef[FTabManagerArea] {.importcpp:"FTabManager::NewPrimaryArea()" .}
+proc setOrientation*(self: TSharedRef[FTabManagerArea], orientation: EOrientation): TSharedRef[FTabManagerArea] {.importcpp:"#->SetOrientation(#)" .}
+proc split*(self: TSharedRef[FTabManagerArea], node: TSharedRef[FTabManagerLayoutNode]): TSharedRef[FTabManagerArea] {.importcpp:"#->Split(#)" .}
+proc newSplitter*(orientation: EOrientation): TSharedRef[FTabManagerSplitter] {.importcpp:"FTabManager::NewSplitter(#)" .}
+proc split*(self: TSharedRef[FTabManagerSplitter], node: TSharedRef[FTabManagerLayoutNode]): TSharedRef[FTabManagerSplitter] {.importcpp:"#->Split(#)" .}
+proc newTabManagerStack*(): TSharedRef[FTabManagerStack] {.importcpp:"FTabManager::NewStack()" .}
+proc newTabManagerLayout*(name: FName): TSharedRef[FTabManagerLayout] {.importcpp:"FTabManager::NewLayout(#)".}
+proc nullTabManagerLayout*(): TSharedRef[FTabManagerLayout] {.importcpp:"(FTabManager::FLayout::NullLayout)".}
+proc addTab*(self: TSharedRef[FTabManagerStack], tabId: FName, tabState: ETabState): TSharedRef[FTabManagerStack] {.importcpp:"#->AddTab(@)" .}
+
+proc registerTabSpawner*(self: TSharedRef[FTabManager], tabId: FName, tabSpawner {.byref.}: FOnSpawnTab): FTabSpawnerEntry {.importcpp:"#->RegisterTabSpawner(#, #)" .}
+proc unregisterTabSpawner*(self: TSharedRef[FTabManager], tabId: FName): bool {.importcpp:"#->UnregisterTabSpawner(#)" .}
+
+
+proc construct*(arg: SAssetEditorViewportFArguments, ctorArg: FAssetEditorViewportConstructionArgs) {.importcpp:"SAssetEditorViewport::Construct(@)".}
+proc setEditorViewportClient*(self: SAssetEditorViewportFArguments, viewportClient: TSharedPtr[FEditorViewportClient]) {.importcpp:"#.EditorViewportClient(#)".}

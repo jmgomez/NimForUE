@@ -206,8 +206,34 @@ func fromCallNodeToIdentDenf(n: NimNode): NimNode =
   let pragms = newEmptyNode() #no pragmas for now
   nnkIdentDefs.newTree(name, typ, pragms)
 
+func getRawClassTemplate(isSlate: bool): string = 
+  #TODO Interfaces
+  let slateContent = 
+    (if isSlate:
+      """
+  SLATE_BEGIN_ARGS($1){}
+  SLATE_END_ARGS()
+      """
+    else: "")
+  &"""
+struct $1 : public $3{{
+  { slateContent }
+  $2  
+}};
+  """
 
 proc genRawCppTypeImpl(name, body : NimNode) : NimNode =     
+  #TODO do this better so I can introudce other metas
+  
+  let isSlate = 
+    body
+    .filterIt(it.kind == nnkPar)
+    .mapIt(it.children.toSeq)
+    .flatten
+    .anyIt(it.kind == nnkIdent and it.strVal.toLower == "slate")
+  
+
+
   let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
   let nimProcs = body.children.toSeq
     .filterIt(it.kind in [nnkProcDef, nnkFuncDef])
@@ -230,8 +256,10 @@ proc genRawCppTypeImpl(name, body : NimNode) : NimNode =
     typeDefs=
       genAst(typeName, typeNamePtr, typeParent):
         type 
-          typeName {.exportcpp.} = object of typeParent
+          typeName {.exportcpp,  inheritable, codegenDecl:"placeholder".} = object of typeParent
           typeNamePtr = ptr typeName
+  #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
+  typeDefs[0][0][^1][^1][^1] = newLit getRawClassTemplate(isSlate)
   typeDefs[0][2][2] = recList #set the fields
 
   result = newStmtList(typeDefs & nimProcs) 
@@ -251,7 +279,7 @@ func functorImpl(body: NimNode): NimNode =
       .mapIt(nnkIdentDefs.newTree(identPublic(it[0].strVal()), it[1], newEmptyNode()))
     )
   let name = ident prc.name.strVal.capitalizeAscii()
-  prc.name = ident "invoke"
+  prc.name = ident "invoke" & name.strVal()
   prc.addPragma ident "member"
   prc =
    prc
@@ -280,12 +308,6 @@ macro functor*(body: untyped): untyped =
   ]#
   result = functorImpl(body)  
 
-
-dumpTree:
-  proc forwardTest(a:int):void
-  proc forwardTest(a:int):void = echo ""
-    
-
 macro uSection*(body: untyped): untyped = 
     func getFromBody(body:NimNode, name: string): seq[NimNode] = body.filterIt(it.kind in [nnkCommand, nnkCall] and it[0].strVal() == name)
     let uclasses = body.getFromBody("uClass").mapIt(uClassImpl(it[1], it[^1]))
@@ -298,13 +320,11 @@ macro uSection*(body: untyped): untyped =
     var fns = userProcs
     
     var uClassesTypsHelper = newSeq[NimNode]()
+    var uClassFns = newSeq[NimNode]()
     for uclass in uclasses:
       let (uClassNode, funcs) = uclass
       uClassesTypsHelper.add uClassNode
-      for fn in funcs:
-        if fn.kind in [nnkProcDef, nnkFuncDef] and fn[^1].len() > 0: #we dont put forward declares here
-          echo "adding " & fn.name.strVal
-          fns.add fn   
+      uClassFns.add funcs
 
     for class in classes & functors: 
       let types =  
@@ -325,14 +345,7 @@ macro uSection*(body: untyped): untyped =
       typSection.add typDefs
       uprops.add typ[1..^1] #shouldnt this be only for uClasses?
     
-    var forwards = newSeq[NimNode]()
-    for fn in fns:
-      let forward = copyNimTree(fn)
-      forward[^1] = newEmptyNode()
-      forwards.add forward
-
-    # echo treeRepr forwards
-    result = nnkStmtList.newTree(@[typSection] & uprops & forwards & fns)
+    result = nnkStmtList.newTree(@[typSection] & uprops & uClassFns & fns)
 
 when not defined nuevm:
   macro uForwardDecl*(name : untyped ) : untyped = 

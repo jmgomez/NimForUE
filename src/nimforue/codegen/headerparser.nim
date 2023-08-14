@@ -172,6 +172,7 @@ proc getUClassesNamesFromHeaders(cppCode:string) : seq[CppTypeInfo] =
   result.add(getTypeSeparatingSemicolon("struct"))
   result.add(getTypeAfterUType("UCLASS", "class"))
   result.add(getTypeAfterUType("USTRUCT", "struct"))
+  result.add(getTypeAfterUType("UEnum", "enum"))
   result = result.deduplicate()
 
 

@@ -306,6 +306,9 @@ type
   SWidget* {.importcpp, inheritable, pure .} = object
   SWidgetPtr* = ptr SWidget
   UWidget* {.importcpp, inheritable, pure .} = object of UObject
+    bOverrideAccessibleDefaults*: bool
+    bCanChildrenBeAccessible*: bool
+    
   UWidgetPtr* = ptr UWidget
   FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
     # bIsDynamicallyLoaded*: uint8

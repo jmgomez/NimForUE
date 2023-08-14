@@ -28,6 +28,7 @@ macro noresult*(prc:untyped) =
   prc
 
 proc treeRepr*(xs: seq[NimNode]): string = xs.mapIt(treeRepr(it)).join("\n")
+proc repr*(xs: seq[NimNode]): string = xs.mapIt(repr(it)).join("\n")
 
 template toVar*[T](self : ptr T) : var T = cast[var T](self)
 template toVar*[T](self : T) : var T = toVar(self.unsafePtr())

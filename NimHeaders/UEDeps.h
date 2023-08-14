@@ -38,6 +38,7 @@
 #include "Engine/Public/WorldPartition/DataLayer/DataLayerInstance.h"
 #include "Engine/DamageEvents.h"
 #include "Engine/Private/AsyncActionLoadPrimaryAsset.h"
+#include "Engine/Public/PreviewScene.h"
 
 
 #include "Misc/AutomationTest.h"
@@ -48,6 +49,9 @@
 #include "UObject/UObjectAllocator.h"
 #include "UObject/ObjectSaveContext.h"
 
+
+//UMG
+#include "Components/Viewport.h"
 
 
 //NimForUEBindingsHeaders.h
@@ -70,7 +74,9 @@
   #include "Editor/UnrealEdEngine.h"
   #include "Editor/UnrealEd/Public/Editor.h"
   #include "Editor/UnrealEd/Public/EditorViewportClient.h"
+  #include "Editor/UnrealEd/Public/SAssetEditorViewport.h"
   #include "Editor/UnrealEd/Public/LevelEditorViewport.h"
+  #include "Editor/UnrealEd/Public/AssetEditorViewportLayout.h"
   #include "Factories/Factory.h"
 
   #include "WorkflowOrientedApp/WorkflowTabManager.h"
