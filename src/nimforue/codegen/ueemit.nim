@@ -610,7 +610,8 @@ func genDefaults*(body:NimNode) : Option[NimNode] =
 
 
 func addSelfToProc*(procDef:NimNode, className:string) : NimNode = 
-    if procDef.pragma.toSeq.any(it=>it.kind == nnkIdent and it.strVal() == "constructor"):
+    if procDef.pragma.toSeq.any(it=>it.kind == nnkIdent and it.strVal() == "constructor" or 
+        it.kind == nnkExprColonExpr and it[0].strVal() == "constructor"):
         let assignSelf = 
           genAst(): 
            let self {.inject.} = this
@@ -640,8 +641,8 @@ func processVirtual*(procDef: NimNode, parentName: string = "", overrideName: st
     let isPlainVirtual = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "virtual"
     let isPlainMember = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "member"
     let isOverride = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "override"
-    let isConstCpp = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "constcpp"
-    let isByRef = (it:NimNode) => it.kind == nnkIdent and it.strVal.toLower == "byref"
+    let isConstCpp = (it:NimNode) => it.kind == nnkIdent and it.strVal() in ["constcpp", "constref"]
+    let isByRef = (it:NimNode) => it.kind == nnkIdent and it.strVal.toLower in ["byref", "constref"]
     let isParamConstCpp = (it:NimNode) => it.kind == nnkIdentDefs and it[0].kind == nnkPragmaExpr and 
         it[0][^1].children.toSeq.any(isConstCpp)
     let constParamContent = (it:NimNode) => (if isParamConstCpp(it): "const " else: "")

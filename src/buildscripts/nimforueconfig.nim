@@ -267,7 +267,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
       "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
       "SlateCore", "Slate", "TypedElementFramework", "Renderer", "AnimationCore",
       "ClothingSystemRuntimeInterface", "SandboxFile", "NetworkFileSystem",
-      "Experimental/Interchange/Core", "UMG",
+      "Experimental/Interchange/Core", "UMG", "Slate", "SlateCore",
       "Experimental/ChaosCore", "InputCore", "RHI", "AudioMixerCore", "AssetRegistry", "DeveloperSettings"]
 
   let developerModules = @["DesktopPlatform", 

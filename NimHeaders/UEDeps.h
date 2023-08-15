@@ -49,6 +49,8 @@
 #include "UObject/UObjectAllocator.h"
 #include "UObject/ObjectSaveContext.h"
 
+//Slate
+#include "Widgets/Layout/Anchors.h"
 
 //UMG
 #include "UMG/Public/Components/Viewport.h"

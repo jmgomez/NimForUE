@@ -259,14 +259,21 @@ proc genRawCppTypeImpl(name, body : NimNode) : NimNode =
     typeName = ident className
     typeNamePtr = ident $className & "Ptr"
     typeParent = ident parent
-    typeDefs=
+  var typeDefs=
       genAst(typeName, typeNamePtr, typeParent):
         type 
           typeName {.exportcpp,  inheritable, codegenDecl:"placeholder".} = object of typeParent
           typeNamePtr = ptr typeName
+        
   #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
   typeDefs[0][0][^1][^1][^1] = newLit getRawClassTemplate(isSlate)
   typeDefs[0][2][2] = recList #set the fields
+  if isSlate:
+    let arguments = 
+      genAst(name = ident className & "FArguments"): 
+        type name* {. inject, importcpp: "cppContent".} = object
+    arguments[0][0][^1][^1][^1] = newLit className & "::FArguments"
+    typeDefs.add arguments[0]
 
   result = newStmtList(typeDefs & nimProcs) 
   # echo repr result

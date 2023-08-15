@@ -94,9 +94,12 @@ type
   SEditorViewport* {.importcpp, inheritable.} = object of SCompoundWidget
   SEditorViewportPtr* = ptr SEditorViewport
   SAssetEditorViewport* {.importcpp, inheritable.} = object of SEditorViewport
+    sceneViewport {.importcpp:"SceneViewport".} : TSharedPtr[FSceneViewport]
   SAssetEditorViewportPtr* = ptr SAssetEditorViewport
   SAssetEditorViewportFArguments* {.importcpp:"SAssetEditorViewport::FArguments", inheritable.} = object
+  FAssetEditorViewportLayout* {.importcpp, inheritable.} = object #of FEditorViewportLayout
   FAssetEditorViewportConstructionArgs* {.importcpp.} = object
+    parentLayout* {.importcpp:"ParentLayout".} : TSharedRef[FAssetEditorViewportLayout]
 
   ICommonEditorViewportToolbarInfoProvider* {.importcpp, inheritable.} = object 
 
@@ -224,5 +227,5 @@ proc registerTabSpawner*(self: TSharedRef[FTabManager], tabId: FName, tabSpawner
 proc unregisterTabSpawner*(self: TSharedRef[FTabManager], tabId: FName): bool {.importcpp:"#->UnregisterTabSpawner(#)" .}
 
 
-proc construct*(arg: SAssetEditorViewportFArguments, ctorArg: FAssetEditorViewportConstructionArgs) {.importcpp:"SAssetEditorViewport::Construct(@)".}
+proc constructSEditorViewport*(arg: SAssetEditorViewportFArguments, ctorArg: FAssetEditorViewportConstructionArgs) {.importcpp:"SAssetEditorViewport::Construct(@)".}
 proc setEditorViewportClient*(self: SAssetEditorViewportFArguments, viewportClient: TSharedPtr[FEditorViewportClient]) {.importcpp:"#.EditorViewportClient(#)".}
