@@ -2,7 +2,7 @@
 # include ../unreal/prelude
 import ../unreal/coreuobject/[uobject, package]
 import models
-import std/[sugar, tables, options, sequtils]
+import std/[sugar, tables, options, sequtils, typetraits]
 import ../unreal/nimforue/[nimforuebindings]
 import ../utils/[utils, ueutils]
 
@@ -95,6 +95,8 @@ proc initEmitter*() : UEEmitterPtr = #Notice there is a global emitter that neve
 #     else:
 #         getGameEmitter()
 var emitter : UEEmitterPtr 
+
+
 proc getGlobalEmitter*() : UEEmitterPtr = 
     if emitter.isNil:
         emitter = initEmitter()
@@ -106,10 +108,10 @@ when not defined(guest): #called from ue
 
 
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =              
-    # var emitter =  ueEmitter.emitters[ueField.typeName]
     getGlobalEmitter().emitters[ueField.typeName].ueType.fields.add ueField
-    UE_Log "Adding emitter info for " & $ueField
-    UE_Warn $getGlobalEmitter().emitters[ueField.typeName]
+    # UE_Log "Adding emitter info for " & $ueField
+    # UE_Warn $getGlobalEmitter().emitters[ueField.typeName]
 
     if fnImpl.isSome:
       getGlobalEmitter().fnTable.add FnEmitter(fnPtr: fnImpl.get(), ueField: ueField)
+

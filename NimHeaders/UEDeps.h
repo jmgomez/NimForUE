@@ -51,7 +51,7 @@
 
 
 //UMG
-#include "Components/Viewport.h"
+#include "UMG/Public/Components/Viewport.h"
 
 
 //NimForUEBindingsHeaders.h

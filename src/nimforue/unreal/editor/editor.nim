@@ -1,8 +1,23 @@
 when not defined(nimsuggest):
   include  ../prelude
 import std/[options,sugar, typetraits, sequtils]
-import ../../game/extras/ui
 
+when defined(game): #TODO remove this
+  import ../../game/extras/ui
+else:
+  type 
+    SCompoundWidget* {.importcpp, inheritable.} = object of SWidget
+    SCompoundWidgetPtr* = ptr SCompoundWidget
+    SBorder* {.importcpp, inheritable.} = object of SCompoundWidget
+    SBorderPtr* = ptr SBorder
+    SDockTab* {.importcpp, inheritable.} = object of SBorder
+    SDockTabPtr* = ptr SDockTab
+    SDockableTab * {.importcpp, inheritable.} = object of SDockTab
+    SDockableTabPtr* = ptr SDockableTab
+
+    EToolkitMode* {.importcpp:"EToolkitMode::Type".} = enum
+      Standalone
+      WorldCentric
 
 type 
   UEditorEngine* {.importcpp.} = object of UEngine

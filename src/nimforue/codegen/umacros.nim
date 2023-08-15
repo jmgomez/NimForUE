@@ -178,15 +178,21 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
 
       let nimProcs = body.children.toSeq
                       .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor", ueType.name])
-                      .mapIt(it.addSelfToProc(className).processVirtual(parent))
-      
+                      .mapIt(it.addSelfToProc(className).processVirtual(parent))        
+
       var (fns,_) = genUFuncsForUClass(body, className, nimProcs)
       fns.insert(0, procNodes)
-      if ueType.hasObjInitCtor: #Note not used so far. Left in here because it may be needed.
-        let ctorContent = newLit &"{className}(const '1& #1) : {ueType.parent}(#1)"
-        let initCtor = genAst(cls = ident className, ctorContent):
-            proc fakeConstructor(init: FObjectInitializer): cls {.constructor: ctorContent .} = discard
-        fns.add(initCtor)
+      let ctorContent = newLit &"{className}(const '1& #1) : {ueType.parent}(#1)"
+      let initCtor = genAst(cls = ident className, clsCtor = ident className & "Ctor", ctorContent, needsCppCtor = ueType.hasObjInitCtor):
+        when cls is UUserWidget or needsCppCtor: #The test type needs to be on sync with the type on the generic ctor in ueemit
+          proc clsCtor(): cls {.constructor, nodecl.} = discard
+          proc fakeConstructor(init: FObjectInitializer): cls {.constructor: ctorContent .} = discard
+        else:
+          proc clsCtor(): cls {.constructor.} = discard
+          
+      fns.add initCtor
+       
+
       result =  (typeNode, fns)    
 
 macro uClass*(name:untyped, body : untyped) : untyped = 

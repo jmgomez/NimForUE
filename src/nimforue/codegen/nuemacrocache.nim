@@ -8,6 +8,7 @@ const mcDelegates = CacheSeq"delegates"
 
 const mcVMTypes = CacheSeq"vmTypes"
 const mcVMUFuncs = CacheSeq"vmUFuncs" #since ufuncs are detached from types we keep track them here. 
+
 func contains(cs: CacheSeq, node:NimNode) : bool = 
     for n in cs:
         if n == node: return true
@@ -63,9 +64,11 @@ proc addVMUFunc*(ufun:UEField) =
     #     mcVMUFuncs[ufun.typeName] = nnkStmtList.newTree newStrLitNode $(@[ufun].toJson())
     
 
-proc getVMTypes*() : seq[UEType] =     
+proc getVMTypes*(needsFields: bool = true) : seq[UEType] =     
     for uet in mcVMTypes:
       result.add parseJson(uet.strVal).jsonTo(UEType)
+    if not needsFields: return result
+    
     var fns: seq[UEField]
     for uef in mcVMUFuncs:
       fns.add parseJson(uef.strVal).jsonTo(UEField)

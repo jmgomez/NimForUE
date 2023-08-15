@@ -181,11 +181,15 @@ func genInterfaceConverers*(ueType:UEType) : NimNode =
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
-func getClassTemplate*(typeDef: UEType ) : string =  
+func getClassTemplate*(typeDef: UEType) : string =  
   var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":
     cppInterfaces = ", " & cppInterfaces
-  let defaultCtor = if typeDef.hasObjInitCtor: "" else: "$1()=default;" #the default ctor will be autogen by Nim (dsl only, TODO make sure only dsl types do this). Also not used so far (it may be needed down the road)
+  # let ctorContent = newLit &"{typeDef.name}(const '1& #1) : {ueType.parent}(#1)"
+  
+  let defaultCtor = ""
+    # if typeDef.hasObjInitCtor: "" # "$1(const FObjectInitializer& i) : $3(i){}" 
+    # else: "$1()=default;" #the default ctor will be autogen by Nim (dsl only, TODO make sure only dsl types do this). Also not used so far (it may be needed down the road)
 
 #The constructor is called internally in emittypes
   &"""

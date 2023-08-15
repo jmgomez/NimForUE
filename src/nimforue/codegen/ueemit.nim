@@ -30,7 +30,8 @@ import std/typetraits
 
 #	return new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), NAME_None, RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) TClass(Helper);
 proc newInstanceInAddr*[T](obj:UObjectPtr, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*2".} 
-proc newInstanceInAddrWithInit*[T](obj:UObjectPtr, init: var FObjectInitializer, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*2(const_cast<FObjectInitializer&>(#))".} 
+# proc newInstanceInAddrWithInit*[T](obj:UObjectPtr, init: var FObjectInitializer, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*2(const_cast<FObjectInitializer&>(#))".} 
+proc newInstanceInAddrWithInit*[T](obj:UObjectPtr, init: var FObjectInitializer, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*3(#)".} 
 
 proc newInstanceWithVTableHelper*[T](helper : var FVTableHelper, fake : ptr T = nil) : UObjectPtr {.importcpp: "new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), FName(), RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) '*2(#)".} 
   
@@ -38,26 +39,24 @@ proc newInstanceWithVTableHelper*[T](helper : var FVTableHelper, fake : ptr T = 
 proc vtableConstructorStatic*[T](helper : var FVTableHelper): UObjectPtr {.cdecl.} = 
   newInstanceWithVTableHelper[T](helper)
 
-proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
-  let obj = initializer.getObj()
-  const typeName = typeof(T).name
 
-  newInstanceInAddr[T](initializer.getObj())
-  let cls = obj.getClass()
-    #call super for the needed types (TODO a type table lookup). A needed type would be those that doesnt have default constructors
-  let superCpp = cls.getFirstCppClass()
-  if superCpp.getName() in ["UserWidget"]:     
-    superCpp.classConstructor(initializer)
-  
+proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
+  const typeName = typeof(T).name
+  const ueType = getVMTypes(false).filter(t=>t.name == typeName)[0] #Compile time only. This may be expensive. Make it faster (but measure first)
+
+  when ueType.hasObjInitCtor or T is UUserWidget: #The type needs to be in sync with umacros 
+    newInstanceInAddrWithInit[T](initializer.getObj(), initializer)
+  else:
+    newInstanceInAddr[T](initializer.getObj())
+
   var fieldIterator = makeTFieldIterator[FProperty](initializer.getObj.getClass(), None)
   for it in fieldIterator: #Initializes all fields. So things like copy constructors get called. 
-      let prop = it.get() 
-      let address = prop.containerPtrToValuePtr(obj)
-      prop.initializeValue(address)
+    let prop = it.get() 
+    let address = prop.containerPtrToValuePtr(initializer.getObj)
+    prop.initializeValue(address)
 
-  let actor = tryUECast[AActor](obj)
-  if actor.isSome():
-    initComponents(initializer, actor.get(), cls)
+  when T is AActor:
+    initComponents(initializer, ueCast[AActor](initializer.getObj()), initializer.getObj.getClass)
 
 proc getVTable*(obj : UObjectPtr) : pointer {. importcpp: "*(void**)#".}
 proc setVTable*(obj : UObjectPtr, newVTable:pointer) : void {. importcpp: "((*(void**)#)=(#))".}
@@ -687,8 +686,7 @@ func processVirtual*(procDef: NimNode, parentName: string = "", overrideName: st
       result[3] = nnkFormalParams.newTree(procDef.params[0..1] & params)
 
     result.pragma = pragmas   
-    if not hasMember:
-        assert parentName != "", "virtual functions must have a parent"
+    if parentName != "":
         result.body.insert 0, generateSuper(procDef, parentName)
     if hasFnConstCpp:
         let selfNoConst =

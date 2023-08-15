@@ -308,8 +308,11 @@ type
   UWidget* {.importcpp, inheritable, pure .} = object of UObject
     bOverrideAccessibleDefaults*: bool
     bCanChildrenBeAccessible*: bool
-    
+
   UWidgetPtr* = ptr UWidget
+  UUserWidget* {.importcpp, inheritable, pure.} = object of UWidget
+  UUserWidgetPtr* = ptr UUserWidget
+  
   FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
     # bIsDynamicallyLoaded*: uint8
     # imageType*: ESlateBrushImageType
