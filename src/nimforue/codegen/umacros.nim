@@ -212,8 +212,10 @@ func fromCallNodeToIdentDenf(n: NimNode): NimNode =
   let pragms = newEmptyNode() #no pragmas for now
   nnkIdentDefs.newTree(name, typ, pragms)
 
-func getRawClassTemplate(isSlate: bool): string = 
-  #TODO Interfaces
+func getRawClassTemplate(isSlate: bool, interfaces: seq[string]): string = 
+  var cppInterfaces = interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
+  if cppInterfaces != "":
+    cppInterfaces = ", " & cppInterfaces
   let slateContent = 
     (if isSlate:
       """
@@ -222,7 +224,7 @@ func getRawClassTemplate(isSlate: bool): string =
       """
     else: "")
   &"""
-struct $1 : public $3{{
+struct $1 : public $3{cppInterfaces} {{
   { slateContent }
   $2  
 }};
@@ -266,7 +268,7 @@ proc genRawCppTypeImpl(name, body : NimNode) : NimNode =
           typeNamePtr = ptr typeName
         
   #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
-  typeDefs[0][0][^1][^1][^1] = newLit getRawClassTemplate(isSlate)
+  typeDefs[0][0][^1][^1][^1] = newLit getRawClassTemplate(isSlate, interfaces)
   typeDefs[0][2][2] = recList #set the fields
   if isSlate:
     let arguments = 

@@ -83,7 +83,7 @@
 
   #include "WorkflowOrientedApp/WorkflowTabManager.h"
   #include "WorkflowOrientedApp/WorkflowTabFactory.h"
-
+  #include "SCommonEditorViewportToolbarBase.h"
   #include "NavigationSystem.h"
 
   //asset tools

@@ -23,7 +23,8 @@ func makeSharedPtr*[T](): TSharedPtr[T] {.importcpp: "MakeShared<'*0>()".}
 func makeSharedPtr*[T](pointr : ptr T) : TSharedPtr[T] {.importcpp: "TSharedPtr<'*0>(#)", constructor.}
 func makeSharedRef*[T](pointr : ptr T) : TSharedRef[T] {.importcpp: "TSharedRef<'*0>(#)", constructor.}
 
-func sharedThis*[T](v: ptr T): TWeakPtr[T] {.importcpp: "SharedThis(#)".}
+func sharedThisWeak*[T](v: ptr T): TWeakPtr[T] {.importcpp: "SharedThis(#)".}
+func sharedThisRef*[T](v: ptr T): TSharedRef[T] {.importcpp: "SharedThis(#)".}
 
 func get*[T](sharedPtr : TSmartPtr[T]) : ptr T {.importcpp: "#.Get()".}
 func isValid*[T](sharedPtr : TSmartPtr[T]) : bool {.importcpp: "#.IsValid()".}

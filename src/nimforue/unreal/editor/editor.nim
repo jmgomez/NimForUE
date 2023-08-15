@@ -108,7 +108,8 @@ type
   #this should be in EngineTypes I guess
 
   FOnSpawnTab* {.importcpp.} = object# TDelegateRetOneParam[TSharedRef[SDockTab], FSpawnTabArgs]
-
+  
+  FExtender* {.importcpp.} = object
 #TODO before moving on make the parser work with the enums!
   EOrientation* {.size: sizeof(uint8), importcpp, pure.} = enum
     Orient_Horizontal, Orient_Vertical, Orient_MAX
