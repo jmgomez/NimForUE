@@ -253,6 +253,9 @@ proc unsafePtr*[T](t: T): ptr T {.inline.} =
 
 #allocations
 proc newCpp*[T]() :ptr T {.importcpp:"new '*0()".}
+proc newCpp*[P](T: typedesc, p:P) :ptr T {.importcpp:"new '*0(@)".}
+proc newCpp*[P, P2](T: typedesc, p:P, p2:P2) :ptr T {.importcpp:"new '*0(@)".}
+proc newCpp*[P, P2, P3](T: typedesc, p:P, p2:P2, p3:P3) :ptr T {.importcpp:"new '*0(@)".}
 proc deleteInteral[T](val : ptr T ) : void {.importcpp:"delete #".}
 proc deleteCpp*[T](val : ptr T ) : void  =
   if val.isNotNil():
