@@ -111,9 +111,12 @@ func genImportCProp(typeDef: UEType, prop: UEField): NimNode =
     else: newEmptyNode() #No Support as UProp getter/Seter
   let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)).nimToCppConflictsFreeName()
   let setPropertyName = newStrLitNode(&"set{prop.name.firstToLow()}(@)")
+  var getterImport = newStrLitNode "$1(@)"
+  if typeNodeAsReturnValue.repr.contains("var "):
+    getterImport = newStrLitNode "(*$1(@))" #avoids importcpp to import it by copy producing #fixes #26
   result =
-    genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, setPropertyName, typeNodeAsReturnValue):
-      proc `propIdent`*(obj {.inject.}: ptrName): typeNodeAsReturnValue {.importcpp: "$1(@)", header: "UEGenBindings.h".}
+    genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, setPropertyName, typeNodeAsReturnValue, getterImport):
+      proc `propIdent`*(obj {.inject.}: ptrName): typeNodeAsReturnValue {.importcpp: getterImport, header: "UEGenBindings.h".}
       proc `propIdent=`*(obj {.inject.}: ptrName, val {.inject.}: typeNode): void {.importcpp: setPropertyName, header: "UEGenBindings.h".}
 
 
