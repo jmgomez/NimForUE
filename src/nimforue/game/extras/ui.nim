@@ -24,6 +24,9 @@ type
 
 #SLATE
 proc sNew*[T:SWidget](): TSharedRef[T]{.importcpp:"SNew('*0)" .}
+proc sNew*[P](T: typedesc[SWidget], arg:P): TSharedRef[T]{.importcpp:"#SNew('*1, #)" .}
+
+proc sAssignNew*[T:SWidget](widget: TSharedPtr[T]){.importcpp:"SAssignNew(#, '*1)" .}
 # proc sNew[T: typedesc[SWidget]](_: T): TSharedRef[T] = sNew[T]()
 #SBorder
 proc setContent*[T: SBorder](self: TSharedRef[T], content: TSharedRef[SWidget]): TSharedRef[T] {.importcpp:"#->SetContent(#)" .}

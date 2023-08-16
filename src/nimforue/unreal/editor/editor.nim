@@ -230,5 +230,5 @@ proc registerTabSpawner*(self: TSharedRef[FTabManager], tabId: FName, tabSpawner
 proc unregisterTabSpawner*(self: TSharedRef[FTabManager], tabId: FName): bool {.importcpp:"#->UnregisterTabSpawner(#)" .}
 
 
-proc constructSEditorViewport*(arg: SAssetEditorViewportFArguments, ctorArg: FAssetEditorViewportConstructionArgs) {.importcpp:"SAssetEditorViewport::Construct(@)".}
+proc construct*(arg: SAssetEditorViewportFArguments, ctorArg: FAssetEditorViewportConstructionArgs) {.importcpp:"SAssetEditorViewport::Construct(@)".}
 proc setEditorViewportClient*(self: SAssetEditorViewportFArguments, viewportClient: TSharedPtr[FEditorViewportClient]) {.importcpp:"#.EditorViewportClient(#)".}
