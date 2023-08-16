@@ -61,6 +61,7 @@ public class NimForUE : ModuleRules
 				"UnrealEd",
 				"NimForUEEditor",
 				"EditorStyle",
+				"AdvancedPreviewScene",
 			});
 		}
 
@@ -68,13 +69,8 @@ public class NimForUE : ModuleRules
 			new string[] {
 				"CoreUObject",
 				"Engine",
-				
-
 				"NimForUEBindings",
-				
 				"Projects",
-			
-
 			}
 		);
 		

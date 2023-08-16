@@ -87,6 +87,8 @@ type
 
   FPreviewScene* {.importcpp, inheritable.} = object
   FPreviewScenePtr* = ptr FPreviewScene
+  FAdvancedPreviewScene* {.importcpp, inheritable.} = object of FPreviewScene
+  FAdvancedPreviewScenePtr* = ptr FAdvancedPreviewScene
   ConstructionValues* {.importcpp:"FPreviewScene::$1", inheritable.} = object
     lightRotation* {.importcpp:"LightRotation".} : FRotator
     lightBrightness* {.importcpp:"LightBrightness".} : float32

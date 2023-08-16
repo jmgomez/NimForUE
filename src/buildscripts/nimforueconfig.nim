@@ -382,7 +382,7 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
         let libPathBindings = getObjFiles(dir / "NimForUEBindings", "NimForUEBindings")
         libPath & libPathBindings
 
-  let modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", "NetCore", "UMG"]
+  let modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", "NetCore", "UMG", "AdvancedPreviewScene"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
   let enginePluginSymbolsPaths = @["EnhancedInput"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName)).flatten()
   let engineRuntimePluginSymbolsPaths = @["GameplayAbilities"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Runtime", modName)).flatten()
