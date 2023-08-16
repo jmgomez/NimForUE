@@ -111,6 +111,7 @@ type
     TScriptInterface*[out T] {.importcpp.} = object
 
     UWorld* {.importcpp, pure .} = object of UObject
+      bBegunPlay*: bool 
     UWorldPtr* = ptr UWorld
 
     ConstructorHelpers* {.importcpp, pure .} = object

@@ -29,6 +29,7 @@
 #include "Engine/Classes/GameFramework/PlayerController.h"
 #include "Engine/Classes/GameFramework/GameMode.h"
 #include "Engine/Classes/GameFramework/GameModeBase.h"
+#include "Engine/Classes/GameFramework/WorldSettings.h"
 #include "Engine/Classes/Engine/World.h"
 #include "Engine/Classes/Engine/Engine.h"
 #include "Engine/Classes/Engine/DataTable.h"

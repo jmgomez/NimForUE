@@ -154,7 +154,8 @@ type
     repIndex* {.importcpp: "RepIndex".}: uint16
     condition* {.importcpp: "Condition".}: ELifetimeCondition
     repNotifyCondition* {.importcpp: "RepNotifyCondition".}: ELifetimeRepNotifyCondition
-  
+  FCanvas* {.importcpp, pure.} = object
+  FCanvasPtr* = ptr FCanvas
   FGameplayTag* {.importcpp, pure.} = object
     tag* {.importcpp: "Tag".}: FName
   # UDeveloperSettings* {.importcpp .} = object of UObject
@@ -312,7 +313,7 @@ type
   UWidgetPtr* = ptr UWidget
   UUserWidget* {.importcpp, inheritable, pure.} = object of UWidget
   UUserWidgetPtr* = ptr UUserWidget
-  
+
   FSlateBrush* {.importcpp, header:"Styling/SlateBrush.h".} = object
     # bIsDynamicallyLoaded*: uint8
     # imageType*: ESlateBrushImageType

@@ -13,6 +13,8 @@ type
     actorTemplate* {.importcpp: "Template".} : AActor
     owner* {.importcpp: "Owner".} : AActor
     instigator* {.importcpp: "Instigator".} : APawn
+  AWorldSettings* {.importcpp.} = object of AInfo
+  AWorldSettingsPtr* = ptr AWorldSettings
 
 # AActor* SpawnActor( UClass* Class, FTransform const* Transform, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
 
@@ -35,3 +37,10 @@ proc spawnActorWith*[T : AActor](world:UWorldPtr, class:UClassPtr, transform: FT
   ueCast[T](actor)
 
 proc getGameViewPort*(uworld:UWorldPtr) : UGameViewportClientPtr {. importcpp:"#->GetGameViewport()" .}
+
+proc getWorldSettings*(uworld: UWorldPtr, bCheckStreamingPersistent = false, bChecked = true): AWorldSettingsPtr {. importcpp:"#->GetWorldSettings(@)" .}
+proc notifyBeginPlay*(uworld: AWorldSettingsPtr) {. importcpp:"#->NotifyBeginPlay()" .}
+proc notifyMatchStarted*(uworld: AWorldSettingsPtr) {. importcpp:"#->NotifyMatchStarted()" .}
+
+proc tick*(world: UWorldPtr, deltaSecs: float32) {. importcpp:"#->Tick(LEVELTICK_All, #)" .}
+proc setShouldTick*(world: UWorldPtr, bShouldTick: bool) {. importcpp:"#->SetShouldTick(#)" .}
