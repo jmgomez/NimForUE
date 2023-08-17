@@ -32,6 +32,8 @@ type
   FLevelEditorViewportClientPtr* = ptr FLevelEditorViewportClient
   FEditorModeTools* {.importcpp.} = object
   FEditorModeToolsPtr* = ptr FEditorModeTools
+  FAdvancedPreviewSceneModule* {.importcpp.} = object
+  FAdvancedPreviewSceneModulePtr* = ptr FAdvancedPreviewSceneModule
 
   FViewportCursorLocation* {.importcpp.} = object
   EReloadCompleteReason* {.importcpp, size:sizeof(uint8).} = enum
@@ -103,11 +105,14 @@ type
   FAssetEditorViewportConstructionArgs* {.importcpp.} = object
     parentLayout* {.importcpp:"ParentLayout".} : TSharedRef[FAssetEditorViewportLayout]
 
+  SAdvancedPreviewDetailsTab* {.importcpp.} = object of SCompoundWidget
+
   ICommonEditorViewportToolbarInfoProvider* {.importcpp, inheritable.} = object 
 
   FAssetEditorToolkit* {.importcpp, inheritable.} = object
   FAssetEditorToolkitPtr* = ptr FAssetEditorToolkit
   #this should be in EngineTypes I guess
+  
 
   FOnSpawnTab* {.importcpp.} = object# TDelegateRetOneParam[TSharedRef[SDockTab], FSpawnTabArgs]
   
@@ -232,3 +237,5 @@ proc unregisterTabSpawner*(self: TSharedRef[FTabManager], tabId: FName): bool {.
 
 proc construct*(arg: SAssetEditorViewportFArguments, ctorArg: FAssetEditorViewportConstructionArgs) {.importcpp:"SAssetEditorViewport::Construct(@)".}
 proc setEditorViewportClient*(self: SAssetEditorViewportFArguments, viewportClient: TSharedPtr[FEditorViewportClient]) {.importcpp:"#.EditorViewportClient(#)".}
+
+proc createAdvancedPreviewSceneSettingsWidget*(prevSceneModule: FAdvancedPreviewSceneModulePtr, prevScene: TSharedRef[FAdvancedPreviewScene]): TSharedRef[SWidget] {.importcpp:"#->CreateAdvancedPreviewSceneSettingsWidget(#)".}

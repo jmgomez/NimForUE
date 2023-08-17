@@ -14,6 +14,7 @@ type
   TWeakPtr*[out T] {.importcpp.} = object
 
   TSmartPtr[T] = TSharedPtr[T] | TSharedRef[T] | TWeakObjectPtr[T] | TWeakPtr[T]
+  TShared[T] = TSharedPtr[T] | TSharedRef[T]
 
 
 
@@ -26,9 +27,10 @@ func makeSharedRef*[T](pointr : ptr T) : TSharedRef[T] {.importcpp: "TSharedRef<
 func sharedThisWeak*[T](v: ptr T): TWeakPtr[T] {.importcpp: "SharedThis(#)".}
 func sharedThisRef*[T](v: ptr T): TSharedRef[T] {.importcpp: "SharedThis(#)".}
 
-func get*[T](sharedPtr : TSmartPtr[T]) : ptr T {.importcpp: "#.Get()".}
+func get*[T](sharedPtr : TShared[T] | TWeakObjectPtr[T]) : ptr T {.importcpp: "#.Get()".}
 func isValid*[T](sharedPtr : TSmartPtr[T]) : bool {.importcpp: "#.IsValid()".}
 
 func toSharedRef*[T](sharedPtr : TSharedPtr[T]) : TSharedRef[T] {.importcpp: "#.ToSharedRef()".}
 func toSharedPtr*[T](sharedRef : TSharedRef[T]) : TSharedPtr[T] {.importcpp: "#.ToSharedPtr()".}
+func toWeakPtr*[T](shared: TShared[T]): TWeakPtr[T] {.importcpp: "#.ToWeakPtr()".}
 

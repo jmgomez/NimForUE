@@ -87,6 +87,7 @@
   #include "SCommonEditorViewportToolbarBase.h"
   #include "NavigationSystem.h"
   #include "AdvancedPreviewScene.h"
+  #include "SAdvancedPreviewDetailsTab.h"
   //asset tools
   #include "AssetTypeActions_Base.h"
 
