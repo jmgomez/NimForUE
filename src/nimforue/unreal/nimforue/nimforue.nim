@@ -131,7 +131,8 @@ func asUObjectArray*[T : UObject](arr:TArray[ptr T]): TArray[UObjectPtr] =
 
 #Probably these should be repr
 
-func `$`*(prop:FPropertyPtr):string=
+func `$`*(prop:FPropertyPtr):string= 
+
   if prop.isNil(): 
     return "nil"
   let meta = prop.getMetadataMap()
@@ -169,7 +170,7 @@ proc `$`*(str:UScriptStructPtr) : string =
   # for key, value in metas:
   #   result = &"{str}\n\t\t {key} : {value}"
 
-  # result = &"{str} \n\t Props:"
+  result = &"{str} \n\t Props:"
   # for p in str.getFPropsFromUStruct():
   #   result = &"{str}\n\t\t {p}"
   

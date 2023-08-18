@@ -289,7 +289,10 @@ func getParamFromIdentDef(identDefs:NimNode): seq[NimParam] =
       #probably a type class, let's just take the first we found for now. In the future this should open the function so there are more than one version or maybe just allow them     
       var child = identDefs[^2].findChild(it.kind == nnkIdent and it.strVal != "|")
       if child.kind == nnkBracketExpr: child[0].strVal()
-      else: child.strVal()
+      elif child.kind == nnkNilLit:
+        return @[]
+      else: 
+        child.strVal()
     of nnkCommand:
       #sink?
       identDefs[^2][1].strVal

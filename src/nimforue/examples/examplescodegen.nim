@@ -96,8 +96,11 @@ textObject}
 
 ]#
 
-
-
+uStruct FNimStruct:
+  test: int32
+  uprops:
+    turnRate: float32
+    bTest: bool
 
 
 uEnum EInspectType: 
@@ -138,7 +141,6 @@ uClass AActorCodegen of AActor:
           return self.inspectClass
         of EInspectType.Name: 
           return getClassByName(self.inspectName)
-    
 
   
   ufuncs(BlueprintCallable, CallInEditor, Category=CodegenInspect):
@@ -158,9 +160,13 @@ uClass AActorCodegen of AActor:
       if struct.isNil():
         UE_Error "Struct is null"
         return
-      UE_Log $struct
+      log "ScriptStruct is not nil " & struct.getName()
+      for p in struct.getFPropsFromUStruct():
+        log $p
+      # UE_Log $struct
     proc dumpDefinedTypesInCode() = 
       UE_Log $NimDefinedTypesNames
+
     proc dumpClassAsUEType() = 
       let cls = self.getClassFromInspectedType()
       if cls.isNil():

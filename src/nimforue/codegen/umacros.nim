@@ -32,6 +32,17 @@ macro uEnum*(name:untyped, body : untyped): untyped =
       addVMType ueType 
       result = emitUEnum(ueType)
 
+func fromCallNodeToIdentDenf(n: NimNode): NimNode = 
+  assert n.kind == nnkCall
+  let name = n[0] #first always match #Although we could make it public here
+  let typ = 
+    if n[1][0].kind in [nnkBracketExpr, nnkIdent]: #n[1] is StmtList always
+      n[1][0]
+    else:
+      error "Unexpected type of field. Expected ident or bracketExpr got " & $n[1][0].kind
+      newEmptyNode()
+  let pragms = newEmptyNode() #no pragmas for now
+  nnkIdentDefs.newTree(name, typ, pragms)
     
 macro uStruct*(name:untyped, body : untyped) : untyped = 
     var superStruct = ""
@@ -49,15 +60,19 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     let ueFields = getUPropsAsFieldsForType(body, structTypeName)
     let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
     let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
+    let nimFields = body.children.toSeq
+      .filterIt(it.kind == nnkCall and it[0].strVal() notin ["uprops"]) #Todo check for the whole list (share it)
+      .map(fromCallNodeToIdentDenf)
     when defined nuevm:
       let types = @[ueType]    
       emitType($(types.toJson()))  #TODO needs structOps to be implemented
       result = nnkTypeSection.newTree(genUStructCodegenTypeDefBinding(ueType, ctVM))      
     else:
       addVMType ueType 
-      result = emitUStruct(ueType) 
+      result = emitUStruct(ueType)
+      if nimFields.any:
+        result[0][0][^1][^1].add nimFields
     # echo repr result
-
 
 func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags, seq[UEMetadata]) = 
     var metas = classMetadata
@@ -200,18 +215,6 @@ macro uClass*(name:untyped, body : untyped) : untyped =
   result = nnkStmtList.newTree(@[uClassNode] & fns)
   #  repr result
 
-func fromCallNodeToIdentDenf(n: NimNode): NimNode = 
-  assert n.kind == nnkCall
-  let name = n[0] #first always match #Although we could make it public here
-  let typ = 
-    if n[1][0].kind in [nnkBracketExpr, nnkIdent]: #n[1] is StmtList always
-      n[1][0]
-    else:
-      error "Unexpected type of field. Expected ident or bracketExpr got " & $n[1][0].kind
-      newEmptyNode()
-  let pragms = newEmptyNode() #no pragmas for now
-  nnkIdentDefs.newTree(name, typ, pragms)
-
 func getRawClassTemplate(isSlate: bool, interfaces: seq[string]): string = 
   var cppInterfaces = interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":
@@ -239,8 +242,6 @@ proc genRawCppTypeImpl(name, body : NimNode) : NimNode =
     .mapIt(it.children.toSeq)
     .flatten
     .anyIt(it.kind == nnkIdent and it.strVal.toLower == "slate")
-  
-
 
   let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
   let nimProcs = body.children.toSeq

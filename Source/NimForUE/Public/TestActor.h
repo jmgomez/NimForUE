@@ -22,6 +22,7 @@ struct FMyStructTableRow : public FTableRowBase {
 USTRUCT(BlueprintType)
 struct FCppStruct {
 	GENERATED_BODY()
+		int test;
 		UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float TurnRateGamepad;
 		UPROPERTY(EditAnywhere, BlueprintReadOnly)
