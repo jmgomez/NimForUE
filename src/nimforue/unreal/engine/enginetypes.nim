@@ -32,6 +32,7 @@ type
 
   AActor* {.importcpp, inheritable, pure .} = object of UObject
     primaryActorTick* {.importcpp:"PrimaryActorTick"}: FActorTickFunction
+    bAllowTickBeforeBeginPlay* {.importcpp.}: bool
 
   AActorPtr* = ptr AActor
   AController* {.importcpp, inheritable, pure .}= object of AActor

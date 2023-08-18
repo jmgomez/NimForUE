@@ -61,7 +61,7 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
     let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
     let nimFields = body.children.toSeq
-      .filterIt(it.kind == nnkCall and it[0].strVal() notin ["uprops"]) #Todo check for the whole list (share it)
+      .filterIt(it.kind == nnkCall and it[0].strVal() notin ValidUprops)
       .map(fromCallNodeToIdentDenf)
     when defined nuevm:
       let types = @[ueType]    

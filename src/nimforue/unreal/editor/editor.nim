@@ -172,7 +172,10 @@ proc getEditorViewportClient*(editorWorld:UWorldPtr) : FEditorViewportClientPtr 
 
 # proc getMouseX*(viewportClient:FEditorViewportClientPtr) : int32 {.importcpp: "#->GetMouseX()".}
 proc getViewLocation*(viewportClient:FEditorViewportClientPtr) : FVector {.importcpp: "#->GetViewLocation()".}
-
+proc isAltPressed*(vpClint: FEditorViewportClientPtr): bool {.importcpp: "#->IsAltPressed()".}
+proc isCtrlPressed*(vpClint: FEditorViewportClientPtr): bool {.importcpp: "#->IsCtrlPressed()".}
+proc isShiftPressed*(vpClint: FEditorViewportClientPtr): bool {.importcpp: "#->IsShiftPressed()".}
+proc getViewportDimensions*(vpClint: FEditorViewportClientPtr, outOrigin, outSize: var FIntPoint) {.importcpp:"#->(@)".}
 
 proc getCursorWorldLocation*(viewportClient:FEditorViewportClientPtr) : FViewportCursorLocation {.importcpp: "#->GetCursorWorldLocationFromMousePos()".}
 

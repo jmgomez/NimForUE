@@ -196,7 +196,7 @@ func isNimTypeInAffectedTypes(nimType: string, affectedTypes: seq[string]): bool
 proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] = @[]): Option[UEField] = #The expected type is something that UEField can understand
   let name = prop.getName()
      
-      
+  UE_Warn &"To UE Field {name}" 
 
   var nimType = prop.getNimTypeAsStr(outer)
   if "TEnumAsByte" in nimType:
@@ -249,6 +249,7 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
 
   
   if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules or outerFn.isSome()):
+    UE_Error &"Creating field {name} with type {nimType}"
     var field = makeFieldAsUProp(name, nimType, typeName, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
     field.defaultParamValue = defaultValue
     return some field

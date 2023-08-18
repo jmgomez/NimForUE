@@ -170,7 +170,7 @@ proc `$`*(str:UScriptStructPtr) : string =
   # for key, value in metas:
   #   result = &"{str}\n\t\t {key} : {value}"
 
-  result = &"{str} \n\t Props:"
+  # result = &"{str} \n\t Props:"
   # for p in str.getFPropsFromUStruct():
   #   result = &"{str}\n\t\t {p}"
   

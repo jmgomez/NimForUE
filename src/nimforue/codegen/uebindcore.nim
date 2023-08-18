@@ -404,7 +404,7 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
         metadata = metas & @[attachs[0], makeUEMetadata(SocketMetadataKey, attachs[1].value)]
     (flags, metadata)
 
-const ValidUprops = ["uprop", "uprops", "uproperty", "uproperties"]
+const ValidUprops* = ["uprop", "uprops", "uproperty", "uproperties"]
 
 func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] = 
 
