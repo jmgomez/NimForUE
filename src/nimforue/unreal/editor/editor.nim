@@ -143,6 +143,7 @@ proc getAllViewportClients*(editor:UEditorEnginePtr) : TArray[FEditorViewportCli
 proc getLevelViewportClients*(editor:UEditorEnginePtr) : TArray[FLevelEditorViewportClientPtr] {.importcpp: "#->GetLevelViewportClients()".}
 
 proc getWorld*(viewportClient:FEditorViewportClientPtr) : UWorldPtr {.importcpp: "#->GetWorld()".}
+proc setRealtime*(viewportClient:FEditorViewportClientPtr, val: bool) {.importcpp: "#->SetRealtime(#)".}
 proc getClientAsEditorViewportClient*(viewport: FViewportPtr): FEditorViewportClientPtr = 
   cast[FEditorViewportClientPtr](viewport.getClient())
 
@@ -239,3 +240,4 @@ proc construct*(arg: SAssetEditorViewportFArguments, ctorArg: FAssetEditorViewpo
 proc setEditorViewportClient*(self: SAssetEditorViewportFArguments, viewportClient: TSharedPtr[FEditorViewportClient]) {.importcpp:"#.EditorViewportClient(#)".}
 
 proc createAdvancedPreviewSceneSettingsWidget*(prevSceneModule: FAdvancedPreviewSceneModulePtr, prevScene: TSharedRef[FAdvancedPreviewScene]): TSharedRef[SWidget] {.importcpp:"#->CreateAdvancedPreviewSceneSettingsWidget(#)".}
+func getWorld*(prevScene: FPreviewScenePtr): UWorldPtr {.importcpp:"#->GetWorld()".}

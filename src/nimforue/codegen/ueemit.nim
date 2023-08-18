@@ -572,7 +572,7 @@ func genDeclaredConstructor*(body:NimNode, className:string) : Option[NimNode] =
 
   let constructorBlock = 
     body.toSeq()
-    .filterIt(it.kind == nnkProcDef and it[0].strVal().toLower() in ["constructor", className])
+    .filterIt(it.kind == nnkProcDef and it.name.strVal().toLower() in ["constructor", className])
     .head()
  
   if constructorBlock.isNone():
