@@ -20,7 +20,10 @@ func isNimClass*(cls:UClassPtr) : bool = cls.hasMetadata(NimClassMetadataKey)
 proc markAsNimClass*(cls:UClassPtr) = cls.setMetadata(NimClassMetadataKey, "true")
 
 #not sure if I should make a specific file for object extensions that are outside of the bindings
-proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr {.exportcpp.} = getClassByName(clsName).getDefaultObject()
+proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr {.exportcpp.} = 
+  let cls = getClassByName(clsName)
+  if cls.isNotNil:
+    result = cls.getDefaultObject()
 
 proc removeFunctionFromClass*(cls:UClassPtr, fn:UFunctionPtr) =
     cls.removeFunctionFromFunctionMap(fn)

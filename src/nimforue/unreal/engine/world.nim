@@ -38,7 +38,7 @@ proc spawnActorWith*[T : AActor](world:UWorldPtr, class:UClassPtr, transform: FT
 
 proc getGameViewPort*(uworld:UWorldPtr) : UGameViewportClientPtr {. importcpp:"#->GetGameViewport()" .}
 
-proc getWorldSettings*(uworld: UWorldPtr, bCheckStreamingPersistent = false, bChecked = true): AWorldSettingsPtr {. importcpp:"#->GetWorldSettings(@)" .}
+# proc getWorldSettings*(uworld: UWorldPtr, bCheckStreamingPersistent = false, bChecked = true): AWorldSettingsPtr {. importcpp:"#->GetWorldSettings(@)" .}
 proc notifyBeginPlay*(uworld: AWorldSettingsPtr) {. importcpp:"#->NotifyBeginPlay()" .}
 proc notifyMatchStarted*(uworld: AWorldSettingsPtr) {. importcpp:"#->NotifyMatchStarted()" .}
 
