@@ -144,10 +144,13 @@ proc getLevelViewportClients*(editor:UEditorEnginePtr) : TArray[FLevelEditorView
 
 proc getWorld*(viewportClient:FEditorViewportClientPtr) : UWorldPtr {.importcpp: "#->GetWorld()".}
 proc setRealtime*(viewportClient:FEditorViewportClientPtr, val: bool) {.importcpp: "#->SetRealtime(#)".}
+proc setViewLocation*(viewportClient:FEditorViewportClientPtr, loc: FVector) {.importcpp: "#->SetViewLocation(#)".}
+proc setViewRotation*(viewportClient:FEditorViewportClientPtr, rot: FRotator) {.importcpp: "#->SetViewRotation(#)".}
+proc setLookAtLocation*(viewportClient:FEditorViewportClientPtr, loc: FVector, bRecalculateView = false) {.importcpp: "#->SetLookAtLocation(@)".}
 proc getClientAsEditorViewportClient*(viewport: FViewportPtr): FEditorViewportClientPtr = 
   cast[FEditorViewportClientPtr](viewport.getClient())
 
-proc getEditorWorld*() : UWorldPtr =
+proc getEditorWorld*(): UWorldPtr {.deprecated: "Use the playWorld from GEditor".} =
   #notice this wont give you the appropiated world when there are multiple viewports
   if GPlayInEditorID < 0:
     let worldContext = GEditor.getPieWorldContext(1)
@@ -162,11 +165,11 @@ proc getEditorWorld*() : UWorldPtr =
       return worldContext.getWorld()
   #At this point we try to return an editor one
   return GEditor
-          .getAllViewportClients()
-          .toSeq()
-          .head()
-          .map(x=>x.getWorld())
-          .get(nil)
+    .getAllViewportClients()
+    .toSeq()
+    .head()
+    .map(x=>x.getWorld())
+    .get(nil)
     
 proc getEditorViewportClient*(editorWorld:UWorldPtr) : FEditorViewportClientPtr = GEditor.getAllViewportClients().toSeq().filterIt(it.getWorld()==editorWorld).head().get(nil)
 
@@ -217,7 +220,6 @@ proc initAssetEditor*(self:FAssetEditorToolkitPtr, mode: EToolkitMode, initToolk
                       bCreateDefaultToolbar: bool, objToEdit: UObjectPtr, bInIsToolbarFocusable = false,
                       bInUseSmallToolbarIcons = false) {.importcpp:"#->InitAssetEditor(@)".}
 
-
 proc createDetailView*(self: FPropertyEditorModulePtr, args: FDetailsViewArgs): TSharedPtr[IDetailsView] {.importcpp:"#->CreateDetailView(#)" .}
 proc setObject*(self: TSharedPtr[IDetailsView], obj: UObjectPtr) {.importcpp:"#->SetObject(#)" .}
 
@@ -244,3 +246,10 @@ proc setEditorViewportClient*(self: SAssetEditorViewportFArguments, viewportClie
 
 proc createAdvancedPreviewSceneSettingsWidget*(prevSceneModule: FAdvancedPreviewSceneModulePtr, prevScene: TSharedRef[FAdvancedPreviewScene]): TSharedRef[SWidget] {.importcpp:"#->CreateAdvancedPreviewSceneSettingsWidget(#)".}
 func getWorld*(prevScene: FPreviewScenePtr): UWorldPtr {.importcpp:"#->GetWorld()".}
+proc setEnvironmentVisibility*(prevScene: FAdvancedPreviewScenePtr, bVisible: bool, bDirect = false) {.importcpp:"#->SetEnvironmentVisibility(@)" .}
+proc setFloorVisibility*(prevScene: FAdvancedPreviewScenePtr, bVisible: bool, bDirect = false) {.importcpp:"#->SetFloorVisibility(@)" .}
+
+template withCallInEditor*(body: untyped) =
+  block:
+    {.emit:"FEditorScriptExecutionGuard Guard; ".}
+    body

@@ -104,7 +104,7 @@ type
     UDelegateFunction* {.importcpp, inheritable, pure .} = object of UFunction
     UDelegateFunctionPtr* = ptr UDelegateFunction
 
-    TObjectPtr*[T ] {.importcpp.} = object 
+    TObjectPtr*[out T] {.importcpp.} = object 
     TLazyObjectPtr*[out T ] {.importcpp.} = object 
     TEnumAsByte*[T : enum] {.importcpp.} = object
 
@@ -370,6 +370,7 @@ func getCapabilities*(ops:ICppStructOpsPtr): FCapabilities {. importcpp:"#->GetC
 
 
 proc get*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
+proc getValid*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"GetValid(#)".}
 converter toUObjectPtr*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 converter fromObjectPtr*[T : UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
 
