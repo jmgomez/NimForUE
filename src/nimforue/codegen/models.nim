@@ -220,7 +220,8 @@ func makeUEMetadata*(name:string, value:string) : UEMetadata =
 
 func contains*(metas:seq[UEMetadata], name:string) : bool = metas.any(m=>m.name.toLower()==name.toLower())
 
-func hasUEMetadata*[T:UEField|UEType](val:T, name:string) : bool = val.metadata.any(m => m.name == name)
+func hasUEMetadata*(val:UEField, name:string) : bool = val.metadata.any(m => m.name == name)
+func hasUEMetadata*(val:UEType, name:string) : bool = val.metadata.any(m => m.name == name)
 func hasUEMetadataDefaultValue*(val:UEField) : bool = val.metadata.any(m => m.name.contains(CPP_Default_MetadataKeyPrefix))
 func shouldBeLoadedEarly*(uet:UEType) : bool = uet.hasUEMetadata(EarlyLoadMetadataKey)
 
