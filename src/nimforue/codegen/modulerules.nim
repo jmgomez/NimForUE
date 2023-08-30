@@ -147,7 +147,9 @@ moduleImportRules["Engine"] = @[
     # "UKismetMathLibrary", #issue with the funcs?,
     "FOnTemperatureChangeDelegate", #Mac gets stuck here?,
     # "UParticleSystem", #collision with a function name and Cascade is deprecated, use Niagara instead.
-    "UNetFaultConfig", "FActorTickFunction",
+    "UNetFaultConfig", "FActorTickFunction", "FCharacterMovementComponentPostPhysicsTickFunction", #Note most of these has the ctor deleted. Put them back once we dont gen setters/getters but the field 
+    "FStaticMeshSourceModel", "FLevelCollection",
+    "FActorComponentTickFunction",
     ]), 
     # makeImportedRuleModule(uerIgnoreHash),
     

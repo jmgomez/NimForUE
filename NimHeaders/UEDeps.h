@@ -23,6 +23,8 @@
 
 #include "Engine/Classes/Animation/AnimNotifies/AnimNotify.h"
 #include "Engine/Classes/Animation/AnimInstance.h"
+#include "Engine/Classes/Animation/BlendProfile.h"
+#include "Engine/Classes/Animation/AnimBlueprintGeneratedClass.h"
 #include "Engine/Classes/GameFramework/Actor.h"
 #include "Engine/Classes/GameFramework/Volume.h"
 #include "Engine/Classes/GameFramework/GameSession.h"
@@ -33,7 +35,7 @@
 #include "Engine/Classes/Engine/World.h"
 #include "Engine/Classes/Engine/Engine.h"
 #include "Engine/Classes/Engine/DataTable.h"
-#include "Engine/Classes/Animation/BlendProfile.h"
+#include "Engine/Classes/Engine/Channel.h"
 #include "Engine/Classes/Engine/SceneCapture.h"
 
 #include "Engine/Public/WorldPartition/DataLayer/DataLayerInstance.h"
