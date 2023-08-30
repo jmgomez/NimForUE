@@ -37,10 +37,10 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
   let actualSetter = 
     if prop.uePropType == "bool": 
       genAst():
-        setValueInBoolProp(prop, obj, value)
+        setValueInBoolProp(prop, obj, val)
     else:
       genAst(typeNode):
-        setPropertyValuePtr[typeNode](prop, obj, value.addr)
+        setPropertyValuePtr[typeNode](prop, obj, val.addr)
 
   #Notice we generate two set properties one for nim and the other for code gen due to cpp
   #not liking the equal in the ident name
@@ -48,17 +48,15 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
   result = 
     genAst(propIdent, ptrName, typeNode, className, actualGetter, actualSetter, propUEName = prop.name, typeNodeAsReturnValue):
       proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {.exportcpp.} =
-        let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
+        let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
         actualGetter
       
       proc `propIdent=`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  = 
-        var value {.inject.} : typeNode = val
-        let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
+        let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
         actualSetter
 
       proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
-        var value {.inject.} : typeNode = val
-        let prop {.inject.} = getClassByName(className).getFPropertyByName(propUEName)
+        let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
         actualSetter
   
 
