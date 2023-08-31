@@ -34,7 +34,7 @@ macro uEnum*(name:untyped, body : untyped): untyped =
 
 func fromCallNodeToIdentDenf(n: NimNode): NimNode = 
   assert n.kind == nnkCall
-  let name = n[0] #first always match #Although we could make it public here
+  let name = identPublic n[0].strVal #first always match #Although we could make it public here
   let typ = 
     if n[1][0].kind in [nnkBracketExpr, nnkIdent]: #n[1] is StmtList always
       n[1][0]
@@ -43,6 +43,7 @@ func fromCallNodeToIdentDenf(n: NimNode): NimNode =
       newEmptyNode()
   let pragms = newEmptyNode() #no pragmas for now
   nnkIdentDefs.newTree(name, typ, pragms)
+
     
 macro uStruct*(name:untyped, body : untyped) : untyped = 
     var superStruct = ""
