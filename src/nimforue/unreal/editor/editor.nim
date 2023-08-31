@@ -178,6 +178,8 @@ proc getViewLocation*(viewportClient:FEditorViewportClientPtr) : FVector {.impor
 proc isAltPressed*(vpClint: FEditorViewportClientPtr): bool {.importcpp: "#->IsAltPressed()".}
 proc isCtrlPressed*(vpClint: FEditorViewportClientPtr): bool {.importcpp: "#->IsCtrlPressed()".}
 proc isShiftPressed*(vpClint: FEditorViewportClientPtr): bool {.importcpp: "#->IsShiftPressed()".}
+proc redrawRequested*(vpClint: FEditorViewportClientPtr, viewport: FViewportPtr) {.importcpp: "#->RedrawRequested(#)".}
+proc receivedFocus*(vpClint: FEditorViewportClientPtr, viewport: FViewportPtr) {.importcpp: "#->ReceivedFocus(#)".}
 proc getViewportDimensions*(vpClint: FEditorViewportClientPtr, outOrigin, outSize: var FIntPoint) {.importcpp:"#->(@)".}
 
 proc getCursorWorldLocation*(viewportClient:FEditorViewportClientPtr) : FViewportCursorLocation {.importcpp: "#->GetCursorWorldLocationFromMousePos()".}
