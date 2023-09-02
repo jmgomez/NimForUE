@@ -30,7 +30,12 @@ func empty*[K, V](map:TMap[K, V], expectedElems: int32 = 0) {.importcpp: "#.Empt
 func clear*[K, V](map:TMap[K, V]) {.inline.} = map.empty()
 
 proc `[]`*[K, V](map:TMap[K, V], key: K): var V {. importcpp: "#[#]",  noSideEffect.}
-proc `[]=`*[K, V](map:TMap[K, V], key: K, val : V)  {. importcpp: "#[#]=#",  }
+proc update*[K, V](map:TMap[K, V], key: K, val : V)  {. importcpp: "#[#]=#",  }
+proc `[]=`*[K, V](map:TMap[K, V], key: K, val : V) {.inline.} = 
+  if key in map:
+    map.update(key, val)
+  else:
+    map.add(key, val)
 
 #TODO Keys(), Values() and Iterators (no need to bind the Cpp ones)
 

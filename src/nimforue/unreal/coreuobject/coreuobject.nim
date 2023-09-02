@@ -537,3 +537,5 @@ func toFVector*(v: FVector4) : FVector = makeFVector(v.x, v.y, v.z)
 #Asset
 proc toSoftObjectPath*(assetData:FAssetData) : FSoftObjectPath {.importcpp: "#.ToSoftObjectPath()".}
 proc tryLoad*(softObjectPath:FSoftObjectPath) : UObjectPtr {.importcpp: "#.TryLoad()".}
+
+proc flip*(plane: FPlane): FPlane {.importcpp: "#.Flip()".}

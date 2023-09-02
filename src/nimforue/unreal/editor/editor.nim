@@ -179,6 +179,7 @@ proc isAltPressed*(vpClint: FEditorViewportClientPtr): bool {.importcpp: "#->IsA
 proc isCtrlPressed*(vpClint: FEditorViewportClientPtr): bool {.importcpp: "#->IsCtrlPressed()".}
 proc isShiftPressed*(vpClint: FEditorViewportClientPtr): bool {.importcpp: "#->IsShiftPressed()".}
 proc redrawRequested*(vpClint: FEditorViewportClientPtr, viewport: FViewportPtr) {.importcpp: "#->RedrawRequested(#)".}
+proc invalidate*(vpClint: FViewportClientPtr) {.importcpp: "#->Invalidate()".}
 proc receivedFocus*(vpClint: FEditorViewportClientPtr, viewport: FViewportPtr) {.importcpp: "#->ReceivedFocus(#)".}
 proc getViewportDimensions*(vpClint: FEditorViewportClientPtr, outOrigin, outSize: var FIntPoint) {.importcpp:"#->(@)".}
 
