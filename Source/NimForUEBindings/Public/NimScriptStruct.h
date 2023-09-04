@@ -16,17 +16,55 @@
 			: ICppStructOps(sizeof(CPPSTRUCT), alignof(CPPSTRUCT))
 		{
 		}
-
+//
+// 		virtual FCapabilities GetCapabilities() const override
+// 		{
+// 			constexpr FCapabilities Capabilities {
+// 				(TIsPODType<CPPSTRUCT>::Value ? CPF_IsPlainOldData : CPF_None)
+// 				| CPF_NoDestructor
+// 				| (TIsZeroConstructType<CPPSTRUCT>::Value ? CPF_ZeroConstructor : CPF_None)
+// 				| (TModels<CGetTypeHashable, CPPSTRUCT>::Value ? CPF_HasGetValueTypeHash : CPF_None),
+// 				TTraits::WithNoInitConstructor,
+// 				TTraits::WithZeroConstructor,
+// 				TTraits::WithNoDestructor,
+// 				TTraits::WithSerializer,
+// 				TTraits::WithStructuredSerializer,
+// 				TTraits::WithPostSerialize,
+// 				TTraits::WithNetSerializer,
+// 				TTraits::WithNetSharedSerialization,
+// 				TTraits::WithNetDeltaSerializer,
+// 				TTraits::WithPostScriptConstruct,
+// 				TIsPODType<CPPSTRUCT>::Value,
+// 				TIsUECoreType<CPPSTRUCT>::Value,
+// 				TIsUECoreVariant<CPPSTRUCT>::Value,
+// 				TTraits::WithCopy,
+// 				TTraits::WithIdentical || TTraits::WithIdenticalViaEquality,
+// 				TTraits::WithExportTextItem,
+// 				TTraits::WithImportTextItem,
+// 				TTraits::WithAddStructReferencedObjects,
+// 				TTraits::WithSerializeFromMismatchedTag,
+// 				TTraits::WithStructuredSerializeFromMismatchedTag,
+// 				TModels<CGetTypeHashable, CPPSTRUCT>::Value,
+// 				TIsAbstract<CPPSTRUCT>::Value,
+// #if WITH_EDITOR
+// 				TTraits::WithCanEditChange,
+// #endif
+// 			};
+// 			
+// 			return Capabilities;
+// 		}
+//
 		virtual FCapabilities GetCapabilities() const override
 		{
 			constexpr FCapabilities Capabilities {
 				(TIsPODType<CPPSTRUCT>::Value ? CPF_IsPlainOldData : CPF_None)
-				| CPF_NoDestructor
+				| (TIsTriviallyDestructible<CPPSTRUCT>::Value ? CPF_NoDestructor : CPF_None)
 				| (TIsZeroConstructType<CPPSTRUCT>::Value ? CPF_ZeroConstructor : CPF_None)
-				| (TModels<CGetTypeHashable, CPPSTRUCT>::Value ? CPF_HasGetValueTypeHash : CPF_None),
+				| (TModels_V<CGetTypeHashable, CPPSTRUCT> ? CPF_HasGetValueTypeHash : CPF_None),
+				TTraits::WithSerializerObjectReferences,
 				TTraits::WithNoInitConstructor,
 				TTraits::WithZeroConstructor,
-				TTraits::WithNoDestructor,
+				!(TTraits::WithNoDestructor || TIsPODType<CPPSTRUCT>::Value),
 				TTraits::WithSerializer,
 				TTraits::WithStructuredSerializer,
 				TTraits::WithPostSerialize,
@@ -44,15 +82,18 @@
 				TTraits::WithAddStructReferencedObjects,
 				TTraits::WithSerializeFromMismatchedTag,
 				TTraits::WithStructuredSerializeFromMismatchedTag,
-				TModels<CGetTypeHashable, CPPSTRUCT>::Value,
+				TModels_V<CGetTypeHashable, CPPSTRUCT>,
 				TIsAbstract<CPPSTRUCT>::Value,
+				TTraits::WithFindInnerPropertyInstance,
 #if WITH_EDITOR
 				TTraits::WithCanEditChange,
 #endif
 			};
-			
 			return Capabilities;
 		}
+
+
+
 		virtual void Construct(void* Dest) override
 		{
 			check(!TTraits::WithZeroConstructor); // don't call this if we have indicated it is not necessary
@@ -326,7 +367,33 @@
 			}
 		}
 #endif // WITH_EDITOR
+
+
+//5.3 up
+		/** Returns the CppStructOps that can be used to do custom operations */
+		// FORCEINLINE ICppStructOps* GetCppStructOps() const
+		// {
+		// 	// checkf(bPrepareCppStructOpsCompleted, TEXT("GetCppStructOps: PrepareCppStructOps() has not been called for class %s"), *GetName());
+		// 	// return CppStructOps;
+		// }
+		//
+		virtual bool FindInnerPropertyInstance(FName PropertyName, const void* Data, const FProperty*& OutProp, const void*& OutData) const {
+			// if (const UScriptStruct::ICppStructOps* TheCppStructOps = GetCppStructOps())
+			// {
+			// 	if (TheCppStructOps->HasFindInnerPropertyInstance())
+			// 	{
+			// 		return TheCppStructOps->FindInnerPropertyInstance(PropertyName, Data, OutProp, OutData);
+			// 	}
+			// }
+	
+			return false;
+		}
+
+		
 	};
+
+
+
 
 UCLASS()
 class NIMFORUEBINDINGS_API UNimScriptStruct : public UScriptStruct {
