@@ -94,6 +94,7 @@ func getGenFuncName(funField : UEField) : string = funField.name.firstToLow().ue
 #Returns a tuple with the forward declaration and the actual function 
 func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:NimNode] = 
   let isStatic = FUNC_Static in funField.fnFlags
+  let isSuper = funField.name == "super"
   let clsName = typeDef.name.substr(1)
 
   let formalParams = genFormalParamsInFunctionSignature(typeDef, funField, "self")
@@ -112,8 +113,11 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
           genAst(): self.processDelegate(param.addr)
         of uedelMulticastDynScriptDelegate:
           genAst(): self.processMulticastDelegate(param.addr)
-    else: genAst(clsName=newStrLitNode(clsName)): 
-      let fn {.inject, used.} = uobject.findFuncByName(uobject.getClass(ueCast[UObject](self)), fnName)
+    else: genAst(clsName=newStrLitNode(clsName), isSuper = newLit isSuper): 
+      var cls {.inject.} = uobject.getClass(ueCast[UObject](self))
+      when isSuper:
+        cls = cls.getSuperClass()
+      let fn {.inject, used.} = uobject.findFuncByName(cls, fnName)
       self.processEvent(fn, param.addr)
 
   let outParams = 
@@ -157,7 +161,8 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
   #   pragmas.add(ident("thiscall")) #I Dont think this is necessary
   let forwardDeclaration = 
    nnkProcDef.newTree([
-              identPublic funField.getGenFuncName(), 
+              (if isSuper: ident funField.getGenFuncName() #super is local
+              else: identPublic funField.getGenFuncName()),
               newEmptyNode(), newEmptyNode(), 
               formalParams, 
               pragmas, newEmptyNode(),

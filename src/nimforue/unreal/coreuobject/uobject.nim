@@ -94,7 +94,7 @@ type
       computedPropertyFlags* {.importcpp:"ComputedPropertyFlags".} : EPropertyFlags
 
 
-
+    
     UFunction* {.importcpp, inheritable, pure .} = object of UStruct
         functionFlags* {.importcpp:"FunctionFlags".} : EFunctionFlags
         numParms* {.importcpp:"NumParms".}: uint8

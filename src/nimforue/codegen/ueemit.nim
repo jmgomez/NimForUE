@@ -408,11 +408,17 @@ macro uDelegate*(body:untyped) : untyped =
 
 func isBlueprintEvent(fnField:UEField) : bool = FUNC_BlueprintEvent in fnField.fnFlags
 
-func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : NimNode =
+func genUFuncSuper(fnField: UEField): NimNode =
+  var fnField = fnField
+  fnField.name = "super"
+  let typeDefFn = makeUEClass(fnField.typeName, parent="", CLASS_None, @[fnField])
+  result = genFunc(typeDefFn, fnField).impl 
+
+func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : NimNode =    
     let ueType = UEType(name:funField.typeName, kind:uetClass) #Notice it only looks for the name and the kind (delegates)
     let className = ident ueType.name
 
-    
+    let super = genUFuncSuper(funField)
     proc genParamArgFor(param:UEField) : NimNode = 
         let paraName = ident param.name
         let paraNameAddr = ident param.name & "Addr"
@@ -473,19 +479,20 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
         
     let innerFunction = 
         genAst(body, returnType, innerName, innerCall): 
-            proc innerName() : returnType = 
+            proc innerName() : returnType =                 
                 body
             innerCall
     # let innerCall() = nnkCall.newTree(ident "inner", newEmptyNode())
     let signatureAsStr = funField.signature.mapIt(it.uePropType).join("_")
     let fnImplName = ident &"impl{funField.name}{funField.typeName}{signatureAsStr}" #probably this needs to be injected so we can inspect it later
     let selfName = ident firstParam.name
-    let fnImpl = genAst(className, genParmas, innerFunction, fnImplName, selfName, setOutParams):        
+    let fnImpl = genAst(className, genParmas, super, innerFunction, fnImplName, selfName, setOutParams):        
             let fnImplName {.inject.} = proc (context{.inject.}:UObjectPtr, stack{.inject.}:var FFrame,  returnResult {.inject.}: pointer):void {. cdecl .} =
                 genParmas
                 # var stackCopy {.inject.} = stack This would allow to create a super function to call the impl but not sure if it worth the trouble   
                 stack.increaseStack()
                 let selfName {.inject, used.} = ueCast[className](context) 
+                super
                 innerFunction
                 setOutParams
 

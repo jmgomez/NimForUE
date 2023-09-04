@@ -23,6 +23,8 @@ type
 
   UEngineSubsystem* {.importcpp, pure .} = object of UDynamicSubsystem
   UEngineSubsystemPtr* {.importcpp, pure .} = ptr UEngineSubsystem
+  FSubsystemCollectionBase* {.importcpp.} = object
+    
 
   FTickFunction* {.importcpp, pure, inheritable .} = object
     bCanEverTick*, bStartWithTickEnabled*: bool
