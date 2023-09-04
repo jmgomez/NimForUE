@@ -101,12 +101,15 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool, target:string
     # "--command:./nue echotask --test",
     # "--vctoolset:14.33.31629"# & getCompilerVersion() #get it from the config as primary source
     # "--vccversion:143"# & getCompilerVersion()
-  ] & (if UEVersion() >= 5.2: 
-        @[
-          "/Zc:__cplusplus"
-        
-        ] else: @[])
+  ] 
+  if UEVersion() >= 5.2: 
+    result.add "/Zc:__cplusplus"
    
+  if UEVersion() >= 5.3:
+    result.add @[ 
+      "/D_UTF8", 
+      "/Zc:preprocessor" #preprocessor conformance
+    ]
 
   result &= (if withDebug: 
               @["/Od", "/Z7"] 

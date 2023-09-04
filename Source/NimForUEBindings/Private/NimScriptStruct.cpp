@@ -17,7 +17,7 @@ UScriptStruct(ObjectInitializer, InSuperStruct, InCppStructOps, InStructFlags, E
 
 void UNimScriptStruct::PrepareCppStructOps() {
 #if WITH_EDITORONLY_DATA
-	GIsUCCMakeStandaloneHeaderGenerator = true;
+	// GIsUCCMakeStandaloneHeaderGenerator = true;
 #endif
 	UScriptStruct::PrepareCppStructOps();
 	if(!CppStructOps) {
@@ -27,7 +27,7 @@ void UNimScriptStruct::PrepareCppStructOps() {
     		CppStructOps = static_cast<ICppStructOps*>(StructOps);
     	}
 #if WITH_EDITORONLY_DATA
-	GIsUCCMakeStandaloneHeaderGenerator = false;
+	// GIsUCCMakeStandaloneHeaderGenerator = false;
 #endif
 
 }
