@@ -22,48 +22,46 @@
 #if  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3)
 			return GetCapabilitiesImpl();
 #else
-			return GetCapabilitiesPrior53();
-#endif
-		}
-
-
-		FCapabilities GetCapabilitiesPrior53() {
-			constexpr FCapabilities Capabilities {
-						(TIsPODType<CPPSTRUCT>::Value ? CPF_IsPlainOldData : CPF_None)
-						| CPF_NoDestructor
-						| (TIsZeroConstructType<CPPSTRUCT>::Value ? CPF_ZeroConstructor : CPF_None)
-						| (TModels<CGetTypeHashable, CPPSTRUCT>::Value ? CPF_HasGetValueTypeHash : CPF_None),
-						TTraits::WithNoInitConstructor,
-						TTraits::WithZeroConstructor,
-						TTraits::WithNoDestructor,
-						TTraits::WithSerializer,
-						TTraits::WithStructuredSerializer,
-						TTraits::WithPostSerialize,
-						TTraits::WithNetSerializer,
-						TTraits::WithNetSharedSerialization,
-						TTraits::WithNetDeltaSerializer,
-						TTraits::WithPostScriptConstruct,
-						TIsPODType<CPPSTRUCT>::Value,
-						TIsUECoreType<CPPSTRUCT>::Value,
-						TIsUECoreVariant<CPPSTRUCT>::Value,
-						TTraits::WithCopy,
-						TTraits::WithIdentical || TTraits::WithIdenticalViaEquality,
-						TTraits::WithExportTextItem,
-						TTraits::WithImportTextItem,
-						TTraits::WithAddStructReferencedObjects,
-						TTraits::WithSerializeFromMismatchedTag,
-						TTraits::WithStructuredSerializeFromMismatchedTag,
-						TModels<CGetTypeHashable, CPPSTRUCT>::Value,
-						TIsAbstract<CPPSTRUCT>::Value,
+		constexpr FCapabilities Capabilities {
+				(TIsPODType<CPPSTRUCT>::Value ? CPF_IsPlainOldData : CPF_None)
+				| CPF_NoDestructor
+				| (TIsZeroConstructType<CPPSTRUCT>::Value ? CPF_ZeroConstructor : CPF_None)
+				| (TModels<CGetTypeHashable, CPPSTRUCT>::Value ? CPF_HasGetValueTypeHash : CPF_None),
+				TTraits::WithNoInitConstructor,
+				TTraits::WithZeroConstructor,
+				TTraits::WithNoDestructor,
+				TTraits::WithSerializer,
+				TTraits::WithStructuredSerializer,
+				TTraits::WithPostSerialize,
+				TTraits::WithNetSerializer,
+				TTraits::WithNetSharedSerialization,
+				TTraits::WithNetDeltaSerializer,
+				TTraits::WithPostScriptConstruct,
+				TIsPODType<CPPSTRUCT>::Value,
+				TIsUECoreType<CPPSTRUCT>::Value,
+				TIsUECoreVariant<CPPSTRUCT>::Value,
+				TTraits::WithCopy,
+				TTraits::WithIdentical || TTraits::WithIdenticalViaEquality,
+				TTraits::WithExportTextItem,
+				TTraits::WithImportTextItem,
+				TTraits::WithAddStructReferencedObjects,
+				TTraits::WithSerializeFromMismatchedTag,
+				TTraits::WithStructuredSerializeFromMismatchedTag,
+				TModels<CGetTypeHashable, CPPSTRUCT>::Value,
+				TIsAbstract<CPPSTRUCT>::Value,
 		#if WITH_EDITOR
 						TTraits::WithCanEditChange,
 		#endif
 					};
 					
 					return Capabilities;
+#endif
 		}
-		
+
+
 		FCapabilities GetCapabilitiesImpl() {
+	#if  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3)
+
 			constexpr FCapabilities Capabilities {
 				(TIsPODType<CPPSTRUCT>::Value ? CPF_IsPlainOldData : CPF_None)
 				| (TIsTriviallyDestructible<CPPSTRUCT>::Value ? CPF_NoDestructor : CPF_None)
@@ -98,6 +96,9 @@
 #endif
 			};
 			return Capabilities;
+#else
+			return FCapabilities();
+#endif
 			
 		}
 		virtual void Construct(void* Dest) override
