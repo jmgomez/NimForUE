@@ -14,10 +14,11 @@ import ../test/testutils
 
 uStruct FStructVMTest:
   (BlueprintType)
-  uprops(EditAnywhere):
+  uprops(EditAnywhere, BlueprintReadWrite):
     x: float32
     y: float32
     z: float32
+    zz: float32
 
 uEnum EEnumVMTest:
   (BlueprintType)  
