@@ -9,7 +9,7 @@ proc fromFName*(str: FName) : FText {. importcpp:"FText::FromName(#)".}
 proc toFString*(text:FText) : FString {. importcpp:"#.ToString()", ureflect.}
 proc textToFString*(text:FText) : FString {. importcpp:"#.ToString()", ureflect.}
 
-proc toText*(n: SomeNumber): FText {. importcpp:"FText::AsNumber(#)", ureflect .}
+proc toText*(n: SomeNumber): FText {. importcpp:"FText::AsNumber(#)" .}
 proc toText*(str: FString) : FText {. importcpp:"FText::FromString(#)", ureflect .}
 proc toText*(str: string) : FText  = makeFString(str).toText()
 

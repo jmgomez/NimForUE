@@ -205,7 +205,6 @@ func genUEnumTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =
   
 func genUStructCodegenTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =
   #TODO move export here and separate it enterely from the dsl
-
   let pragmas = 
     case target:
     of ctImport:
@@ -226,7 +225,9 @@ func genUStructCodegenTypeDefBinding*(ueType: UEType, target: CodegenTarget): Ni
           ident "inject",
           ident "inheritable",
           ident "pure",
-          nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h"))
+          nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenBindings.h")),
+          nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode("$1_")), 
+          
         )
         ])
       )
@@ -248,12 +249,14 @@ func genUStructCodegenTypeDefBinding*(ueType: UEType, target: CodegenTarget): Ni
       )
     )
     .foldl(a.add b, nnkRecList.newTree)
-  nnkTypeDef.newTree(pragmas,
+  result = nnkTypeDef.newTree(
+    pragmas,
     newEmptyNode(),
     nnkObjectTy.newTree(
       newEmptyNode(), newEmptyNode(), recList
     )
   )
+  debugEcho repr result
 
 
 func genDelegateVMTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =

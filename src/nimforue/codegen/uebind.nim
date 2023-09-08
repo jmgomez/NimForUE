@@ -326,9 +326,7 @@ func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField, isImportCpp: bool = fa
         nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(prop.name))))                                    
   else:
     getFieldIdent(prop)
-#TODO rename this dont use single letter variables
-#TODO REFACTOR THIS. This is not simmetric at all. Either we split everything by it's type exposure or we dont split at all
-#The padding function also add noise here. 
+
 func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:UEExposure) : NimNode = 
   let suffix = "_"
   let typeName = 
