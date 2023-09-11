@@ -118,7 +118,7 @@ func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tupl
                     .flatten()
     let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), ueTypeName, CPF_None) #notice no generic/var allowed. Only UObjects
     let allFuncs = funcBlock[^1].children.toSeq()
-      .filterIt(it.kind in {nnkProcDef, nnkFuncDef})
+      .filterIt(it.kind in {nnkProcDef, nnkFuncDef, nnkIteratorDef})
       .map(procBody=>ufuncImpl(procBody, firstParam, firstParam.get.typeName, metas))
     
     var fws = newSeq[NimNode]()
@@ -246,7 +246,7 @@ proc genRawCppTypeImpl(name, body : NimNode) : NimNode =
 
   let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
   let nimProcs = body.children.toSeq
-    .filterIt(it.kind in [nnkProcDef, nnkFuncDef])
+    .filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef])
     .mapIt(it.addSelfToProc(className).processVirtual(parent))
 
   #Call is equivalent with identDefs
@@ -332,7 +332,7 @@ macro uSection*(body: untyped): untyped =
     let functors = body.getFromBody("functor").mapIt(functorImpl(it[^1]))
 
     let userTypes = body.filterIt(it.kind == nnkTypeSection).mapIt(it.children.toSeq()).flatten()
-    let userProcs = body.filterIt(it.kind in [nnkProcDef, nnkFuncDef]) 
+    let userProcs = body.filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef]) 
     var typSection = nnkTypeSection.newTree(userTypes)
     var fns = userProcs
     
@@ -352,7 +352,7 @@ macro uSection*(body: untyped): untyped =
          .map(section=>section.children.toSeq())
          .get(newSeq[NimNode]())
       typSection.add types
-      fns.add class.children.toSeq.filterIt(it.kind in [nnkProcDef, nnkFuncDef])
+      fns.add class.children.toSeq.filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef])
 
     #TODO allow uStructs in sections
     #set all types in the same typesection

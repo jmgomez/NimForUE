@@ -256,8 +256,6 @@ func genUStructCodegenTypeDefBinding*(ueType: UEType, target: CodegenTarget): Ni
       newEmptyNode(), newEmptyNode(), recList
     )
   )
-  debugEcho repr result
-
 
 func genDelegateVMTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =
   let pragmas = nnkPragmaExpr.newTree([

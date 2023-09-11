@@ -400,11 +400,11 @@ func getAllFunctions(nimNode: NimNode): seq[NimNode] =
     nimNode
       .children
       .toSeq
-      .filterIt(it.kind in {nnkProcDef, nnkFuncDef} and it[0].kind == nnkPostfix and it[0][0].strVal == "*")
+      .filterIt(it.kind in {nnkProcDef, nnkFuncDef, nnkIteratorDef} and it[0].kind == nnkPostfix and it[0][0].strVal == "*")
   
 
 func makeNimFunction(nimNode: NimNode, modName: string): NimFunction = 
-  assert nimNode.kind in {nnkProcDef, nnkFuncDef}
+  assert nimNode.kind in {nnkProcDef, nnkFuncDef, nnkIteratorDef}
   let name = nimNode.name.strVal
   let kind = 
     case nimNode.kind:
