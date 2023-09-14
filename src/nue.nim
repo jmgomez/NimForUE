@@ -244,7 +244,8 @@ task codegen, "Generate the bindings structure from the persisted json (TEMPORAL
   createDir(config.nimHeadersModulesDir) # we need to create the bindings folder here because we can't importc
   createDir(config.bindingsImportedDir) # we need to create the bindings folder here because we can't importc
   createDir(config.bindingsExportedDir) # we need to create the bindings folder here because we can't importc
-  let buildFlags = @[buildSwitches].foldl(a & " " & b.join(" "), "")
+  let skipCodegenCache = if "skipcodegencache" in taskOptions: "--d:skipCodegenCache" else: ""
+  let buildFlags = @[buildSwitches, @[skipCodegenCache]].foldl(a & " " & b.join(" "), "")
   doAssert(execCmd(&"nim cpp {buildFlags} --compileonly -f --nomain --maxLoopIterationsVM:400000000 --nimcache:.nimcache/projectbindings src/nimforue/codegen/genprojectbindings.nim") == 0)
 
 task gencppbindings, "Generates the codegen and cpp bindings":

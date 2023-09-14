@@ -10,7 +10,6 @@ import uebind, uebindcore
 import ../vm/vmmacros
 
 
-
 func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq[NimNode] =
   let pragmas = 
     if ueType.isInPCH:
@@ -31,8 +30,9 @@ func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq
             # nnkExprColonExpr.newTree(ident "codegenDecl", ident "UClassTemplate")
         )
       )
-  let isNothingToDo = rule == uerCodeGenOnlyFields or ueType.forwardDeclareOnly or ueType.name in NimDefinedTypesNames
-  if isNothingToDo: @[]    
+  if rule == uerCodeGenOnlyFields or (ueType.forwardDeclareOnly) or ueType.name in NimDefinedTypesNames:
+    # debugEcho "[export] nothing to do for " & ueType.name
+    @[]    
   else:
     @[
       nnkTypeDef.newTree(
@@ -41,7 +41,7 @@ func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq
         nnkObjectTy.newTree(
           newEmptyNode(),
           nnkOfInherit.newTree(ident ueType.parent),
-          newEmptyNode()
+          ueType.genPropsAsRecList(rule)
         )
       ),
       # ptr type TypePtr* = ptr Type
@@ -71,7 +71,8 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
         )
       )
       
-  if rule == uerCodeGenOnlyFields or ueType.forwardDeclareOnly or ueType.name in NimDefinedTypesNames:
+  if rule == uerCodeGenOnlyFields or (ueType.forwardDeclareOnly) or ueType.name in NimDefinedTypesNames:
+    # debugEcho "[import] nothing to do for " & ueType.name
     @[]
   else:
     @[
@@ -82,7 +83,7 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
         nnkObjectTy.newTree(
           newEmptyNode(),
           nnkOfInherit.newTree(ident ueType.parent),
-          newEmptyNode()
+          ueType.genPropsAsRecList(rule)
         )
       ),
       # ptr type TypePtr* = ptr Type
@@ -126,7 +127,7 @@ func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
   let parent = ident typeDef.parent
   let props = nnkStmtList.newTree(
                             typeDef.fields
-                              .filter(prop=>prop.kind == uefProp)
+                              .filter(prop=>prop.kind == uefProp and not typeDef.isInPCH)
                               .map(prop=>genImportCProp(typeDef, prop)))
 
   let funcs = nnkStmtList.newTree(
@@ -320,10 +321,11 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let exportBindingsPath = bindingsDir / "exported" / path & ".nim"
     let importBindingsPath = bindingsDir / "imported" / path & ".nim"
     let vmBindingsPath = bindingsDir / "vm" / path & ".nim"
-    let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
-    if prevModHash == module.hash and uerIgnoreHash notin module.rules:
-      echo "Skipping module: " & module.name & " as it has not changed"
-      continue
+    when defined(skipCodegeCache):
+      let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
+      if prevModHash == module.hash and uerIgnoreHash notin module.rules:
+        echo "Skipping module: " & module.name & " as it has not changed"
+        continue
     let preludeRelative =  if isOneFilePkg: "../" else: "../../"            
     let moduleImportStrTemplate = &"""
 #hash:{module.hash}
@@ -346,7 +348,6 @@ import utils/[ueutils]
 import {vmEngineTypes}
 import {runtimeFields}
 """    
-
     echo &"Generating bindings for {module.name}."
     genCode(importBindingsPath, moduleImportStrTemplate, module, genImportCModuleDecl(module), ctImport)
     genCode(exportBindingsPath, moduleExportStrTemplate, module, genExportModuleDecl(module), ctExport)

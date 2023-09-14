@@ -802,7 +802,7 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
       let compCls = objProp.getPropertyClass()
       var defaultComp = ueCast[UActorComponent](initializer.createDefaultSubobject(actor, objProp.getName().firstToUpper().makeFName(), compCls, compCls, true, false))
       setPropertyValuePtr[UActorComponentPtr](objProp, actor, defaultComp.addr)
- 
+      
   #Root component
   for objProp in actorCls.getAllPropsWithMetaData[:FObjectPtrProperty](RootComponentMetadataKey):
       let comp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](objProp, actor)[])
