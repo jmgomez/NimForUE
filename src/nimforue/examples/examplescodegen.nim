@@ -155,6 +155,21 @@ uClass AActorCodegen of AActor:
         UE_Error "Class is null"
         return
       UE_Log $cls
+    
+    proc dumpClassProps() = 
+      let cls = self.getClassFromInspectedType()
+      if cls.isNil():
+        UE_Error "Class is null"
+        return
+
+      var str = &"{str} \n\t Props:"
+      for p in cls.getFPropsFromUStruct():
+        str.add &"\n\t\t {p}"
+      UE_Log $str
+
+    proc quickTest() = 
+      log $sizeof(APawn)
+      
     proc dumpScriptStruct() =
       let struct = self.inspectStruct
       if struct.isNil():

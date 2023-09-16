@@ -208,14 +208,14 @@ func isInPCHAndManuallyImported*(uet: UEType): bool = uet.isInPCH and uet.name i
 func isNonPublicPropInNonCommonModule(uet: UEType, prop: UEField): bool = 
   not uet.isInCommon and not prop.isPublic()
 
-func shouldGenGetterSetters*(uet: UEType, prop: UEField): bool = 
-  prop.kind == uefProp and (not uet.isInPCH or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
+func shouldGenGetterSetters*(uet: UEType, prop: UEField, isUserType: bool): bool = 
+  prop.kind == uefProp and (isUserType or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
 
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =
 
   let props = nnkStmtList.newTree(
         typeDef.fields
-          .filter(prop=>shouldGenGetterSetters(typeDef, prop)) 
+          .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
           .map(prop=>genProp(typeDef, prop)))
 
   let funcs = nnkStmtList.newTree(
@@ -450,14 +450,11 @@ func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode =
 
 func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone) : NimNode =
   var genPad = not uet.isInPCH #Only non PCH types need padding
-  # if uet.kind == uetClass and not uet.isInPCH:
-  #   return newEmptyNode() #props are gen as getter setters for non pch types (this will change soon)
-  if uet.kind == uetClass:
-    if not uet.isInPCH:
-      return newEmptyNode() #props are gen as getter setters for non pch types (this will change soon)
-
   var recList = nnkRecList.newTree()
   var size, offset, padId: int
+  if genPad and uet.kind == uetClass:
+    offset = uet.parentSize #TODO FStructs doenst have inheritance applied yet, so they can start at 0
+
   for prop in uet.fields.filterIt(it.kind == uefProp):
     let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
     let propIden = 
@@ -477,7 +474,7 @@ func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone) : NimNode =
 
     let offsetDelta = prop.offset - offset
     if offsetDelta > 0 and genPad:
-      recList.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(offsetDelta), ident "byte"), newEmptyNode())
+      recList.add nnkIdentDefs.newTree(ident(&"pad_{uet.name}_{padId}"), nnkBracketExpr.newTree(ident "array", newIntLitNode(offsetDelta), ident "byte"), newEmptyNode())
       inc padId
       offset += offsetDelta
       size += offsetDelta
@@ -487,7 +484,7 @@ func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone) : NimNode =
     offset += prop.size
 
   if size < uet.size and genPad:
-    recList.add nnkIdentDefs.newTree(ident("pad_" & $padId), nnkBracketExpr.newTree(ident "array", newIntLitNode(uet.size - size), ident "byte"), newEmptyNode())
+    recList.add nnkIdentDefs.newTree(ident(&"pad_{uet.name}_{padId}"), nnkBracketExpr.newTree(ident "array", newIntLitNode(uet.size - size), ident "byte"), newEmptyNode())
   recList
 
 func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode =  

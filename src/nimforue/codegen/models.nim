@@ -121,7 +121,8 @@ type
         isInPCH* : bool #if the type is in the PCH at the time of generting the bindings. Means we can do importc directly (only for structs and classes for now. Need to figure out enums, not sure about if delegate worth the trouble, probably not)
         moduleRelativePath* : string 
         size*: int32
-        alignment*: int32
+        parentSize*: int32
+        alignment*: int32        
 
         case kind*: UETypeKind
             of uetClass:

@@ -126,7 +126,7 @@ func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
   let parent = ident typeDef.parent
   let props = nnkStmtList.newTree(
                             typeDef.fields
-                              .filter(prop => typeDef.shouldGenGetterSetters(prop))
+                              .filter(prop => typeDef.shouldGenGetterSetters(prop, false))
                               .map(prop=>genImportCProp(typeDef, prop)))
 
   let funcs = nnkStmtList.newTree(

@@ -329,7 +329,7 @@ proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. 
 
 #USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
-
+proc getStructureSize*(str:UStructPtr) : int32 {.importcpp:"#->GetStructureSize()".}
 #This belongs to this file due to nim not being able to forward declate types. We may end up merging this file into uobject
 proc addCppProperty*(str:UStructPtr, prop:FPropertyPtr) : void {.importcpp:"#->AddCppProperty(@)".}
 #     virtual const TCHAR* GetPrefixCPP() const { return TEXT("F"); }

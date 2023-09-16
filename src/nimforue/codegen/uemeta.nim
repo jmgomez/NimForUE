@@ -377,7 +377,7 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
   
 
   if cls.isBpExposed() or uerImportBlueprintOnly notin rules:
-    some UEType(name: name, kind: uetClass, parent: parentName, 
+    some UEType(name: name, kind: uetClass, parent: parentName, size: cls.getStructureSize(), parentSize: cls.getSuperClass.getStructureSize(),
       isInPCH: isInPCH, isParentInPCH: isParentInPCH, moduleRelativePath:cls.getModuleRelativePath().get(""),
       fields: fields, interfaces: cls.interfaces.mapIt("U" & $it.class.getName()))
   else:

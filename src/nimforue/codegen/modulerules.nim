@@ -386,7 +386,9 @@ moduleImportRules["AudioModulationEditor"] = @[
 moduleImportRules["UnrealEd"] = @[
   # makeImportedRuleModule(uerImportBlueprintOnly),
   makeExcludeDepsRule(@[ "DataLayerEditor" ]),
-
+  makeImportedRuleType(uerIgnore, @[ #MovieScene was removed as dependency for now          
+   "UDataLayerConversionInfo" #Recursion (the compiler crashes)
+    ]), 
   makeImportedRuleField(uerIgnore, @[
     "ScriptReimportHelper", "ModeToolsContext", "PreviewInstance", "BlueprintFavorites", "CreateParams", "Bool",
   ])
