@@ -202,12 +202,20 @@ struct $1 : public $3{cppInterfaces} {{
 }};
 """
 
+#Eventually this types should generate its own file so it's easier to copy paste them to the EngineTypes. In the mean time they generate getter/setters
+func isInPCHAndManuallyImported*(uet: UEType): bool = uet.isInPCH and uet.name in ManuallyImportedClasses
+
+func isNonPublicPropInNonCommonModule(uet: UEType, prop: UEField): bool = 
+  not uet.isInCommon and not prop.isPublic()
+
+func shouldGenGetterSetters*(uet: UEType, prop: UEField): bool = 
+  prop.kind == uefProp and (not uet.isInPCH or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
 
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =
 
   let props = nnkStmtList.newTree(
         typeDef.fields
-          .filter(prop=>prop.kind==uefProp) 
+          .filter(prop=>shouldGenGetterSetters(typeDef, prop)) 
           .map(prop=>genProp(typeDef, prop)))
 
   let funcs = nnkStmtList.newTree(
@@ -442,9 +450,12 @@ func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode =
 
 func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone) : NimNode =
   var genPad = not uet.isInPCH #Only non PCH types need padding
+  # if uet.kind == uetClass and not uet.isInPCH:
+  #   return newEmptyNode() #props are gen as getter setters for non pch types (this will change soon)
   if uet.kind == uetClass:
-    return newEmptyNode() #props are gen as getter setters for non pch types (this will change soon)
-    
+    if not uet.isInPCH:
+      return newEmptyNode() #props are gen as getter setters for non pch types (this will change soon)
+
   var recList = nnkRecList.newTree()
   var size, offset, padId: int
   for prop in uet.fields.filterIt(it.kind == uefProp):
@@ -453,7 +464,7 @@ func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone) : NimNode =
       if uet.isInPCH:
         nnkIdentDefs.newTree(
           nnkPragmaExpr.newTree(
-            ident fieldName,
+            (if prop.isPublic: identPublic fieldName else: ident fieldName),
             nnkPragma.newTree(
               nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(prop.name)),
             )

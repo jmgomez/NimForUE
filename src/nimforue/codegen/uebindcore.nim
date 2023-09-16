@@ -40,7 +40,7 @@ func isStatic*(funField:UEField) : bool =
 
 func getReturnProp*(funField:UEField) : Option[UEField] =  funField.signature.filter(isReturnParam).head()
 func doesReturn*(funField:UEField) : bool = funField.getReturnProp().isSome()
-
+func isPublic*(propField: UEField): bool = bitand(propField.propFlags.int, CPF_NativeAccessSpecifierPublic.int) > 0
 
 
 func getTypeNodeForReturn*(prop: UEField, typeNode : NimNode) : NimNode = 

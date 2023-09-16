@@ -30,7 +30,7 @@ func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq
             # nnkExprColonExpr.newTree(ident "codegenDecl", ident "UClassTemplate")
         )
       )
-  if rule == uerCodeGenOnlyFields or (ueType.forwardDeclareOnly) or ueType.name in NimDefinedTypesNames:
+  if ueType.forwardDeclareOnly or ueType.name in NimDefinedTypesNames:
     # debugEcho "[export] nothing to do for " & ueType.name
     @[]    
   else:
@@ -71,7 +71,7 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
         )
       )
       
-  if rule == uerCodeGenOnlyFields or (ueType.forwardDeclareOnly) or ueType.name in NimDefinedTypesNames:
+  if (ueType.forwardDeclareOnly) or ueType.name in NimDefinedTypesNames:
     # debugEcho "[import] nothing to do for " & ueType.name
     @[]
   else:
@@ -121,13 +121,12 @@ func genImportCProp(typeDef: UEType, prop: UEField): NimNode =
       proc `propIdent=`*(obj {.inject.}: ptrName, val {.inject.}: typeNode): void {.importcpp: setPropertyName, header: "UEGenBindings.h".}
 
 
-
 func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
   let ptrName = ident typeDef.name & "Ptr"
   let parent = ident typeDef.parent
   let props = nnkStmtList.newTree(
                             typeDef.fields
-                              .filter(prop=>prop.kind == uefProp)
+                              .filter(prop => typeDef.shouldGenGetterSetters(prop))
                               .map(prop=>genImportCProp(typeDef, prop)))
 
   let funcs = nnkStmtList.newTree(

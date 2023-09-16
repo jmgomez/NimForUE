@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import ../codegen/[codegentemplate,modulerules, headerparser, models, uemeta, genreflectiondata, genmodule]
+import ../codegen/[codegentemplate,modulerules, headerparser, models, uemeta, genreflectiondata, genmodule, uebindcore]
 import std/[strformat, tables, hashes, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans, algorithm, macros]
 import ../../buildscripts/[buildscripts, nimforueconfig]
 
@@ -136,8 +136,8 @@ func moveTypeFrom(uet:UEType, source, destiny : var UEModule) =
     uet.isInCommon = true
     uet.forwardDeclareOnly = true
     source.types[index] = uet
-    uet.forwardDeclareOnly = false
-    uet.fields = @[]
+    uet.forwardDeclareOnly = false    
+    uet.fields = uet.fields.filterIt(it.kind == uefProp and uet.isInPCH and it.isPublic()) #no need for functions in common
     destiny.types.insert(uet) #Insert at the beggining so we got around and issue where the child is defined befpre the parent
   of uetEnum, uetStruct:
     source.types.del(index)
