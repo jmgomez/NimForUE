@@ -228,18 +228,34 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
       typeDef.metadata.filterIt(it.name.toLower() == NoDeclMetadataKey.toLower()).any(): 
         newEmptyNode()
     else: 
-      let ptrName = ident typeDef.name & "Ptr"
-      let parent = ident typeDef.parent      
       case typeExposure:
       of uexDsl:
-        let outputHeader = newLit OutPutHeader
-        let typeSection = genAst(name = ident typeDef.name, ptrName, parent, outputHeader):
-                    type 
-                      name* {.inject, exportc, inheritable, codegenDecl:"placeholder".} = object of parent #TODO OF BASE CLASS 
-                      ptrName* {.inject.} = ptr name
-        #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
-        typeSection[0][0][^1][^1][^1] = newLit getClassTemplate(typeDef)  
-        # typeSection[0][^1][^1] = genPropsAsRecList(typeDef, rule)
+        let pragmas = 
+            nnkPragmaExpr.newTree(
+              nnkPostFix.newTree(ident "*", ident typeDef.name),
+              nnkPragma.newTree(ident "exportc", ident "inheritable", 
+                nnkExprColonExpr.newTree(ident "codegenDecl", 
+                  newLit getClassTemplate(typeDef))
+              )
+            )
+        let typ = 
+          nnkTypeDef.newTree(
+            pragmas,
+            newEmptyNode(),
+            nnkObjectTy.newTree(
+              newEmptyNode(),
+              nnkOfInherit.newTree(ident typeDef.parent),
+              newEmptyNode()
+              # ueType.genPropsAsRecList(rule)
+            )
+          )
+        let typPtr = 
+          nnkTypeDef.newTree(
+              nnkPostFix.newTree(ident "*", ident typedef.name & "Ptr"),
+              newEmptyNode(),
+              nnkPtrTy.newTree(ident typeDef.name)
+          )
+        let typeSection = nnkTypeSection.newTree(typ, typPtr)
         typeSection
       of uexExport:
         newEmptyNode()       

@@ -350,5 +350,5 @@ import {runtimeFields}
     echo &"Generating bindings for {module.name}."
     genCode(importBindingsPath, moduleImportStrTemplate, module, genImportCModuleDecl(module), ctImport)
     genCode(exportBindingsPath, moduleExportStrTemplate, module, genExportModuleDecl(module), ctExport)
-    genCode(vmBindingsPath, moduleVMStrTemplate, module, genVMModuleDecl(module), ctVM)
+    # genCode(vmBindingsPath, moduleVMStrTemplate, module, genVMModuleDecl(module), ctVM)
     # genHeaders(module, nimHeadersDir)
