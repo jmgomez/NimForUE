@@ -126,7 +126,7 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
     "-d:OutputHeader:Guest.h",
   ]
   let nimcacheDir = getBaseNimCacheDir("guest")
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "guest"), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"{nimCmd} cpp {buildFlags} --app:lib --d:genffi -d:withPCH --nimcache:{nimcacheDir} src/nimforue.nim"
   doAssert(execCmd(compCmd)==0)
   
@@ -181,7 +181,7 @@ switch("backend", "cpp")
   if not fileExists(gameConf):
     writeFile(gameConf, fileTemplate)
 
-proc getBindingsLib(): string = "bindings"
+proc getBindingsLib(): string = "Binaries/nim/bindings"
 
 proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:bool, withThreads = false) = 
   var extraSwitches = extraSwitches
@@ -213,7 +213,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
   let entryPoint = NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim")
   let releaseFlag = if withRelease: "-d:danger" else: ""
   let threadFlag = if withThreads: "--threads:on" else: "" #off by default (switches)
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"{nimCmd} cpp {buildFlags} {releaseFlag} {threadFlag}  --nimMainPrefix:{name.capitalizeAscii()}  -d:withPCH --nimcache:{nimCache} {entryPoint}"
   # echo compCmd
   doAssert(execCmd(compCmd)==0)
@@ -256,7 +256,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
   let gameFolder = NimGameDir()
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"nim cpp {buildFlags} --genScript --nimMainPrefix:Game   -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
@@ -300,9 +300,9 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
 
 proc compileGenerateBindings*() = 
   let withDebug = false
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug), bindingsPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  doAssert(execCmd(&"nim  cpp {buildFlags}   --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:Binaries/nim/bindings.lib --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"nim  cpp {buildFlags} -d:bindings   --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:Binaries/nim/bindings.lib --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
   #It still generates NimMain in the header. So we need to get rid of it:

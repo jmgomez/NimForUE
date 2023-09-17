@@ -47,7 +47,7 @@ let buildSwitches* = @[
 ]
 
 #Probably this needs to be platform specific as well
-proc targetSwitches*(withDebug: bool): seq[string] =
+proc targetSwitches*(withDebug: bool, target:string): seq[string] =
   result = 
     case config.targetConfiguration:
     of Debug, Development:
@@ -62,9 +62,14 @@ proc targetSwitches*(withDebug: bool): seq[string] =
         
       ts & @["--stacktrace:on", "--linedir:on"]
     of Shipping: @["--danger"]
-  result.add @[
+  if target == "bindings":
+    result.add @[
+      "--nimBasePattern:bindingsbase.h",
+    ]  
+  else:
+    result.add @[
     "--nimBasePattern:nuebase.h",
-  ]
+    ]
 
 
 proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, true, "")
