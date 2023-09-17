@@ -331,7 +331,7 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
 when not defined(nimsuggest) and not defined(nimcheck):
   include {preludeRelative}../prelude
   const BindingPrefix {{.strdefine.}} = ""  
-  {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
+  ##{{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
    
 """
     let moduleExportStrTemplate = &"""

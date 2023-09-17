@@ -28,23 +28,17 @@ public class NimForUE : ModuleRules
 	    PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		if (Target.Platform == UnrealTargetPlatform.Win64){
 			CppStandard = CppStandardVersion.Cpp20;
-		} else {
+		}
+		else {
 			CppStandard = CppStandardVersion.Cpp17;
 		}
-		//Console.WriteLine((Path.GetFullPath(PluginDirectory + "NimForUE\\..\\NimHeaders")));
-	    //PublicIncludePaths.Add(Path.GetFullPath(PluginDirectory + "NimForUE\\..\\NimHeaders"));
-	    //PublicIncludePaths.Add("../../Intermediate\Build\Mac\x86_64\UnrealEditor\DebugGame\NimForUEBindings");
-        PublicDefinitions.Add("NIM_INTBITS=64");
-        //PublicDefinitions.Add("NUE_GAME=0");
 
-	    bEnableExceptions = true;
+		PublicDefinitions.Add("NIM_INTBITS=64");
+        bEnableExceptions = true;
 	    OptimizeCode = CodeOptimization.InShippingBuildsOnly;
-	    Console.WriteLine("Linker arguments:");
-		
-	    Console.WriteLine(Target.AdditionalLinkerArguments);
-	
 
-		PublicIncludePathModuleNames.Add("GameplayAbilities");
+
+	    PublicIncludePathModuleNames.Add("GameplayAbilities");
 	
 		
 		PublicDependencyModuleNames.AddRange(new string[] { 

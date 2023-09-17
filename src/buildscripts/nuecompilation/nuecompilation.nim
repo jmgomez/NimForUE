@@ -181,6 +181,7 @@ switch("backend", "cpp")
   if not fileExists(gameConf):
     writeFile(gameConf, fileTemplate)
 
+proc getBindingsLib(): string = "bindings"
 
 proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:bool, withThreads = false) = 
   var extraSwitches = extraSwitches
@@ -191,6 +192,8 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
     "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
+
+    "--clib:" & getBindingsLib(),
 
   ] 
   let isCompileOnly = "--compileOnly" in extraSwitches
@@ -297,9 +300,9 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
 
 proc compileGenerateBindings*() = 
   let withDebug = false
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug), gamePlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
-  doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  # doAssert(execCmd(&"nim  cpp {buildFlags}   --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug), bindingsPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
+  # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"nim  cpp {buildFlags}   --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:Binaries/nim/bindings.lib --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
   #It still generates NimMain in the header. So we need to get rid of it:

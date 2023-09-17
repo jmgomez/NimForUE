@@ -70,4 +70,5 @@ proc targetSwitches*(withDebug: bool): seq[string] =
 proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, true, "")
 proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "guest") 
 proc gamePlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "game") 
+proc bindingsPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "bindings") 
 
