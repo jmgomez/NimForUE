@@ -323,13 +323,14 @@ func tryParseJson[T](jsonStr: string): Option[T] =
       none[T]()
 
 func getFirstBpExposedParent(parent: UClassPtr): UClassPtr =
-  if parent.isBpExposed():
+  if parent != nil and parent.isBpExposed():
     UE_Log &"Parent {parent.getName()} is exposed"
-    parent
-  else:    
-    UE_Log &"Parent {parent} is NOT exposed"
-
-    getFirstBpExposedParent(parent.getSuperClass())
+    return parent
+  # else:    
+    # UE_Log &"Parent {parent} is NOT exposed"
+  if parent.getSuperClass() == nil:
+    return nil
+  getFirstBpExposedParent(parent.getSuperClass())
 
 
 
@@ -398,12 +399,12 @@ proc toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchInclude
   let fields = getFPropsFromUStruct(str)
     .map(x=>toUEField(x, str, rules))
     .sequence()
+  # UE_Log "ScriptStruct is " & name
+  var metadata = newSeq[UEMetadata]()
+  let metadataMap = str.getMetadataMap()
+  for k in metadataMap.keys():
+    metadata.add(makeUEMetadata(k, metadataMap[k]))
 
-  let metadata = str.getMetaDataMap()
-    .toTable()
-    .pairs
-    .toSeq()
-    .mapIt(makeUEMetadata($it[0], it[1]))
 
   for rule in rules:
     if name in rule.affectedTypes and rule.rule == uerIgnore:

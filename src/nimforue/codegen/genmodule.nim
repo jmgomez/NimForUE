@@ -41,7 +41,7 @@ func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq
         nnkObjectTy.newTree(
           newEmptyNode(),
           nnkOfInherit.newTree(ident ueType.parent),
-          ueType.genPropsAsRecList(rule)
+          ueType.genPropsAsRecList(rule, false)
         )
       ),
       # ptr type TypePtr* = ptr Type
@@ -83,7 +83,7 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
         nnkObjectTy.newTree(
           newEmptyNode(),
           nnkOfInherit.newTree(ident ueType.parent),
-          ueType.genPropsAsRecList(rule)
+          ueType.genPropsAsRecList(rule, true)
         )
       ),
       # ptr type TypePtr* = ptr Type

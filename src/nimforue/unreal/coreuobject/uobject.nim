@@ -353,7 +353,8 @@ proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()"
 proc assembleReferenceTokenStream*(cls:UClassPtr, bForce = false) : void {. importcpp:"#->AssembleReferenceTokenStream(@)" .}
 
 #ScriptStruct
-proc getSuperStruct*(str:UScriptStructPtr) : UScriptStructPtr {. importcpp:"#->GetSuperStruct()" .}
+proc getSuperStruct*(str:UStructPtr) : UStructPtr {. importcpp:"#->GetSuperStruct()" .}
+proc getSuperStruct*(str:UScriptStructPtr) : UScriptStructPtr = ueCast[UScriptStruct](getSuperStruct(ueCast[UStruct](str)))
 proc hasStructOps*(str:UScriptStructPtr) : bool {.importcpp:"(#->GetCppStructOps() != nullptr)".}
 proc getAlignment*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->GetAlignment()".}
 proc getSize*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->GetSize()".}
@@ -518,15 +519,18 @@ when WithEditor:
     func getMetadataMap*(field:FFieldPtr) : TMap[FName, FString] =
         when WithEditor:
             let metadataMap = getMetadataMapPtr(field)
-            if metadataMap.isNil: makeTMap[FName, FString]()
+            if metadataMap.isNil or metadataMap[].len  == 0: 
+                makeTMap[FName, FString]()
             else: metadataMap[]
         else: makeTMap[FName, FString]()
 
     func getMetadataMap*(field:UObjectPtr) : TMap[FName, FString] =
         when WithEditor:
             let metadataMap = getMetadataMapPtr(field)
-            if metadataMap.isNil: makeTMap[FName, FString]()
-            else: metadataMap[]
+            if metadataMap.isNil or metadataMap[].len == 0: 
+                makeTMap[FName, FString]()
+            else: 
+                metadataMap[]
         else: makeTMap[FName, FString]()
 else:
     #only used in non editor builds (metadata is not available in non editor builds)

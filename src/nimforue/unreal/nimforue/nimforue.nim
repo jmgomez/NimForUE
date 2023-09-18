@@ -229,3 +229,6 @@ proc repr*(obj:UObjectPtr) : string =
             str = str & &"{p.getName()}: {val.getName()}\n\t"
         # elif p.isA[FUinProperty]():
     str
+
+func makeUEMetadata*(name:FName, value:FString) : UEMetadata = 
+    makeUEMetadata($n, value)

@@ -217,6 +217,7 @@ const DelegateMetadataKey* = "Delegate"
     
 func makeUEMetadata*(name:string) : UEMetadata = 
     UEMetadata(name:name, value:"true" ) #todo check if the name is valid. Also they can be more than simple names
+
 func makeUEMetadata*(name:string, value:string) : UEMetadata = 
     UEMetadata(name:name, value:value ) #todo check if the name is valid. Also they can be more than simple names
 

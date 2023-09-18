@@ -5,16 +5,16 @@ import ../unreal/bindings/[engine]
 import ../codegen/[uemeta]
 import std/random
 
-uStruct FNimTableRowBase of FTableRowBase:
-  (BlueprintType)
-  uprop(EditAnywhere):
-    testProperty: FString
-    montage: UAnimMontagePtr
+# uStruct FNimTableRowBase of FTableRowBase:
+#   (BlueprintType)
+#   uprop(EditAnywhere):
+#     testProperty: FString
+#     montage: UAnimMontagePtr
 
-uStruct FNimPPSettings:# of FPostProcessSettings:
-  (BlueprintType)
-  uprops(EditAnywhere, BlueprintType):
-    testProperty: FString
+# uStruct FNimPPSettings:# of FPostProcessSettings:
+#   (BlueprintType)
+#   uprops(EditAnywhere, BlueprintType):
+#     testProperty: FString
  
 
 proc getOwner2*(obj : UActorComponentPtr): AActorPtr {.importcpp: "#->GetOwner()".}

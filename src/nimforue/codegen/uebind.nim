@@ -8,7 +8,7 @@ import modulerules
 import ../../buildscripts/nimforueconfig #probably nimforueconfig should be removed from buildscripts
 
   # macro ex*(a:untyped):untyped = a
-func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone): NimNode 
+func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone, isImporting: bool): NimNode 
 
 func genProp(typeDef : UEType, prop : UEField) : NimNode = 
   let ptrName = ident typeDef.name & "Ptr"
@@ -464,7 +464,7 @@ func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode =
   if typeExposure == uexExport: 
     result = newEmptyNode() #exportc since Nim 2.0 exports the type so nothing to do here. 
 
-func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone) : NimNode =
+func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone, isImporting: bool) : NimNode =
   var genPad = not uet.isInPCH #Only non PCH types need padding
   var recList = nnkRecList.newTree()
   var size, offset, padId: int
@@ -486,7 +486,8 @@ func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone) : NimNode =
           newEmptyNode())
         else: 
           nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode())
- 
+
+    if isImporting: continue
 
     let offsetDelta = prop.offset - offset
     if offsetDelta > 0 and genPad:
@@ -504,7 +505,7 @@ func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone) : NimNode =
   recList
 
 func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode =  
-  let recList = genPropsAsRecList(ueType, rule)
+  let recList = genPropsAsRecList(ueType, rule, false)
   let importExportPragma =
     if ueType.isInPCH:
       ident "importcpp"

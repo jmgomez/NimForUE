@@ -48,17 +48,16 @@ proc keys*[K, V](map:TMap[K, V]): TArray[K] =
     arr
 proc values*[K, V](map:TMap[K, V]): TArray[V] = 
     var arr = makeTArray[V]()
-    generateValueArray(map, arr)
+    arr.reserve(map.len())
+    for k in map.keys():
+        arr.add(map[k])
     arr
 
 proc toTable*[K, V](map:TMap[K, V]): Table[K, V] = 
-    let keys = map.keys().toSeq()
-    let values = map.values().toSeq()
+    let keys = map.keys()
     var table = initTable[K, V]()
-
-    for pairs in zip(keys, values):
-        let (key, value) = pairs
-        table[key] = value
+    for k in keys:
+        table[k] = map[k]
     table
 
 proc toTMap*[K, V](table:Table[K, V]): TMap[K, V] =
