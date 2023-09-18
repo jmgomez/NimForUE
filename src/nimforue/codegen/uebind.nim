@@ -487,7 +487,7 @@ func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone, isImporting: bool) 
         else: 
           nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode())
 
-    if isImporting: continue
+    # if isImporting: continue
 
     let offsetDelta = prop.offset - offset
     if offsetDelta > 0 and genPad:
