@@ -35,7 +35,7 @@ Nim is fast and easy to read with a good type system and a fantastic macro syste
 
 The compiler is incredibly fast, and it's about to get faster with incremental compilation on the works.
 
-The performance is the same as with C++ because you are outputting C++ with zero overhead.
+The performance is the same as with C++ because you are outputting optimized C++ with zero overhead.
 
 Fully control the memory if you so desire (including move semantics). 
 
