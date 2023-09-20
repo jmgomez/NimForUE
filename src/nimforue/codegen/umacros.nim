@@ -300,9 +300,9 @@ func functorImpl(body: NimNode): NimNode =
     prc.name = ident "invoke" & name.strVal()
     prc.addPragma ident "member"
     prc =
-    prc
-      .addSelfToProc(name.strVal())
-      .processVirtual(overrideName = "operator()")
+      prc
+        .addSelfToProc(name.strVal())
+        .processVirtual(overrideName = "operator()")
 
     let typ = genAst(name, namePtr = ident name.strVal() & "Ptr"):
       type 
