@@ -287,28 +287,29 @@ proc genRawCppTypeImpl(name, body : NimNode) : NimNode =
 macro class*(name, body): untyped = genRawCppTypeImpl(name, body)
 
 func functorImpl(body: NimNode): NimNode = 
-  var prc = body.filterIt(it.kind == nnkProcDef).head().get()
-  let captures = 
-    nnkRecList.newTree(
-      body
-      .filterIt(it.kind == nnkBracket)
-      .head.get(newEmptyNode())
-      .mapIt(nnkIdentDefs.newTree(identPublic(it[0].strVal()), it[1], newEmptyNode()))
-    )
-  let name = ident prc.name.strVal.capitalizeAscii()
-  prc.name = ident "invoke" & name.strVal()
-  prc.addPragma ident "member"
-  prc =
-   prc
-    .addSelfToProc(name.strVal())
-    .processVirtual(overrideName = "operator()")
+  when not defined(nimvm):
+    var prc = body.filterIt(it.kind == nnkProcDef).head().get()
+    let captures = 
+      nnkRecList.newTree(
+        body
+        .filterIt(it.kind == nnkBracket)
+        .head.get(newEmptyNode())
+        .mapIt(nnkIdentDefs.newTree(identPublic(it[0].strVal()), it[1], newEmptyNode()))
+      )
+    let name = ident prc.name.strVal.capitalizeAscii()
+    prc.name = ident "invoke" & name.strVal()
+    prc.addPragma ident "member"
+    prc =
+    prc
+      .addSelfToProc(name.strVal())
+      .processVirtual(overrideName = "operator()")
 
-  let typ = genAst(name, namePtr = ident name.strVal() & "Ptr"):
-    type 
-      name* = object
-      namePtr* = ptr name
-  typ[0][^1][^1] = captures
-  result = nnkStmtList.newTree(typ, prc)
+    let typ = genAst(name, namePtr = ident name.strVal() & "Ptr"):
+      type 
+        name* = object
+        namePtr* = ptr name
+    typ[0][^1][^1] = captures
+    result = nnkStmtList.newTree(typ, prc)
   # debugEcho repr result
 
 macro functor*(body: untyped): untyped = 

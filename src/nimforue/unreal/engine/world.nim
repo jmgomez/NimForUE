@@ -13,8 +13,7 @@ type
     actorTemplate* {.importcpp: "Template".} : AActor
     owner* {.importcpp: "Owner".} : AActor
     instigator* {.importcpp: "Instigator".} : APawn
-  AWorldSettings* {.importcpp.} = object of AInfo
-  AWorldSettingsPtr* = ptr AWorldSettings
+
 
 # AActor* SpawnActor( UClass* Class, FTransform const* Transform, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
 

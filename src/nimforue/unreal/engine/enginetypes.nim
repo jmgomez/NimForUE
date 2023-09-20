@@ -56,8 +56,8 @@ type
   # AGameSessionPtr* = ptr AGameSession
 
 
-  # AWorldSettings* {.importcpp, inheritable, pure .}= object of AInfo
-  # AWorldSettingsPtr* = ptr AWorldSettings
+  AWorldSettings* {.importcpp, inheritable, pure .}= object of AInfo
+  AWorldSettingsPtr* = ptr AWorldSettings
 
   UActorComponent* {.importcpp, inheritable, pure .} = object of UObject
   UActorComponentPtr* = ptr UActorComponent

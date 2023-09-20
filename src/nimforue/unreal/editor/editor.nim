@@ -240,6 +240,7 @@ proc newTabManagerLayout*(name: FName): TSharedRef[FTabManagerLayout] {.importcp
 proc nullTabManagerLayout*(): TSharedRef[FTabManagerLayout] {.importcpp:"(FTabManager::FLayout::NullLayout)".}
 proc addTab*(self: TSharedRef[FTabManagerStack], tabId: FName, tabState: ETabState): TSharedRef[FTabManagerStack] {.importcpp:"#->AddTab(@)" .}
 
+# proc contains*(self: TSharedRef[FTabManager], tabId: FName): bool {.importcpp:"#->HasTabSpawner(#)" .}
 proc registerTabSpawner*(self: TSharedRef[FTabManager], tabId: FName, tabSpawner {.byref.}: FOnSpawnTab): FTabSpawnerEntry {.importcpp:"#->RegisterTabSpawner(#, #)" .}
 proc unregisterTabSpawner*(self: TSharedRef[FTabManager], tabId: FName): bool {.importcpp:"#->UnregisterTabSpawner(#)" .}
 
