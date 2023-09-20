@@ -236,58 +236,58 @@ struct $1 : public $3{cppInterfaces} {{
 
 proc genRawCppTypeImpl(name, body : NimNode) : NimNode =     
   #TODO do this better so I can introudce other metas
-  
-  let isSlate = 
-    body
-    .filterIt(it.kind == nnkPar)
-    .mapIt(it.children.toSeq)
-    .flatten
-    .anyIt(it.kind == nnkIdent and it.strVal.toLower == "slate")
+  when not defined(nuevm):
+    let isSlate = 
+      body
+      .filterIt(it.kind == nnkPar)
+      .mapIt(it.children.toSeq)
+      .flatten
+      .anyIt(it.kind == nnkIdent and it.strVal.toLower == "slate")
 
-  let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
-  let nimProcs = body.children.toSeq
-    .filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef])
-    .mapIt(it.addSelfToProc(className).processVirtual(parent))
+    let (className, parent, interfaces) = getTypeNodeFromUClassName(name)
+    let nimProcs = body.children.toSeq
+      .filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef])
+      .mapIt(it.addSelfToProc(className).processVirtual(parent))
 
-  #Call is equivalent with identDefs
-  let nimFields = body.children.toSeq
-    .filterIt(it.kind == nnkCall)
-    .map(fromCallNodeToIdentDenf)
-  
-  let recList = nnkRecList.newTree(nimFields)
+    #Call is equivalent with identDefs
+    let nimFields = body.children.toSeq
+      .filterIt(it.kind == nnkCall)
+      .map(fromCallNodeToIdentDenf)
+    
+    let recList = nnkRecList.newTree(nimFields)
 
-  for prc in nimProcs:
-    prc[0] = identPublic prc[0].strVal()
+    for prc in nimProcs:
+      prc[0] = identPublic prc[0].strVal()
 
-  let  
-    typeName = ident className
-    typeNamePtr = ident $className & "Ptr"
-    typeParent = ident parent
-  var typeDefs=
-      genAst(typeName, typeNamePtr, typeParent):
-        type 
-          typeName {.exportcpp,  inheritable, codegenDecl:"placeholder".} = object of typeParent
-          typeNamePtr = ptr typeName
-        
-  #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
-  typeDefs[0][0][^1][^1][^1] = newLit getRawClassTemplate(isSlate, interfaces)
-  typeDefs[0][2][2] = recList #set the fields
-  if isSlate:
-    let arguments = 
-      genAst(name = ident className & "FArguments"): 
-        type name* {. inject, importcpp: "cppContent".} = object
-    arguments[0][0][^1][^1][^1] = newLit className & "::FArguments"
-    typeDefs.add arguments[0]
+    let  
+      typeName = ident className
+      typeNamePtr = ident $className & "Ptr"
+      typeParent = ident parent
+    var typeDefs=
+        genAst(typeName, typeNamePtr, typeParent):
+          type 
+            typeName {.exportcpp,  inheritable, codegenDecl:"placeholder".} = object of typeParent
+            typeNamePtr = ptr typeName
+          
+    #Replaces the header pragma vale 'placehodler' from above. For some reason it doesnt want to pick the value directly
+    typeDefs[0][0][^1][^1][^1] = newLit getRawClassTemplate(isSlate, interfaces)
+    typeDefs[0][2][2] = recList #set the fields
+    if isSlate:
+      let arguments = 
+        genAst(name = ident className & "FArguments"): 
+          type name* {. inject, importcpp: "cppContent".} = object
+      arguments[0][0][^1][^1][^1] = newLit className & "::FArguments"
+      typeDefs.add arguments[0]
 
-  result = newStmtList(typeDefs & nimProcs) 
-  # echo repr result
-  # echo treeRepr body
+    result = newStmtList(typeDefs & nimProcs) 
+    # echo repr result
+    # echo treeRepr body
 
-
-macro class*(name, body): untyped = genRawCppTypeImpl(name, body)
+macro class*(name, body): untyped = 
+  genRawCppTypeImpl(name, body)
 
 func functorImpl(body: NimNode): NimNode = 
-  when not defined(nimvm):
+  when not defined(nuevm):
     var prc = body.filterIt(it.kind == nnkProcDef).head().get()
     let captures = 
       nnkRecList.newTree(
@@ -327,7 +327,11 @@ macro functor*(body: untyped): untyped =
   result = functorImpl(body)  
 
 macro uSection*(body: untyped): untyped = 
-    func getFromBody(body:NimNode, name: string): seq[NimNode] = body.filterIt(it.kind in [nnkCommand, nnkCall] and it[0].strVal() == name)
+  when defined(nuevm):
+    discard
+  else:
+    func getFromBody(body:NimNode, name: string): seq[NimNode] = 
+        body.filterIt(it.kind in [nnkCommand, nnkCall] and it[0].strVal() == name)
     let uclasses = body.getFromBody("uClass").mapIt(uClassImpl(it[1], it[^1]))
     let classes = body.getFromBody("class").mapIt(genRawCppTypeImpl(it[1], it[^1]))
     let functors = body.getFromBody("functor").mapIt(functorImpl(it[^1]))
@@ -347,11 +351,11 @@ macro uSection*(body: untyped): untyped =
     for class in classes & functors: 
       let types =  
         class
-         .children.toSeq
-         .filterIt(it.kind == nnkTypeSection)
-         .head()
-         .map(section=>section.children.toSeq())
-         .get(newSeq[NimNode]())
+        .children.toSeq
+        .filterIt(it.kind == nnkTypeSection)
+        .head()
+        .map(section=>section.children.toSeq())
+        .get(newSeq[NimNode]())
       typSection.add types
       fns.add class.children.toSeq.filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef])
 
