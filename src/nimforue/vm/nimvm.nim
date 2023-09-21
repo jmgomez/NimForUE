@@ -188,7 +188,6 @@ proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) :
       UE_Error &"script does not export a proc of the name: {borrowInfo.fnName}"
       UE_Log &"All exported funcs: {borrowTable}"
       return
-    #TODO pass params as json to vm call (from stack but review how it's done in uebind)
     try:
       
       var argsAsRtField = RuntimeField(kind:Struct)
@@ -210,7 +209,6 @@ proc borrowImpl(context: UObjectPtr; stack: var FFrame; returnResult: pointer) :
       UE_Error &"error calling {borrowInfo.fnName} in script"
       UE_Error getCurrentExceptionMsg()
       UE_Error getStackTrace()
-    #TODO return value
 
 
 proc implementNativeFunc(borrowInfo: UEBorrowInfo) = 

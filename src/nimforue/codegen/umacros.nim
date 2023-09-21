@@ -206,15 +206,13 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
         else:
           proc clsCtor(): cls {.constructor.} = discard
           
-      fns.add initCtor
-       
-
+      fns.add initCtor       
       result =  (typeNode, fns)    
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
   let (uClassNode, fns) = uClassImpl(name, body)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
-  # echo repr result
+ 
 
 func getRawClassTemplate(isSlate: bool, interfaces: seq[string]): string = 
   var cppInterfaces = interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
