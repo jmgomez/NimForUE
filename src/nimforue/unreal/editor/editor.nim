@@ -20,6 +20,7 @@ else:
       WorldCentric
 
 type 
+  FViewportCameraTransform* {.importcpp.} = object
   UEditorEngine* {.importcpp.} = object of UEngine
     playWorld* {.importcpp: "PlayWorld".} : UWorldPtr
     editorWorld* {.importcpp: "EditorWorld".} : UWorldPtr
@@ -27,6 +28,7 @@ type
   FEditorViewportClient* {.importcpp, inheritable.} = object of FViewportClient
     # viewport* {.importcpp: "Viewport".} : FViewportPtr
     previewScene* {.importcpp: "PreviewScene".} : FPreviewScenePtr
+    viewTransformPerspective* {.importcpp: "ViewTransformPerspective".} : FViewportCameraTransform
   FEditorViewportClientPtr* = ptr FEditorViewportClient
   FLevelEditorViewportClient* {.importcpp.} = object of FEditorViewportClient
   FLevelEditorViewportClientPtr* = ptr FLevelEditorViewportClient
@@ -257,3 +259,11 @@ template withCallInEditor*(body: untyped) =
   block:
     {.emit:"FEditorScriptExecutionGuard Guard; ".}
     body
+
+#Camera transfomr
+
+
+
+proc getLocation*(self: FViewportCameraTransform): var FVector {.importcpp:"#.GetLocation()".}
+proc getRotation*(self: FViewportCameraTransform): var FRotator {.importcpp:"#.GetRotation()".}
+proc getLookAt*(self: FViewportCameraTransform): var FVector {.importcpp:"#.GetLookAt()".}

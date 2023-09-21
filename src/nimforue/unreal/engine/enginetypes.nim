@@ -28,6 +28,7 @@ type
 
   FTickFunction* {.importcpp, pure, inheritable .} = object
     bCanEverTick*, bStartWithTickEnabled*: bool
+    tickInterval* {.importcpp:"TickInterval"}: float32
 
   FActorTickFunction* {.importcpp, pure, inheritable.} = object of FTickFunction
 
