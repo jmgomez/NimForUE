@@ -25,8 +25,8 @@ public class NimForUE : ModuleRules
 	static extern bool SetDllDirectory(string lpPathName);
 
 	public NimForUE(ReadOnlyTargetRules Target) : base(Target) {
-	    PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		if (Target.Platform == UnrealTargetPlatform.Win64){
+		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		if (Target.Platform == UnrealTargetPlatform.Win64) {
 			CppStandard = CppStandardVersion.Cpp20;
 		}
 		else {
@@ -34,24 +34,24 @@ public class NimForUE : ModuleRules
 		}
 
 		PublicDefinitions.Add("NIM_INTBITS=64");
-        bEnableExceptions = true;
-	    OptimizeCode = CodeOptimization.InShippingBuildsOnly;
+		bEnableExceptions = true;
+		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 
 
-	    PublicIncludePathModuleNames.Add("GameplayAbilities");
-	
-		
-		PublicDependencyModuleNames.AddRange(new string[] { 
+		PublicIncludePathModuleNames.Add("GameplayAbilities");
+
+
+		PublicDependencyModuleNames.AddRange(new string[] {
 			"GameplayAbilities",
-			"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", 
+			"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem",
 			"Slate",
 			"SlateCore",
-		
+
 		});
 
 
 		if (Target.bBuildEditor) {
-			PrivateDependencyModuleNames.AddRange(new string[]{
+			PrivateDependencyModuleNames.AddRange(new string[] {
 				"UnrealEd",
 				"NimForUEEditor",
 				"EditorStyle",
@@ -67,34 +67,37 @@ public class NimForUE : ModuleRules
 				"Projects",
 			}
 		);
-		
+
 
 
 		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
+			new string[] {
 				// ... add any modules that your module loads dynamically here ...
 			}
-			);
-		
+		);
+
 		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
 		var PCHFile = Path.Combine(nimHeadersPath, "nuebase.h");
 		PublicIncludePaths.Add(nimHeadersPath);
 		PrivatePCHHeaderFile = PCHFile;
-		// SharedPCHHeaderFile = PCHFile;
+
+		var nimGameDir = Path.Combine(this.Target.ProjectFile.Directory.ToString(), "NimForUE");
+		if (File.Exists(Path.Combine(nimGameDir, "nuegame.h"))) {
+			PublicIncludePaths.Add(nimGameDir);
+			PublicDefinitions.Add("NUE_GAME=1");
+			Console.WriteLine("Found an user custom header nuegame.h Adding it to the PCH");
+		}
 
 		if (Target.bBuildEditor) {
 			AddNimForUEDev();
 			// PublicIncludePaths.Add(Marshal.PtrToStringAnsi(getNimBaseHeaderPath()));
 			// PublicIncludePaths.Add("/Volumes/Store/Nim/lib");
 		}
-		
-		
+
+
 		bUseUnity = false;
 	}
 
-
-	
 	void NimbleSetup() {
 		var processInfo = new ProcessStartInfo();
 		processInfo.WorkingDirectory = PluginDirectory;

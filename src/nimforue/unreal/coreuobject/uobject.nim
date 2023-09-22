@@ -109,9 +109,12 @@ type
     TEnumAsByte*[T : enum] {.importcpp.} = object
 
     TScriptInterface*[out T] {.importcpp.} = object
+    EWorldType* {.importcpp:"EWorldType::Type", pure.} = enum
+        None, Game, Editor, PIE, EditorPreview, GamePreview, GameRPC, Inactive
 
     UWorld* {.importcpp, pure .} = object of UObject
       bBegunPlay*: bool 
+      worldType* {.importcpp:"WorldType".}: EWorldType
     UWorldPtr* = ptr UWorld
 
     ConstructorHelpers* {.importcpp, pure .} = object

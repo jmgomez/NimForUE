@@ -2,4 +2,6 @@
 
 #include "UEDeps.h"
 #include "nimbasenue.h"
-// #include "UEGenBindings.h"
+#if NUE_GAME
+  #include "nuegame.h"
+#endif
