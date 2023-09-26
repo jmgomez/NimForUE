@@ -620,8 +620,12 @@ func addSelfToProc*(procDef:NimNode, className:string) : NimNode =
     if procDef.pragma.toSeq.any(it=>it.kind == nnkIdent and it.strVal() == "constructor" or 
         it.kind == nnkExprColonExpr and it[0].strVal() == "constructor"):
         let assignSelf = 
-          genAst(): 
-           let self {.inject.} = this
+            genAst(res= ident "result"):  
+                when (NimMajor, NimMinor) <= (2, 0):           
+                    let self {.inject.} = this
+                else:
+                    let self {.inject.} = res.addr
+
         procDef.body.insert(0, assignSelf)
         return procDef
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
