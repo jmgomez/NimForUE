@@ -123,12 +123,7 @@ type
   # UVectorFieldPtr* = ptr UVectorField
 
   FWorldContext* {.importcpp, pure .} = object
-  
-  # FBoneReference* {.importcpp, pure .} = object
-  #   boneName* {.importcpp: "BoneName".}: FName
-  #   boneIndex* {.importcpp: "BoneIndex".}: int32
-  #   bUseSkeletonIndex* {.importcpp.}: bool
-
+    gameViewport* {.importcpp: "GameViewport".}: UGameViewportClientPtr
 
   FWorldContextPtr* = ptr FWorldContext
 
@@ -228,6 +223,7 @@ type
   FViewportClientPtr* = ptr FViewportClient
 
   UGameViewportClient* {.importcpp, inheritable, pure .} = object of UObject
+    viewport* {.importcpp:"Viewport"}: FViewportPtr
   UGameViewportClientPtr* = ptr UGameViewportClient
 
   FActorInstanceHandle* {.importcpp .} = object
@@ -337,7 +333,9 @@ type
   UGameplayTaskPtr* = ptr UGameplayTask
   UAbilityTask* {.importcpp, inheritable, pure .} = object of UGameplayTask
   UAbilityTaskPtr* = ptr UAbilityTask
-   
+
+  UGameInstance* {.importcpp, inheritable, pure.} = object of UObject
+  UGameInstancePtr* = ptr UGameInstance
 
 proc toString*(hit: FHitResult): FString {.importcpp: "#.ToString()" .}
 proc `$`*(hit: FHitResult): string = hit.toString()
@@ -391,11 +389,12 @@ proc isTickFunctionRegistered*(tickFn: FActorTickFunction): bool {.importcpp: "#
 #UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const
 proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)", ureflect.} 
 let GEngine* = getEngine()
-proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGetWorldErrorMode) : UWorldPtr  
-  {.importcpp: "#->GetWorldFromContextObject(#, #)".}
-
+proc getWorldFromContextObject*(engine:UEnginePtr, obj:UObjectPtr, errorMode:EGetWorldErrorMode) : UWorldPtr  {.importcpp: "#->GetWorldFromContextObject(#, #)".}
+proc getWorldContextFromWorld*(engine:UEnginePtr, world:UWorldPtr) : FWorldContextPtr  {.importcpp: "#->GetWorldContextFromWorld(#)".}
 proc activateExternalSubsystem*(cls:UClassPtr) {.importcpp: "FObjectSubsystemCollection<UEngineSubsystem>::ActivateExternalSubsystem(#)".}
-
+proc createGameViewportWidget*(engine: UEnginePtr, gameViewportClient: UGameViewportClientPtr) {.importcpp: "#->CreateGameViewportWidget(#)" .}
+#GameviewportClietn
+proc init*(gameViewportClient: UGameViewportClientPtr, worldContext {.byref.}: FWorldContext, gameInstance:UGameInstancePtr) {.importcpp: "#->Init(@)".}
 
 #VIEWPORT
 proc getSizeXY*(viewport: FViewportPtr): FIntPoint {.importcpp: "#->GetSizeXY()".}
@@ -461,13 +460,18 @@ type
   FInputKeyEventArgsPtr* = ptr FInputKeyEventArgs
 
   FInputDeviceId* {.importcpp .} = object
-  EInputEvent* {.size: sizeof(uint8), importcpp, pure.} = enum
+  EInputEvent* {. importcpp, pure.} = enum
     IE_Pressed, IE_Released, IE_Repeat, IE_DoubleClick, IE_Axis, IE_MAX
 
+#TODO initializer
+# proc makeFInputKeyEventArgs*(viewport: FViewportPtr = nil, controllerId: int32 = 0, key: FKey = "None", event: EInputEvent = IE_Pressed) : FInputKeyEventArgs 
+#   {.importcpp: "FInputKeyEventArgs(@)", constructor, .}
 
 func makeFKey*(keyName: FName) : FKey {.importcpp: "FKey(#)", constructor, .}
 func getFName*(key: FKey) : FName {.importcpp: "#.GetFName()", .}
-func `$`*(key: FKey): string = $key.getFName()
+func toString*(key: FKey) : FString {.importcpp: "#.ToString()", .}
+func `$`*(key: FKey): string = key.toString()
+func isKeyPressed*(key: FKey, name: FName): bool = key.getFName() == name
 
 func getKey*(self: FKeyEventPtr) : FKey {.importcpp: "#->GetKey()".}
 func getCharacter*(self: FKeyEventPtr) : char {.importcpp: "#->GetCharacter()".}

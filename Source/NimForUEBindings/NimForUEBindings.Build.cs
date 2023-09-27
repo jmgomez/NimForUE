@@ -25,8 +25,9 @@ public class NimForUEBindings : ModuleRules
 #endif
 
 		if (Target.bBuildEditor) {
-			PrivateDependencyModuleNames.AddRange(new string[] {
+			PublicDependencyModuleNames.AddRange(new string[] {
 				"UnrealEd",
+				"AdvancedPreviewScene"
 			});
 		}
 		if (Target.Platform == UnrealTargetPlatform.Win64){

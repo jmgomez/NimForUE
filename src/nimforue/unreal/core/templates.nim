@@ -26,6 +26,7 @@ func sharedThisWeak*[T](v: ptr T): TWeakPtr[T] {.importcpp: "SharedThis(#)".}
 func sharedThisRef*[T](v: ptr T): TSharedRef[T] {.importcpp: "SharedThis(#)".}
 
 func get*[T](sharedPtr : TShared[T] | TWeakObjectPtr[T]) : ptr T {.importcpp: "#.Get()".}
+func pin*[T](weakPtr :TWeakPtr[T]) : TSharedPtr[T] {.importcpp: "#.Pin()".}
 func isValid*[T](sharedPtr : TSmartPtr[T]) : bool {.importcpp: "#.IsValid()".}
 
 func toSharedRef*[T](sharedPtr : TSharedPtr[T]) : TSharedRef[T] {.importcpp: "#.ToSharedRef()".}
