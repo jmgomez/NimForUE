@@ -88,10 +88,8 @@
   #include "WorkflowOrientedApp/WorkflowTabFactory.h"
   #include "SCommonEditorViewportToolbarBase.h"
   #include "NavigationSystem.h"
-  #if ENGINE_MINOR_VERSION <= 2
-    #include "AdvancedPreviewScene.h"
-    #include "SAdvancedPreviewDetailsTab.h"
-  #endif
+  #include "AdvancedPreviewScene.h"
+  #include "SAdvancedPreviewDetailsTab.h"
   //asset tools
   #include "AssetTypeActions_Base.h"
 
