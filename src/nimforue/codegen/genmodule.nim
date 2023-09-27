@@ -279,10 +279,17 @@ proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, m
             of ctExport: &"import ../../exported/{moduleName}"
             of ctVM:     &"import ../../vm/{moduleName}" 
 
+  proc shoudGenImports(dep: string): bool = 
+    moduleDef.name.split("/")[^1].toLower notin ["delegates", "enums"]
+   
+  
   let code =
     moduleStrTemplate &
     #"{.experimental:\"codereordering\".}\n" &
-    moduleDef.dependencies.map(getImport).join("\n") &
+    
+    moduleDef.dependencies
+      .filter(shoudGenImports) #skip impots for these as they dont have deps
+      .map(getImport).join("\n") &
     repr(moduleNode)
       .multiReplace(
     ("{.inject.}", ""),
@@ -320,7 +327,7 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let exportBindingsPath = bindingsDir / "exported" / path & ".nim"
     let importBindingsPath = bindingsDir / "imported" / path & ".nim"
     let vmBindingsPath = bindingsDir / "vm" / path & ".nim"
-    when defined(skipCodegeCache):
+    when not defined(skipCodegenCache):
       let prevModHash = getModuleHashFromFile(importBindingsPath).get("_")
       if prevModHash == module.hash and uerIgnoreHash notin module.rules:
         echo "Skipping module: " & module.name & " as it has not changed"

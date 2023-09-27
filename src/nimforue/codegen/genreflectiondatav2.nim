@@ -136,8 +136,8 @@ func moveTypeFrom(uet:UEType, source, destiny : var UEModule) =
     uet.isInCommon = true
     uet.forwardDeclareOnly = true
     source.types[index] = uet
+    uet.fields = uet.fields.filterIt(it.kind != uefFunction)
     uet.forwardDeclareOnly = false    
-    uet.fields = uet.fields.filterIt(it.kind == uefProp and uet.isInPCH and it.isPublic()) #no need for functions in common
     destiny.types.insert(uet) #Insert at the beggining so we got around and issue where the child is defined befpre the parent
   of uetEnum, uetStruct:
     source.types.del(index)
@@ -264,11 +264,11 @@ func getAllTypesDepsNotDefinedInAllModules*(project:UEProject, typeDefs : Table[
       result[uem.name] = undefinedDeps
   result
 
-func removeDepsFromDelegatesEnumsAndCommon(project : UEProject) : UEProject = 
+func removeDepsFromDelegatesEnums(project : UEProject) : UEProject = 
   result = project
   var projectModules = project.modules
   for uem in projectModules: #Delegate and enums shouldnt have any deps as they are just typedefs without dependencies
-    if uem.name.split("/")[^1] in ["Delegates", "Enums", "Common"]:
+    if uem.name.split("/")[^1] in ["Delegates", "Enums"]:
       var uem = uem
       uem.dependencies = @[] 
       projectModules = projectModules.replaceFirst((m:UEModule)=>m.name == uem.name, uem)
@@ -549,7 +549,6 @@ proc generateProject*(forceGeneration = false) =
       commonModule.types = commonModule.types.deduplicate()
       commonModule = reorderTypesSoParentAreDeclaredFirst(commonModule)
 
-
       project.modules.add commonModule
 
       #Set final deps
@@ -583,6 +582,8 @@ proc generateProject*(forceGeneration = false) =
           m.types = m.types.filterIt(it.name notin typesToRemove)
             
           projectModules = projectModules.replaceFirst((uem:UEModule)=>uem.name == m.name, m)
+          # project = removeDepsFromDelegatesEnums(project) #This is done in the genmodule phase (easier to iterate over)
+
       except:
         UE_Error &"Error fixing forward declare only types"
         UE_Error getCurrentExceptionMsg()

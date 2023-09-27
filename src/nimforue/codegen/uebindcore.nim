@@ -101,7 +101,7 @@ func signatureAsNode*(funField:UEField, identFn : string->NimNode, isDefaultValu
       of "FRotator": makeFnCall("makeFRotator", val)
       else:
         if propType.startsWith("E"): 
-          nnkDotExpr.newTree(ident propType, ident val)
+          nnkDotExpr.newTree(ident propType, ident val.replace("Type::", "")) #replce get rid of Namespace.Type.Value
         elif @["A", "U"].filterIt(propType.startsWith(it)).any(): #Will be always a null pointer
           ident "nil"
         else:

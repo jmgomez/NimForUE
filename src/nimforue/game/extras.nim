@@ -7,7 +7,7 @@ import ../codegen/[gencppclass]
 import engine/common
 import engine/gameframework
 import engine/engine
-import enhancedinput
+import enhancedinput/enhancedinput
 import std/[typetraits, options, asyncdispatch, strformat, tables]
 
 proc tryGetSubsystem*[T : UEngineSubsystem]() : Option[ptr T] = 
