@@ -21,13 +21,18 @@ type
   SPanelPtr* = ptr SPanel
   SOverlay* {.importcpp, inheritable.} = object of SPanel
   SOverlayPtr* = ptr SOverlay
+  SLeafWidget* {.importcpp, inheritable.} = object of SWidget
+  SLeafWidgetPtr* = ptr SLeafWidget
+  STextBlock* {.importcpp, inheritable.} = object of SLeafWidget
+  STextBlockPtr* = ptr STextBlock
+
 
 
   EToolkitMode* {.importcpp:"EToolkitMode::Type".} = enum
     Standalone
     WorldCentric
 
-type ArrowPtr[T] = ptr T | TSharedRef[T] | TSharedPtr[T]  
+type ArrowPtr[T] = ptr T | TSharedRef[out T] | TSharedPtr[T]  | TSharedRef[T]
 #SLATE
 proc sNew*[T:SWidget](): TSharedRef[T]{.importcpp:"SNew('*0)" .}
 proc sNew*(T: typedesc[SWidget]): TSharedRef[T]{.importcpp:"SNew('*0)" .}
@@ -73,8 +78,12 @@ type
 # proc add*(slot: FOverlaySlot, )
 proc addSlot*(overlay: ArrowPtr[SOverlay], zIndex: int32 = -1):FScopeWidgetSlotArguments {.importcpp: "#->AddSlot(#)" .}
 proc `[]`*(arg: FScopeWidgetSlotArguments, widget: ArrowPtr[SWidget]) {.importcpp: "#[@]" .}
+proc add*(arg: FScopeWidgetSlotArguments, widget: ArrowPtr[SWidget]) {.importcpp: "#[@]" .}
 proc removeSlot*(overlay: ArrowPtr[SOverlay], zIndex: int32) {.importcpp: "#->RemoveSlot(#)" .}
 proc clearChildren*(overlay: ArrowPtr[SOverlay]) {.importcpp: "#->ClearChildren()" .}
 proc slot*(overlay: typedesc[SOverlay]): FOverlaySlotArguments {.importcpp: "'1::Slot()" .}
 proc getNumberWidgets*(overlay: ArrowPtr[SOverlay]): int32 {.importcpp: "#->GetNumWidgets()" .}
 proc len*(overlay: ArrowPtr[SOverlay]): int32  = getNumberWidgets(overlay)
+
+
+proc setText*(textBlock: ArrowPtr[STextBlock], text: FText) {.importcpp: "#->SetText(#)" .}
