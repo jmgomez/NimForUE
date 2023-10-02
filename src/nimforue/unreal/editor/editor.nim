@@ -53,6 +53,7 @@ type
   IAssetTools* {.importcpp.} = object
   IAssetToolsPtr* = ptr IAssetTools  
   
+  FScopedTransaction* {.importcpp.} = object
 
   EAssetTypeCategories* = enum
     None, Basic, Animation, Materials, Sounds, Physics, UI, Misc = 64, Gameplay, Blueprint, Media, Textures
@@ -267,3 +268,5 @@ template withCallInEditor*(body: untyped) =
 proc getLocation*(self: FViewportCameraTransform): var FVector {.importcpp:"#.GetLocation()".}
 proc getRotation*(self: FViewportCameraTransform): var FRotator {.importcpp:"#.GetRotation()".}
 proc getLookAt*(self: FViewportCameraTransform): var FVector {.importcpp:"#.GetLookAt()".}
+
+proc makeFScopedTransaction*(desc: FText): FScopedTransaction {.importcpp:"FScopedTransaction(#)" .}

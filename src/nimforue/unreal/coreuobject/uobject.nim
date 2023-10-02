@@ -328,7 +328,7 @@ proc getWorld*(obj : UObjectPtr) : UWorldPtr {. ureflect, importcpp: "#->GetWorl
 proc getName*(obj : UObjectPtr) : FString {. ureflect, importcpp:"#->GetName()" .}
 proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
 proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
-
+proc modify*(obj: UObjectPtr) {.importcpp:"#->Modify()".}
 
 #USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}
@@ -370,7 +370,6 @@ func getCapabilities*(ops:ICppStructOpsPtr): FCapabilities {. importcpp:"#->GetC
 
 # proc getCppStructOps*(str:UScriptStructPtr) : ICppStructOpsPtr {. importcpp:"#->GetCppStructOps()" .}
 
-#TObjectPtr
 
 
 proc get*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
@@ -492,7 +491,6 @@ func getAllUClasses*() : TArray[UClassPtr] =
   
 
 #other
-
 proc succeeded*(clsFinder : FClassFinder) : bool {.importcpp:"#.Succeeded()".}
 proc makeClassFinder*[T](classToFind : FString) : FClassFinder[T]{.importcpp:"'0(*#)" .}
 proc makeObjectFinder*[T](objectToFind : FString) : FObjectFinder[T]{.importcpp:"'0(*#)" .}

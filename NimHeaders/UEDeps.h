@@ -82,6 +82,7 @@
   #include "Editor/UnrealEd/Public/SAssetEditorViewport.h"
   #include "Editor/UnrealEd/Public/LevelEditorViewport.h"
   #include "Editor/UnrealEd/Public/AssetEditorViewportLayout.h"
+  #include "Editor/UnrealEd/Public/ScopedTransaction.h"
   #include "Factories/Factory.h"
 
   #include "WorkflowOrientedApp/WorkflowTabManager.h"
