@@ -57,6 +57,26 @@ type
     ueActualName* : string #in case it has Received or some other prefix
     isDelayed*: bool #only used for vmdefaultconstructor. When true means there is no native implementation yet as the class doesnt exist when calling setup borrow
 
+func `==`*(self: RuntimeField, other: RuntimeField): bool = 
+  if self.kind != other.kind: return false
+  case self.kind:
+  of Int:
+    return self.intVal == other.intVal
+  of Bool:
+    return self.boolVal == other.boolVal
+  of Float:
+    return self.floatVal == other.floatVal
+  of String:
+    return self.stringVal == other.stringVal
+  of Struct:
+    return self.structVal == other.structVal
+  of Array:
+    return self.arrayVal == other.arrayVal
+  of Map:
+    return self.mapVal == other.mapVal
+  else:
+    return false
+
 const VMDefaultConstructor* = "vmdefaultconstructor"
 func isVMDefaultConstructor*(borrowInfo: UEBorrowInfo): bool = borrowInfo.fnName == borrowInfo.className & VMDefaultConstructor
 func makeVMDefaultConstructorName*(className: string): string = className & VMDefaultConstructor
