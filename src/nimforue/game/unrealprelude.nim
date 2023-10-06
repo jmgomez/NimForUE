@@ -9,7 +9,7 @@ import ../unreal/core/[coreglobals,ftext, delegates, templates]
 import ../unreal/engine/[enginetypes, world]
 import ../unreal/runtime/[assetregistry]
 
-import ../utils/[utils, ueutils]
+import ../utils/[utils, ueutils, matching]
 import extras
 
 import engine/[common, components, camera, engine, gameframework, enums]

@@ -8,7 +8,6 @@ import ../utils/[utils, ueutils]
 
 
 
-
 type 
   CtorInfo* = object #stores the constuctor information for a class.
     fn*: UClassConstructor

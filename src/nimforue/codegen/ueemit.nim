@@ -1,7 +1,7 @@
 import std/[sugar, macros, algorithm, strutils, strformat, tables, times, genasts, sequtils, options, hashes]
 import ../unreal/coreuobject/[uobject, package, uobjectglobals, nametypes]
 import ../unreal/core/containers/[unrealstring, array, map]
-import ../unreal/nimforue/[nimforue, nimforuebindings]
+import ../unreal/nimforue/[nimforuebindings]
 import ../unreal/engine/enginetypes
 import ../utils/[utils, ueutils]
 import nuemacrocache
