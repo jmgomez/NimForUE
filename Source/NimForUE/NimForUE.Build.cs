@@ -87,6 +87,7 @@ public class NimForUE : ModuleRules
 			PublicDefinitions.Add("NUE_GAME=1");
 			Console.WriteLine("Found an user custom header nuegame.h Adding it to the PCH");
 		}
+			
 
 		if (Target.bBuildEditor) {
 			AddNimForUEDev();

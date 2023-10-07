@@ -2,6 +2,11 @@
 
 #include "UEDeps.h"
 #include "nimbasenue.h"
-#if NUE_GAME
+
+#if defined(__clang__)
+#pragma GCC diagnostic ignored "-Wundef"
+#endif
+#if NUE_GAME == 1
   #include "nuegame.h"
 #endif
+
