@@ -224,6 +224,8 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
 macro uClass*(name:untyped, body : untyped) : untyped = 
   let (uClassNode, fns) = uClassImpl(name, body)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
+  # debugEcho repr result
+
  
 
 func getRawClassTemplate(isSlate: bool, interfaces: seq[string]): string = 
@@ -320,7 +322,6 @@ func functorImpl(body: NimNode): NimNode =
         namePtr* = ptr name
     typ[0][^1][^1] = captures
     result = nnkStmtList.newTree(typ, prc)
-  # debugEcho repr result
 
 macro functor*(body: untyped): untyped = 
   #[

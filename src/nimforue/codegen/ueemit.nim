@@ -42,9 +42,9 @@ proc vtableConstructorStatic*[T](helper : var FVTableHelper): UObjectPtr {.cdecl
 
 proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
   const typeName = typeof(T).name
-  const ueType = getVMTypes(false).filter(t=>t.name == typeName)[0] #Compile time only. This may be expensive. Make it faster (but measure first)
+  const ueType = getVMTypes(false).filter(t=>t.name == typeName).head() #Compile time only. This may be expensive. Make it faster (but measure first)
 
-  when ueType.hasObjInitCtor or T is UUserWidget: #The type needs to be in sync with umacros 
+  when ueType.isSome() and ueType.get.hasObjInitCtor or T is UUserWidget: #The type needs to be in sync with umacros 
     newInstanceInAddrWithInit[T](initializer.getObj(), initializer)
   else:
     newInstanceInAddr[T](initializer.getObj())
@@ -705,3 +705,16 @@ func processVirtual*(procDef: NimNode, parentName: string = "", overrideName: st
             let self {.inject.} = removeConst(self)
         result.body.insert 0, selfNoConst
         
+
+
+#Manually added NimForUEBinding. Here to avoid cycle
+proc addManualUClasses() = 
+    addEmitterInfoForClass[UNimFunction](UEType(name: "UNimFunction",
+        fields: seq[UEField](@[]), metadata: seq[UEMetadata](@[]), isInPCH: false,
+        moduleRelativePath: "", size: 0'i32, parentSize: 0'i32, alignment: 0'i32,
+        kind: UETypeKind(0), isInCommon: false, parent: "UFunction",
+        clsFlags: 1252198110'u32, ctorSourceHash: "", interfaces: seq[string](@[]),
+        fnOverrides: seq[CppFunction](@[]), isParentInPCH: true,
+        forwardDeclareOnly: false, hasObjInitCtor: false))
+
+addManualUClasses()

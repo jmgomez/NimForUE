@@ -18,14 +18,22 @@ type
 
     UNimEnumPtr* = ptr UNimEnum
 
-    UNimFunction* {.importcpp.} = object of UFunction
-        sourceHash* {.importcpp:"SourceHash".} : FString
-    UNimFunctionPtr* = ptr UNimFunction
+    # UNimFunction* {.importcpp.} = object of UFunction
+    #     sourceHash* {.importcpp:"SourceHash".} : FString
+    # UNimFunctionPtr* = ptr UNimFunction
 
     UReflectionHelpers* {.importcpp.} = object of UObject
     UReflectionHelpersPtr* = ptr UReflectionHelpers
 
 
+#Manual uClasses (copied from generating one with the macro. The metadata is in emitter)
+const clsTemplate = "struct $1 : public $3 {\n  \n  $1(FVTableHelper& Helper) : $3(Helper) {}\n  $2  \n};\n"
+type
+  UNimFunction* {.exportc, inheritable, codegenDecl: clsTemplate .} = object of UFunction
+    sourceHash*: FString
+  UNimFunctionPtr* = ptr UNimFunction
+
+proc UFuncTestCtor(): UNimFunction {.constructor.} = discard
 
 
 proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
