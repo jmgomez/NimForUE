@@ -39,6 +39,7 @@ func fromCallNodeToIdentDenf(n: NimNode): NimNode =
     if n[1][0].kind in [nnkBracketExpr, nnkIdent]: #n[1] is StmtList always
       n[1][0]
     else:
+      debugEcho treeRepr n
       error "Unexpected type of field. Expected ident or bracketExpr got " & $n[1][0].kind
       newEmptyNode()
   let pragms = newEmptyNode() #no pragmas for now
@@ -137,8 +138,8 @@ func getForwardDeclarationForProc(fn:NimNode) : NimNode =
 #At this point the fws are reduced into a nnkStmtList and the same with the nodes
 func genUFuncsForUClass*(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode]) : (NimNode, seq[UEField]) = 
     let fnBlocks = body.toSeq()
-                       .filter(n=>n.kind == nnkCall and 
-                            n[0].strVal().toLower() in ["ufunc", "ufuncs", "ufunction", "ufunctions"])
+                      .filter(n=>n.kind == nnkCall and 
+                          n[0].strVal().toLower() in ValidUFuncs)
 
     let fns = fnBlocks.map(fnBlock=>funcBlockToFunctionInUClass(fnBlock, ueTypeName))
     let procFws =nimProcs.map(getForwardDeclarationForProc) #Not used there is a internal error: environment misses: self
@@ -151,7 +152,11 @@ func genUFuncsForUClass*(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode])
       fnFields.add newfnFields
     result = (nnkStmtList.newTree(fws &  nimProcs & impls ), fnFields)
 
-
+proc typeParams*(typeDef: NimNode): NimNode = #TODO move to utils
+  assert typeDef.kind == nnkTypeDef
+  if typeDef[^1][^1].kind == nnkEmpty:
+    typeDef[^1][^1] = nnkRecList.newTree()
+  typeDef[^1][^1]
 
 proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)    
@@ -181,7 +186,14 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
       #this may cause a comp error if the file doesnt exist. Make sure it exists first. #TODO PR to fix this 
       ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
       addVMType ueType
+      #Call is equivalent with identDefs
+      let nimFields = body.children.toSeq
+                          .filterIt(it.kind == nnkCall and it[0].strVal() notin @ValidUprops & "defaults" & @ValidUFuncs)
+                          .map(fromCallNodeToIdentDenf)
+     
       var (typeNode, addEmitterProc) = emitUClass(ueType)
+      if nimFields.any():
+        typeNode[0][0].typeParams.add nimFields
       var procNodes = nnkStmtList.newTree(addEmitterProc)
       #returns empty if there is no block defined
       let defaults = genDefaults(body)
@@ -195,7 +207,7 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
       let nimProcs = body.children.toSeq
                       .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor", ueType.name])
                       .mapIt(it.addSelfToProc(className).processVirtual(parent))        
-
+       
       var (fns,_) = genUFuncsForUClass(body, className, nimProcs)
       fns.insert(0, procNodes)
       let ctorContent = newLit &"{className}(const '1& #1) : {ueType.parent}(#1)"

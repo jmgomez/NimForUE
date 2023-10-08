@@ -405,6 +405,7 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
     (flags, metadata)
 
 const ValidUprops* = ["uprop", "uprops", "uproperty", "uproperties"]
+const ValidUFuncs* = ["ufunc", "ufuncs", "ufunction", "ufunctions"]
 
 func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] = 
 

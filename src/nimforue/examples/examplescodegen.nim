@@ -114,9 +114,6 @@ uEnum EInspectType:
 #This is just for testing/exploring, it wont be an actor
 uClass AActorCodegen of AActor:
   (BlueprintType)
-  override:
-    proc beginPlay() = 
-      UE_Warn "Hello Begin play from actor codegen"
   uprops(EditAnywhere, BlueprintReadWrite, Category=CodegenInspect):
     inspect : EInspectType 
     inspectName : FString
