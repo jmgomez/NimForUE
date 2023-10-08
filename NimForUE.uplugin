@@ -26,11 +26,7 @@
 			"Type": "Runtime",
 			"LoadingPhase": "PostDefault"
 		},
-		{
-			"Name": "NimForUETest",
-			"Type": "Editor",
-			"LoadingPhase": "PostDefault"
-		},
+		
 		{
 			"Name": "NimForUEEditor",
 			"Type": "EditorNoCommandlet",
