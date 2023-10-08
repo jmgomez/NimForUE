@@ -5,24 +5,13 @@ import std/[typetraits, strutils, options, strformat, sequtils, sugar, tables]
 import ../../codegen/[models]
 import ../../utils/[utils, ueutils]
 type 
-    UFunctionCaller* {.importc, inheritable, pure .} = object
-    FNativeFuncPtr* {.importcpp.} = object
-    
-    UNimScriptStruct* {.importcpp.} = object of UScriptStruct
-    # UNimScriptStruct* = UScriptStruct
-        
-
+    UFunctionCaller* {.importc, inheritable, pure .} = object #Not used anymore?
+    FNativeFuncPtr* {.importcpp.} = object #recreate in Nim
+    UNimScriptStruct* {.importcpp.} = object of UScriptStruct #HARD: recreate in Nim (the last one)
     UNimScriptStructPtr* = ptr UNimScriptStruct
-
-    UNimEnum* {.importcpp.} = object of UEnum
-
+    UNimEnum* {.importcpp.} = object of UEnum #recreate in Nim
     UNimEnumPtr* = ptr UNimEnum
-
-    # UNimFunction* {.importcpp.} = object of UFunction
-    #     sourceHash* {.importcpp:"SourceHash".} : FString
-    # UNimFunctionPtr* = ptr UNimFunction
-
-    UReflectionHelpers* {.importcpp.} = object of UObject
+    UReflectionHelpers* {.importcpp.} = object of UObject #Tedious because there are a lot of functions inside.
     UReflectionHelpersPtr* = ptr UReflectionHelpers
 
 
