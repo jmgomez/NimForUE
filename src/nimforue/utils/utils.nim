@@ -1,9 +1,13 @@
-import std/[options, strutils, sequtils, sugar, tables, json, jsonutils, macros, genasts]
+import std/[options, strutils, sequtils, sugar, tables, json, jsonutils, macros, genasts, typetraits]
 #NOTE Do not include UE Types here
 
 type Criteria[T] = proc (t:T) : bool {.noSideEffect.}
 const PathSeparator* = when defined(windows): "\\" else: "/"
 
+type
+  Traversable*[T] = concept 
+    iterator items(self: Self): T
+    proc len(self: Self): int
 
 #small macros/templates
 template measureTime*(name: static string, body: untyped) =
@@ -30,6 +34,13 @@ macro noresult*(prc:untyped) =
 proc treeRepr*(xs: seq[NimNode]): string = xs.mapIt(treeRepr(it)).join("\n")
 proc repr*(xs: seq[NimNode]): string = xs.mapIt(repr(it)).join("\n")
 
+proc parent*(T:typedesc): string = 
+  let child = bindSym typeof(T).name
+  let parent = child.getImpl()[^1][1]
+  case parent.kind:
+  of nnkOfInherit:parent[0].strVal()
+  else: ""
+
 template toVar*[T](self : ptr T) : var T = cast[var T](self)
 template toVar*[T](self : T) : var T = toVar(self.unsafePtr())
 
@@ -50,11 +61,11 @@ func tail*[T](xs: seq[T]): seq[T] =
   if len(xs) == 0: @[]
   else: xs[1..^1]
 
-func any*[T](xs: seq[T]): bool = len(xs) != 0
-func any*[T](xs: seq[T], fn: T->bool): bool = xs.filter(fn).any()
-func all*[T](xs: seq[T], fn: T->bool): bool = xs.filter(fn).len() == xs.len()
+func any*[T](xs: Traversable[T]): bool = len(xs) != 0
+func any*[T](xs: Traversable[T], fn: T->bool): bool = xs.filter(fn).any()
+func all*[T](xs: Traversable[T], fn: T->bool): bool = xs.filter(fn).len() == xs.len()
 
-func firstIndexOf*[T](xs: seq[T], fn: proc (t:T) : bool): int =
+func firstIndexOf*[T](xs: Traversable[T], fn: proc (t:T) : bool): int =
   var i = 0
   while i < len(xs):
     safe: 
@@ -277,5 +288,3 @@ proc tryGetJson*[T](json:JsonNode, key:string) : Option[T] =
 proc objectLen*(T: typedesc[object]) : int =  
   for field in default(T).fields:    
     inc result
-
-
