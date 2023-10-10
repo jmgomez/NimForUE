@@ -374,6 +374,9 @@ func typeDefToNimType(typeDef: NimNode) : NimType =
   of nnkBracketExpr: #GENERIC ALIAS (type FOnInputKeySignature* = TMulticastDelegateOneParam[FInputKeyEventArgsPtr])
     #For now it's fine to just do an object with no params
     NimType(name:name, kind:None)
+  of nnkTypeClassTy:
+    #TODO concepts
+    NimType(name:name, kind:None)
 
   else:
     debugEcho treeRepr typeDef
