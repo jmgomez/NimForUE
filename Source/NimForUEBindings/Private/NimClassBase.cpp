@@ -9,20 +9,20 @@
 #include "Subsystems/AssetEditorSubsystem.h"
 #endif
 
-
-UNimEnum::UNimEnum(const FObjectInitializer& Initializer) : UEnum(Initializer) {
-	SetEnumFlags(EEnumFlags::Flags);
-}
-
-TArray<TPair<FName, int64>> UNimEnum::GetEnums() {
-	return this->Names;
-}
-
-void UNimEnum::MarkNewVersionExists() {
-	SetEnumFlags(EEnumFlags::NewerVersionExists);
-}
-
-int FNimHotReload::GetNumber()
-{
-	return 5;
-}
+//
+// UNimEnum::UNimEnum(const FObjectInitializer& Initializer) : UEnum(Initializer) {
+// 	SetEnumFlags(EEnumFlags::Flags);
+// }
+//
+// TArray<TPair<FName, int64>> UNimEnum::GetEnums() {
+// 	return this->Names;
+// }
+//
+// void UNimEnum::MarkNewVersionExists() {
+// 	SetEnumFlags(EEnumFlags::NewerVersionExists);
+// }
+//
+// int FNimHotReload::GetNumber()
+// {
+// 	return 5;
+// }

@@ -26,7 +26,7 @@ void ReinstanceBindings::ReinstanceNueTypes(FString NueModule, FNimHotReload* Ni
 		return;
 		
 	}
-	UE_LOG(LogTemp, Log, TEXT("NimForUE NIMHOTRELOAD! %i"), NimHotReload->GetNumber());
+
 
 	if (NimHotReload->bShouldHotReload) {
 		// if (!bIsFirstLoad) {

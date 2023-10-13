@@ -5,24 +5,24 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "CoreUObject/Public/UObject/Class.h"
-#include "NimClassBase.generated.h"
+// #include "NimClassBase.generated.h"
 
 /**
  * 
  */
 
-
-
-UCLASS()
-class NIMFORUEBINDINGS_API UNimEnum : public UEnum {
-GENERATED_BODY()
-public:
-	FString ueType;
-	UNimEnum(const FObjectInitializer& Initializer);
-
-	TArray<TPair<FName, int64>> GetEnums();
-	void MarkNewVersionExists(); 
-};
+//
+//
+// UCLASS()
+// class NIMFORUEBINDINGS_API UNimEnum : public UEnum {
+// GENERATED_BODY()
+// public:
+// 	FString ueType;
+// 	UNimEnum(const FObjectInitializer& Initializer);
+//
+// 	TArray<TPair<FName, int64>> GetEnums();
+// 	void MarkNewVersionExists(); 
+// };
 
 // UCLASS()
 // class NIMFORUEBINDINGS_API UNimFunction : public UFunction {

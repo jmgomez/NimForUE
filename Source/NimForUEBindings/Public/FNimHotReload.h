@@ -20,7 +20,7 @@ struct DLLEXPORT FNimHotReload {
 	
 	bool bShouldHotReload = false;
 
-	virtual int GetNumber();
+	// virtual int GetNumber();
 };
 
 

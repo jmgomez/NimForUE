@@ -43,7 +43,6 @@ proc vtableConstructorStatic*[T](helper : var FVTableHelper): UObjectPtr {.cdecl
 proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
   const typeName = typeof(T).name
   const ueType = getVMTypes(false).filter(t=>t.name == typeName).head() #Compile time only. This may be expensive. Make it faster (but measure first)
-
   when ueType.isSome() and ueType.get.hasObjInitCtor or T is UUserWidget: #The type needs to be in sync with umacros 
     newInstanceInAddrWithInit[T](initializer.getObj(), initializer)
   else:
@@ -704,17 +703,30 @@ func processVirtual*(procDef: NimNode, parentName: string = "", overrideName: st
           genAst():  
             let self {.inject.} = removeConst(self)
         result.body.insert 0, selfNoConst
-        
-
 
 #Manually added NimForUEBinding. Here to avoid cycle
-proc addManualUClasses() = 
-    addEmitterInfoForClass[UNimFunction](UEType(name: "UNimFunction",
+proc getUETypeFor[T](hasObjInitCtor: static bool = false): UEType =
+    const name = typeof(T).name
+    const parent = typeof(T).parent()
+    const uet = (UEType(name: name,
         fields: seq[UEField](@[]), metadata: seq[UEMetadata](@[]), isInPCH: false,
         moduleRelativePath: "", size: 0'i32, parentSize: 0'i32, alignment: 0'i32,
-        kind: UETypeKind(0), isInCommon: false, parent: "UFunction",
+        kind: UETypeKind(0), isInCommon: false, parent: parent,
         clsFlags: 1252198110'u32, ctorSourceHash: "", interfaces: seq[string](@[]),
         fnOverrides: seq[CppFunction](@[]), isParentInPCH: true,
-        forwardDeclareOnly: false, hasObjInitCtor: false))
+        forwardDeclareOnly: false, hasObjInitCtor: hasObjInitCtor))
+    uet
+const manualTypes = @[
+    getUETypeFor[UNimFunction](),
+    getUETypeFor[UNimEnum](hasObjInitCtor = true),
+]
+static:
+  for uet in manualTypes:
+    addVMType uet
+
+proc addManualUClasses() = 
+    #TODO find a way to do this automatically without involving a macro.
+    addEmitterInfoForClass[UNimFunction]( getUETypeFor[UNimFunction]())
+    addEmitterInfoForClass[UNimEnum](getUETypeFor[UNimEnum](true))
 
 addManualUClasses()

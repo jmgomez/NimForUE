@@ -9,8 +9,6 @@ type
     FNativeFuncPtr* {.importcpp.} = object #recreate in Nim
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct #HARD: recreate in Nim (the last one)
     UNimScriptStructPtr* = ptr UNimScriptStruct
-    UNimEnum* {.importcpp.} = object of UEnum #recreate in Nim
-    UNimEnumPtr* = ptr UNimEnum
     UReflectionHelpers* {.importcpp.} = object of UObject #Tedious because there are a lot of functions inside.
     UReflectionHelpersPtr* = ptr UReflectionHelpers
 
@@ -22,15 +20,25 @@ type
   UNimFunction* {.inheritable, codegenDecl: clsTemplate .} = object of UFunction
     sourceHash*: FString
   UNimFunctionPtr* = ptr UNimFunction
+  UNimEnum* {.inheritable, codegenDecl: clsTemplate .} = object of UEnum #recreate in Nim
+  UNimEnumPtr* = ptr UNimEnum
 
-proc UFuncTestCtor(): UNimFunction {.constructor.} = discard
+proc makeNimEnum*(init: var FObjectInitializer): UNimEnum {.constructor:"UNimEnum(const '1 #1) : UEnum(#1)".} = discard
+#HACK ahead, this probably would crash at runtime if called. TODO add suport for noDecl in the compiler
+when (NimMajor, NimMinor) <= (2, 0):    
+  proc makeNimEnum*(): UNimEnum {.constructor: "UNimEnum() : UEnum(*(new FObjectInitializer()))".} = discard
+else:
+  proc makeNimEnum*(): UNimEnum {.constructor, nodecl .} = discard
 
+proc makeNimFunction*(): UNimFunction {.constructor.} = discard
+#UNimEnum
+proc markNewVersionExistsInternal(uenum:UNimEnumPtr) : void {.importcpp:"#->SetEnumFlags(EEnumFlags::NewerVersionExists)".}
+proc markNewVersionExists*(uenum:UNimEnumPtr) {.member.} = uenum.markNewVersionExistsInternal()
 
 proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
 
 #UNimEnum
 func getEnums*(uenum:UEnumPtr) : TArray[FString] {.importcpp:"UReflectionHelpers::GetEnums(#)".}
-proc markNewVersionExists*(uenum:UNimEnumPtr) : void {.importcpp:"#->MarkNewVersionExists()".}
 
 #UNimClassBase
 proc setClassConstructor*(cls:UClassPtr, classConstructor:UClassConstructor) : void {.importcpp:"UReflectionHelpers::SetClassConstructor(@)".}
