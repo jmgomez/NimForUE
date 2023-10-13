@@ -151,7 +151,7 @@ uClass AActorCodegen of AActor:
       if cls.isNil():
         UE_Error "Class is null"
         return
-      UE_Log $cls
+      UE_Log dump cls
     
     proc dumpClassProps() = 
       let cls = self.getClassFromInspectedType()

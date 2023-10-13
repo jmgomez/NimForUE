@@ -434,17 +434,17 @@ proc `$`*(str:UScriptStructPtr) : string =
 
 proc dump*(cls:UClassPtr) : string = 
   var str = &"Class: {cls.getName()} \n\t Parent: {cls.getSuperClass().getName()}\n\t Module:{cls.getPackage().getModuleName()} \n\t Package:{cls.getPackage().getName()} \n\t Class Flags: {cls.classFlags} \n\t Object Flags: {cls.getFlags}"
-  str = &"{str} \n\t Interfaces:"
-  for i in cls.interfaces:
-    str = &"{str}\n\t\t {i}"
-  str = &"{str} \n\t Metas:"
-  let metas = cls.getMetadataMap().toTable()
-  for key, value in metas:
-    str = &"{str}\n\t\t {key} : {value}"
+  # str = &"{str} \n\t Interfaces:"
+  # for i in cls.interfaces:
+  #   str = &"{str}\n\t\t {i}"
+  # str = &"{str} \n\t Metas:"
+  # let metas = cls.getMetadataMap().toTable()
+  # for key, value in metas:
+  #   str = &"{str}\n\t\t {key} : {value}"
 
-  str = &"{str} \n\t Props:"
-  for p in cls.getFPropsFromUStruct():
-    str = &"{str}\n\t\t {p}"
+  # str = &"{str} \n\t Props:"
+  # for p in cls.getFPropsFromUStruct():
+  #   str = &"{str}\n\t\t {p}"
     
   str = &"{str} \n\t Funcs:"
   let funcs = cls.getFuncsFromClass()
