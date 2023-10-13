@@ -33,7 +33,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         of emTObjectPtr: propType.extractTypeFromGenericInNimFormat("TObjectPtr").removeFirstLetter() 
         of emObjPtr, emClass, emScriptStruct: propType.removeFirstLetter().removeLastLettersIfPtr()
 
-    UE_Log "Looking for ustruct.." & className 
+    UE_Log &"Looking for ustruct..{className} emeta: {eMeta} PropType: {propType}"
     let ustruct = getUStructByName className
     if ustruct.isnil(): return none[FPropertyPtr]()
     #we still dont know if it's a script struct

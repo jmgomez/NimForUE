@@ -1016,7 +1016,7 @@ proc emitUEnum*(enumType: UEType, package: UPackagePtr): UFieldPtr =
   let uenum = newUObject[UNimEnum](package, name, objFlags)
   for metadata in enumType.metadata:
     uenum.setMetadata(metadata.name, $metadata.value)
-  let enumFields = makeTArray[TPair[FName, int64]]()
+  var enumFields = makeTArray[TPair[FName, int64]]()
   for field in enumType.fields.pairs:
     let fieldName = field.val.name.makeFName()
     enumFields.add(makeTPair(fieldName, field.key.int64))

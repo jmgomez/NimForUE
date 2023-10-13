@@ -6,10 +6,11 @@ type TArray*[out T] {.importcpp } = object
 func num*[T](arr:TArray[T]): Natural {.importcpp: "#.Num()" noSideEffect}
 proc remove*[T](arr:TArray[T], value:T) {.importcpp: "#.Remove(#)".}
 proc removeAt*[T](arr: var TArray[T], idx:Natural) {.importcpp: "#.RemoveAt(#)".}
-proc add*[T](arr:TArray[T], value:T) {.importcpp: "#.Add(#)".}
+proc add*[T](arr:var TArray[T], value:T) {.importcpp: "#.Add(#)".}
 proc addUnique*[T](arr:TArray[T], value:T) {.importcpp: "#.AddUnique(#)".}
 proc append*[T](a, b:TArray[T]) {.importcpp: "#.Append(#)".}
 func reserve*[T](arr:TArray[T], value:Natural) {.importcpp: "#.Reserve(#)".}
+
 
 
 # proc `[]`*[T](arr:TArray[T], i: int): var T {. inline, noSideEffect.} = arr[i.int32]
@@ -94,3 +95,5 @@ proc removeBy*[T](arr: var TArray[T], fn: T -> bool) =
   for idx, e in enumerate(arr):
     if fn(e):
       arr.removeAt idx
+      break
+    

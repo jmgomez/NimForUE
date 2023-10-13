@@ -18,7 +18,8 @@ type
 #Manual uClasses (copied from generating one with the macro. The metadata is in emitter)
 const clsTemplate = "struct $1 : public $3 {\n  \n  $1(FVTableHelper& Helper) : $3(Helper) {}\n  $2  \n};\n"
 type
-  UNimFunction* {.exportc, inheritable, codegenDecl: clsTemplate .} = object of UFunction
+  #Notice you cant export types here or they will collide with the ones in the headers when linking the bindings.
+  UNimFunction* {.inheritable, codegenDecl: clsTemplate .} = object of UFunction
     sourceHash*: FString
   UNimFunctionPtr* = ptr UNimFunction
 
