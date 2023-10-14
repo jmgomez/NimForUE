@@ -557,6 +557,8 @@ macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn)
 macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn)
 
 macro ueBindProp*(cls:typedesc, propName:untyped, typ:typedesc) = 
+  ### example usage: ueBindProp(UInstancedStaticMeshComponent, perInstanceSMCustomData, TArray[int32])
+
   let ueType = UEType(name: cls.strVal().removeLastLettersIfPtr(), kind: uetClass) #notice it only binds uclasses. Struct cant be bound like this
-  let ueProp = UEField(name: propName.strVal(), uePropType: typ.strVal(), kind: uefProp)
-  genProp(ueType, ueProp)
+  let ueProp = UEField(name: propName.strVal(), uePropType: repr typ, kind: uefProp)
+  result = genProp(ueType, ueProp)

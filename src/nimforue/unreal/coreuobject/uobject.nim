@@ -393,8 +393,8 @@ proc doesReturn*(fn:UFunctionPtr) : bool  = tryGetReturnProperty(fn).isSome()
 #virtual bool SetEnums(TArray<TPair<FName, int64>>& InNames, ECppForm InCppForm, EEnumFlags InFlags = EEnumFlags::None, bool bAddMaxKeyIfMissing = true) override;
 
 proc setEnums*(uenum:UENumPtr, inName:TArray[TPair[FName, int64]]) : bool {. importcpp:"#->SetEnums(#, UEnum::ECppForm::Regular)" .}
-
-
+proc numEnums*(uenum:UENumPtr): int32 {. importcpp:"#->NumEnums()" .}
+proc getNameStringByIndex*(uenum:UENumPtr, index:int32) : FString {. importcpp:"#->GetNameStringByIndex(#)" .}
 
 #ITERATOR
 type TFieldIterator* [T:UStruct] {.importcpp.} = object

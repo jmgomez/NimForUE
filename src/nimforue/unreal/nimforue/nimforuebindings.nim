@@ -5,7 +5,6 @@ import std/[typetraits, strutils, options, strformat, sequtils, sugar, tables]
 import ../../codegen/[models]
 import ../../utils/[utils, ueutils]
 type 
-    UFunctionCaller* {.importc, inheritable, pure .} = object #Not used anymore?
     FNativeFuncPtr* {.importcpp.} = object #recreate in Nim
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct #HARD: recreate in Nim (the last one)
     UNimScriptStructPtr* = ptr UNimScriptStruct
@@ -37,26 +36,15 @@ proc markNewVersionExists*(uenum:UNimEnumPtr) {.member.} = uenum.markNewVersionE
 
 proc setCppStructOpFor*[T](scriptStruct:UNimScriptStructPtr, fakeType:ptr T) : void {.importcpp:"#->SetCppStructOpFor<'*2>(#)".}
 
-#UNimEnum
-func getEnums*(uenum:UEnumPtr) : TArray[FString] {.importcpp:"UReflectionHelpers::GetEnums(#)".}
+func getEnums*(uenum:UEnumPtr) : TArray[FString] = 
+  let values = uenum.numEnums()
+  result = makeTArray[FString]()
+  for i in 0 ..< values:
+    result.add uenum.getNameStringByIndex(i)
 
 #UNimClassBase
-proc setClassConstructor*(cls:UClassPtr, classConstructor:UClassConstructor) : void {.importcpp:"UReflectionHelpers::SetClassConstructor(@)".}
-# proc prepareNimClass*(cls:UNimClassBasePtr) : void {.importcpp:"#->PrepareNimClass()".}
+proc setClassConstructor*(cls:UClassPtr, classConstructor:UClassConstructor) : void {.importcpp:"(#->ClassConstructor = reinterpret_cast<void(*)(const FObjectInitializer&)>(#))".}
 proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.importcpp:"UReflectionHelpers::ConstructFromVTable(@)".}
-
-
-# proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
-proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:openarray[pointer]) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
-proc makeFunctionCaller*(class : UClassPtr, functionName:var FString, InParams:pointer) : UFunctionCaller {.importcpp: "UFunctionCaller(@)".}
-proc invoke*(functionCaller: UFunctionCaller, executor:ptr UObject, returnResult:pointer) : void {.importcpp: "#.Invoke(@)".}
-
-proc callUFuncOn*(executor:UObjectPtr, funcName : var FString, InParams : pointer) : void {.importcpp: "UFunctionCaller::CallUFunctionOn(@)".}
-proc callUFuncOn*(class:UClassPtr, funcName : var FString, InParams : pointer) : void {.importcpp: "UFunctionCaller::CallUFunctionOnClass(@)".}
-
-
-
-
 
 
 proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
@@ -76,21 +64,6 @@ proc containsStrongReference*(prop:FPropertyPtr) : bool {.importcpp:"UReflection
 # static TNativeType& StepCompiledInRef(FFrame* Frame, void*const TemporaryBuffer, TProperty* Ignore) {
 
 proc stepCompiledInRef*[T, TProperty ](stack:ptr FFrame, tempBuffer:pointer, ignore:ptr FProperty) : var T {. importcpp: "UReflectionHelpers::StepCompiledInRef<'*3, '*0>(@)" .}
-
-
-# type 
-#     FNimTestBase* {.importcpp, inheritable, pure.} = object
-#         testName* {.importcpp: "TestName".} : FString
-#         ActualTest* : proc (test:var FNimTestBase) : void {.cdecl.}
-
-
-
-# proc makeFNimTestBase*(testName:FString): FNimTestBase {.importcpp:"FNimTestBase(#)", constructor.}
-# proc makeFNimTestBase*(): FNimTestBase {.importcpp:"FNimTestBase()", constructor.}
-# proc reloadTest*(test:FNimTestBase, isOnly:bool):void {.importcpp:"#.ReloadTest(@)".}
-# proc testTrue*(test:FNimTestBase, msg:FString, value:bool):void {.importcpp:"#.TestTrue(@)".}
-# proc unregisterAllNimTests*() : void {.importcpp:"FNimTestBase::UnregisterAll()".} 
-
 
 #TODO This should throw if the property is not found!
 #If the property is not found it tries to find it as capital. For some reason UE makes moveAction as MoveAction. Need to investigate it further
