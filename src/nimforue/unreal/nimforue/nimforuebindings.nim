@@ -45,6 +45,27 @@ func getEnums*(uenum:UEnumPtr) : TArray[FString] =
 #UNimClassBase
 proc setClassConstructor*(cls:UClassPtr, classConstructor:UClassConstructor) : void {.importcpp:"(#->ClassConstructor = reinterpret_cast<void(*)(const FObjectInitializer&)>(#))".}
 proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.importcpp:"UReflectionHelpers::ConstructFromVTable(@)".}
+# proc constructFromVTable*(clsVTableHelperCtor: VTableConstructor) : UObjectPtr = 
+#   var clsVTableHelperCtor {.exportc.} = clsVTableHelperCtor
+#   #we emit here so we dont bind unnecesary functions
+#   {.emit:"""
+#     {
+#       TGuardValue<bool> Guard(GIsRetrievingVTablePtr, true);
+
+#       // Mark we're in the constructor now.
+#       FUObjectThreadContext& ThreadContext = FUObjectThreadContext::Get();
+#       TScopeCounter<int32> InConstructor(ThreadContext.IsInConstructor);
+
+#       FVTableHelper Helper;
+#       result = clsVTableHelperCtor(Helper);
+#       result->AtomicallyClearInternalFlags(EInternalObjectFlags::PendingConstruction);
+#     }
+
+#     if( !result->IsRooted() ) {
+#       result->MarkAsGarbage();
+#     }
+#     return result;
+#   """.}
 
 
 proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
@@ -58,23 +79,19 @@ proc setValueInBoolProp*(prop:FPropertyPtr, obj:UObjectPtr, val: bool) {.inline.
   castField[FBoolProperty](prop).setPropertyValue(prop.containerPtrToValuePtr(obj), val)
 
 
+proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr = 
+  var fieldIterator = makeTFieldIterator[FProperty](struct, IncludeSuper)
+  for it in fieldIterator: 
+    let prop = it.get() 
+    if prop.getName() == propName or prop.getName().capitalizeAscii() == propName:
+      return prop
 
-proc containsStrongReference*(prop:FPropertyPtr) : bool {.importcpp:"UReflectionHelpers::ContainsStrongReference(@)".}
-
-# static TNativeType& StepCompiledInRef(FFrame* Frame, void*const TemporaryBuffer, TProperty* Ignore) {
-
-proc stepCompiledInRef*[T, TProperty ](stack:ptr FFrame, tempBuffer:pointer, ignore:ptr FProperty) : var T {. importcpp: "UReflectionHelpers::StepCompiledInRef<'*3, '*0>(@)" .}
-
-#TODO This should throw if the property is not found!
-#If the property is not found it tries to find it as capital. For some reason UE makes moveAction as MoveAction. Need to investigate it further
-proc getFPropertyByNameInternal(struct:UStructPtr, propName:FString) : FPropertyPtr {.importcpp: "UReflectionHelpers::GetFPropetyByName(@)"}
-proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr {.inline.} = 
-    let prop = getFPropertyByNameInternal(struct, propName)
-    if prop.isNil:
-        getFPropertyByNameInternal(struct, propName.capitalizeAscii())
-    else:
-        prop
-proc getFPropertiesFrom*(struct:UStructPtr) : TArray[FPropertyPtr] {.importcpp: "UReflectionHelpers::GetFPropertiesFrom(@)"}
+proc getFPropertiesFrom*(struct:UStructPtr) : TArray[FPropertyPtr] = 
+  var xs : TArray[FPropertyPtr]
+  var fieldIterator = makeTFieldIterator[FProperty](struct, IncludeSuper)
+  for it in fieldIterator: 
+    xs.add it.get() 
+  xs
 
 
 proc getAllClassesFromModule*(moduleName:FString) : TArray[UClassPtr] {.importcpp:"UReflectionHelpers::GetAllClassesFromModule(@)" .}
