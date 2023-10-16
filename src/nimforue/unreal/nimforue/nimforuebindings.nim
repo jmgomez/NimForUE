@@ -98,9 +98,17 @@ proc getAllClassesFromModule*(moduleName:FString) : TArray[UClassPtr] {.importcp
 
 #nil here and in newUObject is equivalent to GetTransient() (like ue does). Once GetTrasientPackage is bind, use that instead since 
 #it's better design
-proc newObjectFromClass*(owner:UObjectPtr, cls:UClassPtr, name:FName) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
+proc staticConstructObject_Internal(params:FStaticConstructObjectParameters): UObjectPtr {.importcpp:"StaticConstructObject_Internal(#)".}
+proc newObjectFromClass*(owner:UObjectPtr, cls:UClassPtr, name:FName) : UObjectPtr = 
+  var params = makeFStaticConstructObjectParameters(cls)
+  params.outer = if owner.isNil(): getTransientPackage() else: owner
+  params.name = name
+  params.setFlags = RF_NoFlags
+  staticConstructObject_Internal(params)
+
 proc newObjectFromClass*(cls:UClassPtr) : UObjectPtr = newObjectFromClass(nil, cls, ENone)
-proc newObjectFromClass(params:FStaticConstructObjectParameters) : UObjectPtr {.importcpp:"UReflectionHelpers::NewObjectFromClass(@)".}
+proc newObjectFromClass(params:FStaticConstructObjectParameters): UObjectPtr = staticConstructObject_Internal(params)
+
 
 
  
@@ -125,17 +133,16 @@ proc newUObject*[T:UObject]() : ptr T = newUObject[T](nil, ENone)
 proc newUObject*[T:UObject](outer:UObjectPtr, name:FName, flags: EObjectFlags) : ptr T = 
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     let cls = getClassByName(className)
-
     var params = makeFStaticConstructObjectParameters(cls)
-    params.Outer = outer
-    params.Name = name
-    params.SetFlags = flags
+    params.outer = outer
+    params.name = name
+    params.setFlags = flags
     cast[ptr T](newObjectFromClass(params))
 
 proc newUObject*[T:UObject](outer:UObjectPtr, subcls : TSubClassOf[T]) : ptr T = 
     let cls = subcls.get()
     var params = makeFStaticConstructObjectParameters(cls)
-    params.Outer = outer
+    params.outer = outer
     cast[ptr T](newObjectFromClass(params))
 
 
@@ -231,9 +238,6 @@ proc `$`*(hr:FNimHotReloadPtr) : string =
     """
 
 
-
-
-
 proc executeTaskInTaskGraph*[T](param: T, taskFn: proc(param:T){.cdecl.}, nimMain:proc(){.cdecl.}) {.importcpp: "UReflectionHelpers::ExecuteTaskInTaskGraph<'1>(#, #)".}
 #[
     The task to run in another thread
@@ -249,12 +253,6 @@ proc reinstanceNueTypes*(nueModule:FString, nimHotReload:FNimHotReloadPtr, nimEr
 
 
 
-
-
-
-
-
-
 #This file contains logic on top of ue types that it isnt necessarily bind 
 
 
@@ -264,7 +262,7 @@ func isNimClass*(cls:UClassPtr) : bool = cls.hasMetadata(NimClassMetadataKey)
 proc markAsNimClass*(cls:UClassPtr) = cls.setMetadata(NimClassMetadataKey, "true")
 
 #not sure if I should make a specific file for object extensions that are outside of the bindings
-proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr {.exportcpp.} = 
+proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr = 
   let cls = getClassByName(clsName)
   if cls.isNotNil:
     result = cls.getDefaultObject()
