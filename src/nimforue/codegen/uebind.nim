@@ -101,7 +101,7 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
   let generateObjForStaticFunCalls = 
     if isStatic: 
       genAst(clsName=newStrLitNode(clsName)): 
-        let self {.inject.} = nimforuebindings.getDefaultObjectFromClassName(clsName)
+        let self {.inject.} = bindingdeps.getDefaultObjectFromClassName(clsName)
     else: newEmptyNode()
 
   let processFn = 

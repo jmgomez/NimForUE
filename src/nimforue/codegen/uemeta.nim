@@ -2,7 +2,7 @@
 import std/[times, strformat, tables, json, bitops, jsonUtils, strutils, options, sugar, algorithm, sequtils, hashes, typetraits]
 import ../unreal/core/containers/[unrealstring, array, map, set]
 import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype, tsoftobjectptr, nametypes, scriptdelegates, uobjectglobals, metadata]
-import ../unreal/nimforue/[nimforuebindings, nimforue]
+import ../unreal/nimforue/[nimforuebindings, nimforue, bindingdeps]
 import ../utils/[utils, ueutils]
 import ../unreal/engine/[enginetypes, world]
 import ../unreal/runtime/[assetregistry]

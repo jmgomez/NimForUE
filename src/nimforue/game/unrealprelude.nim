@@ -1,5 +1,5 @@
 import ../codegen/[ueemit, emitter, umacros]
-import ../unreal/nimforue/[nimforuebindings, nimforue]
+import ../unreal/nimforue/[nimforuebindings, nimforue, bindingdeps]
 import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype,tsoftobjectptr, 
     nametypes, scriptdelegates, uobjectglobals, metadata]
 import ../unreal/core/containers/[unrealstring, array, map, set]

@@ -4,13 +4,12 @@ import ../core/containers/[unrealstring, array, map]
 import std/[typetraits, strutils, options, strformat, sequtils, sugar, tables]
 import ../../codegen/[models]
 import ../../utils/[utils, ueutils]
+import bindingdeps
+
 type 
     FNativeFuncPtr* {.importcpp.} = object #recreate in Nim
     UNimScriptStruct* {.importcpp.} = object of UScriptStruct #HARD: recreate in Nim (the last one)
     UNimScriptStructPtr* = ptr UNimScriptStruct
-    UReflectionHelpers* {.importcpp.} = object of UObject #Tedious because there are a lot of functions inside.
-    UReflectionHelpersPtr* = ptr UReflectionHelpers
-
 
 #Manual uClasses (copied from generating one with the macro. The metadata is in emitter)
 const clsTemplate = "struct $1 : public $3 {\n  \n  $1(FVTableHelper& Helper) : $3(Helper) {}\n  $2  \n};\n"
@@ -68,23 +67,7 @@ proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.
 #   """.}
 
 
-proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
-proc setPropertyValuePtr*[T](property:FPropertyPtr, container : pointer, value : ptr T) : void {.importcpp: "SetPropertyValuePtr<'*3>(@)", header:"UPropertyCaller.h".}
-proc setPropertyValue*[T](property:FPropertyPtr, container : pointer, value : T) : void {.importcpp: "SetPropertyValue<'3>(@)", header:"UPropertyCaller.h".}
 
-
-proc getValueFromBoolProp*(prop:FPropertyPtr, obj:UObjectPtr): bool {.inline.} =
-  castField[FBoolProperty](prop).getPropertyValue(prop.containerPtrToValuePtr(obj))
-proc setValueInBoolProp*(prop:FPropertyPtr, obj:UObjectPtr, val: bool) {.inline.} =
-  castField[FBoolProperty](prop).setPropertyValue(prop.containerPtrToValuePtr(obj), val)
-
-
-proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr = 
-  var fieldIterator = makeTFieldIterator[FProperty](struct, IncludeSuper)
-  for it in fieldIterator: 
-    let prop = it.get() 
-    if prop.getName() == propName or prop.getName().capitalizeAscii() == propName:
-      return prop
 
 proc getFPropertiesFrom*(struct:UStructPtr) : TArray[FPropertyPtr] = 
   var xs : TArray[FPropertyPtr]
@@ -262,10 +245,7 @@ func isNimClass*(cls:UClassPtr) : bool = cls.hasMetadata(NimClassMetadataKey)
 proc markAsNimClass*(cls:UClassPtr) = cls.setMetadata(NimClassMetadataKey, "true")
 
 #not sure if I should make a specific file for object extensions that are outside of the bindings
-proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr = 
-  let cls = getClassByName(clsName)
-  if cls.isNotNil:
-    result = cls.getDefaultObject()
+
 
 proc removeFunctionFromClass*(cls:UClassPtr, fn:UFunctionPtr) =
     cls.removeFunctionFromFunctionMap(fn)
