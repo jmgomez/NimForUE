@@ -1,6 +1,7 @@
 include ../unreal/prelude
 import std/[strformat, tables, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os]
 import ../codegen/[models, modulerules, genmodule, uemeta]
+import ../unreal/nimforue/nimforuebindings
 import ../../buildscripts/[nimforueconfig, buildscripts]
 import modulerules
 import headerparser

@@ -4,6 +4,7 @@ import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta, umacros]
 import std/[json, strformat, jsonutils, sequtils, options, sugar, enumerate, strutils, tables]
 
 import ../vm/[runtimefield, uecall]
+import ../unreal/nimforue/nimforuebindings
 
 import ../test/testutils
 

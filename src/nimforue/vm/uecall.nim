@@ -3,6 +3,7 @@ include ../unreal/prelude
 import ../codegen/[modelconstructor, ueemit, uebind, models, uemeta]
 import std/[json, jsonutils, sequtils, options, sugar, enumerate, tables, strutils, strformat, typetraits]
 import runtimefield
+import ../unreal/nimforue/nimforuebindings
 
 proc makeUEFunc*(name, className : string) : UEFunc = 
   result.name = name

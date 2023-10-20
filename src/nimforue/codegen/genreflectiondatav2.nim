@@ -2,6 +2,7 @@ include ../unreal/prelude
 import ../codegen/[codegentemplate,modulerules, headerparser, models, uemeta, genreflectiondata, genmodule, uebindcore]
 import std/[strformat, tables, hashes, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans, algorithm, macros]
 import ../../buildscripts/[buildscripts, nimforueconfig]
+import ../unreal/nimforue/nimforuebindings
 
 import projectinstrospect
 

@@ -6,6 +6,7 @@ import unreal/core/containers/containers
 import ../nimforue/codegen/[ffi,emitter, genreflectiondatav2, models, uemeta, ueemit, umacros]
 import std/[options, strformat, dynlib, os, osproc, tables, asyncdispatch, times, json, jsonutils]
 import ../buildscripts/[nimforueconfig, buildscripts, keyboard]
+import unreal/nimforue/nimforuebindings
 
 const withEngineBindings = fileExists(BindingsImportedDir/"engine"/"engine.nim")
 # when withEngineBindings:
