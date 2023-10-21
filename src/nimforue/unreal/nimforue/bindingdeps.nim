@@ -22,9 +22,12 @@ proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr =
     if prop.getName() == propName or prop.getName().capitalizeAscii() == propName:
       return prop
 
-proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)", header:"UPropertyCaller.h".}
-proc setPropertyValuePtr*[T](property:FPropertyPtr, container : pointer, value : ptr T) : void {.importcpp: "SetPropertyValuePtr<'*3>(@)", header:"UPropertyCaller.h".}
-proc setPropertyValue*[T](property:FPropertyPtr, container : pointer, value : T) : void {.importcpp: "SetPropertyValue<'3>(@)", header:"UPropertyCaller.h".}
+
+proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)".}
+proc setPropertyValuePtr*[T](property:FPropertyPtr, container : pointer, value : ptr T) : void {.importcpp: "SetPropertyValuePtr<'*3>(@)".}
+proc setPropertyValue*[T](property:FPropertyPtr, container : pointer, value : T) : void {.importcpp: "SetPropertyValue<'3>(@)".}
+
+
 
 
 proc getValueFromBoolProp*(prop:FPropertyPtr, obj:UObjectPtr): bool {.inline.} =

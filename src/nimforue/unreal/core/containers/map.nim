@@ -53,6 +53,11 @@ proc values*[K, V](map:TMap[K, V]): TArray[V] =
         arr.add(map[k])
     arr
 
+iterator pairs*[K, V](map: TMap[K, V]): (K, V) =
+    for k in map.keys():
+        yield (k, map[k])
+
+
 proc toTable*[K, V](map:TMap[K, V]): Table[K, V] = 
     let keys = map.keys()
     var table = initTable[K, V]()
