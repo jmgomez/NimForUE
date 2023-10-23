@@ -57,12 +57,13 @@ proc map*[T, U](xs:TArray[T], fn : T -> U) : TArray[U] =
     arr.add(fn(x))
   arr
 
-proc filter*[T](xs:TArray[T], fn : T -> bool) : TArray[T] =
+func filter*[T](xs:TArray[T], fn : proc(t:T): bool ) : TArray[T] =
   var arr = makeTArray[T]()
   arr.reserve(xs.num())
-  for x in xs:
-    if fn(x):
-      arr.add x
+  {.cast(noSideEffect).}:
+    for x in xs:
+      if fn(x):
+        arr.add x
   arr
 
 func toSeq*[T](arr:TArray[T]) : seq[T] = 

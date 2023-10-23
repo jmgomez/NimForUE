@@ -233,7 +233,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         let pragmas = 
             nnkPragmaExpr.newTree(
               nnkPostFix.newTree(ident "*", ident typeDef.name),
-              nnkPragma.newTree(ident "exportc", ident "inheritable", 
+              nnkPragma.newTree(ident "exportc", ident "inheritable",
                 nnkExprColonExpr.newTree(ident "codegenDecl", 
                   newLit getClassTemplate(typeDef))
               )

@@ -220,11 +220,13 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
           
       fns.add initCtor       
       result =  (typeNode, fns)    
+      # if ueType.name == "UWangBaseSelector":
+      #   debugEcho repr result
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
   let (uClassNode, fns) = uClassImpl(name, body)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
-  # debugEcho repr result
+ 
 
  
 

@@ -62,7 +62,9 @@ func tail*[T](xs: seq[T]): seq[T] =
   else: xs[1..^1]
 
 func any*[T](xs: Traversable[T]): bool = len(xs) != 0
-func any*[T](xs: Traversable[T], fn: T->bool): bool = xs.filter(fn).any()
+func any*[T](xs: Traversable[T], fn: T->bool): bool =
+  safe: 
+    xs.filter(fn).any()
 func all*[T](xs: Traversable[T], fn: T->bool): bool = xs.filter(fn).len() == xs.len()
 
 func firstIndexOf*[T](xs: Traversable[T], fn: proc (t:T) : bool): int =
@@ -121,7 +123,7 @@ proc forEach*[T](xs: seq[T], fn: (x: T)->void): void =
 
 func flatten*[T](xs: seq[seq[T]]): seq[T] = xs.foldl(a & b, newSeq[T]())
 
-func tryGet*[T](xs: seq[T], idx: int): Option[T] =
+func tryGet*[T](xs: Traversable[T], idx: int): Option[T] =
   if idx < 0 or idx >= len(xs): none[T]()
   else: some(xs[idx])
 
