@@ -18,8 +18,12 @@ else:
     EToolkitMode* {.importcpp:"EToolkitMode::Type".} = enum
       Standalone
       WorldCentric
+      
 
 type 
+  FEngineShowFlags* {.importcpp.} = object
+    niagara* {.importcpp: "Niagara".} : uint32
+
   FViewportCameraTransform* {.importcpp.} = object
   UEditorEngine* {.importcpp.} = object of UEngine
     playWorld* {.importcpp: "PlayWorld".} : UWorldPtr
@@ -29,6 +33,8 @@ type
     # viewport* {.importcpp: "Viewport".} : FViewportPtr
     previewScene* {.importcpp: "PreviewScene".} : FPreviewScenePtr
     viewTransformPerspective* {.importcpp: "ViewTransformPerspective".} : FViewportCameraTransform
+    engineShowFlags* {.importcpp:"EngineShowFlags".}: FEngineShowFlags
+
   FEditorViewportClientPtr* = ptr FEditorViewportClient
   FLevelEditorViewportClient* {.importcpp.} = object of FEditorViewportClient
   FLevelEditorViewportClientPtr* = ptr FLevelEditorViewportClient
@@ -147,6 +153,7 @@ proc getLevelViewportClients*(editor:UEditorEnginePtr) : TArray[FLevelEditorView
 
 proc getWorld*(viewportClient:FEditorViewportClientPtr) : UWorldPtr {.importcpp: "#->GetWorld()".}
 proc setRealtime*(viewportClient:FEditorViewportClientPtr, val: bool) {.importcpp: "#->SetRealtime(#)".}
+proc setGameView*(viewportClient:FEditorViewportClientPtr, val: bool) {.importcpp: "#->SetGameView(#)".}
 proc setViewLocation*(viewportClient:FEditorViewportClientPtr, loc: FVector) {.importcpp: "#->SetViewLocation(#)".}
 proc setViewRotation*(viewportClient:FEditorViewportClientPtr, rot: FRotator) {.importcpp: "#->SetViewRotation(#)".}
 proc setLookAtLocation*(viewportClient:FEditorViewportClientPtr, loc: FVector, bRecalculateView = false) {.importcpp: "#->SetLookAtLocation(@)".}
