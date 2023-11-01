@@ -55,9 +55,6 @@
 //Slate
 #include "Widgets/Layout/Anchors.h"
 
-//UMG
-#include "UMG/Public/Components/Viewport.h"
-
 
 //NimForUEBindingsHeaders.h
 #include "NimForUEBindingsHeaders.h"
@@ -94,11 +91,16 @@
   //asset tools
   #include "AssetTypeActions_Base.h"
 
-#endif
 
+
+//UMG
+#include "UMG/Public/Components/Viewport.h"
 //Slate
 #include "Components/Widget.h"
 #include "Widgets/Docking/SDockTab.h"
+#endif
+
+
 
 //TEMP test 52
 //TODO add with ENGINE_
