@@ -190,7 +190,7 @@ type
         bShouldHotReload* {.importcpp: "bShouldHotReload" .} : bool
     FNimHotReloadPtr* = ptr FNimHotReload
 
-proc getNumber*(hotReloadInfo: ptr FNimHotReload) : int {.importcpp: "#->GetNumber()".}
+# proc getNumber*(hotReloadInfo: ptr FNimHotReload) : int {.importcpp: "#->GetNumber()".}
 
 proc newNimHotReload*() : FNimHotReloadPtr {.importcpp: "new '*0()".}
 proc setShouldHotReload*(hotReloadInfo: ptr FNimHotReload) = 

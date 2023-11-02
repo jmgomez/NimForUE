@@ -8,7 +8,7 @@
 #include "NimForUEFFI.h"
 
 #else
-#include "NimForUEGame.h"
+// #include "NimForUEGame.h" This was needed to the old approach (delete when the new one works)
 #endif
 #include "Async/Async.h"
 #include "Framework/Notifications/NotificationManager.h"
