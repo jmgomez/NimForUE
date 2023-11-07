@@ -240,7 +240,7 @@ proc reinstanceNueTypes*(nueModule:FString, nimHotReload:FNimHotReloadPtr, nimEr
 
 
 
-func isNimClass*(cls:UClassPtr) : bool = cls.hasMetadata(NimClassMetadataKey)
+func isNimClass*(cls:UClassPtr): bool = cls.hasMetadata(NimClassMetadataKey)
 
 proc markAsNimClass*(cls:UClassPtr) = cls.setMetadata(NimClassMetadataKey, "true")
 

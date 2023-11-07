@@ -28,13 +28,20 @@ proc unloadPrevLib(nextLib:string) =
 
 proc getEmitterFromGame(libPath:string) : UEEmitterPtr = 
   type 
-    GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, stdcall.}
+    GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, cdecl.}
 
   let lib = loadLib(libPath)
-  let getEmitter = cast[GetUEEmitterFn](lib.symAddr("getGlobalEmitterPtr"))
+  if lib.isNil:
+    UE_Error &"Cant load lib {libPath}"
+    return nil
+  let fnPtr = lib.symAddr("getGlobalEmitterPtr")
+  if fnPtr.isNil:
+    UE_Error &"getGlobalEmitterPtr is not in the lib {libPath}"
+    return nil
+  let getEmitter = cast[GetUEEmitterFn](fnPtr)
   
   if getEmitter.isNil():
-    UE_Error &"getGlobalEmitterPtr is nil"
+    UE_Error &"Cant cast getGlobalEmitterPtr to GetUEEmitterFn for {libPath}"
     return nil
   
 
@@ -140,9 +147,9 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
         if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
           discard   
-    else:
-        if not isRunningCommandlet():
-          discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
+    else: discard
+        # if not isRunningCommandlet():
+        #   discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
 

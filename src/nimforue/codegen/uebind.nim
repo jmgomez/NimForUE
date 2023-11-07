@@ -10,7 +10,7 @@ import ../../buildscripts/nimforueconfig #probably nimforueconfig should be remo
   # macro ex*(a:untyped):untyped = a
 func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone, isImporting: bool): NimNode 
 
-func genProp(typeDef : UEType, prop : UEField) : NimNode = 
+func genProp(typeDef : UEType, prop : UEField, typeExposure: UEExposure = uexDsl) : NimNode = 
   let ptrName = ident typeDef.name & "Ptr"
   
   let className = typeDef.name.substr(1)
@@ -58,6 +58,15 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
       proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
         let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
         actualSetter
+  if typeExposure == uexExport:
+    
+    let dynlib = ident "dynlib"
+    for i in [0, 2]: 
+      result[i].pragma.add dynlib
+  
+  
+
+  
   
 func genParamInFnBodyAsType(funField:UEField) : NimNode = 
   let returnProp = funField.signature.filter(isReturnParam).head()
@@ -91,7 +100,7 @@ func getGenFuncName(funField : UEField) : string = funField.name.firstToLow().ue
 #for the most part the same code is used for both
 #this is also used for native function implementation but the ast is changed afterwards
 #Returns a tuple with the forward declaration and the actual function 
-func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:NimNode] = 
+func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = uexDsl) : tuple[fw:NimNode, impl:NimNode] = 
   let isStatic = FUNC_Static in funField.fnFlags
   let isSuper = funField.name == "super"
   let clsName = typeDef.name.substr(1)
@@ -155,6 +164,8 @@ func genFunc*(typeDef : UEType, funField : UEField) : tuple[fw:NimNode, impl:Nim
         nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
         ) #export the func with an underscore to avoid collisions
     else: newEmptyNode()
+  if typeExposure == uexExport:
+    pragmas.add ident "dynlib"
 
   # when defined(windows):
   #   pragmas.add(ident("thiscall")) #I Dont think this is necessary
@@ -216,12 +227,12 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
   let props = nnkStmtList.newTree(
         typeDef.fields
           .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
-          .map(prop=>genProp(typeDef, prop)))
+          .map(prop=>genProp(typeDef, prop, typeExposure)))
 
   let funcs = nnkStmtList.newTree(
           typeDef.fields
              .filter(prop=>prop.kind==uefFunction)
-             .map(fun=>genFunc(typeDef, fun).impl))
+             .map(fun=>genFunc(typeDef, fun, typeExposure).impl))
 
   let typeDecl = 
     if rule == uerCodeGenOnlyFields or typeDef.forwardDeclareOnly or 
@@ -330,7 +341,7 @@ proc genDelType*(delType:UEType, exposure:UEExposure) : NimNode =
   let broadcastFunType = UEField(name:broadcastFnName, kind:uefFunction, signature: delType.fields)
   let funcNode = 
     if exposure == uexImport: genImportCFunc(delType, broadcastFunType)
-    else: genFunc(delType, broadcastFunType).impl
+    else: genFunc(delType, broadcastFunType, exposure).impl
 
   result = nnkStmtList.newTree(typ, funcNode)
 

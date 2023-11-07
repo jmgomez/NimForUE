@@ -263,7 +263,7 @@ task gencppbindings, "Generates the codegen and cpp bindings":
     .run proc (idxs:(int, int)) =          
           headerFileContents.delete(idxs[0]..idxs[1])
           writeFile(headerFile, headerFileContents)
-  ubuild(taskOptions)        
+  # ubuild(taskOptions)        
 
 
 

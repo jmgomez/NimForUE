@@ -203,7 +203,11 @@ __AVR__
 #  define N_SAFECALL_PTR(rettype, name) rettype (__stdcall *name)
 
 #  ifdef __cplusplus
-#    define N_LIB_EXPORT  NIM_EXTERNC __declspec(dllexport)
+#    ifdef NUE_BINDINGS
+#    define N_LIB_EXPORT __declspec(dllexport) //NIM_EXTERNC __declspec(dllexport)
+#    else
+#    define N_LIB_EXPORT NIM_EXTERNC __declspec(dllexport)
+#    endif
 #  else
 #    define N_LIB_EXPORT  NIM_EXTERNC __declspec(dllexport)
 #  endif

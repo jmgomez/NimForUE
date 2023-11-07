@@ -217,6 +217,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   let pluginDefinitionsPaths = pluginDir / "Intermediate" / "Build" / platformDir / unrealFolder / confDir  #Notice how it uses the TargetPlatform, The Editor?, and the TargetConfiguration
   let nimForUEIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / unrealFolder / "Inc" / "NimForUE"
   let nimForUEBindingsHeaders =  pluginDir / "Source/NimForUEBindings/Public/"
+  let nimForUEAutoBindingsHeaders =  pluginDir / "Source/NimForUEAutoBindings/Public/"
   let nimForUEBindingsIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / unrealFolder / "Inc" / "NimForUEBindings"
   let nimForUEEditorHeaders =  pluginDir / "Source/NimForUEEditor/Public/"
   let nimForUEEditorIntermediateHeaders = pluginDir / "Intermediate" / "Build" / platformDir / unrealFolder / "Inc" / "NimForUEEditor"
@@ -227,6 +228,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     nimForUEIntermediateHeaders,
     nimForUEBindingsHeaders,
     nimForUEBindingsIntermediateHeaders,
+    nimForUEAutoBindingsHeaders,
     #notice this shouldn't be included when target <> Editor
     nimForUEEditorHeaders,
     nimForUEEditorIntermediateHeaders,
@@ -374,8 +376,9 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
         #seems like the plugin is still win64?
         let libPath = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUE/UnrealEditor-NimForUE{suffix}.lib"
         let libPathBindings = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
+        let libPathAutoBindings = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEAutoBindings/UnrealEditor-NimForUEAutoBindings{suffix}.lib"
         let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEEditor/UnrealEditor-NimForUEEditor{suffix}.lib"
-        @[libPath,libpathBindings, libPathEditor]
+        @[libPath,libpathBindings, libPathAutoBindings, libPathEditor]
       else:
         let dir = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir 
         let libPath = getObjFiles(dir / "NimForUE", "NimForUE")
