@@ -381,6 +381,7 @@ func typeDefToNimType(typeDef: NimNode) : NimType =
     #TODO concepts
     NimType(name:name, kind:None)
   of nnkIdent:
+    #Alias?
     NimType(name:name, kind:None)
   else:
     debugEcho treeRepr typeDef
