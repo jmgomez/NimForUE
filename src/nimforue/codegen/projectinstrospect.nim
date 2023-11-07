@@ -377,7 +377,9 @@ func typeDefToNimType(typeDef: NimNode) : NimType =
   of nnkTypeClassTy:
     #TODO concepts
     NimType(name:name, kind:None)
-
+  of nnkIdent:
+    #Alias?
+    NimType(name:name, kind:None)
   else:
     debugEcho treeRepr typeDef
     error("Unknown type " & $typeDef[2].kind)
