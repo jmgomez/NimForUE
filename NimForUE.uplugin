@@ -26,7 +26,13 @@
 			"Type": "Runtime",
 			"LoadingPhase": "PostDefault"
 		},
-		
+		{
+			"Name": "NimForUEAutoBindings",
+			"Type": "Runtime",
+			"LoadingPhase": "PostDefault"
+		},
+
+
 		{
 			"Name": "NimForUEEditor",
 			"Type": "EditorNoCommandlet",

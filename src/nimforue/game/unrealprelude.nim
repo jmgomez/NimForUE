@@ -3,6 +3,7 @@ import ../unreal/nimforue/[nimforuebindings, nimforue, bindingdeps]
 import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype,tsoftobjectptr, 
     nametypes, scriptdelegates, uobjectglobals, metadata]
 import ../unreal/core/containers/[unrealstring, array, map, set]
+import ../unreal/core/core
 import ../unreal/core/logging/[logmacros]
 import ../unreal/core/math/[vector]
 import ../unreal/core/[coreglobals,ftext, delegates, templates]

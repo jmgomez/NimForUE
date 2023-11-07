@@ -102,7 +102,7 @@ proc getGlobalEmitter*() : UEEmitterPtr =
     emitter
 
 when not defined(guest) and not defined(bindings): #called from ue
-    proc getGlobalEmitterPtr*() : UEEmitterPtr {.exportc, cdecl, dynlib.} = 
+    proc getGlobalEmitterPtr*(): UEEmitterPtr {.exportc, cdecl, dynlib.} = 
         getGlobalEmitter()
 
 

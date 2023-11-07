@@ -72,9 +72,13 @@ src/NimForUE.code-workspace
 
 Source/NimForUEGame/Private/Game/
 
+Source/NimForUEAutoBindings/Private/auto/
+
 Source/NimForUEGame/Private/Bindings/
 
 src/hostnimforue/ffigen.nim
 nimble.develop
 nimble.paths
 
+
+Source/NimForUEAutoBindings/Private/autogen/

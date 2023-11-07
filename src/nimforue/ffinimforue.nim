@@ -28,13 +28,20 @@ proc unloadPrevLib(nextLib:string) =
 
 proc getEmitterFromGame(libPath:string) : UEEmitterPtr = 
   type 
-    GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, stdcall.}
+    GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, cdecl.}
 
   let lib = loadLib(libPath)
-  let getEmitter = cast[GetUEEmitterFn](lib.symAddr("getGlobalEmitterPtr"))
+  if lib.isNil:
+    UE_Error &"Cant load lib {libPath}"
+    return nil
+  let fnPtr = lib.symAddr("getGlobalEmitterPtr")
+  if fnPtr.isNil:
+    UE_Error &"getGlobalEmitterPtr is not in the lib {libPath}"
+    return nil
+  let getEmitter = cast[GetUEEmitterFn](fnPtr)
   
   if getEmitter.isNil():
-    UE_Error &"getGlobalEmitterPtr is nil"
+    UE_Error &"Cant cast getGlobalEmitterPtr to GetUEEmitterFn for {libPath}"
     return nil
   
 

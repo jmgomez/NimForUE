@@ -1,8 +1,7 @@
 include ../unreal/prelude
 import ../unreal/core/containers/containers
-import ../codegen/[ueemit, emitter]
-import ../codegen/[gencppclass]
-
+import ../codegen/[ueemit, emitter, nuemacrocache]
+import unreal/nimforue/nimforuebindings
 
 import engine/common
 import engine/gameframework
@@ -81,14 +80,36 @@ proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.
         if emitTypesExternal.isNotNil():
           emitTypesExternal(globalEmitter, calledFrom, reuseHotReload=true)
   emitTypesInGuest(nlfEditor, globalEmitter)
-  
-#Called from NimForUE module as entry point when we are in a non editor build
-proc startNue*(calledFrom:NueLoadedFrom) {.cdecl, exportc.} =
-  UE_Log "Reinstanciating NueTypes startNue! aqui"
-  case calledFrom:
-  of nlfPostDefault:  #TODO do hook early on the module's constructor.
-    discard emitUStructsForPackage(getGlobalEmitter(), "GameNim", emitEarlyLoadTypesOnly = false)     
-  else:    
-    #TODO hook early load
-    discard
 
+
+proc emitTypes() {.cdecl.} = 
+  discard  emitUStructsForPackage(getGlobalEmitter(), "GameNim", emitEarlyLoadTypesOnly = false)     
+
+proc isThereAnyNimClass(): bool = 
+  var objIter = makeFRawObjectIterator()
+  for objIter in objIter:
+    if objIter.isValid:
+      let cls = objIter.get.ueCast(UClass)      
+      if cls.isNotNil and cls.isNimClass():
+        return true
+  return false
+
+#Called from NimForUE module as entry point when we are in a non editor build
+proc startNue*() {.cdecl, exportc.} =
+
+    #Notice this could also be a HotReload, in that case we should emit the types again but handle it later. 
+    #TODO Hook the Early Types here. 
+
+    #Test if there is any NimClass emitted and it doesnt have the meta EarlyLoadMetadataKey. If so, we are in PostDefault.
+    #NEED to find a way to know when it ends
+    if isThereAnyNimClass():
+      proc runInNextFrame(): Future[void] {.async.} = 
+        await sleepAsync(0)
+        emitTypes()
+      asyncCheck runInNextFrame()
+    else:
+      #TODO Hook the Early Types here. 
+      let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)
+
+once:
+  startNue() 

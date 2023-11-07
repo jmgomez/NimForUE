@@ -26,10 +26,12 @@ proc reset*(del : var FDelegateHandle) {.importcpp: "#.Reset()"}
 
 #Delegates a variadic, for now we can just return the type adhoc
 type 
+  TMulticastDelegate*{.importc, nodecl.} = object
   TMulticastDelegateOneParam*[T] {.importc:"TMulticastDelegate<void('0)>", nodecl.} = object
   TDelegateRetOneParam*[R, T] {.importcpp:"TDelegate<'0('1)>", nodecl.} = object
 
 #TODO add macro that binds all delegates with all params
+proc addStatic*(del: TMulticastDelegate, fn: proc() {.cdecl.}) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
 proc addStatic*[T](del: TMulticastDelegateOneParam[T], fn : proc(v:T) {.cdecl.}) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
 proc addStatic*[T, P](del: TMulticastDelegateOneParam[T], fn : proc(v:T, v2:P) {.cdecl.}, v2:P) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
 proc addStatic*[T, P, P2](del: TMulticastDelegateOneParam[T], fn : proc(v:T, v2:P, v3:P2) {.cdecl.}, v2:P, v3:P2) : FDelegateHandle {.importcpp:"#.AddStatic(@)".}
