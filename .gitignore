@@ -82,3 +82,5 @@ nimble.paths
 
 
 Source/NimForUEAutoBindings/Private/autogen/
+
+Source/NimForUEAutoBindings/Public/UEGenBindings.h
