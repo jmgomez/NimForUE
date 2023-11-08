@@ -182,15 +182,18 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
   (forwardDeclaration,impl)
 
 
-func genInterfaceConverers*(ueType:UEType) : NimNode =   
+func genInterfaceConverers*(ueType:UEType, typeExposure: UEExposure) : NimNode =   
   let typeNamePtr = ident ueType.name & "Ptr"
-  func genConverter(interName:string) : NimNode = 
+  func genConverter(interName:string): NimNode = 
     let interfaceName = ident interName
     let interfacePtrName = ident interName & "Ptr"
     let fnName = ident ueType.name & "to" & interName
-    genAst(fnName,typeNamePtr, interfaceName, interfacePtrName):      
-      when not declared(fnName):
-        converter fnName*(self {.inject.} : typeNamePtr): interfacePtrName =  cast[interfacePtrName](self)
+    result = 
+      genAst(fnName,typeNamePtr, interfaceName, interfacePtrName):      
+        when not declared(fnName):
+          converter fnName*(self {.inject.} : typeNamePtr): interfacePtrName {.exportc.} =  cast[interfacePtrName](self)
+    if typeExposure in [uexExport, uexImport]:
+      result[0].pragma.add ident "dynlib"
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
@@ -286,7 +289,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         funcs
   
 
-  result.add genInterfaceConverers(typeDef)
+  result.add genInterfaceConverers(typeDef, typeExposure)
 
 func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode = 
   let formalParams = genFormalParamsInFunctionSignature(typeDef, funField, "obj")

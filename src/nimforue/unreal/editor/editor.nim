@@ -44,9 +44,6 @@ type
   FAdvancedPreviewSceneModulePtr* = ptr FAdvancedPreviewSceneModule
 
   FViewportCursorLocation* {.importcpp.} = object
-  EReloadCompleteReason* {.importcpp, size:sizeof(uint8).} = enum
-    None, HotReloadAutomatic, HotReloadManual
-  FReloadCompleteDelegate* = TMulticastDelegateOneParam[EReloadCompleteReason]
   FOnPIEEvent* = TMulticastDelegateOneParam[bool]
 
   #Probably this belongs to enginetypes

@@ -2,7 +2,6 @@
 
 #include "UEDeps.h"
 #include "nimbasenue.h"
-
 #if defined(__clang__)
 #pragma GCC diagnostic ignored "-Wundef"
 #endif

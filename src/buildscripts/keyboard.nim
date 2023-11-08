@@ -74,7 +74,8 @@ when defined(windows):
   proc closeHandle*(handle: pointer) {.importcpp: "CloseHandle(#)".}
 
   proc isLiveCodingRunning*(): bool =
-    const LiveCodingMutext = r"Global\LiveCoding_E++unreal_sources+5.1Launcher+UE_5.2+Engine+Binaries+Win64+UnrealEditor.exe"
+    
+    const LiveCodingMutext = r"Global\LiveCoding_E++unreal_sources+store+UE_5.3+Engine+Binaries+Win64+UnrealEditor.exe"
     var mutex = openMutex(LiveCodingMutext)
     let isRunning = not mutex.isNil()
 

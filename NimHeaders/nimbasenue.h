@@ -31,7 +31,7 @@ __AVR__
   #undef _wenviron
   #undef _environ
 
-  #   pragma warning ( disable : 4018 4244 4547 4800 4804 4805 4913 4133)
+  #   pragma warning ( disable : 4018 4244 4547 4800 4804 4805 4913 4133 4703)
 #endif
 //NimForUE EndPatch
 
