@@ -301,19 +301,19 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
         copyFile(cppFile, path)
 
 
-proc updateFile(src, dst: string) = 
-  if fileExists(dst) and readFile(src) == readFile(dst):
-    return
+proc updateFile(src, dst: string): bool = 
+  if fileExists(dst) and readFile(src) == readFile(dst): false
   else:
     copyFile(src, dst)
+    true
 
 proc copyNewCppTo(srcFolder, dstFolder: string) = 
   var filesUpdated = 0
   for file in walkFiles(srcFolder / "*.cpp"):
     let filename = file.extractFilename()
     let dstFile = dstFolder / filename
-    inc filesUpdated
-    updateFile(file, dstFile)   
+    if updateFile(file, dstFile): 
+      inc filesUpdated  
 
   if filesUpdated > 0:
     log "Copied " & $filesUpdated & " files to " & dstFolder
@@ -324,9 +324,10 @@ proc compileGenerateBindings*() =
   let withDebug = false #TODO disable on final builds
   let buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  doAssert(execCmd(&"nim  cpp {buildFlags} -d:bindings   --noMain --app:staticlib --compileOnly  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"nim  cpp {buildFlags} -d:bindings --noMain --app:staticlib --compileOnly  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
-  copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
+  let uegenbindingsHeader = "./.nimcache/gencppbindings/UEGenBindings.h"
+  copyFile(uegenbindingsHeader, ueGenBindingsPath)
   #It still generates NimMain in the header. So we need to get rid of it:
   let nimMain = "N_CDECL(void, NimMain)(void);"
   writeFile(ueGenBindingsPath, readFile(ueGenBindingsPath).replace(nimMain, ""))
@@ -334,9 +335,9 @@ proc compileGenerateBindings*() =
   let autoBindingsPath = "./Source" / "NimForUEAutoBindings"
   let cppDestiny = autoBindingsPath / "Private" / "autogen"
   createDir(cppDestiny)
-  copyNewCppTo("./.nimcache/gencppbindings", cppDestiny)
-  updateFile(ueGenBindingsPath, autoBindingsPath / "Public" / "UEGenBindings.h")
-  
+  copyNewCppTo(uegenbindingsHeader, cppDestiny)
+  discard updateFile(ueGenBindingsPath, autoBindingsPath / "Public" / "UEGenBindings.h")
+  # removeFile(ueGenBindingsPath)
 
 
 

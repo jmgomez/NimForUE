@@ -19,7 +19,7 @@ DEFINE_LOG_CATEGORY(NimForUE);
 
 #include "Interfaces/IPluginManager.h"
 
-#define LOCTEXT_NAMESPACE "FNimForUEModule"
+#define LOCTEXT_NAMESPACE "FNimFoUEModule"
 
 
 

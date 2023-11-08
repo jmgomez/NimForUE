@@ -82,8 +82,10 @@ proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.
   emitTypesInGuest(nlfEditor, globalEmitter)
 
 
-proc emitTypes() {.cdecl.} = 
+proc emitTypes() {.cdecl, exportc, dynlib.} = 
   discard  emitUStructsForPackage(getGlobalEmitter(), "GameNim", emitEarlyLoadTypesOnly = false)     
+
+
 
 proc isThereAnyNimClass(): bool = 
   var objIter = makeFRawObjectIterator()
@@ -94,6 +96,13 @@ proc isThereAnyNimClass(): bool =
         return true
   return false
 
+proc emitInNextFrame(): Future[void] {.async.} = 
+  await sleepAsync(100)
+  emitTypes()
+
+proc emitTypesLC(reason: EReloadCompleteReason) {.cdecl.}= 
+  asyncCheck emitInNextFrame()
+  UE_Warn "Tururuuu"
 #Called from NimForUE module as entry point when we are in a non editor build
 proc startNue*() {.cdecl, exportc.} =
 
@@ -102,14 +111,13 @@ proc startNue*() {.cdecl, exportc.} =
 
     #Test if there is any NimClass emitted and it doesnt have the meta EarlyLoadMetadataKey. If so, we are in PostDefault.
     #NEED to find a way to know when it ends
-    if isThereAnyNimClass():
-      proc runInNextFrame(): Future[void] {.async.} = 
-        await sleepAsync(0)
-        emitTypes()
-      asyncCheck runInNextFrame()
+    if isThereAnyNimClass():      
+      asyncCheck emitInNextFrame()
     else:
       #TODO Hook the Early Types here. 
       let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)
+    
 
 once:
   startNue() 
+let reloadHandle = reloadCompleteDelegate.addStatic(emitTypesLC)

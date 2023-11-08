@@ -1,5 +1,5 @@
 
-import std/[os, strformat, strutils, sequtils, tables, hashes]
+import std/[jsonutils, json, os, strformat, strutils, sequtils, tables, hashes]
 import buildcommon, buildscripts, nimforueconfig
 
 
@@ -67,6 +67,7 @@ public class $1 : ModuleRules
 			"SlateCore",
 			"Engine", 
 			"NimForUEBindings",
+			"NimForUEAutoBindings",
 			"EnhancedInput", 
 			"GameplayTags",
 			"PCG",  //TODO add only in 5.2
@@ -86,7 +87,7 @@ public class $1 : ModuleRules
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 		var nimHeadersPath = Path.Combine($2, "NimHeaders");
-    PrivatePCHHeaderFile =  Path.Combine(nimHeadersPath, "nimgame.h");
+    PrivatePCHHeaderFile =  Path.Combine(nimHeadersPath, "nuebase.h");
 
 		PublicIncludePaths.Add(nimHeadersPath);
 		bUseUnity = false;
@@ -120,6 +121,7 @@ const ModuleCppFileTemplate = """
 DEFINE_LOG_CATEGORY($1);
 
 #define LOCTEXT_NAMESPACE "FGameCorelibEditor"
+/*
 #define $1 1
 
 constexpr char NUEModule[] = "some_module";
@@ -132,25 +134,30 @@ extern  "C" void* getGlobalEmitterPtr();
 extern  "C" void reinstanceFromGloabalEmitter(void* globalEmitter);
 #endif
 
-void $1NimMain();
 void StartNue() {
-#if WITH_EDITOR
   FCoreUObjectDelegates::ReloadCompleteDelegate.AddLambda([&](EReloadCompleteReason Reason) {
   UE_LOG(LogTemp, Log, TEXT("Reinstancing Lib"))
     $1NimMain();
     reinstanceFromGloabalEmitter(getGlobalEmitterPtr());
   });
-#endif
   $1NimMain();
   startNue(1);
   // #endif
 }
 
-
+*/
+void $1NimMain();
+extern "C" void emitTypes();
 
 void F$1::StartupModule()
 {
-	  StartNue();
+	 $1NimMain();
+    FCoreUObjectDelegates::ReloadCompleteDelegate.AddLambda([&](EReloadCompleteReason Reason) {
+      UE_LOG(LogTemp, Log, TEXT("Reinstancing Lib"))
+      $1NimMain();  
+      emitTypes();
+     
+    });
 }
 
 void F$1::ShutdownModule()
@@ -191,14 +198,12 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
   #some seconds on the first build.
   var existingFiles = initTable[string, CppSourceFile]()
   var newFiles = initTable[string, CppSourceFile]()
-  var bindingsSrcDir = PluginDir / ".nimcache/gencppbindings"
-  
-  for newFile in walkFiles(bindingsSrcDir / &"*.cpp"):
-    let filename = newFile.extractFilename()
-    if filename.contains("sbindings@sexported"):# and not (filename.contains("unrealed") or filename.contains("umgeditor")):  Should handle this in a better way TOOD
-      newFiles[filename] = CppSourceFile(name:filename, path:newFile, content: readFile(newFile))         
-  for newFile in walkFiles(cppSrcDir / &"*.cpp"):    
+
+  for newFile in walkFiles(cppSrcDir / &"*.cpp"):        
     let filename = newFile.extractFilename()   
+    if filename.contains("sbindings@simported"):
+      #"imported bindings arent copied"
+      continue
     newFiles[filename] = CppSourceFile(name:filename, path:newFile, content: readFile(newFile))
 
   for oldFile in walkFiles(nimGeneratedCodeDir / &"*.cpp"):
@@ -221,12 +226,11 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
       removeFile(oldFile.path)
       log "File removed: " & oldFile.name
       
-  #TODO removes
-  
     
 
 proc copyCppToModule(name:string, nimGeneratedCodeDir : string) =   
-  let cppSrcDir = PluginDir / &".nimcache/{name}/release"
+  let platform = "win"
+  let cppSrcDir = PluginDir / &".nimcache/{name}/{platform}/release"
     # cppSrcDir = PluginDir / &".nimcache/nimforuegame/release"
   copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
 
@@ -267,8 +271,28 @@ proc cleanGenerateCode*(name, genPluginDir:string) =
   echo privateDir / name & ".cpp"
   removeFile(privateDir / name & ".cpp")
 
-proc generatePlugin*(name:string) =
+proc addPluginToUProject(name: string) = 
+  var uprojectJson = getGamePathFromGameDir().readFile.parseJson()
+  let plugin = newJObject()
+  plugin["Name"] = name.toJson()
+  plugin["Enabled"] = true.toJson()
+  uprojectJson["Plugins"].add(plugin)
+  
+  getGamePathFromGameDir().writeFile(uprojectJson.pretty)
 
+proc removePluginFromUProject(name: string) = 
+  var uprojectJson = getGamePathFromGameDir().readFile.parseJson()
+  uprojectJson["Plugins"] = uprojectJson["Plugins"].filterIt(it["Name"].getStr != name).toJson()
+  getGamePathFromGameDir().writeFile(uprojectJson.pretty)
+
+proc removePlugin*(name:string) = 
+  let uePluginDir = parentDir(PluginDir)
+  let genPluginDir = uePluginDir / name
+  removeDir(genPluginDir)
+  removePluginFromUProject(name)
+  log &"Removed plugin {name} in {genPluginDir}"
+
+proc generatePlugin*(name:string) =
   let uePluginDir = parentDir(PluginDir)
   let genPluginDir = uePluginDir / name
   let genPluginSourceDir = genPluginDir / "Source"
@@ -279,6 +303,7 @@ proc generatePlugin*(name:string) =
     createDir(genPluginDir)
     createDir(genPluginSourceDir)
     writeFile(upluginFilePath, getPluginTemplateFile(name, modules))
+    addPluginToUProject(name)
     for module in modules:
       generateModule(module, name)
   except Exception as e:

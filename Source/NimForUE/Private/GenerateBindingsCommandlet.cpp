@@ -21,7 +21,7 @@ int32 UGenerateBindingsCommandlet::Main(const FString& Params) {
 	};
 	FGenericPlatformProcess::ConditionalSleep([]{return true;}, 2000);
 
-	registerLogger(logger);
+	// registerLogger(logger);
 	CommandletHelpers::TickEngine();
 	// ensureGuestIsCompiled();
 	checkReload(3); 

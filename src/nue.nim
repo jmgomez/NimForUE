@@ -419,6 +419,10 @@ task genplugin, "Creates a plugin, by default it uses the name of the game with 
   #TODO replace this with a call to all libs 
   generatePlugin(pluginName)
  
+task removeplugin, "Removes the plugin, by default it uses the name of the game with NUE as prefix":  
+  let pluginName = if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
+  removePlugin(pluginName)
+ 
 
 task setupvm, "Creates the vm module library and adds a scratchup to it": 
   let dir = NimGameDir() / "vm"
