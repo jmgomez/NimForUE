@@ -141,7 +141,6 @@ func getActiveViewport*(editor:UEditorEnginePtr) : FViewportPtr {.importcpp: "#-
 
 let onBeginPIEEvent* {.importcpp:"FEditorDelegates::BeginPIE", nodecl.}  : FOnPIEEvent
 let onEndPIEEvent* {.importcpp:"FEditorDelegates::EndPIE", nodecl.}  : FOnPIEEvent
-let onReloadCompleteEvent* {.importcpp:"FCoreUObjectDelegates::ReloadCompleteDelegate", nodecl.}  : FReloadCompleteDelegate
 
 proc getPieWorldContext*(editor:UEditorEnginePtr, worldPIEInstance:int32 = 0) : FWorldContextPtr {.importcpp: "#->GetPIEWorldContext(#)".}
 

@@ -166,7 +166,6 @@ proc reloadScriptGuest() {.ffi:genFilePath.} =
 
 proc tickPoll(deltaTime:float32) : bool {.cdecl.} =
   try:  
-    UE_Log "Polling"
     let p = getGlobalDispatcher()
     poll(0)
   except: 
