@@ -154,7 +154,6 @@ void F$1::ShutdownModule()
 IMPLEMENT_MODULE(F$1, $1)
 """
 
-import std/random
 proc getPluginTemplateFile(name:string, modules:seq[string]) : string =
   let modulesStr = modules.mapIt(ModuleTemplateForUPlugin.format(it)).join(",\n")
   UPluginTemplate.format(name, modulesStr)
@@ -167,7 +166,7 @@ proc getModuleHFile(name:string) : string =
   ModuleHFileTemplate.format(name)
 
 proc getModuleCppFile(name:string) : string =
-  ModuleCppFileTemplate.format(name, rand(10))
+  ModuleCppFileTemplate.format(name)
 
 
 
