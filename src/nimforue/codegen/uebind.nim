@@ -188,12 +188,14 @@ func genInterfaceConverers*(ueType:UEType, typeExposure: UEExposure) : NimNode =
     let interfaceName = ident interName
     let interfacePtrName = ident interName & "Ptr"
     let fnName = ident ueType.name & "to" & interName
-    result = 
+    result =       
       genAst(fnName,typeNamePtr, interfaceName, interfacePtrName):      
         when not declared(fnName):
           converter fnName*(self {.inject.} : typeNamePtr): interfacePtrName {.exportc.} =  cast[interfacePtrName](self)
-    if typeExposure in [uexExport, uexImport]:
-      result[0].pragma.add ident "dynlib"
+    # if typeExposure in [uexExport, uexImport]:
+    #   debugEcho treeRepr result
+    #   debugEcho repr result
+    #   result[^1][0].pragma.add ident "dynlib"
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 

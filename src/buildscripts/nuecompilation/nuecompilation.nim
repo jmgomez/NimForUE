@@ -306,9 +306,9 @@ proc updateFile(src, dst: string): bool =
     copyFile(src, dst)
     true
 
-proc copyNewCppTo(srcFolder, dstFolder: string) = 
+proc copyNewCppTo(srcFolder, dstFolder: string, pattern = "*.cpp") = 
   var filesUpdated = 0
-  for file in walkFiles(srcFolder / "*.cpp"):
+  for file in walkFiles(srcFolder / pattern):
     let filename = file.extractFilename()
     let dstFile = dstFolder / filename
     if updateFile(file, dstFile): 
@@ -317,7 +317,7 @@ proc copyNewCppTo(srcFolder, dstFolder: string) =
   if filesUpdated > 0:
     log "Copied " & $filesUpdated & " files to " & dstFolder
   else:
-    log "No files copied to " & dstFolder & " as is up to date"
+    log &"No files copied from {srcFolder} to {dstFolder} as is up to date"
 
 proc compileGenerateBindings*() = 
   let withDebug = false #TODO disable on final builds
@@ -334,7 +334,7 @@ proc compileGenerateBindings*() =
   let autoBindingsPath = "./Source" / "NimForUEAutoBindings"
   let cppDestiny = autoBindingsPath / "Private" / "autogen"
   createDir(cppDestiny)
-  copyNewCppTo(uegenbindingsHeader, cppDestiny)
+  copyNewCppTo("./.nimcache/gencppbindings/", cppDestiny)
   discard updateFile(ueGenBindingsPath, autoBindingsPath / "Public" / "UEGenBindings.h")
   # removeFile(ueGenBindingsPath)
 
