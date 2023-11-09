@@ -72,12 +72,18 @@ public class $1 : ModuleRules
 			"GameplayTags",
 			"PCG",  //TODO add only in 5.2
 			"GameplayAbilities", //TODO PCG, GameplayTags and GampleyAbilities should be optional modules
-			"PhysicsCore",
-			"UnrealEd", //TODO add only in editor
-			
+			"PhysicsCore",		
+		
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
-	
+    if (Target.bBuildEditor) {
+			PrivateDependencyModuleNames.AddRange(new string[] {
+				"UnrealEd",
+			});
+      if (Target.Platform == UnrealTargetPlatform.Win64)
+				PrivateDependencyModuleNames.Add("LiveCoding");
+		}
+
 		PublicDefinitions.Add("NIM_INTBITS=64");
 		if (Target.Platform == UnrealTargetPlatform.Win64){
 			CppStandard = CppStandardVersion.Cpp20;
@@ -117,47 +123,25 @@ class F$1 : public IModuleInterface
 
 const ModuleCppFileTemplate = """
 #include "../Public/$1.h"
-#include "CoreUObject/Public/UObject/UObjectGlobals.h"
+#include "ILiveCodingModule.h"
+
 DEFINE_LOG_CATEGORY($1);
 
 #define LOCTEXT_NAMESPACE "FGameCorelibEditor"
-/*
-#define $1 1
 
-constexpr char NUEModule[] = "some_module";
-extern  "C" void startNue(uint8 calledFrom);
-
-
-#if WITH_EDITOR
-
-extern  "C" void* getGlobalEmitterPtr();
-extern  "C" void reinstanceFromGloabalEmitter(void* globalEmitter);
-#endif
-
-void StartNue() {
-  FCoreUObjectDelegates::ReloadCompleteDelegate.AddLambda([&](EReloadCompleteReason Reason) {
-  UE_LOG(LogTemp, Log, TEXT("Reinstancing Lib"))
-    $1NimMain();
-    reinstanceFromGloabalEmitter(getGlobalEmitterPtr());
-  });
-  $1NimMain();
-  startNue(1);
-  // #endif
-}
-
-*/
 void $1NimMain();
-extern "C" void emitTypes();
+extern  "C" void* reinstanceNextFrame();
 
 void F$1::StartupModule()
 {
 	 $1NimMain();
-    FCoreUObjectDelegates::ReloadCompleteDelegate.AddLambda([&](EReloadCompleteReason Reason) {
-      UE_LOG(LogTemp, Log, TEXT("Reinstancing Lib"))
-      $1NimMain();  
-      emitTypes();
-     
-    });
+#if PLATFORM_WINDOWS && WITH_EDITOR
+  ILiveCodingModule* LiveCodingModule = FModuleManager::GetModulePtr<ILiveCodingModule>("LiveCoding");
+  LiveCodingModule->GetOnPatchCompleteDelegate().AddLambda([] {
+    GameNimMain();
+    reinstanceNextFrame();
+  });
+#endif
 }
 
 void F$1::ShutdownModule()
@@ -170,7 +154,7 @@ void F$1::ShutdownModule()
 IMPLEMENT_MODULE(F$1, $1)
 """
 
-
+import std/random
 proc getPluginTemplateFile(name:string, modules:seq[string]) : string =
   let modulesStr = modules.mapIt(ModuleTemplateForUPlugin.format(it)).join(",\n")
   UPluginTemplate.format(name, modulesStr)
@@ -181,8 +165,9 @@ proc getModuleBuildCsFile(name:string) : string =
 
 proc getModuleHFile(name:string) : string =
   ModuleHFileTemplate.format(name)
+
 proc getModuleCppFile(name:string) : string =
-  ModuleCppFileTemplate.format(name)
+  ModuleCppFileTemplate.format(name, rand(10))
 
 
 
