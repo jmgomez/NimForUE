@@ -100,9 +100,10 @@ proc emitInNextFrame(): Future[void] {.async.} =
   await sleepAsync(100)
   emitTypes()
 
-proc emitTypesLC(reason: EReloadCompleteReason) {.cdecl.}= 
-  asyncCheck emitInNextFrame()
-  UE_Warn "Tururuuu"
+proc reinstanceNextFrame() {.cdecl, exportc.} = 
+  sleepAsync(100).callback= () => reinstanceFromGloabalEmitter(getGlobalEmitter())
+
+
 #Called from NimForUE module as entry point when we are in a non editor build
 proc startNue*() {.cdecl, exportc.} =
 
@@ -120,4 +121,3 @@ proc startNue*() {.cdecl, exportc.} =
 
 once:
   startNue() 
-let reloadHandle = reloadCompleteDelegate.addStatic(emitTypesLC)
