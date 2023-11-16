@@ -150,6 +150,7 @@ moduleImportRules["Engine"] = @[
     "UNetFaultConfig", "FActorTickFunction", "FCharacterMovementComponentPostPhysicsTickFunction", #Note most of these has the ctor deleted. Put them back once we dont gen setters/getters but the field 
     "FStaticMeshSourceModel", "FLevelCollection",
     "FActorComponentTickFunction",
+    "FActorDataLayer", #Deprecated by UE in 5.3.x
     ]), 
     # makeImportedRuleModule(uerIgnoreHash),
     
