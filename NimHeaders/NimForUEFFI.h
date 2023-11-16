@@ -6,90 +6,90 @@
 
 #include "nuebase.h"
 #include <setjmp.h>
-#undef LANGUAGE_C
-#undef MIPSEB
-#undef MIPSEL
-#undef PPC
-#undef R3000
-#undef R4000
-#undef i386
-#undef linux
-#undef mips
-#undef near
-#undef far
-#undef powerpc
-#undef unix
-struct TNimNode;
-struct TNimType;
-struct RootObj;
-struct TNimTypeV2;
-struct RootEffect;
-struct Exception;
-struct NimStrPayload;
-struct NimStringV2;
-struct tySequence__nkyLXcAOvqEN77Wb7C9cIAA;
-struct tySequence__nkyLXcAOvqEN77Wb7C9cIAA_Content;
-struct TSafePoint;
-struct GcFrameHeader;
-struct ForLoopStmt;
-typedef NU8 tyEnum_TNimNodeKind__hS7zpbgcPQBrSr8Ohh0pcA;
-struct TNimNode {	tyEnum_TNimNodeKind__hS7zpbgcPQBrSr8Ohh0pcA kind;
-	NI offset;
-	TNimType* typ;
-	NCSTRING name;
-	NI len;
-	TNimNode** sons;
-};
-typedef NU8 tyEnum_TNimKind__SrAogb6GXIy2rKgKzC704A;
-typedef NU8 tySet_tyEnum_TNimTypeFlag__rQnvJqGKO9aJZPmc79bCxPTg;
-typedef N_NIMCALL_PTR(void, tyProc__ojoeKfW4VYIm36I9cpDTQIg) (void* p_p0, NI op_p1);
-typedef N_NIMCALL_PTR(void*, tyProc__WSm2xU5ARYv9aAR4l0z9c9auQ) (void* p_p0);
-struct TNimType {	NI size;
-	NI align;
-	tyEnum_TNimKind__SrAogb6GXIy2rKgKzC704A kind;
-	tySet_tyEnum_TNimTypeFlag__rQnvJqGKO9aJZPmc79bCxPTg flags;
-	TNimType* base;
-	TNimNode* node;
-	void* finalizer;
-	tyProc__ojoeKfW4VYIm36I9cpDTQIg marker;
-	tyProc__WSm2xU5ARYv9aAR4l0z9c9auQ deepcopy;
-	void* typeInfoV2;
-};
-struct TNimTypeV2 {	void* destructor;
-	NI size;
-	NI16 align;
-	NI16 depth;
-	NU32* display;
-	void* traceImpl;
-	void* typeInfoV1;
-	NI flags;
-};
-struct RootObj {TNimTypeV2* m_type;};
-struct RootEffect : public RootObj {};
-struct NimStrPayload {	NI cap;
-	NIM_CHAR data[SEQ_DECL_SIZE];
-};
-struct NimStringV2 {	NI len;
-	NimStrPayload* p;
-};
-struct tySequence__nkyLXcAOvqEN77Wb7C9cIAA {
-  NI len; tySequence__nkyLXcAOvqEN77Wb7C9cIAA_Content* p;
-};
-struct Exception : public RootObj {	Exception* parent;
-	NCSTRING name;
-	NimStringV2 message;
-	tySequence__nkyLXcAOvqEN77Wb7C9cIAA trace;
-	Exception* up;
-};
-struct TSafePoint {	TSafePoint* prev;
-	NI status;
-	jmp_buf context;
-};
-struct GcFrameHeader {	NI len;
-	GcFrameHeader* prev;
-};
-struct ForLoopStmt {	char dummy;
-};
+// #undef LANGUAGE_C
+// #undef MIPSEB
+// #undef MIPSEL
+// #undef PPC
+// #undef R3000
+// #undef R4000
+// #undef i386
+// #undef linux
+// #undef mips
+// #undef near
+// #undef far
+// #undef powerpc
+// #undef unix
+// struct TNimNode;
+// struct TNimType;
+// struct RootObj;
+// struct TNimTypeV2;
+// struct RootEffect;
+// struct Exception;
+// struct NimStrPayload;
+// struct NimStringV2;
+// struct tySequence__nkyLXcAOvqEN77Wb7C9cIAA;
+// struct tySequence__nkyLXcAOvqEN77Wb7C9cIAA_Content;
+// struct TSafePoint;
+// struct GcFrameHeader;
+// struct ForLoopStmt;
+// typedef NU8 tyEnum_TNimNodeKind__hS7zpbgcPQBrSr8Ohh0pcA;
+// struct TNimNode {	tyEnum_TNimNodeKind__hS7zpbgcPQBrSr8Ohh0pcA kind;
+// 	NI offset;
+// 	TNimType* typ;
+// 	NCSTRING name;
+// 	NI len;
+// 	TNimNode** sons;
+// };
+// typedef NU8 tyEnum_TNimKind__SrAogb6GXIy2rKgKzC704A;
+// typedef NU8 tySet_tyEnum_TNimTypeFlag__rQnvJqGKO9aJZPmc79bCxPTg;
+// typedef N_NIMCALL_PTR(void, tyProc__ojoeKfW4VYIm36I9cpDTQIg) (void* p_p0, NI op_p1);
+// typedef N_NIMCALL_PTR(void*, tyProc__WSm2xU5ARYv9aAR4l0z9c9auQ) (void* p_p0);
+// struct TNimType {	NI size;
+// 	NI align;
+// 	tyEnum_TNimKind__SrAogb6GXIy2rKgKzC704A kind;
+// 	tySet_tyEnum_TNimTypeFlag__rQnvJqGKO9aJZPmc79bCxPTg flags;
+// 	TNimType* base;
+// 	TNimNode* node;
+// 	void* finalizer;
+// 	tyProc__ojoeKfW4VYIm36I9cpDTQIg marker;
+// 	tyProc__WSm2xU5ARYv9aAR4l0z9c9auQ deepcopy;
+// 	void* typeInfoV2;
+// };
+// struct TNimTypeV2 {	void* destructor;
+// 	NI size;
+// 	NI16 align;
+// 	NI16 depth;
+// 	NU32* display;
+// 	void* traceImpl;
+// 	void* typeInfoV1;
+// 	NI flags;
+// };
+// struct RootObj {TNimTypeV2* m_type;};
+// struct RootEffect : public RootObj {};
+// struct NimStrPayload {	NI cap;
+// 	NIM_CHAR data[SEQ_DECL_SIZE];
+// };
+// struct NimStringV2 {	NI len;
+// 	NimStrPayload* p;
+// };
+// struct tySequence__nkyLXcAOvqEN77Wb7C9cIAA {
+//   NI len; tySequence__nkyLXcAOvqEN77Wb7C9cIAA_Content* p;
+// };
+// struct Exception : public RootObj {	Exception* parent;
+// 	NCSTRING name;
+// 	NimStringV2 message;
+// 	tySequence__nkyLXcAOvqEN77Wb7C9cIAA trace;
+// 	Exception* up;
+// };
+// struct TSafePoint {	TSafePoint* prev;
+// 	NI status;
+// 	jmp_buf context;
+// };
+// struct GcFrameHeader {	NI len;
+// 	GcFrameHeader* prev;
+// };
+// struct ForLoopStmt {	char dummy;
+// };
 typedef NU8 NueLoadedFrom;
 typedef N_CDECL_PTR(void, tyProc__5cp59bim9aJ4WupX5aVaD1Sg) (NCSTRING msg_p0);
 extern "C" N_LIB_PRIVATE N_NOCONV(void, signalHandler)(int sign_p0);
