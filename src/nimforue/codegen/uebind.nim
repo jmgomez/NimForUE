@@ -159,12 +159,13 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
     returnCall
 
   var pragmas = 
-    when WithEditor:
+    # when WithEditor:
       nnkPragma.newTree(
         nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
         ) #export the func with an underscore to avoid collisions
-    else: newEmptyNode()
+    # else: newEmptyNode()
   if typeExposure == uexExport:
+    # debugEcho treeRepr pragmas
     pragmas.add ident "dynlib"
 
   # when defined(windows):

@@ -73,6 +73,7 @@ public class $1 : ModuleRules
 			"PCG",  //TODO add only in 5.2
 			"GameplayAbilities", //TODO PCG, GameplayTags and GampleyAbilities should be optional modules
 			"PhysicsCore",		
+      "NavigationSystem",
 		
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
@@ -123,7 +124,9 @@ class F$1 : public IModuleInterface
 
 const ModuleCppFileTemplate = """
 #include "../Public/$1.h"
-#include "ILiveCodingModule.h"
+#if PLATFORM_WINDOWS && WITH_EDITOR
+  #include "ILiveCodingModule.h"
+#endif
 
 DEFINE_LOG_CATEGORY($1);
 

@@ -15,7 +15,7 @@ type
 const clsTemplate = "struct $1 : public $3 {\n  \n  $1(FVTableHelper& Helper) : $3(Helper) {}\n  $2  \n};\n"
 type
   #Notice you cant export types here or they will collide with the ones in the headers when linking the bindings.
-  UNimFunction* {.inheritable, codegenDecl: clsTemplate .} = object of UFunction
+  UNimFunction* {.inheritable, codegenDecl: clsTemplate, exportc .} = object of UFunction
     sourceHash*: FString
   UNimFunctionPtr* = ptr UNimFunction
   UNimEnum* {.inheritable, codegenDecl: clsTemplate .} = object of UEnum #recreate in Nim
