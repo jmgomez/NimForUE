@@ -86,21 +86,17 @@
   #include "WorkflowOrientedApp/WorkflowTabManager.h"
   #include "WorkflowOrientedApp/WorkflowTabFactory.h"
   #include "SCommonEditorViewportToolbarBase.h"
-  #include "NavigationSystem.h"
+
   #include "AdvancedPreviewScene.h"
   #include "SAdvancedPreviewDetailsTab.h"
   //asset tools
   #include "AssetTypeActions_Base.h"
 
-
-
-//UMG
-#include "UMG/Public/Components/Viewport.h"
-//Slate
-#include "Components/Widget.h"
-#include "Widgets/Docking/SDockTab.h"
 #endif
-
+#include "NavigationSystem.h"
+#include "Components/Widget.h"
+#include "UMG/Public/Components/Viewport.h"
+#include "Widgets/Docking/SDockTab.h"
 
 
 //TEMP test 52

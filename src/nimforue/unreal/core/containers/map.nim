@@ -10,6 +10,7 @@ type
     TMap*[K, V] {.importcpp: "TMap"} = object
 
 
+
 proc makeTPair*[K, V](k:K, v:V) : TPair[K, V] {.importcpp: "TPair<'1, '2>(@)", constructor .}
 
 proc makeTMapPriv*[K, V](k: typedesc[K], v: typedesc[V]) : TMap[K, V] {.importcpp: "TMap<'*1, '*2>()", constructor, cdecl.}

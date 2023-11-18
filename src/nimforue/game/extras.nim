@@ -64,22 +64,22 @@ when WithEditor:
   # import unreal/editor/editor
 
   # proc GameNimMain() {.importcpp.}
-
-proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.} = 
-  proc emitTypesInGuest(calledFrom:NueLoadedFrom, globalEmitter:UEEmitterPtr) = 
-        type 
-          EmitTypesExternal = proc (emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.gcsafe, cdecl.}
-        let libDir = PluginDir / "Binaries"/"nim"/"ue"
-        let guestPath = getLastLibPath(libDir, "nimforue")
-        if guestPath.isNone():
-          UE_Error "Could not find guest lib"
-          return
-        UE_Log "emit types in guest"
-        let lib = loadLib(guestPath.get())
-        let emitTypesExternal = cast[EmitTypesExternal](lib.symAddr("emitTypesExternal"))
-        if emitTypesExternal.isNotNil():
-          emitTypesExternal(globalEmitter, calledFrom, reuseHotReload=true)
-  emitTypesInGuest(nlfEditor, globalEmitter)
+when WithEditor:
+  proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.} = 
+    proc emitTypesInGuest(calledFrom:NueLoadedFrom, globalEmitter:UEEmitterPtr) = 
+          type 
+            EmitTypesExternal = proc (emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.gcsafe, cdecl.}
+          let libDir = PluginDir / "Binaries"/"nim"/"ue"
+          let guestPath = getLastLibPath(libDir, "nimforue")
+          if guestPath.isNone():
+            UE_Error "Could not find guest lib"
+            return
+          UE_Log "emit types in guest"
+          let lib = loadLib(guestPath.get())
+          let emitTypesExternal = cast[EmitTypesExternal](lib.symAddr("emitTypesExternal"))
+          if emitTypesExternal.isNotNil():
+            emitTypesExternal(globalEmitter, calledFrom, reuseHotReload=true)
+    emitTypesInGuest(nlfEditor, globalEmitter)
 
 
 proc emitTypes() {.cdecl, exportc, dynlib.} = 
@@ -97,11 +97,13 @@ proc isThereAnyNimClass(): bool =
   return false
 
 proc emitInNextFrame(): Future[void] {.async.} = 
-  await sleepAsync(100)
-  emitTypes()
+    await sleepAsync(100)
+    emitTypes()
+    
+when WithEditor:
 
-proc reinstanceNextFrame() {.cdecl, exportc.} = 
-  sleepAsync(100).callback= () => reinstanceFromGloabalEmitter(getGlobalEmitter())
+  proc reinstanceNextFrame() {.cdecl, exportc.} = 
+    sleepAsync(100).callback= () => reinstanceFromGloabalEmitter(getGlobalEmitter())
 
 
 #Called from NimForUE module as entry point when we are in a non editor build

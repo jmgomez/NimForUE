@@ -535,13 +535,13 @@ when WithEditor:
         else: makeTMap[FName, FString]()
 else:
     #only used in non editor builds (metadata is not available in non editor builds)
-    var metadataTable* = newTable[pointer, TMap[FName, FString]]()
+    var metadataTable* = newTable[pointer, Table[FName, FString]]()
     func getMetadataMap*(field :UFieldPtr|FFieldPtr|UObjectPtr  ) : TMap[FName, FString] = 
         let outerKey = field.getFName()
         {.cast(noSideEffect).}:
             if field notin metadataTable:
-                metadataTable.add(field, makeTMap[FName, FString]())
-            metadataTable[field]
+                metadataTable.add(field, initTable[FName, FString]())
+            metadataTable[field].toTMap()
     proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) = 
         
         let outerKey = field.getFName()
@@ -553,12 +553,12 @@ else:
                 map[nkey] = inValue
             else:
                 map.add(nkey, inValue)
-            metadataTable[field] = map
+            metadataTable[field] = map.toTable()
     proc copyMetadata*(src, dst : UObjectPtr) : void = 
         #assumes dst doesnt exists
         let srcMap = src.getMetadataMap()
         let dstMap = dst.getMetadataMap()
-        metadataTable[dst] = srcMap
+        metadataTable[dst] = srcMap.toTable()
 
 proc `$`*(pt:pointer) : string = $cast[int](pt)
 
