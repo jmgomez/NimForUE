@@ -92,9 +92,8 @@
   #include "AssetTypeActions_Base.h"
 
 #endif
-#include "NavigationSystem.h"
 #include "Components/Widget.h"
-#include "UMG/Public/Components/Viewport.h"
+#include "Components/Viewport.h"
 #include "Widgets/Docking/SDockTab.h"
 
 
@@ -105,6 +104,7 @@
 #include "AbilitySystemComponent.h"
 #include "ABilitySystemInterface.h"
 #include "Abilities/Tasks/AbilityTask.h"
+#include "NavigationSystem.h"
 
 #if  ENGINE_MINOR_VERSION >= 2   
 #include "Elements/PCGExecuteBlueprint.h"
