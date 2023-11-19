@@ -9,6 +9,8 @@ public class NimForUEBindings : ModuleRules
 			"CoreUObject", 
 			"Engine",
 			"Projects",
+			"UMG",
+			"NavigationSystem",
 			//"UnrealEd"
 			 "InputCore", 
 			 //THE PCH pulls the headers from this module. So the search paths should be in here
