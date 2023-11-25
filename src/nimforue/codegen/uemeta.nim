@@ -739,7 +739,7 @@ func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: string): Option[UFunc
         return some fun
 
   none[UFunctionPtr]()
-
+type Test = object of UNimFunction
 #note at some point class can be resolved from the UEField?
 proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Option[UFunctionNativeSignature]): UFunctionPtr =
   let superCls = someNil(cls.getSuperClass())

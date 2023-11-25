@@ -206,7 +206,8 @@ __AVR__
 #    ifdef NUE_BINDINGS
 #    define N_LIB_EXPORT __declspec(dllexport) //NIM_EXTERNC __declspec(dllexport)
 #    else
-#    define N_LIB_EXPORT NIM_EXTERNC __declspec(dllexport)
+// #    define N_LIB_EXPORT  __declspec(dllexport)
+#    define N_LIB_EXPORT __declspec(dllexport)
 #    endif
 #  else
 #    define N_LIB_EXPORT  NIM_EXTERNC __declspec(dllexport)

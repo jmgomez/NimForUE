@@ -226,7 +226,6 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
 macro uClass*(name:untyped, body : untyped) : untyped = 
   let (uClassNode, fns) = uClassImpl(name, body)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
- 
 
  
 

@@ -196,7 +196,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
     "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
-    # "-l:" & getBindingsLib()
+    "-l:" & getBindingsLib()
   ] 
   let isCompileOnly = "--compileOnly" in extraSwitches
   if isCompileOnly:
@@ -323,19 +323,21 @@ proc compileGenerateBindings*() =
   let withDebug = false #TODO disable on final builds
   let buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  doAssert(execCmd(&"nim  cpp {buildFlags} -d:bindings --noMain --app:staticlib --compileOnly  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"nim  cpp {buildFlags} -d:bindings --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   let uegenbindingsHeader = "./.nimcache/gencppbindings/UEGenBindings.h"
-  copyFile(uegenbindingsHeader, ueGenBindingsPath)
+  copyFile(uegenbindingsHeader, ueGenBindingsPath)  
   #It still generates NimMain in the header. So we need to get rid of it:
   let nimMain = "N_CDECL(void, NimMain)(void);"
   writeFile(ueGenBindingsPath, readFile(ueGenBindingsPath).replace(nimMain, ""))
 
-  let autoBindingsPath = "./Source" / "NimForUEAutoBindings"
-  let cppDestiny = autoBindingsPath / "Private" / "autogen"
-  createDir(cppDestiny)
-  copyNewCppTo("./.nimcache/gencppbindings/", cppDestiny)
-  discard updateFile(ueGenBindingsPath, autoBindingsPath / "Public" / "UEGenBindings.h")
+  let generateCppBindings = false
+  if generateCppBindings: #Only needed for LC support which not sure if we should waste energy on it
+    let autoBindingsPath = "./Source" / "NimForUEAutoBindings"
+    let cppDestiny = autoBindingsPath / "Private" / "autogen"
+    createDir(cppDestiny)
+    copyNewCppTo("./.nimcache/gencppbindings/", cppDestiny)
+    discard updateFile(ueGenBindingsPath, autoBindingsPath / "Public" / "UEGenBindings.h")
   # removeFile(ueGenBindingsPath)
 
 
