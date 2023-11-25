@@ -60,7 +60,7 @@ when WithEditor:
 
 when WithEditor:
   import ../../buildscripts/buildscripts
-  import std/[os, sequtils, sugar]
+  import std/[os, sequtils, sugar, dynlib]
   # import unreal/editor/editor
 
   # proc GameNimMain() {.importcpp.}
