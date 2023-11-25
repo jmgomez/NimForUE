@@ -302,8 +302,6 @@ proc emitUStruct*(typeDef:UEType) : NimNode =
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr resulti
 
-import ../../buildscripts/nimforueconfig
-
 proc emitUClass*(typeDef:UEType) : (NimNode, NimNode) =
     let typeDecl = genTypeDecl(typeDef)
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution

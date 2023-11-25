@@ -67,7 +67,6 @@ public class $1 : ModuleRules
 			"SlateCore",
 			"Engine", 
 			"NimForUEBindings",
-			"NimForUEAutoBindings",
 			"EnhancedInput", 
 			"GameplayTags",
 			"PCG",  //TODO add only in 5.2
@@ -138,7 +137,12 @@ extern  "C" void* reinstanceNextFrame();
 
 void F$1::StartupModule()
 {
+#if WITH_EDITOR
+  //TODO improve for livecoding
+  //But do no start Nim when no editor
+#else
 	 $1NimMain();
+#endif
 #if PLATFORM_WINDOWS && WITH_EDITOR
   ILiveCodingModule* LiveCodingModule = FModuleManager::GetModulePtr<ILiveCodingModule>("LiveCoding");
   LiveCodingModule->GetOnPatchCompleteDelegate().AddLambda([] {
@@ -186,10 +190,10 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
   #some seconds on the first build.
   var existingFiles = initTable[string, CppSourceFile]()
   var newFiles = initTable[string, CppSourceFile]()
-
+  let exludeFiles = @["os.nim.cpp", "buildscripts.nim.cpp"]
   for newFile in walkFiles(cppSrcDir / &"*.cpp"):        
     let filename = newFile.extractFilename()   
-    if filename.contains("sbindings@simported"):
+    if filename.contains("sbindings@simported") or exludeFiles.anyIt(filename.contains(it)):
       #"imported bindings arent copied"
       continue
     newFiles[filename] = CppSourceFile(name:filename, path:newFile, content: readFile(newFile))

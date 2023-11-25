@@ -60,12 +60,12 @@ when WithEditor:
 
 when WithEditor:
   import ../../buildscripts/buildscripts
-  import std/[dynlib, os, sequtils, sugar]
+  import std/[os, sequtils, sugar]
   # import unreal/editor/editor
 
   # proc GameNimMain() {.importcpp.}
-when WithEditor:
-  proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.} = 
+proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.} = 
+  when WithEditor:
     proc emitTypesInGuest(calledFrom:NueLoadedFrom, globalEmitter:UEEmitterPtr) = 
           type 
             EmitTypesExternal = proc (emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.gcsafe, cdecl.}
@@ -100,9 +100,8 @@ proc emitInNextFrame(): Future[void] {.async.} =
     await sleepAsync(100)
     emitTypes()
     
-when WithEditor:
-
-  proc reinstanceNextFrame() {.cdecl, exportc.} = 
+proc reinstanceNextFrame() {.cdecl, exportc.} = 
+  when WithEditor:
     sleepAsync(100).callback= () => reinstanceFromGloabalEmitter(getGlobalEmitter())
 
 

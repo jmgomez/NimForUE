@@ -37,6 +37,10 @@ proc echoTasks() =
   for t in tasks:
     log("  " & t.name & (if t.name.len < 6: "\t\t" else: "\t") & t.t.description)
 
+proc getPluginName(): string = 
+  if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
+
+
 proc main() =
   if commandLineParams().join(" ").len == 0:
     log "nue: NimForUE tool"
@@ -205,6 +209,7 @@ task lib, "Builds a game lib":
 
   var extraSwitches = newSeq[string]()
   var withLiveCoding = false
+  let withEditor = config.withEditor
 
   if "f" in taskOptions: 
     extraSwitches.add "-f" #force 
@@ -212,8 +217,12 @@ task lib, "Builds a game lib":
     extraSwitches.add "--linedir:off"
   if "livecoding" in taskOptions: #notice when doing non editor builds we will be doing the same process
     withLiveCoding = true
+  let shouldGenerateModule = withLiveCoding or not withEditor
+  if shouldGenerateModule:
     extraSwitches.add "--compileOnly"
-
+  else:
+    discard
+    #TODO remove autogen plugin
 
   let debug = "debug" in taskOptions
   let release = "release" in taskOptions
@@ -224,8 +233,10 @@ task lib, "Builds a game lib":
     log "Compiling lib " & name & "..."
     assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"         
     compileLib(taskOptions["name"], extraSwitches, debug, release, threads)
-    if withLiveCoding:
+    if shouldGenerateModule:
+      generatePlugin(getPluginName())
       generateModule(name.capitalizeAscii(), pluginName)
+      #TODO remove this module dll so it isnt loaded
       ubuild(taskOptions)
   else:
     log "You need to specify a name for the lib. i.e. 'nue lib --name=mylib'"
@@ -415,13 +426,11 @@ task buildmodules, "Rebuilds the plugin, game and libs":
     generateModule(lib.capitalizeAscii(), pluginName)  
 
 task genplugin, "Creates a plugin, by default it uses the name of the game with NUE as prefix":  
-  let pluginName = if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
   #TODO replace this with a call to all libs 
-  generatePlugin(pluginName)
+  generatePlugin(getPluginName())
  
 task removeplugin, "Removes the plugin, by default it uses the name of the game with NUE as prefix":  
-  let pluginName = if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
-  removePlugin(pluginName)
+  removePlugin(getPluginName())
  
 
 task setupvm, "Creates the vm module library and adds a scratchup to it": 
