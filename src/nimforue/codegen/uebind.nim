@@ -71,11 +71,11 @@ func genProp(typeDef : UEType, prop : UEField, typeExposure: UEExposure = uexDsl
       proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
         let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
         actualSetter
-  if typeExposure == uexExport:
+  # if typeExposure == uexExport:
     
-    let dynlib = ident "dynlib"
-    for i in [0, 2]: 
-      result[i].pragma.add dynlib
+    # let dynlib = ident "dynlib"
+    # for i in [0, 2]: 
+    #   result[i].pragma.add dynlib
   
   
 
@@ -177,9 +177,9 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
         nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
         ) #export the func with an underscore to avoid collisions
     # else: newEmptyNode()
-  if typeExposure == uexExport:
-    # debugEcho treeRepr pragmas
-    pragmas.add ident "dynlib"
+  # if typeExposure == uexExport:
+  #   # debugEcho treeRepr pragmas
+  #   pragmas.add ident "dynlib"
 
   # when defined(windows):
   #   pragmas.add(ident("thiscall")) #I Dont think this is necessary
@@ -205,7 +205,7 @@ func genInterfaceConverers*(ueType:UEType, typeExposure: UEExposure) : NimNode =
     result =       
       genAst(fnName,typeNamePtr, interfaceName, interfacePtrName):      
         when not declared(fnName):
-          converter fnName*(self {.inject.} : typeNamePtr): interfacePtrName {.exportc.} =  cast[interfacePtrName](self)
+          converter fnName*(self {.inject.} : typeNamePtr): interfacePtrName =  cast[interfacePtrName](self)
     # if typeExposure in [uexExport, uexImport]:
     #   debugEcho treeRepr result
     #   debugEcho repr result
@@ -231,7 +231,6 @@ struct $1 : public $3{cppInterfaces} {{
   $2  
 }};
 """
-
 #Eventually this types should generate its own file so it's easier to copy paste them to the EngineTypes. In the mean time they generate getter/setters
 func isInPCHAndManuallyImported*(uet: UEType): bool = uet.isInPCH and uet.name in ManuallyImportedClasses
 

@@ -64,7 +64,6 @@ public class NimForUE : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"NimForUEBindings",
-				"NimForUEAutoBindings",
 				"Projects",
 			}
 		);

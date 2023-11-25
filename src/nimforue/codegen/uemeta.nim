@@ -741,6 +741,7 @@ func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: string): Option[UFunc
 
 proc check(test: bool) {.importcpp: "check(#)".}
 
+type Test = object of UNimFunction
 #note at some point class can be resolved from the UEField?
 proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Option[UFunctionNativeSignature]): UFunctionPtr =
   # return nil
