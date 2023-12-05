@@ -108,8 +108,8 @@ else:
             if field notin metadataTable:
                 metadataTable.add(field, initTable[FName, FString]())
             metadataTable[field].toTMap()
-    proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) = 
-        
+
+    proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) =          
         let outerKey = field.getFName()
         # UE_Log "Adding key for field: " & $field.getFName() & " key: " & key & " value: " & inValue
         {.cast(noSideEffect).}:

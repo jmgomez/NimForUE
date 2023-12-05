@@ -830,13 +830,9 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
                 attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata(AttachMetadataKey).get().capitalizeASCII)
               
               let attachToComp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](attachToCompProp, actor)[])
-              if objProp.hasMetadata(SocketMetadataKey):
-                comp.setupAttachment(attachToComp, n(objProp.getMetadata(SocketMetadataKey).get()))
-              else:
-                comp.setupAttachment(attachToComp)
-
+              var socket =  makeFName objProp.getMetadata(SocketMetadataKey).get()
+              comp.setupAttachment(attachToComp, socket)
           else:
-              UE_Warn &"No attach metadata for {comp}"
               if comp != actor.getRootComponent():
                 comp.setupAttachment(actor.getRootComponent())
 
