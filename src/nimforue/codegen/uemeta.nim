@@ -718,8 +718,7 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
   let prop: FPropertyPtr = newFProperty(makeFieldVariant outer, propField)
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
   for metadata in propField.metadata:
-    prop.setMetadata(metadata.name, $metadata.value)
-    # UE_Log &"Setting metadata for {propField.name} {metadata.name} {metadata.value}"
+    prop.setMetadata(makeFName metadata.name, $metadata.value)
   outer.addCppProperty(prop)
   prop
 
@@ -764,7 +763,7 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
     let sFn = superFn.get()
     fn.functionFlags = (fn.functionFlags | (sFn.functionFlags & (FUNC_FuncInherit | FUNC_Public | FUNC_Protected | FUNC_Private | FUNC_BlueprintPure | FUNC_HasOutParms)))
     copyMetadata(sFn, fn)
-    fn.setMetadata("ToolTip", fn.getMetadata("ToolTip").get("")&" vNim")
+    fn.setMetadata(n "ToolTip", fn.getMetadata("ToolTip").get("")&" vNim")
     setSuperStruct(fn, sFn)
 
 
@@ -776,7 +775,7 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
   
   if superFn.isNone():
     for metadata in fnField.metadata:
-      fn.setMetadata(metadata.name, $metadata.value)
+      fn.setMetadata(makeFName metadata.name, $metadata.value)
 
   cls.addFunctionToFunctionMap(fn, fnName)
   if fnImpl.isSome(): #blueprint implementable events doesnt have a function implementation
@@ -915,7 +914,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
 
   for metadata in ueType.metadata:
     UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
-    newCls.setMetadata(metadata.name, $metadata.value)
+    newCls.setMetadata(makeFName metadata.name, $metadata.value)
 
 
   for field in ueType.fields:
@@ -944,7 +943,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   setGIsUCCMakeStandaloneHeaderGenerator(false)
   newCls.assembleReferenceTokenStream()
   
-  newCls.setMetadata(UETypeMetadataKey, $ueType.toJson())
+  newCls.setMetadata(makeFName UETypeMetadataKey, $ueType.toJson())
 
 
 
@@ -1011,14 +1010,14 @@ proc emitUEnum*(enumType: UEType, package: UPackagePtr): UFieldPtr =
   const objFlags = RF_Public | RF_Transient | RF_MarkAsNative
   let uenum = newUObject[UNimEnum](package, name, objFlags)
   for metadata in enumType.metadata:
-    uenum.setMetadata(metadata.name, $metadata.value)
+    uenum.setMetadata(makeFName metadata.name, $metadata.value)
   var enumFields = makeTArray[TPair[FName, int64]]()
   for field in enumType.fields.pairs:
     let fieldName = field.val.name.makeFName()
     enumFields.add(makeTPair(fieldName, field.key.int64))
     # uenum.setMetadata("DisplayName", "Whatever"&field.val.name)) TODO the display name seems to be stored into a metadata prop that isnt the one we usually use
   discard uenum.setEnums(enumFields)
-  uenum.setMetadata(UETypeMetadataKey, $enumType.toJson())
+  uenum.setMetadata(makeFName UETypeMetadataKey, $enumType.toJson())
 
   uenum
 
@@ -1032,7 +1031,7 @@ proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
     # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
 
   fn.staticLink(true)
-  fn.setMetadata(UETypeMetadataKey, $delType.toJson())
+  fn.setMetadata(makeFName UETypeMetadataKey, $delType.toJson())
   fn
 
 

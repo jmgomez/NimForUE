@@ -19,8 +19,8 @@ proc getPlainNameString*(entry: ptr FNameEntry): FString {.importcpp:"#->GetPlai
 proc getDisplayIndex*(name: FName): FNameEntryId {.importcpp:"#.GetDisplayIndex()".}
 
 
-proc makeFName*(str: FString) : FName {. importcpp: "FName(#) " constructor.}
-proc makeFName(name: EName) : FName {. importcpp: "FName(#) " constructor.}
+proc makeFName*(str: FString) : FName {. importcpp: "FName(#) ", constructor.}
+proc makeFName(name: EName) : FName {. importcpp: "FName(#) ", constructor.}
 
 proc nameFromInt*(val: int): FName = 
   let entry = fromUnstableInt(val.uint32).getEntry()
@@ -39,10 +39,10 @@ converter ENameToFName*(ename:EName) : FName = makeFName ename
 proc getNumber*(name : FName) : int32 {. importcpp: "#.GetNumber()".}
 
 proc `==`*(a:FName, b:FName) : bool {.importcpp:"(# == #)" .}
-proc `$`*(name:FName) : string =
-  if name.getNumber() == 0: return "None"
-  let str = name.toFString()
-  result = str
+proc `$`*(name:FName) : string = name.toFString()
+  # if name.getNumber() == 0: return "None"
+  # let str = name.toFString()
+  # result = str
 
 
 proc hash*(name: FName): Hash = name.getNumber()
