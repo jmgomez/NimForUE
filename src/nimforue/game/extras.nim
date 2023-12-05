@@ -81,11 +81,8 @@ proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.
             emitTypesExternal(globalEmitter, calledFrom, reuseHotReload=true)
     emitTypesInGuest(nlfEditor, globalEmitter)
 
-
-proc emitTypes() {.cdecl, exportc, dynlib.} = 
+proc emitTypes() {.cdecl, exportc, dynlib.} =  
   discard  emitUStructsForPackage(getGlobalEmitter(), "GameNim", emitEarlyLoadTypesOnly = false)     
-
-
 
 proc isThereAnyNimClass(): bool = 
   var objIter = makeFRawObjectIterator()
@@ -103,6 +100,7 @@ proc emitInNextFrame(): Future[void] {.async.} =
 proc reinstanceNextFrame() {.cdecl, exportc.} = 
   when WithEditor:
     sleepAsync(100).callback= () => reinstanceFromGloabalEmitter(getGlobalEmitter())
+  
 
 
 #Called from NimForUE module as entry point when we are in a non editor build
@@ -117,8 +115,7 @@ proc startNue*() {.cdecl, exportc.} =
       asyncCheck emitInNextFrame()
     else:
       #TODO Hook the Early Types here. 
-      let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)
-    
+      let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)      
 
 once:
   startNue() 
