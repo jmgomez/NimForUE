@@ -211,7 +211,7 @@ proc newFProperty*(owner : FFieldVariant, propField:UEField, optPropType="", opt
         name = optName.nonEmptyOr(propField.name).makeFName()
     # if name == ENone: return nil
     const flags = propObjFlags
-    UE_Log "Creating new property: " & $name & " of type: " & propType
+    UE_Log "Creating new property: " & $propField.name & " of type: " & propType
     let prop : FPropertyPtr = 
         if isBasicProperty(propType): newBasicProperty(owner, propField, propType, name).get()
         elif isContainer(propType) and owner.isUObject() : newContainerProperty(owner, propField, propType, name).get()

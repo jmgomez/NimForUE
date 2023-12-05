@@ -73,7 +73,7 @@ proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.
 
 #UFIELD
 when WithEditor:
-    proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) : void {.importcpp:"#->SetMetaData(*#, *#)".}
+    proc setMetadata*(field:UFieldPtr|FFieldPtr, key:FName, inValue:FString) : void {.importcpp:"#->SetMetaData(#, *#)".}
     # proc getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) :var FString {.importcpp:"#->GetMetaData(*#)".}
     proc findMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : ptr FString {.importcpp:"const_cast<FString*>(#->FindMetaData(*#))".}
     #notice it also checks for the ue value. It will return false on "false"
@@ -109,12 +109,13 @@ else:
                 metadataTable.add(field, initTable[FName, FString]())
             metadataTable[field].toTMap()
 
-    proc setMetadata*(field:UFieldPtr|FFieldPtr, key, inValue:FString) =          
+    proc setMetadata*(field:UFieldPtr|FFieldPtr, key: FName, inValue:FString) =          
         let outerKey = field.getFName()
-        # UE_Log "Adding key for field: " & $field.getFName() & " key: " & key & " value: " & inValue
+        UE_Log getStackTrace()
+        UE_Log "Adding key for field: " & $field.getFName() & " key: " & $key & " value: " & inValue
         {.cast(noSideEffect).}:
             let map = field.getMetadataMap()
-            let nkey = n key
+            let nkey = key
             if nKey in map:
                 map[nkey] = inValue
             else:
@@ -313,7 +314,7 @@ proc reinstanceNueTypes*(nueModule:FString, nimHotReload:FNimHotReloadPtr, nimEr
 
 func isNimClass*(cls:UClassPtr): bool = cls.hasMetadata(NimClassMetadataKey)
 
-proc markAsNimClass*(cls:UClassPtr) = cls.setMetadata(NimClassMetadataKey, "true")
+proc markAsNimClass*(cls:UClassPtr) = cls.setMetadata(makeFName NimClassMetadataKey, "true")
 
 #not sure if I should make a specific file for object extensions that are outside of the bindings
 
