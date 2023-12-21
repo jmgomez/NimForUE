@@ -98,3 +98,8 @@ proc removeBy*[T](arr: var TArray[T], fn: T -> bool) =
       arr.removeAt idx
       break
     
+proc flatten*[T](arr: TArray[TArray[T]]): TArray[T] = 
+  var xs = makeTArray[T]()
+  for x in arr:
+    xs.append x
+  xs
