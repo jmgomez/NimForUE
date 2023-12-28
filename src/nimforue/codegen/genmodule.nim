@@ -23,7 +23,7 @@ func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq
           nnkPragma.newTree(
             # ident "exportc",#, newStrLitNode("$1_")), #Probably we dont need _ anymore but it be useful to see the distinction when debugging the code, if so it needs to be passed to the template
             nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_")),             
-            nnkExprColonExpr.newTree(ident "codegenDecl", newStrLitNode ueType.getClassTemplate()), 
+            nnkExprColonExpr.newTree(ident "codegenDecl", newStrLitNode ueType.getClassTemplate(true)), 
             ident "inheritable",
             ident "pure",
             # nnkExprColonExpr.newTree(ident "header", newStrLitNode("UEGenClassDefs.h"))

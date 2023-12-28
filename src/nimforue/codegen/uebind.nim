@@ -183,13 +183,13 @@ func genInterfaceConverers*(ueType:UEType) : NimNode =
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
-func getClassTemplate*(typeDef: UEType) : string =  
+func getClassTemplate*(typeDef: UEType, fromBindings: bool = false) : string =  
   var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":
     cppInterfaces = ", " & cppInterfaces
   # let ctorContent = newLit &"{typeDef.name}(const '1& #1) : {ueType.parent}(#1)"
   
-  let defaultCtor = ""
+  let defaultCtor = if fromBindings: "$1()=default;" else: ""
     # if typeDef.hasObjInitCtor: "" # "$1(const FObjectInitializer& i) : $3(i){}" 
     # else: "$1()=default;" #the default ctor will be autogen by Nim (dsl only, TODO make sure only dsl types do this). Also not used so far (it may be needed down the road)
 
