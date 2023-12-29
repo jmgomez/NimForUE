@@ -10,6 +10,7 @@ type
     FScriptDelegate* {.importcpp, inheritable, pure.} = object
     
 
+proc getMulticastDelegate*(prop: FMulticastDelegatePropertyPtr, propValue: pointer): ptr FMulticastScriptDelegate {.importcpp:"const_cast<FMulticastScriptDelegate*>(#->GetMulticastDelegate(#))".}
 
 proc makeScriptDelegate() : FScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
 # proc makeMulticastScriptDelegate() : FMulticastScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
