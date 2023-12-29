@@ -9,7 +9,7 @@ macro importAllBindings() : untyped =
   let modules = 
         walkDirRec(exportBindingsPath)
         .toSeq()
-        .filterIt(it.endsWith(".nim"))
+        .filterIt(it.endsWith(".nim") and ManuallyImportedModule.toLower notin it)
         .mapIt(
           it.split(PathSeparator).join("/").split("bindings/exported/")[^1].replace(".nim", "").toLower)
               

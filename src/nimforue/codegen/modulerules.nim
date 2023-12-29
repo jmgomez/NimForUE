@@ -4,7 +4,7 @@ import ../utils/utils
 
 
 const ManuallyImportedClasses* = @[ 
-  #we could have this list being generated automatically by using a pragma on the imported cpp
+  #TODO remove but double check first: most of this is already being generated automatically when instrospection the project see NimDefinedTypesNames
       "AActor", "AInfo", "UReflectionHelpers", "UObject", "UEngine", "APawn",
       "UField", "UStruct", "UScriptStruct", "UPackage", "UPackageMap",
       "UClass", "UFunction", "UDelegateFunction",

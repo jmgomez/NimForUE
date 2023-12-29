@@ -589,6 +589,16 @@ proc generateProject*(forceGeneration = false) =
         UE_Error &"Error fixing forward declare only types"
         UE_Error getCurrentExceptionMsg()
 
+
+           #Finally we are going to create another module with the manually imported types
+      #notice we are not removing the source types because the manually imported are just for ref (i.e copy paste to engine types)
+      var manuallyImportedModule = UEModule(name: ManuallyImportedModule)
+      for m in projectModules:
+        for t in m.types:
+          if t.name in ManuallyImportedClasses & NimDefinedTypesNames:
+            manuallyImportedModule.types.add(t)
+      projectModules.add manuallyImportedModule
+      
       project.modules = projectModules
       UE_Log $project.modules.mapIt( &"Mod: {it.name} Types: {it.types.len} Deps: {it.dependencies} \n")
 
@@ -600,6 +610,9 @@ proc generateProject*(forceGeneration = false) =
       # ueProjectRef[] = project
       # UE_Log &"Modules to gen: {project.modules.len}"
       # UE_Log &"Modules to gen: {project.modules.mapIt(it.name)}"
+
+
+ 
       project.saveProject()
 
 

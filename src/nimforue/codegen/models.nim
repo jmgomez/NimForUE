@@ -161,6 +161,7 @@ type
         modules* : seq[UEModule]
 
 const CommonModule* = "Engine/Common"
+const ManuallyImportedModule* = "ManuallyImportedModule"
 func isCommon*(module: UEModule): bool = module.name == CommonModule
 
 func `$`*(a : EPropertyFlagsVal) : string {.borrow.}

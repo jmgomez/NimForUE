@@ -10,7 +10,7 @@ import uebind, uebindcore
 import ../vm/vmmacros
 
 
-func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq[NimNode] =
+func genUClassExportTypeDefBinding(ueModule: UEModule, ueType: UEType, rule: UERule = uerNone) : seq[NimNode] =
   let pragmas = 
     if ueType.isInPCH:
       nnkPragmaExpr.newTree(
@@ -30,7 +30,7 @@ func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq
             # nnkExprColonExpr.newTree(ident "codegenDecl", ident "UClassTemplate")
         )
       )
-  if ueType.forwardDeclareOnly or ueType.name in NimDefinedTypesNames:
+  if ueType.forwardDeclareOnly or (ueType.name in NimDefinedTypesNames and ueModule.name != ManuallyImportedModule):
     # debugEcho "[export] nothing to do for " & ueType.name
     @[]    
   else:
@@ -53,7 +53,7 @@ func genUClassExportTypeDefBinding(ueType: UEType, rule: UERule = uerNone) : seq
     ]
 
 
-func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[NimNode] =
+func genUClassImportTypeDefBinding(ueModule: UEModule, ueType: UEType, rule: UERule = uerNone): seq[NimNode] =
   let pragmas = 
     if ueType.isInPCH:
       nnkPragmaExpr.newTree(
@@ -71,7 +71,7 @@ func genUClassImportTypeDefBinding(ueType: UEType, rule: UERule = uerNone): seq[
         )
       )
       
-  if (ueType.forwardDeclareOnly) or ueType.name in NimDefinedTypesNames:
+  if (ueType.forwardDeclareOnly) or (ueType.name in NimDefinedTypesNames and ueModule.name != ManuallyImportedModule):
     # debugEcho "[import] nothing to do for " & ueType.name
     @[]
   else:
@@ -178,7 +178,7 @@ proc genImportCModuleDecl*(moduleDef: UEModule): NimNode =
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
       of uetClass:
-        typeSection.add genUClassImportTypeDefBinding(typeDef, rules)
+        typeSection.add genUClassImportTypeDefBinding(moduleDef, typeDef, rules)
       of uetStruct:
         typeSection.add genUStructCodegenTypeDefBinding(typedef, ctImport)
       of uetEnum:
@@ -217,7 +217,7 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
     of uetClass:
-      typeSection.add genUClassExportTypeDefBinding(typeDef, rules)
+      typeSection.add genUClassExportTypeDefBinding(moduleDef, typeDef, rules)
     of uetStruct:
       typeSection.add genUStructTypeDefBinding(typedef, rules)
     of uetEnum:
