@@ -137,7 +137,9 @@ func getUnrealTypeFromNameAsUObject[T : UObject](name: FString): Option[UObjectP
 
 func isBPExposed(ufun: UFunctionPtr): bool = FUNC_BlueprintCallable in ufun.functionFlags
 
-func isBPExposed(str: UFieldPtr): bool = str.hasMetadata("BlueprintType")
+func isBPExposed(str: UFieldPtr): bool = 
+  result = str.hasMetadata("BlueprintType") 
+
 
 func isBPExposed(str: UScriptStructPtr): bool = str.hasMetadata("BlueprintType")
 
@@ -165,7 +167,7 @@ proc isBPExposed(prop: FPropertyPtr, outer: UObjectPtr): bool =
     .get(true) #we assume it is by default
 
   let flags = prop.getPropertyFlags()
-  (CPF_BlueprintVisible in flags or CPF_Parm in flags) and
+  (CPF_BlueprintVisible in flags or CPF_Parm in flags or CPF_BlueprintAssignable in flags) and
   isTypeExposed
 
 func isBPExposed(uenum: UEnumPtr): bool = true
@@ -224,7 +226,7 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
   let importRule = rules.getRuleAffectingType(nimType, uerInnerClassDelegate)
   var typeName : string
   if importRule.isSome():
-    # UE_Error &"Delegate {nimType} is affected by uerInnedClassDelegate"
+    UE_Error &"Delegate {nimType} is affected by uerInnedClassDelegate"
     #the outer of this delegate should be the same outer as the property
     #notice these delegates are not ment to be used in your our type (the name wouldnt match, it can be fixed but doesnt make sense)
     typeName = outer.getPrefixCpp() & outer.getName()
@@ -244,17 +246,13 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
       defaultValue = ufun.getMetadata(CPP_Default_MetadataKeyPrefix & prop.getName()).get("")
       # UE_Log &"Default value for {prop.getName()} is {defaultValue} and the type is {nimType} and the flags are {prop.getPropertyFlags()}"
       
-
-  
-  if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules or outerFn.isSome()):
-    var field = makeFieldAsUProp(name, nimType, typeName, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
-    field.defaultParamValue = defaultValue
-    return some field
-  else:
-    none(UEField)
-
-
-
+  result = 
+    if (prop.isBpExposed(outer) or uerImportBlueprintOnly notin rules or outerFn.isSome()):
+      var field = makeFieldAsUProp(name, nimType, typeName, prop.getPropertyFlags(), @[], prop.getSize(), prop.getOffset())
+      field.defaultParamValue = defaultValue
+      some field
+    else:
+      none(UEField)
 
 func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField] =
 

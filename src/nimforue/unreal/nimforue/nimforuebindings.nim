@@ -410,9 +410,9 @@ proc dump*(cls:UClassPtr) : string =
   # for key, value in metas:
   #   str = &"{str}\n\t\t {key} : {value}"
 
-  # str = &"{str} \n\t Props:"
-  # for p in cls.getFPropsFromUStruct():
-  #   str = &"{str}\n\t\t {p}"
+  str = &"{str} \n\t Props:"
+  for p in cls.getFPropsFromUStruct():
+    str = &"{str}\n\t\t {p}"
     
   str = &"{str} \n\t Funcs:"
   let funcs = cls.getFuncsFromClass()

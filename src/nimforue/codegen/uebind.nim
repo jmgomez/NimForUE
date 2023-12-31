@@ -10,7 +10,7 @@ import ../../buildscripts/nimforueconfig #probably nimforueconfig should be remo
   # macro ex*(a:untyped):untyped = a
 func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone, isImporting: bool): NimNode 
 
-func genProp(typeDef : UEType, prop : UEField) : NimNode = 
+func genProp(typeDef: UEType, prop: UEField, typeExposure: UEExposure): NimNode = 
   let ptrName = ident typeDef.name & "Ptr"
   
   let className = typeDef.name.substr(1)
@@ -21,11 +21,7 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
   let typeNodeAsReturnValue = case prop.kind:
               of uefProp: prop.getTypeNodeForReturn(getTypeNodeFromUProp(prop, isVarContext=true))
               else: newEmptyNode()#No Support as UProp getter/Seter
-  
-  
   let propIdent = ident (prop.name[0].toLowerAscii() & prop.name.substr(1)).nimToCppConflictsFreeName()
-
-
   #bools are handled differently:
   let actualGetter = 
     if prop.uePropType == "bool": 
@@ -41,23 +37,26 @@ func genProp(typeDef : UEType, prop : UEField) : NimNode =
     else:
       genAst(typeNode):
         setPropertyValuePtr[typeNode](prop, obj, val.addr)
+  if CPF_BlueprintAssignable in prop.propFlags and typeExposure != uexDsl:
+    result = 
+      genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
+        proc `propIdent`*(obj {.inject.}: ptrName): typeNodeAsReturnValue = 
+          let prop {.inject.}  = obj.getClass.getFPropertyByName(propUEName).castField[:FMulticastDelegateProperty]()
+          cast[ptr typeNode](prop.getMulticastDelegate(getPropertyValuePtr[typeNode](prop, obj)))[]
+  else:
+    result = 
+      genAst(propIdent, ptrName, typeNode, className, actualGetter, actualSetter, propUEName = prop.name, typeNodeAsReturnValue):
+        proc `propIdent`* (obj {.inject.}: ptrName) : typeNodeAsReturnValue {.exportcpp.} =
+          let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
+          actualGetter
+        
+        proc `propIdent=`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  = 
+          let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
+          actualSetter
 
-  #Notice we generate two set properties one for nim and the other for code gen due to cpp
-  #not liking the equal in the ident name
-  
-  result = 
-    genAst(propIdent, ptrName, typeNode, className, actualGetter, actualSetter, propUEName = prop.name, typeNodeAsReturnValue):
-      proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {.exportcpp.} =
-        let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
-        actualGetter
-      
-      proc `propIdent=`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  = 
-        let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
-        actualSetter
-
-      proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
-        let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
-        actualSetter
+        proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
+          let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
+          actualSetter
   
 func genParamInFnBodyAsType(funField:UEField) : NimNode = 
   let returnProp = funField.signature.filter(isReturnParam).head()
@@ -216,7 +215,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
   let props = nnkStmtList.newTree(
         typeDef.fields
           .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
-          .map(prop=>genProp(typeDef, prop)))
+          .map(prop=>genProp(typeDef, prop, typeExposure)))
 
   let funcs = nnkStmtList.newTree(
           typeDef.fields
@@ -561,4 +560,4 @@ macro ueBindProp*(cls:typedesc, propName:untyped, typ:typedesc) =
 
   let ueType = UEType(name: cls.strVal().removeLastLettersIfPtr(), kind: uetClass) #notice it only binds uclasses. Struct cant be bound like this
   let ueProp = UEField(name: propName.strVal(), uePropType: repr typ, kind: uefProp)
-  result = genProp(ueType, ueProp)
+  result = genProp(ueType, ueProp, uexDsl)
