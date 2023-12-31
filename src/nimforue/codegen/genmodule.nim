@@ -115,10 +115,18 @@ func genImportCProp(typeDef: UEType, prop: UEField): NimNode =
   var getterImport = newStrLitNode "$1(@)"
   if typeNodeAsReturnValue.repr.contains("var "):
     getterImport = newStrLitNode "(*$1(@))" #avoids importcpp to import it by copy producing #fixes #26
-  result =
-    genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, setPropertyName, typeNodeAsReturnValue, getterImport):
-      proc `propIdent`*(obj {.inject.}: ptrName): typeNodeAsReturnValue {.importcpp: getterImport, header: "UEGenBindings.h".}
-      proc `propIdent=`*(obj {.inject.}: ptrName, val {.inject.}: typeNode): void {.importcpp: setPropertyName, header: "UEGenBindings.h".}
+
+  if CPF_BlueprintAssignable in prop.propFlags:
+    result = 
+      genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
+        proc `propIdent`*(obj {.inject.}: ptrName): typeNodeAsReturnValue = 
+          let prop {.inject.}  = obj.getClass.getFPropertyByName(propUEName).castField[:FMulticastDelegateProperty]()
+          cast[ptr typeNode](prop.getMulticastDelegate(getPropertyValuePtr[typeNode](prop, obj)))[]
+  else:
+    result =
+      genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, setPropertyName, typeNodeAsReturnValue, getterImport):
+        proc `propIdent`*(obj {.inject.}: ptrName): typeNodeAsReturnValue {.importcpp: getterImport, header: "UEGenBindings.h".}
+        proc `propIdent=`*(obj {.inject.}: ptrName, val {.inject.}: typeNode): void {.importcpp: setPropertyName, header: "UEGenBindings.h".}
 
 
 func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
