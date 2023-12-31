@@ -35,6 +35,35 @@ type
   AActor* {.importcpp, inheritable, pure .} = object of UObject
     primaryActorTick* {.importcpp:"PrimaryActorTick"}: FActorTickFunction
     bAllowTickBeforeBeginPlay* {.importcpp.}: bool
+    bOnlyRelevantToOwner* {.importcpp: "bOnlyRelevantToOwner".}: bool
+    bAlwaysRelevant* {.importcpp: "bAlwaysRelevant".}: bool
+    bHidden {.importcpp: "bHidden".}: bool
+    bNetUseOwnerRelevancy* {.importcpp: "bNetUseOwnerRelevancy".}: bool
+    bAutoDestroyWhenFinished {.importcpp: "bAutoDestroyWhenFinished".}: bool
+    bCanBeDamaged {.importcpp: "bCanBeDamaged".}: bool
+    bFindCameraComponentWhenViewTarget* {.
+        importcpp: "bFindCameraComponentWhenViewTarget".}: bool
+    bGenerateOverlapEventsDuringLevelStreaming*
+        {.importcpp: "bGenerateOverlapEventsDuringLevelStreaming".}: bool
+    bEnableAutoLODGeneration* {.importcpp: "bEnableAutoLODGeneration".}: bool
+    bReplicates {.importcpp: "bReplicates".}: bool
+    bReplicateUsingRegisteredSubObjectList
+        {.importcpp: "bReplicateUsingRegisteredSubObjectList".}: bool
+    initialLifeSpan* {.importcpp: "InitialLifeSpan".}: float32
+    customTimeDilation* {.importcpp: "CustomTimeDilation".}: float32
+    # netDormancy* {.importcpp: "NetDormancy".}: ENetDormancy
+    # spawnCollisionHandlingMethod* {.importcpp: "SpawnCollisionHandlingMethod".}: ESpawnActorCollisionHandlingMethod
+    netCullDistanceSquared* {.importcpp: "NetCullDistanceSquared".}: float32
+    netUpdateFrequency* {.importcpp: "NetUpdateFrequency".}: float32
+    minNetUpdateFrequency* {.importcpp: "MinNetUpdateFrequency".}: float32
+    netPriority* {.importcpp: "NetPriority".}: float32
+    instigator {.importcpp: "Instigator".}: APawnPtr
+    pivotOffset {.importcpp: "PivotOffset".}: FVector
+    actorGuid {.importcpp: "ActorGuid".}: FGuid
+    actorInstanceGuid {.importcpp: "ActorInstanceGuid".}: FGuid
+    contentBundleGuid {.importcpp: "ContentBundleGuid".}: FGuid
+    spriteScale* {.importcpp: "SpriteScale".}: float32
+    tags* {.importcpp: "Tags".}: TArray[FName]
 
   AActorPtr* = ptr AActor
   AController* {.importcpp, inheritable, pure .}= object of AActor
@@ -63,7 +92,92 @@ type
   UActorComponentPtr* = ptr UActorComponent
   USceneComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
   USceneComponentPtr* = ptr USceneComponent
-  UPrimitiveComponent* {.importcpp, inheritable, pure .} = object of USceneComponent
+  # FComponentBeginOverlapSignature* {.importcpp.} = object
+  UPrimitiveComponent* {.importcpp, inheritable, pure.} = object of USceneComponent
+    minDrawDistance* {.importcpp: "MinDrawDistance".}: float32
+    lDMaxDrawDistance* {.importcpp: "LDMaxDrawDistance".}: float32
+    cachedMaxDrawDistance* {.importcpp: "CachedMaxDrawDistance".}: float32
+    # indirectLightingCacheQuality* {.importcpp: "IndirectLightingCacheQuality".}: EIndirectLightingCacheQuality
+    # lightmapType* {.importcpp: "LightmapType".}: ELightmapType
+    # hLODBatchingPolicy* {.importcpp: "HLODBatchingPolicy".}: EHLODBatchingPolicy
+    bEnableAutoLODGeneration* {.importcpp: "bEnableAutoLODGeneration".}: bool
+    bNeverDistanceCull* {.importcpp: "bNeverDistanceCull".}: bool
+    bAlwaysCreatePhysicsState* {.importcpp: "bAlwaysCreatePhysicsState".}: bool
+    bGenerateOverlapEvents {.importcpp: "bGenerateOverlapEvents".}: bool
+    bMultiBodyOverlap* {.importcpp: "bMultiBodyOverlap".}: bool
+    bTraceComplexOnMove* {.importcpp: "bTraceComplexOnMove".}: bool
+    bReturnMaterialOnMove* {.importcpp: "bReturnMaterialOnMove".}: bool
+    bAllowCullDistanceVolume* {.importcpp: "bAllowCullDistanceVolume".}: bool
+    bVisibleInReflectionCaptures* {.importcpp: "bVisibleInReflectionCaptures".}: bool
+    bVisibleInRealTimeSkyCaptures* {.importcpp: "bVisibleInRealTimeSkyCaptures".}: bool
+    bVisibleInRayTracing* {.importcpp: "bVisibleInRayTracing".}: bool
+    bRenderInMainPass* {.importcpp: "bRenderInMainPass".}: bool
+    bRenderInDepthPass* {.importcpp: "bRenderInDepthPass".}: bool
+    bReceivesDecals* {.importcpp: "bReceivesDecals".}: bool
+    bHoldout* {.importcpp: "bHoldout".}: bool
+    bOwnerNoSee* {.importcpp: "bOwnerNoSee".}: bool
+    bOnlyOwnerSee* {.importcpp: "bOnlyOwnerSee".}: bool
+    bTreatAsBackgroundForOcclusion* {.importcpp: "bTreatAsBackgroundForOcclusion".}: bool
+    bUseAsOccluder* {.importcpp: "bUseAsOccluder".}: bool
+    bForceMipStreaming* {.importcpp: "bForceMipStreaming".}: bool
+    castShadow* {.importcpp: "CastShadow".}: uint8
+    bEmissiveLightSource* {.importcpp: "bEmissiveLightSource".}: bool
+    bAffectDynamicIndirectLighting* {.importcpp: "bAffectDynamicIndirectLighting".}: bool
+    bAffectIndirectLightingWhileHidden* {.
+        importcpp: "bAffectIndirectLightingWhileHidden".}: bool
+    bAffectDistanceFieldLighting* {.importcpp: "bAffectDistanceFieldLighting".}: bool
+    bCastDynamicShadow* {.importcpp: "bCastDynamicShadow".}: bool
+    bCastStaticShadow* {.importcpp: "bCastStaticShadow".}: bool
+    # shadowCacheInvalidationBehavior* {.importcpp: "ShadowCacheInvalidationBehavior".}: EShadowCacheInvalidationBehavior
+    bCastVolumetricTranslucentShadow* {.importcpp: "bCastVolumetricTranslucentShadow".}: bool
+    bCastContactShadow* {.importcpp: "bCastContactShadow".}: bool
+    bSelfShadowOnly* {.importcpp: "bSelfShadowOnly".}: bool
+    bCastFarShadow* {.importcpp: "bCastFarShadow".}: bool
+    bCastInsetShadow* {.importcpp: "bCastInsetShadow".}: bool
+    bCastCinematicShadow* {.importcpp: "bCastCinematicShadow".}: bool
+    bCastHiddenShadow* {.importcpp: "bCastHiddenShadow".}: bool
+    bCastShadowAsTwoSided* {.importcpp: "bCastShadowAsTwoSided".}: bool
+    bLightAttachmentsAsGroup* {.importcpp: "bLightAttachmentsAsGroup".}: bool
+    bExcludeFromLightAttachmentGroup* {.importcpp: "bExcludeFromLightAttachmentGroup".}: bool
+    bReceiveMobileCSMShadows* {.importcpp: "bReceiveMobileCSMShadows".}: bool
+    bSingleSampleShadowFromStationaryLights*
+        {.importcpp: "bSingleSampleShadowFromStationaryLights".}: bool
+    bIgnoreRadialImpulse* {.importcpp: "bIgnoreRadialImpulse".}: bool
+    bIgnoreRadialForce* {.importcpp: "bIgnoreRadialForce".}: bool
+    bApplyImpulseOnDamage* {.importcpp: "bApplyImpulseOnDamage".}: bool
+    bReplicatePhysicsToAutonomousProxy* {.
+        importcpp: "bReplicatePhysicsToAutonomousProxy".}: bool
+    bRenderCustomDepth* {.importcpp: "bRenderCustomDepth".}: bool
+    bVisibleInSceneCaptureOnly* {.importcpp: "bVisibleInSceneCaptureOnly".}: bool
+    bHiddenInSceneCapture* {.importcpp: "bHiddenInSceneCapture".}: bool
+    bStaticWhenNotMoveable {.importcpp: "bStaticWhenNotMoveable".}: bool
+    # canCharacterStepUpOn* {.importcpp: "CanCharacterStepUpOn".}: ECanBeCharacterBase
+    # lightingChannels* {.importcpp: "LightingChannels".}: FLightingChannels
+    rayTracingGroupId* {.importcpp: "RayTracingGroupId".}: int32
+    customDepthStencilValue* {.importcpp: "CustomDepthStencilValue".}: int32
+    translucencySortPriority* {.importcpp: "TranslucencySortPriority".}: int32
+    translucencySortDistanceOffset* {.importcpp: "TranslucencySortDistanceOffset".}: float32
+    # runtimeVirtualTextures* {.importcpp: "RuntimeVirtualTextures".}: TArray[
+    #     URuntimeVirtualTexturePtr]
+    # virtualTextureRenderPassType* {.importcpp: "VirtualTextureRenderPassType".}: ERuntimeVirtualTextureMainPassType
+    # bodyInstance* {.importcpp: "BodyInstance".}: FBodyInstance
+    # onComponentHit* {.importcpp: "OnComponentHit".}: FComponentHitSignature
+    # onComponentBeginOverlap* {.importcpp: "OnComponentBeginOverlap".}: FComponentBeginOverlapSignature
+    # onComponentEndOverlap* {.importcpp: "OnComponentEndOverlap".}: FComponentEndOverlapSignature
+    # onComponentWake* {.importcpp: "OnComponentWake".}: FComponentWakeSignature
+    # onComponentSleep* {.importcpp: "OnComponentSleep".}: FComponentSleepSignature
+    # onComponentPhysicsStateChanged* {.importcpp: "OnComponentPhysicsStateChanged".}: FComponentPhysicsStateChanged
+    # onBeginCursorOver* {.importcpp: "OnBeginCursorOver".}: FComponentBeginCursorOverSignature
+    # onEndCursorOver* {.importcpp: "OnEndCursorOver".}: FComponentEndCursorOverSignature
+    # onClicked* {.importcpp: "OnClicked".}: FComponentOnClickedSignature
+    # onReleased* {.importcpp: "OnReleased".}: FComponentOnReleasedSignature
+    # onInputTouchBegin* {.importcpp: "OnInputTouchBegin".}: FComponentOnInputTouchBeginSignature
+    # onInputTouchEnd* {.importcpp: "OnInputTouchEnd".}: FComponentOnInputTouchEndSignature
+    # onInputTouchEnter* {.importcpp: "OnInputTouchEnter".}: FComponentBeginTouchOverSignature
+    # onInputTouchLeave* {.importcpp: "OnInputTouchLeave".}: FComponentEndTouchOverSignature
+    # rayTracingGroupCullingPriority* {.importcpp: "RayTracingGroupCullingPriority".}: ERayTracingGroupCullingPriority
+    # customDepthStencilWriteMask* {.importcpp: "CustomDepthStencilWriteMask".}: ERendererStencilMask
+
   UPrimitiveComponentPtr* = ptr UPrimitiveComponent
   # UShapeComponent* {.importcpp, inheritable, pure .} = object of UPrimitiveComponent
   # UShapeComponentPtr* = ptr UShapeComponent
