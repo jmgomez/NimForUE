@@ -47,4 +47,5 @@ proc createStatic*[R, T, P](fn : proc(v:T, p:P) : bool {.cdecl.}, p:P) : TDelega
 #Notice this is needed because we cant express the signature of some delegates without hacks (mostly due to const) in Nim
 #So you bind the delegate as a regular type and then you pass over a functor to this function and voila!
 proc createLambda*[T](functor: object): T {.importcpp:"'0::CreateLambda(#)" .}
+proc addLambda*(del: TMulticastDelegateOneParam, functor: object): FDelegateHandle {.importcpp:"'#.AddLambda(#)" .}
 
