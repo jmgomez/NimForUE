@@ -158,6 +158,33 @@ proc typeParams*(typeDef: NimNode): NimNode = #TODO move to utils
     typeDef[^1][^1] = nnkRecList.newTree()
   typeDef[^1][^1]
 
+proc expandGameplayAttibute(uef: UEField): NimNode =
+  assert uef.kind == uefProp
+  let capName = uef.name.capitalizeAscii()
+  genAst(
+    getAttributeFn = ident "get" & capName & "Attribute",
+    setFn = ident "set" & capName,
+    getFn = ident "get" & capName,
+    initFn = ident "init" & capName,
+    nameLit = newLit uef.name,
+    name = ident uef.name,
+    BaseTypeName = ident uef.typeName & "Ptr"
+  ):
+    proc getAttributeFn*(self: BaseTypeName): FGameplayAttribute =
+      if self.isNil or self.getClass.isNil: return 
+      let prop = self.getClass.getFPropertyByName("health")
+      makeFGameplayAttribute(prop)
+    
+    proc setFn*(self: BaseTypeName, newVal: float32) = 
+      let asc = self.getOwningAbilitySystemComponent()
+      asc.setNumericAttributeBase(self.getAttributeFn(), newVal)
+
+    proc getFn*(self: BaseTypeName): float32 = self.name.getCurrentValue()
+
+    proc initFn*(self: BaseTypeName, newVal: float32) = 
+      self.name.setBaseValue(newVal)
+      self.name.setCurrentValue(newVal)
+
 proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)    
     let ueProps = getUPropsAsFieldsForType(body, className)
@@ -165,7 +192,11 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
     ueType.interfaces = interfaces
     ueType.hasObjInitCtor = NeedsObjectInitializerCtorMetadataKey in ueType.metadata
-
+    let gameplayAttributeHelpers = 
+      ueType.fields
+      .filterIt(it.kind == uefProp and it.uePropType == "FGameplayAttributeData")
+      .map(expandGameplayAttibute)
+  
     when defined nuevm:           
       let typeSection = nnkTypeSection.newTree(genVMClassTypeDef(ueType))      
       var members = genUCalls(ueType) 
