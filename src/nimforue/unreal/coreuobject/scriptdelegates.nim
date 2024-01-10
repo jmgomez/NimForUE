@@ -2,7 +2,7 @@ include ../definitions
 
 import uobject
 import nametypes
-
+import std/strformat
 
 
 type
@@ -11,8 +11,11 @@ type
     
 
 proc getMulticastDelegate*(prop: FMulticastDelegatePropertyPtr, propValue: pointer): ptr FMulticastScriptDelegate {.importcpp:"const_cast<FMulticastScriptDelegate*>(#->GetMulticastDelegate(#))".}
+proc setMulticastDelegate*(prop: FMulticastDelegatePropertyPtr, propValue: pointer, scriptDel: FMulticastScriptDelegate) : void {.importcpp:"#->SetMulticastDelegate(#, #)".}
+proc addDelegate*(prop: FMulticastDelegatePropertyPtr, del: FScriptDelegate, obj: UObjectPtr): void {.importcpp:"#->AddDelegate(@)".}
 
-proc makeScriptDelegate() : FScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
+
+proc makeScriptDelegate*() : FScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
 # proc makeMulticastScriptDelegate() : FMulticastScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
 
 
@@ -20,13 +23,19 @@ proc bindUFunction*(dynDel: var FScriptDelegate, obj:UObjectPtr, name:FName) : v
 # proc bindUFunction*(dynDel: var FScriptDelegate, obj:UObjectPtr, name:FName) : void = bindUFunction(dynDel[], obj, name)
 
 #Should use add unique?
-proc addUnique(dynDel: var FMulticastScriptDelegate, scriptDel : FScriptDelegate) : void {.importcpp: "#.AddUnique(#)".}
+proc addUnique*(dynDel: var FMulticastScriptDelegate, scriptDel : FScriptDelegate) : void {.importcpp: "#.AddUnique(#)".}
+proc add*(dynDel: var FMulticastScriptDelegate, scriptDel : FScriptDelegate) : void {.importcpp: "#.Add(#)".}
+
+
 
 # #Notice this function doesnt exists in cpp
 proc bindUFunc*(dynDel: var FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
     var scriptDel = makeScriptDelegate()
     scriptDel.bindUFunction obj, name
-    dynDel.addUnique(scriptDel)
+    if dynDel.addr.isNil:
+      UE_Warn &"Coudlnt bind {name.toFString()} to {obj.getName()} because the delegate is null"
+    else:
+      dynDel.addUnique(scriptDel)
 
 # template bindUFunction*(dynDel: var FMulticastScriptDelegate, obj:UObjectPtr, name:FName) = 
 #     var scriptDel = makeScriptDelegate()

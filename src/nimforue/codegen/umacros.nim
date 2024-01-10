@@ -226,6 +226,7 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
       if nimFields.any():
         typeNode[0][0].typeParams.add nimFields
       var procNodes = nnkStmtList.newTree(addEmitterProc)
+      procNodes.add gameplayAttributeHelpers
       #returns empty if there is no block defined
       let defaults = genDefaults(body)
       let declaredConstructor = genDeclaredConstructor(body, className)
