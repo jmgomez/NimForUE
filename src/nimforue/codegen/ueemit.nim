@@ -95,7 +95,7 @@ proc addEmitterInfoForClass*[T](ueType:UEType) : void =
 proc addStructOpsWrapper*(structName : string, fn : UNimScriptStructPtr->void) = 
     getGlobalEmitter().setStructOpsWrapperTable.add(structName, fn)
 
-proc addClassConstructor*[T](clsName:string, classConstructor:UClassConstructor, hash:string) : void =  
+proc addClassConstructor*[T](clsName: string, classConstructor: UClassConstructor, hash:string) : void =  
     let ctorInfo = CtorInfo(fn:classConstructor, hash:hash, className: clsName,
         vtableConstructor: vtableConstructorStatic[T], updateVTableForType: updateVTableStatic[T])
     if not getGlobalEmitter().clsConstructorTable.contains(clsName):
@@ -332,6 +332,9 @@ proc emitUEnum*(typedef:UEType) : NimNode =
 
 
 
+const CtorPrefix = "defaultConstructor"
+const CtorNimInnerPrefix = "defaultConstructorNimInner" 
+
 
 func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode = 
     
@@ -345,18 +348,24 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
     let fnName = ident fnField.name
 
     let assignments = getPropAssigments(fnField.typeName, typeParam.name)
-    let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent,typeLiteral,assignments, initName):
-        proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
-            defaultConstructorStatic[typeIdent](initName)
+    let nimInnerCtor = ident &"{CtorNimInnerPrefix}{fnField.typeName}" 
+    let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent, typeLiteral,assignments, initName, nimInnerCtor):
+        
+        template genSelf() = 
             var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
             when not declared(self): #declares self and initializer so the default compiler compiles when using the assignments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
                 var self{.inject used .} = selfIdent
-          
-            #calls the cpp constructor first it may not be needed anymore as we are using the default constructor
-            #but it's here for reference 
-            # callSuperConstructor(initName)
+        proc nimInnerCtor(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} =                     
+            #it's wrapped so we can call the user constructor from the Nim child classes
+            #Maybe in the future we could treat the Nim constructors as C++ constructors and forget about this special treatment (by the time this was designed Nim didnt have cpp constructors compatibility)
+            genSelf()
             assignments
             fnBody
+
+        proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
+            defaultConstructorStatic[typeIdent](initName)
+            genSelf()
+            nimInnerCtor(initName)
             postConstructor(initName) #inits any missing comp that the user hasnt set
     
     let ctorRes = genAst(typeIdent, fnName, typeLiteral, hash=newStrLitNode($hash(repr(ctorImpl)))):
@@ -377,32 +386,6 @@ macro uDelegate*(body:untyped) : untyped =
     let ueType = makeUEMulDelegate(name, paramsAsFields)
     addVMType ueType
     emitUDelegate(ueType)
-
-
-# macro uEnum*(name:untyped, body : untyped) : untyped = 
-#     #[
-#         uEnum EMyEnumCreatedInDsl:
-#         (BlueprintType)
-#             WhateverEnumValue
-#             SomethingElse
-
-#     ]#
-#     # echo treeRepr name
-#     # echo treeRepr body           
-#     let name = name.strVal()
-#     let metas = getMetasForType(body)
-#     let fields = body.toSeq().filter(n=>n.kind in [nnkIdent, nnkTupleConstr])
-#                     .mapIt((if it.kind == nnkIdent: @[it] else: it.children.toSeq()))
-#                     .foldl(a & b)
-#                     .mapIt(it.strVal())
-#                     .mapIt(makeFieldASUEnum(it, name))
-
-#     let ueType = makeUEEnum(name, fields, metas)
-#     addVMType ueType
-#     result = emitUEnum(ueType)
-
-
-
 
 func isBlueprintEvent(fnField:UEField) : bool = FUNC_BlueprintEvent in fnField.fnFlags
 
@@ -566,18 +549,27 @@ macro uConstructor*(fn:untyped) : untyped =
     let fnField = makeFieldAsUFun(fn.name.strVal(), params, firstParam.uePropType.removeLastLettersIfPtr())
     constructorImpl(fnField, fn.body)
 
-func genConstructorForClass*(uClassBody:NimNode, className:string, constructorBody:NimNode, initializerName:string="") : NimNode = 
+func genConstructorForClass*(uClassBody:NimNode, uet: UEType, constructorBody:NimNode, initializerName:string="") : NimNode = 
   var initializerName = if initializerName == "" : "initializer" else : initializerName
+  let className = uet.name
   let typeParam = makeFieldAsUPropParam("self", className, className)
   let initParam = makeFieldAsUPropParam(initializerName, "FObjectInitializer", className)
-  let fnField = makeFieldAsUFun("defaultConstructor"&className, @[typeParam, initParam], className)
-  return constructorImpl(fnField, constructorBody)
+  let fnField = makeFieldAsUFun(CtorPrefix&className, @[typeParam, initParam], className)
+  let ctorParentCall = 
+    genAst(
+      parentCall = ident(CtorNimInnerPrefix & uet.parent),
+    ):
+        when compiles(parentCall(initializer)):
+            parentCall(initializer)
+  if constructorBody.kind != nnkEmpty:
+    constructorBody.add ctorParentCall
+  constructorImpl(fnField, constructorBody)  
 
-func genDeclaredConstructor*(body:NimNode, className:string) : Option[NimNode] = 
+func genDeclaredConstructor*(body:NimNode, uet: UEType) : Option[NimNode] = 
 
   let constructorBlock = 
     body.toSeq()
-    .filterIt(it.kind == nnkProcDef and it.name.strVal().toLower() in ["constructor", className])
+    .filterIt(it.kind == nnkProcDef and it.name.strVal().toLower() in ["constructor", uet.name])
     .head()
  
   if constructorBlock.isNone():
@@ -587,13 +579,9 @@ func genDeclaredConstructor*(body:NimNode, className:string) : Option[NimNode] =
   let params = fn.params
   assert params.len == 2, "Constructor must have only one parameter" #Notice first param is Empty
   let param = params[1] #Check for FObjectInitializer
-
-
   constructorBlock
-    .map(consBody => genConstructorForClass(body, className, consBody.body(), param[0].strVal()))
+    .map(consBody => genConstructorForClass(body, uet, consBody.body(), param[0].strVal()))
     
-
- 
 func genDefaults*(body:NimNode) : Option[NimNode] = 
     func replaceFirstIdentWithSelfDotExpr(assignment:NimNode) : NimNode = 
         case assignment[0].kind:
