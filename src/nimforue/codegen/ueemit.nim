@@ -582,12 +582,11 @@ func genDeclaredConstructor*(body:NimNode, uet: UEType) : Option[NimNode] =
   constructorBlock
     .map(consBody => genConstructorForClass(body, uet, consBody.body(), param[0].strVal()))
     
-func genDefaults*(body:NimNode) : Option[NimNode] = 
+func genDefaults*(body:NimNode): Option[NimNode] = 
     func replaceFirstIdentWithSelfDotExpr(assignment:NimNode) : NimNode = 
         case assignment[0].kind:
         of nnkIdent: assignment.kind.newTree(nnkDotExpr.newTree(ident "self", assignment[0]) & assignment[1..^1])
         else: assignment.kind.newTree(replaceFirstIdentWithSelfDotExpr(assignment[0]) & assignment[1..^1])
-
     result = 
         body.toSeq()
             .filterIt(it.kind == nnkCall and it[0].strVal().toLower() in ["default", "defaults"])

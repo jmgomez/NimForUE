@@ -229,12 +229,9 @@ proc uClassImpl*(name:NimNode, body:NimNode): (NimNode, NimNode) =
       procNodes.add gameplayAttributeHelpers
       #returns empty if there is no block defined
       let defaults = genDefaults(body)
-      let declaredConstructor = genDeclaredConstructor(body, ueType)
-      if declaredConstructor.isSome(): #TODO now that Nim support constructors maybe it's a good time to revisit this. 
-          procNodes.add declaredConstructor.get()
-      elif doesClassNeedsConstructor(className) or defaults.isSome():
-          let defaultConstructor = genConstructorForClass(body, ueType, defaults.get(newEmptyNode()))
-          procNodes.add defaultConstructor
+      let ctor = genDeclaredConstructor(body, ueType)
+        .get(genConstructorForClass(body, ueType, defaults.get(nnkStmtList.newTree())))
+      procNodes.add ctor
 
       let nimProcs = body.children.toSeq
                       .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor", ueType.name])
