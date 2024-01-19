@@ -138,7 +138,7 @@ moduleImportRules["Engine"] = @[
     makeImportedRuleType(uerIgnore, @[
     "FVector", "FSlateBrush", "FVector_NetQuantize", "FVector_NetQuantize10",
     "FVector_NetQuantize10", "FVector_NetQuantize100", "FVector_NetQuantizeNormal",
-    "FHitResult","FActorInstanceHandle",
+    "FHitResult","FActorInstanceHandle", "FLatentActionInfo",
     #issue with a field name 
     "FTransformConstraint", 
     "FTableRowBase", "FMaterialInput",

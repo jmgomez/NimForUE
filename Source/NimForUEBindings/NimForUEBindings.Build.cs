@@ -14,7 +14,7 @@ public class NimForUEBindings : ModuleRules
 			 //THE PCH pulls the headers from this module. So the search paths should be in here
 			 //maybe it's a good idea to have this templated so we can add more modules. without changing the PCH
 			 //TODO: Get the modules from the host dll. So the user can specify them via game.json
-			 "EnhancedInput", "GameplayAbilities",
+			 "EnhancedInput", "GameplayAbilities", "AIModule",
 			 
 			
 		});

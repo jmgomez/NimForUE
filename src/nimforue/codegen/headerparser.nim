@@ -11,14 +11,9 @@ type
     name* : string #Name of the type FSomeType USomeType
     cppDefinitionLine : string #The line where the type is defined. This will be the body at some point
 
-proc getHeaderFromPath(path : string) : Option[string] = 
-  if fileExists(path):
-    some readFile(path)
-  else: none(string)
-
-proc getIncludesFromHeader(header : string) : seq[string] = 
+proc getIncludesFromHeader(header: string): seq[string] = 
   let lines = header.split("\n")
-  func getHeaderFromIncludeLine(line: string) : string = 
+  func getHeaderFromIncludeLine(line: string): string = 
     line.multiReplace(@[
       ("#include", ""),
       ("<", ""),
@@ -26,10 +21,17 @@ proc getIncludesFromHeader(header : string) : seq[string] =
       ("\"", ""),
       ("\t", ""),
     ]).strip()
-    
-  lines
+  result = lines
     .filterIt(it.contains("#include")) #this may introduce incorrect includes? like in comments. 
     .map(getHeaderFromIncludeLine)
+  # echo "result", result
+
+proc getHeaderFromPath(path: string): Option[string] = 
+  if fileExists(path):
+    # echo "Header found: ", path
+    some readFile(path)
+  else: 
+    none(string)
 
 func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : seq[string] = 
     var variations = @["Public", "Classes"]
@@ -67,14 +69,24 @@ func isModuleRelativePathInHeaders*(moduleName, moduleRelativePath:string, heade
   
 
 #returns the absolute path of all the include paths
-proc getAllIncludePaths*() : seq[string] = getNimForUEConfig().getUEHeadersIncludePaths()
+proc getAllIncludePaths*() : seq[string] = 
+  result = getNimForUEConfig().getUEHeadersIncludePaths()    
+  #some modules doesnt have "Classes" in the include paths so we dont increase the cmd length, they end with "Public"
+  #we add it here, because we are not running a cmd and the ubt already does it 
+  result.add result.filterIt(it.endsWith "Public").mapIt(it[0..^7] / "Classes")
+  result.add NimGameDir()
 
 
 
-proc getHeaderIncludesFromIncludePaths(header:string, includePaths:seq[string]) : seq[string] = 
+proc getHeaderIncludesFromIncludePaths(headerName:string, includePaths:seq[string]): seq[string] = 
   for path in includePaths:
-    let headerPath = path / header
-    let header = getHeaderFromPath(headerPath)
+    let headerPath = path / headerName
+    var header = getHeaderFromPath(headerPath)
+    #some modules doesnt have "Classes" in the include paths so we dont increase the cmd length, they end with "Public"
+    #we add it here, because we are not running a cmd and the ubt already does it 
+    if header.isNone and path.endsWith "Public":
+      let clsPath = path[0..^7] / "Classes" / headerName
+      header = getHeaderFromPath(clsPath)
     if header.isSome:
       return getIncludesFromHeader(header.get)
   newSeq[string]()
@@ -85,9 +97,11 @@ proc traverseAllIncludes*(entryPoint:string, includePaths:seq[string], visited:s
   let newVisited = (visited & includes).deduplicate()
   if depth >= maxDepth:
     return newVisited
-  includes
-    .mapIt(traverseAllIncludes(it, includePaths, newVisited, depth+1))
-    .flatten()
+  result = 
+    includes & includes
+      .mapIt(traverseAllIncludes(it, includePaths, newVisited, depth+1))
+      .flatten()
+  # echo "result", result
 
 
 proc saveIncludesToFile*(path:string, includes:seq[string]) =   
@@ -104,11 +118,14 @@ proc getPCHIncludes*(useCache=true) : seq[string] =
     if useCache and fileExists(path): #TODO Check it's newer than the PCH
       readFile(path).parseJson().to(seq[string])
     else:      
-      let includePaths = getNimForUEConfig().getUEHeadersIncludePaths()
-      let includes = traverseAllIncludes("UEDeps.h", includePaths, @[]).deduplicate() 
+      let includePaths = getAllIncludePaths()
+      var includes = newSeq[string]()
+      includes.add traverseAllIncludes("UEDeps.h", includePaths, @[])
+      includes.add traverseAllIncludes("nuegame.h", includePaths, @[])
+      includes = includes.deduplicate() 
+      # echo "indlude paths", pchIncludes
       if useCache: 
         saveIncludesToFile(path, includes)
-
       includes
   pchIncludes  
 
@@ -179,7 +196,7 @@ proc getUClassesNamesFromHeaders(cppCode:string) : seq[CppTypeInfo] =
 
 proc getAllTypesFromHeader*(includePaths:seq[string], headerName:string) :  seq[CppTypeInfo] = 
   let header = readHeader(includePaths, headerName)
-  header
+  result = header
     .map(getUClassesNamesFromHeaders)
     .get(newSeq[CppTypeInfo]())
 

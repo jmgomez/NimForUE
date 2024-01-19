@@ -295,6 +295,11 @@ type
   # UBlendProfile* {.importcpp, pure .} = object of UObject
   # UBlendProfilePtr* = ptr UBlendProfile
 
+  FLatentActionInfo* {.importcpp.} = object
+    linkage* {.importcpp: "Linkage".}: int32
+    uuid* {.importcpp: "UUID".}: int32
+    executionFunction* {.importcpp: "ExecutionFunction".}: FName
+    callbackTarget* {.importcpp: "CallbackTarget".}: UObjectPtr
 
   FKey* {.importcpp .} = object
 
@@ -679,4 +684,5 @@ type
 converter toObjectType*(collisionChannel:ECollisionChannel) : EObjectTypeQuery {.importcpp: "UEngineTypes::ConvertToObjectType(@)".}
 converter toTraceType*(collisionChannel:ECollisionChannel) : ETraceTypeQuery {.importcpp: "UEngineTypes::ConvertToTraceType(@)".}
 
-
+# FLatentActionInfo(int32 InLinkage, int32 InUUID, const TCHAR* InFunctionName, UObject* InCallbackTarget)
+# proc makeFLatentActionInfo*(linkage, uuid: int32, functionName: FString, callbackTarget: UObjectPtr) : FLatentActionInfo {.importcpp: "FLatentActionInfo(#, #, const_cast<char*>)(*#), #)", constructor, .}
