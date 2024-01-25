@@ -7,18 +7,13 @@ import ../unreal/nimforue/nimforuebindings
 import projectinstrospect
 
 
-
-
-
-
-
-func getAllFieldsFromUEType(uet:UEType) : seq[UEField] = 
+func getAllFieldsFromUEType(uet:UEType): seq[UEField] = 
   # Returns all fields for delegates, classes and structs. Notice it wont retunr enum fields
   case uet.kind:
   of uetEnum, uetInterface: @[]
   else: uet.fields
 
-func getAllTypesFromUEField(uef:UEField) : seq[string] = 
+func getAllTypesFromUEField(uef:UEField): seq[string] = 
   # Returns all types for a field. It will return generic types as they are in Nim.
   case uef.kind:
   of uefProp: @[uef.uePropType]
@@ -298,6 +293,7 @@ func removeDepFrom(uet:UEType, cleanedDepTypeName:string) : UEType =
         UE_Log &"Removing parent from {uet.name} was {uet.parent}"
         uet.parent =
           if uet.parent[0] == 'A': "AActor"
+          elif "Component" in uet.parent: "UActorComponent" #TODO We should add a new field to the UEType instead
           else: "UObject"
       if uet.interfaces.any():
         uet.interfaces = uet.interfaces.filterIt(it != cleanedDepTypeName)
@@ -528,11 +524,7 @@ proc generateProject*(forceGeneration = false) =
         else:
           cycleTable[cycle.problematic] = (cycleTable[cycle.problematic] & cycle.modules).deduplicate()
       let minCycles = cycleTable.pairs.toSeq().mapIt((it[0], it[1]))
-      UE_Log &"Found {minCycles.len} min cycles"
-
-
-
-      
+      UE_Log &"Found {minCycles.len} min cycles"    
       
       #We could try to do the hash here. It could even be in a another thread when starting the editor and if it needs to regen something we could just do it
    

@@ -31,6 +31,8 @@ type
 
   FActorTickFunction* {.importcpp, pure, inheritable.} = object of FTickFunction
 
+  # UInputComponent* {.importcpp, inheritable, pure.} = object of UActorComponent
+  # UInputComponentPtr* = ptr UInputComponent
 
   AActor* {.importcpp, inheritable, pure .} = object of UObject
     primaryActorTick* {.importcpp:"PrimaryActorTick"}: FActorTickFunction
@@ -64,6 +66,7 @@ type
     contentBundleGuid {.importcpp: "ContentBundleGuid".}: FGuid
     spriteScale* {.importcpp: "SpriteScale".}: float32
     tags* {.importcpp: "Tags".}: TArray[FName]
+    inputComponent* {.importcpp: "InputComponent".}: UObjectPtr
 
   AActorPtr* = ptr AActor
   AController* {.importcpp, inheritable, pure .}= object of AActor
@@ -594,9 +597,9 @@ func isKeyPressed*(key: FKey, name: FName): bool = key.getFName() == name
 func getKey*(self: FKeyEventPtr) : FKey {.importcpp: "#->GetKey()".}
 func getCharacter*(self: FKeyEventPtr) : char {.importcpp: "#->GetCharacter()".}
 
-proc bindActionInteral(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) : var FEnhancedInputActionEventBinding {.importcpp:"#->BindAction(@)".}
+proc bindActionInternal*(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) : var FEnhancedInputActionEventBinding {.importcpp:"#->BindAction(@)".}
 proc bindAction*(self: UEnhancedInputComponentPtr, action: UInputActionPtr, triggerEvent: ETriggerEvent, obj: UObjectPtr, functionName: FName) =
-  discard bindActionInteral(self, action, triggerEvent, obj, functionName)
+  discard bindActionInternal(self, action, triggerEvent, obj, functionName)
   
 
 func get*[T:float32 | FVector2D | FVector](input : FInputActionValue) {.importcpp: "#.Get<'0>()".}
