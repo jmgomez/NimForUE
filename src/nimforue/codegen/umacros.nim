@@ -381,14 +381,16 @@ macro uSection*(body: untyped): untyped =
     let userTypes = body.filterIt(it.kind == nnkTypeSection).mapIt(it.children.toSeq()).flatten()
     let userProcs = body.filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef]) 
     var typSection = nnkTypeSection.newTree(userTypes)
-    var fns = userProcs
-    
+    var fns: seq[NimNode] = userProcs
+    let userPrcsFwds = userProcs.map(getForwardDeclarationForProc) 
     var uClassesTypsHelper = newSeq[NimNode]()
     var uClassFns = newSeq[NimNode]()
+    var uFuncFws = newSeq[NimNode]()
     for uclass in uclasses:
       let (uClassNode, funcs) = uclass
       uClassesTypsHelper.add uClassNode
       uClassFns.add funcs
+      uFuncFws.add funcs.filterIt(it.kind in RoutineNodes).map(getForwardDeclarationForProc)
 
     for class in classes & functors: 
       let types =  
@@ -408,8 +410,9 @@ macro uSection*(body: untyped): untyped =
       let typDefs = typ[0].children.toSeq()
       typSection.add typDefs
       uprops.add typ[1..^1] #shouldnt this be only for uClasses?
-    
-    result = nnkStmtList.newTree(@[typSection] & uprops & uClassFns & fns)
+
+    #TODO add forward declarions for ufuncs after typeSection (there is an issue with the environment)
+    result = nnkStmtList.newTree(@[typSection] & userPrcsFwds & uprops & uClassFns & fns)
 
 when not defined nuevm:
   macro uForwardDecl*(name : untyped ) : untyped = 

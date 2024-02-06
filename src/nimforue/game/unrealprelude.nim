@@ -14,7 +14,7 @@ import extras
 
 import engine/[common, components, camera, engine, gameframework, enums]
 
-import std/[strutils, options, tables, sequtils, strformat, strutils, sugar, times]
+import std/[strutils, options, tables, sequtils, strformat, strutils, sugar, times, enumerate]
 include ../unreal/definitions
 
 

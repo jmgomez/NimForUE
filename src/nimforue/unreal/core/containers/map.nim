@@ -24,7 +24,7 @@ proc remove*[K, V](map : TMap[K, V], k:K) : void  {.importcpp: "#.Remove(@)", .}
 func num*[K, V](map:TMap[K, V]): int32 {.importcpp: "#.Num()" }
 func len*[K, V](arr:TMap[K, V]): int = arr.num()
 
-func contains*[K, V](map:TMap[K, V], key:K): bool {.importcpp: "#.Contains(#)" }
+func contains*[K, V](map:TMap[K, V], key:K): bool 
 func hasKey*[K, V](map:TMap[K, V], key:K): bool {.importcpp: "#.Contains(#)" }
 func empty*[K, V](map:TMap[K, V], expectedElems: int32 = 0) {.importcpp: "#.Empty(#)" }
 func clear*[K, V](map:TMap[K, V]) {.inline.} = map.empty()
@@ -57,6 +57,10 @@ iterator pairs*[K, V](map: TMap[K, V]): (K, V) =
     for k in map.keys():
         yield (k, map[k])
 
+func contains*[K, V](map:TMap[K, V], key:K): bool  = 
+    for k in map.keys():
+      if k == key:
+       return true
 
 proc toTable*[K, V](map:TMap[K, V]): Table[K, V] = 
     let keys = map.keys()

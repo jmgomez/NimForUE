@@ -4,7 +4,6 @@ import std/[sugar, enumerate]
 type TArray*[out T] {.importcpp } = object
 
 func num*[T](arr:TArray[T]): Natural {.importcpp: "#.Num()" noSideEffect}
-proc remove*[T](arr:TArray[T], value:T) {.importcpp: "#.Remove(#)".}
 proc removeAt*[T](arr: var TArray[T], idx:Natural) {.importcpp: "#.RemoveAt(#)".}
 proc add*[T](arr:var TArray[T], value:T) {.importcpp: "#.Add(#)".}
 proc addUnique*[T](arr:TArray[T], value:T) {.importcpp: "#.AddUnique(#)".}
@@ -97,7 +96,13 @@ proc removeBy*[T](arr: var TArray[T], fn: T -> bool) =
     if fn(e):
       arr.removeAt idx
       break
-    
+
+proc remove*[T](arr: var TArray[T], value:T) = 
+  for idx, e in enumerate(arr):
+    if e == value:
+      arr.removeAt idx
+      break
+
 proc flatten*[T](arr: TArray[TArray[T]]): TArray[T] = 
   var xs = makeTArray[T]()
   for x in arr:
