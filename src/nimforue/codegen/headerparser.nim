@@ -107,7 +107,7 @@ proc traverseAllIncludes*(entryPoint:string, includePaths:seq[string], visited:s
 proc saveIncludesToFile*(path:string, includes:seq[string]) =   
   writeFile(path, $includes.toJson())
 
-var pchIncludes : seq[string]
+var pchIncludes {.compileTime.} : seq[string]
 proc getPCHIncludes*(useCache=true) : seq[string] = 
   if pchIncludes.any(): 
     return pchIncludes

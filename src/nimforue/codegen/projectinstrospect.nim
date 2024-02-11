@@ -223,6 +223,7 @@ func getNameFromIdentDef(identDefs:NimNode) : string =
       debugEcho treeRepr identDefs
       error &"Error in getParamFromIdentDef got {identDefs[0].kind} in identDefs name"
       quit() 
+      ""
 
 func getGenericTypeName(identDefs:NimNode) : seq[NimParam] = 
   assert identDefs.kind == nnkIdentDefs, "Expected nnkIdentDefs got " & $identDefs.kind
@@ -327,6 +328,7 @@ func makeObjNimType(typeName:string, typeDef:NimNode) : NimType =
     else: 
       debugEcho treeRepr typeDef
       quit()
+      ""
 
   let genericParams = 
     case typeDef[^2].kind:
@@ -355,6 +357,7 @@ func makeObjNimType(typeName:string, typeDef:NimNode) : NimType =
   else:  
     debugEcho treeRepr typeDef
     quit()
+    NimType()
   #   let fields = typeDef[2].children.mapIt(it[0].strVal)
   # NimType(name: typeName, kind:Object)#, fields:fields)
 
