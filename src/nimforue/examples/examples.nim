@@ -5,7 +5,7 @@
 
 # import examplescratchpad
 
-import examplescodegen
+# import examplescodegen
 # import examplecoreuobject
 # import engineexample
 # import editorexample
@@ -18,7 +18,7 @@ import examplescodegen
 
 # import ueborrowexample
 
-import vminteroppocexample
+# import vminteroppocexample
 include ../unreal/prelude
 
 # uClass AFoo of AActor:

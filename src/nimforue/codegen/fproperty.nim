@@ -44,7 +44,6 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         UE_Log "Found ScriptStruct " & propType & " creating Prop"
     else:
         UE_Log "Found Class " & propType & " creating Prop"
-
     some case eMeta:
     of emClass, emTSubclassOf:
         #check if it's a component here

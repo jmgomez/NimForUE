@@ -26,7 +26,8 @@ proc compileHostMac*() =
     "--tlsEmulation:off",
     "--app:lib",
     "--d:host",
-    "--nimBasePattern:nimbasenue.h"
+    "--nimBasePattern:nimbasenue.h",
+    "--debugger:native",
     # "--header:NimForUEFFI.h",
   ]
   let macArmSwitches = @[

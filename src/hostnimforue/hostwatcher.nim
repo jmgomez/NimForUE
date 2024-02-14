@@ -65,16 +65,17 @@ proc checkReload*(loadedFrom:NueLoadedFrom)  = #only for nimforue (plugin)
     
     #TEST currentLoadPhase changed AND we are in Plugin so we can trigger the emission
     if currentLoadPhase != loadedFrom:
-        if plugin in libMap:
-            let pluginLib = libMap[plugin]
-            if pluginLib.lib != nil:
-                onLoadingPhaseChanged(currentLoadPhase, loadedFrom)
-    let pluginLib = libMap[plugin]
-    if pluginLib.lib != nil:
-      if fileExists(scriptPath) and currentLoadPhase >= NueLoadedFrom.nlfEditor and
-        scriptLastModified < getLastModificationTime(scriptPath).toUnix():
-        reloadScriptGuest()
-        scriptLastModified = getLastModificationTime(scriptPath).toUnix()
+      if plugin in libMap:
+        let pluginLib = libMap[plugin]
+        if pluginLib.lib != nil:
+            onLoadingPhaseChanged(currentLoadPhase, loadedFrom)
+    if plugin in libMap:
+        let pluginLib = libMap[plugin]
+        if pluginLib.lib != nil:
+            if fileExists(scriptPath) and currentLoadPhase >= NueLoadedFrom.nlfEditor and
+                scriptLastModified < getLastModificationTime(scriptPath).toUnix():
+                reloadScriptGuest()
+                scriptLastModified = getLastModificationTime(scriptPath).toUnix()
 
     currentLoadPhase = loadedFrom
 

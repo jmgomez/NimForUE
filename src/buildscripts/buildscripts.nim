@@ -67,7 +67,7 @@ proc compileGameSyncFromPlugin*() : string =
   output
 
 proc compileGuestSyncFromPlugin*() : string =
-  let cmd = &"{PluginDir}/{NueExec} guest"
+  let cmd = &"{PluginDir}/{NueExec} guest --debug"
   let (output, _) = execCmdEx(cmd)
   output
 

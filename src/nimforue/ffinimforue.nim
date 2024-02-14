@@ -98,6 +98,7 @@ proc compileBps(emitter:UEEmitterPtr) =
 
 proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) : bool = 
     try:
+        log "Emitting types for package: " & packageName
         let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
         if not nimHotReload.bShouldHotReload:
           UE_Log "Nothing to re/instance"
@@ -137,9 +138,9 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
     case libName:
     of "nimforue": 
         discard emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
-        if not isRunningCommandlet() and timesReloaded == 0: 
+        # if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
-          discard   
+          # discard   
     else:
         if not isRunningCommandlet():
           discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
@@ -231,36 +232,40 @@ uEnum EMyEnumCreatedInDsl:
     WhateverEnumValue
     SomethingElse
 
+uClass ANimTestGuest of AActor:
+  ufuncs(CallInEditor):
+    proc test() = discard
+  discard
 
-# VM
-#TODO refactor the vm so emitType is only called once. 
-uClass UVmHelpers of UObject:
-  ufuncs(Static):
-    proc emitType(uetJson: FString) = 
-      let types = uetJson.parseJson.jsonTo(seq[UEType])
-      #emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
-      let emitter = initEmitter() #TODO deallocate after wards or use a ref and cast it back to a ptr
-      for typeDef in types:
-        var typeDef = typeDef
-        case typeDef.kind:
-        of uetClass:
-          var typeDef = typeDef
-          #last chance to fix the typedef comming from the vm
-          for field in typeDef.fields.mitems:
-            if field.kind != uefFunction: continue
-            if "Static" in field.metadata: 
-              field.fnFlags = field.fnFlags or FUNC_Static
+# # VM
+# #TODO refactor the vm so emitType is only called once. 
+# uClass UVmHelpers of UObject:
+#   ufuncs(Static):
+#     proc emitType(uetJson: FString) = 
+#       let types = uetJson.parseJson.jsonTo(seq[UEType])
+#       #emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
+#       let emitter = initEmitter() #TODO deallocate after wards or use a ref and cast it back to a ptr
+#       for typeDef in types:
+#         var typeDef = typeDef
+#         case typeDef.kind:
+#         of uetClass:
+#           var typeDef = typeDef
+#           #last chance to fix the typedef comming from the vm
+#           for field in typeDef.fields.mitems:
+#             if field.kind != uefFunction: continue
+#             if "Static" in field.metadata: 
+#               field.fnFlags = field.fnFlags or FUNC_Static
 
 
 
-          #This may cause issues as it is a whole new path. Native uses addEmitterInfoForClass
-          addEmitterInfo(typeDef, (package:UPackagePtr) => emitUClass[void](typeDef, package, @[], vmConstructor, nil), emitter)
-        of uetEnum:         
-          addEmitterInfo(typeDef, (package:UPackagePtr) => emitUEnum(typeDef, package), emitter)
-        of uetStruct:
-          addEmitterInfo(typeDef, (package:UPackagePtr) => emitUStruct[void](typeDef, package), emitter)
-        else: continue
-      # UE_Log $ueTyp
-      discard emitNueTypes(emitter, "GameNim", false, false)
-      compileBps(emitter)
+#           #This may cause issues as it is a whole new path. Native uses addEmitterInfoForClass
+#           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUClass[void](typeDef, package, @[], vmConstructor, nil), emitter)
+#         of uetEnum:         
+#           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUEnum(typeDef, package), emitter)
+#         of uetStruct:
+#           addEmitterInfo(typeDef, (package:UPackagePtr) => emitUStruct[void](typeDef, package), emitter)
+#         else: continue
+#       # UE_Log $ueTyp
+#       discard emitNueTypes(emitter, "GameNim", false, false)
+#       compileBps(emitter)
   

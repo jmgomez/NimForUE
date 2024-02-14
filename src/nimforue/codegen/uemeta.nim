@@ -255,7 +255,6 @@ proc toUEField*(prop: FPropertyPtr, outer: UStructPtr, rules: seq[UEImportRule] 
       none(UEField)
 
 func toUEField*(ufun: UFunctionPtr, rules: seq[UEImportRule] = @[]): seq[UEField] =
-
   let paramsMb = getFPropsFromUStruct(ufun).map(x=>toUEField(x, ufun, rules))
   let params = paramsMb.sequence()
   let allParamsExposedToBp = len(params) == len(paramsMb)
@@ -726,6 +725,8 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
 #the nim name in unreal on the emit, when the actual name is not set already.
 #it is also taking into consideration when converting from ue to nim via UClass->UEType
 func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: string): Option[UFunctionPtr] =
+  if cls.isNil():
+    return none[UFunctionPtr]()
   for name in [name, name.capitalizeAscii()]:
     for prefix in fnPrefixes:
       let fnName = prefix & name
@@ -926,7 +927,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
     case field.kind:
     of uefProp:      
       discard field.emitFProperty(newCls)      
-    of uefFunction:      
+    of uefFunction:   
+         
       # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}" #notice each module emits its own functions  
       discard emitUFunction(field, ueType, newCls, getNativeFuncImplPtrFromUEField(getGlobalEmitter(), field))
     else:

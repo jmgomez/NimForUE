@@ -40,7 +40,7 @@ proc getNumber*(name : FName) : int32 {. importcpp: "#.GetNumber()".}
 
 proc `==`*(a:FName, b:FName) : bool {.importcpp:"(# == #)" .}
 proc `$`*(name:FName) : string =
-  if name.getNumber() == 0: return "None"
+  # if name.getNumber() == 0: return "None"
   let str = name.toFString()
   result = str
 
