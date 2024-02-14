@@ -197,7 +197,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
     "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
-    "-l:" & getBindingsLib()
+    # "-l:" & getBindingsLib()
   ] 
   let isCompileOnly = "--compileOnly" in extraSwitches
   if isCompileOnly:
@@ -304,8 +304,8 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
 proc compileGenerateBindings*() = 
   let withDebug = false #TODO disable on final builds
   let buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
-  # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  doAssert(execCmd(&"nim  cpp {buildFlags} -d:bindings   --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  # doAssert(execCmd(&"nim  cpp {buildFlags} -d:bindings   --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   copyFile("./.nimcache/gencppbindings/UEGenBindings.h", ueGenBindingsPath)
   #It still generates NimMain in the header. So we need to get rid of it:
