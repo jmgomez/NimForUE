@@ -409,7 +409,6 @@ void UEditorUtils::HotReload(FNimHotReload* NimHotReload, IReload* UnrealReload,
 	for (const auto& EnumToReinstancePair: NimHotReload->EnumsToReinstance)
 		UnrealReload->NotifyChange(EnumToReinstancePair.Value, EnumToReinstancePair.Key);
 		
-	
 	UnrealReload->Reinstance();
 
 	for (auto& Struct : NimHotReload->StructsToReinstance)

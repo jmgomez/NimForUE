@@ -7,27 +7,27 @@
 #include "Engine/DataTable.h"
 
 #include "TestActor.generated.h"
-
-USTRUCT(BlueprintType)
-struct FMyStructTableRow : public FTableRowBase {
-	GENERATED_BODY()
-		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
-		float TurnRateGamepad;
-		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
-		UObject* ObjectTest;
-	 
-};
-
-
-USTRUCT(BlueprintType)
-struct FCppStruct {
-	GENERATED_BODY()
-		int test;
-		UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float TurnRateGamepad;
-		UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	 	bool bTest;
-};
+//
+// USTRUCT(BlueprintType)
+// struct FMyStructTableRow : public FTableRowBase {
+// 	GENERATED_BODY()
+// 		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
+// 		float TurnRateGamepad;
+// 		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
+// 		UObject* ObjectTest;
+// 	 
+// };
+//
+//
+// USTRUCT(BlueprintType)
+// struct FCppStruct {
+// 	GENERATED_BODY()
+// 		int test;
+// 		UPROPERTY(EditAnywhere, BlueprintReadWrite)
+// 		float TurnRateGamepad;
+// 		UPROPERTY(EditAnywhere, BlueprintReadOnly)
+// 	 	bool bTest;
+// };
 
 UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent))
 class UMyTestActorComponent : public UActorComponent {

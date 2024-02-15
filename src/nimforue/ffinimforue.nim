@@ -219,22 +219,27 @@ proc onLoadingPhaseChanged(prev : NueLoadedFrom, next:NueLoadedFrom) : void {.ff
   
 
 
-uEnum EEnumGuestSomethingElse: 
-  (BlueprintType)
-  Value1
-  Value2
-  Value3
-  Value4
-  Value5
+# uEnum EEnumGuestSomethingElse: 
+#   (BlueprintType)
+#   Value1
+#   Value2
+#   Value3
+#   Value4
+#   Value5
 
-uEnum EMyEnumCreatedInDsl:
-    (BlueprintType)
-    WhateverEnumValue
-    SomethingElse
+# uEnum EMyEnumCreatedInDsl:
+#     (BlueprintType)
+#     WhateverEnumValue
+#     SomethingElse
 
 uClass ANimTestGuest of AActor:
+  uprops(EditAnywhere, BlueprintReadWrite):
+    test: int
+    anotehr: FString
+    yes: bool
   ufuncs(CallInEditor):
-    proc test() = discard
+    proc test2() = 
+      UE_Warn "wtf. Como es posible que ahora si funcione?"
   discard
 
 # # VM

@@ -739,13 +739,18 @@ func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: string): Option[UFunc
 
   none[UFunctionPtr]()
 
+proc check(test: bool) {.importcpp: "check(#)".}
+
 #note at some point class can be resolved from the UEField?
 proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Option[UFunctionNativeSignature]): UFunctionPtr =
+  # return nil
+  check cls.isNotNil()
   let superCls = someNil(cls.getSuperClass())
   let superFn = superCls.flatmap((scls: UClassPtr)=>scls.findFunctionByNameWithPrefixes(fnField.name))
 
   #if we are overriden a function we use the name with the prefix
   #notice this only works with BlueprintEvent so check that too.
+  # var fnName = n "test"# superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
   var fnName = superFn.map(fn=>fn.getName().makeFName()).get(fnField.name.makeFName())
 
   #we need to see if any of the implemented interfaces have the function
@@ -776,13 +781,14 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
   if superFn.isNone():
     for metadata in fnField.metadata:
       fn.setMetadata(metadata.name, $metadata.value)
+  UE_Warn &"Adding function {fnName}"
+  UE_Warn &"CLS is {cls.getName()}"
 
   cls.addFunctionToFunctionMap(fn, fnName)
   if fnImpl.isSome(): #blueprint implementable events doesnt have a function implementation
     fn.setNativeFunc(makeFNativeFuncPtr(fnImpl.get()))
   fn.staticLink(true)
   fn.sourceHash = $hash(fnField.sourceHash)
-  # fn.parmsSize = uprops.foldl(a + b.getSize(), 0) doesnt seem this is necessary
   fn
 
 

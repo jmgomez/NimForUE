@@ -298,11 +298,11 @@ type
   # UBlendProfile* {.importcpp, pure .} = object of UObject
   # UBlendProfilePtr* = ptr UBlendProfile
 
-  FLatentActionInfo* {.importcpp.} = object
-    linkage* {.importcpp: "Linkage".}: int32
-    uuid* {.importcpp: "UUID".}: int32
-    executionFunction* {.importcpp: "ExecutionFunction".}: FName
-    callbackTarget* {.importcpp: "CallbackTarget".}: UObjectPtr
+  # FLatentActionInfo* {.importcpp.} = object
+  #   linkage* {.importcpp: "Linkage".}: int32
+  #   uuid* {.importcpp: "UUID".}: int32
+  #   executionFunction* {.importcpp: "ExecutionFunction".}: FName
+  #   callbackTarget* {.importcpp: "CallbackTarget".}: UObjectPtr
 
   FKey* {.importcpp .} = object
 

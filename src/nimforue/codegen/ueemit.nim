@@ -713,7 +713,7 @@ static:
 
 proc addManualUClasses() = 
     #TODO find a way to do this automatically without involving a macro.
-    addEmitterInfoForClass[UNimFunction]( getUETypeFor[UNimFunction]())
+    # addEmitterInfoForClass[UNimFunction]( getUETypeFor[UNimFunction]())
     addEmitterInfoForClass[UNimEnum](getUETypeFor[UNimEnum](true))
 
 addManualUClasses()

@@ -15,11 +15,14 @@ type
 const clsTemplate = "struct $1 : public $3 {\n  \n  $1(FVTableHelper& Helper) : $3(Helper) {}\n  $2  \n};\n"
 type
   #Notice you cant export types here or they will collide with the ones in the headers when linking the bindings.
-  UNimFunction* {.inheritable, codegenDecl: clsTemplate .} = object of UFunction
-    sourceHash*: FString
-  UNimFunctionPtr* = ptr UNimFunction
+  # UNimFunction* {.inheritable, codegenDecl: clsTemplate .} = object of UFunction
+  #   sourceHash*: FString
+  # UNimFunctionPtr* = ptr UNimFunction
   UNimEnum* {.inheritable, codegenDecl: clsTemplate .} = object of UEnum #recreate in Nim
   UNimEnumPtr* = ptr UNimEnum
+  UNimFunction* {.inheritable, importcpp .} = object of UFunction
+    sourceHash* {.importcpp:"SourceHash".}: FString
+  UNimFunctionPtr* = ptr UNimFunction
 
 proc makeNimEnum*(init: var FObjectInitializer): UNimEnum {.constructor:"UNimEnum(const '1 #1) : UEnum(#1)".} = discard
 #HACK ahead, this probably would crash at runtime if called. TODO add suport for noDecl in the compiler
@@ -28,7 +31,7 @@ when (NimMajor, NimMinor) <= (2, 0):
 else:
   proc makeNimEnum*(): UNimEnum {.constructor, nodecl .} = discard
 
-proc makeNimFunction*(): UNimFunction {.constructor.} = discard
+# proc makeNimFunction*(): UNimFunction {.constructor.} = discard
 #UNimEnum
 proc markNewVersionExistsInternal(uenum:UNimEnumPtr) : void {.importcpp:"#->SetEnumFlags(EEnumFlags::NewerVersionExists)".}
 proc markNewVersionExists*(uenum:UNimEnumPtr) {.member.} = uenum.markNewVersionExistsInternal()
