@@ -73,7 +73,12 @@ proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.
 
 #UFIELD
 when WithEditor:
-    proc setMetadata*(field:UFieldPtr|FFieldPtr, key:FName, inValue:FString) : void {.importcpp:"#->SetMetaData(#, *#)".}
+    proc setMetadata*(field: FFieldPtr, key: FName, inValue:FString) : void {.importcpp:"#->SetMetaData(#, *#)".}
+    proc setMetadata*(field: UFieldPtr, key: FName, inValue:FString): void {.importcpp:"#->SetMetaData(#, *#)".}
+    proc setMetadata*(field: UEnumPtr, key: FName, inValue:FString): void {.importcpp:"#->SetMetaData(*(#.ToString()), *#)".}
+    
+    # proc setMetadata*(field: UFieldPtr, key:FString, inValue:FString): void {.importcpp:"#->SetMetaData(#, *#)".}
+    # proc setMetadata*(field:UFieldPtr|FFieldPtr, key:FName, inValue:FString) : void = setMetadataInternal(field, key.toFString(), inValue)
     # proc getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) :var FString {.importcpp:"#->GetMetaData(*#)".}
     proc findMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : ptr FString {.importcpp:"const_cast<FString*>(#->FindMetaData(*#))".}
     #notice it also checks for the ue value. It will return false on "false"

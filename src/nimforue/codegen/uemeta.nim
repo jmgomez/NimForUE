@@ -715,7 +715,7 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
   let prop: FPropertyPtr = newFProperty(makeFieldVariant outer, propField)
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
   for metadata in propField.metadata:
-    prop.setMetadata(makeFName metadata.name, $metadata.value)
+    prop.setMetadata(n metadata.name, $metadata.value)
   outer.addCppProperty(prop)
   prop
 
@@ -990,7 +990,7 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
     ueCast[UNimScriptStruct](scriptStruct).setCppStructOpFor[:T](nil)
 
   for metadata in ueType.metadata:
-      scriptStruct.setMetadata(metadata.name, $metadata.value)
+      scriptStruct.setMetadata(n metadata.name, $metadata.value)
   scriptStruct.assetCreated()    
   for field in ueType.fields:
     let prop = field.emitFProperty(scriptStruct)
@@ -1001,7 +1001,7 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
     scriptStruct.staticLink(true)
     setGIsUCCMakeStandaloneHeaderGenerator(false)
 
-  scriptStruct.setMetadata(UETypeMetadataKey, $ueType.toJson())
+  scriptStruct.setMetadata(n UETypeMetadataKey, $ueType.toJson())
   scriptStruct
 
 proc emitUStruct*[T](ueType: UEType, package: string): UFieldPtr =
