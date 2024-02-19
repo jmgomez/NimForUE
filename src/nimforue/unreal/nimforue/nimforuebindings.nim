@@ -106,18 +106,22 @@ when WithEditor:
         else: makeTMap[FName, FString]()
 else:
     #only used in non editor builds (metadata is not available in non editor builds)
-    var metadataTable* = newTable[pointer, Table[FName, FString]]()
-    func getMetadataMap*(field :UFieldPtr|FFieldPtr|UObjectPtr  ) : TMap[FName, FString] = 
+    # var metadataTable* = newTable[pointer, Table[FName, FString]]()
+    var metadataTable = TMap[pointer, TMap[FName, FString]]()
+    func getMetadataMap*(field :UFieldPtr|FFieldPtr|UObjectPtr): TMap[FName, FString] = 
         let outerKey = field.getFName()
         {.cast(noSideEffect).}:
-            if field notin metadataTable:
-                metadataTable.add(field, initTable[FName, FString]())
-            metadataTable[field].toTMap()
+          # log "Getting metadata for field: " & $field.getFName()
+          # log "is In table: " & $(field in metadataTable)
+          if field notin metadataTable:
+              metadataTable.add(field, makeTMap[FName, FString]())
+              # return makeTMap[FName, FString]()
+          metadataTable[field]
 
     proc setMetadata*(field:UFieldPtr|FFieldPtr, key: FName, inValue:FString) =          
         let outerKey = field.getFName()
-        UE_Log getStackTrace()
-        UE_Log "Adding key for field: " & $field.getFName() & " key: " & $key & " value: " & inValue
+        # UE_Log getStackTrace()
+        # UE_Log "Adding key for field: " & $field.getFName() & " key: " & $key & " value: " & inValue
         {.cast(noSideEffect).}:
             let map = field.getMetadataMap()
             let nkey = key
@@ -125,12 +129,12 @@ else:
                 map[nkey] = inValue
             else:
                 map.add(nkey, inValue)
-            metadataTable[field] = map.toTable()
+            metadataTable[field] = map
     proc copyMetadata*(src, dst : UObjectPtr) : void = 
         #assumes dst doesnt exists
         let srcMap = src.getMetadataMap()
         let dstMap = dst.getMetadataMap()
-        metadataTable[dst] = srcMap.toTable()
+        metadataTable[dst] = srcMap
 
 proc `$`*(pt:pointer) : string = $cast[int](pt)
 
@@ -146,7 +150,9 @@ func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] =
     else:
         none[FString]()
 
-func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : bool = field.getMetadata(key).isSome()
+func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString): bool = 
+  # log field.getName() & " has metadata " & key
+  field.getMetadata(key).isSome()
 
 
 

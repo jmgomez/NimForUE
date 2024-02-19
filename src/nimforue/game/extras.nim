@@ -94,7 +94,8 @@ proc isThereAnyNimClass(): bool =
   return false
 
 proc emitInNextFrame(): Future[void] {.async.} = 
-    await sleepAsync(100)
+    log "NimForUE will emit in next frame."
+    await sleepAsync(0)
     emitTypes()
     
 proc reinstanceNextFrame() {.cdecl, exportc.} = 
@@ -105,7 +106,7 @@ proc reinstanceNextFrame() {.cdecl, exportc.} =
 
 #Called from NimForUE module as entry point when we are in a non editor build
 proc startNue*() {.cdecl, exportc.} =
-
+    log "NimForUE entra en Extras."
     #Notice this could also be a HotReload, in that case we should emit the types again but handle it later. 
     #TODO Hook the Early Types here. 
 
