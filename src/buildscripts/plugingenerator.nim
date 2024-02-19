@@ -137,15 +137,18 @@ DEFINE_LOG_CATEGORY($1);
 
 void $1NimMain();
 extern  "C" void* reinstanceNextFrame();
+extern  "C" void startNue();
+
 
 void F$1::StartupModule()
 {
-#if WITH_EDITOR
+//# if WITH_EDITOR
   //TODO improve for livecoding
   //But do no start Nim when no editor
-#else
+//#else
 	 $1NimMain();
-#endif
+    startNue();
+//#endif
 #if PLATFORM_WINDOWS && WITH_EDITOR
   ILiveCodingModule* LiveCodingModule = FModuleManager::GetModulePtr<ILiveCodingModule>("LiveCoding");
   LiveCodingModule->GetOnPatchCompleteDelegate().AddLambda([] {

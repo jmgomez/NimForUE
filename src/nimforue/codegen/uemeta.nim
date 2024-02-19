@@ -7,7 +7,7 @@ import ../utils/[utils, ueutils]
 import ../unreal/engine/[enginetypes, world]
 import ../unreal/runtime/[assetregistry]
 import fproperty, models, modelconstructor, emitter, modulerules, headerparser, enumops
-
+import ../unreal/definitions
 # export models
 
 const fnPrefixes* = @["", "Receive", "K2_", "BP_"]
@@ -372,9 +372,13 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
       UE_Log &"Ignoring {name} because it is in the ignore list"
       return none(UEType)
   
-  
-  let isInPCH = name in getAllPCHTypes()
-  var isParentInPCH = parentName in getAllPCHTypes()
+  when definitions.WithEditor: 
+    #Only make sense with editor because this is only used for generating the bindings
+    let isInPCH = name in getAllPCHTypes() 
+    var isParentInPCH = parentName in getAllPCHTypes() #TODO not sure about this one thoug. 
+  else:
+    let isInPCH = false
+    let isParentInPCH = false
   
 
   if cls.isBpExposed() or uerImportBlueprintOnly notin rules:

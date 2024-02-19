@@ -34,11 +34,14 @@ proc newInstanceInAddr*[T](obj:UObjectPtr, fake : ptr T = nil) {.importcpp: "new
 proc newInstanceInAddrWithInit*[T](obj:UObjectPtr, init: var FObjectInitializer, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*3(#)".} 
 
 proc newInstanceWithVTableHelper*[T](helper : var FVTableHelper, fake : ptr T = nil) : UObjectPtr {.importcpp: "new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), FName(), RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) '*2(#)".} 
+proc newInstanceWithVTableHelperNoEditor*[T](helper : var FVTableHelper, fake : ptr T = nil) : UObjectPtr {.importcpp: "new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), FName(), RF_ClassDefaultObject | RF_TagGarbageTemp) '*2(#)".} 
   
 
 proc vtableConstructorStatic*[T](helper : var FVTableHelper): UObjectPtr {.cdecl.} = 
-  newInstanceWithVTableHelper[T](helper)
-
+  when WithEditor:
+    newInstanceWithVTableHelper[T](helper)
+  else:
+    newInstanceWithVTableHelperNoEditor[T](helper) #TODO review this
 
 proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
   const typeName = typeof(T).name
