@@ -248,7 +248,6 @@ proc compileGame*(extraSwitches:seq[string], withDebug, withRelease:bool) =
 
 
 
-
 proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) = 
   let gameSwitches = @[
     "-d:game",

@@ -31,6 +31,7 @@ let buildSwitches* = @[
   "--path:$nim",
   "--parallelBuild:0",
   "-d:nimOldCaseObjects", #Nim 2.0 
+  "--noMain",
 
   # "--hints:off",
   "--hint:XDeclaredButNotUsed:off",
@@ -43,6 +44,7 @@ let buildSwitches* = @[
   "-d:pluginDir:" & quotes(PluginDir),
   "-d:withEditor:" & $WithEditor,
   "--cincludes:" & quotes(PluginDir / "NimHeaders")
+  
   
 ]
 

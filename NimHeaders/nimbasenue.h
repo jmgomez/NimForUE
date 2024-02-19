@@ -25,6 +25,7 @@ __AVR__
 #if defined(__clang__)
   #pragma clang diagnostic ignored "-Warray-bounds"
   #pragma clang diagnostic ignored "-Wignored-attributes"
+  #pragma clang diagnostic ignored "-Wsometimes-uninitialized"
 #endif
 //NimForUE specific conflicts
 #if defined(WIN32) 
@@ -181,7 +182,7 @@ __AVR__
 
 /* ------------------------------------------------------------------- */
 #ifdef  __cplusplus
-#  define NIM_EXTERNC extern "C"
+#  define NIM_EXTERNC 
 #else
 #  define NIM_EXTERNC
 #endif
