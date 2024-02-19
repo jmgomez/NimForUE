@@ -98,6 +98,9 @@ public class $1 : ModuleRules
 
 		PublicIncludePaths.Add(nimHeadersPath);
 		bUseUnity = false;
+    //TODO not hardcoded and not mac os specific
+    var bindingsLibPath = "/Users/jmgomez/NimTemplate/NimTemplate/Plugins/NimForUE/Binaries/nim/libbindings.a";
+		PublicAdditionalLibraries.Add(bindingsLibPath);
 	}
 }
 """
@@ -193,9 +196,9 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
   let exludeFiles = @["os.nim.cpp", "buildscripts.nim.cpp"]
   for newFile in walkFiles(cppSrcDir / &"*.cpp"):        
     let filename = newFile.extractFilename()   
-    if filename.contains("sbindings@simported") or exludeFiles.anyIt(filename.contains(it)):
-      #"imported bindings arent copied"
-      continue
+    # if filename.contains("sbindings@simported") or exludeFiles.anyIt(filename.contains(it)):
+    #   #"imported bindings arent copied"
+    #   continue
     newFiles[filename] = CppSourceFile(name:filename, path:newFile, content: readFile(newFile))
 
   for oldFile in walkFiles(nimGeneratedCodeDir / &"*.cpp"):
@@ -217,11 +220,11 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
     if oldFile.name notin newFiles:
       removeFile(oldFile.path)
       log "File removed: " & oldFile.name
-      
+        
     
 
 proc copyCppToModule(name:string, nimGeneratedCodeDir : string) =   
-  let platform = "win"
+  let platform = when defined(windows): "win" else: "mac"
   let cppSrcDir = PluginDir / &".nimcache/{name}/{platform}/release"
     # cppSrcDir = PluginDir / &".nimcache/nimforuegame/release"
   copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
