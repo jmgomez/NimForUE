@@ -275,7 +275,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
               newEmptyNode(),
               nnkOfInherit.newTree(ident typeDef.parent),
               newEmptyNode()
-              # ueType.genPropsAsRecList(rule)
+              # typeDef.genPropsAsRecList(rule, false)
             )
           )
         let typPtr = 

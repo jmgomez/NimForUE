@@ -800,6 +800,7 @@ proc isNimClassBase(cls: UClassPtr): bool = cls.isNimClass()
 
 
 proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actorCls:UClassPtr) {.cdecl.} =   
+  log "Init components"
   #get a chance to init the parent
   let parentCls = actorCls.getSuperClass()
   if parentCls.isNimClass() or parentCls.isBpClass():
@@ -895,7 +896,6 @@ proc vmConstructor*(objectInitializer:var FObjectInitializer) : void {.cdecl.} =
   else:
     UE_Warn &"No vmdefaultconstructor found tried: {constructorName}"
   
-
 proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
     
@@ -921,7 +921,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.markAsNimClass()
 
   for metadata in ueType.metadata:
-    UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
+    # UE_Log &"Setting metadata {metadata.name} to {metadata.value}"
     newCls.setMetadata(makeFName metadata.name, $metadata.value)
 
 
@@ -953,7 +953,6 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.assembleReferenceTokenStream()
   
   newCls.setMetadata(makeFName UETypeMetadataKey, $ueType.toJson())
-
 
 
   discard newCls.getDefaultObject()#forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out

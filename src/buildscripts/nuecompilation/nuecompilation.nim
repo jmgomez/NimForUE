@@ -218,6 +218,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
   let isCompileOnly = "--compileOnly" in extraSwitches
   if isCompileOnly:
     gameSwitches.add("--genScript")
+    gameSwitches.add("--noMain")
   else:
     gameSwitches.add("--app:lib")
 
@@ -336,7 +337,7 @@ proc copyNewCppTo(srcFolder, dstFolder: string, pattern = "*.cpp") =
     log &"No files copied from {srcFolder} to {dstFolder} as is up to date"
 
 proc compileGenerateBindings*() = 
-  let withDebug = false #TODO disable on final builds
+  let withDebug = true #TODO disable on final builds
   let buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   doAssert(execCmd(&"nim  cpp {buildFlags} -d:bindings --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)

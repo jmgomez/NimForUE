@@ -26,10 +26,11 @@ proc unloadPrevLib(nextLib:string) =
   
   prevGameLib = some nextLib
 
-proc getEmitterFromGame(libPath:string) : UEEmitterPtr = 
+proc getEmitterFromGame(libPath, name:string) : UEEmitterPtr = 
   type 
     GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, cdecl.}
-
+    MainFn = proc(): void {.gcsafe, cdecl.}
+  UE_Log &"getEmitterFromGame lib {libPath}"
   let lib = loadLib(libPath)
   if lib.isNil:
     UE_Error &"Cant load lib {libPath}"
@@ -50,6 +51,18 @@ proc getEmitterFromGame(libPath:string) : UEEmitterPtr =
     UE_Error "Emitter is nul"
   assert not emitterPtr.isNil()
   unloadPrevLib(libPath) 
+
+  # #we also need to call the MainFunc. Hardcoded to GameNimMain for now
+  # let libMainName = &"{name.firstToUpper()}NimMain"
+  # let mainFunc = lib.symAddr(libMainName)
+  # if mainFunc.isNil:
+  #   UE_Error &"{libMainName} is not in the lib {libPath}"
+  #   return nil
+  # let mainFn = cast[MainFn](mainFunc)
+  # if mainFn.isNil():
+  #   UE_Error &"Cant cast {libMainName} to MainFn for {libPath}"
+  #   return nil
+  # mainFn()
 
   emitterPtr
 
@@ -147,10 +160,18 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
         discard emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
         # if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
+<<<<<<< HEAD
           # discard   
     else:
         if not isRunningCommandlet():
           discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
+=======
+          discard   
+    else: 
+        # if not isRunningCommandlet():
+          log &"Emitting types for {libName}"
+          discard emitNueTypes(getEmitterFromGame(libPath, libname), "GameNim",  loadedFrom == nlfPreEngine, false)
+>>>>>>> 6a64f6e... progress
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
 
@@ -220,7 +241,7 @@ proc onLoadingPhaseChanged(prev : NueLoadedFrom, next:NueLoadedFrom) : void {.ff
   UE_Log &"Loading phase changed: {prev} -> {next}"
   if prev == nlfPreEngine and next == nlfPostDefault:
     for (libName, libPath, timesReloaded) in libsToEmmit:
-      UE_Log &"Emitting types for {libName}"
+      UE_Log &"Emitting types for {libName} "
       emitTypeFor(libName, libPath, timesReloaded, next)
   
 

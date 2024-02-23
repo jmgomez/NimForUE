@@ -81,7 +81,8 @@ proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.
             emitTypesExternal(globalEmitter, calledFrom, reuseHotReload=true)
     emitTypesInGuest(nlfEditor, globalEmitter)
 
-proc emitTypes() {.cdecl, exportc, dynlib.} =  
+proc emitTypes*() {.cdecl, exportc, dynlib.} = 
+  log "Emitting types" 
   discard  emitUStructsForPackage(getGlobalEmitter(), "GameNim", emitEarlyLoadTypesOnly = false)     
 
 proc isThereAnyNimClass(): bool = 
@@ -106,17 +107,24 @@ proc reinstanceNextFrame() {.cdecl, exportc.} =
 
 #Called from NimForUE module as entry point when we are in a non editor build
 proc startNue*() {.cdecl, exportc.} =
-    log "NimForUE entra en Extras."
+    log "NimForUE entra en startNue Extras."
     #Notice this could also be a HotReload, in that case we should emit the types again but handle it later. 
     #TODO Hook the Early Types here. 
 
+    #The code commmented is only needed for LiveCoding (live++) which is not supported (and may not be as the benefit is not too big).
     #Test if there is any NimClass emitted and it doesnt have the meta EarlyLoadMetadataKey. If so, we are in PostDefault.
     #NEED to find a way to know when it ends
-    if isThereAnyNimClass():      
-      asyncCheck emitInNextFrame()
-    else:
-      #TODO Hook the Early Types here. 
-      let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)      
+    # let shouldEmit = not isThereAnyNimClass()
+    # log "Should emit types: ", shouldEmit
+    # if isThereAnyNimClass():      
+    #   asyncCheck emitInNextFrame()
+    # else:
+    #   #TODO Hook the Early Types here. 
+    # asyncCheck emitInNextFrame()
+    # emitTypes() #This may be too soon for some type. Seems onAllmoduleLoadingPhasesComplete is not called in PostDefault.
+    let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)      
 
-once:
-  startNue() 
+
+# log "Hello!!!!"
+# once:
+#   startNue() 

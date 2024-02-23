@@ -186,7 +186,6 @@ __AVR__
 #else
 #  define NIM_EXTERNC
 #endif
-
 #if defined(WIN32) || defined(_WIN32) /* only Windows has this mess... */
 #  define N_LIB_PRIVATE 
 #  define N_CDECL(rettype, name) rettype __cdecl name
