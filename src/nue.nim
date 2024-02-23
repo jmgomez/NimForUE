@@ -260,20 +260,33 @@ task codegen, "Generate the bindings structure from the persisted json (TEMPORAL
   let buildFlags = @[buildSwitches, @[skipCodegenCache]].foldl(a & " " & b.join(" "), "")
   doAssert(execCmd(&"nim cpp {buildFlags} --compileonly -f --nomain --maxLoopIterationsVM:400000000 --nimcache:.nimcache/projectbindings src/nimforue/codegen/genprojectbindings.nim") == 0)
 
+task cleanbindingheader, "Process the UEGenBindings  file": 
+  #since Nim 2.0 we need to clean up the produced header: 
+  let headerFile = config.nimHeadersDir / "UEGenBindings.h" 
+  var lines = readFile(headerFile).split("\n") 
+  let typesToSkip = @[ 
+    "TNimNode", "NimStrPayload", "NimStringV2", "TNimTypeV2",  
+  ] 
+  var header = "" 
+  var insideType = false 
+  for l in lines: 
+    for t in typesToSkip: 
+      if l.contains(&"struct " & t & " {"): 
+        insideType = true     
+    if not insideType: 
+      header.add l & "\n" 
+ 
+    if insideType and l.contains("};"): 
+      insideType = false 
+ 
+  writeFile(headerFile, header) 
+
 task gencppbindings, "Generates the codegen and cpp bindings":
   if "only" notin taskOptions:
     codegen(taskOptions)
   compileGenerateBindings()
   #since Nim 2.0 we need to clean up the produced header:
-  let headerFile = config.nimHeadersDir / "UEGenBindings.h"
-  var headerFileContents = readFile(headerFile)
-  let frm = "struct TNimNode {"
-  # let to = "Exception* up;\n};"
-  let to = "char dummy;\n};" #ForLoopStmt
-  headerFileContents.between(frm, to)
-    .run proc (idxs:(int, int)) =          
-          headerFileContents.delete(idxs[0]..idxs[1])
-          writeFile(headerFile, headerFileContents)
+  cleanbindingheader(taskOptions)
   # ubuild(taskOptions)        
 
 

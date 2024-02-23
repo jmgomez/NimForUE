@@ -71,6 +71,7 @@ proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.
 
 #UFIELD
 when WithEditor:
+# when true:
     proc setMetadata*(field: FFieldPtr, key: FName, inValue:FString) : void {.importcpp:"#->SetMetaData(#, *#)".}
     proc setMetadata*(field: UFieldPtr, key: FName, inValue:FString): void {.importcpp:"#->SetMetaData(#, *#)".}
     proc setMetadata*(field: UEnumPtr, key: FName, inValue:FString): void {.importcpp:"#->SetMetaData(*(#.ToString()), *#)".}
@@ -105,7 +106,7 @@ when WithEditor:
 else:
     #only used in non editor builds (metadata is not available in non editor builds)
     # var metadataTable* = newTable[pointer, Table[FName, FString]]()
-    var metadataTable = TMap[pointer, TMap[FName, FString]]()
+    var metadataTable = makeTMap[pointer, TMap[FName, FString]]()
     func getMetadataMap*(field :UFieldPtr|FFieldPtr|UObjectPtr): TMap[FName, FString] = 
         let outerKey = field.getFName()
         {.cast(noSideEffect).}:
