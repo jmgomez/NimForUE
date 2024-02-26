@@ -90,52 +90,49 @@ when WithEditor:
     func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
 
     func getMetadataMap*(field:FFieldPtr) : TMap[FName, FString] =
-        when WithEditor:
-            let metadataMap = getMetadataMapPtr(field)
-            if metadataMap.isNil or metadataMap[].len  == 0: 
-                makeTMap[FName, FString]()
-            else: metadataMap[]
-        else: makeTMap[FName, FString]()
+      let metadataMap = getMetadataMapPtr(field)
+      if metadataMap.isNil or metadataMap[].len  == 0: 
+          makeTMap[FName, FString]()
+      else: metadataMap[]
 
     func getMetadataMap*(field:UObjectPtr) : TMap[FName, FString] =
-        when WithEditor:
-            let metadataMap = getMetadataMapPtr(field)
-            if metadataMap.isNil or metadataMap[].len == 0: 
-                makeTMap[FName, FString]()
-            else: 
-                metadataMap[]
-        else: makeTMap[FName, FString]()
+      let metadataMap = getMetadataMapPtr(field)
+      if metadataMap.isNil or metadataMap[].len == 0: 
+          makeTMap[FName, FString]()
+      else: 
+          metadataMap[]
 else:
     #only used in non editor builds (metadata is not available in non editor builds)
     # var metadataTable* = newTable[pointer, Table[FName, FString]]()
-    var metadataTable = makeTMap[pointer, TMap[FName, FString]]()
+    var metadataTable* = makeTMap[FString, TMap[FName, FString]]()
     func getMetadataMap*(field :UFieldPtr|FFieldPtr|UObjectPtr): TMap[FName, FString] = 
         let outerKey = field.getFName()
         {.cast(noSideEffect).}:
           # log "Getting metadata for field: " & $field.getFName()
           # log "is In table: " & $(field in metadataTable)
-          if field notin metadataTable:
-              metadataTable.add(field, makeTMap[FName, FString]())
+          if field.getName() notin metadataTable:
+              # log "Creating new metadata map for field: " & field.getName()
+              metadataTable.add(field.getName(), makeTMap[FName, FString]())
               # return makeTMap[FName, FString]()
-          metadataTable[field]
+          metadataTable[field.getName()]
 
     proc setMetadata*(field:UFieldPtr|FFieldPtr, key: FName, inValue:FString) =          
         let outerKey = field.getFName()
-        # UE_Log getStackTrace()
-        # UE_Log "Adding key for field: " & $field.getFName() & " key: " & $key & " value: " & inValue
         {.cast(noSideEffect).}:
-            let map = field.getMetadataMap()
-            let nkey = key
-            if nKey in map:
-                map[nkey] = inValue
-            else:
-                map.add(nkey, inValue)
-            metadataTable[field] = map
+          let map = field.getMetadataMap()
+      
+          let nkey = key
+          if nKey in map:
+            map[nkey] = inValue
+          else:
+            map.add(nkey, inValue)         
+          metadataTable[field.getName()] = map
+
     proc copyMetadata*(src, dst : UObjectPtr) : void = 
         #assumes dst doesnt exists
         let srcMap = src.getMetadataMap()
         let dstMap = dst.getMetadataMap()
-        metadataTable[dst] = srcMap
+        metadataTable[dst.getName()] = srcMap
 
 proc `$`*(pt:pointer) : string = $cast[int](pt)
 
@@ -153,8 +150,7 @@ func getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) : Option[FString] =
 
 func hasMetadata*(field:UFieldPtr|FFieldPtr, key:FString): bool = 
   # log field.getName() & " has metadata " & key
-  field.getMetadata(key).isSome()
-
+  result = field.getMetadata(key).isSome()
 
 
 proc getFPropertiesFrom*(struct:UStructPtr) : TArray[FPropertyPtr] = 

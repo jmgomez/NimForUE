@@ -199,9 +199,10 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
   let exludeFiles = @["os.nim.cpp", "buildscripts.nim.cpp"]
   for newFile in walkFiles(cppSrcDir / &"*.cpp"):        
     let filename = newFile.extractFilename()   
-    # if filename.contains("sbindings@simported") or exludeFiles.anyIt(filename.contains(it)):
-    #   #"imported bindings arent copied"
-    #   continue
+    when defined(windows):
+      if filename.contains("sbindings@simported") or exludeFiles.anyIt(filename.contains(it)):
+      #   #"imported bindings arent copied"
+        continue
     newFiles[filename] = CppSourceFile(name:filename, path:newFile, content: readFile(newFile))
 
   for oldFile in walkFiles(nimGeneratedCodeDir / &"*.cpp"):

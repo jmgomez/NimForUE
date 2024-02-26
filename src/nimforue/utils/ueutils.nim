@@ -105,3 +105,5 @@ func makeFRotator*(rotStr:string) : FRotator =
     var pitch, yaw, roll : float
     if scanf(rotStr, "$f,$f,$f", roll, yaw, pitch): FRotator(pitch:pitch, yaw:yaw, roll:roll)
     else: FRotator(pitch:0.0, yaw:0.0, roll:0.0)
+    
+proc debugBreak*() {.importcpp: "UE_DEBUG_BREAK()".}

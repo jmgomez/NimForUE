@@ -800,7 +800,7 @@ proc isNimClassBase(cls: UClassPtr): bool = cls.isNimClass()
 
 
 proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actorCls:UClassPtr) {.cdecl.} =   
-  log "Init components"
+  # debugBreak()
   #get a chance to init the parent
   let parentCls = actorCls.getSuperClass()
   if parentCls.isNimClass() or parentCls.isBpClass():
@@ -808,6 +808,7 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
 
   # #Check defaults
   for objProp in getAllPropsWithMetaData[FObjectPtrProperty](actorCls, DefaultComponentMetadataKey):
+      # log &"Default component {objProp.getName()} of {objProp.getPropertyClass().getName()}"
       let compCls = objProp.getPropertyClass()
       var defaultComp = ueCast[UActorComponent](initializer.createDefaultSubobject(actor, objProp.getName().firstToUpper().makeFName(), compCls, compCls, true, false))
       setPropertyValuePtr[UActorComponentPtr](objProp, actor, defaultComp.addr)
