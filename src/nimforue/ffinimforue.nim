@@ -26,7 +26,7 @@ proc unloadPrevLib(nextLib:string) =
   
   prevGameLib = some nextLib
 
-proc getEmitterFromGame(libPath, name:string) : UEEmitterPtr = 
+proc getEmitterFromGame(libPath: string) : UEEmitterPtr = 
   type 
     GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, cdecl.}
     MainFn = proc(): void {.gcsafe, cdecl.}
@@ -160,18 +160,10 @@ proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoa
         discard emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
         # if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
-<<<<<<< HEAD
           # discard   
     else:
         if not isRunningCommandlet():
           discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
-=======
-          discard   
-    else: 
-        # if not isRunningCommandlet():
-          log &"Emitting types for {libName}"
-          discard emitNueTypes(getEmitterFromGame(libPath, libname), "GameNim",  loadedFrom == nlfPreEngine, false)
->>>>>>> 6a64f6e... progress
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
 
