@@ -106,25 +106,7 @@ proc reinstanceNextFrame() {.cdecl, exportc.} =
 
 
 #Called from NimForUE module as entry point when we are in a non editor build
+#Notice it needs to be called after NimMain (for the early types) that's why we dont call it from Nim
 proc startNue*() {.cdecl, exportc.} =
-    log "NimForUE entra en startNue Extras."
-    #Notice this could also be a HotReload, in that case we should emit the types again but handle it later. 
-    #TODO Hook the Early Types here. 
-
-    #The code commmented is only needed for LiveCoding (live++) which is not supported (and may not be as the benefit is not too big).
-    #Test if there is any NimClass emitted and it doesnt have the meta EarlyLoadMetadataKey. If so, we are in PostDefault.
-    #NEED to find a way to know when it ends
-    # let shouldEmit = not isThereAnyNimClass()
-    # log "Should emit types: ", shouldEmit
-    # if isThereAnyNimClass():      
-    #   asyncCheck emitInNextFrame()
-    # else:
-    #   #TODO Hook the Early Types here. 
-    # asyncCheck emitInNextFrame()
-    # emitTypes() #This may be too soon for some type. Seems onAllmoduleLoadingPhasesComplete is not called in PostDefault.
-    let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)      
-
-
-# log "Hello!!!!"
-# once:
-#   startNue() 
+  #TODO Hook the Early Types here. 
+  let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)      
