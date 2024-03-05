@@ -33,6 +33,7 @@
 #include "Engine/Classes/GameFramework/GameModeBase.h"
 #include "Engine/Classes/GameFramework/WorldSettings.h"
 #include "Engine/Classes/GameFramework/HUD.h"
+#include "Engine/Classes/GameFramework/PlayerStart.h"
 #include "Engine/Classes/Engine/World.h"
 #include "Engine/Classes/Engine/Engine.h"
 #include "Engine/Classes/Engine/DataTable.h"

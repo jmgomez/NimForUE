@@ -380,7 +380,7 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
         let libPathBindings = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEBindings/UnrealEditor-NimForUEBindings{suffix}.lib"
         let libPathAutoBindings = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEAutoBindings/UnrealEditor-NimForUEAutoBindings{suffix}.lib"
         let libPathEditor = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir / &"NimForUEEditor/UnrealEditor-NimForUEEditor{suffix}.lib"
-        @[libPath,libpathBindings, libPathAutoBindings, libPathEditor]
+        @[libPath,libpathBindings, libPathEditor]
       else:
         let dir = pluginDir / "Intermediate/Build" / platformDir / unrealFolder / confDir 
         let libPath = getObjFiles(dir / "NimForUE", "NimForUE")
