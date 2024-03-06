@@ -53,6 +53,7 @@ void UNimForUEEngineSubsystem::LoadNimForUEHost() {
 }
 
 UNimForUEEngineSubsystem::UNimForUEEngineSubsystem() {
+	if (IsRunningCookCommandlet()) return;
 	LoadNimForUEHost();
 }
 
@@ -63,6 +64,7 @@ void UNimForUEEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	//Some modules use PostEngineInit but command lets only runs if PostDefault is set.
 	//So we delay init
 	FCoreDelegates::OnAllModuleLoadingPhasesComplete.AddLambda([this] {
+		if (IsRunningCookCommandlet()) return;
 		checkReload(1); //The first emission of types will occur at this point, after everything is loaded
 	});
 	
@@ -76,7 +78,7 @@ void UNimForUEEngineSubsystem::Deinitialize()
 {
 #if WITH_EDITOR
 	//If we are cooking we just skip
-	if (IsRunningCommandlet()) return;
+	if (IsRunningCookCommandlet()) return;
 	FTSTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
 #endif
 }
@@ -94,7 +96,7 @@ bool UNimForUEEngineSubsystem::Tick(float DeltaTime)
 {
 #if WITH_EDITOR
 	//If we are cooking we just skip
-	if (IsRunningCommandlet()) return true;
+	if (IsRunningCookCommandlet()) return true;
 	checkReload(2);
 #endif
 	return true;

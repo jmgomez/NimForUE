@@ -265,13 +265,20 @@ task cleanbindingheader, "Process the UEGenBindings  file":
   let headerFile = config.nimHeadersDir / "UEGenBindings.h"
   var lines = readFile(headerFile).split("\n")
   let typesToSkip = @[
-    "TNimNode", "NimStrPayload", "NimStringV2", "TNimTypeV2", 
+    #Notice these types are drag by Nim in some cases into the header causing collisions with the exported module.
+    #The commit below will prevent most non needed pulls
+    #https://github.com/nim-lang/Nim/pull/23369
+    "TNimNode", "NimStrPayload", "NimStringV2", "TNimTypeV2", "Exception",
+    "TNimType", "RootObj", "RootEffect", "TSafePoint", "GcFrameHeader", 
+    "ForLoopStmt"
   ]
   var header = ""
   var insideType = false
   for l in lines:
     for t in typesToSkip:
-      if l.contains(&"struct " & t & " {"):
+      if l.contains(&"struct " & t & " {") or
+      l.contains(&"struct " & t & " : public"):
+      
         insideType = true    
     if not insideType:
       header.add l & "\n"
