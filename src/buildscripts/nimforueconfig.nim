@@ -391,13 +391,14 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
         let libPathBindings = getObjFiles(dir / "NimForUEBindings", "NimForUEBindings")
         libPath & libPathBindings
 
-  
-  when UEVersion() >= 5.4:  
-    let enginePlugins = @["EnhancedInput", "PCG"]
-    let experimentalPlugins = newSeq[string]()
+
+  var enginePlugins = @["EnhancedInput"]
+  var experimentalPlugins = newSeq[string]()
+  if UEVersion() >= 5.4:
+    enginePlugins.add("PCG")
   else:
-    let enginePlugins = @["EnhancedInput"]
-    let experimentalPlugins = @["PCG"]
+    experimentalPlugins.add("PCG")
+
 
   let modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", "NetCore", "UMG", "AdvancedPreviewScene", "AIModule"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
