@@ -288,9 +288,13 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   
   ]
 
+  when UEVersion() >= 5.4:  
+    let enginePlugins = @["EnhancedInput", "PCG"]
+    let engineExperimentalPlugins = newSeq[string]()
+  else:
+    let enginePlugins = @["EnhancedInput"]
+    let engineExperimentalPlugins = @["PCG"]
 
-  let enginePlugins = @["EnhancedInput"]
-  let engineExperimentalPlugins = @["PCG"]
   let engineRuntimePlugins = @["GameplayAbilities"]
 
 #Notice the header are not need for compiling the dll. We use a PCH. They will be needed to traverse the C++
@@ -387,11 +391,21 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
         let libPathBindings = getObjFiles(dir / "NimForUEBindings", "NimForUEBindings")
         libPath & libPathBindings
 
+  
+  when UEVersion() >= 5.4:  
+    let enginePlugins = @["EnhancedInput", "PCG"]
+    let experimentalPlugins = newSeq[string]()
+  else:
+    let enginePlugins = @["EnhancedInput"]
+    let experimentalPlugins = @["PCG"]
+
   let modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", "NetCore", "UMG", "AdvancedPreviewScene", "AIModule"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
-  let enginePluginSymbolsPaths = @["EnhancedInput"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName)).flatten()
+  let enginePluginSymbolsPaths = enginePlugins.map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName)).flatten()
+  
+ 
   let engineRuntimePluginSymbolsPaths = @["GameplayAbilities"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Runtime", modName)).flatten()
-  let engineExperimentalPluginSymbolsPaths = @["PCG"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Experimental", modName)).flatten()
+  let engineExperimentalPluginSymbolsPaths = experimentalPlugins.map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Experimental", modName)).flatten()
 
   (engineSymbolsPaths & enginePluginSymbolsPaths &  engineRuntimePluginSymbolsPaths & engineExperimentalPluginSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
 

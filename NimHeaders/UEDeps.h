@@ -74,7 +74,7 @@
 #include "EnhancedInputSubsystems.h"
 
 
-#if WITH_EDITORONLY_DATA
+// #if WITH_EDITORONLY_DATA
   #include "Editor/UnrealEdEngine.h"
   #include "Editor/UnrealEd/Public/Editor.h"
   #include "Editor/UnrealEd/Public/EditorViewportClient.h"
@@ -83,7 +83,6 @@
   #include "Editor/UnrealEd/Public/AssetEditorViewportLayout.h"
   #include "Editor/UnrealEd/Public/ScopedTransaction.h"
   #include "Factories/Factory.h"
-
   #include "WorkflowOrientedApp/WorkflowTabManager.h"
   #include "WorkflowOrientedApp/WorkflowTabFactory.h"
   #include "SCommonEditorViewportToolbarBase.h"
@@ -93,7 +92,7 @@
   //asset tools
   #include "AssetTypeActions_Base.h"
 
-#endif
+// #endif
 #include "Components/Widget.h"
 #include "Components/Viewport.h"
 #include "Widgets/Docking/SDockTab.h"
