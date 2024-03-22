@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "CoreUObject/Public/UObject/Class.h"
+#include "UObject/Class.h"
 #include "NimClassBase.generated.h"
 
 /**

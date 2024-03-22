@@ -83,8 +83,9 @@ public:
 	static TArray<T*> GetAllObjectsFromPackage(UPackage* Package) {
 			TArray<T*> Objects = {};
 			ForEachObjectWithPackage(Package, [&](UObject* Object) {
-				if(T* Obj = Cast<T>(Object))
+				if(T* Obj = Cast<T>(Object)){
 					Objects.Add(Obj);
+				}
 					return true;
 				});
 			return Objects;

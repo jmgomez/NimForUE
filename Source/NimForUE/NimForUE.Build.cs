@@ -36,11 +36,10 @@ public class NimForUE : ModuleRules
 		PublicDefinitions.Add("NIM_INTBITS=64");
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
-
-
 		PublicIncludePathModuleNames.Add("GameplayAbilities");
-
-
+		Console.WriteLine(EngineDirectory);
+		PrivateIncludePaths.Add(GetModuleDirectory("Engine"));
+		
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"GameplayAbilities",
 			"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem",

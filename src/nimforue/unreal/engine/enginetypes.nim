@@ -204,8 +204,8 @@ type
   # UTexturePtr* = ptr UTexture
   # UTextureRenderTarget2D* {.importcpp, inheritable, pure .} = object of UTexture
   # UTextureRenderTarget2DPtr* = ptr UTextureRenderTarget2D
-
-  UAsyncActionLoadPrimaryAssetBase* {.importcpp, inheritable, pure .} = object of UObject
+  #Jumps one level in the Class hierarchy as this Class is in inaccessible private folder now and it's the base class of multiple codegened classes.
+  UAsyncActionLoadPrimaryAssetBase* {.importcpp:"UBlueprintAsyncActionBase", inheritable, pure .} = object of UObject
   UAsyncActionLoadPrimaryAssetBasePtr* = ptr UAsyncActionLoadPrimaryAssetBase
 
   ASceneCapture* {.importcpp, inheritable, pure .} = object of AActor

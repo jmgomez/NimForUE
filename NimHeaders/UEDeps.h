@@ -21,29 +21,30 @@
 #include "Engine/AssetManager.h"
 #include "Engine/DeveloperSettings.h"
 
-#include "Engine/Classes/Animation/AnimNotifies/AnimNotify.h"
-#include "Engine/Classes/Animation/AnimInstance.h"
-#include "Engine/Classes/Animation/BlendProfile.h"
-#include "Engine/Classes/Animation/AnimBlueprintGeneratedClass.h"
-#include "Engine/Classes/GameFramework/Actor.h"
-#include "Engine/Classes/GameFramework/Volume.h"
-#include "Engine/Classes/GameFramework/GameSession.h"
-#include "Engine/Classes/GameFramework/PlayerController.h"
-#include "Engine/Classes/GameFramework/GameMode.h"
-#include "Engine/Classes/GameFramework/GameModeBase.h"
-#include "Engine/Classes/GameFramework/WorldSettings.h"
-#include "Engine/Classes/GameFramework/HUD.h"
-#include "Engine/Classes/GameFramework/PlayerStart.h"
-#include "Engine/Classes/Engine/World.h"
-#include "Engine/Classes/Engine/Engine.h"
-#include "Engine/Classes/Engine/DataTable.h"
-#include "Engine/Classes/Engine/Channel.h"
-#include "Engine/Classes/Engine/SceneCapture.h"
+#include "Animation/AnimNotifies/AnimNotify.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/BlendProfile.h"
+#include "Animation/AnimBlueprintGeneratedClass.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/Volume.h"
+#include "GameFramework/GameSession.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/GameMode.h"
+#include "GameFramework/GameModeBase.h"
+#include "GameFramework/WorldSettings.h"
+#include "GameFramework/HUD.h"
+#include "GameFramework/PlayerStart.h"
+#include "Engine/World.h"
+#include "Engine/Engine.h"
+#include "Engine/DataTable.h"
+#include "Engine/Channel.h"
+#include "Engine/SceneCapture.h"
 
-#include "Engine/Public/WorldPartition/DataLayer/DataLayerInstance.h"
+#include "WorldPartition/DataLayer/DataLayerInstance.h"
 #include "Engine/DamageEvents.h"
-#include "Engine/Private/AsyncActionLoadPrimaryAsset.h"
-#include "Engine/Public/PreviewScene.h"
+// #include "Private/AsyncActionLoadPrimaryAsset.h"
+#include "Kismet/BlueprintAsyncActionBase.h"
+#include "PreviewScene.h"
 
 
 #include "Misc/AutomationTest.h"
@@ -63,10 +64,10 @@
 #include "../Source/NimForUE/Public/NimForUEHeaders.h"
 //Editor only
 //#include "FakeFactory.h"
-#include "PhysicsCore/Public/PhysicalMaterials/PhysicalMaterial.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 
 
-#include "GameplayTags/Classes/GameplayTagContainer.h"
+#include "GameplayTagContainer.h"
 
 #include "InputAction.h"
 #include "InputActionValue.h"
@@ -74,7 +75,7 @@
 #include "EnhancedInputSubsystems.h"
 
 
-// #if WITH_EDITORONLY_DATA
+#if WITH_EDITORONLY_DATA
   #include "Editor/UnrealEdEngine.h"
   #include "Editor/UnrealEd/Public/Editor.h"
   #include "Editor/UnrealEd/Public/EditorViewportClient.h"
@@ -92,7 +93,7 @@
   //asset tools
   #include "AssetTypeActions_Base.h"
 
-// #endif
+#endif
 #include "Components/Widget.h"
 #include "Components/Viewport.h"
 #include "Widgets/Docking/SDockTab.h"

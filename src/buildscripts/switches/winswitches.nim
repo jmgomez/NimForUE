@@ -86,6 +86,7 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool, target:string
     "/wd4653", #: compiler option 'Optimizations (one or more of /Oawstgp[y]) or debug checks (one or more of /GZ, /RTCcsu)' inconsistent with precompiled header; current command-line option ignored
     "/wd4701", #disables warning C4701: potentially uninitialized local variable 'dc' used
     "/wd5105", #disables warning C5105: macro expansion producing 'defined' has undefined behavior
+    "/DSAL_NO_ATTRIBUTE_DECLARATIONS=1", 
     "/TP",
     "/GR-", # /GR[-]	Enables run-time type information (RTTI).
   
