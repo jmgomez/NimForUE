@@ -86,8 +86,9 @@ TArray<UClass*> UReflectionHelpers::GetAllClassesFromModule(FString ModuleName) 
 	if(!Package) return {};
 	TArray<UClass*> Classes = {};
 	ForEachObjectWithPackage(Package, [&](UObject* Object) {
-		if(UClass* Class = Cast<UClass>(Object))
+		if(UClass* Class = Cast<UClass>(Object)) {
 			Classes.Add(Class);
+		}
 			return true;
 		});
 	return Classes;

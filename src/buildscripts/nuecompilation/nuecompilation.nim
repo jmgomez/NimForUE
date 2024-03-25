@@ -11,12 +11,6 @@ let config = getNimForUEConfig()
 let nimCmd = "nim" #so we can easy switch with nim_temp
 # let nimCmd = "nim_temp" #so we can easy switch with nim_temp
 
-func getBaseNimCacheDir(folderName:string): string =
-  let platformDir = 
-    when defined windows: "win"
-    else: "mac"
-  &".nimcache/{folderName}/{platformDir}/"
-
 #In mac we need to do a universal 
 proc compileHostMac*() =
   let common = @[
@@ -227,7 +221,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
 
   ensureGameConfExists()
   
-  let nimCache = getBaseNimCacheDir(name)/(if withDebug and not isCompileOnly: "debug" else: "release")
+  let nimCache = getBaseNimCacheDir(name) / (if withDebug and not isCompileOnly: "debug" else: "release")
   let isGame = name == "game"
   
   let entryPoint = NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim")

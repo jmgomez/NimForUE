@@ -228,8 +228,7 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
     
 
 proc copyCppToModule(name:string, nimGeneratedCodeDir : string) =   
-  let platform = when defined(windows): "win" else: "mac"
-  let cppSrcDir = PluginDir / &".nimcache/{name}/{platform}/release"
+  let cppSrcDir = PluginDir / getBaseNimCacheDir(name) / "release" #embed debug? 
     # cppSrcDir = PluginDir / &".nimcache/nimforuegame/release"
   copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
 
@@ -258,7 +257,6 @@ proc generateModule*(name, pluginName : string) =
   log &"Generated module {name} in {nimGeneratedCodeDir}"
   
  #this is a param 
-
 
 proc cleanGenerateCode*(name, genPluginDir:string) = 
   let moduleDir = genPluginDir / "Source" / name 
@@ -293,6 +291,7 @@ proc removePlugin*(name:string) =
 
 proc generatePlugin*(name:string) =
   let uePluginDir = parentDir(PluginDir)
+  log &"Generating plugin {name} in {uePluginDir}"
   let genPluginDir = uePluginDir / name
   let genPluginSourceDir = genPluginDir / "Source"
   let upluginFilePath = genPluginDir / (name & ".uplugin")
@@ -302,6 +301,7 @@ proc generatePlugin*(name:string) =
     createDir(genPluginDir)
     createDir(genPluginSourceDir)
     writeFile(upluginFilePath, getPluginTemplateFile(name, modules))
+    #TODO make sure is not added before first
     addPluginToUProject(name)
     for module in modules:
       generateModule(module, name)

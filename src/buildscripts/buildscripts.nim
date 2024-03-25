@@ -83,6 +83,29 @@ proc tryGetGameUserConfigValue*[T](key: string) : Option[T] =
 proc getGameUserConfigValue*[T](key: string, default:T) : T =
   tryGetGameUserConfigValue[T](key).get(default)
 
+#TODO move from here
+type 
+  #interal NUE platform target (different than current editor platfrom)
+  #it will be used to setup the compiler flags and ultimately generate 
+  #a plugin for each platform
+  PlatformTargetKind* = enum 
+    ptkWindows = "windows"
+    ptkLinux = "linux" #Not supported so far
+    ptkMac = "macos" #Not supported so far
+    ptkIOS = "ios" #Not supported so far
+    ptkAndroid = "android" #Not supported so far
+    #Aadd Support to consoles here
+
+proc getPlatformTarget*(): PlatformTargetKind = 
+  let defaultPlatform = 
+    when defined(windows): "windows"
+    elif defined(macos): "android"
+    else: error("Platform not supported")
+  #TODO when running against the editor fallback to the default one. 
+  parseEnum[PlatformTargetKind](getGameUserConfigValue("platform", defaultPlatform))
+
+proc getBaseNimCacheDir*(folderName:string): string =
+  &".nimcache/{folderName}/{getPlatformTarget()}/"
 
 proc executeNueTask(task: string) =
   let cmd = &"{PluginDir}/{NueExec} {task}"

@@ -55,7 +55,7 @@ proc getGamePathFromGameDir*() : string =
 
 proc UEVersion*() : float = #defers the execution until it's needed  
   when defined(nimsuggest) or defined(nimcheck): return 5.2 #Does really matter as it doesnt include anything
-
+  when defined(android): return 5.3 #TODO do not hardcode this
   let uprojectFile = getGamePathFromGameDir()
   let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
   parseFloat(engineAssociation)  

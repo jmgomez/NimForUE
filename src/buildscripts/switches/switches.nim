@@ -1,14 +1,23 @@
 
 import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
 import buildscripts/[buildcommon, buildscripts, nimforueconfig]
-when defined(macosx):
-  import macswitches
-  export macswitches
-elif defined(windows):
+
+# when defined(android):
+const platformTarget = getPlatformTarget()
+#TODO do this switch at runtime so we can toggle the switch
+#(needs to refactor the way the imports are done first)
+when platformTarget == ptkAndroid:
+  import androidswitches
+  export androidswitches
+elif platformTarget == ptkWindows:
   import winswitches
   export winswitches
+elif platformTarget == ptkMac:
+  import macswitches
+  export macswitches
+  static: echo "****Compiling for mac"
 else:
-  quit("Platform not supported")
+  quit("Platform not supported")  
 
 
 let config = getNimForUEConfig()

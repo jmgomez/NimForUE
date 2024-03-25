@@ -38,8 +38,10 @@ proc echoTasks() =
     log("  " & t.name & (if t.name.len < 6: "\t\t" else: "\t") & t.t.description)
 
 proc getPluginName(): string = 
-  if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
-
+  result = 
+    if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
+  #plugins are created per platform so we append the platform to the name
+  result = result & ($getPlatformTarget()).capitalizeAscii()
 
 proc main() =
   if commandLineParams().join(" ").len == 0:
