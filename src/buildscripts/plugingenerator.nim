@@ -175,7 +175,8 @@ proc getPluginTemplateFile(name:string, modules:seq[string]) : string =
 
 proc getModuleBuildCsFile(name:string) : string =
   #Probably bindings needs a different one
-  ModuleBuildcsTemplate.format(name, escape(PluginDir))
+  let modName = name & ($getPlatformTarget()).capitalizeAscii()
+  ModuleBuildcsTemplate.format(modName, escape(PluginDir))
 
 proc getModuleHFile(name:string) : string =
   ModuleHFileTemplate.format(name)
