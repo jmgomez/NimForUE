@@ -40,12 +40,13 @@ $2
 } 
     
 """
+#TODO LoadingPhase should be before to support EarlyTypes (implement the hook first)
 const ModuleTemplateForUPlugin = """
     {
       "Name" : "$1",
       "Type" : "Runtime",
-      "LoadingPhase" : "PostDefault",
-      "AdditionalDependencies" : []
+      "LoadingPhase" : "PostDefault", 
+      "AdditionalDependencies" : ["NimForUE"]
     }"""
 
 
@@ -273,7 +274,10 @@ proc addPluginToUProject(name: string) =
   let plugin = newJObject()
   plugin["Name"] = name.toJson()
   plugin["Enabled"] = true.toJson()
-  uprojectJson["Plugins"].add(plugin)
+  plugin["BlacklistTargets"] = ["Editor"].toJson()
+  plugin["SupportedTargetPlatforms"] = [($getPlatformTarget()).capitalizeAscii()].toJson()
+  if uprojectJson["Plugins"].filterIt(it["Name"].getStr == name).len == 0:
+    uprojectJson["Plugins"].add(plugin)
   
   getGamePathFromGameDir().writeFile(uprojectJson.pretty)
 
