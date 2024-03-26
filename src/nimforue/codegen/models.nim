@@ -28,7 +28,7 @@ const ReinstanceMetadataKey* = "Reinstance" #force the reinstantiation of a UETy
 const CompileBPMetadataKey* = "CompileBP" #recompile all childs even if nothing changes
 const NeedsObjectInitializerCtorMetadataKey* = "NeedsObjectInitializerCtor" #recompile all childs even if nothing changes
 
-type #TODO get rid of this
+type #TODO get rid of this (this was used before Nim supported virtual)
   CppModifiers* = enum
     cmNone, cmConst
     
@@ -135,7 +135,7 @@ type
                 isParentInPCH* : bool
                 forwardDeclareOnly* : bool #if the class is forward declared only. This means we dont define the class in the current module, it maybe defined (func emmited) in another module or in the PCH
                 hasObjInitCtor* : bool #if the class has a constructor that takes an object initializer. This is used to generate the constructor in the nim side
-                
+                hasDefaultCtor* : bool #if the class has a default constructor, usually implies the above. Only used for bindings so far
             of uetStruct:
                 superStruct* : string
                 structFlags*: EStructFlagsVal

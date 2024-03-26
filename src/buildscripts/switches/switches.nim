@@ -84,8 +84,8 @@ proc targetSwitches*(withDebug: bool, target:string): seq[string] =
 
 proc getPlatformSwitches(withPch, withDebug : bool, target: static string): seq[string] =
   const platformTarget = getPlatformTarget()
-  #Guest is editor only. Maybe we should just check on that
-  if target == "guest":
+  #TODO check WithEditor as well
+  if target in ["guest", "bindings"]:
     when defined(windows):
       return winswitches.getPlatformSwitches(withPch, withDebug, target)
     elif defined(macos):

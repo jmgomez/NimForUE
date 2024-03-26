@@ -360,6 +360,7 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
     .map(p => (if uerImportBlueprintOnly in rules: getFirstBpExposedParent(p) else: p))
 
   let parentName = parent.map(p=>p.getPrefixCpp() & p.getName()).get("")
+  var hasDefaultCtor = true
 
 
   let namePrefixed = cls.getPrefixCpp() & cls.getName()
@@ -368,11 +369,14 @@ func toUEType*(cls: UClassPtr, rules: seq[UEImportRule] = @[], pchIncludes:seq[s
     if shouldBeIgnored(name, rule) or (parentName != "" and shouldBeIgnored(parentName, rule)):
       UE_Log &"Ignoring {name} because it is in the ignore list"
       return none(UEType)
+    if rule.rule == uerNoDefaultCtor and parentName in rule.affectedTypes:
+      hasDefaultCtor = false #we should modify the rule to propagte that this class also has no default ctor
   
   when definitions.WithEditor: 
     #Only make sense with editor because this is only used for generating the bindings
     let isInPCH = name in getAllPCHTypes() 
     var isParentInPCH = parentName in getAllPCHTypes() #TODO not sure about this one thoug. 
+
   else:
     let isInPCH = false
     let isParentInPCH = false

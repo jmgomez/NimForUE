@@ -784,7 +784,8 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
 
 #todo cache to a file
 when not defined(game) or defined(vmhost):
-  when not defined(nimcheck) and not defined(nimsuggest):
+  when not defined(nimcheck) and not defined(nimsuggest) and 
+  not defined(bindings):
     const dir = PluginDir / "src" / "nimforue" / "unreal" 
     const entryPoint = dir / "prelude.nim"
     # const dir = PluginDir / "src" / "nimforue" / "unreal" / "engine" 

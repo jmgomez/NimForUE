@@ -99,10 +99,12 @@ type
 proc getPlatformTarget*(): PlatformTargetKind = 
   let defaultPlatform = 
     when defined(windows): "windows"
-    elif defined(macos): "android"
-    else: error("Platform not supported")
-  #TODO when running against the editor fallback to the default one. 
-  parseEnum[PlatformTargetKind](getGameUserConfigValue("platform", defaultPlatform))
+    elif defined(macos): "macos"
+    else: ""
+  if getNimForUEConfig().withEditor:
+    parseEnum[PlatformTargetKind](defaultPlatform)
+  else:
+    parseEnum[PlatformTargetKind](getGameUserConfigValue("platform", defaultPlatform))
 
 proc getBaseNimCacheDir*(folderName:string): string =
   &".nimcache/{folderName}/{getPlatformTarget()}/"

@@ -41,6 +41,7 @@ type
         uerForce #Force the import of a type. This is useful for types that are not exported by default but we want to import them anyway
         uerExcludeDeps #Module deps to exclude from the module. They are in affectTypes. Module rule only
         uerSingleModule #makes a package be produced as a single module
+        uerNoDefaultCtor #The class doesnt have default ctor so we dont generate className = default for it (notice this is inherited). Ideally we should detect it from C++ directly as it only applies to PCH types.
     UERuleTarget* = enum 
         uertType
         uertField
@@ -153,7 +154,10 @@ moduleImportRules["Engine"] = @[
     "FActorDataLayer", #Deprecated by UE in 5.3.x
     ]), 
     # makeImportedRuleModule(uerIgnoreHash),
-    
+  makeImportedRuleType(uerNoDefaultCtor, @[
+    "USoundEffectPreset", "APlayerStart"
+  ]),
+
   makeImportedRuleField(uerIgnore, @[
     "FOnTemperatureChangeDelegate",
     "FChaosPhysicsSettings",
