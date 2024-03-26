@@ -237,9 +237,9 @@ task lib, "Builds a game lib":
     compileLib(taskOptions["name"], extraSwitches, debug, release, threads)
     if shouldGenerateModule:
       generatePlugin(getPluginName())
-      generateModule(name.capitalizeAscii(), pluginName)
+      generateModule(name.capitalizeAscii(), getPluginName())
       #TODO remove this module dll so it isnt loaded
-      ubuild(taskOptions)
+      # ubuild(taskOptions)
   else:
     log "You need to specify a name for the lib. i.e. 'nue lib --name=mylib'"
  

@@ -3,22 +3,21 @@ import std / [ options, os, osproc, parseopt, sequtils, strformat, strutils, sug
 import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 
 # when defined(android):
-const platformTarget = getPlatformTarget()
 #TODO do this switch at runtime so we can toggle the switch
 #(needs to refactor the way the imports are done first)
-when platformTarget == ptkAndroid:
-  import androidswitches
-  export androidswitches
-elif platformTarget == ptkWindows:
-  import winswitches
-  export winswitches
-elif platformTarget == ptkMac:
-  import macswitches
-  export macswitches
-  static: echo "****Compiling for mac"
-else:
-  quit("Platform not supported")  
-
+# when platformTarget == ptkAndroid:
+#   import androidswitches
+#   export androidswitches
+# elif platformTarget == ptkWindows:
+#   import winswitches
+#   export winswitches
+# elif platformTarget == ptkMac:
+#   import macswitches
+#   export macswitches
+#   static: echo "****Compiling for mac"
+# else:
+#   quit("Platform not supported")  
+import winswitches, macswitches, androidswitches
 
 let config = getNimForUEConfig()
 const withPCH* = true 
@@ -82,6 +81,26 @@ proc targetSwitches*(withDebug: bool, target:string): seq[string] =
     "--nimBasePattern:nuebase.h",
     ]
 
+
+proc getPlatformSwitches(withPch, withDebug : bool, target: static string): seq[string] =
+  const platformTarget = getPlatformTarget()
+  #Guest is editor only. Maybe we should just check on that
+  if target == "guest":
+    when defined(windows):
+      return winswitches.getPlatformSwitches(withPch, withDebug, target)
+    elif defined(macos):
+      return macswitches.getPlatformSwitches(withPch, withDebug, target)
+    else:
+      quit("Platform not supported")
+  case platformTarget:
+  of ptkWindows:
+    winswitches.getPlatformSwitches(withPch, withDebug, target)
+  of ptkMac:
+    macswitches.getPlatformSwitches(withPch, withDebug, target)
+  of ptkAndroid:
+    androidswitches.getPlatformSwitches(withPch, withDebug, target)
+  else:
+    quit("Platform not supported")
 
 proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, true, "")
 proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "guest") 
