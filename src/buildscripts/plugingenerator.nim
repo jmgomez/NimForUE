@@ -136,7 +136,7 @@ DEFINE_LOG_CATEGORY($1);
 
 #define LOCTEXT_NAMESPACE "FGameCorelibEditor"
 
-void $1NimMain();
+void $2NimMain();
 extern  "C" void* reinstanceNextFrame();
 extern  "C" void startNue();
 
@@ -147,13 +147,13 @@ void F$1::StartupModule()
   //TODO improve for livecoding
   //But do no start Nim when no editor
 //#else
-	 $1NimMain();
+	 $2NimMain();
     startNue();
 //#endif
 #if PLATFORM_WINDOWS && WITH_EDITOR
   ILiveCodingModule* LiveCodingModule = FModuleManager::GetModulePtr<ILiveCodingModule>("LiveCoding");
   LiveCodingModule->GetOnPatchCompleteDelegate().AddLambda([] {
-    GameNimMain();
+    $2NimMain();
     reinstanceNextFrame();
   });
 #endif
@@ -169,20 +169,23 @@ void F$1::ShutdownModule()
 IMPLEMENT_MODULE(F$1, $1)
 """
 
+proc nameWithPlatformSuffix(name:string): string =
+  name & ($getPlatformTarget()).capitalizeAscii()
+
 proc getPluginTemplateFile(name:string, modules:seq[string]) : string =
-  let modulesStr = modules.mapIt(ModuleTemplateForUPlugin.format(it)).join(",\n")
+  let modulesStr = modules.mapIt(ModuleTemplateForUPlugin.format(nameWithPlatformSuffix(it))).join(",\n")
   UPluginTemplate.format(name, modulesStr)
 
 proc getModuleBuildCsFile(name:string) : string =
   #Probably bindings needs a different one
-  let modName = name & ($getPlatformTarget()).capitalizeAscii()
+  let modName = nameWithPlatformSuffix(name)
   ModuleBuildcsTemplate.format(modName, escape(PluginDir))
 
 proc getModuleHFile(name:string) : string =
-  ModuleHFileTemplate.format(name)
+  ModuleHFileTemplate.format(nameWithPlatformSuffix(name))
 
 proc getModuleCppFile(name:string) : string =
-  ModuleCppFileTemplate.format(name)
+  ModuleCppFileTemplate.format(nameWithPlatformSuffix(name), name)
 
 
 
@@ -236,7 +239,7 @@ proc copyCppToModule(name:string, nimGeneratedCodeDir : string) =
 
 
 proc generateModule*(name, pluginName : string) = 
-  let moduleName = name.capitalizeAscii()
+  let moduleName = nameWithPlatformSuffix(name)
   let uePluginDir = parentDir(PluginDir)
   let genPluginDir = uePluginDir / pluginName
   let genPluginSourceDir = genPluginDir / "Source"

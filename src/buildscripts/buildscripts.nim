@@ -172,7 +172,7 @@ include unrealprelude
 uClass AMyNimActor of AActor:
   uprops:
     myInt: int32
-  ufuncs(CallFromEditor):
+  ufuncs(CallInEditor):
     proc myFunc() =
       log "Hello from Nim"
 """)
