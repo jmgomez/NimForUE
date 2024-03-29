@@ -83,9 +83,9 @@ proc targetSwitches*(withDebug: bool, target:string): seq[string] =
 
 
 proc getPlatformSwitches(withPch, withDebug : bool, target: static string): seq[string] =
-  const platformTarget = getPlatformTarget()
+  let platformTarget = getPlatformTarget()
   #TODO check WithEditor as well
-  if target in ["guest", "bindings"]:
+  when target in ["guest", "bindings"]:
     when defined(windows):
       return winswitches.getPlatformSwitches(withPch, withDebug, target)
     elif defined(macos):

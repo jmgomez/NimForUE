@@ -162,4 +162,29 @@ proc copyNimForUELibToUEDir*(libName:string) =
   copyFile(fileFullSrc, fileFullDst)
   log "Copied " & fileFullSrc & " to " & fileFullDst
 
+proc createGameDir*() = 
+  createDir(NimGameDir())
+  if not fileExists(NimGameDir() / "game.nim"):
+    writeFile(NimGameDir() / "game.nim", 
+"""
+include unrealprelude
 
+uClass AMyNimActor of AActor:
+  uprops:
+    myInt: int32
+  ufuncs(CallFromEditor):
+    proc myFunc() =
+      log "Hello from Nim"
+""")
+
+
+proc addNUEPluginToProject*() = 
+  var uprojectJson = getGamePathFromGameDir().readFile.parseJson()
+  let plugin = newJObject()
+  plugin["Name"] = "NimForUE".toJson()
+  plugin["Enabled"] = true.toJson()
+  
+  if uprojectJson["Plugins"].filterIt(it["Name"].getStr == "NimForUE").len == 0:
+    uprojectJson["Plugins"].add(plugin)
+  
+  getGamePathFromGameDir().writeFile(uprojectJson.pretty)

@@ -355,11 +355,13 @@ task genbindingsall, "Runs the Generate Bindings commandlet":
 
 
 task setup, "Setups the plugin by building the initial tasks in order":
+  createGameDir()
   ubuild(taskOptions)
   guest(taskOptions)
   genbindingsall(taskOptions)
   rebuildlibs(taskOptions)
-
+  addNUEPluginToProject()
+  compileLib("game", @[], false, false)
   
 task starteditor, "opens the editor":
   ubuild(taskOptions)
