@@ -35,7 +35,7 @@ const UPluginTemplate = """
 	"Installed" : false,
 	"Modules" :
 	[
-$2
+$3
 	]
 } 
     
@@ -46,7 +46,11 @@ const ModuleTemplateForUPlugin = """
       "Name" : "$1",
       "Type" : "Runtime",
       "LoadingPhase" : "PostDefault", 
-      "AdditionalDependencies" : ["NimForUE"]
+      "AdditionalDependencies" : ["NimForUE"],
+      "BlacklistTargets": ["Editor"],
+      "WhitelistPlatforms": ["$2"]
+
+
     }"""
 
 
@@ -100,8 +104,8 @@ public class $1 : ModuleRules
 		PublicIncludePaths.Add(nimHeadersPath);
 		bUseUnity = false;
     //TODO not hardcoded and not mac os specific
-    var bindingsLibPath = "/Users/jmgomez/NimTemplate/NimTemplate/Plugins/NimForUE/Binaries/nim/libbindings.a";
-		PublicAdditionalLibraries.Add(bindingsLibPath);
+    //var bindingsLibPath = "/Users/jmgomez/NimTemplate/NimTemplate/Plugins/NimForUE/Binaries/nim/libbindings.a";
+		//PublicAdditionalLibraries.Add(bindingsLibPath);
 	}
 }
 """
@@ -172,9 +176,19 @@ IMPLEMENT_MODULE(F$1, $1)
 proc nameWithPlatformSuffix(name:string): string =
   name & ($getPlatformTarget()).capitalizeAscii()
 
+proc platformTargetToUnrealTarget(target: PlatformTargetKind): string = 
+  case target
+  of ptkWindows: "Win64"
+  of ptkAndroid: "Android"
+  of ptkIOS: "IOS"
+  of ptkMac: "MacOs"
+  else: 
+    raise newException(Defect, "Invalid platform target")
+    
+
 proc getPluginTemplateFile(name:string, modules:seq[string]) : string =
-  let modulesStr = modules.mapIt(ModuleTemplateForUPlugin.format(nameWithPlatformSuffix(it))).join(",\n")
-  UPluginTemplate.format(name, modulesStr)
+  let modulesStr = modules.mapIt(ModuleTemplateForUPlugin.format(nameWithPlatformSuffix(it), platformTargetToUnrealTarget(getPlatformTarget()))).join(",\n")
+  UPluginTemplate.format(name, platformTargetToUnrealTarget(getPlatformTarget()), modulesStr)
 
 proc getModuleBuildCsFile(name:string) : string =
   #Probably bindings needs a different one
@@ -278,8 +292,6 @@ proc addPluginToUProject(name: string) =
   let plugin = newJObject()
   plugin["Name"] = name.toJson()
   plugin["Enabled"] = true.toJson()
-  plugin["BlacklistTargets"] = ["Editor"].toJson()
-  plugin["SupportedTargetPlatforms"] = [($getPlatformTarget()).capitalizeAscii()].toJson()
   if uprojectJson["Plugins"].filterIt(it["Name"].getStr == name).len == 0:
     uprojectJson["Plugins"].add(plugin)
   

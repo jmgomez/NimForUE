@@ -386,7 +386,7 @@ task showtypes, "Traverses UEDeps.h looking for types (uclasses only for now)":
 
 
 task ok, "prints ok if NUE and Host are built":
-  if fileExists(HostLibPath):
+  if fileExists(HostLibPath()):
     log "ok host built"
   else:
     log "host not built"

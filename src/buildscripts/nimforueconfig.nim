@@ -176,10 +176,12 @@ proc getNimForUEConfig*() : NimForUEConfig =
 
 let
   ueLibsDir = PluginDir/"Binaries"/"nim"/"ue" #THIS WILL CHANGE BASED ON THE CURRENT CONF
-  NimForUELibDir* = ueLibsDir.normalizePathEnd()
-  HostLibPath* =  ueLibsDir / getFullLibName("hostnimforue")
-  GameLibPath* =  ueLibsDir / getFullLibName("game")
+  NimForUELibDir* = ueLibsDir.normalizePathEnd()  
   GenFilePath* = PluginDir / "src" / "hostnimforue"/"ffigen.nim"
+
+proc HostLibPath*(): string = ueLibsDir / getFullLibName("hostnimforue")
+proc GameLibPath*(): string = ueLibsDir / getFullLibName("game")
+
 proc NimGameDir*() :string = getOrCreateNUEConfig().gameDir / "NimForUE" #notice this is a proc so it's lazy loaded
 proc GamePath*() : string = getGamePathFromGameDir()
 proc GameName*() : string = GamePath().split(PathSeparator)[^1].split(".")[0]
