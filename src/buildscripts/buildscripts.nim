@@ -93,21 +93,21 @@ type
     ptkLinux = "linux" #Not supported so far
     ptkMac = "macos" #Not supported so far
     ptkIOS = "ios" #Not supported so far
-    ptkAndroid = "android" #Not supported so far
-    #Aadd Support to consoles here
+    ptkAndroid = "android" 
+    #Add Support to consoles here
 
-proc getPlatformTarget*(): PlatformTargetKind = 
+proc getPlatformTarget*(arg: string): PlatformTargetKind = 
   let defaultPlatform = 
     when defined(windows): "windows"
     elif defined(macos): "macos"
     else: ""
-  if getNimForUEConfig().withEditor:
+  if getNimForUEConfig().withEditor or arg == "":
     parseEnum[PlatformTargetKind](defaultPlatform)
   else:
-    parseEnum[PlatformTargetKind](getGameUserConfigValue("platform", defaultPlatform))
+    parseEnum[PlatformTargetKind](arg)
 
-proc getBaseNimCacheDir*(folderName:string): string =
-  &".nimcache/{folderName}/{getPlatformTarget()}/"
+proc getBaseNimCacheDir*(folderName:string, platformTarget: PlatformTargetKind): string =
+  &".nimcache/{folderName}/{platformTarget}/"
 
 proc executeNueTask(task: string) =
   let cmd = &"{PluginDir}/{NueExec} {task}"

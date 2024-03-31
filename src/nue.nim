@@ -37,11 +37,17 @@ proc echoTasks() =
   for t in tasks:
     log("  " & t.name & (if t.name.len < 6: "\t\t" else: "\t") & t.t.description)
 
+proc getPlatformTargetFromOptions(taskOptions: Table[string, string]): PlatformTargetKind =
+  if "platform" in taskOptions:
+    taskOptions["platform"].getPlatformTarget()
+  else:
+    getPlatformTarget("") #not specify defaults to the current platform
+
 proc getPluginName(): string = 
   result = 
     if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
   #plugins are created per platform so we append the platform to the name
-  result = result & ($getPlatformTarget()).capitalizeAscii()
+  result = result & ($getPlatformTargetFromOptions(taskOptions)).capitalizeAscii()
 
 proc main() =
   if commandLineParams().join(" ").len == 0:
@@ -234,10 +240,11 @@ task lib, "Builds a game lib":
     let name = taskOptions["name"]
     log "Compiling lib " & name & "..."
     assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"         
-    compileLib(taskOptions["name"], extraSwitches, debug, release, threads)
+    let platformTarget = getPlatformTargetFromOptions(taskOptions)
+    compileLib(taskOptions["name"], extraSwitches, debug, release, threads, platformTarget)
     if shouldGenerateModule:
-      generatePlugin(getPluginName())
-      generateModule(name.capitalizeAscii(), getPluginName())
+      generatePlugin(getPluginName(), platformTarget)
+      generateModule(name.capitalizeAscii(), getPluginName(), platformTarget)
       #TODO remove this module dll so it isnt loaded
       # ubuild(taskOptions)
   else:
@@ -361,7 +368,7 @@ task setup, "Setups the plugin by building the initial tasks in order":
   genbindingsall(taskOptions)
   rebuildlibs(taskOptions)
   addNUEPluginToProject()
-  compileLib("game", @[], false, false)
+  compileLib("game", @[], false, false, false, getPlatformTargetFromOptions(taskOptions))
   
 task starteditor, "opens the editor":
   ubuild(taskOptions)
@@ -429,16 +436,18 @@ task buildmodules, "Rebuilds the plugin, game and libs":
   #remove code on the plugin 
   taskOptions["nobuild"] = ""
   taskOptions["livecoding"] = ""
+  let platformTarget = getPlatformTargetFromOptions(taskOptions)
   let libs = getAllGameLibs()
   log "Compiling Nim only lib " & $libs
   for lib in libs:
     taskOptions["name"] = lib   
     lib(taskOptions)
-    generateModule(lib.capitalizeAscii(), pluginName)  
+    generateModule(lib.capitalizeAscii(), pluginName, platformTarget)  
 
 task genplugin, "Creates a plugin, by default it uses the name of the game with NUE as prefix":  
   #TODO replace this with a call to all libs 
-  generatePlugin(getPluginName())
+  let platformTarget = getPlatformTargetFromOptions(taskOptions)
+  generatePlugin(getPluginName(), platformTarget)
  
 task removeplugin, "Removes the plugin, by default it uses the name of the game with NUE as prefix":  
   removePlugin(getPluginName())

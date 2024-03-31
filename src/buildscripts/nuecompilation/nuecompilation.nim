@@ -120,7 +120,8 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
     "-d:libname:guest",
     "-d:OutputHeader:Guest.h",
   ]
-  let nimcacheDir = getBaseNimCacheDir("guest")
+  let platformTarget = getPlatformTarget("") #Guest is only whithEditor 
+  let nimcacheDir = getBaseNimCacheDir("guest", platformTarget)
   let buildFlags = @[buildSwitches, targetSwitches(withDebug, "guest"), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"{nimCmd} cpp {buildFlags} --app:lib --d:genffi -d:withPCH --nimcache:{nimcacheDir} src/nimforue.nim"
   doAssert(execCmd(compCmd)==0)
@@ -198,7 +199,7 @@ proc getBindingsLib(): string =
   else:
     "Binaries/nim/libbindings.a"
 
-proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:bool, withThreads = false) = 
+proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:bool, withThreads = false, platformTarget: PlatformTargetKind) = 
   var extraSwitches = extraSwitches
   let isVm = "vm" in name
   var gameSwitches = @[
@@ -221,13 +222,13 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
 
   ensureGameConfExists()
   
-  let nimCache = getBaseNimCacheDir(name) / (if withDebug and not isCompileOnly: "debug" else: "release")
+  let nimCache = getBaseNimCacheDir(name, platformTarget) / (if withDebug and not isCompileOnly: "debug" else: "release")
   let isGame = name == "game"
   
   let entryPoint = NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim")
   let releaseFlag = if withRelease: "-d:danger" else: ""
   let threadFlag = if withThreads: "--threads:on" else: "" #off by default (switches)
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes, uesymbols, gamePlatformSwitches(withDebug, platformTarget), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"{nimCmd} cpp {buildFlags} {releaseFlag} {threadFlag}  --nimMainPrefix:{name.capitalizeAscii()}  -d:withPCH --nimcache:{nimCache} {entryPoint}"
   # echo compCmd
   doAssert(execCmd(compCmd)==0)
@@ -235,16 +236,8 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
 
   if not isCompileOnly:
     copyNimForUELibToUEDir(name)
-  
 
-proc compileGame*(extraSwitches:seq[string], withDebug, withRelease:bool) = 
-  compileLib("game", extraSwitches, withDebug, withRelease)
-
-
-
-
-
-proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) = 
+proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool, platformTarget: PlatformTargetKind) = 
   let gameSwitches = @[
     "-d:game",
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
@@ -269,7 +262,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool) =
   let gameFolder = NimGameDir()
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes, uesymbols, gamePlatformSwitches(withDebug), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes, uesymbols, gamePlatformSwitches(withDebug, platformTarget), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"nim cpp {buildFlags} --genScript --nimMainPrefix:Game   -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders

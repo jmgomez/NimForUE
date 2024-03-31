@@ -82,9 +82,9 @@ proc targetSwitches*(withDebug: bool, target:string): seq[string] =
     ]
 
 
-proc getPlatformSwitches(withPch, withDebug : bool, target: static string): seq[string] =
-  let platformTarget = getPlatformTarget()
+proc getPlatformSwitches(withPch, withDebug : bool, target: static string, platformTarget: PlatformTargetKind): seq[string] =
   #TODO check WithEditor as well
+  echo "Requesting switches for platform: ", platformTarget
   when target in ["guest", "bindings"]:
     when defined(windows):
       return winswitches.getPlatformSwitches(withPch, withDebug, target)
@@ -102,8 +102,8 @@ proc getPlatformSwitches(withPch, withDebug : bool, target: static string): seq[
   else:
     quit("Platform not supported")
 
-proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, true, "")
-proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "guest") 
-proc gamePlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "game") 
-proc bindingsPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "bindings") 
+proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, true, "", getPlatformTarget(""))
+proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "guest", getPlatformTarget(""))
+proc gamePlatformSwitches*(withDebug: bool, platformTarget:PlatformTargetKind): seq[string] = getPlatformSwitches(withPch, withDebug, "game", platformTarget) 
+proc bindingsPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "bindings", getPlatformTarget("")) 
 

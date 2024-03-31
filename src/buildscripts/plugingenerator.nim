@@ -47,8 +47,7 @@ const ModuleTemplateForUPlugin = """
       "Type" : "Runtime",
       "LoadingPhase" : "PostDefault", 
       "AdditionalDependencies" : ["NimForUE"],
-      "BlacklistTargets": ["Editor"],
-      "WhitelistPlatforms": ["$2"]
+      "PlatformAllowList": ["$2"]
 
 
     }"""
@@ -173,8 +172,8 @@ void F$1::ShutdownModule()
 IMPLEMENT_MODULE(F$1, $1)
 """
 
-proc nameWithPlatformSuffix(name:string): string =
-  name & ($getPlatformTarget()).capitalizeAscii()
+proc nameWithPlatformSuffix(name:string, platformTarget: PlatformTargetKind): string =
+  name & capitalizeAscii($platformTarget)
 
 proc platformTargetToUnrealTarget(target: PlatformTargetKind): string = 
   case target
@@ -186,20 +185,24 @@ proc platformTargetToUnrealTarget(target: PlatformTargetKind): string =
     raise newException(Defect, "Invalid platform target")
     
 
-proc getPluginTemplateFile(name:string, modules:seq[string]) : string =
-  let modulesStr = modules.mapIt(ModuleTemplateForUPlugin.format(nameWithPlatformSuffix(it), platformTargetToUnrealTarget(getPlatformTarget()))).join(",\n")
-  UPluginTemplate.format(name, platformTargetToUnrealTarget(getPlatformTarget()), modulesStr)
+proc getPluginTemplateFile(name:string, modules:seq[string], platformTarget: PlatformTargetKind) : string =
+  let modulesStr = modules
+    .mapIt(ModuleTemplateForUPlugin.format(
+      nameWithPlatformSuffix(it, platformTarget), 
+      platformTargetToUnrealTarget(platformTarget)))
+    .join(",\n")
+  UPluginTemplate.format(name, platformTargetToUnrealTarget(platformTarget), modulesStr)
 
-proc getModuleBuildCsFile(name:string) : string =
+proc getModuleBuildCsFile(name:string, platformTarget: PlatformTargetKind) : string =
   #Probably bindings needs a different one
-  let modName = nameWithPlatformSuffix(name)
+  let modName = nameWithPlatformSuffix(name, platformTarget)
   ModuleBuildcsTemplate.format(modName, escape(PluginDir))
 
-proc getModuleHFile(name:string) : string =
-  ModuleHFileTemplate.format(nameWithPlatformSuffix(name))
+proc getModuleHFile(name:string, platformTarget: PlatformTargetKind) : string =
+  ModuleHFileTemplate.format(nameWithPlatformSuffix(name, platformTarget))
 
-proc getModuleCppFile(name:string) : string =
-  ModuleCppFileTemplate.format(nameWithPlatformSuffix(name), name)
+proc getModuleCppFile(name:string, platformTarget: PlatformTargetKind) : string =
+  ModuleCppFileTemplate.format(nameWithPlatformSuffix(name, platformTarget), name)
 
 
 
@@ -246,14 +249,14 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
         
     
 
-proc copyCppToModule(name:string, nimGeneratedCodeDir : string) =   
-  let cppSrcDir = PluginDir / getBaseNimCacheDir(name) / "release" #embed debug? 
+proc copyCppToModule(name:string, nimGeneratedCodeDir : string, platformTarget: PlatformTargetKind) =   
+  let cppSrcDir = PluginDir / getBaseNimCacheDir(name, platformTarget) / "release" #embed debug? 
     # cppSrcDir = PluginDir / &".nimcache/nimforuegame/release"
   copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
 
 
-proc generateModule*(name, pluginName : string) = 
-  let moduleName = nameWithPlatformSuffix(name)
+proc generateModule*(name, pluginName : string, platformTarget: PlatformTargetKind) = 
+  let moduleName = nameWithPlatformSuffix(name, platformTarget)
   let uePluginDir = parentDir(PluginDir)
   let genPluginDir = uePluginDir / pluginName
   let genPluginSourceDir = genPluginDir / "Source"
@@ -269,10 +272,10 @@ proc generateModule*(name, pluginName : string) =
   createDir(privateDir)
   createDir(publicDir)
   createDir(nimGeneratedCodeDir)
-  writeFile(moduleCppFile, getModuleCppFile(name))
-  writeFile(moduleHFile, getModuleHFile(name))
-  writeFile(moduleBuildCsFile, getModuleBuildCsFile(name))  
-  copyCppToModule(name, nimGeneratedCodeDir)
+  writeFile(moduleCppFile, getModuleCppFile(name, platformTarget))
+  writeFile(moduleHFile, getModuleHFile(name, platformTarget))
+  writeFile(moduleBuildCsFile, getModuleBuildCsFile(name, platformTarget))  
+  copyCppToModule(name, nimGeneratedCodeDir, platformTarget)
   log &"Generated module {name} in {nimGeneratedCodeDir}"
   
  #this is a param 
@@ -309,7 +312,7 @@ proc removePlugin*(name:string) =
   removePluginFromUProject(name)
   log &"Removed plugin {name} in {genPluginDir}"
 
-proc generatePlugin*(name:string) =
+proc generatePlugin*(name:string, platformTarget: PlatformTargetKind) =
   let uePluginDir = parentDir(PluginDir)
   log &"Generating plugin {name} in {uePluginDir}"
   let genPluginDir = uePluginDir / name
@@ -320,11 +323,11 @@ proc generatePlugin*(name:string) =
   try:
     createDir(genPluginDir)
     createDir(genPluginSourceDir)
-    writeFile(upluginFilePath, getPluginTemplateFile(name, modules))
+    writeFile(upluginFilePath, getPluginTemplateFile(name, modules, platformTarget))
     #TODO make sure is not added before first
     addPluginToUProject(name)
     for module in modules:
-      generateModule(module, name)
+      generateModule(module, name, platformTarget)
   except Exception as e:
     log getCurrentExceptionMsg()
     log getStackTrace()
