@@ -1,7 +1,7 @@
 
 
 import std/[algorithm, options, times, os, osproc, sequtils, 
-  strformat, strscans, strutils, sugar, jsonutils, json]
+  strformat, strscans, strutils, sugar, jsonutils, json, enumerate]
 import buildcommon, nimforueconfig
 export buildcommon, nimforueconfig
 import ../nimforue/utils/utils
@@ -176,6 +176,31 @@ uClass AMyNimActor of AActor:
     proc myFunc() =
       log "Hello from Nim"
 """)
+
+proc getLineNumberFromContent*(content: string, lineContent: string): int = 
+  var nLine = -1
+  for idx, line in enumerate(content.splitLines()):
+    if line.contains(lineContent):
+      nLine = idx
+      break
+  nLine
+
+proc addCompilerOptionsToProject*() = 
+  let nueCompilerOptions = """
+    bOverrideBuildEnvironment = true;
+		if (Target.Platform == UnrealTargetPlatform.Win64) {
+			AdditionalCompilerArguments = "/Zc:strictStrings-";
+		}
+"""
+  let lineContent = "ExtraModuleNames.AddRange"
+  let walkPattern = getNimForUEConfig().gameDir / "Source/*.Target.cs"
+  for file in walkFiles(walkPattern):
+    let fileContent = readFile(file)
+    if "strictStrings-" notin fileContent:
+      let nLine = getLineNumberFromContent(fileContent, lineContent)
+      var lines = fileContent.splitLines()
+      lines.insert(nueCompilerOptions, nLine)
+      writeFile(file, lines.join("\n"))
 
 
 proc addNUEPluginToProject*() = 

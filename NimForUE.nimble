@@ -23,3 +23,6 @@ task ok, "Make sure NUE and Host are built at least once (ment to be called for 
   if not output.contains "ok host built":
     exec buildNueCmd
 
+task nuesetup, "Setup the plugin":
+  exec buildNueCmd
+  exec "./nue setup"

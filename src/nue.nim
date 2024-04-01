@@ -148,7 +148,6 @@ task ugenproject, "Calls UE Generate Project":
   else:
     log "Project generation not supported on this platform"
 
-
 task ubuild, "Calls Unreal Build Tool for your project":
   #This logic is temporary. We are going to get of most of the config data
   #and just define const globals for all the paths we can deduce. The moment to do that is when supporting Game builds
@@ -363,6 +362,7 @@ task genbindingsall, "Runs the Generate Bindings commandlet":
 
 task setup, "Setups the plugin by building the initial tasks in order":
   createGameDir()
+  addCompilerOptionsToProject()
   ubuild(taskOptions)
   guest(taskOptions)
   genbindingsall(taskOptions)
