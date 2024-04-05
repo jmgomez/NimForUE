@@ -353,9 +353,9 @@ type
     initialSeed* {.importcpp: "InitialSeed".}: int32
 
   FRotator* {.importcpp.} = object
-    roll* {.importcpp: "Roll".}: float64
-    yaw* {.importcpp: "Yaw".}: float64
-    pitch* {.importcpp: "Pitch".}: float64
+    roll* {.importcpp: "Roll".}: float64 = 0
+    yaw* {.importcpp: "Yaw".}: float64 = 0
+    pitch* {.importcpp: "Pitch".}: float64 = 0
 
   FRotator3d* {.importcpp.} = object
     roll* {.importcpp: "Roll".}: float64
@@ -539,3 +539,12 @@ proc toSoftObjectPath*(assetData:FAssetData) : FSoftObjectPath {.importcpp: "#.T
 proc tryLoad*(softObjectPath:FSoftObjectPath) : UObjectPtr {.importcpp: "#.TryLoad()".}
 
 proc flip*(plane: FPlane): FPlane {.importcpp: "#.Flip()".}
+
+#operations
+func `+`*(a,b: FVector2D): FVector2D {.importcpp:"# + #".}
+func `-`*(a,b: FVector2D): FVector2D {.importcpp:"# - #".}
+func `*`*(a : SomeFloat | SomeNumber, b: FVector2D): FVector2D {.importcpp:"# * #".}
+func `*`*(a : FVector2D, b: SomeNumber | SomeFloat): FVector2D {.importcpp:"# * #".}
+
+func toVector*(vec2: FVector2D, z: float32 = 0): FVector = makeFVector(vec2.x, vec2.y, z)
+func getCenterAndExtents*(box: FBox, center, extends: var FVector) {.importcpp: "#.GetCenterAndExtents(@)".}

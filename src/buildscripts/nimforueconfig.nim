@@ -116,7 +116,7 @@ type NimForUEConfig* = object
   #WithEditor? 
   #DEBUG?
 
-func getConfigFileName() : string = 
+func getConfigFileName(): string = 
   when defined macosx:
     return "NimForUE.mac.json"
   when defined windows:
@@ -148,7 +148,7 @@ proc getOrCreateNUEConfig*() : NimForUEConfig =
   NimForUEConfig()
 
 
-proc getNimForUEConfig*() : NimForUEConfig = 
+proc getNimForUEConfig*(): NimForUEConfig = 
   var config = getOrCreateNUEConfig()
 
   let configErrMsg = "Please check " & getConfigFileName() & " for missing: "

@@ -43,3 +43,4 @@ proc notifyMatchStarted*(uworld: AWorldSettingsPtr) {. importcpp:"#->NotifyMatch
 
 proc tick*(world: UWorldPtr, deltaSecs: float32) {. importcpp:"#->Tick(LEVELTICK_All, #)" .}
 proc setShouldTick*(world: UWorldPtr, bShouldTick: bool) {. importcpp:"#->SetShouldTick(#)" .}
+
