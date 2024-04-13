@@ -12,7 +12,7 @@ requires "nim >= 1.6.4"
 backend = "cpp"
 #bin = @["nue"]
 
-let buildNueCmd = "nim cpp -p:./ -d:danger  --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
+let buildNueCmd = "nim cpp -p:./  -d:nimOldCaseObjects  --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
 task nue, "Build the NimForUE tool":
   exec buildNueCmd
 

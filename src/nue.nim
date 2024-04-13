@@ -165,7 +165,7 @@ task ubuild, "Calls Unreal Build Tool for your project":
   log "Targe files: " &  $targetFiles
   #left for reference in case new way doest work with 5.1 logic
 # let target = targetFiles[0].split(".")[0].split(PathSeparator)[^1] #i.e " NimForUEDemoEditor "
-
+  assert targetFiles.len > 0, "No target files found. Make sure you have an Unreal C++ project."
   let target = targetFiles[0].split(PathSeparator)[^1].split(".")[0] #i.e " NimForUEDemoEditor "
 
   log "Target is " & target
