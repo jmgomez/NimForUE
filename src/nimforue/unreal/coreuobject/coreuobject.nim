@@ -548,3 +548,4 @@ func `*`*(a : FVector2D, b: SomeNumber | SomeFloat): FVector2D {.importcpp:"# * 
 
 func toVector*(vec2: FVector2D, z: float32 = 0): FVector = makeFVector(vec2.x, vec2.y, z)
 func getCenterAndExtents*(box: FBox, center, extends: var FVector) {.importcpp: "#.GetCenterAndExtents(@)".}
+func getCenter*(box: FBox): FVector {.importcpp: "#.GetCenter()".}
