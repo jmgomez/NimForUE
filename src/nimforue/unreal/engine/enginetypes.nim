@@ -30,6 +30,7 @@ type
     tickInterval* {.importcpp:"TickInterval"}: float32
 
   FActorTickFunction* {.importcpp, pure, inheritable.} = object of FTickFunction
+  FActorComponentTickFunction* {.importcpp, pure, inheritable.} = object of FTickFunction
 
   # UInputComponent* {.importcpp, inheritable, pure.} = object of UActorComponent
   # UInputComponentPtr* = ptr UInputComponent
@@ -92,6 +93,21 @@ type
   AWorldSettingsPtr* = ptr AWorldSettings
 
   UActorComponent* {.importcpp, inheritable, pure .} = object of UObject
+    primaryComponentTick* {.importcpp:"PrimaryComponentTick"}: FActorComponentTickFunction
+    componentTags* {.importcpp: "ComponentTags".}: TArray[FName]
+    bReplicateUsingRegisteredSubObjectList
+        {.importcpp: "bReplicateUsingRegisteredSubObjectList".}: bool
+    bReplicates {.importcpp: "bReplicates".}: bool
+    bAutoActivate* {.importcpp: "bAutoActivate".}: bool
+    bIsEditorOnly* {.importcpp: "bIsEditorOnly".}: bool
+    
+  ELevelTick* {.importcpp.}  = enum
+    LEVELTICK_TimeOnly = 0,
+    LEVELTICK_ViewportsOnly = 1,
+    LEVELTICK_All = 2,
+    LEVELTICK_PauseTick = 3,
+
+
   UActorComponentPtr* = ptr UActorComponent
   USceneComponent* {.importcpp, inheritable, pure .} = object of UActorComponent
   USceneComponentPtr* = ptr USceneComponent
@@ -583,6 +599,7 @@ type
   FInputDeviceId* {.importcpp .} = object
   EInputEvent* {. importcpp, pure.} = enum
     IE_Pressed, IE_Released, IE_Repeat, IE_DoubleClick, IE_Axis, IE_MAX
+  TStatId* {.importcpp .} = object
 
 #TODO initializer
 # proc makeFInputKeyEventArgs*(viewport: FViewportPtr = nil, controllerId: int32 = 0, key: FKey = "None", event: EInputEvent = IE_Pressed) : FInputKeyEventArgs 
