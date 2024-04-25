@@ -219,7 +219,7 @@ func getClassTemplate*(typeDef: UEType, fromBindings: bool = false) : string =
     cppInterfaces = ", " & cppInterfaces
   # let ctorContent = newLit &"{typeDef.name}(const '1& #1) : {ueType.parent}(#1)"
   
-  let defaultCtor = if fromBindings and typeDef.hasDefaultCtor: "$1()=default;" else: ""
+  let defaultCtor = if fromBindings and not typeDef.hasObjInitCtor: "$1()=default;" else: ""
     # if typeDef.hasObjInitCtor: "" # "$1(const FObjectInitializer& i) : $3(i){}" 
     # else: "$1()=default;" #the default ctor will be autogen by Nim (dsl only, TODO make sure only dsl types do this). Also not used so far (it may be needed down the road)
 
