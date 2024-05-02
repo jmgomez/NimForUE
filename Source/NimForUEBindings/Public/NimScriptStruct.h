@@ -19,7 +19,42 @@
 
 		virtual FCapabilities GetCapabilities() const override
 		{
-#if  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3)
+#if  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5)
+			constexpr FCapabilities Capabilities {
+				(TIsPODType<CPPSTRUCT>::Value ? CPF_IsPlainOldData : CPF_None)
+				| (std::is_trivially_destructible_v<CPPSTRUCT> ? CPF_NoDestructor : CPF_None)
+				| (TIsZeroConstructType<CPPSTRUCT>::Value ? CPF_ZeroConstructor : CPF_None)
+				| (TModels_V<CGetTypeHashable, CPPSTRUCT> ? CPF_HasGetValueTypeHash : CPF_None),
+				TTraits::WithSerializerObjectReferences,
+				TTraits::WithNoInitConstructor,
+				TTraits::WithZeroConstructor,
+				!(TTraits::WithNoDestructor || TIsPODType<CPPSTRUCT>::Value),
+				TTraits::WithSerializer,
+				TTraits::WithStructuredSerializer,
+				TTraits::WithPostSerialize,
+				TTraits::WithNetSerializer,
+				TTraits::WithNetSharedSerialization,
+				TTraits::WithNetDeltaSerializer,
+				TTraits::WithPostScriptConstruct,
+				TIsPODType<CPPSTRUCT>::Value,
+				TIsUECoreType<CPPSTRUCT>::Value,
+				TIsUECoreVariant<CPPSTRUCT>::Value,
+				TTraits::WithCopy,
+				TTraits::WithIdentical || TTraits::WithIdenticalViaEquality,
+				TTraits::WithExportTextItem,
+				TTraits::WithImportTextItem,
+				TTraits::WithAddStructReferencedObjects,
+				TTraits::WithSerializeFromMismatchedTag,
+				TTraits::WithStructuredSerializeFromMismatchedTag,
+				TModels_V<CGetTypeHashable, CPPSTRUCT>,
+				TIsAbstract<CPPSTRUCT>::Value,
+				TTraits::WithFindInnerPropertyInstance,
+#if WITH_EDITOR
+				TTraits::WithCanEditChange,
+#endif
+			};
+			return Capabilities;
+#elif  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 3)
 			constexpr FCapabilities Capabilities {
 				(TIsPODType<CPPSTRUCT>::Value ? CPF_IsPlainOldData : CPF_None)
 				| (TIsTriviallyDestructible<CPPSTRUCT>::Value ? CPF_NoDestructor : CPF_None)
@@ -369,6 +404,46 @@
 //5.3 up
 		virtual bool FindInnerPropertyInstance(FName PropertyName, const void* Data, const FProperty*& OutProp, const void*& OutData) const {
 			return false;
+		}
+
+//5.5 up
+		/** Construct an unset optional value */
+		virtual void InitializeIntrusiveUnsetOptionalValue(void* Data) const
+		{
+			new (Data) TOptional<CPPSTRUCT>();
+		}
+
+		/** Return true if the optional value at Data is in an unset state */
+		virtual bool IsIntrusiveOptionalValueSet(const void* Data) const 
+		{
+			return reinterpret_cast<const TOptional<CPPSTRUCT>*>(Data)->IsSet();
+		}
+
+		/** Reset an optional value to its unset state */
+		virtual void ClearIntrusiveOptionalValue(void* Data) const 
+		{
+			reinterpret_cast<TOptional<CPPSTRUCT>*>(Data)->Reset();
+		}
+
+		/** 
+		 * Used for assertions only: confirms that this type has certified that its object reference fields are safe 
+		 * for the GC to visit while the struct is in its intrusive unset optional state.
+		*/
+		virtual bool IsIntrusiveOptionalSafeForGC() const
+		{
+			return TTraits::WithIntrusiveOptionalSafeForGC;
+		}
+
+		virtual EPropertyVisitorControlFlow Visit(FPropertyVisitorPath& Path, void* Data, const TFunctionRef<EPropertyVisitorControlFlow(const FPropertyVisitorPath& /*Path*/, void* /*Data*/)> InFunc) const 
+		{
+			if constexpr (TStructOpsTypeTraits<CPPSTRUCT>::WithVisitor)
+			{
+				return ((CPPSTRUCT*)Data)->Visit(Path, InFunc);
+			}
+			else
+			{
+				return EPropertyVisitorControlFlow::StepOver;
+			}
 		}
 
 		

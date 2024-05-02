@@ -2,6 +2,9 @@ import std/[json, jsonutils, os, strutils, genasts, sequtils, strformat, sugar, 
 import ../nimforue/utils/utils
 import buildcommon
 
+when defined windows:
+  import std/registry
+
 #[
 TODO this file does too many things and it's imported from too many places
   It should be split in three files:
@@ -52,41 +55,90 @@ proc getGamePathFromGameDir*() : string =
   # (gameDir / "*.uproject").walkFiles.toSeq().head().get(GamePathError)
 
 
+# https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Projects/FProjectDescriptor/EngineAssociation?application_version=5.4
+# engineAssociation if using a stable version is major.minor version
+# for perforce/git users that branch the engine with their games it's blank
+# for source builds it's a random guid. On windows this is a registry key
+#   "HKEY_CURRENT_USER\Software\Epic Games\Unreal Engine\Builds" which will gives us the source directory
+#   The version can be looked up in \Engine\Source\Runtime\Launch\Resources\Version.h
+
+type
+  EngineAssociationBlankError* = object of Exception # currently don't support blank engineAssociation (need to find the enginedir, see comments in UEVersion)
+  EngineAssociationNonWindowsSourceError* = object of Exception # source builds on non-windows platform not supported (how do we get the engine source path?)
+
+var retrievedUEVersion:float = -1f; # store the engine version after we look it up from the uproject using UEVersion() below
 
 proc UEVersion*() : float = #defers the execution until it's needed  
   when defined(nimsuggest) or defined(nimcheck): return 5.2 #Does really matter as it doesnt include anything
   when defined(android): return 5.3 #TODO do not hardcode this
-  let uprojectFile = getGamePathFromGameDir()
-  let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
-  parseFloat(engineAssociation)  
-  
+  if retrievedUEVersion < 0f:
+    let gameDir = absolutePath(PluginDir/".."/"..")
+    let uprojectFile = getGamePathFromGameDir()
+
+    let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
+    try:
+      retrievedUEVersion = parseFloat(engineAssociation)
+    except ValueError:
+      if engineAssociation.len > 0:
+        when defined windows:
+          let registryPath = "SOFTWARE\\Epic Games\\Unreal Engine\\Builds"
+          var engineDir = getUnicodeValue(registryPath, engineAssociation, HKEY_CURRENT_USER)
+          var versionFilePath = engineDir / "Engine/Source/Runtime/Launch/Resources/Version.h"
+          var
+            major:int = 0
+            minor:int = 0
+            majorFound = false
+
+          for line in versionFilePath.lines:
+            if not majorFound and line.contains "ENGINE_MAJOR_VERSION":
+              major = parseInt(line[^1..^1])
+              majorFound = true
+            elif line.contains "ENGINE_MINOR_VERSION":
+              minor = parseInt(line[^1..^1])
+              break
+          retrievedUEVersion = parseFloat($major & "." & $minor)
+        else:
+          raise newException(EngineAssociationNonWindowsSourceError, "EngineAssociation for source builds on non-windows platform unsupported.")
+      else:
+          raise newException(EngineAssociationBlankError, "EngineAssociation in uproject is blank and unsupported.")
+  return retrievedUEVersion
 
 
-when MacOsARM and UEVersion() >= 5.2:
-  const MacPlatformDir* = "Mac/arm64"
-else:
-  const MacPlatformDir* = "Mac/x86_64"
+proc MacPlatformDir*(): string =
+  if MacOsARM and UEVersion() >= 5.2:
+    "Mac/arm64"
+  else:
+    "Mac/x86_64"
 
-
-when UEVersion() >= 5.2: #Seems they introduced ARM win support in 5.2
-  const WinPlatformDir* = "Win64"/"x64"
-else:
-  const WinPlatformDir* = "Win64"
+proc WinPlatformDir*(): string =
+  if UEVersion() >= 5.2: #Seems they introduced ARM win support in 5.2
+    "Win64/x64"
+  else:
+    "Win64"
   
 
 when defined windows:
-  import std/registry
-  proc getEnginePathFromRegistry*(association:string) : string =
-    let registryPath = "SOFTWARE\\EpicGames\\Unreal Engine\\" & association
-    getUnicodeValue(registryPath, "InstalledDirectory", HKEY_LOCAL_MACHINE)
-  
   proc tryGetEngineAndGameDir*() : Option[(string, string)] =
     try:
       #We assume we are inside the game plugin folder when no json is available
       let gameDir = absolutePath(PluginDir/".."/"..")
       let uprojectFile = getGamePathFromGameDir()
       let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
-      let engineDir = getEnginePathFromRegistry(engineAssociation)
+      var engineDir:string
+      try:
+        let fversion = parseFloat(engineAssociation)
+        let registryPath = "SOFTWARE\\EpicGames\\Unreal Engine\\" & $fversion
+        engineDir = getUnicodeValue(registryPath, "InstalledDirectory", HKEY_LOCAL_MACHINE)
+      except ValueError:
+        if engineAssociation.len > 0:
+          when defined windows:
+            let registryPath = "SOFTWARE\\Epic Games\\Unreal Engine\\Builds"
+            engineDir = getUnicodeValue(registryPath, engineAssociation, HKEY_CURRENT_USER)
+          else:
+            raise newException(EngineAssociationNonWindowsSourceError, "EngineAssociation for source builds on non-windows platform unsupported.")
+        else:
+            raise newException(EngineAssociationBlankError, "EngineAssociation in uproject is blank and unsupported.")
+
       some (engineDir / "Engine", gameDir)
     except:
       log "Could not find the game path. Please set the game path in the json file."
@@ -140,7 +192,7 @@ proc getOrCreateNUEConfig*() : NimForUEConfig =
   let conf = 
     tryGetEngineAndGameDir()
       .map(d=>createConfigFromDirs(d[0], d[1]))
-  
+
   if conf.isSome():
     conf.get().saveConfig()
     return conf.get()
@@ -208,7 +260,7 @@ codegenDir(reflectionDataFilePath, ReflectionDataFilePath)
 
 
 proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
-  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir else:  WinPlatformDir
+  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir() else:  WinPlatformDir()
   let confDir = $ conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = PluginDir
@@ -290,12 +342,13 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   
   ]
 
-  when UEVersion() >= 5.4:  
-    let enginePlugins = @["EnhancedInput", "PCG"]
-    let engineExperimentalPlugins = newSeq[string]()
+  var enginePlugins:seq[string]
+  var engineExperimentalPlugins:seq[string] = newSeq[string]()
+  if UEVersion() >= 5.4:
+    enginePlugins = @["EnhancedInput", "PCG"]
   else:
-    let enginePlugins = @["EnhancedInput"]
-    let engineExperimentalPlugins = @["PCG"]
+    enginePlugins = @["EnhancedInput"]
+    engineExperimentalPlugins = @["PCG"]
 
   let engineRuntimePlugins = @["GameplayAbilities"]
 
@@ -315,7 +368,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
 
 
 proc getUESymbols*(conf: NimForUEConfig): seq[string] =
-  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir else: WinPlatformDir
+  let platformDir = if conf.targetPlatform == Mac: MacPlatformDir() else: WinPlatformDir()
   let confDir = $conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = PluginDir

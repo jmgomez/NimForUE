@@ -192,7 +192,7 @@ proc addCompilerOptionsToProject*() =
 			AdditionalCompilerArguments = "/Zc:strictStrings-";
 		}
 """
-  let lineContent = "ExtraModuleNames.AddRange"
+  let lineContent = "ExtraModuleNames.Add"
   let walkPattern = getNimForUEConfig().gameDir / "Source/*.Target.cs"
   for file in walkFiles(walkPattern):
     let fileContent = readFile(file)

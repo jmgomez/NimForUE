@@ -152,7 +152,6 @@ public class NimForUE : ModuleRules
 			if (Target.Platform == UnrealTargetPlatform.Win64)
 				setWinCompilerSettings(Target.WindowsPlatform.WindowsSdkVersion, Target.WindowsPlatform.CompilerVersion, Target.WindowsPlatform.ToolChainDir);
 			Console.WriteLine(Target.WindowsPlatform.ToolChainDir);	
-			Console.WriteLine(Target.WindowsPlatform.ToolChainDir);	
 			Console.WriteLine(Target.WindowsPlatform.CompilerVersion);	
 			//setUEConfig(
 		}
