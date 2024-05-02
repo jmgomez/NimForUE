@@ -9,6 +9,8 @@
 #include "CoreUObject.h"
 #include "EngineMinimal.h"
 
+
+
 #include "Delegates/Delegate.h"
 
 #include "Containers/UnrealString.h"
@@ -117,6 +119,20 @@
 #include "PCGSubsystem.h"
 #include "PCGData.h"
 #include "Data/PCGSpatialData.h"
+#endif
+
+
+#if  ENGINE_MINOR_VERSION >= 5
+#include "Materials/Material.h"
+#include "Materials/MaterialFunction.h"
+#include "Materials/MaterialExpressionTextureSampleParameter.h"
+#include "Materials/MaterialExpressionParameter.h"
+#include "Materials/MaterialExpressionMaterialFunctionCall.h"
+#include "PhysicsEngine/PhysicalAnimationComponent.h"
+#include "EnhancedInput/Public/EnhancedActionKeyMapping.h"
+#include "PhysicsEngine/PhysicsAsset.h"
+#include "EnhancedInput/Public/InputMappingQuery.h"
+#include "Engine/SkinnedAssetCommon.h"
 #endif
 
 

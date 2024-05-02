@@ -12,6 +12,7 @@
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Engine\GameViewportClient.h"
 
 UClass* UReflectionHelpers::GetClassByName(FString ClassName) {
 	UObject* ClassPackage = ANY_PACKAGE;
