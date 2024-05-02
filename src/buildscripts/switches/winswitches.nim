@@ -4,11 +4,8 @@ import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 
 
 let config = getNimForUEConfig()
-
 let unrealFolder = if WithEditor: "UnrealEditor" else: "UnrealGame"
-
-
-let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir / unrealFolder / $config.targetConfiguration 
+let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir() / unrealFolder / $config.targetConfiguration
 
 func getModuleName(target:string) : string = 
   # if target == "bindings": "NimForUEBindings"
