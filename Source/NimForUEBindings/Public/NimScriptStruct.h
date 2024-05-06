@@ -406,6 +406,9 @@
 			return false;
 		}
 
+
+#if  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5)
+
 //5.5 up
 		/** Construct an unset optional value */
 		virtual void InitializeIntrusiveUnsetOptionalValue(void* Data) const
@@ -445,7 +448,7 @@
 				return EPropertyVisitorControlFlow::StepOver;
 			}
 		}
-
+#endif
 		
 	};
 
