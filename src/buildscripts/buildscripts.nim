@@ -2,9 +2,11 @@
 
 import std/[algorithm, options, times, os, osproc, sequtils, 
   strformat, strscans, strutils, sugar, jsonutils, json, enumerate]
+import ../nimforue/utils/utils
+
 import buildcommon, nimforueconfig
 export buildcommon, nimforueconfig
-import ../nimforue/utils/utils
+
 
 
 

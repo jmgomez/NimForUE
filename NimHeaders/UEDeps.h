@@ -122,18 +122,13 @@
 #endif
 
 
-#if  ENGINE_MINOR_VERSION >= 5
-#include "Materials/Material.h"
-#include "Materials/MaterialFunction.h"
-#include "Materials/MaterialExpressionTextureSampleParameter.h"
-#include "Materials/MaterialExpressionParameter.h"
-#include "Materials/MaterialExpressionMaterialFunctionCall.h"
-#include "PhysicsEngine/PhysicalAnimationComponent.h"
-#include "EnhancedInput/Public/EnhancedActionKeyMapping.h"
-#include "PhysicsEngine/PhysicsAsset.h"
+#if  ENGINE_MINOR_VERSION >= 4
 #include "EnhancedInput/Public/InputMappingQuery.h"
-#include "Engine/SkinnedAssetCommon.h"
+#include "EnhancedInput/Public/EnhancedActionKeyMapping.h"
+#include "PhysicsEngine/ConstraintInstance.h"
+
 #endif
+
 
 
 // #include "UPropertyCaller.h"

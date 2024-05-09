@@ -222,7 +222,10 @@ func makeUEMetadata*(name:string) : UEMetadata =
 func makeUEMetadata*(name:string, value:string) : UEMetadata = 
     UEMetadata(name:name, value:value ) #todo check if the name is valid. Also they can be more than simple names
 
-func contains*(metas:seq[UEMetadata], name:string) : bool = metas.any(m=>m.name.toLower()==name.toLower())
+func contains*(metas:seq[UEMetadata], name:string): bool =     
+  for meta in metas:
+    if meta.name.toLower() == name.toLower():
+      return true
 
 func hasUEMetadata*(val:UEField, name:string) : bool = val.metadata.any(m => m.name == name)
 func hasUEMetadata*(val:UEType, name:string) : bool = val.metadata.any(m => m.name == name)

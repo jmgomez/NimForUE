@@ -11,7 +11,8 @@ type
     name* : string #Name of the type FSomeType USomeType
     cppDefinitionLine : string #The line where the type is defined. This will be the body at some point
 
-proc getIncludesFromHeader(header: string): seq[string] = 
+proc getIncludesFromHeader(path, header: string): seq[string] = 
+  #path only passed to show better errors
   let lines = header.split("\n")
   func getHeaderFromIncludeLine(line: string): string = 
     line.multiReplace(@[
@@ -21,10 +22,64 @@ proc getIncludesFromHeader(header: string): seq[string] =
       ("\"", ""),
       ("\t", ""),
     ]).strip()
-  result = lines
-    .filterIt(it.contains("#include")) #this may introduce incorrect includes? like in comments. 
-    .map(getHeaderFromIncludeLine)
-  # echo "result", result
+
+  let currentIncludeOrderVersion = UEVersion() #We assume the UEVersion matches the IncludeOrderVersion (we could read it from the cs file though)
+  # echo "Current Include Order Version: ", currentIncludeOrderVersion
+  assert currentIncludeOrderVersion != 0, "Current version is 0. This is not expected. Which means this function is running at compile time and it shouldnt. The cache file must be generated before compiling guest"
+  #Everything within 
+  #if UE_ENABLE_INCLUDE_ORDER_DEPRECATED_IN_MAJOR_MINOR should only be included if the current version is that one.
+
+  proc isInclude(line: string): bool = 
+    # if line.contains("//") and "#include" in line: discard
+    #   echo "Warning: Commented include found in header", line
+    "#include" in line  #this may introduce incorrect includes? like in comments. 
+
+  var insideConditionalBlock = false
+  var includesInsideCurrentBlock = newSeq[string]()
+  var lastConditionalBlockVersion: float
+  var isNegated = false #if the condition is negated
+  const IncludeOrderDeprecated = "UE_ENABLE_INCLUDE_ORDER_DEPRECATED_IN_"
+  
+  for idx, line in enumerate(lines):
+    if IncludeOrderDeprecated in line and "#endif" notin line:
+      try:
+        lastConditionalBlockVersion = 
+          line
+            .multiReplace(@[
+              (" ", ""), 
+              ("\t", ""),
+              (IncludeOrderDeprecated, ""),
+              ("_", "."),
+              ("#if", ""),  
+              ("//", ""),  
+              ("!", "")                      
+            ])
+            .strip()
+            .parseFloat()
+      except CatchableError:
+        echo "Error parsing version in include order:", line
+        echo "Line", idx + 1
+        echo path
+        quit()
+
+      isNegated = ("!" & IncludeOrderDeprecated) in line
+      insideConditionalBlock = true
+      continue
+    if insideConditionalBlock and line.isInclude:
+      includesInsideCurrentBlock.add line.getHeaderFromIncludeLine()
+    elif line.isInclude:
+      result.add line.getHeaderFromIncludeLine()
+
+    if insideConditionalBlock:
+      if line.contains("#endif"):
+        insideConditionalBlock = false        
+        if lastConditionalBlockVersion == currentIncludeOrderVersion and not isNegated or
+          lastConditionalBlockVersion != currentIncludeOrderVersion and isNegated:
+            result.add(includesInsideCurrentBlock)
+
+        # echo "End of conditional include block"
+        # echo "Includes inside block", includesInsideCurrentBlock
+        includesInsideCurrentBlock = newSeq[string]()
 
 proc getHeaderFromPath(path: string): Option[string] = 
   if fileExists(path):
@@ -53,7 +108,6 @@ func getModuleRelativePathVariations(moduleName, moduleRelativePath:string) : se
       variations.mapIt(&"{it}/{moduleName}/{header}") &
       variations.mapIt(&"{moduleName}/{it}/{moduleName}/{header}") &
       moduleRelativePath.split("/").filterIt(it notin variations).join("/")
-    
 
 func isModuleRelativePathInHeaders*(moduleName, moduleRelativePath:string, headers:seq[string]) : bool = 
   let paths = getModuleRelativePathVariations(moduleName, moduleRelativePath)
@@ -66,7 +120,6 @@ func isModuleRelativePathInHeaders*(moduleName, moduleRelativePath:string, heade
       if path in headers: 
         return true
     false
-  
 
 #returns the absolute path of all the include paths
 proc getAllIncludePaths*() : seq[string] = 
@@ -75,8 +128,6 @@ proc getAllIncludePaths*() : seq[string] =
   #we add it here, because we are not running a cmd and the ubt already does it 
   result.add result.filterIt(it.endsWith "Public").mapIt(it[0..^7] / "Classes")
   result.add NimGameDir()
-
-
 
 proc getHeaderIncludesFromIncludePaths(headerName:string, includePaths:seq[string]): seq[string] = 
   for path in includePaths:
@@ -88,7 +139,7 @@ proc getHeaderIncludesFromIncludePaths(headerName:string, includePaths:seq[strin
       let clsPath = path[0..^7] / "Classes" / headerName
       header = getHeaderFromPath(clsPath)
     if header.isSome:
-      return getIncludesFromHeader(header.get)
+      return getIncludesFromHeader(headerPath, header.get)
   newSeq[string]()
 
 

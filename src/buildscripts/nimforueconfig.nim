@@ -70,38 +70,41 @@ var retrievedUEVersion:float = -1f; # store the engine version after we look it 
 
 proc UEVersion*() : float = #defers the execution until it's needed  
   when defined(nimsuggest) or defined(nimcheck): return 5.2 #Does really matter as it doesnt include anything
-  when defined(android): return 5.3 #TODO do not hardcode this
-  if retrievedUEVersion < 0f:
-    let gameDir = absolutePath(PluginDir/".."/"..")
-    let uprojectFile = getGamePathFromGameDir()
+  elif defined(android): return 5.3 #TODO do not hardcode this
+  elif defined nimvm:
+    return 0.0
+  else:
+    if retrievedUEVersion < 0f:
+      let gameDir: string = absolutePath(PluginDir/".."/"..")
+      let uprojectFile = getGamePathFromGameDir()
 
-    let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
-    try:
-      retrievedUEVersion = parseFloat(engineAssociation)
-    except ValueError:
-      if engineAssociation.len > 0:
-        when defined windows:
-          let registryPath = "SOFTWARE\\Epic Games\\Unreal Engine\\Builds"
-          var engineDir = getUnicodeValue(registryPath, engineAssociation, HKEY_CURRENT_USER)
-          var versionFilePath = engineDir / "Engine/Source/Runtime/Launch/Resources/Version.h"
-          var
-            major:int = 0
-            minor:int = 0
-            majorFound = false
+      let engineAssociation = readFile(uprojectFile).parseJson()["EngineAssociation"].getStr()
+      try:
+        retrievedUEVersion = parseFloat(engineAssociation)
+      except ValueError:
+        if engineAssociation.len > 0:
+          when defined windows:
+            let registryPath = "SOFTWARE\\Epic Games\\Unreal Engine\\Builds"
+            var engineDir = getUnicodeValue(registryPath, engineAssociation, HKEY_CURRENT_USER)
+            var versionFilePath = engineDir / "Engine/Source/Runtime/Launch/Resources/Version.h"
+            var
+              major:int = 0
+              minor:int = 0
+              majorFound = false
 
-          for line in versionFilePath.lines:
-            if not majorFound and line.contains "ENGINE_MAJOR_VERSION":
-              major = parseInt(line[^1..^1])
-              majorFound = true
-            elif line.contains "ENGINE_MINOR_VERSION":
-              minor = parseInt(line[^1..^1])
-              break
-          retrievedUEVersion = parseFloat($major & "." & $minor)
+            for line in versionFilePath.lines:
+              if not majorFound and line.contains "ENGINE_MAJOR_VERSION":
+                major = parseInt(line[^1..^1])
+                majorFound = true
+              elif line.contains "ENGINE_MINOR_VERSION":
+                minor = parseInt(line[^1..^1])
+                break
+            retrievedUEVersion = parseFloat($major & "." & $minor)
+          else:
+            raise newException(EngineAssociationNonWindowsSourceError, "EngineAssociation for source builds on non-windows platform unsupported.")
         else:
-          raise newException(EngineAssociationNonWindowsSourceError, "EngineAssociation for source builds on non-windows platform unsupported.")
-      else:
-          raise newException(EngineAssociationBlankError, "EngineAssociation in uproject is blank and unsupported.")
-  return retrievedUEVersion
+            raise newException(EngineAssociationBlankError, "EngineAssociation in uproject is blank and unsupported.")
+    return retrievedUEVersion
 
 
 proc MacPlatformDir*(): string =
