@@ -357,11 +357,11 @@ task genbindingsall, "Runs the Generate Bindings commandlet":
   genbindings(taskOptions)
   gencppbindings(taskOptions)
 
-
-
+task creategame, "Creates the sample Game plugin":
+  createGameDir()
 
 task setup, "Setups the plugin by building the initial tasks in order":
-  createGameDir()
+  creategame(taskOptions)
   addCompilerOptionsToProject()
   ubuild(taskOptions)
   guest(taskOptions)
