@@ -5,7 +5,7 @@ import ../unreal/core/containers/[unrealstring, array, map, set]
 import ../unreal/coreuobject/[uobjectflags]
 import nuemacrocache, models, modelconstructor, projectinstrospect, uebindcore
 import modulerules
-import ../../buildscripts/nimforueconfig #probably nimforueconfig should be removed from buildscripts
+# import ../../buildscripts/nimforueconfig #probably nimforueconfig should be removed from buildscripts
 
   # macro ex*(a:untyped):untyped = a
 func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone, isImporting: bool): NimNode 
