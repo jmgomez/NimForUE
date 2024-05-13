@@ -108,3 +108,7 @@ proc flatten*[T](arr: TArray[TArray[T]]): TArray[T] =
   for x in arr:
     xs.append x
   xs
+
+proc addUnique*[T](arr: var TArray[T], value:T) = 
+  if value notin arr:
+    arr.add value

@@ -129,7 +129,7 @@ type
 
     FVTableHelper* {.importcpp, pure.} = object
 
-    FPropertyChangedEvent* {.importcpp, pure, inheritable} = object
+    FPropertyChangedEvent* {.importcpp, pure, inheritable, bycopy} = object
       property*  {.importcpp: "Property" .} : FPropertyPtr #	 * The actual property that changed
       memberProperty*  {.importcpp: "MemberProperty" .} : FPropertyPtr #	 * The property that was actually modified (in the case of a struct member)
       #TODO bind EPropertyChangeType
