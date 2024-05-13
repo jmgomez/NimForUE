@@ -250,7 +250,6 @@ bindFProperty([
         "FMapProperty", "FDelegateProperty", "FSetProperty", "FInterfaceProperty",
         "FMulticastDelegateProperty", #It seems to be abstract. Review Sparse vs Inline
         "FMulticastInlineDelegateProperty", "FFieldPathProperty", "FTextProperty"
-        
         ])
 
 
@@ -270,9 +269,10 @@ proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->S
 proc getElementProp*(setProp:FSetPropertyPtr) : FPropertyPtr {.importcpp:"(#->ElementProp)".}
 proc getElementPtr*(setProp:FSetPropertyPtr, inSet: pointer, idx:int32) : pointer {.importcpp:"#->GetElementPtr(@)".}
 proc getNum*(setProp: FSetPropertyPtr, inSet: pointer): int32 {.importcpp:"#->GetNum(@)".}
-proc getInnerProp*(arrProp:FArrayPropertyPtr) : FPropertyPtr {.importcpp:"(#->Inner)".}
-proc setInnerProp*(arrProp:FArrayPropertyPtr, innerProp:FPropertyPtr) : void {.importcpp:"(#->Inner=#)".}
-proc getInterfaceClass*(interfaceProp:FInterfacePropertyPtr) : UClassPtr {.importcpp:"(#->InterfaceClass)".}
+proc getInnerProp*(arrProp:FArrayPropertyPtr): FPropertyPtr {.importcpp:"(#->Inner)".}
+proc setInnerProp*(arrProp: FArrayPropertyPtr, innerProp: FPropertyPtr) : void {.importcpp:"(#->Inner=#)".}
+proc getInterfaceClass*(interfaceProp: FInterfacePropertyPtr): UClassPtr {.importcpp:"(#->InterfaceClass)".}
+proc setInterfaceClass*(interfaceProp: FInterfacePropertyPtr, interfaceClass: UClassPtr): void {.importcpp:"(#->InterfaceClass=#)".}
 
 proc getPropertyClass*(prop:FFieldPathPropertyPtr) : FFieldClassPtr {.importcpp:"(#->PropertyClass)".}
 proc setPropertyClass*(prop:FFieldPathPropertyPtr, propClass:FFieldClassPtr) : void {.importcpp:"(#->PropertyClass=#)".}

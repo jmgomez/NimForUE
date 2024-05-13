@@ -17,12 +17,14 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
     const flags = propObjFlags
          #It holds a complex type, like a struct or a class
     type EObjectMetaProp = enum
-        emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, emTSoftClassPtr, emScriptStruct, emTObjectPtr#, TSoftClassPtr = "TSoftClassPtr"
+        emObjPtr, emClass, emTSubclassOf, emTSoftObjectPtr, 
+        emTSoftClassPtr, emScriptStruct, emTObjectPtr, emTInterfaceScript#, TSoftClassPtr = "TSoftClassPtr"
     
     var eMeta = if propType.contains("TSubclassOf"): emTSubclassOf
                 elif propType.contains("TSoftObjectPtr"): emTSoftObjectPtr
                 elif propType.contains("TSoftClassPtr"): emTSoftClassPtr
                 elif propType.contains("TObjectPtr"): emTObjectPtr
+                elif propType.contains("TScriptInterface"): emTInterfaceScript
                 elif propType == ("UClassPtr"): emClass
                 else: emObjPtr #defaults to emObjPtr but it can be scriptStruct since the name it's the same(will worth to do an or?)
                 
@@ -31,6 +33,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         of emTSoftObjectPtr: propType.extractTypeFromGenericInNimFormat("TSoftObjectPtr").removeFirstLetter() 
         of emTSoftClassPtr: propType.extractTypeFromGenericInNimFormat("TSoftClassPtr").removeFirstLetter() 
         of emTObjectPtr: propType.extractTypeFromGenericInNimFormat("TObjectPtr").removeFirstLetter() 
+        of emTInterfaceScript: propType.extractTypeFromGenericInNimFormat("TScriptInterface").removeFirstLetter()         
         of emObjPtr, emClass, emScriptStruct: propType.removeFirstLetter().removeLastLettersIfPtr()
 
     UE_Log &"Looking for ustruct..{className} emeta: {eMeta} PropType: {propType}"
@@ -83,6 +86,11 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
             UE_Log "Setting prop flags for " & scriptStruct.getName() & " to " & $propFlags
         structProp.setPropertyFlags(propFlags)
         structProp
+    of emTInterfaceScript:
+        let interfaceProp = newFInterfaceProperty(owner, name, flags)
+        interfaceProp.setInterfaceClass(cls)
+        interfaceProp
+    
 
 
 func newDelegateBasedProperty(owner : FFieldVariant, propType:string, name:FName) : Option[FPropertyPtr] = 

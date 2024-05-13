@@ -76,9 +76,14 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
         result[0][0][^1][^1].add nimFields
     # echo repr result
 
-func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata]) : (EClassFlags, seq[UEMetadata]) = 
+func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata], isInterface: bool) : (EClassFlags, seq[UEMetadata]) = 
     var metas = classMetadata
-    var flags = (CLASS_Inherit | CLASS_Native ) #| CLASS_CompiledFromBlueprint
+    var flags = CLASS_Native
+    if isInterface:
+      flags = flags or (CLASS_Interface | CLASS_Abstract)
+    else:
+      flags = flags or (CLASS_Inherit ) #| CLASS_CompiledFromBlueprint
+   
     for meta in classMetadata:
         if meta.name.toLower() == "config": #Game config. The rest arent supported just yet
             flags = flags or CLASS_Config
@@ -215,7 +220,8 @@ type UClassNode = object
 proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, NimNode, UFuncsInClass) = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)    
     let ueProps = getUPropsAsFieldsForType(body, className)
-    let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body))
+    let isInterface = parent == "UInterface"
+    let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body), isInterface)
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
     ueType.interfaces = interfaces
     ueType.hasObjInitCtor = NeedsObjectInitializerCtorMetadataKey in ueType.metadata
