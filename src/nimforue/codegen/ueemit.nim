@@ -386,7 +386,7 @@ macro uDelegate*(body:untyped) : untyped =
                              .map(n=>makeFieldAsUPropParam(n[0].strVal(), n[1].repr.strip(), name))
     let ueType = makeUEMulDelegate(name, paramsAsFields)
     addVMType ueType
-    emitUDelegate(ueType)
+    emitUDelegate(ueType)    
 
 func isBlueprintEvent(fnField:UEField) : bool = FUNC_BlueprintEvent in fnField.fnFlags
 

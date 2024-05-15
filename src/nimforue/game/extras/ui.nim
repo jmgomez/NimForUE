@@ -87,3 +87,8 @@ proc len*(overlay: ArrowPtr[SOverlay]): int32  = getNumberWidgets(overlay)
 
 
 proc setText*(textBlock: ArrowPtr[STextBlock], text: FText) {.importcpp: "#->SetText(#)" .}
+
+#For some reason this is not being bound. TODO research why
+import codegen/uebind
+ 
+proc setVisibility*(widget: UWidget, visibility: ESlateVisibility) {.uebind.}

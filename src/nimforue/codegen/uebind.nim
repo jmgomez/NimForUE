@@ -332,7 +332,7 @@ proc genDelType*(delType:UEType, exposure:UEExposure) : NimNode =
   #NOTE delegates are always passed around as reference
   #adds the delegate to the global list of available delegates so we can lookup it when emitting the UCLass
   addDelegateToAvailableList(delType)
-  let typeName = ident delType.name
+  let typeName = identPublic delType.name
    
   let delBaseType = 
     case delType.delKind 
