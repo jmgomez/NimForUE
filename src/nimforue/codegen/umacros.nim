@@ -257,7 +257,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
                           .filterIt(it.kind == nnkCall and it[0].strVal() notin @ValidUprops & "defaults" & @ValidUFuncs)
                           .map(fromCallNodeToIdentDenf)
      
-      var (typeNode, addEmitterProc) = emitUClass(ueType)
+      var (typeNode, addEmitterProc) = emitUClass(ueType, some name.lineInfoObj)
       if nimFields.any():
         typeNode[0][0].typeParams.add nimFields
       var procNodes = nnkStmtList.newTree(addEmitterProc)

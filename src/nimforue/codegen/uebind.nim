@@ -240,7 +240,7 @@ func isNonPublicPropInNonCommonModule(uet: UEType, prop: UEField): bool =
 func shouldGenGetterSetters*(uet: UEType, prop: UEField, isUserType: bool): bool = 
   prop.kind == uefProp and (isUserType or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
 
-func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure) : NimNode =
+func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure,  lineInfo: Option[LineInfo]) : NimNode =
 
   let props = nnkStmtList.newTree(
         typeDef.fields
@@ -284,6 +284,10 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
               newEmptyNode(),
               nnkPtrTy.newTree(ident typeDef.name)
           )
+        if lineInfo.isSome:
+          #Targets the ident node that holds the name
+          typ[0][0][1].setLineInfo(lineInfo.get())
+          typPtr[0][1].setLineInfo(lineInfo.get())
         let typeSection = nnkTypeSection.newTree(typ, typPtr)
         typeSection
       of uexExport:
@@ -556,10 +560,10 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
   )
 
 
-proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexDsl) : NimNode = 
+proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexDsl,  lineInfo: Option[LineInfo] = none(LineInfo)) : NimNode = 
   case typeDef.kind:
     of uetClass:
-      genUClassTypeDef(typeDef, rule, typeExposure)
+      genUClassTypeDef(typeDef, rule, typeExposure, lineInfo)
     of uetStruct:
       genUStructTypeDef(typeDef, rule, typeExposure)
     of uetEnum:
