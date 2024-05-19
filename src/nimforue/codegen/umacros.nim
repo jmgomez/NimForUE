@@ -100,7 +100,7 @@ proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =
     let className = name[1].strVal()
     case name[^1].kind:
     of nnkIdent: 
-        let parent = name[^1].strVal()
+        let parent = name[^1].strVal()        
         (className, parent, newSeq[string]())
     of nnkCommand:
         let parent = name[^1][0].strVal()        

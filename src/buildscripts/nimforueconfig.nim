@@ -458,7 +458,9 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
     experimentalPlugins.add("PCG")
 
 
-  let modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", "NetCore", "UMG", "AdvancedPreviewScene", "AIModule"]
+  let modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", 
+    "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", 
+    "NetCore", "UMG", "AdvancedPreviewScene", "AIModule", "EditorSubsystem"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
   let enginePluginSymbolsPaths = enginePlugins.map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName)).flatten()
   
