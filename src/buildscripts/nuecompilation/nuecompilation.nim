@@ -13,6 +13,8 @@ let nimCmd = "nim" #so we can easy switch with nim_temp
 
 #In mac we need to do a universal 
 proc compileHostMac*() =
+  generateFFIGenFile(config)
+  
   let common = @[
     "--cc:clang",
     "--debugger:native",
@@ -64,7 +66,8 @@ proc compileHostMac*() =
 
 
 proc compileHost*() = 
- 
+  generateFFIGenFile(config)
+
   let hostSwitches = @[
     "--nimBasePattern:nimbasenue.h"
     
