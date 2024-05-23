@@ -370,17 +370,21 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
             flags = flags | CPF_BlueprintVisible
 
         if m in ["EditAnywhere", "VisibleAnywhere"]:
-            flags = flags | CPF_Edit
+          flags = flags | CPF_Edit
         if m == "ExposeOnSpawn":
-                flags = flags | CPF_ExposeOnSpawn
+          flags = flags | CPF_ExposeOnSpawn
         if m == "VisibleAnywhere": 
-                flags = flags | CPF_DisableEditOnInstance
+          flags = flags | CPF_DisableEditOnInstance
         if m == "Transient":
-                flags = flags | CPF_Transient
+          flags = flags | CPF_Transient
         if m == "BlueprintAssignable":
-                flags = flags | CPF_BlueprintAssignable | CPF_BlueprintVisible
+          flags = flags | CPF_BlueprintAssignable | CPF_BlueprintVisible
         if m == "BlueprintCallable":
-                flags = flags | CPF_BlueprintCallable
+          flags = flags | CPF_BlueprintCallable
+        if m == "Replicated" or m == "ReplicatedUsing":
+          flags = flags | CPF_Net
+        if m == "ReplicatedUsing":
+          flags = flags | CPF_RepNotify
         if m.toLower() == "config":
                 flags = flags | CPF_Config  
         if m.toLower() == InstancedMetadataKey.toLower():

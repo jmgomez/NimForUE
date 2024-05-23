@@ -724,6 +724,8 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
   for metadata in propField.metadata:
     prop.setMetadata(n metadata.name, $metadata.value)
+    if metadata.name == "ReplicatedUsing":
+      prop.repNotifyFunc = makeFName metadata.value
   outer.addCppProperty(prop)
   prop
 

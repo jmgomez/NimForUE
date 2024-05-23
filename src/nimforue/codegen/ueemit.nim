@@ -620,11 +620,11 @@ func addSelfToProc*(procDef:NimNode, className:string) : NimNode =
 func generateSuper(procDef: NimNode, parentName: string) : NimNode = 
     let name = procDef.name.strVal().capitalizeAscii()
     let parent = procDef.params[1]
-    let content = newLit &"{parentName}::{name}"
+    let content = newLit &"{parentName}::{name}(@)"
     result = 
       genAst(content):
-        proc super() {.importc: content, nodecl.}  
-    result.params = nnkFormalParams.newTree procDef.params.filterIt(it != parent)
+        proc super() {.importcpp: content, nodecl.}  
+    result.params = nnkFormalParams.newTree procDef.params.filterIt(it != parent)    
 
 func processVirtual*(procDef: NimNode, parentName: string = "", overrideName: string = "") : NimNode = 
 #[

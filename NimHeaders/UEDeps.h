@@ -9,7 +9,7 @@
 #include "CoreUObject.h"
 #include "EngineMinimal.h"
 
-
+#include "Net/UnrealNetwork.h"
 
 #include "Delegates/Delegate.h"
 
