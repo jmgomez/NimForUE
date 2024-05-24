@@ -473,6 +473,10 @@ type
 
   UGameInstance* {.importcpp, inheritable, pure.} = object of UObject
   UGameInstancePtr* = ptr UGameInstance
+  FDoRepLifetimeParams* {.importcpp.} = object 
+    condition {.importcpp:"Condition".}: ELifetimeCondition
+    repNotifyCondition {.importcpp:"RepNotifyCondition".}: ELifetimeRepNotifyCondition
+    bIsPushBased: bool
 
 proc toString*(hit: FHitResult): FString {.importcpp: "#.ToString()" .}
 proc `$`*(hit: FHitResult): string = hit.toString()
@@ -604,7 +608,7 @@ type
 #TODO initializer
 # proc makeFInputKeyEventArgs*(viewport: FViewportPtr = nil, controllerId: int32 = 0, key: FKey = "None", event: EInputEvent = IE_Pressed) : FInputKeyEventArgs 
 #   {.importcpp: "FInputKeyEventArgs(@)", constructor, .}
-
+#INPUT
 func makeFKey*(keyName: FName) : FKey {.importcpp: "FKey(#)", constructor, .}
 func getFName*(key: FKey) : FName {.importcpp: "#.GetFName()", .}
 func toString*(key: FKey) : FString {.importcpp: "#.ToString()", .}
@@ -661,11 +665,7 @@ proc removeGlobalEditorKeyPressed*(handle: FDelegateHandle) =
 
 type 
   EAxisList* {.size: sizeof(uint8), importcpp:"EAxisList::Type", pure.} = enum
-    None, X, Y, Z, X_Neg, Y_Neg, Z_Neg, EAxisList_MAX
-
-
-
-type 
+    None, X, Y, Z, X_Neg, Y_Neg, Z_Neg, EAxisList_MAX 
   ECollisionChannel* {.size: sizeof(uint8), importcpp, pure.} = enum
     ECC_WorldStatic, ECC_WorldDynamic, ECC_Pawn, ECC_Visibility, ECC_Camera,
     ECC_PhysicsBody, ECC_Vehicle, ECC_Destructible, ECC_EngineTraceChannel1,
@@ -704,5 +704,5 @@ type
 converter toObjectType*(collisionChannel:ECollisionChannel) : EObjectTypeQuery {.importcpp: "UEngineTypes::ConvertToObjectType(@)".}
 converter toTraceType*(collisionChannel:ECollisionChannel) : ETraceTypeQuery {.importcpp: "UEngineTypes::ConvertToTraceType(@)".}
 
-# FLatentActionInfo(int32 InLinkage, int32 InUUID, const TCHAR* InFunctionName, UObject* InCallbackTarget)
-# proc makeFLatentActionInfo*(linkage, uuid: int32, functionName: FString, callbackTarget: UObjectPtr) : FLatentActionInfo {.importcpp: "FLatentActionInfo(#, #, const_cast<char*>)(*#), #)", constructor, .}
+#NET
+proc registerReplicatedLifetimeProperty*(prop: FPropertyPtr, outLifetimeProps {.byref.}: TArray[FLifetimeProperty], params: var FDoRepLifetimeParams) {.importcpp: "RegisterReplicatedLifetimeProperty(@)".}

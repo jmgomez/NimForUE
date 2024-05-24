@@ -140,6 +140,20 @@ func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFuncti
     if hasMeta("Static"):
       when not defined(nuevm): #: illegal conversion from '-1' to '[0..9223372036854775807]'
         flags = flags | FUNC_Static
+    if hasMeta("Server"):
+      flags = flags | FUNC_Net | FUNC_NetServer
+    if hasMeta("Client"):
+      flags = flags | FUNC_Net | FUNC_NetClient
+    if hasMeta("NetMulticast"):
+      flags = flags | FUNC_Net | FUNC_NetMulticast
+    if hasMeta("Reliable"):
+      flags = flags | FUNC_NetReliable
+    if hasMeta("BlueprintAuthorityOnly"):
+      flags = flags | FUNC_BlueprintAuthorityOnly
+    if hasMeta("BlueprintCosmetic"):
+      flags = flags | FUNC_BlueprintCosmetic
+    
+    
     if not hasMeta("Category"):
         fnMetas.add(makeUEMetadata("Category", "Default"))
     
