@@ -2,9 +2,8 @@ include ../definitions
 import std/[strformat]
 import ../core/math/vector
 import ../coreuobject/[uobject, coreuobject, nametypes, tsoftobjectptr, scriptdelegates]
-import ../core/[delegates, templates]
+import ../core/[delegates, templates, net]
 import ../core/containers/[unrealstring, array, set]
-
 
 type 
   UEngine* {.importcpp, importcpp, pure .} = object of UObject
@@ -473,10 +472,6 @@ type
 
   UGameInstance* {.importcpp, inheritable, pure.} = object of UObject
   UGameInstancePtr* = ptr UGameInstance
-  FDoRepLifetimeParams* {.importcpp.} = object 
-    condition {.importcpp:"Condition".}: ELifetimeCondition
-    repNotifyCondition {.importcpp:"RepNotifyCondition".}: ELifetimeRepNotifyCondition
-    bIsPushBased: bool
 
 proc toString*(hit: FHitResult): FString {.importcpp: "#.ToString()" .}
 proc `$`*(hit: FHitResult): string = hit.toString()

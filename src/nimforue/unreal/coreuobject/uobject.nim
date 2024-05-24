@@ -144,7 +144,6 @@ type
         valueOffset* {.importcpp:"ValueOffset".}: int32
     FScriptSet* {.importcpp.} = object
     FScriptSetHelper* {.importcpp.} = object
-
 #LOGS here because we need them. Maybe they should leave in a separated file
 
 

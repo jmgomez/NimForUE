@@ -9,6 +9,7 @@ when defined(nuevm):
 else:
   import ueemit, nuemacrocache, headerparser
   import ../unreal/coreuobject/uobjectflags
+  import ../unreal/core/net
  
 
 # import ueemit
@@ -206,6 +207,57 @@ proc expandGameplayAttibute(uef: UEField): NimNode =
       self.name.setBaseValue(newVal)
       self.name.setCurrentValue(newVal)
 
+
+func getCondFromString(cond: string): ELifetimeCondition = 
+  for e in ELifetimeCondition:
+    if ($e).replace("COND_", "").toLower() == cond.toLower():
+      return e    
+  COND_None
+
+func getRepNotifyFromString(repNotify: string): ELifetimeRepNotifyCondition = 
+  for e in ELifetimeRepNotifyCondition:
+    if ($e).replace("REPNOTIFY_", "").toLower() == repNotify.toLower():
+      return e    
+  REPNOTIFY_OnChanged
+
+func getReplicatedProps(ueType: UEType): seq[UEField] = 
+  ueType.fields.filterIt(it.kind == uefProp and "Replicated" in it.metadata or "ReplicatedUsing" in it.metadata)
+
+proc genGetLifetimeReplicatedProps(ueType: UEType): NimNode =
+  #[Generates when needed.
+    proc getLifetimeReplicatedProps(outLifetimeProps: var TArray[FLifetimeProperty]) {. virtual, override, constcpp.} =    
+    super(outLifetimeProps)  
+
+    let prop = self.getClass.getFPropertyByName("replicatedVar")
+    var lifetimeParams = FDoRepLifetimeParams(condition: COND_None, repNotifyCondition: REPNOTIFY_OnChanged)
+    registerReplicatedLifetimeProperty(prop, outLifetimeProps, lifetimeParams)
+  ]#
+  
+  let replicatedProps = getReplicatedProps(ueType)
+  if replicatedProps.len == 0:
+    return newEmptyNode()
+
+  var propAsStatements = newSeq[NimNode]()
+  for prop in replicatedProps:
+    let cond = getCondFromString(prop.metadata["Cond"].get("None"))
+    let repNotify = getRepNotifyFromString(prop.metadata["RepNotify"].get("OnChanged"))
+    let propStmt = 
+      genAst(prop = ident prop.name, propName = newLit prop.name, cond = newLit cond, repNotify = newLit repNotify):
+        let prop {.inject.} = self.getClass.getFPropertyByName(propName)
+        var lifetimeParams = FDoRepLifetimeParams(condition: COND_None, repNotifyCondition: REPNOTIFY_OnChanged)
+        registerReplicatedLifetimeProperty(prop, getOutLifetimeProps(), lifetimeParams)
+    propAsStatements.add propStmt
+  
+  let propAsStatementsNode = nnkStmtList.newTree(propAsStatements)
+  result = genAst(cls = ident ueType.name, selfType = ident (ueType.name & "Ptr"), propAsStatementsNode):
+    proc getLifetimeReplicatedProps(self {.inject.}: selfType, outLifetimeProps {.inject.}: var TArray[FLifetimeProperty]) {. virtual: "GetLifetimeReplicatedProps('2 #2) const override".} =    
+      proc getOutLifetimeProps(): var TArray[FLifetimeProperty] {.importcpp: "(outLifetimeProps_p0)".} #Skips "ilegal capture" error
+      super(getOutLifetimeProps())  
+      propAsStatementsNode
+
+  result.body.insert 0, generateSuper(result, ueType.parent)
+  # debugEcho repr result
+
 type UClassNode = object
   className: string
   parent: string
@@ -213,9 +265,6 @@ type UClassNode = object
   ueType: UEType
   gameplayAttributeHelpers: seq[NimNode]
   typeNode: NimNode
-
-
-
 
 proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, NimNode, UFuncsInClass) = 
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)    
@@ -267,11 +316,12 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
       let ctor = genDeclaredConstructor(body, ueType)
         .get(genConstructorForClass(body, ueType, defaults.get(nnkStmtList.newTree())))
       procNodes.add ctor
+      procNodes.add genGetLifetimeReplicatedProps(ueType)
 
       let nimProcs = body.children.toSeq
                       .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor", ueType.name])
                       .mapIt(it.addSelfToProc(className).processVirtual(parent))        
-       
+      
       var funcInClass = genUFuncsForUClass(body, className, nimProcs)
       var fns = funcInClass.toStmtNode(withForwards)
       fns.insert(0, procNodes)
@@ -285,6 +335,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
           
       fns.add initCtor       
       result =  (typeNode, fns, funcInClass)    
+   
       # if ueType.name == "UEnhancedInputAbilitySystem":
       #   debugEcho repr result
 

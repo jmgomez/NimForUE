@@ -617,7 +617,7 @@ func addSelfToProc*(procDef:NimNode, className:string) : NimNode =
     procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
     procDef
 
-func generateSuper(procDef: NimNode, parentName: string) : NimNode = 
+func generateSuper*(procDef: NimNode, parentName: string) : NimNode = 
     let name = procDef.name.strVal().capitalizeAscii()
     let parent = procDef.params[1]
     let content = newLit &"{parentName}::{name}(@)"
