@@ -13,8 +13,8 @@ public class NimForUE : ModuleRules
 	[DllImport("hostnimforue")]
 	public static extern void setWinCompilerSettings(string sdkVersion, string compilerVersion, string toolchainDir);
 
-	[DllImport("libhostnimforue")]
-	public static extern void setUEConfig(string engineDir,string conf,string platform, bool withEditor);
+	[DllImport("hostnimforue")]
+	public static extern void setUEConfig(string engineDir, string conf, string platform, bool withEditor);
 
 	[DllImport("hostnimforue")]
 	static extern IntPtr getNimBaseHeaderPath();
@@ -86,7 +86,7 @@ public class NimForUE : ModuleRules
 			PublicDefinitions.Add("NUE_GAME=1");
 			Console.WriteLine("Found an user custom header nuegame.h Adding it to the PCH");
 		}
-			
+
 
 		if (Target.bBuildEditor) {
 			AddNimForUEDev();
@@ -107,9 +107,6 @@ public class NimForUE : ModuleRules
 		try {
 			var process = Process.Start(processInfo);
 			process.WaitForExit();
-			var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue", "libhostnimforue.dylib");
-			Console.WriteLine((Target.ProjectFile.Directory.ToString()));
-			//setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
 		}
 		
 
@@ -143,12 +140,12 @@ public class NimForUE : ModuleRules
 			PublicAdditionalLibraries.Add(dynLibPath);
 		}
 		
-		
+        setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
+
 		//PublicDefinitions.Add($"NIM_FOR_UE_LIB_PATH  \"{dynLibPath}\"");
 		//TRY?
 		try {
 			//BuildNim();
-			//setNimForUEConfig(PluginDirectory, EngineDirectory, Target.Platform.ToString(), Target.Configuration.ToString());
 			if (Target.Platform == UnrealTargetPlatform.Win64)
 				setWinCompilerSettings(Target.WindowsPlatform.WindowsSdkVersion, Target.WindowsPlatform.CompilerVersion, Target.WindowsPlatform.ToolChainDir);
 			Console.WriteLine(Target.WindowsPlatform.ToolChainDir);	
