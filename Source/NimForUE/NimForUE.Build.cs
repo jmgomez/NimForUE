@@ -98,23 +98,31 @@ public class NimForUE : ModuleRules
 		bUseUnity = false;
 	}
 
-	void NimbleSetup() {
+	void runNimble(String command)
+	{
 		var processInfo = new ProcessStartInfo();
 		processInfo.WorkingDirectory = PluginDirectory;
-		Console.WriteLine("Running nimble setup in", PluginDirectory);
+		Console.WriteLine("== NimForUE.Build.cs - Running nimble " + command + "==", PluginDirectory);
 		processInfo.FileName = "nimble" + (Target.Platform == UnrealTargetPlatform.Win64 ? ".exe" : ""); 
-		processInfo.Arguments = "ok";
+		processInfo.Arguments = command;
+		Console.WriteLine(processInfo.FileName);
 		try {
 			var process = Process.Start(processInfo);
 			process.WaitForExit();
-		}
-		
-
-		catch (Exception e) {
-			Console.WriteLine("There was a problem trying to run nimble.");
+		} catch (Exception e) {
+			Console.WriteLine("There was a problem trying to run nimble " + command);
 			Console.WriteLine(e.Message);
 			Console.WriteLine(e.StackTrace);
 		}
+	}
+
+	void NimbleSetup() {
+		if (!File.Exists(Path.Combine(PluginDirectory, "nue" + (Target.Platform == UnrealTargetPlatform.Win64 ? ".exe" : "")))) {
+			Console.WriteLine("nue needs to be built");
+			runNimble("nue");
+		}
+
+		runNimble("ok");
 	}
 
 	//TODO Run buildlibs from here so the correct config/platform is picked when building
