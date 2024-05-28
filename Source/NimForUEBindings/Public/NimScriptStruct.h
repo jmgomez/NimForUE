@@ -20,6 +20,7 @@
 		virtual FCapabilities GetCapabilities() const override
 		{
 #if  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5)
+			// pulled from Runtime\CoreUObject\Public\UObject\Class.h
 			constexpr FCapabilities Capabilities {
 				(TIsPODType<CPPSTRUCT>::Value ? CPF_IsPlainOldData : CPF_None)
 				| (std::is_trivially_destructible_v<CPPSTRUCT> ? CPF_NoDestructor : CPF_None)
@@ -409,7 +410,7 @@
 
 #if  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5)
 
-//5.5 up
+//5.5 up, pulled from Runtime\CoreUObject\Private\UObject\Class.h
 		/** Construct an unset optional value */
 		virtual void InitializeIntrusiveUnsetOptionalValue(void* Data) const
 		{
@@ -446,6 +447,18 @@
 			else
 			{
 				return EPropertyVisitorControlFlow::StepOver;
+			}
+		}
+
+		virtual void* ResolveVisitedPathInfo(void* Data, const FPropertyVisitorInfo& Info) const
+		{
+			if constexpr (TStructOpsTypeTraits<CPPSTRUCT>::WithVisitor)
+			{
+				return ((CPPSTRUCT*)Data)->ResolveVisitedPathInfo(Info);
+			}
+			else
+			{
+				return nullptr;
 			}
 		}
 #endif

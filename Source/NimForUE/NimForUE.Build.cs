@@ -13,8 +13,8 @@ public class NimForUE : ModuleRules
 	[DllImport("hostnimforue")]
 	public static extern void setWinCompilerSettings(string sdkVersion, string compilerVersion, string toolchainDir);
 
-	[DllImport("libhostnimforue")]
-	public static extern void setUEConfig(string engineDir,string conf,string platform, bool withEditor);
+	[DllImport("hostnimforue")]
+	public static extern void setUEConfig(string engineDir, string conf, string platform, bool withEditor);
 
 	[DllImport("hostnimforue")]
 	static extern IntPtr getNimBaseHeaderPath();
@@ -86,7 +86,7 @@ public class NimForUE : ModuleRules
 			PublicDefinitions.Add("NUE_GAME=1");
 			Console.WriteLine("Found an user custom header nuegame.h Adding it to the PCH");
 		}
-			
+
 
 		if (Target.bBuildEditor) {
 			AddNimForUEDev();
@@ -98,26 +98,31 @@ public class NimForUE : ModuleRules
 		bUseUnity = false;
 	}
 
-	void NimbleSetup() {
+	void runNimble(String command)
+	{
 		var processInfo = new ProcessStartInfo();
 		processInfo.WorkingDirectory = PluginDirectory;
-		Console.WriteLine("Running nimble setup in", PluginDirectory);
+		Console.WriteLine("== NimForUE.Build.cs - Running nimble " + command + "==", PluginDirectory);
 		processInfo.FileName = "nimble" + (Target.Platform == UnrealTargetPlatform.Win64 ? ".exe" : ""); 
-		processInfo.Arguments = "ok";
+		processInfo.Arguments = command;
+		Console.WriteLine(processInfo.FileName);
 		try {
 			var process = Process.Start(processInfo);
 			process.WaitForExit();
-			var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue", "libhostnimforue.dylib");
-			Console.WriteLine((Target.ProjectFile.Directory.ToString()));
-			//setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
-		}
-		
-
-		catch (Exception e) {
-			Console.WriteLine("There was a problem trying to run nimble.");
+		} catch (Exception e) {
+			Console.WriteLine("There was a problem trying to run nimble " + command);
 			Console.WriteLine(e.Message);
 			Console.WriteLine(e.StackTrace);
 		}
+	}
+
+	void NimbleSetup() {
+		if (!File.Exists(Path.Combine(PluginDirectory, "nue" + (Target.Platform == UnrealTargetPlatform.Win64 ? ".exe" : "")))) {
+			Console.WriteLine("nue needs to be built");
+			runNimble("nue");
+		}
+
+		runNimble("ok");
 	}
 
 	//TODO Run buildlibs from here so the correct config/platform is picked when building
@@ -142,13 +147,13 @@ public class NimForUE : ModuleRules
 			dynLibPath = Path.Combine(nimBinPath, "libhostnimforue.dylib");
 			PublicAdditionalLibraries.Add(dynLibPath);
 		}
-		
-		
+
+        setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
+
 		//PublicDefinitions.Add($"NIM_FOR_UE_LIB_PATH  \"{dynLibPath}\"");
 		//TRY?
 		try {
 			//BuildNim();
-			//setNimForUEConfig(PluginDirectory, EngineDirectory, Target.Platform.ToString(), Target.Configuration.ToString());
 			if (Target.Platform == UnrealTargetPlatform.Win64)
 				setWinCompilerSettings(Target.WindowsPlatform.WindowsSdkVersion, Target.WindowsPlatform.CompilerVersion, Target.WindowsPlatform.ToolChainDir);
 			Console.WriteLine(Target.WindowsPlatform.ToolChainDir);	

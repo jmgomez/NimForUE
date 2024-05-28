@@ -45,7 +45,7 @@ proc setUEConfig(engineDir, conf, platform : cstring, withEditor:bool)=
     let (_,gameDir) = tryGetEngineAndGameDir().get()
     let conf = 
         NimForUEConfig(engineDir: $engineDir, gameDir: $gameDir, 
-            targetConfiguration: targetConf, targetPlatform: targetPlatform)
+            targetConfiguration: targetConf, targetPlatform: targetPlatform, withEditor: withEditor)
     conf.saveConfig()
 
 var currentLoadPhase = nlfPreEngine #First time check reload is called is preengine
