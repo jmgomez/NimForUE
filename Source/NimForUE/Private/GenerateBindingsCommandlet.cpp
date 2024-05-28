@@ -8,6 +8,8 @@
 #include "ReflectionHelpers.h"
 #include "NimForUEEditor/NimForUEEditor.h"
 
+#include "Misc/EngineVersionComparison.h"
+
 UGenerateBindingsCommandlet::UGenerateBindingsCommandlet() {
 
 }
@@ -22,7 +24,9 @@ int32 UGenerateBindingsCommandlet::Main(const FString& Params) {
 	FGenericPlatformProcess::ConditionalSleep([]{return true;}, 2000);
 
 	// registerLogger(logger);
+#if UE_VERSION_OLDER_THAN(5, 5, 0)
 	CommandletHelpers::TickEngine();
+#endif
 	// ensureGuestIsCompiled();
 	checkReload(3); 
     genBindingsEntryPoint();
