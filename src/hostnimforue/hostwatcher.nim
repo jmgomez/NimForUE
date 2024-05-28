@@ -38,14 +38,12 @@ proc setWinCompilerSettings(sdkVersion, compilerVersion, toolchainDir:cstring) =
 
 proc getNimBaseHeaderPath(): cstring = querySetting(libPath).cstring
 
-proc setUEConfig(engineDir, conf, platform : cstring, withEditor:bool)=
-    #TODO add witheditor
+proc setUEConfig(engineDir, conf, platform: cstring, withEditor:bool)=
     let targetConf = parseEnum[TargetConfiguration]($conf)
     let targetPlatform = parseEnum[TargetPlatform]($platform)
     let (_,gameDir) = tryGetEngineAndGameDir().get()
-    let conf = 
-        NimForUEConfig(engineDir: $engineDir, gameDir: $gameDir, 
-            targetConfiguration: targetConf, targetPlatform: targetPlatform, withEditor: withEditor)
+    var conf = getOrCreateNUEConfig()
+    conf.targetConfiguration = targetConf
     conf.saveConfig()
 
 var currentLoadPhase = nlfPreEngine #First time check reload is called is preengine
