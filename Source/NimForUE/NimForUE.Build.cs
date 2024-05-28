@@ -139,7 +139,7 @@ public class NimForUE : ModuleRules
 			dynLibPath = Path.Combine(nimBinPath, "libhostnimforue.dylib");
 			PublicAdditionalLibraries.Add(dynLibPath);
 		}
-		
+
         setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
 
 		//PublicDefinitions.Add($"NIM_FOR_UE_LIB_PATH  \"{dynLibPath}\"");
