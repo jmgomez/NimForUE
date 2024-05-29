@@ -144,7 +144,7 @@ func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFuncti
       flags = flags | FUNC_Net | FUNC_NetServer
     if hasMeta("Client"):
       flags = flags | FUNC_Net | FUNC_NetClient
-    if hasMeta("NetMulticast"):
+    if hasMeta("NetMulticast") or hasMeta("Multicast"):
       flags = flags | FUNC_Net | FUNC_NetMulticast
     if hasMeta("Reliable"):
       flags = flags | FUNC_NetReliable
