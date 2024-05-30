@@ -43,8 +43,8 @@ proc setUEConfig(engineDir, conf, platform: cstring, withEditor:bool)=
     let targetPlatform = parseEnum[TargetPlatform]($platform)
     let (_,gameDir) = tryGetEngineAndGameDir().get()
     var conf = getOrCreateNUEConfig()
-    conf.targetConfiguration = targetConf
-    conf.saveConfig()
+    conf.targetConfiguration = targetConf    
+    # conf.saveConfig()
 
 var currentLoadPhase = nlfPreEngine #First time check reload is called is preengine
 #In the future Consider removing Host and using the plugin directly? 
