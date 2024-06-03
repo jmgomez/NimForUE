@@ -460,7 +460,7 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
 
   let modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", 
     "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", 
-    "NetCore", "UMG", "AdvancedPreviewScene", "AIModule", "EditorSubsystem"]
+    "NetCore", "UMG", "AdvancedPreviewScene", "AIModule", "EditorSubsystem", "DeveloperSettings"]
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
   let enginePluginSymbolsPaths = enginePlugins.map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName)).flatten()
   

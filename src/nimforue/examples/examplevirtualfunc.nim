@@ -95,7 +95,7 @@ uClass ANimBeginPlayOverrideActor of AActor:
       # UE_Log "CanEditChange called in the parent updated 1"
       self.super(inProperty)
     #	virtual bool EditorCanAttachTo(const AActor* InParent, FText& OutReason) const;
-    proc editorCanAttachTo(inParent {. constcpp .} : AActorPtr, outReason : var FText) : bool {. constcpp .} = 
+    proc editorCanAttachTo(inParent {. constcpp .}: AActorPtr, outReason: var FText): bool {. constcpp, override .} = 
       UE_Log "EditorCanAttachTo called in the parent"
       self.super(inParent, outReason)
     

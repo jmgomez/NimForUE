@@ -288,7 +288,7 @@ type
   FCanvasPtr* = ptr FCanvas
   FGameplayTag* {.importcpp, pure.} = object
     tag* {.importcpp: "Tag".}: FName
-  # UDeveloperSettings* {.importcpp .} = object of UObject
+  UDeveloperSettings* {.importcpp .} = object of UObject
   # UEdGraph* {.importcpp .} = object of UObject
   # UEdGraphPtr* = ptr UEdGraph
   # UEdGraphNode* {.importcpp .} = object of UObject
@@ -701,3 +701,5 @@ converter toTraceType*(collisionChannel:ECollisionChannel) : ETraceTypeQuery {.i
 
 #NET
 proc registerReplicatedLifetimeProperty*(prop: FPropertyPtr, outLifetimeProps {.byref.}: TArray[FLifetimeProperty], params: var FDoRepLifetimeParams) {.importcpp: "RegisterReplicatedLifetimeProperty(@)".}
+
+

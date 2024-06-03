@@ -9,7 +9,7 @@ import engine/engine
 import enhancedinput/enhancedinput
 import std/[typetraits, options, asyncdispatch, strformat, tables]
 
-proc tryGetSubsystem*[T : UEngineSubsystem]() : Option[ptr T] = 
+proc tryGetSubsystem*[T: UEngineSubsystem](): Option[ptr T] = 
     tryUECast[T](getEngineSubsystem(makeTSubclassOf[UEngineSubsystem](staticClass[T]())))
 
 proc tryGetSubsystem*[T : USubsystem](objContext: UObjectPtr) : Option[ptr T] =
