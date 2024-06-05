@@ -14,7 +14,7 @@ requires "nim >= 2.1"
 backend = "cpp"
 #bin = @["nue"]
 
-let buildNueCmd = &"nim cpp -p:./  -d:nimOldCaseObjects -d:nimBin={selfExe()}  --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
+let buildNueCmd = &"nim cpp -p:./  -d:nimOldCaseObjects -d:nimBin={getCurrentCompilerExe()}  --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
 task nue, "Build the NimForUE tool":
   exec buildNueCmd
 
