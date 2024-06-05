@@ -1,3 +1,4 @@
+import std/strformat
 # Package
 
 version       = "0.1.0"
@@ -7,22 +8,24 @@ license       = "MIT"
 srcDir        = "src"
 
 # Dependencies
-requires "nim >= 1.6.4"
+requires "nim >= 2.1"
 
 backend = "cpp"
 #bin = @["nue"]
 
-let buildNueCmd = "nim cpp -p:./  -d:nimOldCaseObjects  --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
+let buildNueCmd = &"nim cpp -p:./  -d:nimOldCaseObjects -d:nimBin={selfExe()}  --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
 task nue, "Build the NimForUE tool":
   exec buildNueCmd
 
 
 task ok, "Make sure NUE and Host are built at least once (ment to be called for UBT)":
   let (output, _) = gorgeEx("./nue ok")
-  echo output
   if not output.contains "ok host built":
     exec buildNueCmd
 
 task nuesetup, "Setup the plugin":
   exec buildNueCmd
   exec "./nue setup"
+
+task shownim, "":
+  echo selfExe()

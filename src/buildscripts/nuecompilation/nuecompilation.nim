@@ -7,8 +7,9 @@ import ../switches/switches
 import nimforue/utils/utils
 
 let config = getNimForUEConfig()
-
-let nimCmd = "nim" #so we can easy switch with nim_temp
+const nimBin {.strdefine.} = ""
+let nimCmd = nimBin
+log "Using nim at " & nimCmd
 # let nimCmd = "nim_temp" #so we can easy switch with nim_temp
 
 #In mac we need to do a universal 
