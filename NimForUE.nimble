@@ -1,4 +1,5 @@
 import std/strformat
+import std/os
 # Package
 
 version       = "0.1.0"
@@ -28,4 +29,4 @@ task nuesetup, "Setup the plugin":
   exec "./nue setup"
 
 task shownim, "":
-  echo selfExe()
+  echo getCurrentCompilerExe()
