@@ -9,8 +9,7 @@ license       = "MIT"
 srcDir        = "src"
 
 # Dependencies
-requires "nim#devel"
-
+requires "https://github.com/jmgomez/Nim#nimcheckfix"
 backend = "cpp"
 #bin = @["nue"]
 
