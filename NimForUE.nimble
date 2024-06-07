@@ -9,7 +9,7 @@ license       = "MIT"
 srcDir        = "src"
 
 # Dependencies
-requires "nim >= 2.1"
+requires "nim#devel"
 
 backend = "cpp"
 #bin = @["nue"]

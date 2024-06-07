@@ -350,7 +350,7 @@ proc findFuncByName*(cls : UClassPtr, name:FName) : UFunctionPtr {.inline.} =
 proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) : void {. importcpp: "#.AddFunctionToFunctionMap(@)"}
 proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
 proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()", ureflect .}
-proc getCDO*[T:UObject](cls:UClassPtr) : ptr T = ueCast[T](cls.getDefaultObject())
+proc getCDO*[T: UObject](): ptr T = ueCast[T](T.staticClass.getDefaultObject())
 proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()" .}
 proc assembleReferenceTokenStream*(cls:UClassPtr, bForce = false) : void {. importcpp:"#->AssembleReferenceTokenStream(@)" .}
 
