@@ -9,11 +9,10 @@ license       = "MIT"
 srcDir        = "src"
 
 # Dependencies
-requires "https://github.com/jmgomez/Nim#nimcheckfix"
 backend = "cpp"
 #bin = @["nue"]
 
-let buildNueCmd = &"nim cpp -p:./  -d:nimOldCaseObjects -d:nimBin={getCurrentCompilerExe()}  --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
+let buildNueCmd = &"nim cpp -p:./  -d:nimOldCaseObjects --nimcache:./.nimcache/nue src/nue.nim" # see src/nue.nims for conf
 task nue, "Build the NimForUE tool":
   exec buildNueCmd
 
