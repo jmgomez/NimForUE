@@ -42,6 +42,12 @@ proc getCompilerVersion() : string =
     return readFile(path)
   compilerVersion.split(".")[0] & "0"
 
+proc getVCToolset(): string = 
+  let path = PluginDir / "toolchain_dir.txt"
+  if fileExists(path):
+    let dir = readFile(path)
+    dir.split("\\")[^1]
+  else:""
 
 proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool, target:string) : seq[string] = 
   result = @[
@@ -119,13 +125,13 @@ proc vccPchCompileFlags*(withDebug, withIncremental, withPch:bool, target:string
   if withPch: 
     result &= pchCompileFlags(target)
   
-  
-  result &= tryGetGameUserConfigValue[string]("vctoolset")
-    .map(x => @["--vctoolset:" & x])
-    .get(newSeq[string]())
+  var vcToolset = tryGetGameUserConfigValue[string]("vctoolset").get("")
+  if vcToolset == "":
+    vcToolset = getVCToolset()
+  if vcToolset != "":
+    result.add("--vctoolset:" & vcToolset)
 
 
- 
 
 #nimforue or game are the target, the folder and the base name must match
 proc getPdbFilePath*(targetName:static string): string =
