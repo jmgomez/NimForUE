@@ -1,7 +1,7 @@
 <img src="./logo.png" width="360"  align="right">
 
 <p align="center">
-  <a href="https://posthog.com/docs">Docs</a> - <a href="https://discord.gg/smD8vZxzHh">Discord</a> - <a href="https://github.com/jmgomez/NimForUE/wiki/Roadmap">Roadmap</a> - <a href="https://github.com/jmgomez/NimTemplate">Template</a> 
+  <a href="https://nimforue.pages.dev">Docs</a> - <a href="https://discord.gg/smD8vZxzHh">Discord</a> - <a href="https://github.com/jmgomez/NimForUE/wiki/Roadmap">Roadmap</a> - <a href="https://github.com/jmgomez/NimTemplate">Template</a> 
 </p>
 
 ### DISCLAIMER ###
