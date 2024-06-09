@@ -1,15 +1,13 @@
-
 <img src="./logo.png" width="360"  align="right">
+
+<p align="center">
+  <a href="https://posthog.com/docs">Docs</a> - <a href="https://discord.gg/smD8vZxzHh">Discord</a> - <a href="https://github.com/jmgomez/NimForUE/wiki/Roadmap">Roadmap</a> - <a href="https://github.com/jmgomez/NimTemplate">Template</a> 
+</p>
 
 ### DISCLAIMER ###
 
 The plugin is being used to develop a Game but it isnt feature complete yet. 
 To get started there is a Third Person Template implementation in NimForUE: https://github.com/jmgomez/NimTemplate
-
-
-### Roadmap ###
-
-https://github.com/jmgomez/NimForUE/wiki/Roadmap
 
 ### Why NimForUE?
 
@@ -188,3 +186,7 @@ Which produces:
 
 1. Clone the repo inside `YourGame/Plugins`
 2. Run `nimble nuesetup` from `YourGame/Plugins/NimForUE`
+
+A video showcasing the installation process in more detail:
+
+[![Installing NimForUE video](https://img.youtube.com/vi/sT8-Oz7k-VU/0.jpg)](https://youtu.be/sT8-Oz7k-VU)
