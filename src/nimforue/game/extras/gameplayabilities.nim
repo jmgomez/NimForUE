@@ -23,3 +23,8 @@ proc setNumericAttributeBase*(asc: UAbilitySystemComponentPtr, attribute: FGamep
 proc initAbilityActorInfo*(asc:UAbilitySystemComponentPtr, actor: AActorPtr, avatar: AActorPtr) {.importcpp: "#->InitAbilityActorInfo(#, #)".}
 proc getSpawnedAttributesMutable*(asc:UAbilitySystemComponentPtr): var TArray[UAttributeSetPtr] {.importcpp: "#->GetSpawnedAttributes_Mutable()".}
 
+#	virtual bool CommitAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr);
+proc commitAbility*(ability: UGameplayAbilityPtr, handle: FGameplayAbilitySpecHandle, actorInfo: ptr FGameplayAbilityActorInfo, activationInfo: FGameplayAbilityActivationInfo): bool {.importcpp: "#->CommitAbility(@)".}
+
+proc add*(handle: FGameplayAbilityTargetDataHandle, data: ptr FGameplayAbilityTargetData) {.importcpp: "#.Add(#)".}
+proc get*(handle: FGameplayAbilityTargetDataHandle, index: int): ptr FGameplayAbilityTargetData {.importcpp: "#.Get(#)".}

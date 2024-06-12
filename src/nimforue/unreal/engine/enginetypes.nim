@@ -287,7 +287,8 @@ type
   FCanvas* {.importcpp, pure.} = object
   FCanvasPtr* = ptr FCanvas
   FGameplayTag* {.importcpp, pure.} = object
-    tag* {.importcpp: "Tag".}: FName
+    tagName* {.importcpp: "TagName".}: FName
+  FGameplayTagContainer* {.importcpp, pure.} = object
   UDeveloperSettings* {.importcpp .} = object of UObject
   # UEdGraph* {.importcpp .} = object of UObject
   # UEdGraphPtr* = ptr UEdGraph
@@ -521,6 +522,7 @@ type EGetWorldErrorMode* {.importcpp, size: sizeof(uint8).} = enum
 func getActor*(hitResult: FHitResult): AActorPtr {.importcpp: "#.GetActor()".}
 func actor*(handle: FActorInstanceHandle): AActorPtr {.importcpp: "#.FetchActor()".}
 proc isTickFunctionRegistered*(tickFn: FActorTickFunction): bool {.importcpp: "#.IsTickFunctionRegistered()".}  
+proc setTickFunctionEnable*(tickFn: FActorTickFunction, bEnable: bool) {.importcpp: "#.SetTickFunctionEnable(#)".}
 ##ENGINE
 #UWorld* UEngine::GetWorldFromContextObject(const UObject* Object, EGetWorldErrorMode ErrorMode) const
 proc getEngine*() : UEnginePtr  {.importcpp: "(GEngine)", ureflect.} 
@@ -701,5 +703,4 @@ converter toTraceType*(collisionChannel:ECollisionChannel) : ETraceTypeQuery {.i
 
 #NET
 proc registerReplicatedLifetimeProperty*(prop: FPropertyPtr, outLifetimeProps {.byref.}: TArray[FLifetimeProperty], params: var FDoRepLifetimeParams) {.importcpp: "RegisterReplicatedLifetimeProperty(@)".}
-
 
