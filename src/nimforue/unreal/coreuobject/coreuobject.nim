@@ -66,7 +66,7 @@ type
     max* {.importcpp: "Max".}: FVector2f
     min* {.importcpp: "Min".}: FVector2f
 
-  FVector2f* {.importcpp.} = object
+  FVector2f* {.importcpp, inheritable.} = object
     y* {.importcpp: "Y".}: float32
     x* {.importcpp: "X".}: float32
 

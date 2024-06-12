@@ -383,7 +383,8 @@ func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField, isImportCpp: bool = fa
   else:
     getFieldIdent(prop)
 
-func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:UEExposure) : NimNode = 
+func genUStructTypeDef*(typeDef: UEType,  rule: UERule = uerNone, typeExposure: UEExposure): NimNode = 
+  debugEcho "Enters into genUStructTypeDef for ", typeDef.name, " type exposure is ", typeExposure
   let suffix = "_"
   let typeName = 
     case typeExposure: 
@@ -410,9 +411,8 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
           ident "inject",
           importExportPragma
         )
-      ])
+      ]) 
 
-    
   let fields =
     case typeExposure:
     of uexDsl, uexImport:
@@ -464,17 +464,17 @@ func genUStructTypeDef*(typeDef: UEType,  rule : UERule = uerNone, typeExposure:
         fields
 
   if typeDef.superStruct == "":
+    debugEcho "No super struct for ", typeDef.name, " type exposure is ", typeExposure
     result = genAst(typeName, fields):
           type typeName = object
-    result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])
-
+    result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])    
   else:
+    debugEcho "Super struct for ", typeDef.name, " is ", typeDef.superStruct , " type exposure is ", typeExposure  
     let superStruct = ident typeDef.superStruct
     result = genAst(typeName, superStruct, fields):
           type typeName = object of superStruct
     result[0][^1][^1] = fields
-
-  
+    debugEcho "Result is ", repr result
 
   if typeExposure == uexExport:  
     result = newEmptyNode() #exportc since Nim 2.0 exports the type so nothing to do here. 

@@ -414,9 +414,11 @@ proc toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchInclude
   for rule in rules:
     if name in rule.affectedTypes and rule.rule == uerIgnore:
       return none(UEType)
-
-  # let parent = str.getSuperClass()
-  # let parentName = parent.getPrefixCpp() & parent.getName()
+  
+  var superStructName = ""
+  if str.getSuperStruct() != nil:
+    superStructName = str.getSuperStruct.getPrefixCpp() & str.getSuperStruct.getName()
+  
   if str.isBpExposed() or uerImportBlueprintOnly notin rules:
     var size, alignment: int32
     if str.hasStructOps():
@@ -430,7 +432,7 @@ proc toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchInclude
        
     some UEType(name: name, kind: uetStruct, fields: fields, 
           isInPCH: isInPCH, moduleRelativePath: str.getModuleRelativePath().get(""), #notice moduleRelativePath is used to deduce the submodule
-          metadata: metadata, size: size, alignment: alignment)
+          metadata: metadata, size: size, alignment: alignment, superStruct: superStructName)
   else:
     # UE_Warn &"Struct {name} is not exposed to BP"
     none(UEType)

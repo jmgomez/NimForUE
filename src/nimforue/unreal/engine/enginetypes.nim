@@ -584,7 +584,7 @@ type
   FInputActionValue* {.importcpp .} = object
     #value (protected) : FVector3
     
-  FKeyEvent* {.importcpp .} = object
+  FKeyEvent* {.importcpp, inheritable .} = object
   FkeyEventPtr* = ptr FKeyEvent
 
   FInputKeyEventArgs* {.importcpp, pure .} = object

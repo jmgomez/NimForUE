@@ -249,11 +249,16 @@ func genUStructCodegenTypeDefBinding*(ueType: UEType, target: CodegenTarget): Ni
       )
     )
     .foldl(a.add b, nnkRecList.newTree)
+  let superStructNode = 
+    if ueType.superStruct != "":
+      nnkOfInherit.newTree(ident ueType.superStruct)
+    else:
+      newEmptyNode()
   result = nnkTypeDef.newTree(
     pragmas,
     newEmptyNode(),
     nnkObjectTy.newTree(
-      newEmptyNode(), newEmptyNode(), recList
+      newEmptyNode(), superStructNode, recList
     )
   )
 
