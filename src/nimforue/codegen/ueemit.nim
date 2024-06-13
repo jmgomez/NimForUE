@@ -287,11 +287,6 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEar
 
     hotReloadInfo
 
-
-
-
-
-
 proc emitUStruct*(typeDef:UEType) : NimNode =
     var ueType = typeDef #the generated type must be reversed to match declaration order because the props where picked in the reversed order
     ueType.fields = ueType.fields.reversed()
@@ -614,7 +609,7 @@ func addSelfToProc*(procDef:NimNode, className:string) : NimNode =
 
         procDef.body.insert(0, assignSelf)
         return procDef
-    procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", ident className & "Ptr", newEmptyNode()))
+    procDef.params.insert(1, nnkIdentDefs.newTree(ident "self", nnkPtrTy.newTree ident className, newEmptyNode()))
     procDef
 
 func generateSuper*(procDef: NimNode, parentName: string) : NimNode = 

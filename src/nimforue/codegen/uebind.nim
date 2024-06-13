@@ -387,7 +387,13 @@ func genUStructTypeDef*(typeDef: UEType,  rule: UERule = uerNone, typeExposure: 
   let suffix = "_"
   let typeName = 
     case typeExposure: 
-    of uexDsl: identWithInjectPublic typeDef.name
+    of uexDsl: 
+      nnkPragmaExpr.newTree([
+        nnkPostfix.newTree([ident "*", ident typeDef.name]),
+        nnkPragma.newTree(
+          ident "exportc"
+        )
+      ])
     of uexImport: 
       nnkPragmaExpr.newTree([
         nnkPostfix.newTree([ident "*", ident typeDef.name]),
@@ -463,13 +469,17 @@ func genUStructTypeDef*(typeDef: UEType,  rule: UERule = uerNone, typeExposure: 
         fields
 
   if typeDef.superStruct == "":
-    result = genAst(typeName, fields):
-          type typeName = object
+    result = genAst(typeName, fields, typenamePtr = ident typeDef.name & "Ptr"):
+          type 
+            typeName = object
+
     result[0][^1] = nnkObjectTy.newTree([newEmptyNode(), newEmptyNode(), fields])    
   else:
     let superStruct = ident typeDef.superStruct
-    result = genAst(typeName, superStruct, fields):
-          type typeName = object of superStruct
+    result = genAst(typeName, superStruct, fields, typenamePtr = ident typeDef.name & "Ptr"):
+          type 
+            typeName = object of superStruct
+
     result[0][^1][^1] = fields
 
   if typeExposure == uexExport:  

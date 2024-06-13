@@ -44,38 +44,7 @@ func fromCallNodeToIdentDenf(n: NimNode): NimNode =
       error "Unexpected type of field. Expected ident or bracketExpr got " & $n[1][0].kind
       newEmptyNode()
   let pragms = newEmptyNode() #no pragmas for now
-  nnkIdentDefs.newTree(name, typ, pragms)
-
-    
-macro uStruct*(name:untyped, body : untyped) : untyped = 
-    var superStruct = ""
-    var structTypeName = ""
-    case name.kind
-    of nnkIdent:
-        structTypeName = name.strVal()
-    of nnkInfix:
-        superStruct = name[^1].strVal()
-        structTypeName = name[1].strVal()
-    else:
-        error("Invalid node for struct name " & repr(name) & " " & $ name.kind)
-
-    let structMetas = getMetasForType(body)
-    let ueFields = getUPropsAsFieldsForType(body, structTypeName)
-    let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
-    let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
-    let nimFields = body.children.toSeq
-      .filterIt(it.kind == nnkCall and it[0].strVal() notin ValidUprops)
-      .map(fromCallNodeToIdentDenf)
-    when defined nuevm:
-      let types = @[ueType]    
-      emitType($(types.toJson()))  #TODO needs structOps to be implemented
-      result = nnkTypeSection.newTree(genUStructCodegenTypeDefBinding(ueType, ctVM))      
-    else:
-      addVMType ueType 
-      result = emitUStruct(ueType)
-      if nimFields.any:
-        result[0][0][^1][^1].add nimFields
-    # echo repr result
+  nnkIdentDefs.newTree(name, typ, pragms)    
 
 func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata], isInterface: bool) : (EClassFlags, seq[UEMetadata]) = 
     var metas = classMetadata
@@ -362,6 +331,42 @@ struct $1 : public $3{cppInterfaces} {{
   $2  
 }};
   """
+
+
+macro uStruct*(name:untyped, body : untyped) : untyped = 
+  var superStruct = ""
+  var structTypeName = ""
+  case name.kind
+  of nnkIdent:
+      structTypeName = name.strVal()
+  of nnkInfix:
+      superStruct = name[^1].strVal()
+      structTypeName = name[1].strVal()
+  else:
+      error("Invalid node for struct name " & repr(name) & " " & $ name.kind)
+
+  let structMetas = getMetasForType(body)
+  let ueFields = getUPropsAsFieldsForType(body, structTypeName)
+  let structFlags = (STRUCT_NoFlags) #Notice UE sets the flags on the PrepareCppStructOps fn
+  let ueType = makeUEStruct(structTypeName, ueFields, superStruct, structMetas, structFlags)
+  let nimFields = body.children.toSeq
+    .filterIt(it.kind == nnkCall and it[0].strVal() notin ValidUprops)
+    .map(fromCallNodeToIdentDenf)
+
+  let nimProcs = body.children.toSeq
+    .filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef])
+    .mapIt(it.addSelfToProc(structTypeName).processVirtual(superStruct))
+
+  when defined nuevm:
+    let types = @[ueType]    
+    emitType($(types.toJson()))  #TODO needs structOps to be implemented
+    result = nnkTypeSection.newTree(genUStructCodegenTypeDefBinding(ueType, ctVM))      
+  else:
+    addVMType ueType 
+    result = emitUStruct(ueType)
+    if nimFields.any:
+      result[0][0][^1][^1].add nimFields
+    result = nnkStmtList.newTree(result & nimProcs)
 
 proc genRawCppTypeImpl(name, body : NimNode) : NimNode =     
   #TODO do this better so I can introudce other metas

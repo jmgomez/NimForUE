@@ -453,7 +453,7 @@ proc staticStruct*[T]() : UScriptStructPtr =
 proc Class*[T : typedesc](t:T): UClassPtr = staticClass[t]()
 
 proc staticStruct*(T:typedesc) : UScriptStructPtr = staticStruct[T]()
-proc ScriptStruct*[T : typedesc](t:T) : UScriptStructPtr = staticStruct[t]()
+proc scriptStruct*[T : typedesc](t:T) : UScriptStructPtr = staticStruct[t]()
 
 
 proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}

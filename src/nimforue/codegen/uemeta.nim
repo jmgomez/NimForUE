@@ -426,10 +426,8 @@ proc toUEType*(str: UScriptStructPtr, rules: seq[UEImportRule] = @[], pchInclude
       alignment = str.getAlignment()
     else:
       UE_Warn &"The struct {str} does not have StructOps therefore we cant calculate the size and alignment"
-
-    
+      
     let isInPCH = name in getAllPCHTypes()
-       
     some UEType(name: name, kind: uetStruct, fields: fields, 
           isInPCH: isInPCH, moduleRelativePath: str.getModuleRelativePath().get(""), #notice moduleRelativePath is used to deduce the submodule
           metadata: metadata, size: size, alignment: alignment, superStruct: superStructName)
