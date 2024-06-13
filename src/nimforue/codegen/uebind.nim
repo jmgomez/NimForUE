@@ -240,6 +240,44 @@ func isNonPublicPropInNonCommonModule(uet: UEType, prop: UEField): bool =
 func shouldGenGetterSetters*(uet: UEType, prop: UEField, isUserType: bool): bool = 
   prop.kind == uefProp and (isUserType or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
 
+
+func getStructTraits(typeDef: UEType): seq[string] =  
+  for m in typeDef.metadata:
+    if m.name == "WithNetSerializer":
+      result.add("WithNetSerializer = true")
+    if m.name == "WithSerializer":
+      result.add("WithSerializer = true")
+    if m.name == "WithNetSharedSerialization":
+      result.add("WithNetSharedSerialization = true")
+    #TODO add the other traits and make sure the type correctly implements them        
+
+func getStructTemplate*(typeDef: UEType): string =  
+  var base = ""
+  if typeDef.superStruct != "": 
+    base = " : public $3"
+
+  let traits = getStructTraits(typeDef)
+  var structOpsTraits = ""
+  if traits.len > 0:    
+    structOpsTraits = &"""
+template<>
+struct TStructOpsTypeTraits<{typeDef.name}> : public TStructOpsTypeTraitsBase2<{typeDef.name}>
+{{
+	enum
+	{{
+      { traits.join(",\n") }
+	}};
+}};
+
+"""
+
+  &"""
+  struct $1 {base} {{
+    $2  
+  }};
+  {structOpsTraits}
+"""
+
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure,  lineInfo: Option[LineInfo]) : NimNode =
 
   let props = nnkStmtList.newTree(
@@ -388,12 +426,16 @@ func genUStructTypeDef*(typeDef: UEType,  rule: UERule = uerNone, typeExposure: 
   let typeName = 
     case typeExposure: 
     of uexDsl: 
-      nnkPragmaExpr.newTree([
-        nnkPostfix.newTree([ident "*", ident typeDef.name]),
-        nnkPragma.newTree(
-          ident "exportc"
+        nnkPragmaExpr.newTree(
+          nnkPostFix.newTree(ident "*", ident typeDef.name),
+          nnkPragma.newTree(
+            ident "pure",
+            ident "exportc", 
+            ident "inheritable",
+            nnkExprColonExpr.newTree(ident "codegenDecl", 
+              newLit getStructTemplate(typeDef))
+          )
         )
-      ])
     of uexImport: 
       nnkPragmaExpr.newTree([
         nnkPostfix.newTree([ident "*", ident typeDef.name]),
