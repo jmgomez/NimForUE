@@ -332,6 +332,12 @@ struct $1 : public $3{cppInterfaces} {{
 }};
   """
 
+func genGetScriptStruct(ueType: UEType): NimNode = 
+  let structIdent = ident uetype.name 
+  result = 
+    genAst(cls = structIdent, selfType = nnkPtrTy.newTree(structIdent), structIdent):
+      proc getScriptStruct(self {.inject.}: selfType): UScriptStructPtr {. virtual: "GetScriptStruct() const override".} =    
+        structIdent.scriptStruct
 
 macro uStruct*(name:untyped, body : untyped) : untyped = 
   var superStruct = ""
@@ -353,9 +359,12 @@ macro uStruct*(name:untyped, body : untyped) : untyped =
     .filterIt(it.kind == nnkCall and it[0].strVal() notin ValidUprops)
     .map(fromCallNodeToIdentDenf)
 
-  let nimProcs = body.children.toSeq
+  var nimProcs = body.children.toSeq
     .filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef])
     .mapIt(it.addSelfToProc(structTypeName).processVirtual(superStruct))
+  
+  if superStruct != "":
+    nimProcs.add genGetScriptStruct(ueType)
 
   when defined nuevm:
     let types = @[ueType]    

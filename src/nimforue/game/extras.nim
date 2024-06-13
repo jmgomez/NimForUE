@@ -117,3 +117,6 @@ proc reinstanceNextFrame() {.cdecl, exportc.} =
 proc startNue*() {.cdecl, exportc.} =
   #TODO Hook the Early Types here. 
   let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)      
+
+
+proc netSerialize*(vec: FVector, ar: var FArchive, map: UPackageMapPtr, bOutSuccess: var bool) {.importcpp:"#.NetSerialize(@)".}
