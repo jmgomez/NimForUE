@@ -52,7 +52,6 @@ proc getGamePathFromGameDir*() : string =
     .mapIt(it[1])
     .head()
     .get(GamePathError)
-  # (gameDir / "*.uproject").walkFiles.toSeq().head().get(GamePathError)
 
 
 # https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Projects/FProjectDescriptor/EngineAssociation?application_version=5.4
@@ -208,7 +207,7 @@ proc getNimForUEConfig*(): NimForUEConfig =
 
   let configErrMsg = "Please check " & getConfigFileName() & " for missing: "
   doAssert(config.engineDir.dirExists(), configErrMsg & " engineDir")
-  doAssert(config.gameDir.dirExists(), configErrMsg & " gameDir")
+  doAssert(config.gameDir.dirExists(), configErrMsg & " gameDir " & config.gameDir)
   config.engineDir = config.engineDir.normalizedPath().normalizePathEnd()
   config.gameDir = config.gameDir.normalizedPath().normalizePathEnd()
 
@@ -238,8 +237,9 @@ proc HostLibPath*(): string = ueLibsDir / getFullLibName("hostnimforue")
 proc GameLibPath*(): string = ueLibsDir / getFullLibName("game")
 
 proc NimGameDir*() :string = getOrCreateNUEConfig().gameDir / "NimForUE" #notice this is a proc so it's lazy loaded
-proc GamePath*() : string = getGamePathFromGameDir()
-proc GameName*() : string = GamePath().split(PathSeparator)[^1].split(".")[0]
+proc GamePath*(withQuotes = true) : string =
+  if withQuotes: quotes(getGamePathFromGameDir()) else: getGamePathFromGameDir()
+proc GameName*() : string = getGamePathFromGameDir().split(PathSeparator)[^1].split(".")[0]
 #TODO we need to make it accesible from game/guest at compile time
 when defined(nue):
   let WithEditor* = getOrCreateNUEConfig().withEditor 

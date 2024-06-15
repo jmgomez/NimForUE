@@ -5,6 +5,9 @@ const importedBindingPrefix* = "@@_binding_"
 template quotes*(path: string): untyped =
   "\"" & path & "\""
 
+template squotes*(path: string): untyped =
+  "'" & path & "'"
+
 type TargetPlatform* = enum
     Mac = "Mac"
     Win64 = "Win64"

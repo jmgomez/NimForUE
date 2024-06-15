@@ -373,9 +373,10 @@ task setup, "Setups the plugin by building the initial tasks in order":
 task starteditor, "opens the editor":
   ubuild(taskOptions)
   when defined windows:
-    discard execCmd("powershell.exe "&GamePath())
+    let command = quotes("&" & squotes(GamePath(withQuotes=false))) # handles powershell command with spaces "&'C:\path\to\project with spaces.uproject'
+    discard execCmd(&"powershell.exe {command}")
   else:
-    discard execCmd("open "&GamePath())
+    discard execCmd("open " & GamePath())
 
 
 task showincludes, "Traverses UEDeps.h gathering includes and shows then in the script":
