@@ -190,3 +190,12 @@ Which produces:
 A video showcasing the installation process in more detail:
 
 [![Installing NimForUE video](https://img.youtube.com/vi/sT8-Oz7k-VU/0.jpg)](https://youtu.be/sT8-Oz7k-VU)
+
+
+## Troubleshooting
+
+### Windows
+- The project path must not be too long, the default location `C:/Users/<USER>/Unreal Projects` is too long for instance.
+- The project path must not contain spaces, the default location `C:/Users/<USER>/Unreal Projects` will break as it contain spaces.
+
+For both issues you can move the "Unreal Projects" folder to the root of a drive and symlink it back to the user document directory if needed by other process / applications.
