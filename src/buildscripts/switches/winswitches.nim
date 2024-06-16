@@ -19,13 +19,13 @@ proc pchObjPath(target:string) : string =
 
 proc pchCompileFlags(target:string) : seq[string] = 
   let module = getModuleName(target)
-  let pchCompileFlags = @[
-    &"/FI\"{pchDir}\\{module}\\PCH.{module}.h\"",
-    &"/Yu\"{pchDir}\\{module}\\PCH.{module}.h\"",
-    &"/Fp\"{pchDir}\\{module}\\PCH.{module}.h.pch\"",
-    # &"/Fd\"{pchDir}\\PCH.NimForUE.h.pdb\"",
+  @[
+    &"/FI" & escape(quotes(pchDir / module / &"PCH.{module}.h")),
+    &"/Yu" & escape(quotes(pchDir / module / &"PCH.{module}.h")),
+    &"/Fp" & escape(quotes(pchDir / module / &"PCH.{module}.h.pch")),
+
+    #&"/Fd" & escape(quotes(pchDir / module / &"PCH.{module}.h.pdb")),
   ]
-  pchCompileFlags
 
 #The file is created from a function in host which is called from the build rules on the plugin when UBT runs
 proc getSdkVersion*() : string =
@@ -164,11 +164,9 @@ proc getPdbFilePath*(targetName:static string): string =
 proc vccCompileSwitches*(withDebug, withIncremental, withPch : bool, target:static string) : seq[string]= 
   var switches = vccPchCompileFlags(withDebug, withIncremental, withPch, target).mapIt("-t:" & it) & @[&"--cc:vcc"]
   if withPch:
-    switches.add "-l:" & pchObjPath(target)
+    switches.add "-l:" & escape(quotes(pchObjPath(target)))
   if withDebug: 
       let debugSwitches = (&"/link /INCREMENTAL /DEBUG /PDB:\"{getPdbFilePath(target)}\"").split("/").filterIt(len(it)>1).mapIt("-l:/" & it.strip())
-
-      # let debugSwitches = "-l:\"/INCREMENTAL /DEBUG\"" & &"-l:/PDB:\"{getPdbFilePath(debugFolder)}\""
       switches & debugSwitches
   else: switches & @["-l:/INCREMENTAL"]
 

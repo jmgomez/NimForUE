@@ -196,6 +196,5 @@ A video showcasing the installation process in more detail:
 
 ### Windows
 - The project path must not be too long, the default location `C:/Users/<USER>/Unreal Projects` is too long for instance.
-- The project path must not contain spaces, the default location `C:/Users/<USER>/Unreal Projects` will break as it contain spaces.
 
-For both issues you can move the "Unreal Projects" folder to the root of a drive and symlink it back to the user document directory if needed by other process / applications.
+You can move the "Unreal Projects" folder to the root of a drive and symlink it back to the user document directory if needed by other process / applications.

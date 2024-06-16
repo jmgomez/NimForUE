@@ -212,7 +212,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
     "-d:OutputHeader:" & name.capitalizeAscii() & ".h",
     "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
-    &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
+    &"-d:BindingPrefix=\"{PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s\"",
     "-l:" & getBindingsLib()
   ] 
   let isCompileOnly = "--compileOnly" in extraSwitches
@@ -230,12 +230,12 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
   let nimCache = getBaseNimCacheDir(name, platformTarget) / (if withDebug and not isCompileOnly: "debug" else: "release")
   let isGame = name == "game"
   
-  let entryPoint = NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim")
+  let entryPoint = quotes(NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim"))
   let releaseFlag = if withRelease: "-d:danger" else: ""
   let threadFlag = if withThreads: "--threads:on" else: "" #off by default (switches)
   let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes, uesymbols, gamePlatformSwitches(withDebug, platformTarget), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"{nimCmd} cpp {buildFlags} {releaseFlag} {threadFlag}  --nimMainPrefix:{name.capitalizeAscii()}  -d:withPCH --nimcache:{nimCache} {entryPoint}"
-  # echo compCmd
+  #echo compCmd
   doAssert(execCmd(compCmd)==0)
 
 
