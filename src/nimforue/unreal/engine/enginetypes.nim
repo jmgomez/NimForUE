@@ -287,7 +287,7 @@ type
   FCanvas* {.importcpp, pure.} = object
   FCanvasPtr* = ptr FCanvas
   FGameplayTag* {.importcpp, pure.} = object
-    tagName* {.importcpp: "TagName".}: FName
+    # tagName* {.importcpp: "TagName".}: FName Field is protected look for GetTagName
   FGameplayTagContainer* {.importcpp, pure.} = object
   UDeveloperSettings* {.importcpp .} = object of UObject
   # UEdGraph* {.importcpp .} = object of UObject
@@ -701,6 +701,7 @@ type
 converter toObjectType*(collisionChannel:ECollisionChannel) : EObjectTypeQuery {.importcpp: "UEngineTypes::ConvertToObjectType(@)".}
 converter toTraceType*(collisionChannel:ECollisionChannel) : ETraceTypeQuery {.importcpp: "UEngineTypes::ConvertToTraceType(@)".}
 
+proc getTagName*(tag: FGameplayTag): FName {.importcpp: "#.GetTagName()".}
+
 #NET
 proc registerReplicatedLifetimeProperty*(prop: FPropertyPtr, outLifetimeProps {.byref.}: TArray[FLifetimeProperty], params: var FDoRepLifetimeParams) {.importcpp: "RegisterReplicatedLifetimeProperty(@)".}
-

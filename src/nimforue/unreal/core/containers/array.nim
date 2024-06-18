@@ -3,7 +3,7 @@ import std/[sugar, enumerate]
 
 type TArray*[out T] {.importcpp } = object
 
-func num*[T](arr:TArray[T]): Natural {.importcpp: "#.Num()" noSideEffect}
+func num*[T](arr:TArray[T]): int32 {.importcpp: "#.Num()" noSideEffect}
 proc removeAt*[T](arr: var TArray[T], idx:Natural) {.importcpp: "#.RemoveAt(#)".}
 proc add*[T](arr:var TArray[T], value:T) {.importcpp: "#.Add(#)".}
 proc addUnique*[T](arr:TArray[T], value:T) {.importcpp: "#.AddUnique(#)".}

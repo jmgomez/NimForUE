@@ -1,7 +1,7 @@
 
 include ../definitions
-import ../Core/Containers/[unrealstring, array, map]
-import ../Core/ftext
+import ../core/containers/[unrealstring, array, map]
+import ../core/[core, ftext]
 import nametypes
 import std/[genasts, options, strformat, macros, sequtils, typetraits, tables, strformat, strutils]
 import ../../utils/utils
@@ -11,7 +11,6 @@ export uobjectflags
 
 
 type 
-    
     FField* {. importcpp, inheritable, pure .} = object 
         next*  {.importcpp:"Next".} : ptr FField
     FFieldPtr* = ptr FField 
@@ -324,10 +323,12 @@ proc getClass*(obj : UObjectPtr) : UClassPtr {. ureflect, importcpp: "#->GetClas
 proc getOuter*(obj : UObjectPtr) : UObjectPtr {. ureflect, importcpp: "#->GetOuter()" .}
 proc getWorld*(obj : UObjectPtr) : UWorldPtr {. ureflect, importcpp: "#->GetWorld()" .}
 
-proc getName*(obj : UObjectPtr) : FString {. ureflect, importcpp:"#->GetName()" .}
-proc conditionalBeginDestroy*(obj:UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
-proc processEvent*(obj : UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
+proc getName*(obj: UObjectPtr): FString {. ureflect, importcpp:"#->GetName()" .}
+proc conditionalBeginDestroy*(obj: UObjectPtr) : void {. importcpp:"#->ConditionalBeginDestroy()".}
+proc processEvent*(obj: UObjectPtr, fn:UFunctionPtr, params:pointer) : void {. importcpp:"#->ProcessEvent(@)" .}
 proc modify*(obj: UObjectPtr) {.importcpp:"#->Modify()".}
+proc `<<`*(ar: var FArchive, obj: UObjectPtr) {.importcpp:"(#<<#)".}
+
 
 #USTRUCT
 proc staticLink*(str:UStructPtr, bRelinkExistingProperties:bool) : void {.importcpp:"#->StaticLink(@)".}

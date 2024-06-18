@@ -29,3 +29,10 @@ proc commitAbility*(ability: UGameplayAbilityPtr, handle: FGameplayAbilitySpecHa
 proc add*(handle: FGameplayAbilityTargetDataHandle, data: ptr FGameplayAbilityTargetData) {.importcpp: "#.Add(#)".}
 proc get*(handle: FGameplayAbilityTargetDataHandle, index: int): ptr FGameplayAbilityTargetData {.importcpp: "#.Get(#)".}
 proc netSerialize*(predKey: FPredictionKey, ar: var FArchive, map: UPackageMapPtr, bOutSuccess: var bool) {.importcpp:"#.NetSerialize(@)".}
+
+proc isActive*(abilitySpec: ptr FGameplayAbilitySpec): bool {.importcpp: "#->IsActive()".}
+#ASC
+#FGameplayAbilitySpec* UAbilitySystemComponent::FindAbilitySpecFromClass(TSubclassOf<UGameplayAbility> InAbilityClass) const
+proc findAbilitySpecFromClass*(asc: UAbilitySystemComponentPtr, inAbilityCls: TSubclassOf[UGameplayAbility]): ptr FGameplayAbilitySpec {.importcpp:"#->FindAbilitySpecFromClass(@)".}
+
+

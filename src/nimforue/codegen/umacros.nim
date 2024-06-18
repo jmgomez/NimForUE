@@ -336,7 +336,7 @@ func genGetScriptStruct(ueType: UEType): NimNode =
   let structIdent = ident uetype.name 
   result = 
     genAst(cls = structIdent, selfType = nnkPtrTy.newTree(structIdent), structIdent):
-      proc getScriptStruct(self {.inject.}: selfType): UScriptStructPtr {. virtual: "GetScriptStruct() const override".} =    
+      proc getScriptStruct(self {.inject.}: selfType): UScriptStructPtr {. virtual: "GetScriptStruct() const".} =    
         structIdent.scriptStruct
 
 macro uStruct*(name:untyped, body : untyped) : untyped = 

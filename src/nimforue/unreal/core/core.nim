@@ -15,3 +15,5 @@ type
 
 let onAllModuleLoadingPhasesComplete* {.importcpp:"FCoreDelegates::OnAllModuleLoadingPhasesComplete", nodecl.}: FSimpleMulticastDelegate
 let reloadCompleteDelegate* {.importcpp:"FCoreUObjectDelegates::ReloadCompleteDelegate", nodecl.}: TMulticastDelegateOneParam[EReloadCompleteReason]
+
+proc `<<`*(ar: var FArchive, n: SomeNumber) {.importcpp:"(#<<#)".}
