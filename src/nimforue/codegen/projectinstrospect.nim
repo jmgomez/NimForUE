@@ -303,7 +303,8 @@ func getParamFromIdentDef(identDefs:NimNode): seq[NimParam] =
         return @[]
       error &"Error in getParamFromIdentDef got {identDefs[^2].kind} in identDefs type"
       ""
-
+    of nnkTupleConstr: #Special case for (owner, MulticastDelegateProp)
+      ""
     else:
       debugEcho treeRepr identDefs
       debugEcho repr identDefs

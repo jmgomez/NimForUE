@@ -40,9 +40,9 @@ func genProp(typeDef : UEType, prop : UEField, typeExposure: UEExposure = uexDsl
   if CPF_BlueprintAssignable in prop.propFlags and typeExposure != uexDsl:
     result = 
       genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
-        proc `propIdent`*(obj {.inject.}: ptrName): typeNodeAsReturnValue = 
+        proc `propIdent`*(obj {.inject.}: ptrName): (UObjectPtr, FMulticastDelegatePropertyPtr) = 
           let prop {.inject.}  = obj.getClass.getFPropertyByName(propUEName).castField[:FMulticastDelegateProperty]()
-          cast[ptr typeNode](prop.getMulticastDelegate(getPropertyValuePtr[typeNode](prop, obj)))[]
+          (obj, prop)
   else:
     result = 
       genAst(propIdent, ptrName, typeNode, className, actualGetter, actualSetter, propUEName = prop.name, typeNodeAsReturnValue):

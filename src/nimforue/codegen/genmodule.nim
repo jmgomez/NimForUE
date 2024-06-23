@@ -119,9 +119,9 @@ func genImportCProp(typeDef: UEType, prop: UEField): NimNode =
   if CPF_BlueprintAssignable in prop.propFlags:
     result = 
       genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
-        proc `propIdent`*(obj {.inject.}: ptrName): typeNodeAsReturnValue = 
+        proc `propIdent`*(obj {.inject.}: ptrName): (UObjectPtr, ptr FMulticastDelegateProperty) = 
           let prop {.inject.}  = obj.getClass.getFPropertyByName(propUEName).castField[:FMulticastDelegateProperty]()
-          cast[ptr typeNode](prop.getMulticastDelegate(getPropertyValuePtr[typeNode](prop, obj)))[]
+          (obj, prop)
   else:
     result =
       genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, setPropertyName, typeNodeAsReturnValue, getterImport):
