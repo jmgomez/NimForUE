@@ -325,7 +325,7 @@ func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField, isImportCpp: bool = fa
     getFieldIdent(prop)
 
 #UEEMit
-func fromNinNodeToMetadata*(node : NimNode) : seq[UEMetadata] =
+func fromNimNodeToMetadata*(node : NimNode) : seq[UEMetadata] =
     case node.kind:
     of nnkIdent:
         @[makeUEMetadata(node.strVal())]
@@ -362,7 +362,7 @@ func getMetasForType*(body:NimNode) : seq[UEMetadata] {.compiletime.} =
         .mapIt(it.children.toSeq())
         .flatten()
         .filterIt(it.kind!=nnkExprColonExpr)
-        .map(fromNinNodeToMetadata)
+        .map(fromNimNodeToMetadata)
         .flatten()
 
 #some metas (so far only uprops)
@@ -430,7 +430,7 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
     let validNodesForMetas = [nnkIdent, nnkExprEqExpr]
     let metasAsNodes = node.childrenAsSeq()
                     .filterIt(it.kind in validNodesForMetas or (it.kind == nnkIdent and it.strVal().toLower() notin ValidUprops))
-    let ueMetas = metasAsNodes.map(fromNinNodeToMetadata).flatten().tail()
+    let ueMetas = metasAsNodes.map(fromNimNodeToMetadata).flatten().tail()
     let metas = metasAsNodes
                     .filterIt(it.kind == nnkIdent)
                     .mapIt(it.strVal())
