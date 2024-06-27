@@ -191,7 +191,9 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
               formalParams, 
               pragmas, newEmptyNode(),
             ])
-  var impl = forwardDeclaration
+
+  var impl = forwardDeclaration.copyNimTree()
+  forwardDeclaration.add newEmptyNode()
   impl.add(fnBody)
   (forwardDeclaration,impl)
 

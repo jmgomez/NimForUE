@@ -1,4 +1,4 @@
-import std/[sequtils, macros, genasts, sugar, json, jsonutils, strutils, tables, options, strformat, hashes, algorithm]
+import std/[sequtils, macros, genasts, sugar, json, jsonutils, strutils, tables, options, strformat, hashes, algorithm, macros]
 import uebindcore, models, modelconstructor, enumops
 import ../utils/[ueutils,utils]
 
@@ -70,10 +70,10 @@ proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =
     let className = name[1].strVal()
     case name[^1].kind:
     of nnkIdent: 
-        let parent = name[^1].strVal()        
+        let parent = name[^1].strVal()
         (className, parent, newSeq[string]())
     of nnkCommand:
-        let parent = name[^1][0].strVal()        
+        let parent = name[^1][0].strVal()
         var ifaces = 
             name[^1][^1][^1].strVal().split(",") 
         if ifaces[0][0] == 'I':
@@ -90,7 +90,7 @@ func funcBlockToFunctionInUClass(funcBlock : NimNode, ueTypeName:string) :  tupl
     let metas = funcBlock.childrenAsSeq()
                     .tail() #skip ufunc and variations
                     .filterIt(it.kind==nnkIdent or it.kind==nnkExprEqExpr)
-                    .map(fromNinNodeToMetadata)
+                    .map(fromNimNodeToMetadata)
                     .flatten()
     let firstParam = some makeFieldAsUPropParam("self", ueTypeName.addPtrToUObjectIfNotPresentAlready(), ueTypeName, CPF_None) #notice no generic/var allowed. Only UObjects
     let allFuncs = funcBlock[^1].children.toSeq()
@@ -312,7 +312,6 @@ macro uClass*(name:untyped, body : untyped) : untyped =
   let (uClassNode, fns, _) = uClassImpl(name, body, true)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
 
- 
 
 func getRawClassTemplate(isSlate: bool, interfaces: seq[string]): string = 
   var cppInterfaces = interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
