@@ -291,3 +291,13 @@ proc tryGetJson*[T](json:JsonNode, key:string) : Option[T] =
 proc objectLen*(T: typedesc[object]) : int =  
   for field in default(T).fields:    
     inc result
+
+
+
+# calls debugEcho with the lineInfo
+macro here*(x: varargs[typed, `$`]):untyped {.noSideEffect.} =
+  {.cast(noSideEffect).}:
+    result = newTree(nnkCommand, ident "debugEcho")
+    result.add newStrLitNode("=== " & x[0].lineInfo & " : "& x.toStrLit().strVal & " ===\n")
+    for c in x:
+      result.add c
