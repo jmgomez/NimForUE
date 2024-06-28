@@ -296,8 +296,9 @@ proc objectLen*(T: typedesc[object]) : int =
 
 # calls debugEcho with the lineInfo
 macro here*(x: varargs[typed, `$`]):untyped {.noSideEffect.} =
-  {.cast(noSideEffect).}:
+   {.cast(noSideEffect), warning[Deprecated]:off.}: # callsite is deprecated, there's no alternative: https://github.com/nim-lang/RFCs/issues/387 
     result = newTree(nnkCommand, ident "debugEcho")
-    result.add newStrLitNode("=== " & x[0].lineInfo & " : "& x.toStrLit().strVal & " ===\n")
+    result.add newStrLitNode("--- " & x[0].lineInfo & " ---\n")
+    result.add newStrLitNode("    " & callsite().toStrLit().strVal & " -> \n")
     for c in x:
       result.add c
