@@ -161,10 +161,12 @@ assert pluginDirs.len == 1
 echo "Using plugin dir: ", $pluginDirs
 
 proc getWithEditorSetting(): bool = 
-  when defined(windows):
-    let confFile = "NimForUE.win.json"
+  var confFile: string
+  when defined(nimsuggest): return true
+  elif defined(windows):
+    confFile = "NimForUE.win.json"
   elif defined(macOS):
-    let confFile = "NimForUE.mac.json"
+    confFile = "NimForUE.mac.json"
   
   parseJson(readFile(confFile))["withEditor"].jsonTo(bool)
 
