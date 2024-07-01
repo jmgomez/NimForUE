@@ -6,7 +6,7 @@
 
 ### DISCLAIMER ###
 
-The plugin is being used to develop a Game but it isnt feature complete yet. 
+The plugin is being used to develop a Game but it isn't feature complete yet. 
 To get started there is a Third Person Template implementation in NimForUE: https://github.com/jmgomez/NimTemplate
 
 ### Why NimForUE?
@@ -131,7 +131,7 @@ uClass ANimGameMode of AGameModeBase:
 
 
 
-This code can be found at src/examples/actorexample. There are more examples inside that folder. You can do `import examples/example` in from Game.nim (see the NimTemplate) to play with it. 
+This code can be found at src/examples/actorexample. There are more examples inside that folder. You can do `import examples/example` in from `game.nim` (see the NimTemplate) to play with it. 
 ```nim
 #Nim UClasses can derive from the same classes that blueprints can derive from.
 
@@ -191,6 +191,22 @@ A video showcasing the installation process in more detail:
 
 [![Installing NimForUE video](https://img.youtube.com/vi/sT8-Oz7k-VU/0.jpg)](https://youtu.be/sT8-Oz7k-VU)
 
+
+## VSCode setup
+
+For Intellisense from nimsuggest, install the `nim-lang.org` extension.
+
+When setting up a project:
+  - Create a new workspace (it can be in the UE project folder).
+  - File>`Add Folder to Workspace`:
+    * The `NimForUE` directory that contains `game.nim`
+    * The `NimForUE` plugin directory.
+    * The `imported` directory in NimForUE plugin directory i.e `.\src\nimforue\unreal\bindings\imported`
+
+## Debugging in Visual Studio
+
+Compile your game with the debug flag, `nue game --debug`.
+Then you can debug the game with nim source maps in Visual Studio. 
 
 ## Troubleshooting
 
