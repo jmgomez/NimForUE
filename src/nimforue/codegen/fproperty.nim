@@ -96,7 +96,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
 func newDelegateBasedProperty(owner : FFieldVariant, propType:string, name:FName) : Option[FPropertyPtr] = 
     #Try to find it as Delegate
     const flags = propObjFlags
-    UE_Log "Not a struct based prorperty. Trying as delegate.." & propType
+    UE_Log "Not a struct based property. Trying as delegate.." & propType
     let delegateName = propType.removeFirstLetter() & DelegateFuncSuffix
     
     someNil(getUTypeByName[UDelegateFunction] delegateName)
@@ -117,7 +117,7 @@ func newDelegateBasedProperty(owner : FFieldVariant, propType:string, name:FName
 func newEnumBasedProperty(owner : FFieldVariant, propType:string, name:FName) : Option[FPropertyPtr] = 
     #Try to find it as Enum
     const flags = propObjFlags
-    UE_Log "Not a delegate based prorperty. Trying as enum.." & propType
+    UE_Log "Not a delegate based property. Trying as enum.." & propType
     let enumProp = propType.extractTypeFromGenericInNimFormat("TEnumAsByte")
     someNil(getUTypeByName[UEnum](enumProp))
         .map(func (ueEnum:UEnumPtr) : FPropertyPtr = 
