@@ -107,3 +107,5 @@ func makeFRotator*(rotStr:string) : FRotator =
     else: FRotator(pitch:0.0, yaw:0.0, roll:0.0)
     
 proc debugBreak*() {.importcpp: "UE_DEBUG_BREAK()".}
+#This functions allows to use UE singletons by just importing the type. i.e. FUESingleton::Get() -> FUESingleton.get()
+proc get*(T: typedesc): ptr T {.importcpp:"&('1::Get())".}

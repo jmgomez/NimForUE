@@ -179,6 +179,10 @@ func removePrefixes*(str: string, prefixes: seq[string]): string =
     str = str.removePref(prefix)
   str
 
+func removeSuffix*(str: string, suffix: string): string =
+  result = str
+  result.removeSuffix(suffix)
+
 func nonEmptyOr*(value, orValue: string): string = nonDefaultOr(value, orValue)
 
 func countSubStr*(str:string, subStr:string): int =

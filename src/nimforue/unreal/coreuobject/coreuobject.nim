@@ -1,7 +1,7 @@
 import ../core/containers/[array, unrealstring, map]
 import nametypes
 import ../core/math/vector
-import ../core/[ftext]
+import ../core/[ftext, core]
 import uobject
 
 type
@@ -541,3 +541,5 @@ func toVector*(vec2: FVector2D, z: float32 = 0): FVector = makeFVector(vec2.x, v
 func getCenterAndExtents*(box: FBox, center, extends: var FVector) {.importcpp: "#.GetCenterAndExtents(@)".}
 func getCenter*(box: FBox): FVector {.importcpp: "#.GetCenter()".}
 func getExtent*(box: FBox): FVector {.importcpp: "#.GetExtent()".}
+
+proc `<<`*(ar: var FArchive, obj: FVector) {.importcpp:"(#<<#)".}

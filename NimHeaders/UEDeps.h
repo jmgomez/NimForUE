@@ -41,6 +41,7 @@
 #include "Engine/DataTable.h"
 #include "Engine/Channel.h"
 #include "Engine/SceneCapture.h"
+#include "Runtime/Engine/Public/CanvasTypes.h"
 
 #include "WorldPartition/DataLayer/DataLayerInstance.h"
 #include "Engine/DamageEvents.h"

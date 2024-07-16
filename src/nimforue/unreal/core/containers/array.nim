@@ -9,7 +9,7 @@ proc add*[T](arr:var TArray[T], value:T) {.importcpp: "#.Add(#)".}
 proc addUnique*[T](arr:TArray[T], value:T) {.importcpp: "#.AddUnique(#)".}
 proc append*[T](a, b:TArray[T]) {.importcpp: "#.Append(#)".}
 func reserve*[T](arr:TArray[T], value:Natural) {.importcpp: "#.Reserve(#)".}
-
+func indexOf*[T](arr:TArray[T], value:T): int32 {.importcpp: "#.IndexOfByKey(#)"}
 
 
 # proc `[]`*[T](arr:TArray[T], i: int): var T {. inline, noSideEffect.} = arr[i.int32]
@@ -33,7 +33,7 @@ func makeTArray*[T](a:T, args:varargs[T]): TArray[T] =
 
 func getData*[T](arr:TArray[T]): ptr T {.importcpp: "#.GetData()", nodecl.}
 
-func len*[T](arr:TArray[T]) : int {.inline.} = arr.num()
+func len*[T](arr:TArray[T]) : int32 {.inline.} = arr.num()
 
 proc `[]`*[T](arr:TArray[T], i: Natural): var T {. importcpp: "#[#]",  noSideEffect.}
 # proc `[]`*[T](arr:TArray[T], i: BackwardsIndex): var T = arr[arr.len - int(i)]

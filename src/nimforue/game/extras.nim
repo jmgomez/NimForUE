@@ -120,3 +120,10 @@ proc startNue*() {.cdecl, exportc.} =
 
 
 proc netSerialize*(vec: FVector, ar: var FArchive, map: UPackageMapPtr, bOutSuccess: var bool) {.importcpp:"#.NetSerialize(@)".}
+
+proc getComponent*[C: UActorComponent](actor: AActorPtr, T: typedesc[C]): ptr T {.inline.} = 
+  ###usage example: self.getCharacter.getComponent(UAbilitySystemComponent)
+  actor.getComponentByClass(T.subClass).ueCast(T)
+
+#Textures
+proc getResource*(texture: UTexturePtr): ptr FTextureResource {.importcpp:"#->GetResource(@)".}

@@ -286,6 +286,9 @@ type
     repNotifyCondition* {.importcpp: "RepNotifyCondition".}: ELifetimeRepNotifyCondition
   FCanvas* {.importcpp, pure.} = object
   FCanvasPtr* = ptr FCanvas
+  FRenderTarget* {.importcpp.} = object
+  FTexture* {.importcpp, inheritable.} = object
+  FTextureResource* {.importcpp.} = object of FTexture
   FGameplayTag* {.importcpp, pure.} = object
     # tagName* {.importcpp: "TagName".}: FName Field is protected look for GetTagName
   FGameplayTagContainer* {.importcpp, pure.} = object
