@@ -163,7 +163,7 @@ proc expandGameplayAttibute(uef: UEField): NimNode =
   ):
     proc getAttributeFn*(self: BaseTypeName): FGameplayAttribute =
       if self.isNil or self.getClass.isNil: return 
-      let prop = self.getClass.getFPropertyByName("health")
+      let prop = self.getClass.getFPropertyByName(nameLit)
       makeFGameplayAttribute(prop)
     
     proc setFn*(self: BaseTypeName, newVal: float32) = 
