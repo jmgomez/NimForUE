@@ -277,6 +277,7 @@ uClass AActorCodegen of AActor:
         UE_Error "Enum is null"
         return
       UE_Log $uenum.toUEType()
+
     proc showEnumMetadata() = 
       let uenum = getUTypeByName[UEnum](self.enumName)
       if uenum.isNil():
@@ -497,11 +498,22 @@ uClass AActorCodegen of AActor:
       # UE_Log "Len " & $modules.len
       # UE_Log "Types " & $modules.head().map(x=>x.types).get(@[]).len
       let ueProject = UEProject(modules: modules)
-      UE_Log "contans deproject to mouse pos: " & $ueProject.modules.filterIt(it.types.filterIt(it.fields.filterIt(it.name.contains("DeprojectMousePositionToWorld")).any()).any()).any()
       # writeFile(PluginDir/"engine.text", $ueProject)
       # UE_Log $ueProject
+      UE_Log "UETypes len:" & $modules.mapIt(it.types).flatten.len
       UE_Log "PCH Types:" & $modules.mapIt(it.types).flatten.filterIt(it.isInPCH).len
     
+    proc showPlugins() = 
+      let plugins = getAllInstalledPlugins()
+      let pluginModules = getAllInstalledPlugins() 
+        .mapIt(getAllModuleDepsForPlugin(it).mapIt($it).toSeq())
+        .flatten()
+
+      UE_Log $plugins
+
+      UE_Log $pluginModules
+
+
     proc showPCHTypes() = 
       let pkg = tryGetPackageByName(self.moduleName)
       let modules = pkg.map((pkg:UPackagePtr) => pkg.toUEModule(@[], @[], @[], getPCHIncludes())).get(@[])

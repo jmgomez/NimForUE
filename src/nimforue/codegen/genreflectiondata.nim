@@ -24,7 +24,12 @@ proc getGameModules*(): seq[string] =
 proc getAllInstalledPlugins*(): seq[string] =
   try:        
     let excludePlugins = getGameUserConfigValue("exclude", newSeq[string]())
-    let projectJson = readFile(GamePath()).parseJson()
+    let path = GamePath().strip(chars ={'"'})
+    if not fileExists(path):
+      UE_Error &"Game path not found '{path}'"
+      return @[]
+
+    let projectJson = readFile(path).parseJson()
     let plugins = projectJson["Plugins"]
                     .filterIt(it["Enabled"].jsonTo(bool))
                     .mapIt(it["Name"].jsonTo(string))
@@ -36,6 +41,7 @@ proc getAllInstalledPlugins*(): seq[string] =
     UE_Error &"Error: {e.msg}"
     UE_Error &"Error: {e.getStackTrace()}"
     UE_Error &"Failed to parse project json"
+    # UE_Log &"The json is {readFile(GamePath())}"
     return @[]
 
 proc genReflectionData*(gameModules, plugins: seq[string]): UEProject =
