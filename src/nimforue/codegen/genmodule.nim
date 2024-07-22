@@ -99,8 +99,6 @@ func genUClassVMTypeDefBindings(ueType: UEtype, rule: UERule = uerNone): seq[Nim
     ueType.name in NimDefinedTypesNames: @[]
   else: genVMClassTypeDef(ueType)
 
-
-
 func genImportCProp(typeDef: UEType, prop: UEField): NimNode =
   let ptrName = ident typeDef.name & "Ptr"
   let className = typeDef.name.substr(1)

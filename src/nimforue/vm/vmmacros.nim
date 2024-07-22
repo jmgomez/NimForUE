@@ -182,12 +182,15 @@ func isAllowedField*(field:UEField) : bool =
 
 
 func genUEnumTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =
-  let pragmas = 
+  var pragmas = 
     case target:
     of ctImport, ctExport: 
       nnkPragma.newTree(nnkExprColonExpr.newTree(ident "size", nnkCall.newTree(ident "sizeof", ident "uint8")), ident "pure")
     of ctVM: newEmptyNode()
-
+  
+  if target in [ctImport, ctExport] and ueType.isInPCH:
+    pragmas.add ident "importcpp"
+    
   let enumTy = ueType.fields
     .map(f => ident f.name)
     .foldl(a.add b, nnkEnumTy.newTree)

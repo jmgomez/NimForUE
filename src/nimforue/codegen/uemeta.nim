@@ -493,9 +493,10 @@ func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[],  pchIncludes:seq
   for rule in rules:
     if name in rule.affectedTypes and rule.rule == uerIgnore:
       return none(UEType)
-
+  
   if uenum.isBpExposed():
-    some UEType(name: name, kind: uetEnum, fields: fields)
+   let isInPch = name in getAllPCHTypes()
+   some UEType(name: name, kind: uetEnum, fields: fields, isInPch: isInPch)
   else:
     UE_Warn &"Enum {name} is not exposed to BP"
     none(UEType)

@@ -530,20 +530,22 @@ func genUStructTypeDef*(typeDef: UEType,  rule: UERule = uerNone, typeExposure: 
     result = newEmptyNode() #exportc since Nim 2.0 exports the type so nothing to do here. 
 
 
-func genUEnumTypeDef*(typeDef:UEType, typeExposure:UEExposure) : NimNode = 
+func genUEnumTypeDef*(typeDef:UEType, typeExposure: UEExposure) : NimNode = 
   let typeName = ident(typeDef.name)
   let fields = typeDef.fields
             .map(f => ident f.name)
             .foldl(a.add b, nnkEnumTy.newTree)
   fields.insert(0, newEmptyNode()) #required empty node in enums
 
-  result= genAst(typeName, fields):
+  result = genAst(typeName, fields):
         type typeName* {.inject, size:sizeof(uint8), pure.} = enum     
           fields
 
   result[0][^1] = fields #replaces enum 
 
-
+  if typeDef.isInPCH:
+    result[0][0][1].add ident "importcpp"
+  
   if typeExposure == uexExport: 
     result = newEmptyNode() #exportc since Nim 2.0 exports the type so nothing to do here. 
 
