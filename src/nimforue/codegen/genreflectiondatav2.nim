@@ -186,9 +186,23 @@ func fixCommonModuleDeps*(project: var UEProject, commonModule : var UEModule) :
   project.modules = projectModules 
   project
 
-func reorderTypesSoParentAreDeclaredFirst*(uem: var UEModule) : UEModule = 
+func reorderClassesSoParentAreDeclaredFirst*(uem: var UEModule) : UEModule = 
   proc splitTypesWithParentDeclaredInThisModule(types:seq[UEType]) :  (seq[UEType], seq[UEType]) =
     let (withParentTypes, otherTypes) = types.partition((it:UEType)=> it.kind == uetClass and it.parent in types.mapIt(it.name))
+    if withParentTypes.isEmpty():
+      return (@[], otherTypes)
+    else:
+      let (withParentTypes2, otherTypes2) = splitTypesWithParentDeclaredInThisModule(withParentTypes)
+      return (withParentTypes2, otherTypes & otherTypes2)
+      
+  
+  let (_, otherTypes) = splitTypesWithParentDeclaredInThisModule(uem.types)
+  uem.types = otherTypes
+  uem
+
+func reorderStructsSoParentAreDeclaredFirst*(uem: var UEModule): UEModule = 
+  proc splitTypesWithParentDeclaredInThisModule(types:seq[UEType]) :  (seq[UEType], seq[UEType]) =
+    let (withParentTypes, otherTypes) = types.partition((it:UEType)=> it.kind == uetStruct and it.superStruct in types.mapIt(it.name))
     if withParentTypes.isEmpty():
       return (@[], otherTypes)
     else:
@@ -540,7 +554,8 @@ proc generateProject*(forceGeneration = false) =
         project = fixCommonModuleDeps(project, commonModule)
 
       commonModule.types = commonModule.types.deduplicate()
-      commonModule = reorderTypesSoParentAreDeclaredFirst(commonModule)
+      commonModule = reorderClassesSoParentAreDeclaredFirst(commonModule)
+      commonModule = reorderStructsSoParentAreDeclaredFirst(commonModule)
 
       project.modules.add commonModule
 
