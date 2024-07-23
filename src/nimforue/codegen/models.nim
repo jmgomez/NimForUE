@@ -141,7 +141,7 @@ type
                 structFlags*: EStructFlagsVal
                 isSuperStructInPCH* : bool
             of uetEnum:
-                discard
+                cppEnumName*: string
             of uetDelegate:
                 #the signature is just the fields
                 # delegateSignature*: seq[string] #this could be set as FScriptDelegate[String,..] but it's probably clearer this way

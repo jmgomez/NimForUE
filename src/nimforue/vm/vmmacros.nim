@@ -189,7 +189,7 @@ func genUEnumTypeDefBinding*(ueType: UEType, target: CodegenTarget): NimNode =
     of ctVM: newEmptyNode()
   
   if target in [ctImport, ctExport] and ueType.isInPCH:
-    pragmas.add ident "importcpp"
+    pragmas.add nnkExprColonExpr.newTree(ident "importcpp", newStrLitNode(ueType.cppEnumName))
     
   let enumTy = ueType.fields
     .map(f => ident f.name)

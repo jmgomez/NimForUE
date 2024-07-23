@@ -482,6 +482,9 @@ func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[],  pchIncludes:seq
   if storedUEType.isSome(): return storedUEType
 
   let name = uenum.getName()
+  # if "EAttachLocation" in name:
+  #   UE_Log &"Found EAttachLocation. CppType: {uenum.cppType} CppForm: {uenum.getCppForm()}"
+
   var fields = newSeq[UEField]()
   for fieldName in uenum.getEnums():
     if fieldName.toLowerAscii() in fields.mapIt(it.name.toLowerAscii()):
@@ -496,7 +499,7 @@ func toUEType*(uenum: UEnumPtr, rules: seq[UEImportRule] = @[],  pchIncludes:seq
   
   if uenum.isBpExposed():
    let isInPch = name in getAllPCHTypes()
-   some UEType(name: name, kind: uetEnum, fields: fields, isInPch: isInPch)
+   some UEType(name: name, kind: uetEnum, fields: fields, isInPch: isInPch, cppEnumName: uenum.cppType)
   else:
     UE_Warn &"Enum {name} is not exposed to BP"
     none(UEType)

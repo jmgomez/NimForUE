@@ -34,8 +34,10 @@ type
     UFieldPtr* = ptr UField 
 
     UEnum* {.importcpp, inheritable, pure .} = object of UField
+      cppType* {.importcpp:"CppType".}: FString
     UEnumPtr* = ptr UEnum
-   
+    ECppForm* {.importcpp:"UEnum::ECppForm".} = enum
+      regular, namespaced, enumClass
 
     UStruct* {.importcpp, inheritable, pure .} = object of UField
         Children* : UFieldPtr # Pointer to start of linked list of child fields */
@@ -395,7 +397,7 @@ proc doesReturn*(fn:UFunctionPtr) : bool  = tryGetReturnProperty(fn).isSome()
 proc setEnums*(uenum:UENumPtr, inName:TArray[TPair[FName, int64]]) : bool {. importcpp:"#->SetEnums(#, UEnum::ECppForm::Regular)" .}
 proc numEnums*(uenum:UENumPtr): int32 {. importcpp:"#->NumEnums()" .}
 proc getNameStringByIndex*(uenum:UENumPtr, index:int32) : FString {. importcpp:"#->GetNameStringByIndex(#)" .}
-
+proc getCppForm*(uenum: UENumPtr): ECppForm {.importcpp:"#->GetCppForm()".}
 #ITERATOR
 type TFieldIterator* [T:UStruct] {.importcpp.} = object
 proc makeTFieldIterator*[T](inStruct : UStructPtr, flag:EFieldIterationFlags) : TFieldIterator[T] {. importcpp:"'0(@)" constructor .}
