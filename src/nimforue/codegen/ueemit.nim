@@ -383,7 +383,8 @@ macro uDelegate*(body:untyped) : untyped =
     addVMType ueType
     emitUDelegate(ueType)    
 
-func isBlueprintEvent(fnField:UEField) : bool = FUNC_BlueprintEvent in fnField.fnFlags
+func isBlueprintImplementableEvent(fnField:UEField): bool = 
+    fnField.hasUEMetadata(BlueprintImplementableEventMetadataKey)
 
 func genUFuncSuper(fnField: UEField): NimNode =
   var fnField = fnField
@@ -477,7 +478,7 @@ func genNativeFunction(firstParam:UEField, funField : UEField, body:NimNode) : N
     funField.sourceHash = $hash(repr fnImpl)
     safe:
         addVmUFunc(funField)
-    if funField.isBlueprintEvent(): #blueprint events doesnt have a body
+    if funField.isBlueprintImplementableEvent: #blueprint events doesnt have a body
         result = genAst(fnImpl, funField = newLit funField): 
                     addEmitterInfo(funField, none[UFunctionNativeSignature]())
     else:

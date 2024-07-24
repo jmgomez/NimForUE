@@ -135,7 +135,7 @@ func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFuncti
         flags = flags | FUNC_BlueprintPure | FUNC_BlueprintCallable
     if hasMeta("BlueprintCallable"):
         flags = flags | FUNC_BlueprintCallable 
-    if hasMeta("BlueprintImplementableEvent") or hasMeta("BlueprintNativeEvent"):
+    if hasMeta(BlueprintImplementableEventMetadataKey) or hasMeta("BlueprintNativeEvent"):
         flags = flags | FUNC_BlueprintEvent | FUNC_BlueprintCallable #This is wrong and we shouldnt care about these pragmas at all.
     if hasMeta("Static"):
       when not defined(nuevm): #: illegal conversion from '-1' to '[0..9223372036854775807]'

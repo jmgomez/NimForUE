@@ -21,6 +21,7 @@ const CPP_Default_MetadataKeyPrefix* = "CPP_Default_"
 const AutoCreateRefTermMetadataKey* = "AutoCreateRefTerm"
 const ScriptMethodMetadataKey* = "ScriptMethod"
 const InstancedMetadataKey* = "Instanced"
+const BlueprintImplementableEventMetadataKey* = "BlueprintImplementableEvent"
 #UEType metadata
 const NoDeclMetadataKey* = "NoDecl"
 const EarlyLoadMetadataKey* = "EarlyLoad"
@@ -227,10 +228,10 @@ func contains*(metas:seq[UEMetadata], name:string): bool =
     if meta.name.toLower() == name.toLower():
       return true
 
-func hasUEMetadata*(val:UEField, name:string) : bool = val.metadata.any(m => m.name == name)
-func hasUEMetadata*(val:UEType, name:string) : bool = val.metadata.any(m => m.name == name)
-func hasUEMetadataDefaultValue*(val:UEField) : bool = val.metadata.any(m => m.name.contains(CPP_Default_MetadataKeyPrefix))
-func shouldBeLoadedEarly*(uet:UEType) : bool = uet.hasUEMetadata(EarlyLoadMetadataKey)
+func hasUEMetadata*(val: UEField, name: string): bool = val.metadata.any(m => m.name.toLower == name.toLower)
+func hasUEMetadata*(val: UEType, name: string): bool = val.metadata.any(m => m.name.toLower == name.toLower)
+func hasUEMetadataDefaultValue*(val: UEField): bool = val.metadata.any(m => m.name.toLower.contains(CPP_Default_MetadataKeyPrefix.toLower))
+func shouldBeLoadedEarly*(uet: UEType): bool = uet.hasUEMetadata(EarlyLoadMetadataKey)
 
 func getAllParametersWithDefaultValuesFromFunc*(fnField:UEField) : seq[UEField] =
     assert fnField.kind == uefFunction
