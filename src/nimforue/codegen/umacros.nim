@@ -166,14 +166,37 @@ proc typeParams*(typeDef: NimNode): NimNode = #TODO move to utils
     typeDef[^1][^1] = nnkRecList.newTree()
   typeDef[^1][^1]
 
-proc expandGameplayAttibute(uef: UEField): NimNode =
+proc expandGameplayAttribute(uef: UEField): NimNode =
   assert uef.kind == uefProp
   let capName = uef.name.capitalizeAscii()
+
+  let repMeta = uef.metadata.first((meta)=>meta.name.toLower() == "replicatedusing" or meta.name.toLower() == "gasreplicated")
+  let repFunc =
+    if repMeta.isSome():
+      let meta = repMeta.get()
+      let repFn =
+        if meta.name.toLower() == "replicatedusing":
+          ident meta.value
+        else:
+          ident "onRep" & capName
+      genAst(
+        repFn = repFn,
+        name = ident uef.name,
+        BaseTypeName = ident uef.typeName & "Ptr",
+        getAttributeFn = ident "get" & capName & "Attribute"
+      ):
+        proc repFn(self: BaseTypeName, oldValue: FGameplayAttributeData ) {.virtual.} =
+          let asc = self.getOwningAbilitySystemComponent()
+          asc.setBaseAttributeValueFromReplication(self.getAttributeFn(), self.name, oldValue)
+    else:
+      newEmptyNode()
+
   genAst(
     getAttributeFn = ident "get" & capName & "Attribute",
     setFn = ident "set" & capName,
     getFn = ident "get" & capName,
     initFn = ident "init" & capName,
+    repFunc = repFunc,
     nameLit = newLit uef.name,
     name = ident uef.name,
     BaseTypeName = ident uef.typeName & "Ptr"
@@ -182,7 +205,7 @@ proc expandGameplayAttibute(uef: UEField): NimNode =
       if self.isNil or self.getClass.isNil: return 
       let prop = self.getClass.getFPropertyByName(nameLit)
       makeFGameplayAttribute(prop)
-    
+
     proc setFn*(self: BaseTypeName, newVal: float32) = 
       let asc = self.getOwningAbilitySystemComponent()
       asc.setNumericAttributeBase(self.getAttributeFn(), newVal)
@@ -192,6 +215,8 @@ proc expandGameplayAttibute(uef: UEField): NimNode =
     proc initFn*(self: BaseTypeName, newVal: float32) = 
       self.name.setBaseValue(newVal)
       self.name.setCurrentValue(newVal)
+
+    repFunc
 
 
 func getCondFromString(cond: string): ELifetimeCondition = 
@@ -207,7 +232,7 @@ func getRepNotifyFromString(repNotify: string): ELifetimeRepNotifyCondition =
   REPNOTIFY_OnChanged
 
 func getReplicatedProps(ueType: UEType): seq[UEField] = 
-  ueType.fields.filterIt(it.kind == uefProp and "Replicated" in it.metadata or "ReplicatedUsing" in it.metadata)
+  ueType.fields.filterIt(it.kind == uefProp and ("Replicated" in it.metadata or "ReplicatedUsing" in it.metadata or "GASReplicated" in it.metadata))
 
 proc genGetLifetimeReplicatedProps(ueType: UEType): NimNode =
   #[Generates when needed.
@@ -230,7 +255,7 @@ proc genGetLifetimeReplicatedProps(ueType: UEType): NimNode =
     let propStmt = 
       genAst(prop = ident prop.name, propName = newLit prop.name, cond = newLit cond, repNotify = newLit repNotify):
         let prop {.inject.} = self.getClass.getFPropertyByName(propName)
-        var lifetimeParams = FDoRepLifetimeParams(condition: COND_None, repNotifyCondition: REPNOTIFY_OnChanged)
+        var lifetimeParams = FDoRepLifetimeParams(condition: cond, repNotifyCondition: repNotify)
         registerReplicatedLifetimeProperty(prop, getOutLifetimeProps(), lifetimeParams)
     propAsStatements.add propStmt
   
@@ -286,7 +311,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
     let gameplayAttributeHelpers = 
       ueType.fields
       .filterIt(it.kind == uefProp and it.uePropType == "FGameplayAttributeData")
-      .map(expandGameplayAttibute)
+      .map(expandGameplayAttribute)
   
     when defined nuevm:           
       let typeSection = nnkTypeSection.newTree(genVMClassTypeDef(ueType))      
@@ -312,9 +337,9 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
       addVMType ueType
       #Call is equivalent with identDefs
       let nimFields = body.children.toSeq
-                          .filterIt(it.kind == nnkCall and it[0].strVal() notin @ValidUprops & "defaults" & @ValidUFuncs)
+                          .filterIt(it.kind == nnkCall and it[0].strVal() notin @ValidUprops & @["default", "defaults"] & @ValidUFuncs)
                           .map(fromCallNodeToIdentDenf)
-     
+
       var (typeNode, addEmitterProc) = emitUClass(ueType, some name.lineInfoObj)
       if nimFields.any():
         typeNode[0][0].typeParams.add nimFields
@@ -330,7 +355,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
       let nimProcs = body.children.toSeq
                       .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor", ueType.name])
                       .mapIt(it.addSelfToProc(className).processVirtual(parent))        
-      
+
       var funcInClass = genUFuncsForUClass(body, className, nimProcs)
       var fns = funcInClass.toStmtNode(withForwards)
       fns.insert(0, procNodes)
@@ -529,11 +554,10 @@ macro uSection*(body: untyped): untyped =
     discard
   else:
     func getFromBody(body:NimNode, name: string): seq[NimNode] = 
-        body.filterIt(it.kind in [nnkCommand, nnkCall] and it[0].strVal() == name)
+        body.filterIt(it.kind in [nnkCommand, nnkCall] and it[0].eqIdent(name))
     let uclasses = body.getFromBody("uClass").mapIt(uClassImpl(it[1], it[^1], withForwards = false))
     let classes = body.getFromBody("class").mapIt(genRawCppTypeImpl(it[1], it[^1]))
     let functors = body.getFromBody("functor").mapIt(functorImpl(it[^1]))
-
     let userTypes = body.filterIt(it.kind == nnkTypeSection).mapIt(it.children.toSeq()).flatten()
     let userProcs = body.filterIt(it.kind in [nnkProcDef, nnkFuncDef, nnkIteratorDef]) 
     var typSection = nnkTypeSection.newTree(userTypes)

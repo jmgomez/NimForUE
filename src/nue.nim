@@ -396,6 +396,9 @@ task starteditor, "opens the editor":
   else:
     discard execCmd("open " & GamePath())
 
+task ue, "alias for starteditor":
+  starteditor(taskOptions)
+
 task targetconfig, "switch the targetConfiguration and rebuild (options are --dev, --debug, --shipping)":
   var otc = none[TargetConfiguration]()
   if "dev" in taskOptions or "development" in taskOptions: 
@@ -473,7 +476,7 @@ task cleanmodules, "Removes the generated code from the game and libs":
     removeDir(PluginDir/".nimcache"/lib)
     log "Cleaning generate code for " & lib 
     cleanGenerateCode(lib.capitalizeAscii(), genPluginDir)
-    
+
 
 
 task buildmodules, "Rebuilds the plugin, game and libs":
@@ -494,10 +497,10 @@ task genplugin, "Creates a plugin, by default it uses the name of the game with 
   #TODO replace this with a call to all libs 
   let platformTarget = getPlatformTargetFromOptions(taskOptions)
   generatePlugin(getPluginName(), platformTarget)
- 
+
 task removeplugin, "Removes the plugin, by default it uses the name of the game with NUE as prefix":  
   removePlugin(getPluginName())
- 
+
 
 task setupvm, "Creates the vm module library and adds a scratchup to it": 
   let dir = NimGameDir() / "vm"

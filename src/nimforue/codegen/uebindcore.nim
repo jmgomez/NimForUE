@@ -386,7 +386,7 @@ func getMetasForType*(body:NimNode) : seq[UEMetadata] {.compiletime.} =
 func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeName:string) : (EPropertyFlags, seq[UEMetadata]) = 
     var flags : EPropertyFlags = CPF_NativeAccessSpecifierPublic
     var metadata : seq[UEMetadata] = preMetas
-    
+
     #TODO THROW ERROR WHEN NON MULTICAST AND USE MC ONLY
     # var flags : EPropertyFlags = CPF_None
     #TODO a lot of flags are mutually exclusive, this is a naive way to go about it
@@ -409,9 +409,9 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
           flags = flags | CPF_BlueprintAssignable | CPF_BlueprintVisible
         if m == "BlueprintCallable":
           flags = flags | CPF_BlueprintCallable
-        if m == "Replicated" or m == "ReplicatedUsing":
+        if m == "Replicated" or m == "ReplicatedUsing" or m == "GASReplicated":
           flags = flags | CPF_Net
-        if m == "ReplicatedUsing":
+        if m == "ReplicatedUsing" or m == "GASReplicated":
           flags = flags | CPF_RepNotify
         if m.toLower() == "config":
                 flags = flags | CPF_Config  
@@ -420,15 +420,14 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
                 metadata.add makeUEMetadata("EditInline")
             #Notice this is only required in the unlikely case that the user wants to use a delegate that is not exposed to Blueprint in any way
         #TODO CPF_BlueprintAuthorityOnly is only for MC
-    
+
     let flagsThatShouldNotBeMeta = ["config", "BlueprintReadOnly", "BlueprintWriteOnly", "BlueprintReadWrite", "EditAnywhere", "VisibleAnywhere", "Transient", "BlueprintAssignable", "BlueprintCallable"]
     for f in flagsThatShouldNotBeMeta:
         metadata = metadata.filterIt(it.name.toLower() != f.toLower())
 
-  
 
     if not metadata.any(m => m.name == CategoryMetadataKey):
-       metadata.add(makeUEMetadata(CategoryMetadataKey, ueTypeName.removeFirstLetter()))
+        metadata.add(makeUEMetadata(CategoryMetadataKey, ueTypeName.removeFirstLetter()))
 
       #Attach accepts a second parameter which is the socket
     if metadata.filterIt(it.name == AttachMetadataKey).len > 1:
@@ -440,7 +439,6 @@ const ValidUprops* = ["uprop", "uprops", "uproperty", "uproperties"]
 const ValidUFuncs* = ["ufunc", "ufuncs", "ufunction", "ufunctions"]
 
 func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] = 
-
     let validNodesForMetas = [nnkIdent, nnkExprEqExpr]
     let metasAsNodes = node.childrenAsSeq()
                     .filterIt(it.kind in validNodesForMetas or (it.kind == nnkIdent and it.strVal().toLower() notin ValidUprops))
@@ -458,7 +456,6 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
                 @[n[0].strVal()]
             of nnkTupleConstr:
                 n[0].children.toSeq().filterIt(it.kind == nnkIdent).mapIt(it.strVal())
-              
             else:
                 error("Invalid node for field " & repr(n) & " " & $ n.kind)
                 @[]
@@ -488,23 +485,23 @@ func fromUPropNodeToField(node : NimNode, ueTypeName:string) : seq[UEField] =
                                 error("Invalid node for field " & repr(n) & " " & $ n.kind)
                                 ""
             assignmentNode.run (n:NimNode) => addPropAssignment(ueTypeName, n)
-            
+
             if isMulticastDelegate propType:
                 makeFieldAsUPropMulDel(fieldName, propType, ueTypeName, metas[0], metas[1])
             elif isDelegate propType:
                 makeFieldAsUPropDel(fieldName, propType, ueTypeName, metas[0], metas[1])
             else:
                 makeFieldAsUProp(fieldName, propType, ueTypeName, metas[0], metas[1])
-        
+
         fieldNames.map(makeUEFieldFromFieldName)
     #TODO Metas to flags
     let ueFields = node.childrenAsSeq()
-                   .filter(n=>n.kind==nnkStmtList)
-                   .head()
-                   .map(childrenAsSeq)
-                   .get(@[])
-                   .map(nodeToUEField)
-                   .flatten()
+                    .filter(n=>n.kind==nnkStmtList)
+                    .head()
+                    .map(childrenAsSeq)
+                    .get(@[])
+                    .map(nodeToUEField)
+                    .flatten()
     ueFields
 
 

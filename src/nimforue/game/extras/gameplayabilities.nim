@@ -34,7 +34,6 @@ proc setReplicationMode*(asc: UAbilitySystemComponentPtr, newReplicationMode: EG
 proc getGameplayAttributeValueChangeDelegate*(asc: UAbilitySystemComponentPtr, attribute: FGameplayAttribute): var FOnGameplayAttributeValueChange {.importcpp:"#->GetGameplayAttributeValueChangeDelegate(#)".}
 
 
-
 proc initAbilityActorInfo*(asc:UAbilitySystemComponentPtr, actor: AActorPtr, avatar: AActorPtr) {.importcpp: "#->InitAbilityActorInfo(#, #)".}
 proc getSpawnedAttributesMutable*(asc:UAbilitySystemComponentPtr): var TArray[UAttributeSetPtr] {.importcpp: "#->GetSpawnedAttributes_Mutable()".}
 

@@ -728,6 +728,8 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
     prop.setMetadata(n metadata.name, $metadata.value)
     if metadata.name == "ReplicatedUsing":
       prop.repNotifyFunc = makeFName metadata.value
+    if metadata.name == "GASReplicated":
+      prop.repNotifyFunc = makeFName "onRep" & propField.name.capitalizeAscii()
   outer.addCppProperty(prop)
   prop
 
@@ -841,7 +843,7 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
               var attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata(AttachMetadataKey).get())
               if attachToCompProp.isNil():
                 attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata(AttachMetadataKey).get().capitalizeASCII)
-              
+
               let attachToComp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](attachToCompProp, actor)[])
               var socket =  makeFName objProp.getMetadata(SocketMetadataKey).get()
               comp.setupAttachment(attachToComp, socket)
@@ -906,11 +908,11 @@ proc vmConstructor*(objectInitializer:var FObjectInitializer) : void {.cdecl.} =
     obj.processEvent(uFn, nil)   
   else:
     UE_Warn &"No vmdefaultconstructor found tried: {constructorName}"
-  
+
+
 proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
-    
-  
+
   let newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))   
   newCls.setClassConstructor(clsConstructor)
   let parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
@@ -940,10 +942,10 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
     assert field.typename == ueType.name
     var field = field
     case field.kind:
-    of uefProp:      
-      discard field.emitFProperty(newCls)      
-    of uefFunction:   
-         
+    of uefProp:
+      discard field.emitFProperty(newCls)
+    of uefFunction:
+
       # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}" #notice each module emits its own functions  
       discard emitUFunction(field, ueType, newCls, getNativeFuncImplPtrFromUEField(getGlobalEmitter(), field))
     else:
@@ -1052,8 +1054,5 @@ proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
   fn.staticLink(true)
   fn.setMetadata(makeFName UETypeMetadataKey, $delType.toJson())
   fn
-
-
-  
 
 
