@@ -30,6 +30,13 @@ proc registerLogger*(inLogger: LoggerSignature)  =
 proc ensureGuestIsCompiled*() : void =
     ensureGuestIsCompiledImpl()
 
+
+
+proc getGameModules(): cstring = 
+    let gameModules = getGameUserConfigValue("gameModules",  newSeq[string]())
+    let gameModulesStr = gameModules.join(",")
+    return gameModulesStr.cstring    
+
 proc setWinCompilerSettings(sdkVersion, compilerVersion, toolchainDir:cstring) =
     #TODO unify it in one file
     writeFile(PluginDir/"sdk_version.txt", $sdkVersion)

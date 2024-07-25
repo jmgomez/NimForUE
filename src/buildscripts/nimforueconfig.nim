@@ -262,12 +262,57 @@ codegenDir(reflectionDataDir, ReflectionDataDir)
 codegenDir(reflectionDataFilePath, ReflectionDataFilePath)
 
 
+proc getGameUserConfig*() : Option[JSonNode] = 
+  let path: string = NimGameDir() / "game.json"
+  if fileExists(path):
+    some readFile(path).parseJson()
+  else:
+    none[JSonNode]()
+
+proc tryGetGameUserConfigValue*[T](key: string) : Option[T] =
+  getGameUserConfig()
+    .flatMap((config:JsonNode)=>tryGetJson[T](config, key))
+
+proc getGameUserConfigValue*[T](key: string, default: T): T =
+  tryGetGameUserConfigValue[T](key).get(default)
+
+type UEModuleKind = enum
+ uemEngineRuntime, uemEngineDeveloper, uemEngineEditor,
+ uemEnginePlugins, uemEngineRuntimePlugins, uemEngineExperimentalPlugins
+
+proc isFolderInDirectory*(dir, folderName: string): bool = 
+  let folder = dir / folderName
+  folder.dirExists()
+
+
+
+proc getModuleTypeByName(conf:NimForUEConfig, moduleName: string): UEModuleKind =
+  #NOTE the logic here is for headers. It's also used for symbols but they are handled slightly differently (see below),
+  # meaning it can fail for symbols but should be easy enough to tell as linking is the final step
+  let engineDir = conf.engineDir
+  let engineRuntime = engineDir / "Source" / "Runtime"
+  let engineDeveloper = engineDir / "Source" / "Developer"
+  let engineEditor = engineDir / "Source" / "Editor"
+  let enginePluginDir = engineDir / "Plugins"
+  let engineRuntimePluginsDirectory = enginePluginDir / "Runtime"
+  let experimentalPluginsDirectory = enginePluginDir / "Experimental"
+  ## Tries to find in the file directory the module type (i.e Runtime, Editor, Experimental, etc)
+  #TODO to implemnent, for now it just support engineRuntimePlugins
+  if engineRuntime.isFolderInDirectory(moduleName): uemEngineRuntime
+  elif engineDeveloper.isFolderInDirectory(moduleName): uemEngineDeveloper
+  elif engineEditor.isFolderInDirectory(moduleName): uemEngineEditor
+  elif enginePluginDir.isFolderInDirectory(moduleName): uemEnginePlugins
+  elif engineRuntimePluginsDirectory.isFolderInDirectory(moduleName): uemEngineRuntimePlugins
+  elif experimentalPluginsDirectory.isFolderInDirectory(moduleName): uemEngineExperimentalPlugins
+  else:    
+    raise newException(ValueError, &"Module '{moduleName}' not found")
+
 proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   let platformDir = if conf.targetPlatform == Mac: MacPlatformDir() else:  WinPlatformDir()
   let confDir = $ conf.targetConfiguration
   let engineDir = conf.engineDir
   let pluginDir = PluginDir
-  let enginePluginDir = engineDir/"Plugins"#\EnhancedInput\Source\EnhancedInput\Public\EnhancedPlayerInput.h
+  let enginePluginDir = engineDir / "Plugins"#\EnhancedInput\Source\EnhancedInput\Public\EnhancedPlayerInput.h
 
   let unrealFolder = if conf.withEditor: "UnrealEditor" else: "UnrealGame"
 
@@ -314,14 +359,13 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   ]
 
   proc getEngineRuntimeIncludePathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Public"
-  proc getEngineRuntimeIncludeClassesPathFor(engineFolder, moduleName: string) : string = engineDir / "Source" / engineFolder / moduleName / "Classes"
   proc getEngineIntermediateIncludePathFor(moduleName:string) : string = engineDir / "Intermediate/Build" / platformDir / unrealFolder / "Inc" / moduleName
   proc getEnginePluginModule(moduleName:string) : string = enginePluginDir / moduleName / "Source" / moduleName / "Public"
   proc getEngineRuntimePluginModule(moduleName:string) : string = enginePluginDir / "Runtime" / moduleName / "Source" / moduleName / "Public"
   proc getEngineExperimentalPluginModule(moduleName:string) : string = enginePluginDir / "Experimental" / moduleName / "Source" / moduleName / "Public"
 
 
-  let runtimeModules = @["CoreUObject", "Core", "TraceLog", "Launch", "ApplicationCore", 
+  var runtimeModules = @["CoreUObject", "Core", "TraceLog", "Launch", "ApplicationCore", 
       "Projects", "Json", "PakFile", "RSA", "RenderCore",
       "NetCore", "CoreOnline", "PhysicsCore", "Experimental/Chaos", 
       "SlateCore", "Slate", "TypedElementFramework", "Renderer", "AnimationCore",
@@ -331,16 +375,16 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
       "DeveloperSettings", "AIModule"
       ]
 
-  let developerModules = @["DesktopPlatform", 
+  var developerModules = @["DesktopPlatform", 
   "ToolMenus", "TargetPlatform", "SourceControl", 
   "DeveloperToolSettings",
   "Localization"]
-  let intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry", 
+  var intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry", 
     "UnrealEd", "ClothingSystemRuntimeInterface",  "EditorSubsystem", "InterchangeCore",
     "TypedElementFramework","Chaos", "ChaosCore", "EditorStyle", "EditorFramework",
     "Localization", "DeveloperToolSettings", "Slate",
     "InputCore", "DeveloperSettings", "SlateCore", "ToolMenus"]
-  let editorModules = @["UnrealEd", "PropertyEditor", 
+  var editorModules = @["UnrealEd", "PropertyEditor", 
   "EditorStyle", "EditorSubsystem","EditorFramework",
   
   ]
@@ -353,13 +397,29 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     enginePlugins = @["EnhancedInput"]
     engineExperimentalPlugins = @["PCG"]
 
-  let engineRuntimePlugins = @["GameplayAbilities"]
+  var engineRuntimePlugins = @["GameplayAbilities"]
+
+  let userGameModules = getGameUserConfigValue("gameModules",  newSeq[string]())
+  for userModule in userGameModules:
+    case conf.getModuleTypeByName(userModule):
+    of uemEngineRuntime:
+      runtimeModules.add(userModule)
+    of uemEngineDeveloper:
+      developerModules.add(userModule)
+    of uemEngineEditor:
+      editorModules.add(userModule)
+    of uemEnginePlugins:
+      enginePlugins.add(userModule)
+    of uemEngineExperimentalPlugins:
+      engineExperimentalPlugins.add(userModule)
+    of uemEngineRuntimePlugins:
+      engineRuntimePlugins.add(userModule)
+      
 
 #Notice the header are not need for compiling the dll. We use a PCH. They will be needed to traverse the C++
   let moduleHeaders = 
     runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
     developerModules.map(module=>getEngineRuntimeIncludePathFor("Developer", module)) & 
-    developerModules.map(module=>getEngineRuntimeIncludeClassesPathFor("Developer", module)) & #if it starts to complain about the lengh of the cmd line. Optimize here
     editorModules.map(module=>getEngineRuntimeIncludePathFor("Editor", module)) & 
     intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module)) &
     enginePlugins.map(module=>getEnginePluginModule(module)) & 
@@ -458,15 +518,29 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
     experimentalPlugins.add("PCG")
 
 
-  let modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", 
+  var modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", 
     "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", 
     "NetCore", "UMG", "AdvancedPreviewScene", "AIModule", "EditorSubsystem", "DeveloperSettings"]
+
+  var engineRuntimepluginSymbols = @["GameplayAbilities"]
+  
+  let userGameModules = getGameUserConfigValue("gameModules",  newSeq[string]())
+  for userModule in userGameModules:
+    case conf.getModuleTypeByName(userModule):
+    of uemEngineRuntimePlugins:
+      engineRuntimepluginSymbols.add(userModule)
+    of uemEngineExperimentalPlugins:
+      experimentalPlugins.add(userModule)
+    else:
+      modules.add(userModule)
+
   let engineSymbolsPaths  = modules.map(modName=>getEngineRuntimeSymbolPathFor("UnrealEditor", modName)).flatten()
   let enginePluginSymbolsPaths = enginePlugins.map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", modName)).flatten()
-  
- 
-  let engineRuntimePluginSymbolsPaths = @["GameplayAbilities"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Runtime", modName)).flatten()
+  let engineRuntimePluginSymbolsPaths = engineRuntimepluginSymbols.map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Runtime", modName)).flatten()
   let engineExperimentalPluginSymbolsPaths = experimentalPlugins.map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Experimental", modName)).flatten()
+
+
+
 
   (engineSymbolsPaths & enginePluginSymbolsPaths &  engineRuntimePluginSymbolsPaths & engineExperimentalPluginSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
 

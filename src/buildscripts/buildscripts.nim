@@ -106,20 +106,6 @@ proc compileGuestSyncFromPlugin*() : string =
   let (output, _) = execCmdEx(cmd)
   output
 
-proc getGameUserConfig*() : Option[JSonNode] = 
-  let path = NimGameDir() / "game.json"
-  if fileExists(path):
-    some readFile(path).parseJson()
-  else:
-    none[JSonNode]()
-
-proc tryGetGameUserConfigValue*[T](key: string) : Option[T] =
-  getGameUserConfig()
-    .flatMap((config:JsonNode)=>tryGetJson[T](config, key))
-
-proc getGameUserConfigValue*[T](key: string, default:T) : T =
-  tryGetGameUserConfigValue[T](key).get(default)
-
 #TODO move from here
 type 
   #interal NUE platform target (different than current editor platfrom)

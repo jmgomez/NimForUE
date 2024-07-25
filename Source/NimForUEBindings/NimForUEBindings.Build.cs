@@ -1,8 +1,34 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Runtime.InteropServices;
 using UnrealBuildTool;
 
 public class NimForUEBindings : ModuleRules
 {
+	//WIN ONLY
+	[DllImport("kernel32.dll")]
+	static extern bool SetDllDirectory(string lpPathName);
+	[DllImport("hostnimforue")]
+	public static extern IntPtr getGameModules();
+	void AddHostDll() {
+		var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue");
+		string dynLibPath;
+		var isWin = Target.Platform == UnrealTargetPlatform.Win64;
+		if (isWin) {
+			var dllName = "hostnimforue.dll";
+			dynLibPath = Path.Combine(nimBinPath, dllName);
+			SetDllDirectory(nimBinPath);
+			var libSymbolsName = "hostnimforue.lib";
+			RuntimeDependencies.Add(dynLibPath);
+			PublicDelayLoadDLLs.Add(dllName);
+			PublicAdditionalLibraries.Add(Path.Combine(nimBinPath, libSymbolsName));
+
+		}
+		else {
+			dynLibPath = Path.Combine(nimBinPath, "libhostnimforue.dylib");
+			PublicAdditionalLibraries.Add(dynLibPath);
+		}
+	}
 	public NimForUEBindings(ReadOnlyTargetRules Target) : base(Target) {
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core", 
@@ -31,6 +57,9 @@ public class NimForUEBindings : ModuleRules
 				"UnrealEd",
 				"AdvancedPreviewScene"
 			});
+			AddHostDll();
+			var gameModules = Marshal.PtrToStringAnsi(getGameModules()).Split(",");
+			PublicDependencyModuleNames.AddRange(gameModules);
 		}
 		if (Target.Platform == UnrealTargetPlatform.Win64){
 			CppStandard = CppStandardVersion.Cpp20;

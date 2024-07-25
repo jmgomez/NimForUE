@@ -357,13 +357,14 @@ func childrenAsSeq*(node:NimNode) : seq[NimNode] =
  
 
 func getMetasForType*(body:NimNode) : seq[UEMetadata] {.compiletime.} = 
-    body.toSeq()
-        .filterIt(it.kind==nnkPar or it.kind == nnkTupleConstr)
-        .mapIt(it.children.toSeq())
-        .flatten()
-        .filterIt(it.kind!=nnkExprColonExpr)
-        .map(fromNimNodeToMetadata)
-        .flatten()
+     body.toSeq()
+      .filterIt(it.kind==nnkPar or it.kind == nnkTupleConstr)
+      .mapIt(it.children.toSeq())
+      .flatten()
+      .filterIt(it.kind!=nnkExprColonExpr)
+      .map(fromNimNodeToMetadata)
+      .flatten()
+
 
 #some metas (so far only uprops)
 #we need to remove some metas that may be incorrectly added as flags

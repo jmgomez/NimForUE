@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using UnrealBuildTool;
 
 
@@ -18,12 +19,10 @@ public class NimForUE : ModuleRules
 
 	[DllImport("hostnimforue")]
 	static extern IntPtr getNimBaseHeaderPath();
-	
-	
+
 	//WIN ONLY
 	[DllImport("kernel32.dll")]
 	static extern bool SetDllDirectory(string lpPathName);
-
 	public NimForUE(ReadOnlyTargetRules Target) : base(Target) {
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		if (Target.Platform == UnrealTargetPlatform.Win64) {
@@ -32,7 +31,6 @@ public class NimForUE : ModuleRules
 		else {
 			CppStandard = CppStandardVersion.Cpp17;
 		}
-
 		PublicDefinitions.Add("NIM_INTBITS=64");
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
@@ -47,8 +45,7 @@ public class NimForUE : ModuleRules
 			"SlateCore",
 
 		});
-
-
+		
 		if (Target.bBuildEditor) {
 			PrivateDependencyModuleNames.AddRange(new string[] {
 				"UnrealEd",
@@ -125,12 +122,8 @@ public class NimForUE : ModuleRules
 		runNimble("ok");
 	}
 
-	//TODO Run buildlibs from here so the correct config/platform is picked when building
-	void AddNimForUEDev() { //ONLY FOR WIN/MAC with EDITOR (dev) target
-		NimbleSetup(); //Make sure NUE and Host are built
+	void AddHostDll() {
 		var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue");
-		
-
 		string dynLibPath;
 		var isWin = Target.Platform == UnrealTargetPlatform.Win64;
 		if (isWin) {
@@ -147,8 +140,13 @@ public class NimForUE : ModuleRules
 			dynLibPath = Path.Combine(nimBinPath, "libhostnimforue.dylib");
 			PublicAdditionalLibraries.Add(dynLibPath);
 		}
+	}
 
-        setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
+	//TODO Run buildlibs from here so the correct config/platform is picked when building
+	void AddNimForUEDev() { //ONLY FOR WIN/MAC with EDITOR (dev) target
+		NimbleSetup(); //Make sure NUE and Host are built
+		AddHostDll();
+		setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
 
 		//PublicDefinitions.Add($"NIM_FOR_UE_LIB_PATH  \"{dynLibPath}\"");
 		//TRY?
@@ -167,9 +165,9 @@ public class NimForUE : ModuleRules
 			//TODO Print JSON Here
 			
 		}
+		
 
 	}
-	
 
 	void BuildNim(){
 		var isWin = Target.Platform == UnrealTargetPlatform.Win64;
@@ -184,7 +182,7 @@ public class NimForUE : ModuleRules
 			processInfo.FileName = "sh";
 			processInfo.Arguments = "buildlibs.sh";
 		}
-		//
+		
 		var process = Process.Start(processInfo);
 		process.WaitForExit();
 		}
