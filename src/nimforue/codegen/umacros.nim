@@ -239,7 +239,10 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)    
     let ueProps = getUPropsAsFieldsForType(body, className)
     let isInterface = parent == "UInterface"
-    let (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body), isInterface)
+    var (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body), isInterface)
+    if "DisplayName" notin classMetas.mapIt(it.name):
+      classMetas.add(makeUEMetadata("DisplayName", className.removeFirstLetter()))
+
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
     ueType.interfaces = interfaces
     ueType.hasObjInitCtor = NeedsObjectInitializerCtorMetadataKey in ueType.metadata
