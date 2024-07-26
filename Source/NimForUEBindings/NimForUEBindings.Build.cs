@@ -58,8 +58,11 @@ public class NimForUEBindings : ModuleRules
 				"AdvancedPreviewScene"
 			});
 			AddHostDll();
-			var gameModules = Marshal.PtrToStringAnsi(getGameModules()).Split(",");
-			PublicDependencyModuleNames.AddRange(gameModules);
+			var gameModulesStr = Marshal.PtrToStringAnsi(getGameModules());
+			if (!String.IsNullOrEmpty(gameModulesStr))
+			{
+				PublicDependencyModuleNames.AddRange(gameModulesStr.Split(","));
+			}
 		}
 		if (Target.Platform == UnrealTargetPlatform.Win64){
 			CppStandard = CppStandardVersion.Cpp20;
