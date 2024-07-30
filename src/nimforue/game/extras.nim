@@ -24,7 +24,8 @@ proc tryGetSubsystem*[T : USubsystem](objContext: UObjectPtr) : Option[ptr T] =
     none[ptr T]()
 
 proc getSubsystem*[T: UEngineSubsystem](): ptr T = tryGetSubsystem[T]().get(nil)
-proc getSubsystem*[T: UEngineSubsystem](objContext: UObjectPtr): ptr T = tryGetSubsystem[T](objContext).get(nil)
+proc getSubsystem*[T: USubsystem](objContext: UObjectPtr): ptr T = tryGetSubsystem[T](objContext).get(nil)
+
 
 proc drawDebugBox*(context: UObjectPtr, box: FBox, color: FLinearColor, location: FVector, rotation: FRotator, duration: float32) =
   var center, extends: FVector
