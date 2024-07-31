@@ -315,6 +315,9 @@ macro uClass*(name:untyped, body : untyped) : untyped =
   let (uClassNode, fns, _) = uClassImpl(name, body, true)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
 
+  #if name[1].eqIdent("AAuraPlayerController"):
+  #  here result.repr
+
 
 func getRawClassTemplate(isSlate: bool, interfaces: seq[string]): string = 
   var cppInterfaces = interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
