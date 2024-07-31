@@ -593,7 +593,7 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
   let recList = genPropsAsRecList(ueType, rule, false)
   let importExportPragma =
     if ueType.isInPCH:
-      ident "importcpp"
+      nnkPragma.newTree(ident "importcpp", ident "bycopy")
     else:
       nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1" & "_"))
 

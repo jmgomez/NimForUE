@@ -216,8 +216,7 @@ func genUStructCodegenTypeDefBinding*(ueType: UEType, target: CodegenTarget): Ni
         nnkPostfix.newTree([ident "*", ident ueType.name.nimToCppConflictsFreeName()]),
         nnkPragma.newTree(
             ident "inject",
-            ident "inheritable",
-            ident "pure",
+            ident "bycopy",
             nnkPragma.newTree(ident "importcpp", ident "inheritable", ident "pure")
           )
         ])
