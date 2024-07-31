@@ -173,6 +173,11 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
 
   var pragmas = 
     # when WithEditor:
+    if isSuper:
+      nnkPragma.newTree(
+        nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode(clsName&"_"&funField.actualFunctionName&"_$1_"))
+        ) #export the func with clsName and function to avoid super_ collision
+    else:
       nnkPragma.newTree(
         nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
         ) #export the func with an underscore to avoid collisions
