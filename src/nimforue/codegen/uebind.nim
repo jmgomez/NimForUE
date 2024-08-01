@@ -137,7 +137,7 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
     else: genAst(clsName=newStrLitNode(clsName), isSuper = newLit isSuper): 
       var cls {.inject.} = uobject.getClass(ueCast[UObject](self))
       when isSuper:
-        cls = cls.getSuperClass()
+        cls = getClassByName(clsName).getSuperClass()
       let fn {.inject, used.} = uobject.findFuncByName(cls, fnName)
       self.processEvent(fn, param.addr)
 
@@ -172,7 +172,6 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
     returnCall
 
   var pragmas = 
-    # when WithEditor:
     if isSuper:
       nnkPragma.newTree(
         nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode(clsName&"_"&funField.actualFunctionName&"_$1_"))
@@ -181,6 +180,8 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
       nnkPragma.newTree(
         nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
         ) #export the func with an underscore to avoid collisions
+
+    # when WithEditor:
     # else: newEmptyNode()
   # if typeExposure == uexExport:
   #   # debugEcho treeRepr pragmas
