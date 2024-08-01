@@ -138,7 +138,7 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
       var cls {.inject.} = uobject.getClass(ueCast[UObject](self))
       when isSuper:
         cls = getClassByName(clsName).getSuperClass()
-      let fn {.inject, used.} = uobject.findFuncByName(cls, fnName)
+      let fn {.inject, used.} = uobject.findFunctionByNameWithPrefixes(cls, fnName).get()
       self.processEvent(fn, param.addr)
 
   let outParams = 
@@ -165,7 +165,7 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
   var fnBody = genAst(uFnName=newStrLitNode(funField.actualFunctionName), paramInsideBodyAsType, paramDeclaration, generateObjForStaticFunCalls, processFn, returnCall, outParams):
     paramInsideBodyAsType
     paramDeclaration
-    let fnName {.inject, used .} = n uFnName
+    let fnName {.inject, used .} = f uFnName
     generateObjForStaticFunCalls
     processFn
     outParams

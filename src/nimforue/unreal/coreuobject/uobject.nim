@@ -354,6 +354,27 @@ proc findFuncByName*(cls : UClassPtr, name:FName) : UFunctionPtr {.inline.} =
     # UE_Error "Could not find function " & $name & " in class " & cls.getName()
     return fn
 
+const fnPrefixes* = @["", "Receive", "K2_", "BP_"]
+
+#this functions should only being use when trying to resolve
+#the nim name in unreal on the emit, when the actual name is not set already.
+#it is also taking into consideration when converting from ue to nim via UClass->UEType
+func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: FString): Option[UFunctionPtr] =
+  if cls.isNil():
+    return none[UFunctionPtr]()
+  for name in [name, name.capitalizeAscii()]:
+    for prefix in fnPrefixes:
+      let fnName = prefix & name
+      # assert not cls.isNil()
+      if cls.isNil():
+        return none[UFunctionPtr]()
+      let fun = cls.findFunctionByName(makeFName(fnName))
+      if not fun.isNil():
+        return some fun
+
+  none[UFunctionPtr]()
+
+
 proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) : void {. importcpp: "#.AddFunctionToFunctionMap(@)"}
 proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
 proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()", ureflect .}
