@@ -355,8 +355,8 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             #it's wrapped so we can call the user constructor from the Nim child classes
             #Maybe in the future we could treat the Nim constructors as C++ constructors and forget about this special treatment (by the time this was designed Nim didnt have cpp constructors compatibility)
             genSelf()
-            assignments
             fnBody
+            assignments
 
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
             defaultConstructorStatic[typeIdent](initName)
@@ -552,15 +552,15 @@ func genConstructorForClass*(uClassBody:NimNode, uet: UEType, constructorBody:Ni
   let typeParam = makeFieldAsUPropParam("self", className, className)
   let initParam = makeFieldAsUPropParam(initializerName, "FObjectInitializer", className)
   let fnField = makeFieldAsUFun(CtorPrefix&className, @[typeParam, initParam], className)
-  let ctorParentCall = 
+  let newConstructorBody = 
     genAst(
       parentCall = ident(CtorNimInnerPrefix & uet.parent),
+      constructorBody
     ):
         when compiles(parentCall(initializer)):
             parentCall(initializer)
-  if constructorBody.kind != nnkEmpty:
-    constructorBody.add ctorParentCall
-  constructorImpl(fnField, constructorBody)  
+        constructorBody
+  constructorImpl(fnField, newConstructorBody)  
 
 func genDeclaredConstructor*(body:NimNode, uet: UEType) : Option[NimNode] = 
 
