@@ -10,9 +10,6 @@ import fproperty, models, modelconstructor, emitter, modulerules, headerparser, 
 import ../unreal/definitions
 # export models
 
-const fnPrefixes* = @["", "Receive", "K2_", "BP_"]
-
-
 
 func isTArray*(prop: FPropertyPtr): bool = not castField[FArrayProperty](prop).isNil()
 func isFString*(prop: FPropertyPtr): bool = not castField[FStrProperty](prop).isNil()
@@ -734,23 +731,6 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
   prop
 
 
-#this functions should only being use when trying to resolve
-#the nim name in unreal on the emit, when the actual name is not set already.
-#it is also taking into consideration when converting from ue to nim via UClass->UEType
-func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: string): Option[UFunctionPtr] =
-  if cls.isNil():
-    return none[UFunctionPtr]()
-  for name in [name, name.capitalizeAscii()]:
-    for prefix in fnPrefixes:
-      let fnName = prefix & name
-      # assert not cls.isNil()
-      if cls.isNil():
-        return none[UFunctionPtr]()
-      let fun = cls.findFunctionByName(makeFName(fnName))
-      if not fun.isNil():
-        return some fun
-
-  none[UFunctionPtr]()
 
 proc check(test: bool) {.importcpp: "check(#)".}
 
