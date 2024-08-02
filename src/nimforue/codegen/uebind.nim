@@ -30,13 +30,20 @@ func genProp(typeDef : UEType, prop : UEField, typeExposure: UEExposure = uexDsl
     else:
       genAst(typeNode):
         getPropertyValuePtr[typeNode](prop, obj)[]
-  let actualSetter = 
+  var actualSetter = 
     if prop.uePropType == "bool": 
       genAst():
         setValueInBoolProp(prop, obj, val)
     else:
       genAst(typeNode):
         setPropertyValuePtr[typeNode](prop, obj, val.addr)
+  
+  if prop.isFieldNotify:
+    let notifyNode =  
+      genAst(name = newLit prop.name):
+        obj.broadcastFieldValueChanged(n name)
+    actualSetter = nnkStmtList.newTree(actualSetter, notifyNode)
+
   if CPF_BlueprintAssignable in prop.propFlags and typeExposure != uexDsl:
     result = 
       genAst(propIdent, ptrName, typeNode, className, propUEName = prop.name, typeNodeAsReturnValue):
@@ -57,7 +64,7 @@ func genProp(typeDef : UEType, prop : UEField, typeExposure: UEExposure = uexDsl
         proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
           let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
           actualSetter
-  
+  #TODO why the heck this code is repeated? Test Dynamic delegates before deleting
   result = 
     genAst(propIdent, ptrName, typeNode, className, actualGetter, actualSetter, propUEName = prop.name, typeNodeAsReturnValue):
       proc `propIdent`* (obj {.inject.} : ptrName ) : typeNodeAsReturnValue {.exportcpp.} =
@@ -71,15 +78,6 @@ func genProp(typeDef : UEType, prop : UEField, typeExposure: UEExposure = uexDsl
       proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
         let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
         actualSetter
-  # if typeExposure == uexExport:
-    
-    # let dynlib = ident "dynlib"
-    # for i in [0, 2]: 
-    #   result[i].pragma.add dynlib
-  
-  
-
-  
   
 func genParamInFnBodyAsType(funField:UEField) : NimNode = 
   let returnProp = funField.signature.filter(isReturnParam).head()
@@ -224,19 +222,18 @@ func genInterfaceConverers*(ueType:UEType, typeExposure: UEExposure) : NimNode =
 func getClassTemplate*(typeDef: UEType, fromBindings: bool = false) : string =  
   var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":
-    cppInterfaces = ", " & cppInterfaces
-  # let ctorContent = newLit &"{typeDef.name}(const '1& #1) : {ueType.parent}(#1)"
-  
+    cppInterfaces = ", " & cppInterfaces  
   let defaultCtor = if fromBindings and not typeDef.hasObjInitCtor: "$1()=default;" else: ""
-    # if typeDef.hasObjInitCtor: "" # "$1(const FObjectInitializer& i) : $3(i){}" 
-    # else: "$1()=default;" #the default ctor will be autogen by Nim (dsl only, TODO make sure only dsl types do this). Also not used so far (it may be needed down the road)
+  let fieldNotifies = generateFieldNotify(typeDef).get(("", ""))
 
-#The constructor is called internally in emittypes
   &"""
 struct $1 : public $3{cppInterfaces} {{
+  typedef {typeDef.parent} Super;
+  typedef {typeDef.name} ThisClass;
   {defaultCtor}
   $1(FVTableHelper& Helper) : $3(Helper) {{}}
   $2  
+  {fieldNotifies[0]}
 }};
 """
 #Eventually this types should generate its own file so it's easier to copy paste them to the EngineTypes. In the mean time they generate getter/setters

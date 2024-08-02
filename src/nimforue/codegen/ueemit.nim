@@ -198,7 +198,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEar
                 let prevStructPtr = someNil getUTypeByName[UNimScriptStruct] structName
                 let newStructPtr = emitUStructInPackage(pkg, emitter, prevStructPtr, not wasAlreadyLoaded)
 
-                if prevStructPtr.isSome():
+                if prevStructPtr.isSome() and emitter.ueType.name in ueEmitter.setStructOpsWrapperTable:
                    #updates the structOps wrapper with the current type information 
                    ueEmitter.setStructOpsWrapperTable[emitter.ueType.name](prevStructPtr.get())
 

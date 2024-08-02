@@ -129,6 +129,7 @@ uClass AActorCodegen of AActor:
     bindingTypeInfo : FString
     allDepsOf : FString
     moduleRelativePath : FString
+    bDumpParent: bool
   
   ufuncs(): 
     proc getClassFromInspectedType() : UClassPtr = 
@@ -153,6 +154,9 @@ uClass AActorCodegen of AActor:
         UE_Error "Class is null"
         return
       UE_Log dump cls
+      if self.bDumpParent:
+        UE_Log "***** Parent Class *****"
+        UE_Log dump cls.getSuperClass
     
     proc dumpClassProps() = 
       let cls = self.getClassFromInspectedType()

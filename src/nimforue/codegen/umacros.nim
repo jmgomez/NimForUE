@@ -306,8 +306,17 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
           proc clsCtor(): cls {.constructor.} = discard
           
       fns.add initCtor       
+      let fieldNotify = generateFieldNotify(ueType)
+      if fieldNotify.isSome:
+        let impl: string = fieldNotify.get()[1]
+        let fieldNotfiyImpl = 
+          genAst(emitContent = newLit impl):
+            {.emit: emitContent.}
+        fns.add fieldNotfiyImpl
+
+
       result =  (typeNode, fns, funcInClass)    
-   
+
       # if ueType.name == "UEnhancedInputAbilitySystem":
       #   debugEcho repr result
 

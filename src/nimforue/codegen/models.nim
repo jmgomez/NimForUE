@@ -22,12 +22,15 @@ const AutoCreateRefTermMetadataKey* = "AutoCreateRefTerm"
 const ScriptMethodMetadataKey* = "ScriptMethod"
 const InstancedMetadataKey* = "Instanced"
 const BlueprintImplementableEventMetadataKey* = "BlueprintImplementableEvent"
+const FieldNotifyMetadataKey* = "FieldNotify" 
+
 #UEType metadata
 const NoDeclMetadataKey* = "NoDecl"
 const EarlyLoadMetadataKey* = "EarlyLoad"
 const ReinstanceMetadataKey* = "Reinstance" #force the reinstantiation of a UEType
 const CompileBPMetadataKey* = "CompileBP" #recompile all childs even if nothing changes
 const NeedsObjectInitializerCtorMetadataKey* = "NeedsObjectInitializerCtor" #recompile all childs even if nothing changes
+
 
 type #TODO get rid of this (this was used before Nim supported virtual)
   CppModifiers* = enum

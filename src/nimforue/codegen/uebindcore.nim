@@ -528,3 +528,37 @@ func getPropAssigments*(typeName: string, selfName: string): NimNode =
             .toSeq()
             .map(insertReferenceToSelfInAssignmentNode)
     ) 
+
+func isFieldNotify*(field: UEField): bool = 
+  field.kind == uefProp and "FieldNotify" in field.metadata
+
+func generateFieldNotify*(typedef: UEType): Option[(string, string)] =
+  var declareFields = ""
+  var declareEnumFields = ""
+  var implementFields = ""
+  var implementEnumFields = ""
+  var isFirst = true 
+  for field in typedef.fields:
+    #TODO Funcs
+    if field.isFieldNotify():
+      let firstDecl = if isFirst: "_BEGIN" else: ""
+      declareFields.add(&"""UE_FIELD_NOTIFICATION_DECLARE_FIELD({field.name})  \""" & "\n")
+      declareEnumFields.add(&"""UE_FIELD_NOTIFICATION_DECLARE_ENUM_FIELD{firstDecl}({field.name})  \""" & "\n")
+      implementFields.add(&"""UE_FIELD_NOTIFICATION_IMPLEMENT_FIELD({typedef.name}, {field.name})  """ & "\n")
+      implementEnumFields.add(&"""UE_FIELD_NOTIFICATION_IMPLEMENT_ENUM_FIELD({typedef.name}, {field.name})  """ & "\n")
+      isFirst = false
+  if declareFields == "":
+    return none((string, string))
+  let decl = &"""UE_FIELD_NOTIFICATION_DECLARE_CLASS_DESCRIPTOR_BEGIN( ) \
+{declareFields} 
+{declareEnumFields}
+UE_FIELD_NOTIFICATION_DECLARE_ENUM_FIELD_END() \
+UE_FIELD_NOTIFICATION_DECLARE_CLASS_DESCRIPTOR_END();
+"""
+
+  let impl = &"""{implementFields}
+UE_FIELD_NOTIFICATION_IMPLEMENTATION_BEGIN({typedef.name}) 
+{implementEnumFields}
+UE_FIELD_NOTIFICATION_IMPLEMENTATION_END({typedef.name});
+"""
+  some((decl, impl))
