@@ -1,3 +1,4 @@
+import std/options
 import ../codegen/[uebind, models]
 import ../unreal/nimforue/[nimforue, bindingdeps]
 import ../unreal/coreuobject/[uobject, coreuobject, package, unrealtype, tsoftobjectptr, nametypes, scriptdelegates, uobjectglobals, metadata]
