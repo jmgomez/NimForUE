@@ -369,7 +369,10 @@ task setup, "Setups the plugin by building the initial tasks in order":
   rebuildlibs(taskOptions)
   addNUEPluginToProject()
   compileLib("game", @[], false, false, false, getPlatformTargetFromOptions(taskOptions))
-  
+
+task addnueplugin, "add NimForUE plugin to project":
+  addNUEPluginToProject()
+
 task starteditor, "opens the editor":
   ubuild(taskOptions)
   when defined windows:
