@@ -1,31 +1,8 @@
 # import ../unreal/coreuobject/uobjectflags
 import std/[sequtils, options, sugar, tables]
 import ../utils/utils
-
-
-const ManuallyImportedClasses* = @[ 
-  #TODO remove but double check first: most of this is already being generated automatically when instrospection the project see NimDefinedTypesNames
-      "AActor", "AInfo", "UReflectionHelpers", "UObject", "UEngine", "APawn",
-      "UField", "UStruct", "UScriptStruct", "UPackage", "UPackageMap",
-      "UClass", "UFunction", "UDelegateFunction",
-      "UEnum", "AVolume", "UInterface", 
-      "UActorComponent","AController","AGameMode", "AGameModeBase",
-      "UBlueprint", "UBlueprintGeneratedClass",
-      "APlayerController", "UAnimBlueprintGeneratedClass",
-      "UEngineSubsystem", "USubsystem", "UDynamicSubsystem", "UWorldSubsystem",
-      "USceneComponent", "UPrimitiveComponent",
-      "UWorld",
-      "UInputComponent",
-      "UEnhancedInputComponent",
-      "UInputAction",
-      "UPlayerInput",
-      "UEnhancedPlayerInput",
-      "UPhysicalMaterial", 
-      "UTickableWorldSubsystem",
-      "UGameViewportClient",
-      "UNavigationSystemConfig","UNavigationSystemModuleConfig"
-
-]
+import manuallyimportedclasses
+export manuallyimportedclasses
 
 type
      #Rules applies to UERuleTarget
