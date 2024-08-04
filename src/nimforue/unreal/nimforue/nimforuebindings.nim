@@ -76,7 +76,7 @@ when WithEditor:
 # when true:
     proc setMetadata*(field: FFieldPtr, key: FName, inValue:FString) : void {.importcpp:"#->SetMetaData(#, *#)".}
     proc setMetadata*(field: UFieldPtr, key: FName, inValue:FString): void {.importcpp:"#->SetMetaData(#, *#)".}
-    proc setMetadata*(field: UEnumPtr, key: FName, inValue:FString): void {.importcpp:"#->SetMetaData(*(#.ToString()), *#)".}
+    proc setMetadata*(field: UEnumPtr, key: FString, inValue:FString): void {.importcpp:"#->SetMetaData(*#, *#)".}
     
     # proc setMetadata*(field: UFieldPtr, key:FString, inValue:FString): void {.importcpp:"#->SetMetaData(#, *#)".}
     # proc setMetadata*(field:UFieldPtr|FFieldPtr, key:FName, inValue:FString) : void = setMetadataInternal(field, key.toFString(), inValue)

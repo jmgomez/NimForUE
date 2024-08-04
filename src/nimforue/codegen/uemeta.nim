@@ -1009,14 +1009,14 @@ proc emitUEnum*(enumType: UEType, package: UPackagePtr): UFieldPtr =
   const objFlags = RF_Public | RF_Transient | RF_MarkAsNative
   let uenum = newUObject[UNimEnum](package, name, objFlags)
   for metadata in enumType.metadata:
-    uenum.setMetadata(makeFName metadata.name, $metadata.value)
+    uenum.setMetadata(f metadata.name, $metadata.value)
   var enumFields = makeTArray[TPair[FName, int64]]()
   for field in enumType.fields.pairs:
     let fieldName = field.val.name.makeFName()
     enumFields.add(makeTPair(fieldName, field.key.int64))
     # uenum.setMetadata("DisplayName", "Whatever"&field.val.name)) TODO the display name seems to be stored into a metadata prop that isnt the one we usually use
   discard uenum.setEnums(enumFields)
-  uenum.setMetadata(makeFName UETypeMetadataKey, $enumType.toJson())
+  uenum.setMetadata(f UETypeMetadataKey, $enumType.toJson())
 
   uenum
 
