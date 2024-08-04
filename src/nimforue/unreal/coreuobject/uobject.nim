@@ -359,7 +359,7 @@ const fnPrefixes* = @["", "Receive", "K2_", "BP_"]
 #this functions should only being use when trying to resolve
 #the nim name in unreal on the emit, when the actual name is not set already.
 #it is also taking into consideration when converting from ue to nim via UClass->UEType
-func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: FString): Option[UFunctionPtr] =
+func findFunctionByNameWithPrefixes*(cls: UClassPtr, name: FString): Option[UFunctionPtr] {.exportcpp, ureflect.} =
   if cls.isNil():
     return none[UFunctionPtr]()
   for name in [name, name.capitalizeAscii()]:
