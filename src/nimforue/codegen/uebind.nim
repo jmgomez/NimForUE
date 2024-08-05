@@ -136,7 +136,7 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
       var cls {.inject.} = uobject.getClass(ueCast[UObject](self))
       when isSuper:
         cls = getClassByName(clsName).getSuperClass()
-      let fn {.inject, used.} = uobject.findFunctionByNameWithPrefixes(cls, fnName).get()
+      let fn {.inject, used.} = uobject.getFunctionByNameWithPrefixes(cls, fnName)
       self.processEvent(fn, param.addr)
 
   let outParams = 
