@@ -226,15 +226,11 @@ func getClassTemplate*(typeDef: UEType, fromBindings: bool = false) : string =
   let defaultCtor = if fromBindings and not typeDef.hasObjInitCtor: "$1()=default;" else: ""
   let fieldNotifies = generateFieldNotify(typeDef).get(("", ""))
 
-  var typeDefParent = typeDef.parent & (if not typeDef.isParentInPCH and typeDef.parent notin ManuallyImportedClasses and fromBindings : "_" else: "")
-  if typeDefParent == "UAsyncActionLoadPrimaryAssetBase": # importcpp with a different name in enginetypes.nim
-    typeDefParent = "UBlueprintAsyncActionBase"
-  let typeDefName = typeDef.name & (if fromBindings: "_" else: "")
-
+  # see manual codegenDecl pragma for $1,$3
   &"""
 struct $1 : public $3{cppInterfaces} {{
-  typedef {typeDefParent} Super;
-  typedef {typeDefName} ThisClass;
+  typedef $3 Super;
+  typedef $1 ThisClass;
   {defaultCtor}
   $1(FVTableHelper& Helper) : $3(Helper) {{}}
   $2  
