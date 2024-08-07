@@ -1,4 +1,4 @@
-import std/[sequtils, macros, genasts, sugar, json, jsonutils, strutils, tables, options, strformat, hashes, algorithm, macros]
+import std/[sequtils, macros, genasts, sugar, json, jsonutils, strutils, tables, options, strformat, hashes, algorithm, macros, os]
 import uebindcore, models, modelconstructor, enumops
 import ../utils/[ueutils,utils]
 
@@ -10,7 +10,9 @@ else:
   import ueemit, nuemacrocache, headerparser
   import ../unreal/coreuobject/uobjectflags
   import ../unreal/core/net
- 
+
+const WithEditor* {.booldefine.} = true 
+const gameDir {.strdefine.} = ""
 
 # import ueemit
 
@@ -243,7 +245,10 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
     if "DisplayName" notin classMetas.mapIt(it.name):
       classMetas.add(makeUEMetadata("DisplayName", className.removeFirstLetter()))
 
-    var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)    
+    var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
+    when WithEditor:
+      # path is relative to the Plugins/NimForUE/Source/GameNim.Build.cs since classes are emitted to GameNim package
+      ueType.moduleRelativePath = ".." / ".." / ".." / ".." / name.lineInfoObj.filename[gameDir.len .. ^1]
     ueType.interfaces = interfaces
     ueType.hasObjInitCtor = NeedsObjectInitializerCtorMetadataKey in ueType.metadata
     let gameplayAttributeHelpers = 
@@ -324,7 +329,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
   let (uClassNode, fns, _) = uClassImpl(name, body, true)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
 
-  #if name[1].eqIdent("AAuraPlayerController"):
+  #if name[1].eqIdent("AAuraCharacter"):
   #  here result.repr
 
 
