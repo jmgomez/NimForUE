@@ -32,7 +32,13 @@
 			"Name": "NimForUEEditor",
 			"Type": "EditorNoCommandlet",
 			"LoadingPhase": "PostDefault"
-		}
+		},
+
+		{
+			"Name": "GameNim",
+			"Type": "Runtime",
+			"LoadingPhase": "PostDefault"
+		},		
 	],
 	"Plugins": [
 		{

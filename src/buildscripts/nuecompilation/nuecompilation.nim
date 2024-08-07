@@ -211,6 +211,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
   let isVm = "vm" in name
   var gameSwitches = @[
     "-d:game",
+    &"-d:gameDir:\"{config.gameDir}\"",
     "-d:OutputHeader:" & name.capitalizeAscii() & ".h",
     "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
