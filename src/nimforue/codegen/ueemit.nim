@@ -8,7 +8,7 @@ import nuemacrocache
 import ../codegen/[emitter,modelconstructor, models, uemeta, uebind,gencppclass, headerparser, uebindcore]
 
 
-
+const WithEditor* {.booldefine.} = true 
 
     # ueEmitter.emitters[ueField.typeName] = ueEmitter.emitters[ueField.typeName]#.replaceFirst((e:EmitterInfo)=>e.ueType.name == ueField.className, emitter)
 # 
