@@ -229,6 +229,25 @@ proc genGetLifetimeReplicatedProps(ueType: UEType): NimNode =
   result.body.insert 0, generateSuper(result, ueType.parent)
   # debugEcho repr result
 
+
+proc genFieldNotifySetterAssignment(field: UEField): NimNode = 
+  let setterName = ident field.name & "Setter"
+  genAst(propName = newLit field.name, setterName):
+    let prop = self.getClass.getFPropertyByName(propName)
+    setSetter(prop, setterName)
+
+proc generateFieldNotifySetter(uet: UEType, field: UEField): NimNode = 
+  let clsType = ident uet.name & "Ptr"
+  let setterName = ident field.name & "Setter"
+  genAst(clsType, propName = ident field.name, propType = ident field.uePropType, setterName):
+    proc setterName(container{.inject.}: pointer, value{.inject.}: pointer) {.cdecl, codegenDecl: "$1 $2 (void* container_p0, const void* value_p1)".} = 
+      let obj = cast[clsType](container)
+      when propType is ptr:
+        let val = cast[propType](value)
+      else:
+        let val = cast[ptr propType](value)
+      obj.propName = val[]
+
 type UClassNode = object
   className: string
   parent: string
@@ -311,6 +330,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
           proc clsCtor(): cls {.constructor.} = discard
           
       fns.add initCtor       
+      #Adds the C++ implementation for the field notify
       let fieldNotify = generateFieldNotify(ueType)
       if fieldNotify.isSome:
         let impl: string = fieldNotify.get()[1]
@@ -319,8 +339,12 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
             {.emit: emitContent.}
         fns.add fieldNotfiyImpl
 
+        let fieldsWithNotify = ueType.fields.filterIt(it.kind == uefProp and FieldNotifyMetadataKey in it.metadata)
+        for field in fieldsWithNotify:
+          ctor[0][1][^1].add genFieldNotifySetterAssignment(field)
+          typeNode.add generateFieldNotifySetter(ueType, field)
 
-      result =  (typeNode, fns, funcInClass)    
+    result =  (typeNode, fns, funcInClass)    
 
       # if ueType.name == "UEnhancedInputAbilitySystem":
       #   debugEcho repr result

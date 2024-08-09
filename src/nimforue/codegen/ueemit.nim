@@ -213,7 +213,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEar
                 let prevClassPtr = someNil getClassByName(clsName)
                 let newClassPtr = emitUStructInPackage(pkg, emitter, prevClassPtr, not wasAlreadyLoaded)
 
-                when WithEditor:
+                when uobject.WithEditor:
                     if newClassPtr.isSome():
                         pkg.setModuleRelativePath(newClassPtr.get(), emitter.ueType.moduleRelativePath) # so we can click on the parent class link in the BP editor
 
