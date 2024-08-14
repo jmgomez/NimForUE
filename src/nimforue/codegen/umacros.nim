@@ -70,17 +70,32 @@ proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =
     if name.toSeq().len() < 3:
         error("uClass must explicitly specify the base class. (i.e UMyObject of UObject)", name)
     let className = name[1].strVal()
+#[
+  import std/macros
+  dumpTree:
+    uClass AAuraCharacterBase of ACharacter: discard # name[^1].kind == nnkIdent
+    uClass AAuraCharacterBase of ACharacter implements IAbilitySystemInterface: discard # name[^1].kind == nnkCommand inode.kind == nnkIdent
+    uClass AAuraCharacterBase of ACharacter implements (IAbilitySystemInterface, IAnother): discard # name[^1].kind == nnkCommand inode.kind == nnkTupleConstr
+]#
     case name[^1].kind:
     of nnkIdent: 
         let parent = name[^1].strVal()
         (className, parent, newSeq[string]())
     of nnkCommand:
         let parent = name[^1][0].strVal()
-        var ifaces = 
-            name[^1][^1][^1].strVal().split(",") 
-        if ifaces[0][0] == 'I':
-            ifaces.add ("U" & ifaces[0][1..^1])
-        # debugEcho $ifaces
+        let inode = name[^1][^1][^1]
+        var ifaces:seq[string]
+        case inode.kind:
+        of nnkIdent:
+          let iface = inode.strVal()
+          ifaces = @[iface, "U" & iface[1..^1]]
+        of nnkTupleConstr:
+          for iface in inode:
+            ifaces.add iface.strVal()
+            ifaces.add "U" & iface.strVal()[1..^1]
+        else:
+          error("Cant parse the uClass " & repr name)
+        #here ifaces
 
         (className, parent, ifaces)
     else:
