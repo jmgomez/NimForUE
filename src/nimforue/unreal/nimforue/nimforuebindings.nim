@@ -385,14 +385,6 @@ func getModuleRelativePath*(str:UStructPtr) : Option[string] =
     .flatMap((p:FPropertyPtr) => p.getMetaData("ModuleRelativePath").map(m => $m))
   
 
-#it will call super until UObject is reached
-iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr = 
-    var super = cls
-    let uObjCls = staticClass[UObject]()
-    while super != uObjCls:
-        super = super.getSuperClass()
-        yield super
-
 func isBPClass*(cls:UClassPtr) : bool =    
     result = (CLASS_CompiledFromBlueprint.uint32 and cls.classFlags.uint32) != 0
     # UE_Warn &"isBpClass called for {cls.getName() } and result is {result}"

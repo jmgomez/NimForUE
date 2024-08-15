@@ -177,9 +177,72 @@ proc getDefaultObject*(fieldClass:UObjectPtr, createIfNeeded: bool) : UObjectPtr
 
 proc makeFImplementedInterface*(class: UClassPtr, offset:int32 = 0, implementedByK2:bool = true) : FImplementedInterface {.importcpp:"FImplementedInterface(@)", constructor.}
 
+proc getFlags*(obj:UObjectPtr|FFieldPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
+proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()" .}
+
+#CONSTRUCTOR HELPERS
+proc getUTypeByName*[T :UObject](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
+proc tryGetUTypeByName*[T :UObject](typeName:FString) : Option[ptr T] = someNil getUTypeByName[T](typeName)
+proc getClassByName*(className:FString) : UClassPtr {.exportcpp, ureflect.} = getUTypeByName[UClass](className)
+proc getScriptStructByName*(strName:FString) : UScriptStructPtr {.exportcpp, ureflect.} = getUTypeByName[UScriptStruct](strName)
+
+proc staticClass*[T:UObject]() : UClassPtr = #TODO we should autogen a function and call it instead of searching
+    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
+    getClassByName(className) #TODO stop doing this and use fname instead
+    
+proc staticClass*(T:typedesc) : UClassPtr = staticClass[T]()
+proc staticStruct*[T]() : UScriptStructPtr = 
+    let structName : FString = typeof(T).name.substr(1) 
+    getScriptStructByName(structName) 
+
+proc Class*[T : typedesc](t:T): UClassPtr = staticClass[t]()
+
+proc staticStruct*(T:typedesc) : UScriptStructPtr = staticStruct[T]()
+proc scriptStruct*[T : typedesc](t:T) : UScriptStructPtr = staticStruct[t]()
+
+
+proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
+
+
+proc isChildOf*[T:UObject](cls: UClassPtr) : bool =
+    let someBase = staticClass[T]()
+    isChildOf(cls, someBase)
+
+proc isChildOf*[C:UStruct, P:UStruct] : bool = isChildOf(staticClass[C](), staticClass[P]())
+
+proc isA*[T:UObject](obj:UObjectPtr) : bool = obj.isA(staticClass(T))
+
+proc isCDO*(obj : UObjectPtr) : bool = RF_ClassDefaultObject in obj.getFlags()
+
+#it will call super until UObject is reached
+iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr = 
+    var super = cls
+    let uObjCls = staticClass[UObject]()
+    while super != uObjCls:
+        super = super.getSuperClass()
+        yield super
+
+proc doesImplementInterface(cls: UClassPtr, inf: UClassPtr): bool =
+  for i in cls.interfaces:
+    if i.class == inf:
+      return true
+
+  for c in cls.getClassHierarchy:
+    if doesImplementInterface(c, inf):
+      return true
 
 proc castField*[T : FField ](src:FFieldPtr) : ptr T {. importcpp:"CastField<'*0>(#)" .}
-proc ueCast*[T:UObject](src:UObjectPtr) : ptr T {. importcpp:"Cast<'*0>(#)" .}
+proc ueCastInner[T:UObject](src:UObjectPtr) : ptr T {. importcpp:"Cast<'*0>(#)" .}
+
+proc ueCast*[T:UObject](src:UObjectPtr) : ptr T =
+  when T is UInterface:
+    if doesImplementInterface(src.getClass(), T.staticClass):
+      cast[ptr T](src)
+    else:
+      nil
+  else:
+    ueCastInner[T](src)
+
 proc ueCast*(src: UObjectPtr, T: typedesc): ptr T = ueCast[T](src)
 proc ueCastChecked*[T:UObject](src:UObjectPtr) : ptr T {. importcpp:"CastChecked<'*0>(#)" .}
 proc ueCastChecked*(src: UObjectPtr, T: typedesc): ptr T = ueCastChecked[T](src)
@@ -314,7 +377,6 @@ proc getPrefixCpp*(str:UFieldPtr | UStructPtr) : FString {.importcpp:"FString(#-
 
 #UOBJECT
 proc getFName*(obj:UObjectPtr|FFieldPtr) : FName {. importcpp: "#->GetFName()" .}
-proc getFlags*(obj:UObjectPtr|FFieldPtr) : EObjectFlags {. importcpp: "#->GetFlags()" .}
 proc setFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->SetFlags(#)" .}
 proc clearFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->ClearFlags(#)" .}
 
@@ -377,7 +439,6 @@ proc addFunctionToFunctionMap*(cls : UClassPtr, fn : UFunctionPtr, name:FName) :
 proc removeFunctionFromFunctionMap*(cls : UClassPtr, fn : UFunctionPtr) : void {. importcpp: "#.RemoveFunctionFromFunctionMap(@)"}
 proc getDefaultObject*(cls:UClassPtr) : UObjectPtr {. importcpp:"#->GetDefaultObject()", ureflect .}
 proc getCDO*[T: UObject](): ptr T = ueCast[T](T.staticClass.getDefaultObject())
-proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()" .}
 proc assembleReferenceTokenStream*(cls:UClassPtr, bForce = false) : void {. importcpp:"#->AssembleReferenceTokenStream(@)" .}
 
 #ScriptStruct
@@ -461,39 +522,6 @@ iterator items*(ustr: UStructPtr): FFieldPtr =
 
 
 
-#CONSTRUCTOR HELPERS
-proc getUTypeByName*[T :UObject](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
-proc tryGetUTypeByName*[T :UObject](typeName:FString) : Option[ptr T] = someNil getUTypeByName[T](typeName)
-proc getClassByName*(className:FString) : UClassPtr {.exportcpp, ureflect.} = getUTypeByName[UClass](className)
-proc getScriptStructByName*(strName:FString) : UScriptStructPtr {.exportcpp, ureflect.} = getUTypeByName[UScriptStruct](strName)
-
-proc staticClass*[T:UObject]() : UClassPtr = #TODO we should autogen a function and call it instead of searching
-    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
-    getClassByName(className) #TODO stop doing this and use fname instead
-    
-proc staticClass*(T:typedesc) : UClassPtr = staticClass[T]()
-proc staticStruct*[T]() : UScriptStructPtr = 
-    let structName : FString = typeof(T).name.substr(1) 
-    getScriptStructByName(structName) 
-
-proc Class*[T : typedesc](t:T): UClassPtr = staticClass[t]()
-
-proc staticStruct*(T:typedesc) : UScriptStructPtr = staticStruct[T]()
-proc scriptStruct*[T : typedesc](t:T) : UScriptStructPtr = staticStruct[t]()
-
-
-proc isChildOf*(str:UStructPtr, someBase:UStructPtr) : bool {.importcpp:"#->IsChildOf(@)".}
-
-
-proc isChildOf*[T:UObject](cls: UClassPtr) : bool =
-    let someBase = staticClass[T]()
-    isChildOf(cls, someBase)
-
-proc isChildOf*[C:UStruct, P:UStruct] : bool = isChildOf(staticClass[C](), staticClass[P]())
-
-proc isA*[T:UObject](obj:UObjectPtr) : bool = obj.isA(staticClass(T))
-   
-proc isCDO*(obj : UObjectPtr) : bool = RF_ClassDefaultObject in obj.getFlags()
 # Iterators
 iterator UObjects*() : UObjectPtr =
   var objIter = makeFRawObjectIterator()
