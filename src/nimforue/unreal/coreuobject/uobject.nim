@@ -183,8 +183,8 @@ proc getSuperClass*(cls:UClassPtr) : UClassPtr {. importcpp:"#->GetSuperClass()"
 #CONSTRUCTOR HELPERS
 proc getUTypeByName*[T :UObject](typeName:FString) : ptr T {.importcpp:"UReflectionHelpers::GetUTypeByName<'*0>(@)".}
 proc tryGetUTypeByName*[T :UObject](typeName:FString) : Option[ptr T] = someNil getUTypeByName[T](typeName)
-proc getClassByName*(className:FString) : UClassPtr {.exportcpp, ureflect.} = getUTypeByName[UClass](className)
-proc getScriptStructByName*(strName:FString) : UScriptStructPtr {.exportcpp, ureflect.} = getUTypeByName[UScriptStruct](strName)
+proc getClassByName*(className:FString) : UClassPtr {. ureflect.} = getUTypeByName[UClass](className)
+proc getScriptStructByName*(strName:FString) : UScriptStructPtr {. ureflect.} = getUTypeByName[UScriptStruct](strName)
 
 proc staticClass*[T:UObject]() : UClassPtr = #TODO we should autogen a function and call it instead of searching
     let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
@@ -419,7 +419,7 @@ const fnPrefixes = @["", "Receive", "K2_", "BP_"]
 #the nim name in unreal on the emit, when the actual name is not set already.
 #it is also taking into consideration when converting from ue to nim via UClass->UEType
 # this is similar to the one in uemeta without the Option
-func getFunctionByNameWithPrefixes*(cls: UClassPtr, name: FString): UFunctionPtr {.exportcpp, ureflect.} =
+func getFunctionByNameWithPrefixes*(cls: UClassPtr, name: FString): UFunctionPtr {. ureflect.} =
   if cls.isNil():
     return nil
   for name in [name, name.capitalizeAscii()]:
