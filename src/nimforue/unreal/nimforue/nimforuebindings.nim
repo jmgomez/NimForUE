@@ -506,7 +506,7 @@ proc repr*(obj:UObjectPtr) : string =
     for p in props:
         #Only UObjects vals for now:
         
-        if p.isA[:FObjectPtrProperty]():
+        if p.isA[:FObjectProperty]():
             let valPtr = someNil getPropertyValuePtr[UObjectPtr](p, obj)
             let val = valPtr.map(p=>tryUECast[UObject](p[])).flatten()
             if val.isSome():

@@ -817,14 +817,14 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
     initComponents(initializer, actor, parentCls)
 
   # #Check defaults
-  for objProp in getAllPropsWithMetaData[FObjectPtrProperty](actorCls, DefaultComponentMetadataKey):
+  for objProp in getAllPropsWithMetaData[FObjectProperty](actorCls, DefaultComponentMetadataKey):
       # log &"Default component {objProp.getName()} of {objProp.getPropertyClass().getName()}"
       let compCls = objProp.getPropertyClass()
       var defaultComp = ueCast[UActorComponent](initializer.createDefaultSubobject(actor, objProp.getName().firstToUpper().makeFName(), compCls, compCls, true, false))
       setPropertyValuePtr[UActorComponentPtr](objProp, actor, defaultComp.addr)
       
   #Root component
-  for objProp in actorCls.getAllPropsWithMetaData[:FObjectPtrProperty](RootComponentMetadataKey):
+  for objProp in actorCls.getAllPropsWithMetaData[:FObjectProperty](RootComponentMetadataKey):
       let comp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](objProp, actor)[])
       if comp.isNotNil():
         let prevRoot = actor.getRootComponent()
@@ -832,7 +832,7 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
         if prevRoot.isNotNil():
           prevRoot.setupAttachment(comp)
   #Handles attachments
-  for objProp in actorCls.getAllPropsOf[:FObjectPtrProperty]():
+  for objProp in actorCls.getAllPropsOf[:FObjectProperty]():
         let comp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](objProp, actor)[])
         # UE_Log &"Comp: {comp} {objProp}"
         if comp.isNotNil():

@@ -305,7 +305,7 @@ bindFProperty([
         "FInt8Property", "FInt16Property","FIntProperty", "FInt64Property",
         "FByteProperty", "FUInt16Property","FUInt32Property", "FUInt64Property",
         "FStrProperty", "FFloatProperty", "FDoubleProperty", "FNameProperty",
-        "FArrayProperty", "FStructProperty", "FObjectProperty", "FObjectPtrProperty", "FClassProperty",
+        "FArrayProperty", "FStructProperty", "FObjectProperty", "FClassProperty",
         "FSoftObjectProperty", "FSoftClassProperty", "FEnumProperty", 
         "FMapProperty", "FDelegateProperty", "FSetProperty", "FInterfaceProperty",
         "FMulticastDelegateProperty", #It seems to be abstract. Review Sparse vs Inline
@@ -314,16 +314,21 @@ bindFProperty([
 
 
 #TypeClass
+type TPropertyWithSetterAndGetterNim*[T] {.importcpp.} = object
+
 type DelegateProp* = FDelegatePropertyPtr | FMulticastInlineDelegatePropertyPtr | FMulticastDelegatePropertyPtr
 proc containerPtrToValuePtr*(prop:FPropertyPtr, container: pointer) : pointer {. importcpp: "(#->ContainerPtrToValuePtr<void>(@))".}
 
 proc hasSetter*(prop: FPropertyPtr): bool {.importcpp:"#->HasSetter()".}
 proc setSetter*(prop: FPropertyPtr, setterFunc: SetterFuncPtr) {.importcpp:"((TPropertyWithSetterAndGetterNim<FProperty>*)#)->SetSetterFunc(#)".}
+proc testSetter*(prop: FPropertyPtr): ptr TPropertyWithSetterAndGetterNim[FProperty] {.importcpp:"((TPropertyWithSetterAndGetterNim<FProperty>*)#)".}
+
+proc testSetSetter*(prop: ptr TPropertyWithSetterAndGetterNim[FProperty], setterFunc: SetterFuncPtr){.importcpp:"#->SetSetterFunc(#)".}
 #Concrete methods
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
 proc getScriptStruct*(prop:FStructPropertyPtr) : UScriptStructPtr {. importcpp: "(#->Struct)".}
-proc setPropertyClass*(prop:FObjectPtrPropertyPtr | FObjectPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
-proc getPropertyClass*(prop:FObjectPtrPropertyPtr | FObjectPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr) : UClassPtr {. importcpp: "(#->PropertyClass)".}
+proc setPropertyClass*(prop: FObjectPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->PropertyClass=#)".}
+proc getPropertyClass*(prop: FObjectPropertyPtr | FSoftObjectPropertyPtr | FClassPropertyPtr) : UClassPtr {. importcpp: "(#->PropertyClass)".}
 # proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "(#->MetaClass=#)".}
 proc setPropertyMetaClass*(prop:FClassPropertyPtr | FSoftClassPropertyPtr, propClass:UClassPtr) : void {. importcpp: "#->SetMetaClass(#)".}
 proc setEnum*(prop:FEnumPropertyPtr, uenum:UEnumPtr) : void {. importcpp: "(#->SetEnum(#))".}
@@ -461,7 +466,7 @@ func getCapabilities*(ops:ICppStructOpsPtr): FCapabilities {. importcpp:"#->GetC
 proc get*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 proc getValid*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"GetValid(#)".}
 converter toUObjectPtr*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
-converter fromObjectPtr*[T : UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
+converter fromObjectPtr*[T: UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
 
 type ERenameFlag* = distinct uint32
 const REN_None* = ERenameFlag(0x0000)

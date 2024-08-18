@@ -10,7 +10,6 @@ let config = getNimForUEConfig()
 const nimBin {.strdefine.} = ""
 
 let nimCmd = if nimBin != "": nimBin else: "nim"
-log "Using nim at " & nimCmd
 # let nimCmd = "nim_temp" #so we can easy switch with nim_temp
 
 #In mac we need to do a universal 
@@ -335,7 +334,7 @@ proc compileGenerateBindings*() =
   let withDebug = true #TODO disable on final builds
   let buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
   # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  doAssert(execCmd(&"nim  cpp {buildFlags} -d:bindings --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} -d:bindings --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   let uegenbindingsHeader = "./.nimcache/gencppbindings/UEGenBindings.h"
   copyFile(uegenbindingsHeader, ueGenBindingsPath)  

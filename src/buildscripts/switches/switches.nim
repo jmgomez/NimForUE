@@ -51,8 +51,7 @@ let buildSwitches* = @[
   "-d:genFilePath:" & quotes(GenFilePath),
   "-d:pluginDir:" & quotes(PluginDir),
   "-d:withEditor:" & $WithEditor,
-  "--cincludes:" & quotes(PluginDir / "NimHeaders")
-  
+  "--cincludes:" & quotes(PluginDir / "NimHeaders"),
   
 ]
 

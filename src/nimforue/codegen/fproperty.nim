@@ -65,7 +65,7 @@ func newUStructBasedFProperty(owner : FFieldVariant, propField:UEField, propType
         clsProp
     of emObjPtr, emTObjectPtr:
         let isComponent = isChildOf[UActorComponent](cls)
-        let objProp = newFObjectPtrProperty(owner, name, flags)
+        let objProp = newFObjectProperty(owner, name, flags)
         objProp.setPropertyClass(cls)
         if isComponent: #regular uobject instanced are set at the dsl level on ueemit
             objProp.setPropertyFlags(CPF_InstancedReference or CPF_NativeAccessSpecifierPublic or CPF_ExportObject)
