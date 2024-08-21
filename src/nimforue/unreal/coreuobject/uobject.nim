@@ -312,7 +312,6 @@ bindFProperty([
         "FMulticastInlineDelegateProperty", "FFieldPathProperty", "FTextProperty"
         ])
 
-
 #TypeClass
 type TPropertyWithSetterAndGetterNim*[T] {.importcpp.} = object
 
@@ -321,9 +320,10 @@ proc containerPtrToValuePtr*(prop:FPropertyPtr, container: pointer) : pointer {.
 
 proc hasSetter*(prop: FPropertyPtr): bool {.importcpp:"#->HasSetter()".}
 proc setSetter*(prop: FPropertyPtr, setterFunc: SetterFuncPtr) {.importcpp:"((TPropertyWithSetterAndGetterNim<FProperty>*)#)->SetSetterFunc(#)".}
-proc testSetter*(prop: FPropertyPtr): ptr TPropertyWithSetterAndGetterNim[FProperty] {.importcpp:"((TPropertyWithSetterAndGetterNim<FProperty>*)#)".}
+proc getAsTProp*(prop: FPropertyPtr): ptr TPropertyWithSetterAndGetterNim[FProperty] {.importcpp:"((TPropertyWithSetterAndGetterNim<FProperty>*)#)".}
 
 proc testSetSetter*(prop: ptr TPropertyWithSetterAndGetterNim[FProperty], setterFunc: SetterFuncPtr){.importcpp:"#->SetSetterFunc(#)".}
+proc sayHello*(prop: ptr TPropertyWithSetterAndGetterNim[FProperty]) {.importcpp:"#->SayHello()".}
 #Concrete methods
 proc setScriptStruct*(prop:FStructPropertyPtr, scriptStruct:UScriptStructPtr) : void {. importcpp: "(#->Struct=#)".}
 proc getScriptStruct*(prop:FStructPropertyPtr) : UScriptStructPtr {. importcpp: "(#->Struct)".}
