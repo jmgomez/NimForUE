@@ -19,14 +19,18 @@ import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 #   quit("Platform not supported")  
 import winswitches, macswitches, androidswitches
 
-let config = getNimForUEConfig()
 const withPCH* = true 
 #TODO Only PCH works in windows. 
 #Regular builds need to be fixed
 #but since we are using unreal PCH it shouldnt be a big deal
 
-let ueincludes* = getUEHeadersIncludePaths(config).map(headerPath => "-t:-I" & escape(quotes(headerPath)))
-let uesymbols* = getUESymbols(config).map(symbolPath => "-l:" & escape(quotes(symbolPath)))
+proc ueincludes*(): seq[string] = 
+  let config = getNimForUEConfig()
+  getUEHeadersIncludePaths(config).map(headerPath => "-t:-I" & escape(quotes(headerPath)))
+
+proc uesymbols*(): seq[string] = 
+  let config = getNimForUEConfig()
+  getUESymbols(config).map(symbolPath => "-l:" & escape(quotes(symbolPath)))
 
 let buildSwitches* = @[
   "--outdir:./Binaries/nim/",
@@ -57,6 +61,7 @@ let buildSwitches* = @[
 
 #Probably this needs to be platform specific as well
 proc targetSwitches*(withDebug: bool, target:string): seq[string] =
+  let config = getNimForUEConfig()
   result = 
     case config.targetConfiguration:
     of Debug, Development:

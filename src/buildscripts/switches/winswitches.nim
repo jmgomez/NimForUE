@@ -3,9 +3,7 @@ import std / [ options, strscans, algorithm, os, osproc, parseopt, sequtils, str
 import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 
 
-let config = getNimForUEConfig()
 let unrealFolder = if WithEditor: "UnrealEditor" else: "UnrealGame"
-let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir() / unrealFolder / $config.targetConfiguration
 
 func getModuleName(target:string) : string = 
   # if target == "bindings": "NimForUEBindings"
@@ -14,10 +12,14 @@ func getModuleName(target:string) : string =
 
 proc pchObjPath(target:string) : string = 
   let module = getModuleName(target)
+  let config = getNimForUEConfig()
+  let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir() / unrealFolder / $config.targetConfiguration
   pchDir / module / &"PCH.{module}.h.obj"
 
 
 proc pchCompileFlags(target:string) : seq[string] = 
+  let config = getNimForUEConfig()
+  let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir() / unrealFolder / $config.targetConfiguration
   let module = getModuleName(target)
   @[
     &"/FI" & escape(quotes(pchDir / module / &"PCH.{module}.h")),
