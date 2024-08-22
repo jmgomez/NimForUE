@@ -408,7 +408,8 @@ task targetconfig, "switch the targetConfiguration and rebuild (options are --de
     quit()
 
   if otc.isNone():
-    log "A valid targetConfiguration was not specified, use --dev for Development, --debug for Debug, or --shipping for Shipping.", lgError
+    log &"Current targetConfiguration: {config.targetConfiguration}"
+    log "\tTo switch use --dev for Development, --debug for Debug, or --shipping for Shipping to update.", lgWarning
     quit()
 
   let tc = otc.get()
