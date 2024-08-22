@@ -376,8 +376,17 @@ task addnueplugin, "add NimForUE plugin to project":
 task starteditor, "opens the editor":
   ubuild(taskOptions)
   when defined windows:
-    let command = quotes("&" & squotes(GamePath(withQuotes=false))) # handles powershell command with spaces "&'C:\path\to\project with spaces.uproject'
-    discard execCmd(&"powershell.exe {command}")
+    let cmd = case config.targetConfiguration:
+    of Development:
+      &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor.exe {squotes(GamePath(withQuotes=false))}" 
+    of Debug:
+      &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor-Win64-{config.targetConfiguration}.exe {squotes(GamePath(withQuotes=false))}" 
+    else:
+      log &"{config.targetConfiguration} not supported"
+      quit()
+      ""
+    log &"{cmd}"
+    discard execCmd(&"powershell.exe {cmd}")
   else:
     discard execCmd("open " & GamePath())
 
