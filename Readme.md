@@ -208,6 +208,11 @@ When setting up a project:
 Compile your game with the debug flag, `nue game --debug`.
 Then you can debug the game with nim source maps in Visual Studio. 
 
+To switch the project's target configuration use the `targetconfig` task.
+
+To debug the engine along with your project, use `nue targetconfig --debug` and `nue targetconfig --dev` to switch back to Development. 
+This will modify the NimForUE json config file and recompile the plugin and game dll.
+
 ## Troubleshooting
 
 ### Windows

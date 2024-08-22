@@ -176,18 +176,20 @@ func getConfigFileName(): string =
   when defined windows:
     return "NimForUE.win.json"
 
+func getConfigPath*(): string =
+  return PluginDir / getConfigFileName()
+
 #when saving outside of nim set the path to the project
 proc saveConfig*(config:NimForUEConfig) =
-  let ueConfigPath = PluginDir / getConfigFileName()
   var json = toJson(config)
-  writeFile(ueConfigPath, json.pretty())
+  writeFile(getConfigPath(), json.pretty())
 
 proc createConfigFromDirs(engineDir, gameDir:string) : NimForUEConfig = 
   let defaultPlatform = when defined(windows): Win64 else: Mac
   NimForUEConfig(engineDir: engineDir, gameDir: gameDir, withEditor:true, targetConfiguration: Development, targetPlatform: defaultPlatform)
 
 proc getOrCreateNUEConfig*() : NimForUEConfig = 
-  let ueConfigPath = PluginDir / getConfigFileName()
+  let ueConfigPath = getConfigPath()
   if fileExists ueConfigPath:
     let json = readFile(ueConfigPath).parseJson()
     return json.to(NimForUEConfig)

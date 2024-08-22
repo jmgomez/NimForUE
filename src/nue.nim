@@ -97,6 +97,8 @@ task guest, "Builds the main lib. The one that makes sense to hot reload.":
     extraSwitches.add "--linedir:off"
   
   let debug = "debug" in taskOptions
+  if debug:
+    log "Compiling with Debug"
 
   compilePlugin(extraSwitches, debug)
 
@@ -122,8 +124,9 @@ task cleanh, "Clean the .nimcache/host folder":
 
 task cleanlibs, "Clean the .nimcache for plugin, game and libs":
   removeDir(".nimcache/guest")
+  #log getAllGameLibs().repr
   getAllGameLibs()
-    .forEach((dir:string)=>removeDir(dir))
+    .forEach((dir:string)=>removeDir(".nimcache"/dir))
 
 
 when defined windows:
@@ -238,6 +241,8 @@ task lib, "Builds a game lib":
   if "name" in taskOptions:
     let name = taskOptions["name"]
     log "Compiling lib " & name & "..."
+    if debug:
+      log "\twith debug"
     assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"         
     let platformTarget = getPlatformTargetFromOptions(taskOptions)
     compileLib(taskOptions["name"], extraSwitches, debug, release, threads, platformTarget)
@@ -299,9 +304,10 @@ task cleanbindingheader, "Process the UEGenBindings  file":
 task gencppbindings, "Generates the codegen and cpp bindings":
   if "only" notin taskOptions:
     codegen(taskOptions)
+  log "compiling generated bindings"
   compileGenerateBindings()
   cleanbindingheader(taskOptions)
-  ubuild(taskOptions)        
+  ubuild(taskOptions)
 
 
 
@@ -376,10 +382,45 @@ task addnueplugin, "add NimForUE plugin to project":
 task starteditor, "opens the editor":
   ubuild(taskOptions)
   when defined windows:
-    let command = quotes("&" & squotes(GamePath(withQuotes=false))) # handles powershell command with spaces "&'C:\path\to\project with spaces.uproject'
-    discard execCmd(&"powershell.exe {command}")
+    let cmd = case config.targetConfiguration:
+    of Development:
+      &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor.exe {squotes(GamePath(withQuotes=false))}" 
+    of Debug:
+      &"{config.engineDir}\\Binaries\\Win64\\UnrealEditor-Win64-{config.targetConfiguration}.exe {squotes(GamePath(withQuotes=false))}" 
+    else:
+      log &"{config.targetConfiguration} not supported"
+      quit()
+      ""
+    log &"{cmd}"
+    discard execCmd(&"powershell.exe {cmd}")
   else:
     discard execCmd("open " & GamePath())
+
+task targetconfig, "switch the targetConfiguration and rebuild (options are --dev, --debug, --shipping)":
+  var otc = none[TargetConfiguration]()
+  if "dev" in taskOptions or "development" in taskOptions: 
+    otc = some(Development)
+  elif "debug" in taskOptions:
+    otc = some(Debug)
+  elif "shipping" in taskOptions:
+    otc = some(Shipping)
+    log "TODO Need to test this path! quitting for now", lgError
+    quit()
+
+  if otc.isNone():
+    log "A valid targetConfiguration was not specified, use --dev for Development, --debug for Debug, or --shipping for Shipping.", lgError
+    quit()
+
+  let tc = otc.get()
+  log &"Updating targetConfiguration {tc}\n\tin {getConfigPath()}", lgWarning
+
+  var c = getOrCreateNUEConfig()
+  c.targetConfiguration = tc
+  c.saveConfig()
+
+  taskOptions["only"] = ""
+  gencppbindings(taskOptions)
+  rebuildLibs(taskOptions) # pass --debug to rebuild
 
 
 task showincludes, "Traverses UEDeps.h gathering includes and shows then in the script":

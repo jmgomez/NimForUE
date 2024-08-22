@@ -6,7 +6,6 @@ import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 import ../switches/switches
 import nimforue/utils/utils
 
-let config = getNimForUEConfig()
 const nimBin {.strdefine.} = ""
 
 let nimCmd = if nimBin != "": nimBin else: "nim"
@@ -14,6 +13,7 @@ let nimCmd = if nimBin != "": nimBin else: "nim"
 
 #In mac we need to do a universal 
 proc compileHostMac*() =
+  let config = getNimForUEConfig()
   generateFFIGenFile(config)
   
   let common = @[
@@ -67,6 +67,7 @@ proc compileHostMac*() =
 
 
 proc compileHost*() = 
+  let config = getNimForUEConfig()
   generateFFIGenFile(config)
 
   let hostSwitches = @[
@@ -116,7 +117,7 @@ proc compileHost*() =
 
 
 proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
-  
+  let config = getNimForUEConfig()
   generateFFIGenFile(config)
   let guestSwitches = @[
     "-d:BindingPrefix=.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
@@ -126,7 +127,7 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
   ]
   let platformTarget = getPlatformTarget("") #Guest is only whithEditor 
   let nimcacheDir = getBaseNimCacheDir("guest", platformTarget)
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "guest"), ueincludes, uesymbols, pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "guest"), ueincludes(), uesymbols(), pluginPlatformSwitches(withDebug), extraSwitches, guestSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"{nimCmd} cpp {buildFlags} --app:lib --d:genffi -d:withPCH --nimcache:{nimcacheDir} src/nimforue.nim"
   doAssert(execCmd(compCmd)==0)
   
@@ -206,6 +207,7 @@ proc getBindingsLib(): string =
     "Binaries/nim/libbindings.a"
 
 proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:bool, withThreads = false, platformTarget: PlatformTargetKind) = 
+  let config = getNimForUEConfig()
   var extraSwitches = extraSwitches
   let isVm = "vm" in name
   var gameSwitches = @[
@@ -235,7 +237,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
   let entryPoint = quotes(NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim"))
   let releaseFlag = if withRelease: "-d:danger" else: ""
   let threadFlag = if withThreads: "--threads:on" else: "" #off by default (switches)
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes, uesymbols, gamePlatformSwitches(withDebug, platformTarget), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes(), uesymbols(), gamePlatformSwitches(withDebug, platformTarget), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"{nimCmd} cpp {buildFlags} {releaseFlag} {threadFlag}  --nimMainPrefix:{name.capitalizeAscii()}  -d:withPCH --nimcache:{nimCache} {entryPoint}"
   #echo compCmd
   doAssert(execCmd(compCmd)==0)
@@ -245,6 +247,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
     copyNimForUELibToUEDir(name)
 
 proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool, platformTarget: PlatformTargetKind) = 
+  let config = getNimForUEConfig()
   let gameSwitches = @[
     "-d:game",
     &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
@@ -269,7 +272,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool, platformT
   let gameFolder = NimGameDir()
   let nimCache = ".nimcache/nimforuegame"/(if withDebug: "debug" else: "release")
 
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes, uesymbols, gamePlatformSwitches(withDebug, platformTarget), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "game"), ueincludes(), uesymbols(), gamePlatformSwitches(withDebug, platformTarget), gameSwitches, extraSwitches].foldl(a & " " & b.join(" "), "")
   let compCmd = &"nim cpp {buildFlags} --genScript --nimMainPrefix:Game   -d:withPCH --nimcache:{nimCache} {entryPointDir}/gameentrypoint.nim"
   doAssert(execCmd(compCmd)==0)
   #Copy the header into the NimHeaders
@@ -331,9 +334,11 @@ proc copyNewCppTo(srcFolder, dstFolder: string, pattern = "*.cpp") =
     log &"No files copied from {srcFolder} to {dstFolder} as is up to date"
 
 proc compileGenerateBindings*() = 
+  let config = getNimForUEConfig()
   let withDebug = true #TODO disable on final builds
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withDebug), ueincludes, uesymbols].foldl(a & " " & b.join(" "), "")
+  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withDebug), ueincludes(), uesymbols()].foldl(a & " " & b.join(" "), "")
   # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
+  #log &"{nimCmd}  cpp {buildFlags} -d:bindings --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim"
   doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} -d:bindings --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
   let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
   let uegenbindingsHeader = "./.nimcache/gencppbindings/UEGenBindings.h"
