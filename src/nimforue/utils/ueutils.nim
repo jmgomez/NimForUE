@@ -6,7 +6,7 @@ else:
     import ../unreal/core/math/vector
 
 import ../codegen/models
-import std/[options, strutils, tables, sugar, strscans]
+import std/[options, strutils, tables, sugar, strscans, strformat]
 import utils
 
 const DelegateFuncSuffix* = "__DelegateSignature"
@@ -89,6 +89,27 @@ func makeFLinearColor*(colorStr:string) : FLinearColor =
     var r, g, b, a : float
     if scanf(colorStr, "(R=$f,G=$f,B=$f,A=$f)", r, g, b, a): FLinearColor(r:r, g:g, b:b, a:a)
     else: FLinearColor(r:0.0, g:0.0, b:0.0, a:0.0)
+import macros
+
+func `$`(node: NimNode): string = 
+  case node.kind
+  of nnkStrLit: node.strVal
+  of nnkIntLit: $node.intVal
+  of nnkFloatLit: $node.floatVal
+  else: 
+    error "Unsupported node kind: " & $node.kind
+    ""
+
+func makeFLinearColorStr*(n: NimNode): string = 
+    assert n.kind == nnkObjConstr
+    var value = {"r": "0", "g": "0", "b": "0", "a": "0"}.toTable() #default values
+
+    for i in 1..<n.len:
+      let field = n[i][0].strVal
+      let v = $n[i][1] 
+      value[field] = v
+    &"""(R={value["r"]},G={value["g"]},B={value["b"]},A={value["a"]})"""
+
 #FVector2D (X=1.000,Y=1.000)
 func makeFVector2D*(vecStr:string) : FVector2D = 
     var x, y : float

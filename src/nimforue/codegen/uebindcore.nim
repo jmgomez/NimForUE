@@ -204,10 +204,17 @@ func makeUEFieldFromNimParamNode*(typeName: string, n:NimNode) : seq[UEField] =
       of nnkIdent:
         let typ = n[1].strVal
         if typ == "bool": n[^1].strVal.capitalizeAscii()
-        #TODO FStructs here. The support will be limited though 
         else:          
             error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
             ""
+      of nnkObjConstr:
+        let typ = n[1].strVal
+        #For now we only support linear color. This will be extended in a needed basis
+        if typ == "FLinearColor":
+          makeFLinearColorStr(n[^1])
+        else:
+          error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
+          ""
       else:
         safe:
           error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "

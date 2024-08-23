@@ -668,4 +668,3 @@ macro ueBindProp*(cls:typedesc, propName:untyped, typ:typedesc) =
    result = genProp(ueType, ueProp, uexDsl)
   else:
     result = genCppStructField(typeName, ueProp)    
-  echo repr result

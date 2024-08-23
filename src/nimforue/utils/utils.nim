@@ -101,9 +101,9 @@ func remove*[T](xs:var seq[T], x: T) =
 
 func mapi*[T, U](xs: seq[T], fn: (T, int)->U): seq[U] =
   {.cast(noSideEffect).}:
-    var toReturn: seq[U] = @[] #Todo how to reserve memory upfront to avoid reallocations?
+    var toReturn: seq[U] = newSeq[U](xs.len)
     for i, x in xs:
-      toReturn.add(fn(x, i))
+      toReturn[i] = (fn(x, i))
     toReturn
 
 func skip*[T](xs: seq[T], n: int): seq[T] =
