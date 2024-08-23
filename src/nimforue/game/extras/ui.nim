@@ -5,6 +5,7 @@
 include unrealprelude
 import umg/[umg, blueprint, components, enums]
 import slatecore
+import codegen/uebind
 export umg, blueprint, components, enums
 export slatecore
 
@@ -59,7 +60,8 @@ proc `accessibleBehavior=`*(obj : UWidgetPtr;
       "AccessibleBehavior")
   setPropertyValuePtr[ESlateAccessibleBehavior](prop, obj, value.addr)
 
-
+ueBindProp(FSlateBrush, TintColor, FSlateColor)
+proc makeSlateColor*(color: FLinearColor): FSlateColor {.constructor, importcpp.}
 
 proc setViewportOverlayWidget*(gameViewportClient: UGameViewportClientPtr, overlayWidget: TSharedRef[SOverlay]) {.importcpp: "#->SetViewportOverlayWidget(nullptr, #)".}
 

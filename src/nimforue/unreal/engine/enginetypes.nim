@@ -464,9 +464,9 @@ type
     # resourceName*: FName
     # resourceObject*: TObjectPtr[UObject]
     # outlineSettings*: FSlateBrushOutlineSettings
-    # tintColor*: FSlateColor
+    # tintColor*{.importcpp:"TintColor".}: FSlateColor
     # margin*: FMargin
-    ImageSize*: FVector2D
+    imageSize*{.importcpp:"ImageSize"}: FVector2D
   # FMovieSceneSequenceID* {.importcpp.} = object
   # FTextBlockStyle* {.importcpp.} = object
   UGameplayTask* {.importcpp, inheritable, pure .} = object of UObject #Needed because of force moving it to common.
