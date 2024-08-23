@@ -247,25 +247,19 @@ proc genGetLifetimeReplicatedProps(ueType: UEType): NimNode =
 
 proc genFieldNotifySetterAssignment(field: UEField): NimNode = 
   let setterName = ident field.name & "Setter"
-  genAst(propName = newLit field.name, setterName, propType = ident field.uePropType):
+  genAst(propName = newLit field.name, setterName, propType = getTypeNodeFromUProp(field, false)):
     let prop = self.getClass.getFPropertyByName(propName)
     when not propType is UObjectPtr: #UObjectPtr setters has issues
       prop.setSetter(setterName)
 
-    # setSetter(prop, setterName)
-
-
 proc generateFieldNotifySetter(uet: UEType, field: UEField): NimNode = 
   let clsType = ident uet.name & "Ptr"
   let setterName = ident field.name & "Setter"
-  genAst(clsType, propName = ident field.name, propType = ident field.uePropType, setterName):
+  genAst(clsType, propName = ident field.name, propType = getTypeNodeFromUProp(field, false), setterName):
     proc setterName(container{.inject.}: pointer, value{.inject.}: pointer) {.cdecl, codegenDecl: "$1 $2 (void* container_p0, const void* value_p1)".} = 
-      let obj = cast[clsType](container)
-      when propType is ptr: 
-        let val = cast[ptr propType](value)
-      else:
-        let val = cast[ptr propType](value)
-        obj.propName = val[]
+      let obj = cast[clsType](container)      
+      let val = cast[ptr propType](value)
+      obj.propName = val[]
 
 type UClassNode = object
   className: string
