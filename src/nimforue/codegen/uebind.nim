@@ -645,9 +645,27 @@ proc ueBindImpl(clsName : string, fn: NimNode) : NimNode =
 macro uebind*(fn:untyped) : untyped = ueBindImpl("", fn)
 macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBindImpl(clsName, fn)
 
+func genCppStructField(typeName: string, field:UEField): NimNode = 
+  #Notice this only work for PCH types as it uses the name. 
+  let typNode = ident typeName
+  let propNameNode = ident field.name.toLower()
+  let propTypeNode = field.getTypeNodeFromUProp(isVarContext=false) #It may be a var context, but we are not using it for now
+  let importcppSet = newLit(&"(#.{field.name})")
+  genAst(propNameNode, propTypeNode, typNode, importcppSet):
+    proc `propNameNode`*(self: typNode): propTypeNode {.importcpp:"(#.#)".}
+    proc `propNameNode=`*(self: typNode, val: propTypeNode) {.importcpp: importcppSet.}
+
 macro ueBindProp*(cls:typedesc, propName:untyped, typ:typedesc) = 
   ### example usage: ueBindProp(UInstancedStaticMeshComponent, PerInstanceSMCustomData, TArray[float32])
-
-  let ueType = UEType(name: cls.strVal().removeLastLettersIfPtr(), kind: uetClass) #notice it only binds uclasses. Struct cant be bound like this
+  ### Note for now, FStruct types must be PCH types (we will take care of this later, but for now, it's a limitation). 
+  #We shoudlnt encounter it as types fields are bound already anyways. 
+  #Same with most PCH types, except those manually bound
+  let typeName = cls.strVal()
+  let utk = if typeName[0] in ['A', 'U']: uetClass else: uetStruct
+  let ueType = UEType(name: typeName.removeLastLettersIfPtr(), kind: utk)
   let ueProp = UEField(name: propName.strVal(), uePropType: repr typ, kind: uefProp)
-  result = genProp(ueType, ueProp, uexDsl)
+  if utk == uetClass:
+   result = genProp(ueType, ueProp, uexDsl)
+  else:
+    result = genCppStructField(typeName, ueProp)    
+  echo repr result
