@@ -210,13 +210,13 @@ func makeUEFieldFromNimParamNode*(typeName: string, n:NimNode) : seq[UEField] =
       of nnkObjConstr:
         let typ = n[1].strVal
         #For now we only support linear color. This will be extended in a needed basis
-        if typ == "FLinearColor":
-          makeFLinearColorStr(n[^1])
-        else:
-          error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
-          ""
+        # if typ == "FLinearColor":
+        makeFStructStr(n[^1])
+        # else:
+        #   error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
+          
       else:
-        safe:
+        safe: #TODO handle function calls
           error &"Invalid default value for param Kind is {n[^1].kind}. Tree:{ repr n }. "
         ""
     var paramMetadata = newSeq[UEMetadata]()

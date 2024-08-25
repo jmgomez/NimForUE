@@ -6,7 +6,7 @@ else:
     import ../unreal/core/math/vector
 
 import ../codegen/models
-import std/[options, strutils, tables, sugar, strscans, strformat]
+import std/[options, strutils, tables, sugar, strscans, strformat, sequtils]
 import utils
 
 const DelegateFuncSuffix* = "__DelegateSignature"
@@ -93,22 +93,59 @@ import macros
 
 func `$`(node: NimNode): string = 
   case node.kind
-  of nnkStrLit: node.strVal
+  of nnkStrLit, nnkIdent: node.strVal
   of nnkIntLit: $node.intVal
   of nnkFloatLit: $node.floatVal
   else: 
     error "Unsupported node kind: " & $node.kind
     ""
+{.experimental: "dynamicBindSym".}
 
-func makeFLinearColorStr*(n: NimNode): string = 
-    assert n.kind == nnkObjConstr
-    var value = {"r": "0", "g": "0", "b": "0", "a": "0"}.toTable() #default values
+func makeFStructStr*(n: NimNode): string =  #Not sure if this will work with Rotators and Vectors as they use another format. Same with regular FStructs. test it
+    let typeName = $n[0]
+    let T = bindSym(n[0]).getImpl()
+    let isSpecialCase = typeName in ["FVector", "FRotator"] #They are handled differently by UHT
+    debugEcho treeRepr T
+    var values = initTable[string, string]()
+    let recList = T[^1][^1]
+    for field in recList: #identDef
+      #[For now fields are asssumed to have this structure:
+        IdentDefs
+        PragmaExpr
+          Postfix
+            Ident "*"
+            Ident "a"
+          Pragma
+            ExprColonExpr
+              Ident "importcpp"
+              StrLit "A"
+]#
+        let nimName = $field[0][0][^1]
+        let cppName = $field[0][^1][^1][^1]
+        var found = false
+        for i in 1..<n.len: #This doesnt have to be O^2 be we should be fine for now
+          let field = n[i][0].strVal
+          let v = $n[i][1] 
+          if field == nimName:
+            values[cppName] = v 
+            found = true
+        if not found:
+          #assume we are dealing with numbers for now (need to find a way to get the default value from the type). Note if we could travel from sym to type a lot of this would be easier
+          values[cppName] = "0"
+        
+    if values.len == 0: return "" 
+    if isSpecialCase:
+        return values.values.toSeq.join(",")
 
-    for i in 1..<n.len:
-      let field = n[i][0].strVal
-      let v = $n[i][1] 
-      value[field] = v
-    &"""(R={value["r"]},G={value["g"]},B={value["b"]},A={value["a"]})"""
+
+    var strVals = newSeq[string]()
+    for name, val in values.pairs:
+      strVals.add &"{name}={values[name]}" 
+    result = "(" 
+    result.add strVals.join(",")
+    result.add ")"
+    # debugEcho result
+
 
 #FVector2D (X=1.000,Y=1.000)
 func makeFVector2D*(vecStr:string) : FVector2D = 
