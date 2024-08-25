@@ -351,20 +351,20 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
     let nimInnerCtor = ident &"{CtorNimInnerPrefix}{fnField.typeName}" 
     let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent, typeLiteral,assignments, initName, nimInnerCtor):
         
-        template genSelf() = 
-            var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
+        template genSelf(initializer: untyped) = 
+            var selfIdent{.inject.} = ueCast[typeIdent](initializer.getObj())
             when not declared(self): #declares self and initializer so the default compiler compiles when using the assignments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
                 var self{.inject used .} = selfIdent
         proc nimInnerCtor(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} =                     
             #it's wrapped so we can call the user constructor from the Nim child classes
             #Maybe in the future we could treat the Nim constructors as C++ constructors and forget about this special treatment (by the time this was designed Nim didnt have cpp constructors compatibility)
-            genSelf()
+            genSelf(initName)
             fnBody
             assignments
 
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
             defaultConstructorStatic[typeIdent](initName)
-            genSelf()
+            genSelf(initName)
             nimInnerCtor(initName)
             postConstructor(initName) #inits any missing comp that the user hasnt set
     
@@ -559,6 +559,7 @@ func genConstructorForClass*(uClassBody:NimNode, uet: UEType, constructorBody:Ni
   let newConstructorBody = 
     genAst(
       parentCall = ident(CtorNimInnerPrefix & uet.parent),
+      initializer = ident(initializerName),
       constructorBody
     ):
         when compiles(parentCall(initializer)):
