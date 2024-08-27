@@ -90,11 +90,17 @@ func genParamInFnBodyAsType(funField:UEField) : NimNode =
     elif s.isOutParam:
       s.propFlags = CPF_None #remove out flag before the signatureCall, cant do and for some reason. Maybe a bug?
 
+  var typeFields = funField.signatureAsNode(identWrapper, isDefaultValueContext=false)
+  # need to cast enums to uint8 because Unreal uses TEnumAsByte
+  for f in typeFields:
+    if f.kind == nnkIdentDefs and f[1].kind == nnkIdent and f[1].strVal()[0] == 'E':
+      f[1] = ident "uint8"
+
   let paramsInsideFuncDef = nnkTypeSection.newTree([nnkTypeDef.newTree([identWithInject "Params", newEmptyNode(), 
               nnkObjectTy.newTree([
                 newEmptyNode(), newEmptyNode(),  
                 nnkRecList.newTree(
-                  funField.signatureAsNode(identWrapper, isDefaultValueContext=false) &
+                  typeFields &
                   returnProp.map(prop=>
                     @[nnkIdentDefs.newTree([ident("returnValue"), 
                               getTypeNodeFromUProp(prop, isVarContext = false),
@@ -103,7 +109,6 @@ func genParamInFnBodyAsType(funField:UEField) : NimNode =
                 )])
             ])])
 
-  
   paramsInsideFuncDef
 
 func getGenFuncName(funField : UEField) : string = funField.name.firstToLow().ueNameToNimName
@@ -139,24 +144,46 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
       let fn {.inject, used.} = uobject.getFunctionByNameWithPrefixes(cls, fnName)
       self.processEvent(fn, param.addr)
 
+  # need to cast back from uint8 to the Enum type because UE uses TEnumAsByte
+  func constructOutParam(uef: UEField): NimNode =
+    let outName = ident(uef.name.firstToLow().ueNameToNimName)
+    if uef.uePropType[0] == 'E':
+      nnkAsgn.newTree( outName,
+        nnkCast.newTree(ident uef.uePropType, nnkDotExpr.newTree(ident "param", outName))
+      )
+    else:
+      nnkAsgn.newTree(outName, nnkDotExpr.newTree(ident "param", outName))
+
   let outParams = 
     nnkStmtList.newTree(
       funField.signature
         .filterIt(it.isOutParam and not it.isReturnParam)
-        .mapIt(it.name)
-        .mapIt(nnkAsgn.newTree(ident(it.firstToLow().ueNameToNimName), nnkDotExpr.newTree(ident("param"), ident(it.firstToLow().ueNameToNimName))))
+        .map(constructOutParam)
     )
 
   let returnCall = if funField.doesReturn(): 
-            genAst(): 
-              return param.returnValue
-           else: newEmptyNode()
+    let returnProp = funField.getReturnProp().get()
+    if returnProp.uePropType[0] == 'E': # need to cast back to enum from uint8 because UE uses TEnumAsByte
+      genAst(enumType = ident returnProp.uePropType): 
+        return cast[enumType](param.returnValue)
+    else:
+      genAst(): 
+        return param.returnValue
+    else: newEmptyNode()
+
   let paramInsideBodyAsType = genParamInFnBodyAsType(funField)
+
+  func constructFieldForObject(uef: UEField): NimNode =
+    let param = ident uef.name.firstToLow().ueNameToNimName()
+    if uef.uePropType[0] == 'E': # check if enum cast to uint8 because UE uses TEnumAsByte
+      nnkExprColonExpr.newTree(param, nnkCast.newTree(ident "uint8", param))
+    else:
+      nnkExprColonExpr.newTree(param, param)
+
   let paramObjectConstrCall = nnkObjConstr.newTree(@[ident "Params"] &  #creates Params(param0:param0, param1:param1)
                 funField.signature
                   .filter(prop=>not isReturnParam(prop))
-                  .map(param=>ident(param.name.firstToLow().ueNameToNimName()))
-                  .map(param=>nnkExprColonExpr.newTree(param, param))
+                  .map(param=>constructFieldForObject(param))
               )
   let paramDeclaration = nnkVarSection.newTree(nnkIdentDefs.newTree([identWithInject "param", newEmptyNode(), paramObjectConstrCall]))
 
