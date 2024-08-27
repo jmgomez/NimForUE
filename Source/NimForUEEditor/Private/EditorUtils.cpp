@@ -38,6 +38,8 @@
 
 void UNimReferenceReplacementHelper::AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector)
 {
+	Super::AddReferencedObjects(InThis, Collector); //LogGarbage: Warning: Class NimReferenceReplacementHelper or a super class did not call Super::AddReferencedObjects
+	
 	if (InThis->HasAnyFlags(RF_ClassDefaultObject))
 		return;
 	UAssetEditorSubsystem* SubSystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
