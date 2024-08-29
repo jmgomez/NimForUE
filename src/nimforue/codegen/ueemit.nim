@@ -643,6 +643,7 @@ func processVirtual*(procDef: NimNode, parentName: string = "", overrideName: st
     let isOverride = (it:NimNode) => it.kind == nnkIdent and it.strVal() == "override"
     let isConstCpp = (it:NimNode) => it.kind == nnkIdent and it.strVal() in ["constcpp", "constref"]
     let isByRef = (it:NimNode) => it.kind == nnkIdent and it.strVal.toLower in ["byref", "constref"]
+    let isStatic = (it: NimNode) => it.kind == nnkIdent and it.strVal.toLower == "static"
     let isParamConstCpp = (it:NimNode) => it.kind == nnkIdentDefs and it[0].kind == nnkPragmaExpr and 
         it[0][^1].children.toSeq.any(isConstCpp)
     let constParamContent = (it:NimNode) => (if isParamConstCpp(it): "const " else: "")
@@ -650,7 +651,7 @@ func processVirtual*(procDef: NimNode, parentName: string = "", overrideName: st
     let isParamRef = (it:NimNode) => it.kind == nnkIdentDefs and it[0].kind == nnkPragmaExpr and 
         it[0][^1].children.toSeq.any(isByRef)
     let byRefParamContent = (it:NimNode) => (if isParamRef(it): "& " else: "")
-    
+    let staticParamContent = (it: NimNode) => (if isStatic(it): "static" else: "")
     let hasVirtual = procDef.pragma.toSeq.any(x => isPlainVirtual(x) or isPlainMember(x)) #with content it will be differnt. But we are ignoring it anyways
     result = procDef
     if not hasVirtual:
@@ -667,14 +668,14 @@ func processVirtual*(procDef: NimNode, parentName: string = "", overrideName: st
         .params
         .filterIt(it.kind == nnkIdentDefs)
         .skip(1)
-        .mapi((n, idx) => "$1 '$3 $2 #$3" % [constParamContent(n), byRefParamContent(n), $(idx + 2)])
+        .mapi((n, idx) => "$4 $1 '$3 $2 #$3" % [constParamContent(n), byRefParamContent(n), $(idx + 2), staticParamContent(n)])
         .join(", ")
 
     let override = if hasOverride: "override" else: ""
     let fnConstCpp = if hasFnConstCpp: "const" else: ""
     let virtualContent: string = &"{name}({params}) {fnConstCpp} {override}"
     let keptPragmas = procDef.pragma.toSeq
-        .filterIt(not @[isPlainVirtual(it), isOverride(it), isConstCpp(it), isPlainMember(it)].foldl(a or b, false))
+        .filterIt(not @[isPlainVirtual(it), isOverride(it), isConstCpp(it), isPlainMember(it), isStatic(it)].foldl(a or b, false))
     let newVirtual = nnkExprColonExpr.newTree(pragmaIdent, newLit virtualContent)
     let pragmas = nnkPragma.newTree(keptPragmas & newVirtual) 
     if params.len > 0:
