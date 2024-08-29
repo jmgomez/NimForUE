@@ -36,6 +36,7 @@
 #include "GameFramework/WorldSettings.h"
 #include "GameFramework/HUD.h"
 #include "GameFramework/PlayerStart.h"
+#include "GameFramework/PlayerState.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "Engine/DataTable.h"
