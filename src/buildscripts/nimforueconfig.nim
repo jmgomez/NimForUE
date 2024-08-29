@@ -1,4 +1,4 @@
-import std/[json, jsonutils, os, strutils, genasts, sequtils, strformat, sugar, options]
+import std/[json, jsonutils, os, strutils, genasts, sequtils, strformat, sugar, options, tables]
 import ../nimforue/utils/utils
 import buildcommon
 
@@ -365,7 +365,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   proc getEnginePluginModule(moduleName:string) : string = enginePluginDir / moduleName / "Source" / moduleName / "Public"
   proc getEngineRuntimePluginModule(moduleName:string) : string = enginePluginDir / "Runtime" / moduleName / "Source" / moduleName / "Public"
   proc getEngineExperimentalPluginModule(moduleName:string) : string = enginePluginDir / "Experimental" / moduleName / "Source" / moduleName / "Public"
-
+  proc getGamePluginModule(pluginName, moduleName: string): string = (PluginDir / ".." / pluginName / "Source" / moduleName / "Public").absolutePath(PluginDir)
 
   var runtimeModules = @["CoreUObject", "Core", "TraceLog", "Launch", "ApplicationCore", 
       "Projects", "Json", "PakFile", "RSA", "RenderCore",
@@ -400,8 +400,21 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     engineExperimentalPlugins = @["PCG"]
 
   var engineRuntimePlugins = @["GameplayAbilities"]
+  var gamePlugins = newSeq[string]()
 
-  let userGameModules = getGameUserConfigValue("gameModules",  newSeq[string]())
+  var userGameModules = getGameUserConfigValue("gameModules",  newSeq[string]())
+  let userGamePlugins = getGameUserConfigValue("gamePlugins", newSeq[string]())
+  for pluginName in userGamePlugins:     
+    #We need to find out the modules this plugin has. In order todo so, we need to read the
+    #plugin.uPluginFile which holds all the module names it has.
+    let pluginManifestPath = PluginDir / ".." / pluginName / &"{pluginName}.uplugin"
+    if not fileExists(pluginManifestPath):
+      quit "Cant find the plugin manifest in " & pluginManifestPath
+    let pluginManifest = readFile(pluginManifestPath).parseJson()
+    for m in pluginManifest["Modules"]:
+      let moduleName = m["Name"].jsonTo(string)
+      gamePlugins.add getGamePluginModule(pluginName, moduleName)
+
   for userModule in userGameModules:
     case conf.getModuleTypeByName(userModule):
     of uemEngineRuntime:
@@ -416,7 +429,8 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
       engineExperimentalPlugins.add(userModule)
     of uemEngineRuntimePlugins:
       engineRuntimePlugins.add(userModule)
-      
+   
+
 
 #Notice the header are not need for compiling the dll. We use a PCH. They will be needed to traverse the C++
   let moduleHeaders = 
@@ -426,7 +440,8 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module)) &
     enginePlugins.map(module=>getEnginePluginModule(module)) & 
     engineRuntimePlugins.map(module=>getEngineRuntimePluginModule(module)) &
-    engineExperimentalPlugins.map(module=>getEngineExperimentalPluginModule(module))
+    engineExperimentalPlugins.map(module=>getEngineExperimentalPluginModule(module)) & 
+    gamePlugins
 
   (essentialHeaders & moduleHeaders & editorHeaders).map(path => path.normalizedPath().normalizePathEnd())
 

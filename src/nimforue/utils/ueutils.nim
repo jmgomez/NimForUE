@@ -101,11 +101,10 @@ func `$`(node: NimNode): string =
     ""
 {.experimental: "dynamicBindSym".}
 
-func makeFStructStr*(n: NimNode): string =  #Not sure if this will work with Rotators and Vectors as they use another format. Same with regular FStructs. test it
+func makeFStructStr*(n: NimNode): string = 
     let typeName = $n[0]
     let T = bindSym(n[0]).getImpl()
     let isSpecialCase = typeName in ["FVector", "FRotator"] #They are handled differently by UHT
-    debugEcho treeRepr T
     var values = initTable[string, string]()
     let recList = T[^1][^1]
     for field in recList: #identDef

@@ -40,8 +40,6 @@ public class NimForUEBindings : ModuleRules
 			//"UnrealEd"
 			 "InputCore", 
 			 //THE PCH pulls the headers from this module. So the search paths should be in here
-			 //maybe it's a good idea to have this templated so we can add more modules. without changing the PCH
-			 //TODO: Get the modules from the host dll. So the user can specify them via game.json
 			 "EnhancedInput", "GameplayAbilities", "AIModule",
 			 
 			
@@ -59,9 +57,13 @@ public class NimForUEBindings : ModuleRules
 			});
 			AddHostDll();
 			var gameModulesStr = Marshal.PtrToStringAnsi(getGameModules());
-			if (!String.IsNullOrEmpty(gameModulesStr))
-			{
-				PublicDependencyModuleNames.AddRange(gameModulesStr.Split(","));
+			
+			if (!String.IsNullOrEmpty(gameModulesStr)) {
+				var nimGameModules = gameModulesStr.Split(",");
+				foreach (var m in nimGameModules) {
+					Console.WriteLine("Adding Nim Module: " + m);
+				}
+				PublicDependencyModuleNames.AddRange(nimGameModules);
 			}
 		}
 		if (Target.Platform == UnrealTargetPlatform.Win64){

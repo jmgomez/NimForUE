@@ -675,7 +675,7 @@ macro uebindStatic*(clsName : static string = "", fn:untyped) : untyped = ueBind
 func genCppStructField(typeName: string, field:UEField): NimNode = 
   #Notice this only work for PCH types as it uses the name. 
   let typNode = ident typeName
-  let propNameNode = ident field.name.toLower()
+  let propNameNode = ident field.name.firstToLow()
   let propTypeNode = field.getTypeNodeFromUProp(isVarContext=false) #It may be a var context, but we are not using it for now
   let importcppSet = newLit(&"(#.{field.name})")
   genAst(propNameNode, propTypeNode, typNode, importcppSet):
