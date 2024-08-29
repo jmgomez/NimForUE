@@ -335,7 +335,7 @@ proc emitUEnum*(typedef:UEType) : NimNode =
 const CtorPrefix = "defaultConstructor"
 const CtorNimInnerPrefix = "defaultConstructorNimInner" 
 
-
+{.experimental: "dynamicBindSym".}
 func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode = 
     
     let typeParam = fnField.signature.head().get() #TODO errors
@@ -345,26 +345,28 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
     let typeLiteral = newStrLitNode fnField.typeName
     let selfIdent = ident typeParam.name #TODO should we force to just use self?
     let initName = ident fnField.signature[1].name #there are always two params.a
+
     let fnName = ident fnField.name
 
     let assignments = getPropAssigments(fnField.typeName, typeParam.name)
     let nimInnerCtor = ident &"{CtorNimInnerPrefix}{fnField.typeName}" 
-    let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent, typeLiteral,assignments, initName, nimInnerCtor):
-        
-        template genSelf(initializer: untyped) = 
-            var selfIdent{.inject.} = ueCast[typeIdent](initializer.getObj())
-            when not declared(self): #declares self and initializer so the default compiler compiles when using the assignments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
-                var self{.inject used .} = selfIdent
+    let genSelfImpl = genAst(initName, selfIdent, typeIdent):
+        var selfIdent{.inject.} = ueCast[typeIdent](initName.getObj())
+        when not declared(self): #declares self and initializer so the default compiler compiles when using the assignments. A better approach would be to dont produce the default constructor if there is a constructor. But we cant know upfront as it is declared afterwards by definition
+            var self{.inject used .} = selfIdent
+    
+    let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent, typeLiteral,assignments, initName, nimInnerCtor, genSelfImpl):
+            
         proc nimInnerCtor(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} =                     
             #it's wrapped so we can call the user constructor from the Nim child classes
             #Maybe in the future we could treat the Nim constructors as C++ constructors and forget about this special treatment (by the time this was designed Nim didnt have cpp constructors compatibility)
-            genSelf(initName)
+            genSelfImpl
             fnBody
             assignments
 
         proc fnName(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} = 
             defaultConstructorStatic[typeIdent](initName)
-            genSelf(initName)
+            genSelfImpl
             nimInnerCtor(initName)
             postConstructor(initName) #inits any missing comp that the user hasnt set
     
