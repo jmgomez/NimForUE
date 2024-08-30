@@ -287,7 +287,7 @@ proc isFolderInDirectory*(dir, folderName: string): bool =
   folder.dirExists()
 
 
-proc getUserGamePlugins(): Table[string, seq[string]] = #plugin: modules
+proc getUserGamePlugins*(): Table[string, seq[string]] = #plugin: modules
   result = initTable[string, seq[string]]()
   let userGamePlugins = getGameUserConfigValue("gamePlugins", newSeq[string]())
   for pluginName in userGamePlugins:     
