@@ -464,6 +464,7 @@ func genUStructTypeDef*(typeDef: UEType,  rule: UERule = uerNone, typeExposure: 
           nnkPragma.newTree(
             ident "pure",
             ident "exportc", 
+            ident "byCopy", 
             ident "inheritable",
             nnkExprColonExpr.newTree(ident "codegenDecl", 
               newLit getStructTemplate(typeDef))
