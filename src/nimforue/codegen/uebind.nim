@@ -304,11 +304,27 @@ struct TStructOpsTypeTraits<{typeDef.name}> : public TStructOpsTypeTraitsBase2<{
 
 """
 
+  let tBaseStructure = 
+    if "WithGet" in typeDef.metadata:
+      &"""
+        template<> struct TBaseStructure<{typeDef.name}> 
+        {{
+            static UScriptStruct* Get(){{
+
+            static UScriptStruct* ScriptStruct = nullptr;
+            return ScriptStruct;
+          }}
+        }};
+      """
+    else: ""
+
+
   &"""
   struct $1 {base} {{
     $2  
   }};
   {structOpsTraits}
+  {tBaseStructure}
 """
 
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure,  lineInfo: Option[LineInfo]) : NimNode =
