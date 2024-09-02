@@ -1,6 +1,7 @@
 #This file will contain everything related with delegates.
 
 import ../coreuobject/uobject
+import ../../utils/utils
 import std/[macros, genasts, sequtils, strformat]
 
 type FWeakObjectPtr* {.importcpp.} = object
@@ -57,12 +58,7 @@ proc addUObjectImpl[T](del: TMulticastDelegateOneParam, obj: ptr T, fnName: stat
   addUObjectInner(del, obj)
 
 macro addUObject*(del, obj, fn: typed): untyped = 
-  let impl = fn.getImpl
-  let isMember = 
-    impl.pragma.children.toSeq
-    .filterIt(it.kind == nnkExprColonExpr and it[0].strVal in ["member", "virtual"]).len > 0
-  if not isMember:
-    error &"Only member functions are supported and `{repr fn}` is not a member function"
+  fn.ensureIsMember()
   let fnName = newLit repr fn
   genAst(del, obj, fnName):
     addUObjectImpl(del, obj, fnName)
