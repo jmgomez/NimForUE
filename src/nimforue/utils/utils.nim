@@ -1,4 +1,4 @@
-import std/[options, strutils, sequtils, sugar, tables, json, jsonutils, macros, genasts, typetraits]
+import std/[options, strutils, sequtils, sugar, tables, json, jsonutils, macros, genasts, typetraits, strformat]
 #NOTE Do not include UE Types here
 
 type Criteria[T] = proc (t:T) : bool {.noSideEffect.}
@@ -296,7 +296,13 @@ proc objectLen*(T: typedesc[object]) : int =
   for field in default(T).fields:    
     inc result
 
-
+proc ensureIsMember*(fn: NimNode) = 
+  let impl = fn.getImpl
+  let isMember = 
+    impl.pragma.children.toSeq
+    .filterIt(it.kind == nnkExprColonExpr and it[0].strVal in ["member", "virtual"]).len > 0
+  if not isMember:
+    error &"Only member functions are supported and `{repr fn}` is not a member function", fn
 
 # calls debugEcho with the lineInfo
 macro here*(x: varargs[typed, `$`]):untyped {.noSideEffect.} =
@@ -306,3 +312,4 @@ macro here*(x: varargs[typed, `$`]):untyped {.noSideEffect.} =
     result.add newStrLitNode("    " & callsite().toStrLit().strVal & " -> \n")
     for c in x:
       result.add c
+
