@@ -42,6 +42,8 @@
 #include "Engine/DataTable.h"
 #include "Engine/Channel.h"
 #include "Engine/SceneCapture.h"
+#include "Engine/Blueprint.h"
+#include "Engine/GameInstance.h"
 #include "Runtime/Engine/Public/CanvasTypes.h"
 
 #include "WorldPartition/DataLayer/DataLayerInstance.h"
@@ -58,7 +60,6 @@
 #include "UObject/ConstructorHelpers.h"
 #include "UObject/UObjectAllocator.h"
 #include "UObject/ObjectSaveContext.h"
-
 //Slate
 #include "Widgets/Layout/Anchors.h"
 

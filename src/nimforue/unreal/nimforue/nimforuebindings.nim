@@ -116,7 +116,8 @@ else:
               # return makeTMap[FName, FString]()
           metadataTable[field.getName()]
 
-    proc setMetadata*(field:UFieldPtr|FFieldPtr, key: FName, inValue:FString) =          
+    proc setMetadata*(field:UFieldPtr | FFieldPtr | UNimEnumPtr, inKey: FName | FString, inValue: FString) =          
+        let key = when typeof(inKey) is FString: makeFName inKey else: inKey
         let outerKey = field.getFName()
         {.cast(noSideEffect).}:
           let map = field.getMetadataMap()

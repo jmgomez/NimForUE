@@ -9,18 +9,20 @@ public class GameNim : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
-			"UnrealEd",
-			"EditorStyle",
 			"Slate",
 			"SlateCore",
 			"NimForUEBindings"
-			
-		});
-		PrivateDependencyModuleNames.AddRange(new string[] {
-			"Kismet",
-			"BlueprintGraph","ToolMenus", "Projects"
 		});
 		
+		if (Target.bBuildEditor) {
+			PrivateDependencyModuleNames.AddRange(new string[] {
+				"UnrealEd", 			
+				"EditorStyle"
+			});
+			PrivateDependencyModuleNames.AddRange(new string[] {
+			"Kismet", "BlueprintGraph","ToolMenus", "Projects"
+		});
+		}
 	}
 
 }
