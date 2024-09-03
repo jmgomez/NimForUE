@@ -70,6 +70,7 @@ The whole Cpp ThirdPersonTemplate in Nim would be like this:
 
 
 uClass ANimCharacter of ACharacter:
+  (Reinstance)
   (config=Game)
   uprops(EditAnywhere, BlueprintReadOnly, DefaultComponent, Category = Camera):
     cameraBoom : USpringArmComponentPtr 
@@ -92,20 +93,19 @@ uClass ANimCharacter of ACharacter:
     cameraBoom.targetArmLength = 400
     cameraBoom.busePawnControlRotation = true
     followCamera.bUsePawnControlRotation = true
-  
-  override: #Notice here we are overriding a native cpp virtual func. You can call `super` self.super(playerInputComponent) or super(self, playerInputComponent)
-    proc setupPlayerInputComponent(playerInputComponent : UInputComponentPtr) = 
-      let pc = ueCast[APlayerController](self.getController())
-      if pc.isNotNil():
-        let inputComponent = ueCast[UEnhancedInputComponent](playerInputComponent)
-        let subsystem = getSubsystem[UEnhancedInputLocalPlayerSubsystem](pc).get()
-        subsystem.addMappingContext(self.defaultMappingContext, 0)
-        inputComponent.bindAction(self.jumpAction, ETriggerEvent.Triggered, self, n"jump")
-        inputComponent.bindAction(self.jumpAction, ETriggerEvent.Completed, self, n"stopJumping")
-        inputComponent.bindAction(self.moveAction, ETriggerEvent.Triggered, self, n"move")
-        inputComponent.bindAction(self.lookAction, ETriggerEvent.Triggered, self, n"look")
 
-  
+  #Notice this override an actual C++ function that exists in the base type. 
+  proc setupPlayerInputComponent(playerInputComponent : UInputComponentPtr) {.virtual, override.}  =    
+    let pc = ueCast[APlayerController](self.getController())
+    if pc.isNotNil():
+      let inputComponent = ueCast[UEnhancedInputComponent](playerInputComponent)
+      let subsystem = tryGetSubsystem[UEnhancedInputLocalPlayerSubsystem](pc).get()
+      subsystem.addMappingContext(self.defaultMappingContext, 0)
+      inputComponent.bindAction(self.jumpAction, ETriggerEvent.Triggered, self, n"jump")
+      inputComponent.bindAction(self.jumpAction, ETriggerEvent.Completed, self, n"stopJumping")
+      inputComponent.bindAction(self.moveAction, ETriggerEvent.Triggered, self, n"move")
+      inputComponent.bindAction(self.lookAction, ETriggerEvent.Triggered, self, n"look")
+      
   ufuncs:
     proc move(value: FInputActionValue) = 
       let 
@@ -122,10 +122,9 @@ uClass ANimCharacter of ACharacter:
       self.addControllerPitchInput(lookAxis.y)
 
 uClass ANimGameMode of AGameModeBase:
-  proc constructor(init:FObjectInitializer) = #Similar to default but allows you to write full nim code
+  proc constructor(initializer: FObjectInitializer) = #Similar to default but allows you to write full nim code
     let classFinder = makeClassFinder[ACharacter]("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter")
     self.defaultPawnClass = classFinder.class
-
 
 ```
 
