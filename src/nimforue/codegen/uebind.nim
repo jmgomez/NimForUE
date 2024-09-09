@@ -203,7 +203,8 @@ func genFunc*(typeDef : UEType, funField : UEField, typeExposure: UEExposure = u
         ) #export the func with clsName and function to avoid super_ collision
     else:
       nnkPragma.newTree(
-        nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_"))
+        nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1_")),
+        ident "ufunc" #mark them as ufunc so we can later on know if we are dealing with a regular proc or ufunc for custom typechecking
         ) #export the func with an underscore to avoid collisions
 
     # when WithEditor:

@@ -10,7 +10,6 @@ else:
   import vmtypes, exposed
 
 
-
 func getTypeNodeFromUProp*(prop : UEField, isVarContext:bool) : NimNode 
 
 const NimReservedKeywords* = @["object", "method", "type", "interface", "var", "in", "out", "end", "bLock", "from"] 

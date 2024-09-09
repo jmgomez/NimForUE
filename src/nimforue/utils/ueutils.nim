@@ -11,6 +11,8 @@ import utils
 
 const DelegateFuncSuffix* = "__DelegateSignature"
 const DelegateFuncSuffixLength* = DelegateFuncSuffix.len()
+template ufunc* {.pragma.} 
+
 #utils specifics to unreal used accross the project
 
 func isGeneric*(str: string): bool = "[" in str and "]" in str

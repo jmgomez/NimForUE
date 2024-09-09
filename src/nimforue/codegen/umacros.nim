@@ -146,7 +146,7 @@ func genUFuncsForUClass*(body:NimNode, ueTypeName:string, nimProcs:seq[NimNode])
     
     let fnBlocks = body.toSeq()
                       .filter(n=>n.kind == nnkCall and 
-                          n[0].strVal().toLower() in ValidUFuncs)
+                          n[0].strVal().toLower() in ValidUFuncs)  
 
     let fns = fnBlocks.map(fnBlock=>funcBlockToFunctionInUClass(fnBlock, ueTypeName))
     let procFws =nimProcs.map(getForwardDeclarationForProc) #Not used there is a internal error: environment misses: self
@@ -603,3 +603,71 @@ when not defined nuevm:
     ueType.isParentInPCH = ueType.parent in getAllPCHTypes()
     let (typNode, addEmitterProc) = emitUClass(ueType)
     result = nnkStmtList.newTree(typNode, addEmitterProc)
+
+proc getPropAndDelOwnerCall(n: NimNode): ( NimNode, NimNode) = 
+  var propNode, delOwnerCall: NimNode
+  case n.kind:
+  of nnkHiddenDeref: #self.delegateProp
+    propNode = n[0][0]
+    delOwnerCall = n[0][1] #self
+  of nnkCall: #self.someComponent.delegateProp
+    propNode = n[0]
+    delOwnerCall =  n[^1][^1] #self.someComponent
+ 
+  else: #TODO likely we need to handle more depth. self.someObject.someComponent.delegateProp
+    error &"Cant retrieve delegate call from {n.kind}: " & repr n
+  (propNode, delOwnerCall)
+
+proc isDelegate(propNode: NimNode): bool = 
+  #propNodes are either procs returning a var FMulticastScriptDelegate or types with a delegate. Bindings also have this construct (objPtr, delProp)
+  case propNode.kind
+  of nnkProcDef:
+    propNode.params[0].isDelegate()
+  of nnkVarTy:
+    propNode[0].isDelegate()
+  of nnkTupleConstr:  #(objPtr, delProp)
+    propNode[1].isDelegate()
+  of nnkPtrTy:
+    propNode[0].strVal == "FMulticastDelegateProperty" #Not even sure why it has this definition. But works
+  of nnkSym:
+    propNode.getImpl.isDelegate()
+  of nnkTypeDef:
+    let typSym = propNode[0][0][1]
+    let inheritNode = propNode[^1][1]
+    if inheritNode.kind == nnkEmpty:
+      typSym.strVal == "FMulticastScriptDelegate"
+    else:
+      inheritNode[0].isDelegate()
+  else:    
+    # echo "Not a delegate "
+    # echo treeRepr propNode
+    false
+
+proc isUFunc(prc: NimNode): bool = 
+  case prc.kind:
+  of nnkSym: 
+    prc.getImpl.isUFunc()
+  of nnkProcDef:
+    for p in prc.pragma:
+      if p.kind == nnkSym and p.strVal == "ufunc":
+        return true
+    return false
+  else:
+    echo "not ufunc"
+    echo treeRepr prc
+    false
+    
+macro addDynamic*(ownerObj: typed, obj: typed, fn: typed) = 
+  let (propNode, delOwnerCall) = getPropAndDelOwnerCall(ownerObj)
+  let propName = newLit propNode.strVal
+  let fnName = newLit fn.strVal
+  if not propNode.isDelegate:
+    error &"`addDynamic only works over delagates. {propNode.strVal} it is not a delegate."
+  if not fn.isUFunc:
+    error &"addDynamic only works over ufuncs."
+
+  #TODO type check parameters
+  genAst(propNode, propName, delOwnerCall, obj, fnName):
+    let delProp = castField[FMulticastDelegateProperty](delOwnerCall.getClass.getFPropertyByName(propName))
+    bindUFunc((delOwnerCall.ueCast(UObject), delProp), obj, n fnName)
+
