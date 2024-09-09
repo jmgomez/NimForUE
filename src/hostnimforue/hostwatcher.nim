@@ -33,7 +33,7 @@ proc ensureGuestIsCompiled*() : void =
 
 
 proc getGameModules(): cstring = 
-    let userPluginModules = getUserGamePlugins().values.toSeq.concat
+    let userPluginModules: seq[string] = getUserGamePlugins().values.toSeq.concat
     let gameModules = getGameUserConfigValue("gameModules",  newSeq[string]()) & userPluginModules
     let gameModulesStr = gameModules.join(",")
     return gameModulesStr.cstring    

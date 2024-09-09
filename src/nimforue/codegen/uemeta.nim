@@ -907,6 +907,8 @@ proc vmConstructor*(objectInitializer:var FObjectInitializer) : void {.cdecl.} =
   else:
     UE_Warn &"No vmdefaultconstructor found tried: {constructorName}"
   
+proc vtableOffset[T](fake: ptr T = nil): int32 {.importcpp:"VTABLE_OFFSET('*1, IAbilitySystemInterface)".}
+
 proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
     
@@ -954,6 +956,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
     if ifaceCls.isNotNil():
       let implementedInterface = makeFImplementedInterface(ifaceCls, 0, true)
       newCls.interfaces.add(implementedInterface)
+
+
 
   newCls.staticLink(true)
   newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)
