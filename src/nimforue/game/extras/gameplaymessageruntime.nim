@@ -1,8 +1,10 @@
 
 import std/[macros, genasts]
 include unrealprelude
-
-import  ../../unreal/bindings/imported/gameplaymessageruntime
+when WithEditor:
+  import  ../../unreal/bindings/imported/gameplaymessageruntime
+else:
+  import  ../../unreal/bindings/exported/gameplaymessageruntime
 
 proc registerListenerImpl[T: UObject](msgSubsystem: UGameplayMessageSubsystemPtr, channel: FGameplayTag, obj: ptr T, fnName: static string): FGameplayMessageListenerHandle = 
   const importcpp = &"#->RegisterListener(#, #, &'*3::{fnName.capitalizeAscii()})"

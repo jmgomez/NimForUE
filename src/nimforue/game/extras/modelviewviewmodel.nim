@@ -1,6 +1,9 @@
 include unrealprelude
 #TODO This will need to be changed to exported when deploying, review others extras
-import ../../unreal/bindings/imported/modelviewviewmodel
+when WithEditor:
+  import ../../unreal/bindings/imported/modelviewviewmodel
+else:
+  import ../../unreal/bindings/exported/modelviewviewmodel
 
 #[
   This assumes you have in your game.json   "gameModules": ["ModelViewViewModel"]

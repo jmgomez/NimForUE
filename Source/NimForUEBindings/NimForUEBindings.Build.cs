@@ -41,15 +41,12 @@ public class NimForUEBindings : ModuleRules
 			 "InputCore", 
 			 //THE PCH pulls the headers from this module. So the search paths should be in here
 			 "EnhancedInput", "GameplayAbilities", "AIModule",
-			 
-			
 		});
 		
 #if UE_5_2_OR_LATER
 		PublicDependencyModuleNames.Add("PCG");
 		
 #endif
-
 		if (Target.bBuildEditor) {
 			PublicDependencyModuleNames.AddRange(new string[] {
 				"UnrealEd",
@@ -61,7 +58,7 @@ public class NimForUEBindings : ModuleRules
 			if (!String.IsNullOrEmpty(gameModulesStr)) {
 				var nimGameModules = gameModulesStr.Split(",");
 				foreach (var m in nimGameModules) {
-					Console.WriteLine("Adding Nim Module: " + m);
+					Console.WriteLine("Adding Nim Module:: " + m);
 				}
 				PublicDependencyModuleNames.AddRange(nimGameModules);
 			}

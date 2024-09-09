@@ -43,6 +43,7 @@ public class NimForUE : ModuleRules
 			"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem",
 			"Slate",
 			"SlateCore",
+			"NimForUEBindings",
 
 		});
 		
@@ -59,7 +60,6 @@ public class NimForUE : ModuleRules
 			new string[] {
 				"CoreUObject",
 				"Engine",
-				"NimForUEBindings",
 				"Projects",
 			}
 		);
@@ -72,23 +72,22 @@ public class NimForUE : ModuleRules
 			}
 		);
 
-		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
-		var PCHFile = Path.Combine(nimHeadersPath, "nuebase.h");
-		PublicIncludePaths.Add(nimHeadersPath);
-		PrivatePCHHeaderFile = PCHFile;
-
-		var nimGameDir = Path.Combine(this.Target.ProjectFile.Directory.ToString(), "NimForUE");
-		if (File.Exists(Path.Combine(nimGameDir, "nuegame.h"))) {
-			PublicIncludePaths.Add(nimGameDir);
-			PublicDefinitions.Add("NUE_GAME=1");
-			Console.WriteLine("Found an user custom header nuegame.h Adding it to the PCH");
-		}
+	
 
 
 		if (Target.bBuildEditor) {
 			AddNimForUEDev();
-			// PublicIncludePaths.Add(Marshal.PtrToStringAnsi(getNimBaseHeaderPath()));
-			// PublicIncludePaths.Add("/Volumes/Store/Nim/lib");
+			var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
+			var PCHFile = Path.Combine(nimHeadersPath, "nuebase.h");
+			PublicIncludePaths.Add(nimHeadersPath);
+			PrivatePCHHeaderFile = PCHFile;
+
+			var nimGameDir = Path.Combine(this.Target.ProjectFile.Directory.ToString(), "NimForUE");
+			if (File.Exists(Path.Combine(nimGameDir, "nuegame.h"))) {
+				PublicIncludePaths.Add(nimGameDir);
+				PublicDefinitions.Add("NUE_GAME=1");
+				Console.WriteLine("[NimForUE.build.cs] Found an user custom header nuegame.h Adding it to the PCH");
+			}
 		}
 
 
@@ -146,7 +145,7 @@ public class NimForUE : ModuleRules
 	void AddNimForUEDev() { //ONLY FOR WIN/MAC with EDITOR (dev) target
 		NimbleSetup(); //Make sure NUE and Host are built
 		AddHostDll();
-		setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
+		// setUEConfig(EngineDirectory, Target.Configuration.ToString(), Target.Platform.ToString(), Target.bBuildEditor);
 
 		//PublicDefinitions.Add($"NIM_FOR_UE_LIB_PATH  \"{dynLibPath}\"");
 		//TRY?

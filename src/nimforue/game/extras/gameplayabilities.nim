@@ -1,6 +1,10 @@
 include unrealprelude
- 
-import ../../unreal/bindings/imported/gameplayabilities/[abilities, gameplayabilities, enums]
+
+when WithEditor:
+  import ../../unreal/bindings/imported/gameplayabilities/[abilities, gameplayabilities, enums]
+else:
+  import ../../unreal/bindings/exported/gameplayabilities/[abilities, gameplayabilities, enums]
+
 export abilities, gameplayabilities, enums
 
 type 

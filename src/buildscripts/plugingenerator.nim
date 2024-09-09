@@ -88,7 +88,14 @@ public class $1 : ModuleRules
       if (Target.Platform == UnrealTargetPlatform.Win64)
 				PrivateDependencyModuleNames.Add("LiveCoding");
 		}
-
+    
+    $2
+    var nimGameDir = Path.Combine(this.Target.ProjectFile.Directory.ToString(), "NimForUE");
+    if (File.Exists(Path.Combine(nimGameDir, "nuegame.h"))) {
+      PublicIncludePaths.Add(nimGameDir);
+      PublicDefinitions.Add("NUE_GAME=1");
+      System.Console.WriteLine("Found an user custom header nuegame.h Adding it to the PCH");
+    }
 		PublicDefinitions.Add("NIM_INTBITS=64");
 		if (Target.Platform == UnrealTargetPlatform.Win64){
 			CppStandard = CppStandardVersion.Cpp20;
@@ -97,7 +104,7 @@ public class $1 : ModuleRules
 		}
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
-		var nimHeadersPath = Path.Combine($2, "NimHeaders");
+		var nimHeadersPath = Path.Combine(PluginDirectory, "..", "NimForUE", "NimHeaders");
     PrivatePCHHeaderFile =  Path.Combine(nimHeadersPath, "nuebase.h");
 
 		PublicIncludePaths.Add(nimHeadersPath);
@@ -196,7 +203,18 @@ proc getPluginTemplateFile(name:string, modules:seq[string], platformTarget: Pla
 proc getModuleBuildCsFile(name:string, platformTarget: PlatformTargetKind) : string =
   #Probably bindings needs a different one
   let modName = nameWithPlatformSuffix(name, platformTarget)
-  ModuleBuildcsTemplate.format(modName, escape(PluginDir))
+  let userPluginModules = getUserGamePlugins().values.toSeq.concat
+  let extraModules = 
+    (getGameUserConfigValue("gameModules", newSeq[string]()) & userPluginModules)
+    .mapIt(it.quotes)
+  var extraModulesContent = ""
+  if extraModules.len > 0:
+    extraModulesContent = &"""
+    PublicDependencyModuleNames.AddRange(new string[]{{ {extraModules.join(",")} }});
+"""
+
+  
+  ModuleBuildcsTemplate.format(modName, extraModulesContent)
 
 proc getModuleHFile(name:string, platformTarget: PlatformTargetKind) : string =
   ModuleHFileTemplate.format(nameWithPlatformSuffix(name, platformTarget))
