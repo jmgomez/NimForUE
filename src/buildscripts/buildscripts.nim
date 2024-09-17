@@ -12,7 +12,7 @@ export buildcommon, nimforueconfig
 
 type #The engine can trigger the load of a library from different places
   NueLoadedFrom* {.size:sizeof(uint8), exportc .} = enum
-    nlfPreEngine = 0, #before the engine is loaded, when the plugin code is registered.
+    nlfDefault = 0, #right after the NimForUEModule is loaded
     nlfPostDefault = 1, #after all modules are loaded (so all the types exists in the reflection system) this is also hot reloads. Should attempt to emit everything, layers before and after
     nlfEditor = 2 # Dont act different as loaded 
     nlfCommandlet = 3 #while on the commandlet. Nothing special. Dont act different as loaded 
@@ -44,15 +44,15 @@ proc reloadScriptGuest*() {.exportc, cdecl, dynlib.} =
       fun()
 
 proc onLibLoaded*(libName: cstring; libPath: cstring; timesReloaded: cint;
-                  loadedFrom: NueLoadedFrom): void {.exportc, cdecl, dynlib.} =
+                  loadedFrom: NueLoadedFrom, libHandle: LibHandle): void {.exportc, cdecl, dynlib.} =
   type
     ProcType {.inject.} = proc (libName: cstring; libPath: cstring;
-                                timesReloaded: cint; loadedFrom: NueLoadedFrom): void {.
+                                timesReloaded: cint; loadedFrom: NueLoadedFrom, handle: LibHandle): void {.
         cdecl.}
   withLock libLock:
     let fun {.inject.} = cast[ProcType](lib().symAddr("onLibLoaded"))
     if not fun.isNil():
-      fun(libName, libPath, timesReloaded, loadedFrom)
+      fun(libName, libPath, timesReloaded, loadedFrom, libHandle)
 
 proc onLoadingPhaseChanged*(prev: NueLoadedFrom; next: NueLoadedFrom): void {.
     exportc, cdecl, dynlib.} =

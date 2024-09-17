@@ -16,55 +16,32 @@ const genFilePath* {.strdefine.} : string = ""
 
 var prevGameLib : Option[string]
 
-#Useful to free del handles in the game/lib
-proc unloadPrevLib(nextLib:string) = 
-  type OnNewLibLoadedFn = proc(): void {.gcsafe, stdcall.} 
-  if prevGameLib.isSome():
-    let lib = loadLib(prevGameLib.get())
-    let onLibUnloaded = cast[OnNewLibLoadedFn](lib.symAddr("onUnloadLib"))
-    onLibUnloaded()
-  
-  prevGameLib = some nextLib
+type 
+  NueLib = object
+    handle: LibHandle
+    libName: string
+    libPath: string
+    timesReloaded: int
 
-proc getEmitterFromGame(libPath: string) : UEEmitterPtr = 
+
+proc getEmitterFromGame(nueLib: NueLib): Option[UEEmitterPtr] = 
   type 
     GetUEEmitterFn = proc (): UEEmitterPtr {.gcsafe, cdecl.}
     MainFn = proc(): void {.gcsafe, cdecl.}
-  UE_Log &"getEmitterFromGame lib {libPath}"
-  let lib = loadLib(libPath)
-  if lib.isNil:
-    UE_Error &"Cant load lib {libPath}"
-    return nil
-  let fnPtr = lib.symAddr("getGlobalEmitterPtr")
+  if nueLib.handle.isNil:
+    UE_Error &"Cant load lib {nueLib.libPath}. \r\n File {nueLib.libPath} exits: {fileExists(nueLib.libPath)}"
+    return none(UEEmitterPtr)
+  let fnPtr = nueLib.handle.symAddr("getGlobalEmitterPtr")
   if fnPtr.isNil:
-    UE_Error &"getGlobalEmitterPtr is not in the lib {libPath}"
-    return nil
+    UE_Error &"getGlobalEmitterPtr is not in the lib {nueLib.libPath}"
+    return none(UEEmitterPtr)
+  
   let getEmitter = cast[GetUEEmitterFn](fnPtr)
-  
-  if getEmitter.isNil():
-    UE_Error &"Cant cast getGlobalEmitterPtr to GetUEEmitterFn for {libPath}"
-    return nil
-  
-
   let emitterPtr = getEmitter()
   if emitterPtr.isNil():
-    UE_Error "Emitter is nul"
+    UE_Error "Emitter is nil"
   assert not emitterPtr.isNil()
-  unloadPrevLib(libPath) 
-
-  # #we also need to call the MainFunc. Hardcoded to GameNimMain for now
-  # let libMainName = &"{name.firstToUpper()}NimMain"
-  # let mainFunc = lib.symAddr(libMainName)
-  # if mainFunc.isNil:
-  #   UE_Error &"{libMainName} is not in the lib {libPath}"
-  #   return nil
-  # let mainFn = cast[MainFn](mainFunc)
-  # if mainFn.isNil():
-  #   UE_Error &"Cant cast {libMainName} to MainFn for {libPath}"
-  #   return nil
-  # mainFn()
-
-  emitterPtr
+  some emitterPtr
 
 
 proc startNue(libPath:string, calledFrom:NueLoadedFrom)  = 
@@ -150,20 +127,27 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypes
         UE_Error e.getStackTrace()
         return false
 
-
-
-
-proc emitTypeFor(libName, libPath:string, timesReloaded:int, loadedFrom : NueLoadedFrom) = 
+proc emitTypeFor(nueLib: NueLib, loadedFrom : NueLoadedFrom) = 
+  if isRunningCommandlet(): 
+    UE_Log "Running command let, dont emit types"
+    return
   try:
-    case libName:
+    UE_Log &"Emitting types for {nueLib.libName}"
+    let earlyLoad = false
+    case nueLib.libName:
     of "nimforue": 
-        discard emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom == nlfPreEngine, false)
+        discard emitNueTypes(getGlobalEmitter(), "Nim", earlyLoad, false)
         # if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
           # discard   
     else:
-        if not isRunningCommandlet():
-          discard emitNueTypes(getEmitterFromGame(libPath), "GameNim",  loadedFrom == nlfPreEngine, false)
+      if not isRunningCommandlet():
+        let gameEmitter = nueLib.getEmitterFromGame()
+        if gameEmitter.isSome:
+          discard emitNueTypes(gameEmitter.get, "GameNim", earlyLoad, false)
+        else:
+          #TODO we should wait and retry to deal with EarlyTypes
+          UE_Warn "GameEmitter is nil. Library not loaded yet?"
   except CatchableError as e:
     UE_Error &"Error in onLibLoaded: {e.msg} {e.getStackTrace}"
 
@@ -195,7 +179,7 @@ var lastTimeTriggered = now()
 #only GameNim types 
 proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.cdecl, exportc, dynlib.} = 
   UE_Log "Emitting types from external lib " & $emitter.emitters.len
-  let didHotReload = emitNueTypes(emitter, "GameNim",  loadedFrom == nlfPreEngine, reuseHotReload)
+  let didHotReload = emitNueTypes(emitter, "GameNim",  false, reuseHotReload)
   # if not didHotReload: return #TODO review why is not working as expected (will avoid double lc when no reinstancing)
   let tickHandle = subscribeToTick()
   proc waitForLiveCoding() : Future[void] {.async.} =
@@ -210,31 +194,24 @@ proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHo
   asyncCheck waitForLiveCoding()
 
 
-#entry point for the game. but it will also be for other libs in the future
-#even the next guest/nimforue?
-var libsToEmmit : seq[(string, string, int)] 
-proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint, loadedFrom:NueLoadedFrom) : void {.ffi:genFilePath} = 
-  UE_Log &"lib loaded: {libName} loaded from {loadedFrom}" 
-  case loadedFrom
-  of nlfPreEngine:
-    UE_Log "Too early"
-    libsToEmmit.add ($libName, $libPath, int timesReloaded)
-    emitTypeFor($libName, $libPath, timesReloaded, loadedFrom)
-
-  else: #Safe to emit types here
-    emitTypeFor($libName, $libPath, timesReloaded, loadedFrom)
+var libsToEmmit : seq[NueLib] 
+proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint, loadedFrom:NueLoadedFrom, handle: LibHandle) : void {.ffi:genFilePath} = 
+  UE_Log &"lib loaded: {libName} loaded from {loadedFrom}. Handle valid: {handle.isNotNil}" 
+  var nueLib = NueLib(
+    libName: $libName, 
+    libPath: $libPath, 
+    timesReloaded: timesReloaded,
+    handle: handle
+  )  
+  emitTypeFor(nueLib, loadedFrom)
     
 
-#TODO should something like this be handled by the game too? 
-  #1. Works as it worked before
-  #2. Make it fail by initializing everything in start
-  #3. Only emmit types when no in preInit 
 proc onLoadingPhaseChanged(prev : NueLoadedFrom, next:NueLoadedFrom) : void {.ffi:genFilePath} = 
   UE_Log &"Loading phase changed: {prev} -> {next}"
-  if prev == nlfPreEngine and next == nlfPostDefault:
-    for (libName, libPath, timesReloaded) in libsToEmmit:
-      UE_Log &"Emitting types for {libName} "
-      emitTypeFor(libName, libPath, timesReloaded, next)
+  # if prev == nlfPreEngine and next == nlfPostDefault:
+  #   for nueLib in libsToEmmit:
+  #     UE_Log &"Emitting types for {nueLib.libName} "
+  #     emitTypeFor(nueLib, next)
   
 
 
@@ -257,10 +234,12 @@ uClass ANimTestGuest of AActor:
     anotehr: FString
     yes: bool
   ufuncs(CallInEditor):
-    proc test2() = 
-      UE_Warn "wtf. Como es posible que ahora si funcione?"
-  discard
+    proc testQueryModules() = 
+      # logModules()
+      discard
 
+    proc logModelViewViewModelState() = 
+      discard
 # # VM
 # #TODO refactor the vm so emitType is only called once. 
 # uClass UVmHelpers of UObject:

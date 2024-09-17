@@ -181,7 +181,7 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
         hotReloadInfo.deletedEnums.add(instance)
 
 #32431 
-proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEarlyLoadTypesOnly:bool) : FNimHotReloadPtr = 
+proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, emitEarlyLoadTypesOnly:bool) : FNimHotReloadPtr = 
     #/Script/PACKAGE_NAME For now {Nim, GameNim}
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
     UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()
@@ -287,7 +287,9 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName : string, emitEar
     
     hotReloadInfo.setShouldHotReload()
     
-    UE_Log $hotReloadInfo
+    UE_Log &"""
+{hotReloadInfo}
+"""
 
     hotReloadInfo
 

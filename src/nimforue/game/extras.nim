@@ -34,8 +34,6 @@ proc drawDebugBox*(context: UObjectPtr, box: FBox, color: FLinearColor, location
   drawDebugBox(context, center, extends, color, rotation, duration)
 
 
-type 
-  onGameUnloadedCallback* = proc()
 
 
 proc tickPoll(deltaTime:float32) : bool {.cdecl.} =
@@ -54,24 +52,11 @@ proc subscribeToTick() : FTickerDelegateHandle =
 
 let tickHandle = subscribeToTick()
 
-var onGameUnloaded* : onGameUnloadedCallback
-
-when WithEditor:
-  proc onUnloadLib() {.exportc, dynlib, cdecl.} =
-    removeTicker(tickHandle)
-    if onGameUnloaded.isNotNil():
-      onGameUnloaded()
-
-
-# import unreal/editor/editor
-
-
 when WithEditor:
   import ../../buildscripts/buildscripts
   import std/[os, sequtils, sugar, dynlib]
-  # import unreal/editor/editor
 
-  # proc GameNimMain() {.importcpp.}
+
 proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.} = 
   when WithEditor:
     proc emitTypesInGuest(calledFrom:NueLoadedFrom, globalEmitter:UEEmitterPtr) = 
@@ -113,12 +98,9 @@ proc reinstanceNextFrame() {.cdecl, exportc.} =
   
 
 
-#Called from NimForUE module as entry point when we are in a non editor build
-#Notice it needs to be called after NimMain (for the early types) that's why we dont call it from Nim
+#Called from the non editor build on StartupModule
 proc startNue*() {.cdecl, exportc.} =
-  #TODO Hook the Early Types here. 
-  let handle = onAllModuleLoadingPhasesComplete.addStatic(emitTypes)      
-
+  emitTypes()
 
 proc netSerialize*(vec: FVector, ar: var FArchive, map: UPackageMapPtr, bOutSuccess: var bool) {.importcpp:"#.NetSerialize(@)".}
 

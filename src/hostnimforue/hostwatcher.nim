@@ -1,4 +1,4 @@
-import std/[times, os, dynlib, tables, strutils, sequtils, algorithm, locks, sugar, options, compilesettings]
+import std/[times, os, dynlib, tables, strutils, sequtils, algorithm, locks, sugar, options, compilesettings, strformat]
 import pure/asyncdispatch
 import ../buildscripts/[buildscripts]
 import ffigen
@@ -7,25 +7,30 @@ import hostbase
 
 type LoggerSignature* = proc(msg:cstring) {.cdecl, gcsafe.}
     
-
-
-
 var logger : LoggerSignature
-
 
 proc loadNueLib*(libName, nextPath: string, loadedFrom:NueLoadedFrom) =
   var nueLib = libMap[libName]
   if nueLib.lastLoadedPath != nextPath or not nueLib.isInit:
     nueLib.lib = loadLib(nextPath)
+    if nueLib.lib == nil:
+        logger(&"[NUEHost]Library {libName} in {loadedFrom} couldnt be loaded. File Exists: {fileExists(nextPath)}")
+        logger(&"[NUEHost]OS Error {osLastError().int32}")        
+        sleep(1000)
+        nueLib.lib = loadLib(nextPath)
+        logger(&"[NUEHost] Retried Library {libName} in {loadedFrom} is loaded: {nueLib.lib != nil}")        
+
     inc nueLib.timesReloaded
     nueLib.lastLoadedPath = nextPath
     libMap[libName] = nueLib
-    onLibLoaded(libName.cstring, nextPath.cstring, (nueLib.timesReloaded - 1).cint, loadedFrom)
+    logger(&"[NUEHost]Passing the handle of the lib: {libName} valid: {nueLib.lib != nil}")
+    onLibLoaded(libName.cstring, nextPath.cstring, (nueLib.timesReloaded - 1).cint, loadedFrom, nueLib.lib)
 
 {.push  exportc, cdecl, dynlib.}
 
 proc registerLogger*(inLogger: LoggerSignature)  =
-    logger = inLogger
+  logger = inLogger
+
 
 proc ensureGuestIsCompiled*() : void =
     ensureGuestIsCompiledImpl()
@@ -34,7 +39,7 @@ proc ensureGuestIsCompiled*() : void =
 
 proc getGameModules(): cstring = 
     let userPluginModules: seq[string] = getUserGamePlugins().values.toSeq.concat
-    let gameModules = getGameUserConfigValue("gameModules",  newSeq[string]()) & userPluginModules
+    let gameModules = getGameUserConfigValue("gameModules",  newSeq[string]()) & userPluginModules    
     let gameModulesStr = gameModules.join(",")
     return gameModulesStr.cstring    
 
@@ -51,10 +56,10 @@ proc setUEConfig(engineDir, conf, platform: cstring, withEditor:bool)=
     let targetPlatform = parseEnum[TargetPlatform]($platform)
     let (_,gameDir) = tryGetEngineAndGameDir().get()
     var conf = getOrCreateNUEConfig()
-    conf.targetConfiguration = targetConf    
+    conf.targetConfiguration = targetConf        
     # conf.saveConfig()
 
-var currentLoadPhase = nlfPreEngine #First time check reload is called is preengine
+var currentLoadPhase = nlfDefault 
 #In the future Consider removing Host and using the plugin directly? 
 proc checkReload*(loadedFrom:NueLoadedFrom)  = #only for nimforue (plugin)
     let plugin = "nimforue"

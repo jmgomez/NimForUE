@@ -18,9 +18,10 @@ proc getDefaultObjectFromClassName*(clsName:FString) : UObjectPtr =
 proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr = 
   var fieldIterator = makeTFieldIterator[FProperty](struct, IncludeSuper)
   for it in fieldIterator: 
-    let prop = it.get() 
-    if prop.getName() == propName or prop.getName().capitalizeAscii() == propName:
+    let prop = it.get()     
+    if prop.getName.toLower == propName.toLower:
       return prop
+    # log &"[getFPropertyByName]: Finding {propName} Tried: {prop.getName()}"
 
 
 proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)".}

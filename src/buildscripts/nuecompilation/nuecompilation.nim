@@ -24,7 +24,6 @@ proc compileHostMac*() =
     "--app:lib",
     "--d:host",
     "--nimBasePattern:nimbasenue.h",
-    "--debugger:native",
     # "--header:NimForUEFFI.h",
   ]
   let macArmSwitches = @[
@@ -71,7 +70,9 @@ proc compileHost*() =
   generateFFIGenFile(config)
 
   let hostSwitches = @[
-    "--nimBasePattern:nimbasenue.h"
+    "--nimBasePattern:nimbasenue.h",
+    "--lineDir:off",
+    "--stacktrace:off"
     
   ]
   let buildFlags = @[buildSwitches & hostSwitches].foldl(a & " " & b.join(" "), "")
