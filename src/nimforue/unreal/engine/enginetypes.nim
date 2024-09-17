@@ -324,7 +324,10 @@ type
     callbackTarget* {.importcpp: "CallbackTarget".}: UObjectPtr
 
   FKey* {.importcpp .} = object
-
+  FModuleManager {.importcpp.} = object
+  FModuleStatus {.importcpp.} = object
+    name {.importcpp:"Name".}: FString
+    bIsLoaded {.importcpp.}: bool
 
   # UPlayer* {.importcpp, pure, inheritable .} = object of UObject
   # UPlayerPtr* = ptr UPlayer
@@ -708,3 +711,12 @@ proc getTagName*(tag: FGameplayTag): FName {.importcpp: "#.GetTagName()".}
 proc requestGameplayTag*(tagName: FName, errorIfNotFound = true): FGameplayTag {.importcpp:"FGameplayTag::RequestGameplayTag(@)".}
 #NET
 proc registerReplicatedLifetimeProperty*(prop: FPropertyPtr, outLifetimeProps {.byref.}: TArray[FLifetimeProperty], params: var FDoRepLifetimeParams) {.importcpp: "RegisterReplicatedLifetimeProperty(@)".}
+
+#FModuleManagertype 
+
+# proc getModuleManager*(): ptr FModuleManager {.importcpp:"&FModuleManager::Get()".}
+proc get*[T](): ptr T {.importcpp:"(&'*0::Get())".}
+
+proc queryModules(mm: ptr FModuleManager, outModules {.byref.}: TArray[FModuleStatus]) {.importcpp:"#->QueryModules(#)".}
+proc queryModule(mm: ptr FModuleManager, name: FName, outModule: out FModuleStatus) {.importcpp:"#->QueryModule(@)".}
+proc loadModule(mm: ptr FModuleManager, name: FName): pointer {.importcpp:"#->LoadModule(@)".}
