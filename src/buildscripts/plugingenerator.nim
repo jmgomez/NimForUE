@@ -203,7 +203,7 @@ proc getPluginTemplateFile(name:string, modules:seq[string], platformTarget: Pla
 proc getModuleBuildCsFile(name:string, platformTarget: PlatformTargetKind) : string =
   #Probably bindings needs a different one
   let modName = nameWithPlatformSuffix(name, platformTarget)
-  let userPluginModules = getUserGamePlugins().values.toSeq.concat
+  let userPluginModules = getUserGamePlugins({modkDefault, modkRuntime}).values.toSeq.concat
   let extraModules = 
     (getGameUserConfigValue("gameModules", newSeq[string]()) & userPluginModules)
     .mapIt(it.quotes)

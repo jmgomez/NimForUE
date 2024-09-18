@@ -286,8 +286,12 @@ proc isFolderInDirectory*(dir, folderName: string): bool =
   let folder = dir / folderName
   folder.dirExists()
 
+type UEPluginModuleKind* = enum
+  modkAll = "All" 
+  modkDefault = "Default" 
+  modkRuntime = "Runtime"
 
-proc getUserGamePlugins*(): Table[string, seq[string]] = #plugin: modules
+proc getUserGamePlugins*(kinds: set[UEPluginModuleKind] = {modkAll}): Table[string, seq[string]] = #plugin: modules
   result = initTable[string, seq[string]]()
   let userGamePlugins = getGameUserConfigValue("gamePlugins", newSeq[string]())
   for pluginName in userGamePlugins:     
@@ -300,7 +304,10 @@ proc getUserGamePlugins*(): Table[string, seq[string]] = #plugin: modules
     var modules = newSeq[string]()
     for m in pluginManifest["Modules"]:
       let moduleName = m["Name"].jsonTo(string)
-      modules.add moduleName
+      let moduleType = m["Type"].jsonTo(string)
+      if modkAll in kinds or 
+        kinds.toSeq.anyIt(moduleType == $it):
+          modules.add moduleName
     if modules.len > 0:
       result[pluginName] = modules
 
