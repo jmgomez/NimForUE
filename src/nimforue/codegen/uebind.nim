@@ -61,7 +61,7 @@ func genProp(typeDef : UEType, prop : UEField, typeExposure: UEExposure = uexDsl
           let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
           actualSetter
 
-        proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
+        proc `set propIdent` (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
           let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
           actualSetter
   #TODO why the heck this code is repeated? Test Dynamic delegates before deleting
@@ -75,7 +75,7 @@ func genProp(typeDef : UEType, prop : UEField, typeExposure: UEExposure = uexDsl
         let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
         actualSetter
 
-      proc `set propIdent`* (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
+      proc `set propIdent` (obj {.inject.} : ptrName, val {.inject.} :typeNode)  {.exportcpp.} = 
         let prop {.inject.} = obj.getClass.getFPropertyByName(propUEName)
         actualSetter
   
