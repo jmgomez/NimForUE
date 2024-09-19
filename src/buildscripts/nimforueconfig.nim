@@ -564,7 +564,9 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
 
   var modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", 
     "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", 
-    "NetCore", "UMG", "AdvancedPreviewScene", "AIModule", "EditorSubsystem", "DeveloperSettings"]
+    "NetCore", "UMG", "AdvancedPreviewScene", "AIModule", "EditorSubsystem", "DeveloperSettings",
+    "Projects"
+    ]
 
   var engineRuntimepluginSymbols = @["GameplayAbilities"]
   

@@ -215,6 +215,7 @@ proc isChildOf*[C:UStruct, P:UStruct] : bool = isChildOf(staticClass[C](), stati
 proc isA*[T:UObject](obj:UObjectPtr) : bool = obj.isA(staticClass(T))
 
 proc isCDO*(obj : UObjectPtr) : bool = RF_ClassDefaultObject in obj.getFlags()
+proc isEditorOnly*(obj : UObjectPtr): bool {.importcpp:"#->IsEditorOnly()".}
 
 #it will call super until UObject is reached
 iterator getClassHierarchy*(cls:UClassPtr) : UClassPtr = 

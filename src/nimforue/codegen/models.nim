@@ -127,6 +127,7 @@ type
         size*: int32
         parentSize*: int32
         alignment*: int32        
+        isEditorOnly*: bool
 
         case kind*: UETypeKind
             of uetClass:
@@ -162,6 +163,7 @@ type
         dependencies* : seq[string]   
         hash* : string
         isVirtual* : bool #A fake module that's only a module in the Nim side of things. It basically means that a set of classes get included into its own file to avoid name collisions and also to speed up compilation times.
+        isEditorOnly*: bool
     UEProject* = object
         modules* : seq[UEModule]
 

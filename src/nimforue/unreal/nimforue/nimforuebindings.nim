@@ -54,7 +54,7 @@ proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.
 #     {
 #       TGuardValue<bool> Guard(GIsRetrievingVTablePtr, true);
 
-#       // Mark we're in the constructor now.
+#       # Mark we're in the constructor now.
 #       FUObjectThreadContext& ThreadContext = FUObjectThreadContext::Get();
 #       TScopeCounter<int32> InConstructor(ThreadContext.IsInConstructor);
 
@@ -473,7 +473,9 @@ proc `$`*(str:UScriptStructPtr) : string =
   # result = &"{str} \n\t Props:"
   # for p in str.getFPropsFromUStruct():
   #   result = &"{str}\n\t\t {p}"
-  
+
+
+
 
 proc dump*(cls:UClassPtr) : string = 
   var str = &"Class: {cls.getName()} \n\t Parent: {cls.getSuperClass().getName()}\n\t Module:{cls.getPackage().getModuleName()} \n\t Package:{cls.getPackage().getName()} \n\t Class Flags: {cls.classFlags} \n\t Object Flags: {cls.getFlags}"
@@ -493,6 +495,7 @@ proc dump*(cls:UClassPtr) : string =
   let funcs = cls.getFuncsFromClass()
   for f in funcs:
     str = &"{str}\n\t\t {f}"
+  str.add &"\n\t Module EditorOnly (pkg) : {cls.getPackage.isEditorOnly()}"
   str
 
 proc `$`*(obj:UObjectPtr) : string = 
