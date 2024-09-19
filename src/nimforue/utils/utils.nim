@@ -313,3 +313,5 @@ macro here*(x: varargs[typed, `$`]):untyped {.noSideEffect.} =
     for c in x:
       result.add c
 
+#importcpp utils
+proc get*[T](): ptr T {.importcpp:"(&'*0::Get())".}

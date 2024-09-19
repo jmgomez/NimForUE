@@ -705,15 +705,20 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
   let allObjs = pkg.getAllObjectsFromPackage[:UObject]()
   var name = pkg.getShortName()
 
-  let initialTypes = allObjs.toSeq()
+  var initialTypes = allObjs.toSeq()
     .map((obj: UObjectPtr) => getUETypeFrom(obj, rules, pchIncludes))
     .sequence()
+  
+  if pkg.isEditorOnly:
+    for uet in initialTypes.mitems:
+      uet.isEditorOnly = true
   
   let submodulesTable = getSubmodulesForTypes(pkg.getShortName(), initialTypes, rules)
   var submodules : seq[UEModule] = @[]
   for subModuleName, submoduleTypes in submodulesTable:
     # let deps = getDepsFromTypes(subModuleName, submoduleTypes, @[])
     var module = makeUEModule(subModuleName, submoduleTypes, rules)
+    module.isEditorOnly = pkg.isEditorOnly
     submodules.add module
   return submodules
 

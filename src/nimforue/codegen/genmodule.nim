@@ -287,16 +287,28 @@ proc genCode(filePath: string, moduleStrTemplate: string, moduleDef: UEModule, m
 
   proc shoudGenImports(dep: string): bool = 
     moduleDef.name.split("/")[^1].toLower notin ["delegates", "enums"]
-   
   
+  let whenWithEditorNode = 
+   genAst(moduleNode):
+      when withEditor:
+        discard #some code so it doesnt complain when the module is empty
+        moduleNode
+  #genAst that doesnt allow us to set this ident directly
+  whenWithEditorNode[0][0] = ident "WithEditor"
+
+  let moduleCode = 
+    if moduleDef.isEditorOnly and target == ctExport: 
+      whenWithEditorNode
+    else: moduleNode
   let code =
     moduleStrTemplate &
     #"{.experimental:\"codereordering\".}\n" &
     
     moduleDef.dependencies
       .filter(shoudGenImports) #skip impots for these as they dont have deps
-      .map(getImport).join("\n") &
-    repr(moduleNode)
+      .map(getImport).join("\n") & "\n" &
+      
+    repr(moduleCode)
       .multiReplace(
     ("{.inject.}", ""),
     ("{.inject, ", "{."),

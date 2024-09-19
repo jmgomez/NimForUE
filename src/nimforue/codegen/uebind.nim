@@ -254,7 +254,7 @@ func getClassTemplate*(typeDef: UEType, fromBindings: bool = false) : string =
   let fieldNotifies = generateFieldNotify(typeDef).get(("", ""))
 
   # see manual codegenDecl pragma for $1,$3
-  &"""
+  result = &"""
 struct $1 : public $3{cppInterfaces} {{
   typedef $3 Super;
   typedef $1 ThisClass;
