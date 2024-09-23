@@ -100,6 +100,7 @@ proc reinstanceNextFrame() {.cdecl, exportc.} =
 
 #Called from the non editor build on StartupModule
 proc startNue*() {.cdecl, exportc.} =
+  UE_Log "Starting NUE..."
   emitTypes()
 
 proc netSerialize*(vec: FVector, ar: var FArchive, map: UPackageMapPtr, bOutSuccess: var bool) {.importcpp:"#.NetSerialize(@)".}
