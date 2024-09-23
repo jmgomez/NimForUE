@@ -78,6 +78,8 @@ public class $1 : ModuleRules
 			"PhysicsCore",
       "UMG",
       "NavigationSystem",
+      "DeveloperSettings",
+			"GameplayTasks"
 		
 		});
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
@@ -203,6 +205,8 @@ proc getPluginTemplateFile(name:string, modules:seq[string], platformTarget: Pla
 proc getModuleBuildCsFile(name:string, platformTarget: PlatformTargetKind) : string =
   #Probably bindings needs a different one
   let modName = nameWithPlatformSuffix(name, platformTarget)
+  #TODO shis should create two versions, one for editor and one for game. 
+  #The editor one should use all the modules, while the game one should only use the modules that are not editor only.
   let userPluginModules = getUserGamePlugins({modkDefault, modkRuntime}).values.toSeq.concat
   let extraModules = 
     (getGameUserConfigValue("gameModules", newSeq[string]()) & userPluginModules)
@@ -268,10 +272,8 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
     
 
 proc copyCppToModule(name:string, nimGeneratedCodeDir : string, platformTarget: PlatformTargetKind) =   
-  let cppSrcDir = PluginDir / getBaseNimCacheDir(name, platformTarget) / "release" #embed debug? 
-    # cppSrcDir = PluginDir / &".nimcache/nimforuegame/release"
+  let cppSrcDir = PluginDir / getBaseNimCacheDir(name, platformTarget) / "non-editor"
   copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir)
-
 
 proc generateModule*(name, pluginName : string, platformTarget: PlatformTargetKind) = 
   let moduleName = nameWithPlatformSuffix(name, platformTarget)

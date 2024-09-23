@@ -2,8 +2,8 @@
 import std / [ options, strscans, algorithm, os, osproc, parseopt, sequtils, strformat, strutils, sugar, tables, times ]
 import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 
-
-let unrealFolder = if WithEditor: "UnrealEditor" else: "UnrealGame"
+#The unreal game version would be only used for the bindings but turns out we dont need to make a distinction
+let unrealFolder = "UnrealEditor" 
 
 func getModuleName(target:string) : string = 
   # if target == "bindings": "NimForUEBindings"
@@ -13,13 +13,13 @@ func getModuleName(target:string) : string =
 proc pchObjPath(target:string) : string = 
   let module = getModuleName(target)
   let config = getNimForUEConfig()
-  let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir() / unrealFolder / $config.targetConfiguration
+  let pchDir = PluginDir / "Intermediate\\Build" / WinPlatformDir() / unrealFolder / $config.targetConfiguration
   pchDir / module / &"PCH.{module}.h.obj"
 
 
 proc pchCompileFlags(target:string) : seq[string] = 
   let config = getNimForUEConfig()
-  let pchDir = PluginDir / "Intermediate\\Build"/ WinPlatformDir() / unrealFolder / $config.targetConfiguration
+  let pchDir = PluginDir / "Intermediate\\Build" / WinPlatformDir() / unrealFolder / $config.targetConfiguration
   let module = getModuleName(target)
   @[
     &"/FI" & escape(quotes(pchDir / module / &"PCH.{module}.h")),
@@ -142,7 +142,7 @@ proc getPdbFilePath*(targetName:static string): string =
   createDir(pdbFolder)
 
   # clean up pdbs
-  for pdbPath in walkFiles(pdbFolder/ (targetName) & "*.pdb"):
+  for pdbPath in walkFiles(pdbFolder / (targetName) & "*.pdb"):
     discard tryRemoveFile(pdbPath) # ignore if the pdb is locked by the debugger
 
   proc toVersion(s: string):int =

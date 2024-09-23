@@ -109,5 +109,5 @@ proc getPlatformSwitches(withPch, withDebug : bool, target: static string, platf
 proc hostPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(false, true, "", getPlatformTarget(""))
 proc pluginPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "guest", getPlatformTarget(""))
 proc gamePlatformSwitches*(withDebug: bool, platformTarget:PlatformTargetKind): seq[string] = getPlatformSwitches(withPch, withDebug, "game", platformTarget) 
-proc bindingsPlatformSwitches*(withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "bindings", getPlatformTarget("")) 
+proc bindingsPlatformSwitches*(witchPch, withDebug: bool): seq[string] = getPlatformSwitches(withPch, withDebug, "bindings", getPlatformTarget("")) 
 

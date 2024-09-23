@@ -9,7 +9,7 @@ public class NimForUEBindings : ModuleRules
 	[DllImport("kernel32.dll")]
 	static extern bool SetDllDirectory(string lpPathName);
 	[DllImport("hostnimforue")]
-	public static extern IntPtr getGameModules();
+	public static extern IntPtr getGameModules(bool withEditor);
 	void AddHostDll() {
 		var nimBinPath = Path.Combine(PluginDirectory, "Binaries", "nim", "ue");
 		string dynLibPath;
@@ -52,17 +52,18 @@ public class NimForUEBindings : ModuleRules
 				"UnrealEd",
 				"AdvancedPreviewScene"
 			});
-			AddHostDll();
-			var gameModulesStr = Marshal.PtrToStringAnsi(getGameModules());
-			
-			if (!String.IsNullOrEmpty(gameModulesStr)) {
-				var nimGameModules = gameModulesStr.Split(",");
-				foreach (var m in nimGameModules) {
-					Console.WriteLine("Adding Nim Module:: " + m);
-				}
-				PublicDependencyModuleNames.AddRange(nimGameModules);
-			}
 		}
+
+		AddHostDll();
+		var gameModulesStr = Marshal.PtrToStringAnsi(getGameModules(Target.bBuildEditor));
+		if (!String.IsNullOrEmpty(gameModulesStr)) {
+			var nimGameModules = gameModulesStr.Split(",");
+			foreach (var m in nimGameModules) {
+				Console.WriteLine("Adding Nim Module:: " + m);
+			}
+			PublicDependencyModuleNames.AddRange(nimGameModules);
+		}
+	
 		if (Target.Platform == UnrealTargetPlatform.Win64){
 			CppStandard = CppStandardVersion.Cpp20;
 		}
@@ -78,6 +79,7 @@ public class NimForUEBindings : ModuleRules
 		PublicIncludePaths.Add(nimHeadersPath);
 		PrivatePCHHeaderFile = PCHFile;
 		bUseUnity = false;
+		
 		
 	}
 }

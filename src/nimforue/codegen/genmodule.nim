@@ -354,10 +354,7 @@ macro genProjectBindings*(project: static UEProject, pluginDir: static string) =
     let moduleImportStrTemplate = &"""
 #hash:{module.hash}
 when not defined(nimsuggest) and not defined(nimcheck):
-  include {preludeRelative}../prelude
-  const BindingPrefix {{.strdefine.}} = ""  
-  {{.compile: BindingPrefix&"{module.name.tolower().replace("/", "@s")}.nim.cpp".}}
-   
+  include {preludeRelative}../prelude   
 """
     let moduleExportStrTemplate = &"""
 include {preludeRelative}../prelude
@@ -376,4 +373,5 @@ import {runtimeFields}
     genCode(importBindingsPath, moduleImportStrTemplate, module, genImportCModuleDecl(module), ctImport)
     genCode(exportBindingsPath, moduleExportStrTemplate, module, genExportModuleDecl(module), ctExport)
     genCode(vmBindingsPath, moduleVMStrTemplate, module, genVMModuleDecl(module), ctVM)
+
     # genHeaders(module, nimHeadersDir)
