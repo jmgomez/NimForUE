@@ -5,4 +5,3 @@ import ../../buildscripts/nimforueconfig
 import ../../.reflectiondata/ueproject
 
 genProjectBindings(project, "./")
-

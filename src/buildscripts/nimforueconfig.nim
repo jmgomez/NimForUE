@@ -291,7 +291,7 @@ type UEPluginModuleKind* = enum
   modkDefault = "Default" 
   modkRuntime = "Runtime"
 
-proc getUserGamePlugins*(kinds: set[UEPluginModuleKind] = {modkAll}): Table[string, seq[string]] = #plugin: modules
+proc getUserGamePlugins*(kinds: set[UEPluginModuleKind]): Table[string, seq[string]] = #plugin: modules
   result = initTable[string, seq[string]]()
   let userGamePlugins = getGameUserConfigValue("gamePlugins", newSeq[string]())
   for pluginName in userGamePlugins:     
@@ -407,7 +407,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   var intermediateGenModules = @["NetCore", "Engine", "PhysicsCore", "AssetRegistry", 
     "UnrealEd", "ClothingSystemRuntimeInterface",  "EditorSubsystem", "InterchangeCore",
     "TypedElementFramework","Chaos", "ChaosCore", "EditorStyle", "EditorFramework",
-    "Localization", "DeveloperToolSettings", "Slate",
+    "Localization", "DeveloperToolSettings", "Slate", "CoreUObject",
     "InputCore", "DeveloperSettings", "SlateCore", "ToolMenus"]
   var editorModules = @["UnrealEd", "PropertyEditor", 
   "EditorStyle", "EditorSubsystem","EditorFramework",
@@ -426,7 +426,7 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   var gamePlugins = newSeq[string]()
 
   var userGameModules = getGameUserConfigValue("gameModules",  newSeq[string]())
-  for pluginName, modules in getUserGamePlugins():
+  for pluginName, modules in getUserGamePlugins({modkAll}):
     for moduleName in modules:
       gamePlugins.add getGamePluginModule(pluginName, moduleName)
 
@@ -551,7 +551,7 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
     modules.mapIt(getGameModuleDynLib(pluginDir / ".." / pluginName , it))
 
   var userGamePluginSymbols = newSeq[string]()
-  for pluginName, modules in getUserGamePlugins():
+  for pluginName, modules in getUserGamePlugins({modkAll}):
     userGamePluginSymbols.add(getGamePluginSymbols(pluginName, modules))
 
   var enginePlugins = @["EnhancedInput"]

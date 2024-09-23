@@ -7,6 +7,9 @@ import ../switches/switches
 import nimforue/utils/utils
 
 const nimBin {.strdefine.} = ""
+#In non editor buildsbndings are copied over by nim automatically in a lazy manner as we use the compile pragma
+proc nimcacheSubdir*(config: NimForUEConfig): string =
+  if config.withEditor: "editor" else: "non-editor"
 
 let nimCmd = if nimBin != "": nimBin else: "nim"
 # let nimCmd = "nim_temp" #so we can easy switch with nim_temp
@@ -217,7 +220,7 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
     "-d:OutputHeader:" & name.capitalizeAscii() & ".h",
     "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
-    &"-d:BindingPrefix=\"{PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s\"",
+    &"-d:BindingPrefix=\"{PluginDir}/.nimcache/gencppbindings/{nimcacheSubdir(config)}/@m..@sunreal@sbindings@sexported@s\"",
     "-l:" & getBindingsLib()
   ] 
   let isCompileOnly = "--compileOnly" in extraSwitches
@@ -232,7 +235,13 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
 
   ensureGameConfExists()
   
-  let nimCache = getBaseNimCacheDir(name, platformTarget) / (if withDebug and not isCompileOnly: "debug" else: "release")
+  var nimCache = getBaseNimCacheDir(name, platformTarget) 
+  if withDebug and not isCompileOnly: 
+    nimCache = nimCache / "debug"
+  elif isCompileOnly:
+    nimCache = nimCache / "non-editor"
+  else:
+    nimCache = nimCache / "release"
   let isGame = name == "game"
   
   let entryPoint = quotes(NimGameDir() / (if isGame: "game.nim" else: &"{name}/{name}.nim"))
@@ -290,7 +299,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool, platformT
     #Probably this is windows only
     let cppFileContent = readFile(cppFile)
     let formsToMatch = ["(NCSTRING)", "(NCSTRING*)"]
-    if formsToMatch.any(x=> x in cppFileContent):
+    if formsToMatch.any(x => x in cppFileContent):
       let cleanedCppFileContent = cppFileContent.multiReplace(("(NCSTRING)", "(char*)"), ("(NCSTRING*)", "(char**)"))
       writeFile(cppFile, cleanedCppFileContent)
     #checks if the file changed so UE doesnt compile it again:
@@ -307,7 +316,7 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool, platformT
   # removeDir(privateBindingsFolder)
   createDir(privateBindingsFolder)
   #TODO pick only the used bindings files (by collecting them at compile time)
-  for cppFile in walkFiles(bindingsDir/ &"*.cpp"):
+  for cppFile in walkFiles(bindingsDir / &"*.cpp"):
     let filename = cppFile.extractFilename()
     if filename.contains("sbindings@sexported") and not (filename.contains("unrealed") or filename.contains("umgeditor")): 
       let path = privateBindingsFolder / filename
@@ -335,27 +344,35 @@ proc copyNewCppTo(srcFolder, dstFolder: string, pattern = "*.cpp") =
     log &"No files copied from {srcFolder} to {dstFolder} as is up to date"
 
 proc compileGenerateBindings*() = 
-  let config = getNimForUEConfig()
+  let config: NimForUEConfig = getNimForUEConfig()
   let withDebug = true #TODO disable on final builds
-  let buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withDebug), ueincludes(), uesymbols()].foldl(a & " " & b.join(" "), "")
-  # doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} --linedir:off  --noMain --compileOnly --header:UEGenBindings.h  --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  #log &"{nimCmd}  cpp {buildFlags} -d:bindings --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim"
-  doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} -d:bindings --noMain --app:staticlib  --outDir:Binaries/nim/ --header:UEGenBindings.h --out:{getBindingsLib()} --nimcache:.nimcache/gencppbindings src/nimforue/codegen/maingencppbindings.nim") == 0)
-  let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
-  let uegenbindingsHeader = "./.nimcache/gencppbindings/UEGenBindings.h"
-  copyFile(uegenbindingsHeader, ueGenBindingsPath)  
-  #It still generates NimMain in the header. So we need to get rid of it:
-  let nimMain = "N_CDECL(void, NimMain)(void);"
-  writeFile(ueGenBindingsPath, readFile(ueGenBindingsPath).replace(nimMain, ""))
+  #Bindings dont need pch as we only compile the nim code. 
+  #For editor builds, we compile them along with the dll, 
+  #for non editor we copy them into the unreal project and let UBT to do the rest
+  proc compileGenerateBindings(withEditor: bool) = 
+    let withPch = withEditor
+    var buildFlags = @[buildSwitches, targetSwitches(withDebug, "bindings"), bindingsPlatformSwitches(withPch, withDebug), ueincludes(), uesymbols()].foldl(a & " " & b.join(" "), "")
+    if withEditor:
+      echo "Compiling bindings for editor, will output a static lib"
+      buildFlags.add(" --app:staticlib")
+      buildFlags.add(&" --out:{getBindingsLib()}")
+    else:
+      echo "Compiling bindings for non editor, will output a dynamic lib"
+      buildFlags.add("--compileOnly")
+    let nimCacheDir = ".nimcache/gencppbindings" / nimcacheSubdir(config)
+    let outHeader = "UEGenBindings.h"
 
-  let generateCppBindings = false
-  if generateCppBindings: #Only needed for LC support which not sure if we should waste energy on it
-    let autoBindingsPath = "./Source" / "NimForUEAutoBindings"
-    let cppDestiny = autoBindingsPath / "Private" / "autogen"
-    createDir(cppDestiny)
-    copyNewCppTo("./.nimcache/gencppbindings/", cppDestiny)
-    discard updateFile(ueGenBindingsPath, autoBindingsPath / "Public" / "UEGenBindings.h")
-  # removeFile(ueGenBindingsPath)
+    doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} -d:bindings --noMain  --outDir:Binaries/nim/ --header:{outHeader} --nimcache:{nimCacheDir} src/nimforue/codegen/maingencppbindings.nim") == 0)
+    let ueGenBindingsPath =  config.nimHeadersDir / "UEGenBindings.h"
+    let uegenbindingsHeader = nimCacheDir / "UEGenBindings.h"
+    copyFile(uegenbindingsHeader, ueGenBindingsPath)  
+    let nimMain = "N_CDECL(void, NimMain)(void);"
+    writeFile(ueGenBindingsPath, readFile(ueGenBindingsPath).replace(nimMain, ""))
+  
+  #since bindings are stored in different folders we generate both versions here
+  compileGenerateBindings(withEditor = true)
+  compileGenerateBindings(withEditor = false)
+  
 
 
 

@@ -77,19 +77,19 @@ public class NimForUE : ModuleRules
 
 		if (Target.bBuildEditor) {
 			AddNimForUEDev();
-			var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
-			var PCHFile = Path.Combine(nimHeadersPath, "nuebase.h");
-			PublicIncludePaths.Add(nimHeadersPath);
-			PrivatePCHHeaderFile = PCHFile;
-
-			var nimGameDir = Path.Combine(this.Target.ProjectFile.Directory.ToString(), "NimForUE");
-			if (File.Exists(Path.Combine(nimGameDir, "nuegame.h"))) {
-				PublicIncludePaths.Add(nimGameDir);
-				PublicDefinitions.Add("NUE_GAME=1");
-				Console.WriteLine("[NimForUE.build.cs] Found an user custom header nuegame.h Adding it to the PCH");
-			}
 		}
 
+		var nimHeadersPath = Path.Combine(PluginDirectory, "NimHeaders");
+		var PCHFile = Path.Combine(nimHeadersPath, "nuebase.h");
+		PublicIncludePaths.Add(nimHeadersPath);
+		PrivatePCHHeaderFile = PCHFile;
+
+		var nimGameDir = Path.Combine(this.Target.ProjectFile.Directory.ToString(), "NimForUE");
+		if (File.Exists(Path.Combine(nimGameDir, "nuegame.h"))) {
+			PublicIncludePaths.Add(nimGameDir);
+			PublicDefinitions.Add("NUE_GAME=1");
+			Console.WriteLine("[NimForUE.build.cs] Found an user custom header nuegame.h Adding it to the PCH");
+		}
 
 		bUseUnity = false;
 	}
