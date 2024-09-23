@@ -8,8 +8,8 @@ import nimforue/utils/utils
 
 const nimBin {.strdefine.} = ""
 #In non editor buildsbndings are copied over by nim automatically in a lazy manner as we use the compile pragma
-proc nimcacheSubdir*(config: NimForUEConfig): string =
-  if config.withEditor: "editor" else: "non-editor"
+proc nimcacheSubdir*(withEditor: bool): string =
+  if withEditor: "editor" else: "non-editor"
 
 let nimCmd = if nimBin != "": nimBin else: "nim"
 # let nimCmd = "nim_temp" #so we can easy switch with nim_temp
@@ -220,12 +220,12 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
     "-d:OutputHeader:" & name.capitalizeAscii() & ".h",
     "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
-    &"-d:BindingPrefix=\"{PluginDir}/.nimcache/gencppbindings/{nimcacheSubdir(config)}/@m..@sunreal@sbindings@sexported@s\"",
+    &"-d:BindingPrefix=\"{PluginDir}/.nimcache/gencppbindings/{nimcacheSubdir(config.withEditor)}/@m..@sunreal@sbindings@sexported@s\"",
     "-l:" & getBindingsLib()
   ] 
   let isCompileOnly = "--compileOnly" in extraSwitches
   if isCompileOnly:
-    gameSwitches.add("--genScript")
+    gameSwitches.add("--genScript")    
     gameSwitches.add("--noMain")
   else:
     gameSwitches.add("--app:lib")
@@ -359,7 +359,7 @@ proc compileGenerateBindings*() =
     else:
       echo "Compiling bindings for non editor, will output a dynamic lib"
       buildFlags.add("--compileOnly")
-    let nimCacheDir = ".nimcache/gencppbindings" / nimcacheSubdir(config)
+    let nimCacheDir = ".nimcache/gencppbindings" / nimcacheSubdir(withEditor)
     let outHeader = "UEGenBindings.h"
 
     doAssert(execCmd(&"{nimCmd}  cpp {buildFlags} -d:bindings --noMain  --outDir:Binaries/nim/ --header:{outHeader} --nimcache:{nimCacheDir} src/nimforue/codegen/maingencppbindings.nim") == 0)
