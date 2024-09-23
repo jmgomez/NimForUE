@@ -21,6 +21,8 @@ void Logger(NCSTRING msg) {
 
 void FNimForUEModule::StartupModule()
 {
+   if (IsRunningCookCommandlet()) return;
+
 #if WITH_EDITORONLY_DATA
 	//Notice MacOS does not require to manually load the library. It happens on the build.cs file.
 	//The gues library, it's loaded in the EngineSubsystem
