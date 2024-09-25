@@ -546,6 +546,22 @@ task macossetup, "Optional setup for MacOs so both project can live in the same 
     log &"Creating symlink for {sourceDir / dir} to {dstDir / dir}"
     createSymlink(sourceDir / dir, dstDir / dir)
 
+task cook, "Cooks the game":
+  #[
+  cd /D "UE4_ROOT_DIR\Engine\Build\BatchFiles"
+RunUAT BuildCookRun -project=PROJECT_ROOT_DIR\PROJECT_NAME.uproject -build -cook -clientconfig=Development -NoP4 -pak -crashreporter -stage -serverplatform=Win64 -stagingdirectory=PROJECT_ROOT_DIR\Build
+pause
+  ]#
+  when not defined(windows):
+    log "Cooking is not supported on non windows platforms", lgError
+    quit()
+  let uproject = getGamePathFromGameDir()
+  let projectDir = parentDir(uproject)
+  let stagingDir = projectDir / "Build"
+  let uat = config.engineDir  / "Build" / "BatchFiles" / "RunUAT.bat"
+  let cmd = &"""powershell.exe {uat} BuildCookRun -project="{uproject}" -build -cook -clientconfig={config.targetConfiguration} -NoP4 -pak -crashreporter -stage -serverplatform={config.targetPlatform} -stagingdirectory="{stagingDir}"""
+  echo cmd
+  doAssert(execCmd(cmd) == 0, "Cooking failed. Check the logs for more details")
 
 # --- End Tasks ---
 ok(taskOptions)
