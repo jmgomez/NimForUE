@@ -327,9 +327,11 @@ struct TStructOpsTypeTraits<{typeDef.name}> : public TStructOpsTypeTraitsBase2<{
   {tBaseStructure}
 """
 
-func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure,  lineInfo: Option[LineInfo]) : NimNode =
-
-  let props = nnkStmtList.newTree(
+func genUClassTypeDef(typeDef : UEType, rule: UERule = uerNone, typeExposure: UEExposure,  lineInfo: Option[LineInfo]) : NimNode =
+  #Props as getters/setters (dont calculate for uexDsl, we emit them as fields)
+  var props = newEmptyNode()
+  if typeExposure != uexDsl:
+    props = nnkStmtList.newTree(
         typeDef.fields
           .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
           .map(prop=>genProp(typeDef, prop, typeExposure)))
@@ -338,6 +340,18 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
           typeDef.fields
              .filter(prop=>prop.kind==uefFunction)
              .map(fun=>genFunc(typeDef, fun, typeExposure).impl))
+  
+  let fields =
+    if typeExposure == uexDsl and typeDef.fields.len > 0:
+      typeDef.fields
+        .map(prop => 
+          nnkIdentDefs.newTree(
+            getFieldIdent(prop),
+            prop.getTypeNodeFromUProp(isVarContext=false),             
+            newEmptyNode()))
+        .foldl(a.add b, nnkRecList.newTree)
+    else:
+      newEmptyNode()
 
   let typeDecl = 
     if rule == uerCodeGenOnlyFields or typeDef.forwardDeclareOnly or 
@@ -361,8 +375,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
             nnkObjectTy.newTree(
               newEmptyNode(),
               nnkOfInherit.newTree(ident typeDef.parent),
-              newEmptyNode()
-              # typeDef.genPropsAsRecList(rule, false)
+              fields
             )
           )
         let typPtr = 
@@ -394,7 +407,8 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         props
         funcs
   
-
+  debugEcho repr result
+  # quit()
   result.add genInterfaceConverers(typeDef, typeExposure)
 
 func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode = 
