@@ -135,6 +135,7 @@ type
                 clsFlags*: EClassFlagsVal
                 ctorSourceHash*: string
                 interfaces* : seq[string] #the names of the interfaces implemented by this class. If starts with I is a cpp interface otherwise (U) it's a reflected interface. The cpp version generates the actual required cpp code
+                interfaceOffsets*: seq[(string, int32)] # stores the vtable offset of each I interface
                 fnOverrides* : seq[CppFunction] #the names of theTODO Delete
                 isParentInPCH* : bool
                 forwardDeclareOnly* : bool #if the class is forward declared only. This means we dont define the class in the current module, it maybe defined (func emmited) in another module or in the PCH

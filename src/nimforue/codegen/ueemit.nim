@@ -44,7 +44,7 @@ proc vtableConstructorStatic*[T](helper : var FVTableHelper): UObjectPtr {.cdecl
     newInstanceWithVTableHelperNoEditor[T](helper) #TODO review this
 
 proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.} =
-  const typeName = typeof(T).name
+  const typeName = typetraits.name typeof(T)
   const ueType = getVMTypes(false).filter(t=>t.name == typeName).head() #Compile time only. This may be expensive. Make it faster (but measure first)
   when ueType.isSome() and ueType.get.hasObjInitCtor or T is UUserWidget: #The type needs to be in sync with umacros 
     newInstanceInAddrWithInit[T](initializer.getObj(), initializer)

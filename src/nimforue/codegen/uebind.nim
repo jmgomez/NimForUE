@@ -246,6 +246,24 @@ func genInterfaceConverers*(ueType:UEType, typeExposure: UEExposure) : NimNode =
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
+func genInterfaceOffsets*(ueType:UEType) : NimNode =
+  let vtableOffsetNode = genAst():
+    proc vtableOffset[T, I](baseType: ptr T = nil, interfaceType: ptr I = nil): int32 {.importcpp:"VTABLE_OFFSET('*1, '*2)".}
+
+  let typeNode = ident ueType.name
+  func genVtableOffsetTuple(interfaceStr: string): NimNode =
+    genAst(interfaceStrNode = newLit interfaceStr, typeNode, interfaceType = ident interfaceStr):
+      (interfaceStrNode, vtableOffset[typeNode, interfaceType]())
+  let offsetTuples = ueType.interfaces.filterIt(it[0] == 'I').mapIt(genVtableOffsetTuple(it))
+
+  let offsetsSeq = nnkPrefix.newTree( ident "@", offsetTuples.foldl(a.add b, nnkBracket.newTree()))
+  result = genAst(vtableOffsetNode, typeNode, offsetsSeq):
+    vtableOffsetNode
+    proc vtableOffsets*[T](t: ptr T = nil): seq[(string, int32)] = offsetsSeq
+
+  if ueType.name == "AAuraPlayerState":
+    here result.repr
+
 func getClassTemplate*(typeDef: UEType, fromBindings: bool = false) : string =  
   var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":
@@ -312,16 +330,30 @@ struct TStructOpsTypeTraits<{typeDef.name}> : public TStructOpsTypeTraitsBase2<{
 """
 
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure,  lineInfo: Option[LineInfo]) : NimNode =
-
-  let props = nnkStmtList.newTree(
-        typeDef.fields
-          .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
-          .map(prop=>genProp(typeDef, prop, typeExposure)))
+  #Props as getters/setters (dont calculate for uexDsl, we emit them as fields)
+  var props = newEmptyNode()
+  #if typeExposure != uexDsl:
+  props = nnkStmtList.newTree(
+      typeDef.fields
+        .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
+        .map(prop=>genProp(typeDef, prop, typeExposure)))
 
   let funcs = nnkStmtList.newTree(
-          typeDef.fields
-             .filter(prop=>prop.kind==uefFunction)
-             .map(fun=>genFunc(typeDef, fun, typeExposure).impl))
+    typeDef.fields
+      .filter(prop=>prop.kind==uefFunction)
+      .map(fun=>genFunc(typeDef, fun, typeExposure).impl))
+
+  let fields =
+    if typeExposure == uexDsl and typeDef.fields.len > 0:
+      typeDef.fields
+        .map(prop => 
+          nnkIdentDefs.newTree(
+            getFieldIdent(prop),
+            prop.getTypeNodeFromUProp(isVarContext=false),             
+            newEmptyNode()))
+        .foldl(a.add b, nnkRecList.newTree)
+    else:
+      newEmptyNode()
 
   let typeDecl = 
     if rule == uerCodeGenOnlyFields or typeDef.forwardDeclareOnly or 
@@ -345,8 +377,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
             nnkObjectTy.newTree(
               newEmptyNode(),
               nnkOfInherit.newTree(ident typeDef.parent),
-              newEmptyNode()
-              # typeDef.genPropsAsRecList(rule, false)
+              fields
             )
           )
         let typPtr = 
@@ -377,7 +408,8 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         typeDecl
         props
         funcs
-  
+
+  result.add genInterfaceOffsets(typedef)
 
   result.add genInterfaceConverers(typeDef, typeExposure)
 
