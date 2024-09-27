@@ -55,6 +55,10 @@ public:
 		if (HasGetter())
 			GetterFunc(Container, OutValue);
 	}
+	void SetPropertyOffset(int32 InOffset)
+	{
+		PropertyBaseClass::SetOffset_Internal(InOffset);
+	}
 	void SetSetterFunc(SetterFuncPtr InSetterFunc)
 	{
 		SetterFunc = InSetterFunc;

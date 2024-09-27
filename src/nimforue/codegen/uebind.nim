@@ -246,9 +246,9 @@ func genInterfaceConverers*(ueType:UEType, typeExposure: UEExposure) : NimNode =
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
+proc vtableOffset[T, I](baseType: ptr T = nil, interfaceType: ptr I = nil): int32 {.importcpp:"VTABLE_OFFSET('*1, '*2)".}
+
 func genInterfaceOffsets*(ueType:UEType) : NimNode =
-  let vtableOffsetNode = genAst():
-    proc vtableOffset[T, I](baseType: ptr T = nil, interfaceType: ptr I = nil): int32 {.importcpp:"VTABLE_OFFSET('*1, '*2)".}
 
   let typeNode = ident ueType.name
   func genVtableOffsetTuple(interfaceStr: string): NimNode =
@@ -257,8 +257,7 @@ func genInterfaceOffsets*(ueType:UEType) : NimNode =
   let offsetTuples = ueType.interfaces.filterIt(it[0] == 'I').mapIt(genVtableOffsetTuple(it))
 
   let offsetsSeq = nnkPrefix.newTree( ident "@", offsetTuples.foldl(a.add b, nnkBracket.newTree()))
-  result = genAst(vtableOffsetNode, typeNode, offsetsSeq):
-    vtableOffsetNode
+  result = genAst(typeNode, offsetsSeq):
     proc vtableOffsets*[T](t: ptr T = nil): seq[(string, int32)] = offsetsSeq
 
   if ueType.name == "AAuraPlayerState":
@@ -410,7 +409,6 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         funcs
 
   result.add genInterfaceOffsets(typedef)
-
   result.add genInterfaceConverers(typeDef, typeExposure)
 
 func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode = 

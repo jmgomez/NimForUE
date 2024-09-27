@@ -182,8 +182,12 @@ when not defined(nuevm): #TODO this doesnt belong here
     makeStrProc(UEProject)
 
 
-
-
+func setFieldOffset*(ueType: var UEType, fieldName:string, offset:int32)= 
+    for field in ueType.fields.mitems:
+        if field.name == fieldName:
+            field.offset = offset
+            return
+    assert false, "Field " & fieldName & " not found in " & ueType.name
 # #ONLY FOR Delagates that matches the rule innerClassDelegate
 func getFuncDelegateNimName*(name, outerClassName:string) : string = 
     if outerClassName == "": name

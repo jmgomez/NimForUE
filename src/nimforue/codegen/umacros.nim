@@ -385,7 +385,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
     result =  (typeNode, fns, funcInClass)    
 
       # if ueType.name == "UEnhancedInputAbilitySystem":
-      #   debugEcho repr result
+    # debugEcho repr result
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
   let (uClassNode, fns, _) = uClassImpl(name, body, true)

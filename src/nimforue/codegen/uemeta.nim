@@ -723,6 +723,10 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
   assert propField.kind == uefProp
 
   let prop: FPropertyPtr = newFProperty(makeFieldVariant outer, propField)
+  UE_Log &"Setting offset {propField.offset} for {propField.name} {outer is UClassPtr}"
+  # if outer is UClassPtr:
+  #   UE_Log &"Setting offset {propField.offset} for {propField.name}"
+  # prop.setOffset(propField.offset)
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
   for metadata in propField.metadata:
     prop.setMetadata(n metadata.name, $metadata.value)

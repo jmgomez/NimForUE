@@ -1,4 +1,4 @@
-import std/[sugar, macros, algorithm, strutils, strformat, tables, times, genasts, sequtils, options, hashes]
+import std/[sugar, macros, algorithm, strutils, strformat, tables, times, genasts, sequtils, options, hashes, typetraits]
 import ../unreal/coreuobject/[uobject, package, uobjectglobals, nametypes]
 import ../unreal/core/containers/[unrealstring, array, map]
 import ../unreal/nimforue/[nimforuebindings]
@@ -25,8 +25,6 @@ type
 const getNumberMeta = CppFunction(name: "GetNumber", returnType: "int", params: @[])
 
 const cppHotReloadChild = CppClassType(name: "FNimHotReloadChild", parent: "FNimHotReload", functions: @[], kind: cckStruct)
-
-import std/typetraits
 
 #	return new (EC_InternalUseOnlyConstructor, (UObject*)GetTransientPackage(), NAME_None, RF_NeedLoad | RF_ClassDefaultObject | RF_TagGarbageTemp) TClass(Helper);
 proc newInstanceInAddr*[T](obj:UObjectPtr, fake : ptr T = nil) {.importcpp: "new((EInternal*)#)'*2".} 
@@ -94,7 +92,24 @@ proc addEmitterInfo*(ueType:UEType, fn : UPackagePtr->UFieldPtr, emitter: UEEmit
 
 proc addEmitterInfoForClass*[T](ueType:UEType) : void =  
     addEmitterInfo(ueType, getFnGetForUClass[T](ueType))
+
+proc structOffsetImpl(typ: static string, member: static string): int32 = 
+  const importcppContent = &"STRUCT_OFFSET({typ}, {member})"
+  proc structOffsetInner(): int32 {.importcpp: importcppContent.}
+  structOffsetInner()
+
+func genStructOffset*(typeName: NimNode, member: NimNode): NimNode =
+  genAst(typeName, member):
+    uetype.setFieldOffset(member, structOffsetImpl(typeName, member))
+
+func genStructsOffset*(typeDef: UEType): NimNode = 
+  result = nnkStmtList.newTree()
+  let nimType = newLit typeDef.name
   
+  for field in typeDef.fields.reversed():
+    if field.kind == uefProp:
+      result.add genStructOffset(nimType, newLit field.name)
+
 proc addStructOpsWrapper*(structName : string, fn : UNimScriptStructPtr->void) = 
     getGlobalEmitter().setStructOpsWrapperTable.add(structName, fn)
 
@@ -306,9 +321,13 @@ proc emitUStruct*(typeDef:UEType) : NimNode =
 
 proc emitUClass*(typeDef:UEType, lineInfo: Option[LineInfo] = none(LineInfo)): (NimNode, NimNode) =
     let typeDecl = genTypeDecl(typeDef, lineInfo = lineInfo)
-    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef): #defers the execution
-                addEmitterInfoForClass[name](typeDefAsNode)
-        
+    let structsOffsets = genStructsOffset(typeDef)
+    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, structsOffsets): #defers the execution
+            var uetype {.inject.} = typeDefAsNode
+            uetype.interfaceOffsets = vtableOffsets[name]()   
+            structsOffsets       
+            addEmitterInfoForClass[name](uetype)
+
     result = (typeDecl, typeEmitter)
 
 proc emitUDelegate(typedef:UEType) : NimNode = 
