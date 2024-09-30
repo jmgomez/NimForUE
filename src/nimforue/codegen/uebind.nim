@@ -257,8 +257,9 @@ func genInterfaceOffsets*(ueType:UEType) : NimNode =
   let offsetTuples = ueType.interfaces.filterIt(it[0] == 'I').mapIt(genVtableOffsetTuple(it))
 
   let offsetsSeq = nnkPrefix.newTree( ident "@", offsetTuples.foldl(a.add b, nnkBracket.newTree()))
-  result = genAst(typeNode, offsetsSeq):
-    proc vtableOffsets*[T](t: ptr T = nil): seq[(string, int32)] = offsetsSeq
+  let vtableOffsetsName = ident ueType.name & "VTableOffsets"
+  result = genAst(typeNode, offsetsSeq, vtableOffsetsName):
+    proc vtableOffsetsName*[T](t: ptr T = nil): seq[(string, int32)] = offsetsSeq
 
   if ueType.name == "AAuraPlayerState":
     here result.repr
@@ -276,6 +277,9 @@ struct $1 : public $3{cppInterfaces} {{
   typedef $3 Super;
   typedef $1 ThisClass;
   {defaultCtor}
+  virtual ~$1(){{
+    UE_LOG(LogTemp, Log, TEXT("Destroying NimForUEClass: $1"));
+  }};
   $1(FVTableHelper& Helper) : $3(Helper) {{}}
   $2  
   {fieldNotifies[0]}
@@ -327,13 +331,13 @@ struct TStructOpsTypeTraits<{typeDef.name}> : public TStructOpsTypeTraitsBase2<{
   }};
   {structOpsTraits}
 """
-
+import std/algorithm
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure,  lineInfo: Option[LineInfo]) : NimNode =
   #Props as getters/setters (dont calculate for uexDsl, we emit them as fields)
   var props = newEmptyNode()
-  #if typeExposure != uexDsl:
-  props = nnkStmtList.newTree(
-      typeDef.fields
+  if typeExposure != uexDsl:
+    props = nnkStmtList.newTree(
+        typeDef.fields
         .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
         .map(prop=>genProp(typeDef, prop, typeExposure)))
 
@@ -345,6 +349,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
   let fields =
     if typeExposure == uexDsl and typeDef.fields.len > 0:
       typeDef.fields
+        .reversed
         .map(prop => 
           nnkIdentDefs.newTree(
             getFieldIdent(prop),

@@ -98,9 +98,10 @@ proc structOffsetImpl(typ: static string, member: static string): int32 =
   proc structOffsetInner(): int32 {.importcpp: importcppContent.}
   structOffsetInner()
 
-func genStructOffset*(typeName: NimNode, member: NimNode): NimNode =
-  genAst(typeName, member):
-    uetype.setFieldOffset(member, structOffsetImpl(typeName, member))
+func genStructOffset*(uet: UEType, typeName: NimNode, member: NimNode): NimNode =
+  let ueTypeName = ident uet.name & "UEType"
+  genAst(typeName, member, ueTypeName):
+    ueTypeName.setFieldOffset(member, structOffsetImpl(typeName, member))
 
 func genStructsOffset*(typeDef: UEType): NimNode = 
   result = nnkStmtList.newTree()
@@ -108,7 +109,7 @@ func genStructsOffset*(typeDef: UEType): NimNode =
   
   for field in typeDef.fields.reversed():
     if field.kind == uefProp:
-      result.add genStructOffset(nimType, newLit field.name)
+      result.add genStructOffset(typeDef, nimType, newLit field.name)
 
 proc addStructOpsWrapper*(structName : string, fn : UNimScriptStructPtr->void) = 
     getGlobalEmitter().setStructOpsWrapperTable.add(structName, fn)
@@ -322,11 +323,13 @@ proc emitUStruct*(typeDef:UEType) : NimNode =
 proc emitUClass*(typeDef:UEType, lineInfo: Option[LineInfo] = none(LineInfo)): (NimNode, NimNode) =
     let typeDecl = genTypeDecl(typeDef, lineInfo = lineInfo)
     let structsOffsets = genStructsOffset(typeDef)
-    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, structsOffsets): #defers the execution
-            var uetype {.inject.} = typeDefAsNode
-            uetype.interfaceOffsets = vtableOffsets[name]()   
+    let ueTypeName = ident typeDef.name & "UEType"
+    let vtableOffsetsName = ident typeDef.name & "VTableOffsets"
+    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, structsOffsets, ueTypeName, vtableOffsetsName): #defers the execution
+            var ueTypeName {.inject.} = typeDefAsNode
+            ueTypeName.interfaceOffsets = vtableOffsetsName[name]()   
             structsOffsets       
-            addEmitterInfoForClass[name](uetype)
+            addEmitterInfoForClass[name](ueTypeName)
 
     result = (typeDecl, typeEmitter)
 

@@ -719,14 +719,15 @@ proc toUEModule*(pkg: UPackagePtr, rules: seq[UEImportRule], excludeDeps: seq[st
 
 
 
-proc emitFProperty*(propField: UEField, outer: UStructPtr): FPropertyPtr =
+proc emitFProperty*(propField: UEField, outer: UStructPtr, setOffsets: bool = false): FPropertyPtr =
   assert propField.kind == uefProp
 
   let prop: FPropertyPtr = newFProperty(makeFieldVariant outer, propField)
   UE_Log &"Setting offset {propField.offset} for {propField.name} {outer is UClassPtr}"
   # if outer is UClassPtr:
   #   UE_Log &"Setting offset {propField.offset} for {propField.name}"
-  # prop.setOffset(propField.offset)
+  if setOffsets:
+    prop.setOffset(propField.offset)
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
   for metadata in propField.metadata:
     prop.setMetadata(n metadata.name, $metadata.value)
@@ -916,7 +917,7 @@ proc vmConstructor*(objectInitializer:var FObjectInitializer) : void {.cdecl.} =
 
 proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
-
+  
   let newCls = newUObject[UClass](package, makeFName(ueType.name.removeFirstLetter()), cast[EObjectFlags](objClsFlags))   
   newCls.setClassConstructor(clsConstructor)
   let parentCls = someNil(getClassByName(ueType.parent.removeFirstLetter()))
@@ -947,7 +948,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
     var field = field
     case field.kind:
     of uefProp:
-      discard field.emitFProperty(newCls)
+      discard field.emitFProperty(newCls, setOffsets = true)
     of uefFunction:
 
       # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}" #notice each module emits its own functions  
@@ -962,6 +963,13 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
       newCls.interfaces.add(implementedInterface)
 
   newCls.staticLink(true)
+  #HERE
+  #[
+   Fields -> staticLink(true) -> Fails
+   Fields -> staticLink(false) -> Fails for another reason
+   No fields -> staticLink(true) -> Works
+     
+  ]#
   newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)
 
   setGIsUCCMakeStandaloneHeaderGenerator(true)
