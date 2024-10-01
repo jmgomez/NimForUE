@@ -977,13 +977,6 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
         let implementedInterface = makeFImplementedInterface(ifaceCls, 0, true)
         newCls.interfaces.add(implementedInterface)
 
-  #HERE
-  #[
-   Fields -> staticLink(true) -> Fails
-   Fields -> staticLink(false) -> Fails for another reason
-   No fields -> staticLink(true) -> Works
-     
-  ]#
   newCls.staticLink(false)
 
   newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)
