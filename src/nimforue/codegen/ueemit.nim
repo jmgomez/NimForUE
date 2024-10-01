@@ -111,6 +111,25 @@ func genStructsOffset*(typeDef: UEType): NimNode =
     if field.kind == uefProp:
       result.add genStructOffset(typeDef, nimType, newLit field.name)
 
+proc vtableOffset[T, I](baseType: ptr T = nil, interfaceType: ptr I = nil): int32 {.importcpp:"VTABLE_OFFSET('*1, '*2)".}
+
+func genInterfaceOffsets*(ueType:UEType) : NimNode =
+  if ueType.interfaces.len == 0:
+    return newEmptyNode()
+
+  let typeNode = ident ueType.name
+  func genVtableOffsetTuple(interfaceStr: string): NimNode =
+    genAst(interfaceStrNode = newLit interfaceStr, typeNode, interfaceType = ident interfaceStr):
+      (interfaceStrNode, vtableOffset[typeNode, interfaceType]())
+  let ueTypeName = ident ueType.name & "UEType"
+  let offsetTuples = ueType.interfaces.filterIt(it[0] == 'I').mapIt(genVtableOffsetTuple(it))
+  let offsetsSeq = nnkPrefix.newTree( ident "@", offsetTuples.foldl(a.add b, nnkBracket.newTree()))
+  result = genAst(ueTypeName, offsetsSeq):
+    uetypeName.interfaceOffsets = offsetsSeq
+
+#  if ueType.name == "AAuraPlayerState":
+#    here result.repr
+
 proc addStructOpsWrapper*(structName : string, fn : UNimScriptStructPtr->void) = 
     getGlobalEmitter().setStructOpsWrapperTable.add(structName, fn)
 
@@ -322,13 +341,13 @@ proc emitUStruct*(typeDef:UEType) : NimNode =
 
 proc emitUClass*(typeDef:UEType, lineInfo: Option[LineInfo] = none(LineInfo)): (NimNode, NimNode) =
     let typeDecl = genTypeDecl(typeDef, lineInfo = lineInfo)
-    let structsOffsets = genStructsOffset(typeDef)
     let ueTypeName = ident typeDef.name & "UEType"
-    let vtableOffsetsName = ident typeDef.name & "VTableOffsets"
-    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, structsOffsets, ueTypeName, vtableOffsetsName): #defers the execution
+    let structsOffsets = genStructsOffset(typeDef)
+    let interfaceOffsets = genInterfaceOffsets(typeDef)
+    let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, ueTypeName, structsOffsets, interfaceOffsets): #defers the execution
             var ueTypeName {.inject.} = typeDefAsNode
-            ueTypeName.interfaceOffsets = vtableOffsetsName[name]()   
             structsOffsets       
+            interfaceOffsets
             addEmitterInfoForClass[name](ueTypeName)
 
     result = (typeDecl, typeEmitter)

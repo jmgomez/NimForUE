@@ -43,6 +43,8 @@ type
         Children* : UFieldPtr # Pointer to start of linked list of child fields */
         childProperties* {.importcpp:"ChildProperties".}: FFieldPtr #  /** Pointer to start of linked list of child fields */
         propertyLink* {.importcpp:"PropertyLink".}: FPropertyPtr #  /** 	/** In memory only: Linked list of properties from most-derived to base */
+        propertiesSize* {.importcpp:"PropertiesSize".}: int32
+        minAlignment* {.importcpp:"MinAlignment".}: int32
 
     UStructPtr* = ptr UStruct 
 

@@ -170,22 +170,20 @@ proc expandGameplayAttribute(uef: UEField): NimNode =
   assert uef.kind == uefProp
   let capName = uef.name.capitalizeAscii()
 
-  let repMeta = uef.metadata.first((meta)=>meta.name.toLower() == "replicatedusing" or meta.name.toLower() == "gasreplicated")
+  let repMeta = uef.metadata.first((meta)=>meta.name.toLower() == "gasreplicated")
   let repFunc =
     if repMeta.isSome():
+      # on emit we set the repnotifyfunc (in uemeta emitFProperty) no need to set ReplicatedUsing
       let meta = repMeta.get()
-      let repFn =
-        if meta.name.toLower() == "replicatedusing":
-          ident meta.value
-        else:
-          ident "onRep" & capName
+      let repFnName = ident "onRep" & capName
+      # define a function that calls GAMEPLAYATTRIBUTE_REPNOTIFY(ClassName, PropertyName, OldValue) for GAS replication
       genAst(
-        repFn = repFn,
+        repFnName = repFnName,
         name = ident uef.name,
         BaseTypeName = ident uef.typeName & "Ptr",
         getAttributeFn = ident "get" & capName & "Attribute"
       ):
-        proc repFn(self: BaseTypeName, oldValue: FGameplayAttributeData ) {.virtual.} =
+        proc repFnName(self: BaseTypeName, oldValue: FGameplayAttributeData ) {.virtual.} =
           let asc = self.getOwningAbilitySystemComponent()
           asc.setBaseAttributeValueFromReplication(self.getAttributeFn(), self.name, oldValue)
     else:
@@ -391,8 +389,8 @@ macro uClass*(name:untyped, body : untyped) : untyped =
   let (uClassNode, fns, _) = uClassImpl(name, body, true)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
 
-  #if name[1].eqIdent("AAuraCharacter"):
-  #  here result.repr
+#  if name[1].eqIdent("AMyNimActor"):
+#    here result.repr
 
 
 func getRawClassTemplate(isSlate: bool, interfaces: seq[string]): string = 

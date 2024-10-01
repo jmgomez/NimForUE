@@ -1,4 +1,4 @@
-import std/[options, strutils, sugar, sequtils, strformat,  genasts, macros, importutils]
+import std/[options, strutils, sugar, sequtils, strformat,  genasts, macros, importutils, algorithm]
 include ../unreal/definitions
 import ../utils/[utils, ueutils]
 import ../unreal/core/containers/[unrealstring, array, map, set]
@@ -246,24 +246,6 @@ func genInterfaceConverers*(ueType:UEType, typeExposure: UEExposure) : NimNode =
   
   nnkStmtList.newTree(ueType.interfaces.mapIt(genConverter(it)))
 
-proc vtableOffset[T, I](baseType: ptr T = nil, interfaceType: ptr I = nil): int32 {.importcpp:"VTABLE_OFFSET('*1, '*2)".}
-
-func genInterfaceOffsets*(ueType:UEType) : NimNode =
-
-  let typeNode = ident ueType.name
-  func genVtableOffsetTuple(interfaceStr: string): NimNode =
-    genAst(interfaceStrNode = newLit interfaceStr, typeNode, interfaceType = ident interfaceStr):
-      (interfaceStrNode, vtableOffset[typeNode, interfaceType]())
-  let offsetTuples = ueType.interfaces.filterIt(it[0] == 'I').mapIt(genVtableOffsetTuple(it))
-
-  let offsetsSeq = nnkPrefix.newTree( ident "@", offsetTuples.foldl(a.add b, nnkBracket.newTree()))
-  let vtableOffsetsName = ident ueType.name & "VTableOffsets"
-  result = genAst(typeNode, offsetsSeq, vtableOffsetsName):
-    proc vtableOffsetsName*[T](t: ptr T = nil): seq[(string, int32)] = offsetsSeq
-
-  if ueType.name == "AAuraPlayerState":
-    here result.repr
-
 func getClassTemplate*(typeDef: UEType, fromBindings: bool = false) : string =  
   var cppInterfaces = typeDef.interfaces.filterIt(it[0] == 'I').mapIt("public " & it).join(", ")
   if cppInterfaces != "":
@@ -335,9 +317,10 @@ import std/algorithm
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure,  lineInfo: Option[LineInfo]) : NimNode =
   #Props as getters/setters (dont calculate for uexDsl, we emit them as fields)
   var props = newEmptyNode()
+
   if typeExposure != uexDsl:
     props = nnkStmtList.newTree(
-        typeDef.fields
+        typeDef.fields.reversed
         .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
         .map(prop=>genProp(typeDef, prop, typeExposure)))
 
@@ -348,8 +331,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
 
   let fields =
     if typeExposure == uexDsl and typeDef.fields.len > 0:
-      typeDef.fields
-        .reversed
+      typeDef.fields.reversed
         .map(prop => 
           nnkIdentDefs.newTree(
             getFieldIdent(prop),
@@ -413,7 +395,6 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
         props
         funcs
 
-  result.add genInterfaceOffsets(typedef)
   result.add genInterfaceConverers(typeDef, typeExposure)
 
 func genImportCFunc*(typeDef : UEType, funField : UEField) : NimNode = 

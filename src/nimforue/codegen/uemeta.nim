@@ -934,6 +934,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
   newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32)
   newCls.classCastFlags = parent.classCastFlags
+  newCls.propertiesSize = cast[int32](sizeof(T))
+  newCls.minAlignment = cast[int32](alignof(T))
   copyMetadata(parent, newCls)
 
   newCls.markAsNimClass()
@@ -957,12 +959,19 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
       UE_Error("Unsupported field kind: " & $field.kind)
 
   for iface in ueType.interfaces:
-    let ifaceCls = getClassByName(iface.removeFirstLetter())
-    if ifaceCls.isNotNil():
-      let implementedInterface = makeFImplementedInterface(ifaceCls, 0, true)
-      newCls.interfaces.add(implementedInterface)
+    if iface[0] == 'I':
+      let ifacename = iface
+      let interfaceOffset = ueType.interfaceOffsets.first(entry => entry[0] == ifacename).get(("None", 0'i32))[1]
+      let ifaceCls = getClassByName(iface.removeFirstLetter())
+      if ifaceCls.isNotNil():
+        let implementedInterface = makeFImplementedInterface(ifaceCls, interfaceOffset, false)
+        newCls.interfaces.add(implementedInterface)
+    else:
+      let ifaceCls = getClassByName(iface.removeFirstLetter())
+      if ifaceCls.isNotNil():
+        let implementedInterface = makeFImplementedInterface(ifaceCls, 0, true)
+        newCls.interfaces.add(implementedInterface)
 
-  newCls.staticLink(true)
   #HERE
   #[
    Fields -> staticLink(true) -> Fails
@@ -970,6 +979,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
    No fields -> staticLink(true) -> Works
      
   ]#
+  newCls.staticLink(false)
+
   newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)
 
   setGIsUCCMakeStandaloneHeaderGenerator(true)

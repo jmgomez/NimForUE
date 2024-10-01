@@ -4,7 +4,6 @@
 #include "NimClassBase.h"
 #include "Test/NimTestBase.h"
 #include "ReflectionHelpers.h"
-#include "NimClassBase.h"
 #include "NimScriptStruct.h"
 #include "FNimHotReload.h"
 

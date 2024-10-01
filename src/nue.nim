@@ -10,7 +10,6 @@ import  buildscripts/keyboard
 
 
 var taskOptions: Table[string, string]
-let config = getNimForUEConfig()
 
 type
   Task = object
@@ -22,6 +21,7 @@ var tasks: seq[tuple[name:string, t:Task]]
 
 template task(taskName: untyped, desc: string, body: untyped): untyped =
   proc `taskName`(taskOptions: Table[string, string]) {.nimcall.} =
+    let config {.inject.} = getNimForUEConfig()
     let start = now()
     let curDir = getCurrentDir()
     setCurrentDir(PluginDir)
@@ -95,6 +95,8 @@ task guest, "Builds the main lib. The one that makes sense to hot reload.":
     extraSwitches.add "-f" #force 
   if "nolinedir" in taskOptions:  
     extraSwitches.add "--linedir:off"
+  if "noline" in taskOptions:
+    extraSwitches.add "--linedir:off --linetrace:off"
   
   let debug = "debug" in taskOptions
   if debug:
@@ -225,6 +227,9 @@ task lib, "Builds a game lib":
     extraSwitches.add "-f" #force 
   if "nolinedir" in taskOptions:  
     extraSwitches.add "--linedir:off"
+  if "noline" in taskOptions:
+    extraSwitches.add "--linedir:off --linetrace:off"
+
   if "livecoding" in taskOptions: #notice when doing non editor builds we will be doing the same process
     withLiveCoding = true
   let shouldGenerateModule = withLiveCoding or not withEditor
@@ -245,7 +250,7 @@ task lib, "Builds a game lib":
       log "\twith debug"
     assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"         
     let platformTarget = getPlatformTargetFromOptions(taskOptions)
-    compileLib(taskOptions["name"], extraSwitches, debug, release, threads, platformTarget)
+    compileLib(taskOptions["name"], extraSwitches, debug, release, threads, platformTarget, genCompileScript, runCompileScript)
     if shouldGenerateModule:
       generatePlugin(getPluginName(), platformTarget)
       generateModule(name.capitalizeAscii(), getPluginName(), platformTarget)
@@ -422,6 +427,7 @@ task targetconfig, "switch the targetConfiguration and rebuild (options are --de
   c.targetConfiguration = tc
   c.saveConfig()
 
+  ubuild(taskOptions)
   taskOptions["only"] = ""
   gencppbindings(taskOptions)
   rebuildLibs(taskOptions) # pass --debug to rebuild
