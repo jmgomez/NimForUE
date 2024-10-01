@@ -87,12 +87,10 @@ proc getTypeNodeFromUClassName(name:NimNode) : (string, string, seq[string]) =
         var ifaces:seq[string]
         case inode.kind:
         of nnkIdent:
-          let iface = inode.strVal()
-          ifaces = @[iface, "U" & iface[1..^1]]
+          ifaces.add inode.strVal()
         of nnkTupleConstr:
-          for iface in inode:
-            ifaces.add iface.strVal()
-            ifaces.add "U" & iface.strVal()[1..^1]
+          for ifaceNode in inode:
+            ifaces.add ifaceNode.strVal()
         else:
           error("Cant parse the uClass " & repr name)
         #here ifaces
