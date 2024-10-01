@@ -250,7 +250,7 @@ task lib, "Builds a game lib":
       log "\twith debug"
     assert name in getAllGameLibs(), "The lib " & name & " doesn't exist in the game. You need to create one first by adding a folder and a file like so: 'mylib/mylib.nim`"         
     let platformTarget = getPlatformTargetFromOptions(taskOptions)
-    compileLib(taskOptions["name"], extraSwitches, debug, release, threads, platformTarget, genCompileScript, runCompileScript)
+    compileLib(taskOptions["name"], extraSwitches, debug, release, threads, platformTarget)
     if shouldGenerateModule:
       generatePlugin(getPluginName(), platformTarget)
       generateModule(name.capitalizeAscii(), getPluginName(), platformTarget)
