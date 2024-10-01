@@ -259,9 +259,6 @@ struct $1 : public $3{cppInterfaces} {{
   typedef $3 Super;
   typedef $1 ThisClass;
   {defaultCtor}
-  virtual ~$1(){{
-    UE_LOG(LogTemp, Log, TEXT("Destroying NimForUEClass: $1"));
-  }};
   $1(FVTableHelper& Helper) : $3(Helper) {{}}
   $2  
   {fieldNotifies[0]}
