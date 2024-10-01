@@ -192,14 +192,14 @@ proc tryGetClassByName*(className:FString) : Option[UClassPtr] = someNil(getClas
 proc getUStructByName*(structName:FString) : UStructPtr = getUTypeByName[UStruct](structName)
 
 proc newUObject*[T:UObject](owner:UObjectPtr, name:FName) : ptr T = 
-    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
+    let className : FString = typetraits.name(T).substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     let cls = getClassByName(className)
     return cast[ptr T](newObjectFromClass(owner, cls, name)) 
 
 proc newUObject*[T:UObject](owner:UObjectPtr) : ptr T = newUObject[T](owner, ENone)
 proc newUObject*[T:UObject]() : ptr T = newUObject[T](nil, ENone)
 proc newUObject*[T:UObject](outer:UObjectPtr, name:FName, flags: EObjectFlags) : ptr T = 
-    let className : FString = typeof(T).name.substr(1) #Removes the prefix of the class name (i.e U, A etc.)
+    let className: FString = typetraits.name(T).substr(1) #Removes the prefix of the class name (i.e U, A etc.)
     let cls = getClassByName(className)
     var params = makeFStaticConstructObjectParameters(cls)
     params.outer = outer
