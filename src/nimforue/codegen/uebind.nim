@@ -334,7 +334,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
   var props = newEmptyNode()
 
   props = nnkStmtList.newTree(
-      typeDef.fields.reversed
+      typeDef.fields
       .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
       .map(prop=>genProp(typeDef, prop, typeExposure)))
   
@@ -346,7 +346,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
 
   let fields =
     if typeExposure == uexDsl and typeDef.hasExperimentalFields() and typeDef.fields.len > 0:
-      typeDef.fields.reversed
+      typeDef.fields
         .map(prop => 
           nnkIdentDefs.newTree(
             getFieldIdent(prop),

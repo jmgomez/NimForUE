@@ -466,7 +466,7 @@ proc toUEType*(del: UDelegateFunctionPtr, rules: seq[UEImportRule] = @[], pchInc
     if isEmpty or outerName in importRule.get().onlyFor:
       name = getFuncDelegateNimName(name, outerName)
 
-  some UEType(name: name, kind: uetDelegate, delKind: kind, fields: fields.reversed(), outerClassName: outerName)
+  some UEType(name: name, kind: uetDelegate, delKind: kind, fields: fields, outerClassName: outerName)
   # else:
   #     UE_Log &"Delegate {name} is not exposed to BP"
   #     none(UEType)
@@ -728,10 +728,8 @@ proc emitFProperty*(propField: UEField, outer: UStructPtr, setOffsets: bool = fa
   assert propField.kind == uefProp
 
   let prop: FPropertyPtr = newFProperty(makeFieldVariant outer, propField)
-  UE_Log &"Setting offset {propField.offset} for {propField.name} {outer is UClassPtr}"
-  # if outer is UClassPtr:
-  #   UE_Log &"Setting offset {propField.offset} for {propField.name}"
   if setOffsets:
+    #UE_Log &"Setting offset {propField.offset} for {propField.name} setOffset={setOffsets}"
     prop.setOffset(propField.offset)
   prop.setPropertyFlags(propField.propFlags or prop.getPropertyFlags())
   for metadata in propField.metadata:
@@ -797,11 +795,10 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
     fn.setMetadata(n "ToolTip", fn.getMetadata("ToolTip").get("")&" vNim")
     setSuperStruct(fn, sFn)
 
-
   fn.Next = cls.Children
   cls.Children = fn
 
-  for field in fnField.signature.reversed():
+  for field in fnField.signature.reversed(): # reversed because staticLink(true)
     let fprop = field.emitFProperty(fn)
   
   if superFn.isNone():
@@ -811,7 +808,7 @@ proc emitUFunction*(fnField: UEField, ueType:UEType, cls: UClassPtr, fnImpl: Opt
   cls.addFunctionToFunctionMap(fn, fnName)
   if fnImpl.isSome(): #blueprint implementable events doesnt have a function implementation
     fn.setNativeFunc(makeFNativeFuncPtr(fnImpl.get()))
-  fn.staticLink(true)
+  fn.staticLink(true) # calculate field offsets dynamically, fields must be emitted in reverse
   fn.sourceHash = $hash(fnField.sourceHash)
   fn
 
@@ -1028,13 +1025,13 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   for metadata in ueType.metadata:
       scriptStruct.setMetadata(n metadata.name, $metadata.value)
   scriptStruct.assetCreated()    
-  for field in ueType.fields:
+  for field in ueType.fields.reversed(): # reverse because staticLink(true)
     let prop = field.emitFProperty(scriptStruct)
     
   when T is not void:
     setGIsUCCMakeStandaloneHeaderGenerator(true)
     scriptStruct.bindType()
-    scriptStruct.staticLink(true)
+    scriptStruct.staticLink(true) # calculate field offsets dynamically, fields must be emitted in reverse
     setGIsUCCMakeStandaloneHeaderGenerator(false)
 
   scriptStruct.setMetadata(n UETypeMetadataKey, $ueType.toJson())
@@ -1067,11 +1064,11 @@ proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
   const objFlags = RF_Public | RF_Transient | RF_MarkAsNative
   var fn = newUObject[UDelegateFunction](package, fnName, objFlags)
   fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
-  for field in delType.fields.reversed():
+  for field in delType.fields.reversed(): # reverse because staticLink(true)
     let fprop = field.emitFProperty(fn)
     # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
 
-  fn.staticLink(true)
+  fn.staticLink(true) # calculate field offsets dynamically, fields must be emitted in reverse
   fn.setMetadata(makeFName UETypeMetadataKey, $delType.toJson())
   fn
 

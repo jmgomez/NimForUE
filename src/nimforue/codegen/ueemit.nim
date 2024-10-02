@@ -108,7 +108,7 @@ func genStructsOffset*(typeDef: UEType): NimNode =
   result = nnkStmtList.newTree()
   let nimType = newLit typeDef.name
   
-  for field in typeDef.fields.reversed():
+  for field in typeDef.fields:
     if field.kind == uefProp:
       result.add genStructOffset(typeDef, nimType, newLit field.name)
 
@@ -330,8 +330,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, emitEarl
     hotReloadInfo
 
 proc emitUStruct*(typeDef:UEType) : NimNode =
-    var ueType = typeDef #the generated type must be reversed to match declaration order because the props where picked in the reversed order
-    ueType.fields = ueType.fields.reversed()
+    var ueType = typeDef
     let typeDecl = genTypeDecl(ueType)
     
     let typeEmitter = genAst(name=ident typeDef.name, typeDefAsNode=newLit typeDef, structName=newStrLitNode(typeDef.name)): #defers the execution

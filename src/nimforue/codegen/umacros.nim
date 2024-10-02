@@ -305,7 +305,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
     ueType.interfaces = interfaces
     ueType.hasObjInitCtor = NeedsObjectInitializerCtorMetadataKey in ueType.metadata
     let gameplayAttributeHelpers = 
-      ueType.fields.reversed
+      ueType.fields
       .filterIt(it.kind == uefProp and it.uePropType == "FGameplayAttributeData")
       .map(expandGameplayAttribute)
   
@@ -387,8 +387,8 @@ macro uClass*(name:untyped, body : untyped) : untyped =
   let (uClassNode, fns, _) = uClassImpl(name, body, true)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
 
-#  if name[1].eqIdent("UAuraAttributeSet"):
-#    here result.repr
+  #if name[1].eqIdent("AAuraCharacter"):
+    #here result.repr
 
 
 func getRawClassTemplate(isSlate: bool, interfaces: seq[string]): string = 

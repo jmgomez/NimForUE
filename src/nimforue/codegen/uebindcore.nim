@@ -260,6 +260,7 @@ proc ufuncFieldFromNimNode*(fn:NimNode, classParam:Option[UEField], typeName:str
     var flagMetas = getFunctionFlags(fn, functionsMetadata & fields.mapIt(it.metadata).flatten()) #default param values
     if actualParams.any(isOutParam):
         flagMetas[0] = flagMetas[0] or FUNC_HasOutParms 
+
     let fnField = makeFieldAsUFun(fnName, actualParams, className, flagMetas[0], flagMetas[1])
     (fnField, firstParam)
 
@@ -510,7 +511,6 @@ func getUPropsAsFieldsForType*(body:NimNode, ueTypeName:string) : seq[UEField]  
         .filter(n=>n.kind == nnkCall and n[0].strVal().toLower() in ValidUProps)
         .map(n=>fromUPropNodeToField(n, ueTypeName))
         .flatten()
-        .reversed()
 
 
 func getPropAssigments*(typeName: string, selfName: string): NimNode =
