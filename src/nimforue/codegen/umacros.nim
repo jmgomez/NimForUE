@@ -249,8 +249,8 @@ proc genGetLifetimeReplicatedProps(ueType: UEType): NimNode =
     let cond = getCondFromString(prop.metadata["Cond"].get("None"))
     let repNotify = getRepNotifyFromString(prop.metadata["RepNotify"].get("OnChanged"))
     let propStmt = 
-      genAst(prop = ident prop.name, propName = newLit prop.name, cond = newLit cond, repNotify = newLit repNotify):
-        let prop {.inject.} = self.getClass.getFPropertyByName(propName)
+      genAst(prop = ident prop.name & "Property", propName = newLit prop.name, cond = newLit cond, repNotify = newLit repNotify):
+        let prop = self.getClass.getFPropertyByName(propName)
         var lifetimeParams = FDoRepLifetimeParams(condition: cond, repNotifyCondition: repNotify)
         registerReplicatedLifetimeProperty(prop, getOutLifetimeProps(), lifetimeParams)
     propAsStatements.add propStmt
@@ -305,7 +305,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
     ueType.interfaces = interfaces
     ueType.hasObjInitCtor = NeedsObjectInitializerCtorMetadataKey in ueType.metadata
     let gameplayAttributeHelpers = 
-      ueType.fields
+      ueType.fields.reversed
       .filterIt(it.kind == uefProp and it.uePropType == "FGameplayAttributeData")
       .map(expandGameplayAttribute)
   
@@ -387,7 +387,7 @@ macro uClass*(name:untyped, body : untyped) : untyped =
   let (uClassNode, fns, _) = uClassImpl(name, body, true)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
 
-#  if name[1].eqIdent("AMyNimActor"):
+#  if name[1].eqIdent("UAuraAttributeSet"):
 #    here result.repr
 
 
