@@ -271,7 +271,8 @@ func isNonPublicPropInNonCommonModule(uet: UEType, prop: UEField): bool =
   not uet.isInCommon and not prop.isPublic()
 
 func shouldGenGetterSetters*(uet: UEType, prop: UEField, isUserType: bool): bool = 
-  prop.kind == uefProp and (isUserType or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
+  var isUserFieldNotify = isUserType and prop.isFieldNotify()
+  prop.kind == uefProp and (isUserFieldNotify or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
 
 
 func getStructTraits(typeDef: UEType): seq[string] =  
@@ -331,11 +332,11 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
   #Props as getters/setters (dont calculate for uexDsl, we emit them as fields)
   var props = newEmptyNode()
 
-  if typeExposure != uexDsl:
-    props = nnkStmtList.newTree(
-        typeDef.fields.reversed
-        .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
-        .map(prop=>genProp(typeDef, prop, typeExposure)))
+  props = nnkStmtList.newTree(
+      typeDef.fields.reversed
+      .filter(prop=>shouldGenGetterSetters(typeDef, prop, typeExposure == uexDsl)) 
+      .map(prop=>genProp(typeDef, prop, typeExposure)))
+  
 
   let funcs = nnkStmtList.newTree(
     typeDef.fields
