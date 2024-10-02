@@ -90,6 +90,11 @@ proc main() =
 # --- Define Tasks ---
 
 task guest, "Builds the main lib. The one that makes sense to hot reload.":
+  if config.targetConfiguration == Debug:
+    if "debug" notin taskOptions:
+      taskOptions["debug"] = ""
+      taskOptions["noline"] = ""
+
   var extraSwitches = newSeq[string]()
   if "f" in taskOptions: 
     extraSwitches.add "-f" #force 
@@ -97,7 +102,8 @@ task guest, "Builds the main lib. The one that makes sense to hot reload.":
     extraSwitches.add "--linedir:off"
   if "noline" in taskOptions:
     extraSwitches.add "--linedir:off --linetrace:off"
-  
+
+
   let debug = "debug" in taskOptions
   if debug:
     log "Compiling with Debug"
@@ -217,6 +223,11 @@ task ubuild, "Calls Unreal Build Tool for your project":
 
 
 task lib, "Builds a game lib":
+  if config.targetConfiguration == Debug:
+    if "debug" notin taskOptions:
+      taskOptions["debug"] = ""
+      taskOptions["noline"] = ""
+
   let pluginName = if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
 
   var extraSwitches = newSeq[string]()
