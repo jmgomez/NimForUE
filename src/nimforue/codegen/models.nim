@@ -30,7 +30,7 @@ const EarlyLoadMetadataKey* = "EarlyLoad"
 const ReinstanceMetadataKey* = "Reinstance" #force the reinstantiation of a UEType
 const CompileBPMetadataKey* = "CompileBP" #recompile all childs even if nothing changes
 const NeedsObjectInitializerCtorMetadataKey* = "NeedsObjectInitializerCtor" #recompile all childs even if nothing changes
-
+const ExperimentalFieldsMetadataKey* = "ExperimentalFields" #Makes the uClass to emit fields. Meaning it wont relink and we calculate offsets in Nim
 
 type #TODO get rid of this (this was used before Nim supported virtual)
   CppModifiers* = enum
@@ -242,6 +242,8 @@ func hasUEMetadata*(val: UEField, name: string): bool = val.metadata.any(m => m.
 func hasUEMetadata*(val: UEType, name: string): bool = val.metadata.any(m => m.name.toLower == name.toLower)
 func hasUEMetadataDefaultValue*(val: UEField): bool = val.metadata.any(m => m.name.toLower.contains(CPP_Default_MetadataKeyPrefix.toLower))
 func shouldBeLoadedEarly*(uet: UEType): bool = uet.hasUEMetadata(EarlyLoadMetadataKey)
+
+func hasExperimentalFields*(uet: UEType): bool = uet.metadata.any(m => m.name.toLower == ExperimentalFieldsMetadataKey.toLower)
 
 func getAllParametersWithDefaultValuesFromFunc*(fnField:UEField) : seq[UEField] =
     assert fnField.kind == uefFunction

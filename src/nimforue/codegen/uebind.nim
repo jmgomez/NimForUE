@@ -271,8 +271,9 @@ func isNonPublicPropInNonCommonModule(uet: UEType, prop: UEField): bool =
   not uet.isInCommon and not prop.isPublic()
 
 func shouldGenGetterSetters*(uet: UEType, prop: UEField, isUserType: bool): bool = 
-  var isUserFieldNotify = isUserType and prop.isFieldNotify()
-  prop.kind == uefProp and (isUserFieldNotify or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
+  let isUserFieldNotify = isUserType and prop.isFieldNotify()
+  var isUserFieldNotifyOrExperimentalFields = isUserFieldNotify or not uet.hasExperimentalFields()
+  prop.kind == uefProp and (isUserFieldNotifyOrExperimentalFields or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
 
 
 func getStructTraits(typeDef: UEType): seq[string] =  
@@ -327,7 +328,7 @@ struct TStructOpsTypeTraits<{typeDef.name}> : public TStructOpsTypeTraitsBase2<{
   {structOpsTraits}
   {tBaseStructure}
 """
-import std/algorithm
+
 func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: UEExposure,  lineInfo: Option[LineInfo]) : NimNode =
   #Props as getters/setters (dont calculate for uexDsl, we emit them as fields)
   var props = newEmptyNode()
@@ -344,7 +345,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
       .map(fun=>genFunc(typeDef, fun, typeExposure).impl))
 
   let fields =
-    if typeExposure == uexDsl and typeDef.fields.len > 0:
+    if typeExposure == uexDsl and typeDef.hasExperimentalFields() and typeDef.fields.len > 0:
       typeDef.fields.reversed
         .map(prop => 
           nnkIdentDefs.newTree(

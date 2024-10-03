@@ -104,6 +104,7 @@ func genStructOffset*(uet: UEType, typeName: NimNode, member: NimNode): NimNode 
     ueTypeName.setFieldOffset(member, structOffsetImpl(typeName, member))
 
 func genStructsOffset*(typeDef: UEType): NimNode = 
+  if not typeDef.hasExperimentalFields(): return newEmptyNode()
   result = nnkStmtList.newTree()
   let nimType = newLit typeDef.name
   

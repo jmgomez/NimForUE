@@ -955,7 +955,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
     var field = field
     case field.kind:
     of uefProp:
-      discard field.emitFProperty(newCls, setOffsets = true)
+      discard field.emitFProperty(newCls, setOffsets = ueType.hasExperimentalFields())
     of uefFunction:
 
       # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}" #notice each module emits its own functions  
@@ -976,9 +976,8 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
       if ifaceCls.isNotNil():
         let implementedInterface = makeFImplementedInterface(ifaceCls, 0, true)
         newCls.interfaces.add(implementedInterface)
-
-  newCls.staticLink(false)
-
+  #we let unreal to calculate offsets if we dont calculate them in Nim
+  newCls.staticLink(bRelinkExistingProperties = not ueType.hasExperimentalFields())
   newCls.classFlags =  cast[EClassFlags](newCls.classFlags.uint32 or CLASS_Intrinsic.uint32)
 
   setGIsUCCMakeStandaloneHeaderGenerator(true)
