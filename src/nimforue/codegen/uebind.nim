@@ -272,8 +272,8 @@ func isNonPublicPropInNonCommonModule(uet: UEType, prop: UEField): bool =
 
 func shouldGenGetterSetters*(uet: UEType, prop: UEField, isUserType: bool): bool = 
   let isUserFieldNotify = isUserType and prop.isFieldNotify()
-  var isUserFieldNotifyOrExperimentalFields = isUserFieldNotify or not uet.hasExperimentalFields()
-  prop.kind == uefProp and (isUserFieldNotifyOrExperimentalFields or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
+  let isUserFieldNotifyAndExperimentalFields = isUserFieldNotify and uet.hasExperimentalFields()
+  prop.kind == uefProp and (isUserFieldNotifyAndExperimentalFields or uet.isInPCHAndManuallyImported or uet.isNonPublicPropInNonCommonModule(prop))
 
 
 func getStructTraits(typeDef: UEType): seq[string] =  
