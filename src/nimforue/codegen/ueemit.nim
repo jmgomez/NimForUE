@@ -341,7 +341,7 @@ proc emitUStruct*(typeDef:UEType) : NimNode =
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
     # debugEcho repr resulti
 
-proc emitUClass*(typeDef:UEType, lineInfo: Option[LineInfo] = none(LineInfo)): (NimNode, NimNode) =
+proc emitUClass*(typeDef: UEType, lineInfo: Option[LineInfo] = none(LineInfo)): (NimNode, NimNode) =
     let typeDecl = genTypeDecl(typeDef, lineInfo = lineInfo)
     let ueTypeName = ident typeDef.name & "UEType"
     let structsOffsets = genStructsOffset(typeDef)

@@ -55,7 +55,7 @@ func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata], isInterface: bo
       flags = flags or (CLASS_Interface | CLASS_Abstract)
     else:
       flags = flags or (CLASS_Inherit ) #| CLASS_CompiledFromBlueprint
-   
+
     for meta in classMetadata:
         if meta.name.toLower() == "config": #Game config. The rest arent supported just yet
             flags = flags or CLASS_Config
@@ -297,6 +297,12 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
     var (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body), isInterface)
     if "DisplayName" notin classMetas.mapIt(it.name):
       classMetas.add(makeUEMetadata("DisplayName", className.removeFirstLetter()))
+
+    let iinterfaces = interfaces.filterIt(it[0] == 'I')
+    if iinterfaces.len > 0:
+      classMetas.add makeUEMetadata(ExperimentalFieldsMetadataKey)
+      echoUserInfo(&"Experimental: {className} implementing C++ Interface(s) '{iinterfaces}', adding '{ExperimentalFieldsMetadataKey}' to metadata to generate property offsets")
+
 
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
     when WithEditor:

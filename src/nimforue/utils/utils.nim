@@ -313,5 +313,9 @@ macro here*(x: varargs[typed, `$`]):untyped {.noSideEffect.} =
     for c in x:
       result.add c
 
+# This is basically an echo to be used at compile itme for extra info for the user. Separate from debuggin echo's or calls to here.
+template echoUserInfo*(msg: string) =
+  echo msg
+
 #importcpp utils
 proc get*[T](): ptr T {.importcpp:"(&'*0::Get())".}
