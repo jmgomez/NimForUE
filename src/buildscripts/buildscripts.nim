@@ -10,12 +10,6 @@ export buildcommon, nimforueconfig
 
 
 
-type #The engine can trigger the load of a library from different places
-  NueLoadedFrom* {.size:sizeof(uint8), exportc .} = enum
-    nlfDefault = 0, #right after the NimForUEModule is loaded
-    nlfPostDefault = 1, #after all modules are loaded (so all the types exists in the reflection system) this is also hot reloads. Should attempt to emit everything, layers before and after
-    nlfEditor = 2 # Dont act different as loaded 
-    nlfCommandlet = 3 #while on the commandlet. Nothing special. Dont act different as loaded 
 
 proc generateFFIGenFile*(config: NimForUEConfig) = 
   let content = """

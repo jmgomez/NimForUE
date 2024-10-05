@@ -17,10 +17,15 @@ proc getEmmitedTypes*(emitter: UEEmitterPtr) : seq[UEType] =
   emitter.emitters.values.toSeq.mapIt(it.ueType)
 
 
-
-
 type
-  FNimHotReloadChild* {.importcpp, header:"Guest.h".} = object of FNimHotReload
+  FNimHotReloadChild* {.importcpp, header:"Guest.h".} = object of FNimHotReload 
+  
+  NueLoadedFrom* {.size:sizeof(uint8), exportc .} = enum
+    nlfDefault = 0, #right after the NimForUEModule is loaded (PostDefault). In non editor builds only this one is called so far
+    nlfAllModulesLoaded = 1, #after all modules are loaded (so all the types exists in the reflection system) this is also hot reloads. Should attempt to emit everything, layers before and after
+    nlfEditor = 2 # Dont act different as previous (when doing hot reloads)
+    nlfCommandlet = 3 #while on the commandlet. Nothing special. Dont act different as loaded 
+
 
 const getNumberMeta = CppFunction(name: "GetNumber", returnType: "int", params: @[])
 
@@ -60,7 +65,6 @@ proc defaultConstructorStatic*[T](initializer: var FObjectInitializer) {.cdecl.}
 
 proc getVTable*(obj : UObjectPtr) : pointer {. importcpp: "*(void**)#".}
 proc setVTable*(obj : UObjectPtr, newVTable:pointer) : void {. importcpp: "((*(void**)#)=(#))".}
-
 
 proc updateVTable*(prevCls:UClassPtr, newVTable:pointer) : void =
   let oldVTable = getDefaultObject(prevCls).getVTable()
@@ -217,16 +221,12 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
         hotReloadInfo.deletedEnums.add(instance)
 
 #32431 
-proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, emitEarlyLoadTypesOnly:bool) : FNimHotReloadPtr = 
+proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, loadingPhase: NueLoadedFrom) : FNimHotReloadPtr = 
     #/Script/PACKAGE_NAME For now {Nim, GameNim}
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
     UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()
-    # UE_Log "Emit ustructs for Length " & $ueEmitter.emitters.len
     var hotReloadInfo = newCpp[FNimHotReload]()
-    let emitters = 
-        if emitEarlyLoadTypesOnly: ueEmitter.emitters.values.toSeq.filterIt(it.ueType.shouldBeLoadedEarly()) 
-        else: ueEmitter.emitters.values.toSeq
-
+    let emitters =  ueEmitter.emitters.values.toSeq       
     for emitter in emitters:
             case emitter.ueType.kind:
             of uetStruct:
@@ -242,7 +242,6 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, emitEarl
                     hotReloadInfo.newStructs.add(newStructPtr.get())
                 if prevStructPtr.isSome() and newStructPtr.isSome():
                     hotReloadInfo.structsToReinstance.add(prevStructPtr.get(), newStructPtr.get())
-
                
             of uetClass:            
                 let clsName = emitter.ueType.name.removeFirstLetter()
@@ -258,10 +257,6 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, emitEarl
      
                 if prevClassPtr.isSome() and newClassPtr.isSome() :
                     hotReloadInfo.classesToReinstance.add(prevClassPtr.get(), newClassPtr.get())
-
-               
-
-
                 if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated
                     let prevCls = prevClassPtr.get()
                     #We update the prev class pointer to hook the new vfuncs in the new objects
@@ -273,9 +268,6 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, emitEarl
                         prevCls.classVTableHelperCtorCaller = ctorInfo.vTableConstructor
                         if ctorInfo.updateVTableForType.isNotNil():
                             ctorInfo.updateVTableForType(prevCls)
-                   
-                    
-
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
                 let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr, not wasAlreadyLoaded)
@@ -293,11 +285,17 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, emitEarl
                     hotReloadInfo.newDelegatesFunctions.add(newDelPtr.get())
                 if prevDelPtr.isSome() and newDelPtr.isSome():
                     hotReloadInfo.delegatesToReinstance.add(prevDelPtr.get(), newDelPtr.get())
+                when WithEditor:
+                  if loadingPhase >= nlfEditor:
+                    #Due to an issue when generating pythong wrappers we need to delay adding the props  
+                    #This doesnt affect not editor builds
+                    for del in @[prevDelPtr, newDelPtr]:
+                        if del.isSome:
+                            del.get.emitPropertiesForDelegate()
+                
             of uetInterface:
                 assert false, "Interfaces are not supported yet"
                 
-
-
     #Updates function pointers (after a few reloads they got out scope)
     for fnEmitter in ueEmitter.fnTable:
         let funField = fnEmitter.ueField
@@ -306,7 +304,6 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, emitEarl
                         .flatmap((cls:UClassPtr)=>cls.findFunctionByNameWithPrefixes(funField.name))
                         .flatmap((fn:UFunctionPtr)=>tryUECast[UNimFunction](fn))
 
-       
         if prevFn.isSome():
             # UE_Log "Updating function pointer " & funField.name
             let prev = prevFn.get()
@@ -363,6 +360,7 @@ proc emitUDelegate(typedef:UEType) : NimNode =
                 addEmitterInfo(typeDefAsNode, (package:UPackagePtr) => emitUDelegate(typeDefAsNode, package))
 
     result = nnkStmtList.newTree [typeDecl, typeEmitter]
+    # echo repr result
 
 proc emitUEnum*(typedef:UEType) : NimNode = 
     let typeDecl = genTypeDecl(typedef)
@@ -382,7 +380,6 @@ const CtorNimInnerPrefix = "defaultConstructorNimInner"
 func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode = 
     
     let typeParam = fnField.signature.head().get() #TODO errors
-
     #prepare for gen ast
     let typeIdent = ident fnField.typeName
     let typeLiteral = newStrLitNode fnField.typeName
@@ -399,7 +396,6 @@ func constructorImpl(fnField:UEField, fnBody:NimNode) : NimNode =
             var self{.inject used .} = selfIdent
     
     let ctorImpl = genAst(fnName, fnBody, selfIdent, typeIdent, typeLiteral,assignments, initName, nimInnerCtor, genSelfImpl):
-            
         proc nimInnerCtor(initName {.inject.}: var FObjectInitializer) {.cdecl, inject.} =                     
             #it's wrapped so we can call the user constructor from the Nim child classes
             #Maybe in the future we could treat the Nim constructors as C++ constructors and forget about this special treatment (by the time this was designed Nim didnt have cpp constructors compatibility)

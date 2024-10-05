@@ -61,7 +61,7 @@ proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.
   when WithEditor:
     proc emitTypesInGuest(calledFrom:NueLoadedFrom, globalEmitter:UEEmitterPtr) = 
           type 
-            EmitTypesExternal = proc (emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.gcsafe, cdecl.}
+            EmitTypesExternal = proc (emitter : UEEmitterPtr, loadedFrom: NueLoadedFrom, reuseHotReload: bool) {.gcsafe, cdecl.}
           let libDir = PluginDir / "Binaries"/"nim"/"ue"
           let guestPath = getLastLibPath(libDir, "nimforue")
           if guestPath.isNone():
@@ -76,7 +76,7 @@ proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.
 
 proc emitTypes*() {.cdecl, exportc, dynlib.} = 
   log "Emitting types" 
-  discard  emitUStructsForPackage(getGlobalEmitter(), "GameNim", emitEarlyLoadTypesOnly = false)     
+  discard  emitUStructsForPackage(getGlobalEmitter(), "GameNim", nlfDefault)     
 
 proc isThereAnyNimClass(): bool = 
   var objIter = makeFRawObjectIterator()
@@ -95,8 +95,6 @@ proc emitInNextFrame(): Future[void] {.async.} =
 proc reinstanceNextFrame() {.cdecl, exportc.} = 
   when WithEditor:
     sleepAsync(100).callback= () => reinstanceFromGloabalEmitter(getGlobalEmitter())
-  
-
 
 #Called from the non editor build on StartupModule
 proc startNue*() {.cdecl, exportc.} =

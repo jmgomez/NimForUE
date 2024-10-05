@@ -100,7 +100,7 @@ func newDelegateBasedProperty(owner : FFieldVariant, propType:string, name:FName
     let delegateName = propType.removeFirstLetter() & DelegateFuncSuffix
     
     someNil(getUTypeByName[UDelegateFunction] delegateName)
-        .map(func (delegate:UDelegateFunctionPtr) : FPropertyPtr = 
+        .map(func (delegate:UDelegateFunctionPtr): FPropertyPtr = 
                 let isMulticast = FUNC_MulticastDelegate in delegate.functionFlags
                 if isMulticast:
                     UE_Log fmt("Found {propType}  as  MulticastDelegate. Creating prop")

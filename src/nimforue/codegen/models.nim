@@ -23,7 +23,9 @@ const ScriptMethodMetadataKey* = "ScriptMethod"
 const InstancedMetadataKey* = "Instanced"
 const BlueprintImplementableEventMetadataKey* = "BlueprintImplementableEvent"
 const FieldNotifyMetadataKey* = "FieldNotify" 
-
+const MulticastDelegateMetadataKey* = "MulticastDelegate"
+const DelegateMetadataKey* = "Delegate"
+    
 #UEType metadata
 const NoDeclMetadataKey* = "NoDecl"
 const EarlyLoadMetadataKey* = "EarlyLoad"
@@ -224,9 +226,7 @@ proc `[]`*(metadata:seq[UEMetadata], key:string) : Option[string] =
     metadata.first(x=>x.name==key).map(x=>x.value)
 
 
-const MulticastDelegateMetadataKey* = "MulticastDelegate"
-const DelegateMetadataKey* = "Delegate"
-    
+
 func makeUEMetadata*(name:string) : UEMetadata = 
     UEMetadata(name:name, value:"true" ) #todo check if the name is valid. Also they can be more than simple names
 

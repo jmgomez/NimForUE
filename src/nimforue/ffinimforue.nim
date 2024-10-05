@@ -8,20 +8,20 @@ import std/[options, strformat, dynlib, os, osproc, tables, asyncdispatch, times
 import ../buildscripts/[nimforueconfig, buildscripts, keyboard]
 import unreal/nimforue/nimforuebindings
 
+
 const withEngineBindings = fileExists(BindingsImportedDir/"engine"/"engine.nim")
 # when withEngineBindings:
 #   import unreal/bindings/imported/assetregistry
 
 const genFilePath* {.strdefine.} : string = ""
-
 var prevGameLib : Option[string]
-
-type 
-  NueLib = object
-    handle: LibHandle
-    libName: string
-    libPath: string
-    timesReloaded: int
+type
+  NueLib* = object
+    handle*: LibHandle
+    libName*: string
+    libPath*: string
+    timesReloaded*: int
+  
 
 
 proc getEmitterFromGame(nueLib: NueLib): Option[UEEmitterPtr] = 
@@ -46,16 +46,13 @@ proc getEmitterFromGame(nueLib: NueLib): Option[UEEmitterPtr] =
 
 proc startNue(libPath:string, calledFrom:NueLoadedFrom)  = 
   type 
-    StartNueFN = proc ( calledFrom:NueLoadedFrom):void {.gcsafe, stdcall.}
+    StartNueFN = proc (calledFrom:NueLoadedFrom):void {.gcsafe, stdcall.}
 
   let lib = loadLib(libPath)
   let startNueFn = cast[StartNueFN](lib.symAddr("startNue"))
   
   assert startNueFn.isNotNil()
-
   startNueFn(calledFrom)
-
-
 
 
 #Will be called from the commandlet that generates the bindigns
@@ -93,10 +90,10 @@ proc compileBps(emitter:UEEmitterPtr) =
       UE_Log &"Compiling blueprint {bp.getName()}"
       # bp.compileBlueprint()
 
-proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypesOnly, reuseHotReload:bool) : bool = 
+proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, loadingPhase: NueLoadedFrom, reuseHotReload:bool) : bool = 
     try:
         log "Emitting types for package: " & packageName
-        let nimHotReload = emitUStructsForPackage(emitter, packageName, emitEarlyLoadTypesOnly)
+        let nimHotReload = emitUStructsForPackage(emitter, packageName, loadingPhase)
         if not nimHotReload.bShouldHotReload:
           UE_Log "Nothing to re/instance"
           return false
@@ -113,8 +110,6 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypes
           deleteCpp(handle)
           UE_LOG(&"NimUE: PIE ended, reinstanciated nue types {packageName}")
 
-
-
         let onPIEEndHandle = newCpp[FDelegateHandle]()
         (onPIEEndHandle[]) = onEndPIEEvent.addStatic(onPIEEndCallback, packageName, nimHotReload, onPIEEndHandle, emitter)
         UE_Log "Deffered reinstance of NueTypes for package: " & packageName & " after PIE ended"
@@ -127,16 +122,15 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, emitEarlyLoadTypes
         UE_Error e.getStackTrace()
         return false
 
-proc emitTypeFor(nueLib: NueLib, loadedFrom : NueLoadedFrom) = 
+proc emitTypeFor(nueLib: NueLib, loadedFrom: NueLoadedFrom) = 
   if isRunningCommandlet(): 
     UE_Log "Running command let, dont emit types"
     return
   try:
     UE_Log &"Emitting types for {nueLib.libName}"
-    let earlyLoad = false
     case nueLib.libName:
     of "nimforue": 
-        discard emitNueTypes(getGlobalEmitter(), "Nim", earlyLoad, false)
+        discard emitNueTypes(getGlobalEmitter(), "Nim", loadedFrom, false)
         # if not isRunningCommandlet() and timesReloaded == 0: 
           # genBindingsCMD()
           # discard   
@@ -144,7 +138,7 @@ proc emitTypeFor(nueLib: NueLib, loadedFrom : NueLoadedFrom) =
       if not isRunningCommandlet():
         let gameEmitter = nueLib.getEmitterFromGame()
         if gameEmitter.isSome:
-          discard emitNueTypes(gameEmitter.get, "GameNim", earlyLoad, false)
+          discard emitNueTypes(gameEmitter.get, "GameNim", loadedFrom, false)
         else:
           #TODO we should wait and retry to deal with EarlyTypes
           UE_Warn "GameEmitter is nil. Library not loaded yet?"
@@ -177,9 +171,9 @@ proc subscribeToTick() : FTickerDelegateHandle =
 
 var lastTimeTriggered = now()
 #only GameNim types 
-proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHotReload: bool) {.cdecl, exportc, dynlib.} = 
+proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom: NueLoadedFrom, reuseHotReload: bool) {.cdecl, exportc, dynlib.} = 
   UE_Log "Emitting types from external lib " & $emitter.emitters.len
-  let didHotReload = emitNueTypes(emitter, "GameNim",  false, reuseHotReload)
+  let didHotReload = emitNueTypes(emitter, "GameNim",  loadedFrom, reuseHotReload)
   # if not didHotReload: return #TODO review why is not working as expected (will avoid double lc when no reinstancing)
   let tickHandle = subscribeToTick()
   proc waitForLiveCoding() : Future[void] {.async.} =
@@ -194,7 +188,7 @@ proc emitTypesExternal(emitter : UEEmitterPtr, loadedFrom:NueLoadedFrom, reuseHo
   asyncCheck waitForLiveCoding()
 
 
-var libsToEmmit : seq[NueLib] 
+var libsToEmmit: seq[NueLib] 
 proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint, loadedFrom:NueLoadedFrom, handle: LibHandle) : void {.ffi:genFilePath} = 
   UE_Log &"lib loaded: {libName} loaded from {loadedFrom}. Handle valid: {handle.isNotNil}" 
   var nueLib = NueLib(
@@ -203,15 +197,14 @@ proc onLibLoaded(libName:cstring, libPath:cstring, timesReloaded:cint, loadedFro
     timesReloaded: timesReloaded,
     handle: handle
   )  
+  libsToEmmit.add nueLib
   emitTypeFor(nueLib, loadedFrom)
     
 
-proc onLoadingPhaseChanged(prev : NueLoadedFrom, next:NueLoadedFrom) : void {.ffi:genFilePath} = 
+proc onLoadingPhaseChanged(prev: NueLoadedFrom, next: NueLoadedFrom) : void {.ffi:genFilePath} = 
   UE_Log &"Loading phase changed: {prev} -> {next}"
-  # if prev == nlfPreEngine and next == nlfPostDefault:
-  #   for nueLib in libsToEmmit:
-  #     UE_Log &"Emitting types for {nueLib.libName} "
-  #     emitTypeFor(nueLib, next)
+  for nueLib in libsToEmmit:
+    emitTypeFor(nueLib, next)
   
 
 

@@ -954,7 +954,6 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
     of uefProp:
       discard field.emitFProperty(newCls, setOffsets = ueType.hasExperimentalFields())
     of uefFunction:
-
       # UE_Log fmt"Emitting function {field.name} in class {newCls.getName()}" #notice each module emits its own functions  
       discard emitUFunction(field, ueType, newCls, getNativeFuncImplPtrFromUEField(getGlobalEmitter(), field))
     else:
@@ -1059,17 +1058,37 @@ proc emitUEnum*(enumType: UEType, package: UPackagePtr): UFieldPtr =
 
   uenum
 
+proc emitPropertiesForDelegate*(del: UDelegateFunctionPtr) =
+  #There is a crash when trying to duplicate delegate props for generating python wrappers.  
+  #To get around it, we emit props for delegates until later on.
+  #We add them in ueemit inside uetDelegate  
+  let uet =
+    del.getMetadata(UETypeMetadataKey)
+       .flatMap((x:FString)=>tryParseJson[UEType](x))
+  
+  let AlreadyEmit = "AlreadyEmit"
+  if del.hasMetadata AlreadyEmit: return
+  del.setMetadata n AlreadyEmit, "True"
+
+  var needsLink = false
+  for field in uet.get.fields.reversed(): # reverse because staticLink(true)
+    let fprop = field.emitFProperty(del)
+    needsLink = true
+  if needsLink:
+    del.staticLink(true) # calculate field offsets dynamically, fields must be emitted in reverse
+
 proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
   let fnName = (delType.name.removeFirstLetter() & DelegateFuncSuffix).makeFName()
   const objFlags = RF_Public | RF_Transient | RF_MarkAsNative
   var fn = newUObject[UDelegateFunction](package, fnName, objFlags)
   fn.functionFlags = FUNC_MulticastDelegate or FUNC_Delegate
-  for field in delType.fields.reversed(): # reverse because staticLink(true)
-    let fprop = field.emitFProperty(fn)
-    # UE_Warn "Has Return " & $ (CPF_ReturnParm in fprop.getPropertyFlags())
-
-  fn.staticLink(true) # calculate field offsets dynamically, fields must be emitted in reverse
   fn.setMetadata(makeFName UETypeMetadataKey, $delType.toJson())
+  for metadata in delType.metadata:
+    fn.setMetadata(n metadata.name, $metadata.value)
+  when(not definitions.WithEditor):    
+    fn.emitPropertiesForDelegate()
+  else:
+    fn.staticLink(true)
   fn
 
 
