@@ -947,7 +947,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
     newCls.setMetadata(makeFName metadata.name, $metadata.value)
 
 
-  for field in ueType.fields:
+  for field in ueType.fields.reversed: # fields are added to ChildProperties in reverse
     assert field.typename == ueType.name
     var field = field
     case field.kind:
