@@ -916,6 +916,7 @@ proc vmConstructor*(objectInitializer:var FObjectInitializer) : void {.cdecl.} =
   else:
     UE_Warn &"No vmdefaultconstructor found tried: {constructorName}"
 
+proc notifyRegistrationEvent(packageName, name: FString, cls: UClassPtr) {.importcpp:"NotifyRegistrationEvent(*#, *#, ENotifyRegistrationType::NRT_Class, ENotifyRegistrationPhase::NRP_Finished, nullptr, false, #)".}
 
 proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
@@ -982,8 +983,7 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.assembleReferenceTokenStream()
   
   newCls.setMetadata(makeFName UETypeMetadataKey, $ueType.toJson())
-
-
+  notifyRegistrationEvent(package.getName(), newCls.getName(), newCls)
   discard newCls.getDefaultObject()#forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
     # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
   if newCls.isChildOf[:UDynamicSubsystem]():
