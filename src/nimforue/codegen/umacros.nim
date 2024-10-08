@@ -351,7 +351,6 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
       let defaults = genDefaults(body)
       let ctor = genDeclaredConstructor(body, ueType)
         .get(genConstructorForClass(body, ueType, defaults.get(nnkStmtList.newTree())))
-      procNodes.add ctor
       procNodes.add genGetLifetimeReplicatedProps(ueType)
 
       let nimProcs = body.children.toSeq
@@ -369,6 +368,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
         else:
           proc clsCtor(): cls {.constructor.} = discard
           
+      fns.add ctor
       fns.add initCtor       
       #Adds the C++ implementation for the field notify
       let fieldNotify = generateFieldNotify(ueType)
@@ -393,8 +393,8 @@ macro uClass*(name:untyped, body : untyped) : untyped =
   let (uClassNode, fns, _) = uClassImpl(name, body, true)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
 
-  #if name[1].eqIdent("AAuraCharacter"):
-    #here result.repr
+  #if name[1].eqIdent("AAuraEffectActor"):
+  #  here result.repr
 
 
 func getRawClassTemplate(isSlate: bool, interfaces: seq[string]): string = 
