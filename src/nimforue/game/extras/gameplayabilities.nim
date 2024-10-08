@@ -18,6 +18,7 @@ type
 
   FOnGameplayAttributeValueChange* = TMulticastDelegateOneParam[FOnAttributeChangeData]
 
+proc getAbilitySystemComponent*(asi: IAbilitySystemInterfacePtr) : UAbilitySystemComponentPtr {.importcpp: "#.GetAbilitySystemComponent()".}
 proc getAbilitySystemGlobals*() : UAbilitySystemGlobals {.importcpp: "UAbilitySystemGlobals::Get()".}
 proc initGlobalData*(globals:UAbilitySystemGlobals) {.importcpp: "#.InitGlobalData()".}
 proc getBaseValue*(attrb: FGameplayAttributeData) : float32 {.importcpp: "#.GetBaseValue()".}

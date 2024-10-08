@@ -235,9 +235,9 @@ proc doesImplementInterface(cls: UClassPtr, inf: UClassPtr): bool =
       return true
 
 proc castField*[T : FField ](src:FFieldPtr) : ptr T {. importcpp:"CastField<'*0>(#)" .}
-proc ueCastInner[T:UObject](src:UObjectPtr) : ptr T {. importcpp:"Cast<'*0>(#)" .}
+proc ueCastInner[T](src:UObjectPtr) : ptr T {. importcpp:"Cast<'*0>(#)" .}
 
-proc ueCast*[T:UObject](src:UObjectPtr) : ptr T =
+proc ueCast*[T](src:UObjectPtr) : ptr T =
   when T is UInterface:
     if doesImplementInterface(src.getClass(), T.staticClass):
       cast[ptr T](src)
