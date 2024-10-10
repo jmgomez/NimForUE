@@ -74,10 +74,6 @@ proc reinstanceFromGloabalEmitter*(globalEmitter:UEEmitterPtr) {.cdecl, exportc.
             emitTypesExternal(globalEmitter, calledFrom, reuseHotReload=true)
     emitTypesInGuest(nlfEditor, globalEmitter)
 
-proc emitTypes*() {.cdecl, exportc, dynlib.} = 
-  log "Emitting types" 
-  discard  emitUStructsForPackage(getGlobalEmitter(), "GameNim", nlfDefault)     
-
 proc isThereAnyNimClass(): bool = 
   var objIter = makeFRawObjectIterator()
   for objIter in objIter:
@@ -87,20 +83,19 @@ proc isThereAnyNimClass(): bool =
         return true
   return false
 
-proc emitInNextFrame(): Future[void] {.async.} = 
-    log "NimForUE will emit in next frame."
-    await sleepAsync(0)
-    emitTypes()
-    
 proc reinstanceNextFrame() {.cdecl, exportc.} = 
   when WithEditor:
     sleepAsync(100).callback= () => reinstanceFromGloabalEmitter(getGlobalEmitter())
 
 #Called from the non editor build on StartupModule
 proc startNue*() {.cdecl, exportc.} =
-  UE_Log "Starting NUE..."
-  emitTypes()
-
+  discard emitUStructsForPackage(getGlobalEmitter(), "GameNim", nlfDefault) 
+  if withEditorRuntime():
+    #We need to emit again to workaround an issue that only happens in editor with custom delegates
+    discard onAllModuleLoadingPhasesComplete.addStatic( 
+      proc(){.cdecl.} = 
+        discard emitUStructsForPackage(getGlobalEmitter(), "GameNim", nlfEditor)         
+    )
 proc netSerialize*(vec: FVector, ar: var FArchive, map: UPackageMapPtr, bOutSuccess: var bool) {.importcpp:"#.NetSerialize(@)".}
 
 proc getComponent*[C: UActorComponent](actor: AActorPtr, T: typedesc[C]): ptr T {.inline.} = 

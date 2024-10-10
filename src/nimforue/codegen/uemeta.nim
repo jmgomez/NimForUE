@@ -1085,7 +1085,7 @@ proc emitUDelegate*(delType: UEType, package: UPackagePtr): UFieldPtr =
   fn.setMetadata(makeFName UETypeMetadataKey, $delType.toJson())
   for metadata in delType.metadata:
     fn.setMetadata(n metadata.name, $metadata.value)
-  when(not definitions.WithEditor):    
+  if not withEditorRuntime():
     fn.emitPropertiesForDelegate()
   else:
     fn.staticLink(true)
