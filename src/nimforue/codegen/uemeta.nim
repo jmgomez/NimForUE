@@ -916,7 +916,13 @@ proc vmConstructor*(objectInitializer:var FObjectInitializer) : void {.cdecl.} =
   else:
     UE_Warn &"No vmdefaultconstructor found tried: {constructorName}"
 
-proc notifyRegistrationEvent(packageName, name: FString, cls: UClassPtr) {.importcpp:"NotifyRegistrationEvent(*#, *#, ENotifyRegistrationType::NRT_Class, ENotifyRegistrationPhase::NRP_Finished, nullptr, false, #)".}
+type
+  ENotifyRegistrationType {.importcpp.} = enum
+    NRT_Class,
+    NRT_Struct,
+    NRT_Enum
+
+proc notifyRegistrationEvent(packageName, name: FString, nrt: ENotifyRegistrationType, str: UStructPtr | UEnumPtr) {.importcpp:"NotifyRegistrationEvent(*#, *#, #, ENotifyRegistrationPhase::NRP_Finished, nullptr, false, #)".}
 
 proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter], clsConstructor: UClassConstructor, vtableConstructor:VTableConstructor): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
@@ -981,11 +987,9 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.bindType()
   setGIsUCCMakeStandaloneHeaderGenerator(false)
   newCls.assembleReferenceTokenStream()
-  
   newCls.setMetadata(makeFName UETypeMetadataKey, $ueType.toJson())
-  notifyRegistrationEvent(package.getName(), newCls.getName(), newCls)
+  notifyRegistrationEvent(package.getName(), newCls.getName(), NRT_Class, newCls)
   discard newCls.getDefaultObject()#forces the creation of the cdo. the LC reinstancer needs it created before the object gets nulled out
-    # broadcastAsset(newCls) Dont think this is needed since the notification will be done in the boundary of the plugin
   if newCls.isChildOf[:UDynamicSubsystem]():
     log &"Activating engine subsystem {newCls.getName()}"
     #initi the subystem. Doesnt seem that we need to deactivated it but there is an inverse.
@@ -994,16 +998,11 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
 
   newCls
 
-
-
 #	explicit UStruct(UStruct* InSuperStruct, SIZE_T ParamsSize = 0, SIZE_T Alignment = 0);
 # UScriptStruct* NewStruct = new(EC_InternalUseOnlyConstructor, Outer, UTF8_TO_TCHAR(Params.NameUTF8), Params.ObjectFlags) UScriptStruct(FObjectInitializer(), Super, StructOps, (EStructFlags)Params.StructFlags, Params.SizeOf, Params.AlignOf);
 # UScriptStruct(FObjectInitializer(), Super, StructOps, (EStructFlags)Params.StructFlags, Params.SizeOf, Params.AlignOf)
 proc newScriptStruct[T](package: UPackagePtr, name:FString, flags:EObjectFlags, super:UScriptStructPtr, size:int32, align:int32, fake:T) : UNimScriptStructPtr {.importcpp: 
   "new(EC_InternalUseOnlyConstructor, #, *#, #) UNimScriptStruct(FObjectInitializer(), #, (new UScriptStruct::TCppStructOps<'7>()), (EStructFlags)0, #, #)".}
-
-import std/[macros, genasts]
-
 
 proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
   const objClsFlags = (RF_Public | RF_Standalone | RF_MarkAsRootSet)
@@ -1034,6 +1033,7 @@ proc emitUStruct*[T](ueType: UEType, package: UPackagePtr): UFieldPtr =
     setGIsUCCMakeStandaloneHeaderGenerator(false)
 
   scriptStruct.setMetadata(n UETypeMetadataKey, $ueType.toJson())
+  notifyRegistrationEvent(package.getName(), scriptStruct.getName(), NRT_Struct, scriptStruct)
   scriptStruct
 
 proc emitUStruct*[T](ueType: UEType, package: string): UFieldPtr =
@@ -1055,7 +1055,7 @@ proc emitUEnum*(enumType: UEType, package: UPackagePtr): UFieldPtr =
     # uenum.setMetadata("DisplayName", "Whatever"&field.val.name)) TODO the display name seems to be stored into a metadata prop that isnt the one we usually use
   discard uenum.setEnums(enumFields)
   uenum.setMetadata(f UETypeMetadataKey, $enumType.toJson())
-
+  notifyRegistrationEvent(package.getName(), uenum.getName(), NRT_Enum, uenum)
   uenum
 
 proc emitPropertiesForDelegate*(del: UDelegateFunctionPtr) =
