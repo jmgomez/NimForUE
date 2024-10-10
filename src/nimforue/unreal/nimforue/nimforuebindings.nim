@@ -44,6 +44,30 @@ func getEnums*(uenum:UEnumPtr) : TArray[FString] =
   for i in 0 ..< values:
     result.add uenum.getNameStringByIndex(i)
 
+func withEditorRuntime*(): bool = 
+  {.emit:"""
+
+#if WITH_EDITOR
+		result = true;
+#else
+		result = false;
+#endif
+""".}
+
+
+template withinEditorRuntime(body: untyped) = 
+  {.emit:"""
+
+#if WITH_EDITOR
+""".}
+
+  body
+
+  {.emit:"""
+
+#endif
+""".}
+
 #UNimClassBase
 proc setClassConstructor*(cls:UClassPtr, classConstructor:UClassConstructor) : void {.importcpp:"(#->ClassConstructor = reinterpret_cast<void(*)(const FObjectInitializer&)>(#))".}
 proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.importcpp:"UReflectionHelpers::ConstructFromVTable(@)".}
@@ -89,7 +113,7 @@ when WithEditor:
     
     func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
 
-    func getMetadataMap*(field:FFieldPtr) : TMap[FName, FString] =
+    func getMetadataMap*(field:FFieldPtr) : TMap[FName, FString] =      
       let metadataMap = getMetadataMapPtr(field)
       if metadataMap.isNil or metadataMap[].len  == 0: 
           makeTMap[FName, FString]()
@@ -102,21 +126,55 @@ when WithEditor:
       else: 
           metadataMap[]
 else:
+  #Editor Runtime. 
+  #Notice there are three branches:
+    #1. WithEditor True Nim (above)
+    #2. WithEditor False and Unreal still targeting the Editor (EditorRuntime branch, C++ compile time check)
+    #3. WithEditor False and Unreal targeting no neditor (Global custom metadatamap)
+    func getMetaDataMapPtrEditorRuntime(field:FFieldPtr) : ptr TMap[FName, FString] {.importcpp:"const_cast<'0>(#->GetMetaDataMap())".}
+    
+    func getMetaDataMapPtrEditorRuntime(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
+    func getMetaDataMapPtr(field:FFieldPtr) : ptr TMap[FName, FString] {.importcpp:"const_cast<'0>(#->GetMetaDataMap())".}
+    func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
+    func getMetadataMapEditorRuntime*(field:FFieldPtr) : TMap[FName, FString] =      
+      withinEditorRuntime:
+        let metadataMap = getMetadataMapPtr(field)
+        if metadataMap.isNil or metadataMap[].len  == 0: 
+          result = makeTMap[FName, FString]()
+        else: 
+          result = metadataMap[]
+
+    func getMetadataMapEditorRuntime*(field:UObjectPtr) : TMap[FName, FString] =
+      withinEditorRuntime:
+        let metadataMap = getMetadataMapPtr(field)
+        if metadataMap.isNil or metadataMap[].len == 0: 
+            result = makeTMap[FName, FString]()
+        else: 
+            result = metadataMap[]
+
+    proc setMetadataEditorRuntime*(field: FFieldPtr, key: FName, inValue:FString) : void {.importcpp:"#->SetMetaData(#, *#)".}
+    proc setMetadataEditorRuntime*(field: UFieldPtr, key: FName, inValue:FString): void {.importcpp:"#->SetMetaData(#, *#)".}
+    proc setMetadataEditorRuntime*(field: UEnumPtr, key: FString, inValue:FString): void {.importcpp:"#->SetMetaData(*#, *#)".}
+    proc copyMetadataEditorRuntime*(src, dst : UObjectPtr) : void {.importcpp:"UMetaData::CopyMetadata(@)".}
+
     #only used in non editor builds (metadata is not available in non editor builds)
-    # var metadataTable* = newTable[pointer, Table[FName, FString]]()
     var metadataTable* = makeTMap[FString, TMap[FName, FString]]()
     func getMetadataMap*(field :UFieldPtr|FFieldPtr|UObjectPtr): TMap[FName, FString] = 
+      if withEditorRuntime():
+          withinEditorRuntime:
+            return getMetadataMapEditorRuntime(field)
+      else:
         let outerKey = field.getFName()
-        {.cast(noSideEffect).}:
-          # log "Getting metadata for field: " & $field.getFName()
-          # log "is In table: " & $(field in metadataTable)
+        {.cast(noSideEffect).}:           
           if field.getName() notin metadataTable:
-              # log "Creating new metadata map for field: " & field.getName()
               metadataTable.add(field.getName(), makeTMap[FName, FString]())
-              # return makeTMap[FName, FString]()
-          metadataTable[field.getName()]
+          return metadataTable[field.getName()]
 
-    proc setMetadata*(field:UFieldPtr | FFieldPtr | UNimEnumPtr, inKey: FName | FString, inValue: FString) =          
+    proc setMetadata*(field:UFieldPtr | FFieldPtr | UNimEnumPtr, inKey: FName | FString, inValue: FString) =  
+      if withEditorRuntime():
+            withinEditorRuntime:              
+              setMetadataEditorRuntime(field, inKey, inValue)
+      else:        
         let key = when typeof(inKey) is FString: makeFName inKey else: inKey
         let outerKey = field.getFName()
         {.cast(noSideEffect).}:
@@ -130,6 +188,9 @@ else:
           metadataTable[field.getName()] = map
 
     proc copyMetadata*(src, dst : UObjectPtr) : void = 
+      if withEditorRuntime():
+        copyMetadataEditorRuntime(src, dst)
+      else:
         #assumes dst doesnt exists
         let srcMap = src.getMetadataMap()
         let dstMap = dst.getMetadataMap()
