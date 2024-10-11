@@ -315,7 +315,6 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, loadingP
     hotReloadInfo.setShouldHotReload()
     
     UE_Log &"""
-    Prepass: {ueEmitter.isPrepassDone}
 {hotReloadInfo}
 """
 
