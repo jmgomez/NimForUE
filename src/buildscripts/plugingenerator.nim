@@ -40,7 +40,6 @@ $3
 } 
     
 """
-#TODO LoadingPhase should be before to support EarlyTypes (implement the hook first)
 const ModuleTemplateForUPlugin = """
     {
       "Name" : "$1",
@@ -48,12 +47,8 @@ const ModuleTemplateForUPlugin = """
       "LoadingPhase" : "PostDefault", 
       "AdditionalDependencies" : ["NimForUE"],
       "PlatformAllowList": ["$2"]
-
-
     }"""
 
-
-#TODO at some point pase modules to link dinamically here too from game.json. 
 const ModuleBuildcsTemplate = """
 using System.IO;
 using UnrealBuildTool;
@@ -146,7 +141,7 @@ const ModuleCppFileTemplate = """
 
 DEFINE_LOG_CATEGORY($1);
 
-#define LOCTEXT_NAMESPACE "FGameCorelibEditor"
+#define LOCTEXT_NAMESPACE "F$2CorelibEditor"
 
 void $2NimMain();
 extern  "C" void* reinstanceNextFrame();
@@ -253,7 +248,7 @@ proc copyCppFilesToModule(cppSrcDir, nimGeneratedCodeDir:string) =
     let filename = oldFile.extractFilename()
     existingFiles[filename] = CppSourceFile(name:filename, path:oldFile, content: readFile(oldFile))    
 
-  log "Exisiting files: " & $existingFiles.len
+  log "Existing files: " & $existingFiles.len
   log "New files: " & $newFiles.len
   for newFile in newFiles.values:
     if newFile.name in existingFiles:

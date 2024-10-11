@@ -198,7 +198,7 @@ template registerDeleteUType(T : typedesc, package:UPackagePtr, executeAfterDele
             else: instance.getPrefixCpp() & instance.getName()
 
         if getEmitterByName(clsName).isNone():
-            UE_Warn &"No emitter found for {clsName}"
+            # UE_Warn &"No emitter found for {clsName}"
             executeAfterDelete
 
 proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEEmitterPtr, package :UPackagePtr)  =    

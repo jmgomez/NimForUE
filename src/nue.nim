@@ -264,7 +264,6 @@ task lib, "Builds a game lib":
     compileLib(taskOptions["name"], extraSwitches, debug, release, threads, platformTarget)
     if shouldGenerateModule:
       generatePlugin(getPluginName(), platformTarget)
-      generateModule(name.capitalizeAscii(), getPluginName(), platformTarget)
       #TODO remove this module dll so it isnt loaded
       # ubuild(taskOptions)
   else:
