@@ -6,7 +6,7 @@ import ../unreal/engine/enginetypes
 import ../utils/[utils, ueutils]
 import nuemacrocache
 import ../codegen/[emitter,modelconstructor, models, uemeta, uebind,gencppclass, headerparser, uebindcore]
-
+import ../../buildscripts/[nimforueconfig]
 
 const WithEditor* {.booldefine.} = true 
 
@@ -20,12 +20,6 @@ proc getEmmitedTypes*(emitter: UEEmitterPtr) : seq[UEType] =
 type
   FNimHotReloadChild* {.importcpp, header:"Guest.h".} = object of FNimHotReload 
   
-  NueLoadedFrom* {.size:sizeof(uint8), exportc .} = enum
-    nlfDefault = 0, #right after the NimForUEModule is loaded (PostDefault). In non editor builds only this one is called so far
-    nlfAllModulesLoaded = 1, #after all modules are loaded (so all the types exists in the reflection system) this is also hot reloads. Should attempt to emit everything, layers before and after
-    nlfEditor = 2 # Dont act different as previous (when doing hot reloads)
-    nlfCommandlet = 3 #while on the commandlet. Nothing special. Dont act different as loaded 
-
 
 const getNumberMeta = CppFunction(name: "GetNumber", returnType: "int", params: @[])
 
@@ -221,7 +215,7 @@ proc registerDeletedTypesToHotReload(hotReloadInfo:FNimHotReloadPtr, emitter:UEE
         hotReloadInfo.deletedEnums.add(instance)
 
 #32431 
-proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, loadingPhase: NueLoadedFrom) : FNimHotReloadPtr = 
+proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, loadingPhase: NueLoadedFrom) : FNimHotReloadPtr =     
     #/Script/PACKAGE_NAME For now {Nim, GameNim}
     let (pkg, wasAlreadyLoaded) = tryGetPackageByName(pkgName).getWithResult(createNimPackage(pkgName))
     UE_Log "Emit ustructs for Pacakge " & pkgName & "  " & $pkg.getName()
@@ -321,6 +315,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, loadingP
     hotReloadInfo.setShouldHotReload()
     
     UE_Log &"""
+    Prepass: {ueEmitter.isPrepassDone}
 {hotReloadInfo}
 """
 
