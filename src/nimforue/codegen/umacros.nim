@@ -662,9 +662,9 @@ macro addDynamic*(ownerObj: typed, obj: typed, fn: typed) =
   let propName = newLit propNode.strVal
   let fnName = newLit fn.strVal
   if not propNode.isDelegate:
-    error &"`addDynamic only works over delagates. {propNode.strVal} it is not a delegate."
+    error &"`addDynamic only works over delagates. {propNode.strVal} it is not a delegate.", fn
   if not fn.isUFunc:
-    error &"addDynamic only works over ufuncs."
+    error &"addDynamic only works over ufuncs.", fn
 
   #TODO type check parameters
   genAst(propNode, propName, delOwnerCall, obj, fnName):
