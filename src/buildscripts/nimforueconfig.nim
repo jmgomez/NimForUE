@@ -182,8 +182,17 @@ func getConfigFileName(): string =
   when defined windows:
     return "NimForUE.win.json"
 
+func getSampleConfigFileName(): string = 
+  when defined macosx:
+    return "NimForUE.mac.sample.json"
+  when defined windows:
+    return "NimForUE.win.sample.json"
+
 func getConfigPath*(): string =
   return PluginDir / getConfigFileName()
+
+func getSampleConfigPath*(): string =
+  return PluginDir / getSampleConfigFileName()
 
 #when saving outside of nim set the path to the project
 proc saveConfig*(config:NimForUEConfig) =
@@ -196,6 +205,18 @@ proc createConfigFromDirs(engineDir, gameDir:string) : NimForUEConfig =
 
 proc getOrCreateNUEConfig*() : NimForUEConfig = 
   let ueConfigPath = getConfigPath()
+  if not fileExists ueConfigPath:
+    let json = readFile(getSampleConfigPath()).parseJson()
+    var sample = json.to(NimForUEConfig)
+    let res = tryGetEngineAndGameDir()
+    if res.isSome:
+      let (engineDir, gameDir) = res.get()
+      sample.engineDir = engineDir
+      sample.gameDir = gameDir
+      sample.saveConfig()
+    else:
+      assert(false, &"Could not detect engine and/or game dir. Please copy the sample config from {getSampleConfigPath()} to {getConfigPath()} and update the necessary variables.")
+
   if fileExists ueConfigPath:
     let json = readFile(ueConfigPath).parseJson()
     return json.to(NimForUEConfig)
