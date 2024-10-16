@@ -64,6 +64,7 @@ proc getGamePathFromGameDir*() : string =
 type
   EngineAssociationBlankError* = object of Exception # currently don't support blank engineAssociation (need to find the enginedir, see comments in UEVersion)
   EngineAssociationNonWindowsSourceError* = object of Exception # source builds on non-windows platform not supported (how do we get the engine source path?)
+  EngineAssociationInvalidEngineVersionError* = object of Exception # the uproject is associated with non-existent engine version
   NueLoadedFrom* {.size:sizeof(uint8), exportc .} = enum
     nlfDefault = 0, #right after the NimForUEModule is loaded (PostDefault). In non editor builds only this one is called so far
     nlfAllModulesLoaded = 1, #after all modules are loaded (so all the types exists in the reflection system) this is also hot reloads. Should attempt to emit everything, layers before and after
@@ -90,21 +91,24 @@ proc UEVersion*() : float = #defers the execution until it's needed
         if engineAssociation.len > 0:
           when defined windows:
             let registryPath = "SOFTWARE\\Epic Games\\Unreal Engine\\Builds"
-            var engineDir = getUnicodeValue(registryPath, engineAssociation, HKEY_CURRENT_USER)
-            var versionFilePath = engineDir / "Engine/Source/Runtime/Launch/Resources/Version.h"
-            var
-              major:int = 0
-              minor:int = 0
-              majorFound = false
+            try:
+              var engineDir = getUnicodeValue(registryPath, engineAssociation, HKEY_CURRENT_USER)
+              var versionFilePath = engineDir / "Engine/Source/Runtime/Launch/Resources/Version.h"
+              var
+                major:int = 0
+                minor:int = 0
+                majorFound = false
 
-            for line in versionFilePath.lines:
-              if not majorFound and line.contains "ENGINE_MAJOR_VERSION":
-                major = parseInt(line[^1..^1])
-                majorFound = true
-              elif line.contains "ENGINE_MINOR_VERSION":
-                minor = parseInt(line[^1..^1])
-                break
-            retrievedUEVersion = parseFloat($major & "." & $minor)
+              for line in versionFilePath.lines:
+                if not majorFound and line.contains "ENGINE_MAJOR_VERSION":
+                  major = parseInt(line[^1..^1])
+                  majorFound = true
+                elif line.contains "ENGINE_MINOR_VERSION":
+                  minor = parseInt(line[^1..^1])
+                  break
+              retrievedUEVersion = parseFloat($major & "." & $minor)
+            except OSError:
+              raise newException(EngineAssociationInvalidEngineVersionError, "EngineAssociation for the uproject is invalid, run 'Switch Unreal Engine version' on the uproject.")
           else:
             raise newException(EngineAssociationNonWindowsSourceError, "EngineAssociation for source builds on non-windows platform unsupported.")
         else:
@@ -141,7 +145,10 @@ when defined windows:
         if engineAssociation.len > 0:
           when defined windows:
             let registryPath = "SOFTWARE\\Epic Games\\Unreal Engine\\Builds"
-            engineDir = getUnicodeValue(registryPath, engineAssociation, HKEY_CURRENT_USER)
+            try:
+              engineDir = getUnicodeValue(registryPath, engineAssociation, HKEY_CURRENT_USER)
+            except OSError:
+              raise newException(EngineAssociationInvalidEngineVersionError, "EngineAssociation for the uproject is invalid, run 'Switch Unreal Engine version' on the uproject.")
           else:
             raise newException(EngineAssociationNonWindowsSourceError, "EngineAssociation for source builds on non-windows platform unsupported.")
         else:
