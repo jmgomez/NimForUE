@@ -124,7 +124,6 @@ proc compilePlugin*(extraSwitches:seq[string],  withDebug:bool) =
   let config = getNimForUEConfig()
   generateFFIGenFile(config)
   let guestSwitches = @[
-    "-d:BindingPrefix=.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s",
     "-d:guest",
     "-d:libname:guest",
     "-d:OutputHeader:Guest.h",
@@ -220,7 +219,6 @@ proc compileLib*(name:string, extraSwitches:seq[string], withDebug, withRelease:
     "-d:OutputHeader:" & name.capitalizeAscii() & ".h",
     "-d:libname:" & name,
     (if isVm: "-d:vmhost" else: ""),
-    &"-d:BindingPrefix=\"{PluginDir}/.nimcache/gencppbindings/{nimcacheSubdir(config.withEditor)}/@m..@sunreal@sbindings@sexported@s\"",
     "-l:" & getBindingsLib()
   ] 
   let isCompileOnly = "--compileOnly" in extraSwitches
@@ -260,7 +258,6 @@ proc compileGameToUEFolder*(extraSwitches:seq[string], withDebug:bool, platformT
   let config = getNimForUEConfig()
   let gameSwitches = @[
     "-d:game",
-    &"-d:BindingPrefix={PluginDir}/.nimcache/gencppbindings/@m..@sunreal@sbindings@sexported@s"
   ]
   #TODO Clean this up
   let bindingsDir = PluginDir / ".nimcache/gencppbindings"
