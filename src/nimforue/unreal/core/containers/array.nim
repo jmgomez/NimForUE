@@ -65,6 +65,16 @@ func filter*[T](xs:TArray[T], fn : proc(t:T): bool ) : TArray[T] =
         arr.add x
   arr
 
+template filterIt*[T](s:TArray[T], pred: untyped) : TArray[T] =
+  var arr = makeTArray[T]()
+  arr.reserve(s.num())
+  {.cast(noSideEffect).}:
+    for it {.inject.} in s:
+      if pred:
+        arr.add it
+  arr
+
+
 func toSeq*[T](arr:TArray[T]) : seq[T] = 
   if arr.num() == 0:
     return @[]
