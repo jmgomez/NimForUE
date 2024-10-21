@@ -573,6 +573,21 @@ pause
   echo cmd
   doAssert(execCmd(cmd) == 0, "Cooking failed. Check the logs for more details")
 
+task cleandll, "Sometimes we cant make debug dlls because vcc is stuck or there is a file corruption. This task will try to clean the problem. Game only ATM":
+  killvcc(taskOptions)
+  let intermediateDir = PluginDir / "Intermediate"
+  let cppBindingsDir = PluginDir / ".nimcache" / "gencppbindings"
+  let gameCache = PluginDir / ".nimcache" / "game"
+  let binariesDir = PluginDir / "Binaries" / "nim"
+  let binariesToDelete = @["game.exp", "game.lib", "game.dll"]
+  for folder in [intermediateDir, cppBindingsDir, gameCache]:
+    removeDir(folder)
+  for file in binariesToDelete:
+    removeFile(binariesDir / file)
+  taskOptions["only"] = ""
+  gencppbindings(taskOptions)
+
+  
 # --- End Tasks ---
 ok(taskOptions)
 main()

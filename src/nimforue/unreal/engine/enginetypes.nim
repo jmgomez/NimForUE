@@ -703,6 +703,7 @@ converter toObjectType*(collisionChannel:ECollisionChannel) : EObjectTypeQuery {
 converter toTraceType*(collisionChannel:ECollisionChannel) : ETraceTypeQuery {.importcpp: "UEngineTypes::ConvertToTraceType(@)".}
 
 proc getTagName*(tag: FGameplayTag): FName {.importcpp: "#.GetTagName()".}
+proc `$`*(tag: FGameplayTag): string = $tag.getTagName()
 proc requestGameplayTag*(tagName: FName, errorIfNotFound = true): FGameplayTag {.importcpp:"FGameplayTag::RequestGameplayTag(@)".}
 #NET
 proc registerReplicatedLifetimeProperty*(prop: FPropertyPtr, outLifetimeProps {.byref.}: TArray[FLifetimeProperty], params: var FDoRepLifetimeParams) {.importcpp: "RegisterReplicatedLifetimeProperty(@)".}
