@@ -1,7 +1,5 @@
 import std / [json, strutils, terminal]
 
-const importedBindingPrefix* = "@@_binding_"
-
 template quotes*(path: string): untyped =
   "\"" & path & "\""
 
