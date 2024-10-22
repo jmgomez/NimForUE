@@ -107,7 +107,7 @@ when not defined(guest) and not defined(bindings): #called from ue
 
 
 proc addEmitterInfo*(ueField:UEField, fnImpl:Option[UFunctionNativeSignature]) : void =              
-    getGlobalEmitter().emitters[ueField.typeName].ueType.fields.add ueField
+    getGlobalEmitter().emitters[ueField.typeName].ueType.fields.addUnique ueField
     # UE_Log "Adding emitter info for " & $ueField
     # UE_Warn $getGlobalEmitter().emitters[ueField.typeName]
 

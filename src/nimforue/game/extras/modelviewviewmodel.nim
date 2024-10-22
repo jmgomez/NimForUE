@@ -56,3 +56,8 @@ proc getViewModelFromCollection*(T: typedesc, worldContext: UObjectPtr): ptr T  
     addViewModelToCollection(T, worldContext)
   else:
     instance
+
+proc broadcastFieldValueChanged*(T: typedesc, worldContext: UObjectPtr, name: FName): void =
+  let vminstance = getViewModelFromCollection(T, worldContext)
+  assert(vminstance.isNotNil)
+  vminstance.broadcastFieldValueChanged(name)

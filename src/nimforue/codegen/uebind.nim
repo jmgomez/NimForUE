@@ -348,7 +348,7 @@ func genUClassTypeDef(typeDef : UEType, rule : UERule = uerNone, typeExposure: U
 
   let funcs = nnkStmtList.newTree(
     typeDef.fields
-      .filter(prop=>prop.kind==uefFunction)
+      .filter(prop=>prop.kind==uefFunction and typeExposure != uexDsl)
       .map(fun=>genFunc(typeDef, fun, typeExposure).impl))
 
   let fields =

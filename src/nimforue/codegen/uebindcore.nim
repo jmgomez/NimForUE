@@ -145,6 +145,10 @@ func getFunctionFlags*(fn:NimNode, functionsMetadata:seq[UEMetadata]) : (EFuncti
     if hasMeta("Static"):
       when not defined(nuevm): #: illegal conversion from '-1' to '[0..9223372036854775807]'
         flags = flags | FUNC_Static
+
+    if fn.kind == nnkFuncDef:
+      flags = flags | FUNC_Const
+
     if hasMeta("Server"):
       flags = flags | FUNC_Net | FUNC_NetServer
     if hasMeta("Client"):
@@ -541,15 +545,15 @@ func generateFieldNotify*(typedef: UEType): Option[(string, string)] =
   var implementFields = ""
   var implementEnumFields = ""
   var isFirst = true 
-  for field in typedef.fields:
-    #TODO Funcs
-    if field.isFieldNotify():
-      let firstDecl = if isFirst: "_BEGIN" else: ""
-      declareFields.add(&"""UE_FIELD_NOTIFICATION_DECLARE_FIELD({field.name})  \""" & "\n")
-      declareEnumFields.add(&"""UE_FIELD_NOTIFICATION_DECLARE_ENUM_FIELD{firstDecl}({field.name})  \""" & "\n")
-      implementFields.add(&"""UE_FIELD_NOTIFICATION_IMPLEMENT_FIELD({typedef.name}, {field.name})  """ & "\n")
-      implementEnumFields.add(&"""UE_FIELD_NOTIFICATION_IMPLEMENT_ENUM_FIELD({typedef.name}, {field.name})  """ & "\n")
-      isFirst = false
+  let notifyFields = typeDef.fields.filterIt("FieldNotify" in it.metadata)
+
+  for field in notifyFields:
+    let firstDecl = if isFirst: "_BEGIN" else: ""
+    declareFields.add(&"""UE_FIELD_NOTIFICATION_DECLARE_FIELD({field.name})  \""" & "\n")
+    declareEnumFields.add(&"""UE_FIELD_NOTIFICATION_DECLARE_ENUM_FIELD{firstDecl}({field.name})  \""" & "\n")
+    implementFields.add(&"""UE_FIELD_NOTIFICATION_IMPLEMENT_FIELD({typedef.name}, {field.name})  """ & "\n")
+    implementEnumFields.add(&"""UE_FIELD_NOTIFICATION_IMPLEMENT_ENUM_FIELD({typedef.name}, {field.name})  """ & "\n")
+    isFirst = false
   if declareFields == "":
     return none((string, string))
   let decl = &"""UE_FIELD_NOTIFICATION_DECLARE_CLASS_DESCRIPTOR_BEGIN( ) \

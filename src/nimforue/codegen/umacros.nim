@@ -342,6 +342,14 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
                           .filterIt(it.kind == nnkCall and it[0].strVal() notin @ValidUprops & @["default", "defaults"] & @ValidUFuncs)
                           .map(fromCallNodeToIdentDenf)
 
+      let nimProcs = body.children.toSeq
+                      .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor", ueType.name])
+                      .mapIt(it.addSelfToProc(className).processVirtual(parent))        
+
+      var funcInClass = genUFuncsForUClass(body, className, nimProcs)
+
+      ueType.fields = ueType.fields & funcInClass.fields
+
       var (typeNode, addEmitterProc) = emitUClass(ueType, some name.lineInfoObj)
       if nimFields.any():
         typeNode[0][0].typeParams.add nimFields
@@ -353,11 +361,6 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
         .get(genConstructorForClass(body, ueType, defaults.get(nnkStmtList.newTree())))
       procNodes.add genGetLifetimeReplicatedProps(ueType)
 
-      let nimProcs = body.children.toSeq
-                      .filterIt(it.kind == nnkProcDef and it.name.strVal notin ["constructor", ueType.name])
-                      .mapIt(it.addSelfToProc(className).processVirtual(parent))        
-
-      var funcInClass = genUFuncsForUClass(body, className, nimProcs)
       var fns = funcInClass.toStmtNode(withForwards)
       fns.insert(0, procNodes)
       let ctorContent = newLit &"{className}(const '1& #1) : {ueType.parent}(#1)"
@@ -369,15 +372,15 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
           proc clsCtor(): cls {.constructor.} = discard
           
       fns.add ctor
-      fns.add initCtor       
+      fns.add initCtor
       #Adds the C++ implementation for the field notify
       let fieldNotify = generateFieldNotify(ueType)
       if fieldNotify.isSome:
         let impl: string = fieldNotify.get()[1]
-        let fieldNotfiyImpl = 
+        let fieldNotifyImpl = 
           genAst(emitContent = newLit impl):
             {.emit: emitContent.}
-        fns.add fieldNotfiyImpl
+        fns.add fieldNotifyImpl
 
         let fieldsWithNotify = ueType.fields.filterIt(it.kind == uefProp and FieldNotifyMetadataKey in it.metadata)
         for field in fieldsWithNotify:
@@ -386,14 +389,14 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
 
     result =  (typeNode, fns, funcInClass)    
 
-      # if ueType.name == "UEnhancedInputAbilitySystem":
-    # debugEcho repr result
+    #if className.eqIdent("UTodoListViewModel"):
+    #  here typeNode.repr
 
 macro uClass*(name:untyped, body : untyped) : untyped = 
   let (uClassNode, fns, _) = uClassImpl(name, body, true)
   result = nnkStmtList.newTree(@[uClassNode] & fns)
 
-  #if name[1].eqIdent("AAuraEffectActor"):
+  #if name[1].eqIdent("UTodoListViewModel"):
   #  here result.repr
 
 
@@ -594,6 +597,12 @@ macro uSection*(body: untyped): untyped =
       uprops.add typ[1..^1] #shouldnt this be only for uClasses?
 
     result = nnkStmtList.newTree(@[typSection] & userPrcsFwds & uFuncFws & uprops & uClassFns & fns)
+    #here typSection.repr
+    #here userPrcsFwds.repr
+    #here uFuncFws.repr
+    #here uprops.repr
+    #here uprops.repr
+    #here uClassFns.repr
 
 when not defined nuevm:
   macro uForwardDecl*(name : untyped ) : untyped = 
