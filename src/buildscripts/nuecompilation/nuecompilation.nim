@@ -193,7 +193,7 @@ proc setPath(pluginDir: string) =
 
 
 for dir in pluginDirs:
-  setPath(dir)
+  setPath(dir.absolutePath)
 
 switch("backend", "cpp")
 
