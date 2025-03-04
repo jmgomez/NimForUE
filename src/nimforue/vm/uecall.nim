@@ -75,7 +75,7 @@ proc setProp*(rtField: RuntimeField, prop: FPropertyPtr, memoryBlock: pointer) =
       let arrayProp = castField[FArrayProperty](prop)
       let innerProp = arrayProp.getInnerProp()
       let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, memoryBlock)
-      arrayHelper.emptyAndAddUninitializedValues(rtArray.len.int32)
+      arrayHelper.addUninitializedValues(rtArray.len.int32)
       log &"Setting array {rtArray.len}"
       for idx, elem in enumerate(rtArray):
         UE_Log &"Setting array value {elem} to {innerProp.getName()} at address {repr arrayHelper.getRawPtr(idx.int32)} offset {innerProp.getOffset()}"
