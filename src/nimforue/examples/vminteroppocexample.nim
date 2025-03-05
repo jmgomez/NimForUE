@@ -6,7 +6,6 @@ import std/[json, strformat, jsonutils, sequtils, options, sugar, enumerate, str
 import ../vm/[runtimefield, uecall]
 import ../unreal/nimforue/nimforuebindings
 
-import ../test/testutils
 
 #Primero coger el parametro.
 #Luego devolverlo en el out
@@ -769,6 +768,7 @@ uStruct FStructWithHeapAllocatedFields:
 uClass AUECallArrayTest of ANimTestBase:
   uprops(EditAnywhere):
     arrayIntProp: TArray[int]
+    arrayFStringProp: TArray[FString]
     structPocoProp: FStructRuntimeFieldPOCOTest
     arrayStructPocoProp: TArray[FStructRuntimeFieldPOCOTest]
     heapAllocatedStructProp: FStructWithHeapAllocatedFields
@@ -788,6 +788,47 @@ uClass AUECallArrayTest of ANimTestBase:
       UE_Log &"Value send {callData.value}"
       discard uCall(callData)      
       check expected == self.arrayIntProp
+
+    proc shouldBeAbleToWriteAnArrayFStringProp() =
+      #debugBreak()
+      let expected = makeTArray[FString]("hello", "are", "you", "working?")
+      self.arrayFStringProp = makeTArray[FString]()
+      let callData = UECall(
+          kind: uecSetProp,
+          self: cast[int](self),
+          clsName: "A" & self.getClass.getName(),
+          value: (arrayFStringProp: expected).toRuntimeField()
+        )
+      #UE_Log &"Value send {callData.value}"
+
+      #discard uCall(callData)      
+
+      var cls = getClassByName(callData.clsName.removeFirstLetter()) #self class
+      #let callDataRtField = callData.value
+      #let propName = callDataRtField.getStruct()[0].getName() # "arrayFStringProp"
+      let prop = cls.getFPropertyByName("arrayFStringProp") # self.arrayFStringProp
+
+      let selfAddr = cast[uint](self)
+
+      let offset = prop.getOffset()
+      let memoryBlock = cast[pointer](selfAddr + offset.uint) #memory address of self.arrayFStringProp
+
+      let arrayRtField = expected.toRuntimeField()# callDataRtField[propName]
+      let rtArray = arrayRtField.getArray()
+      let arrayProp = castField[FArrayProperty](prop)
+      let innerProp = arrayProp.getInnerProp() # FString prop
+      #debugBreak()
+      let arrayHelper = makeScriptArrayHelperInContainer(arrayProp, memoryBlock)
+      #arrayHelper.emptyAndAddUninitializedValues(rtArray.len.int32)
+      #arrayHelper.addUninitializedValues(rtArray.len.int32)
+      #arrayHelper.addValues(rtArray.len.int32)
+      arrayHelper.emptyAndAddValues(rtArray.len.int32)
+      let container = arrayHelper.getRawPtr(0)
+      let elemAddr = cast[pointer](cast[uint](container) + innerProp.getOffset().uint)
+      #debugBreak()
+      setPropertyValue(innerProp, elemAddr, makeFString rtArray[0].getStr)
+
+      check expected == self.arrayFStringProp
 
     proc shouldBeAbleToWriteAPOCOStruct() =
       let expected = FStructRuntimeFieldPOCOTest(intProp: 10, vectorProp: FVector(x:10, y:10, z:10))
