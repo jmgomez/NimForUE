@@ -937,7 +937,14 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.classCastFlags = parent.classCastFlags
   newCls.propertiesSize = cast[int32](sizeof(T))
   newCls.minAlignment = cast[int32](alignof(T))
-  copyMetadata(parent, newCls)
+
+  #copyMetadata(parent, newCls) # We get a crash here with UShelfData because when copying over 'UEType' the memory allocated for the string overwrites the metadata iterator.
+  # The issue seems to be the allocator is stomping on data its already allocated. There are a couple workarounds. Either we don't allocate or allocate less, or don't copy the metadata.
+  # We're choosing to not copy over 'UEType'. This is only used at editor type anyway.
+  for key, value in parent.getMetadataMap():
+    if key == n "UEType":
+      continue
+    newCls.setMetadata(key, value)
 
   newCls.markAsNimClass()
 
