@@ -355,7 +355,7 @@ proc compileGenerateBindings*() =
       buildFlags.add(&" --out:{getBindingsLib()}")
     else:
       echo "Compiling bindings for non editor, will output a dynamic lib"
-      buildFlags.add("--compileOnly")
+      buildFlags.add(" --compileOnly")
     let nimCacheDir = ".nimcache/gencppbindings" / nimcacheSubdir(withEditor)
     let outHeader = "UEGenBindings.h"
 

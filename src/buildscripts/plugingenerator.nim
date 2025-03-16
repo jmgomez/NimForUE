@@ -94,11 +94,7 @@ public class $1 : ModuleRules
       System.Console.WriteLine("Found an user custom header nuegame.h Adding it to the PCH");
     }
 		PublicDefinitions.Add("NIM_INTBITS=64");
-		if (Target.Platform == UnrealTargetPlatform.Win64){
-			CppStandard = CppStandardVersion.Cpp20;
-		} else {
-			CppStandard = CppStandardVersion.Cpp17;
-		}
+		CppStandard = CppStandardVersion.Cpp20;
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 		var nimHeadersPath = Path.Combine(PluginDirectory, "..", "NimForUE", "NimHeaders");
@@ -184,7 +180,7 @@ proc platformTargetToUnrealTarget(target: PlatformTargetKind): string =
   of ptkWindows: "Win64"
   of ptkAndroid: "Android"
   of ptkIOS: "IOS"
-  of ptkMac: "MacOs"
+  of ptkMac: "Mac"
   else: 
     raise newException(Defect, "Invalid platform target")
     

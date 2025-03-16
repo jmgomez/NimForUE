@@ -1,5 +1,4 @@
 #include "GameNim.h"
-#include "Modules/ModuleManager.h"
 
 DEFINE_LOG_CATEGORY(GameNim);
 
@@ -17,4 +16,4 @@ void FGameNim::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 
-IMPLEMENT_MODULE(FGameNim, GameNim);
+IMPLEMENT_MODULE(FGameNim, GameNim)

@@ -8,6 +8,8 @@ import engine/gameframework
 import engine/engine
 import enhancedinput/enhancedinput
 import std/[typetraits, options, asyncdispatch, strformat, tables]
+import ../../buildscripts/[nimforueconfig]
+
 
 proc tryGetSubsystem*[T: UEngineSubsystem](): Option[ptr T] = 
     tryUECast[T](getEngineSubsystem(makeTSubclassOf[UEngineSubsystem](staticClass[T]())))
