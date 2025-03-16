@@ -55,7 +55,11 @@ public class NimForUEBindings : ModuleRules
 		}
 
 		AddHostDll();
-		var gameModulesStr = Marshal.PtrToStringAnsi(getGameModules(Target.bBuildEditor));
+		var gameModulesStr = "";
+		//Only win #TODO fix for macos
+		if (Target.Platform == UnrealTargetPlatform.Win64){
+			gameModulesStr = Marshal.PtrToStringAnsi(getGameModules(Target.bBuildEditor));
+		}
 		if (!String.IsNullOrEmpty(gameModulesStr)) {
 			var nimGameModules = gameModulesStr.Split(",");
 			foreach (var m in nimGameModules) {
@@ -64,12 +68,9 @@ public class NimForUEBindings : ModuleRules
 			PublicDependencyModuleNames.AddRange(nimGameModules);
 		}
 	
-		if (Target.Platform == UnrealTargetPlatform.Win64){
-			CppStandard = CppStandardVersion.Cpp20;
-		}
-		else {
-			CppStandard = CppStandardVersion.Cpp17;
-		}
+		CppStandard = CppStandardVersion.Cpp20;
+		
+		
 
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;

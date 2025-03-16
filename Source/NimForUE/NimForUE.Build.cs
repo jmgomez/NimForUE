@@ -25,12 +25,7 @@ public class NimForUE : ModuleRules
 	static extern bool SetDllDirectory(string lpPathName);
 	public NimForUE(ReadOnlyTargetRules Target) : base(Target) {
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		if (Target.Platform == UnrealTargetPlatform.Win64) {
-			CppStandard = CppStandardVersion.Cpp20;
-		}
-		else {
-			CppStandard = CppStandardVersion.Cpp17;
-		}
+		CppStandard = CppStandardVersion.Cpp20;
 		PublicDefinitions.Add("NIM_INTBITS=64");
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;

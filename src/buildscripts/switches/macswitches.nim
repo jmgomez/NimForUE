@@ -3,16 +3,16 @@ import buildscripts/[buildcommon, buildscripts, nimforueconfig]
 
 let macArmSwitches = @[
     # "--putenv:MACOSX_DEPLOYMENT_TARGET=10.15",
-    "-l:'-target arm64-apple-macos10.15'",
-    "-t:'-target arm64-apple-macos10.15'",
+    "-l:'-target arm64-apple-macos13.0'",
+    "-t:'-target arm64-apple-macos13.0'",
 ]
 let macSwitches = @[
   "--cc:clang",
   "-t:-stdlib=libc++",
-  "--putenv:MACOSX_DEPLOYMENT_TARGET=10.15",
+  "--putenv:MACOSX_DEPLOYMENT_TARGET=13.0",
   "-t:\"-x objective-c++\"",
   "-t:-fno-unsigned-char",
-  "-t:-std=c++17",
+  "-t:-std=c++20",
   "-t:-fno-rtti",
   "-t:-fasm-blocks",
   "-t:-fvisibility-ms-compat",

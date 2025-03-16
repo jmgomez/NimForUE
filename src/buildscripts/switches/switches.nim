@@ -92,7 +92,7 @@ proc getPlatformSwitches(withPch, withDebug : bool, target: static string, platf
   when target in ["guest", "bindings"]:
     when defined(windows):
       return winswitches.getPlatformSwitches(withPch, withDebug, target)
-    elif defined(macos):
+    elif defined(macosx):
       return macswitches.getPlatformSwitches(withPch, withDebug, target)
     else:
       quit("Platform not supported")

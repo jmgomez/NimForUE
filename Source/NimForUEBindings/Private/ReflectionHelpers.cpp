@@ -12,7 +12,10 @@
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+//Only win 
+#if PLATFORM_WINDOWS
 #include "Engine\GameViewportClient.h"
+#endif
 
 UClass* UReflectionHelpers::GetClassByName(FString ClassName) {
 	UObject* ClassPackage = ANY_PACKAGE;
@@ -98,41 +101,43 @@ TArray<UClass*> UReflectionHelpers::GetAllClassesFromModule(FString ModuleName) 
 UWorld* UReflectionHelpers::GetCurrentActiveWorld()
 {
 	UWorld* world = nullptr;
-#if WITH_EDITOR
-	if (GIsEditor)
-	{
-		if (GPlayInEditorID == -1)
+#if PLATFORM_WINDOWS
+	#if WITH_EDITOR
+		if (GIsEditor)
 		{
-			FWorldContext* worldContext = GEditor->GetPIEWorldContext(1);
-			if (worldContext == nullptr)
+			if (GPlayInEditorID == -1)
 			{
-				if (UGameViewportClient* viewport = GEngine->GameViewport)
+				FWorldContext* worldContext = GEditor->GetPIEWorldContext(1);
+				if (worldContext == nullptr)
 				{
-					world = viewport->GetWorld();
+					if (UGameViewportClient* viewport = GEngine->GameViewport)
+					{
+						world = viewport->GetWorld();
+					}
+				}
+				else
+				{
+					world = worldContext->World();
 				}
 			}
 			else
 			{
+				FWorldContext* worldContext = GEditor->GetPIEWorldContext(GPlayInEditorID);
+				if (worldContext == nullptr)
+				{
+					return nullptr;
+				}
 				world = worldContext->World();
 			}
 		}
 		else
 		{
-			FWorldContext* worldContext = GEditor->GetPIEWorldContext(GPlayInEditorID);
-			if (worldContext == nullptr)
-			{
-				return nullptr;
-			}
-			world = worldContext->World();
+			world = GEngine->GetCurrentPlayWorld(nullptr);
 		}
-	}
-	else
-	{
-		world = GEngine->GetCurrentPlayWorld(nullptr);
-	}
 
-#else
-	world = GEngine->GetCurrentPlayWorld(nullptr);
+	#else
+		world = GEngine->GetCurrentPlayWorld(nullptr);
+	#endif
 #endif
 	return world;
 }

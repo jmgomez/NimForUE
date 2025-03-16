@@ -127,7 +127,7 @@ type
 proc getPlatformTarget*(arg: string): PlatformTargetKind = 
   let defaultPlatform = 
     when defined(windows): "windows"
-    elif defined(macos): "macos"
+    elif defined(macosx): "macos"
     else: ""
   if getNimForUEConfig().withEditor or arg == "":
     parseEnum[PlatformTargetKind](defaultPlatform)

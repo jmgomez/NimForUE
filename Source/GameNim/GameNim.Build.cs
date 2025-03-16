@@ -22,7 +22,8 @@ public class GameNim : ModuleRules
 			PrivateDependencyModuleNames.AddRange(new string[] {
 			"Kismet", "BlueprintGraph","ToolMenus", "Projects"
 		});
-		}
+		bUseUnity = false;
 	}
 
+}
 }
