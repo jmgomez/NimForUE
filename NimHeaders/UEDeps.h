@@ -116,17 +116,7 @@
 #include "Abilities/Tasks/AbilityTask.h"
 #include "NavigationSystem.h"
 
-#if  ENGINE_MINOR_VERSION >= 2   
-#include "Elements/PCGExecuteBlueprint.h"
-#include "PCGContext.h"
-#include "PCGElement.h"
-#include "PCGComponent.h"
-#include "PCGSubgraph.h"
-#include "PCGSubsystem.h"
-#include "PCGData.h"
-#include "Data/PCGSpatialData.h"
-#endif
-
+#include "StructUtils/InstancedStruct.h"
 
 #if  ENGINE_MINOR_VERSION >= 4
 #include "EnhancedInput/Public/InputMappingQuery.h"

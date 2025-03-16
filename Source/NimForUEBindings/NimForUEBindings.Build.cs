@@ -43,10 +43,6 @@ public class NimForUEBindings : ModuleRules
 			 "EnhancedInput", "GameplayAbilities", "AIModule",
 		});
 		
-#if UE_5_2_OR_LATER
-		PublicDependencyModuleNames.Add("PCG");
-		
-#endif
 		if (Target.bBuildEditor) {
 			PublicDependencyModuleNames.AddRange(new string[] {
 				"UnrealEd",

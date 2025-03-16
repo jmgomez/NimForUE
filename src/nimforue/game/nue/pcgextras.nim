@@ -1,6 +1,20 @@
 include unrealprelude
+#[
+  required headers in your nuegame.h for this to work
+#include "Elements/PCGExecuteBlueprint.h"
+#include "PCGContext.h"
+#include "PCGElement.h"
+#include "PCGComponent.h"
+#include "PCGSubgraph.h"
+#include "PCGSubsystem.h"
+#include "PCGData.h"
+#include "Data/PCGSpatialData.h"
+]#
+
 import pcg
 export pcg
+
+
 #TODO Review valid T and check them at compile time. 
 type 
   IPCGElement* {.importcpp.} = object

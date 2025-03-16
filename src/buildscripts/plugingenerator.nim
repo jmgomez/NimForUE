@@ -68,7 +68,6 @@ public class $1 : ModuleRules
 			"NimForUEBindings",
 			"EnhancedInput", 
 			"GameplayTags",
-			"PCG",  //TODO add only in 5.2
 			"GameplayAbilities", //TODO PCG, GameplayTags and GampleyAbilities should be optional modules
 			"PhysicsCore",
       "UMG",
