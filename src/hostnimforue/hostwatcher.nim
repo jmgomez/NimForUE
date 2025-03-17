@@ -2,12 +2,14 @@ import std/[times, os, dynlib, tables, strutils, sequtils, algorithm, locks, sug
 import pure/asyncdispatch
 import ../buildscripts/[buildscripts]
 import ffigen
-
 import hostbase
-
+when defined(posix):
+    import std/posix
 type LoggerSignature* = proc(msg:cstring) {.cdecl, gcsafe.}
     
 var logger : LoggerSignature
+
+
 
 proc loadNueLib*(libName, nextPath: string, loadedFrom:NueLoadedFrom) =
   var nueLib = libMap[libName]
@@ -15,7 +17,11 @@ proc loadNueLib*(libName, nextPath: string, loadedFrom:NueLoadedFrom) =
     nueLib.lib = loadLib(nextPath)
     if nueLib.lib == nil:
         logger(&"[NUEHost]Library {libName} in {loadedFrom} couldnt be loaded. File Exists: {fileExists(nextPath)}")
-        logger(&"[NUEHost]OS Error {osLastError().int32}")        
+        logger(&"[NUEHost]Next Path: {nextPath}")
+        logger(&"[NUEHost]OS Error {osLastError().int32}")   
+        when defined(posix):
+            logger(&"[NUEHost] dlopen error: {$dlerror()}")
+
         sleep(1000)
         nueLib.lib = loadLib(nextPath)
         logger(&"[NUEHost] Retried Library {libName} in {loadedFrom} is loaded: {nueLib.lib != nil}")        
