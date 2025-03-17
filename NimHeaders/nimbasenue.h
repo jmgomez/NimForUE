@@ -241,7 +241,8 @@ __AVR__
 #    define N_FASTCALL_PTR(rettype, name) rettype (*name)
 #    define N_SAFECALL_PTR(rettype, name) rettype (*name)
 #  endif
-#  define N_LIB_EXPORT NIM_EXTERNC __attribute__((visibility("default")))
+// #  define N_LIB_EXPORT NIM_EXTERNC __attribute__((visibility("default")))
+#  define N_LIB_EXPORT  __attribute__((visibility("default"))) //mac doesnt need nim_externc what about android and ios?
 #  define N_LIB_EXPORT_VAR  __attribute__((visibility("default")))
 #  define N_LIB_IMPORT  //extern COMMENTED OUT
 #endif
