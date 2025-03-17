@@ -211,6 +211,8 @@ proc createConfigFromDirs(engineDir, gameDir:string) : NimForUEConfig =
   NimForUEConfig(engineDir: engineDir, gameDir: gameDir, withEditor:true, targetConfiguration: Development, targetPlatform: defaultPlatform)
 
 proc getOrCreateNUEConfig*() : NimForUEConfig = 
+  when defined(nimsuggest):
+    return NimForUEConfig()
   let ueConfigPath = getConfigPath()
   if not fileExists ueConfigPath:
     let json = readFile(getSampleConfigPath()).parseJson()

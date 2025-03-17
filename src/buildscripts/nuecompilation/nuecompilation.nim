@@ -154,10 +154,11 @@ echo "Current dir is ", currentDir
 var pluginDirs = 
   if fileExists(currentDir / "game.nim"): 
     @[getCurrentDir() / "../Plugins/NimForUE"]
+  elif dirExists("NimForUE") and dirExists("Plugins"): 
+    @[getCurrentDir() / "Plugins/NimForUE"]
   elif dirExists("NimForUE"): @["."]
   else:
     @[getCurrentDir() / "../../Plugins/NimForUE"]
-
 
 pluginDirs = pluginDirs.filter(dirExists)
 assert pluginDirs.len == 1
