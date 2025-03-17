@@ -23,7 +23,6 @@ public class NimForUEBindings : ModuleRules
 	static extern string dlerror();
 
 	// Constants for dlopen
-	const int RTLD_LAZY = 1;
 	const int RTLD_NOW = 2;
 	const int RTLD_GLOBAL = 8;
 
