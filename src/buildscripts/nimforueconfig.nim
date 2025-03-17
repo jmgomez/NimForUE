@@ -463,10 +463,10 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
   var enginePlugins:seq[string]
   var engineExperimentalPlugins:seq[string] = newSeq[string]()
   if UEVersion() >= 5.4:
-    enginePlugins = @["EnhancedInput", "PCG"]
+    enginePlugins = @["EnhancedInput"]
   else:
     enginePlugins = @["EnhancedInput"]
-    engineExperimentalPlugins = @["PCG"]
+    engineExperimentalPlugins = @[]
 
   var engineRuntimePlugins = @["GameplayAbilities"]
   var gamePlugins = newSeq[string]()
@@ -611,10 +611,6 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
 
   var enginePlugins = @["EnhancedInput"]
   var experimentalPlugins = newSeq[string]()
-  if UEVersion() >= 5.4:
-    enginePlugins.add("PCG")
-  else:
-    experimentalPlugins.add("PCG")
 
 
   var modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", 
