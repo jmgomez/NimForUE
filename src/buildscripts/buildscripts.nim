@@ -119,8 +119,7 @@ type
   PlatformTargetKind* = enum 
     ptkWindows = "windows"
     ptkLinux = "linux" #Not supported so far
-    ptkMac = "macos" #Not supported so far
-    ptkIOS = "ios" #Not supported so far
+    ptkMac = "macos" #MacOs subsumes ios and likely AppleTv and VisionOS
     ptkAndroid = "android" 
     #Add Support to consoles here
 

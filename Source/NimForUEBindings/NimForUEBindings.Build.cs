@@ -70,8 +70,9 @@ public class NimForUEBindings : ModuleRules
 			} else {
 				getGameModules_Delegate = Marshal.GetDelegateForFunctionPointer<GetGameModulesDelegate>(getModulesPtr);
 			}
-			
-			PublicAdditionalLibraries.Add(dynLibPath);
+			if (Target.Platform == UnrealTargetPlatform.Mac) { //DONT link in ios
+				PublicAdditionalLibraries.Add(dynLibPath);
+			}
 		}
 	}
 	

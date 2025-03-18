@@ -2,20 +2,21 @@
 
 #pragma once
 
+
+#if PLATFORM_WINDOWS 
+#include <NimForUEFFI.h>
+
+extern  "C" void runNUETests();
+#endif
 #include "CoreMinimal.h"
 #include "Commandlets/Commandlet.h"
-#include <NimForUEFFI.h>
 #include "NUETestCommandlet.generated.h"
-
-/**
- * 
- */
-extern  "C" void runNUETests();
 
 UCLASS()
 class NIMFORUE_API UNUETestCommandlet : public UCommandlet {
 	GENERATED_BODY()
-	
+	#if PLATFORM_WINDOWS 
 	virtual int32 Main(const FString& Params) override;
+	#endif
 
 };

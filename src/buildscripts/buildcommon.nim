@@ -8,7 +8,7 @@ template squotes*(path: string): untyped =
 
 type TargetPlatform* = enum
     Mac = "Mac"
-    Win64 = "Win64"
+    Win64 = "Win64"    
     #TODO Fill the rest
 
 type TargetConfiguration* = enum
