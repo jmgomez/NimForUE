@@ -178,8 +178,7 @@ proc platformTargetToUnrealTarget(target: PlatformTargetKind): string =
   case target
   of ptkWindows: "Win64"
   of ptkAndroid: "Android"
-  of ptkIOS: "IOS"
-  of ptkMac: "Mac"
+  of ptkMac: "Mac\", \"iOS"
   else: 
     raise newException(Defect, "Invalid platform target")
     
