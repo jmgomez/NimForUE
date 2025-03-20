@@ -11,7 +11,7 @@
 #include "Misc/EngineVersionComparison.h"
 
 UGenerateBindingsCommandlet::UGenerateBindingsCommandlet() {
-
+	FastExit = true;
 }
 
 int32 UGenerateBindingsCommandlet::Main(const FString& Params) {
