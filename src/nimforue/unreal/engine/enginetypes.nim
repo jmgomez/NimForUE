@@ -539,7 +539,7 @@ proc unRegisterComponent*(obj : UActorComponentPtr) {.importcpp: "#->UnregisterC
 proc destroyComponent*(obj : UActorComponentPtr, bPromoteChildren=false) {.importcpp: "#->DestroyComponent(#)".}
 
 
-proc markRenderStateDirty*(obj : UPrimitiveComponentPtr) {.importcpp: "#->MarkRenderStateDirty()".}
+proc markRenderStateDirty*(obj : UActorComponentPtr) {.importcpp: "#->MarkRenderStateDirty()".}
 
 type EGetWorldErrorMode* {.importcpp, size: sizeof(uint8).} = enum
   ReturnNull,
