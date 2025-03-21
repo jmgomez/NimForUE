@@ -47,9 +47,7 @@
 #include "Runtime/Engine/Public/CanvasTypes.h"
 #include "Runtime/Projects/Public/Interfaces/IPluginManager.h"
 
-#include "WorldPartition/DataLayer/DataLayerInstance.h"
 #include "Engine/DamageEvents.h"
-// #include "Private/AsyncActionLoadPrimaryAsset.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "PreviewScene.h"
 
