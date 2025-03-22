@@ -172,8 +172,10 @@ proc getWithEditorSetting(): bool =
   elif defined(macOS):
     confFile = "NimForUE.mac.json"
   
-  parseJson(readFile(confFile))["withEditor"].jsonTo(bool)
-
+  if fileExists(confFile):
+    parseJson(readFile(confFile))["withEditor"].jsonTo(bool)
+  else:
+    false
 
 const WithEditor = getWithEditorSetting()
 
