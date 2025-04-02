@@ -81,7 +81,7 @@
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-
+#include "UserSettings\EnhancedInputUserSettings.h"
 
 #if WITH_EDITORONLY_DATA
   #include "Editor/UnrealEdEngine.h"
