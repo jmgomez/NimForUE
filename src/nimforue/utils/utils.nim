@@ -27,7 +27,7 @@ macro noresult*(prc:untyped) =
   prc.addPragma(ident "asmnostackframe")
   prc.body = 
     genAst(exp=prc.body): 
-      let res {.inject.} = exp
+      let res {.inject, exportcpp.} = exp
       {.emit: "return res;".}
   prc
 
