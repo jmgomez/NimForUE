@@ -447,7 +447,7 @@ type
     bText* {.importcpp: "bText".}: bool
     importPriority* {.importcpp: "ImportPriority".}: int32
     # automatedImportData* {.importcpp: "AutomatedImportData".}: UAutomatedAssetImportDataPtr
-    assetImportTask* {.importcpp: "AssetImportTask".}: UAssetImportTaskPtr
+    # assetImportTask* {.importcpp: "AssetImportTask".}: UAssetImportTaskPtr
     overwriteYesOrNoToAllState {.importcpp: "OverwriteYesOrNoToAllState".}: int32
 
   UFactoryPtr* = ptr UFactory
