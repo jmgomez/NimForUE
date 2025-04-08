@@ -438,6 +438,18 @@ type
   UNavigationSystemConfigPtr* = ptr UNavigationSystemConfig
 
   UFactory* {.importcpp, inheritable, pure .} = object of UObject
+    bCreateNew {.importcpp: "bCreateNew".}: bool
+    supportedClass* {.importcpp: "SupportedClass".}: TSubclassOf[UObject]
+    contextClass* {.importcpp: "ContextClass".}: TSubclassOf[UObject]
+    formats* {.importcpp: "Formats".}: TArray[FString]
+    bEditAfterNew* {.importcpp: "bEditAfterNew".}: bool
+    bEditorImport* {.importcpp: "bEditorImport".}: bool
+    bText* {.importcpp: "bText".}: bool
+    importPriority* {.importcpp: "ImportPriority".}: int32
+    # automatedImportData* {.importcpp: "AutomatedImportData".}: UAutomatedAssetImportDataPtr
+    assetImportTask* {.importcpp: "AssetImportTask".}: UAssetImportTaskPtr
+    overwriteYesOrNoToAllState {.importcpp: "OverwriteYesOrNoToAllState".}: int32
+
   UFactoryPtr* = ptr UFactory
   # FNavAgentSelector* {.importcpp .} = object
   # FKConvexElem* {.importcpp .} = object
