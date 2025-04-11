@@ -526,7 +526,7 @@ func genUStructTypeDef*(typeDef: UEType,  rule: UERule = uerNone, typeExposure: 
           ident "importcpp"
         else:
           nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1" & suffix))
-          
+
       nnkPragmaExpr.newTree([
         nnkPostfix.newTree([ident "*", ident typeDef.name]),
         nnkPragma.newTree(
@@ -668,7 +668,10 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
     if ueType.isInPCH:
       nnkPragma.newTree(ident "importcpp", ident "bycopy")
     else:
-      nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1" & "_"))
+      nnkPragma.newTree(
+        nnkExprColonExpr.newTree(ident "exportcpp", newStrLitNode("$1" & "_")),
+        ident "noinit"
+      )
 
   nnkTypeDef.newTree(
     nnkPragmaExpr.newTree([
@@ -684,6 +687,13 @@ func genUStructTypeDefBinding*(ueType: UEType, rule: UERule = uerNone): NimNode 
     )
   )
 
+
+proc genStructConstructor*(typeDef: UEType): NimNode =
+  let name = typeDef.name.removeFirstLetter()
+  let ctorName = ident "make" & name.capitalizeAscii()
+  genAst(ctorName, nameLit = newStrLitNode(name), typeName = ident typeDef.name):
+    proc ctorName(): typeName {.constructor.} =       
+       getScriptStructByName(nameLit).initializeStruct(addr result)
 
 proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexDsl,  lineInfo: Option[LineInfo] = none(LineInfo)) : NimNode = 
   case typeDef.kind:

@@ -460,6 +460,7 @@ proc getSize*(str:UScriptStructPtr) : int32 {.importcpp:"#->GetCppStructOps()->G
 proc hasAddStructReferencedObjects*(str:UScriptStructPtr) : bool {.importcpp:"#->GetCppStructOps()->HasAddStructReferencedObjects()".}
 proc getCppStructOps*(str:UScriptStructPtr) : ICppStructOpsPtr {. importcpp:"#->GetCppStructOps()" .}
 proc prepareCppStructOps*(str:UScriptStructPtr) : void {. importcpp:"#->PrepareCppStructOps()" .}
+proc initializeStruct*(str:UScriptStructPtr, dest: pointer): void {. importcpp:"#->InitializeStruct(#)" .}
 #struct ops #TODO need to fill FProperty
 proc copy*(ops:ICppStructOpsPtr; dest: pointer; src: pointer; arrayDim: int32 = 1): bool {. importcpp:"#->Copy(#, #, #)" .}
 func getCapabilities*(ops:ICppStructOpsPtr): FCapabilities {. importcpp:"#->GetCapabilities()" .}

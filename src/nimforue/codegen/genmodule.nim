@@ -1,4 +1,4 @@
-import std/[options, osproc, strutils, sugar, sequtils, strformat, strutils, genasts, macros, importutils, os]
+import std/[options, osproc, strutils, sugar, sequtils, strformat, strutils, genasts, macros, importutils, os, bitops]
 
 import ../utils/ueutils
 
@@ -243,6 +243,13 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
         # if (moduleDef.isCommon and typeDef.isInCommon) or (not moduleDef.isCommon and not typeDef.forwardDeclareOnly):          
         #   result.add makeVTableConstructor(typeDef)   
     else: continue
+
+  #Constructors for structs
+  for typeDef in moduleDef.types:
+    if typeDef.kind == uetStruct:      
+      if bitand(typeDef.structFlags.uint32, STRUCT_ZeroConstructor.uint32) == 0 and not typeDef.isInPCH:
+        result.add genStructConstructor(typeDef)
+
 
 proc genVMModuleDecl*(moduleDef: UEModule): NimNode =
   ##Let's start only with classes
