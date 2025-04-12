@@ -40,12 +40,14 @@ func tryGetPackageByName*(packageName:FString) : Option[UPackagePtr] =
 
 proc createPackage*(packagePath: FString) : UPackagePtr {.importcpp: "CreatePackage(*#)".}
 proc fullyLoad*(pkg: UPackagePtr) {.importcpp: "#->FullyLoad()".}
-proc markPackageDirty*(pkg: UPackagePtr) {.importcpp: "#->MarkPackageDirty()".}
+proc markPackageDirty*(pkg: UObjectPtr) {.importcpp: "#->MarkPackageDirty()".}
+proc setDirtyFlag*(pkg: UPackagePtr, dirty: bool) {.importcpp: "#->SetDirtyFlag(#)".}
 
 
 func getShortName*(pkg:UPackagePtr): FString = pkg.getName().split("/")[^1]
 #this belongs to uobject but it's here due to the UPackage dependency
 proc getPackage*(obj : UObjectPtr) : UPackagePtr {. importcpp: "#->GetPackage()" .}
+proc getOutermost*(obj: UObjectPtr): UPackagePtr {.importcpp: "#->GetOutermost()" .}
 
 proc getModuleName*(obj : UObjectPtr): FString = obj.getPackage().getShortName()
 
