@@ -508,6 +508,9 @@ func `scale3D=`*(tr: var FTransform, value: FVector) {.importcpp: "#.SetScale3D(
 
 proc normalizeRotation*(tr: FTransform) {.importcpp: "#.NormalizeRotation()".}
 
+proc makeFSoftClassPath*(cls: UClassPtr): FSoftClassPath {.importcpp: "FSoftClassPath(@)", constructor.}
+proc toString*(path: FSoftClassPath): FString {.importcpp: "#.ToString()".}
+
 func makeFTransform*(location: FVector, rotation: FQuat, scale: FVector): FTransform = 
   var transform = FTransform()
   transform.setLocation(location)
