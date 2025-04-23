@@ -31,6 +31,7 @@ proc zeroVector*() : FVector {.importcpp: "FVector::ZeroVector".}
 
 func `+`*(a,b: FVector): FVector {.importcpp:"# + #".}
 func `-`*(a,b: FVector): FVector {.importcpp:"# - #".}
+func `*`*(a,b: FVector): FVector {.importcpp:"# * #".}
 func `*`*(a : SomeFloat | SomeNumber, b: FVector): FVector {.importcpp:"# * #".}
 func `*`*(a : FVector, b: SomeNumber | SomeFloat): FVector {.importcpp:"# * #".}
 func `/`*(a : FVector, b: SomeNumber | SomeFloat): FVector {.importcpp:"# / #".}
