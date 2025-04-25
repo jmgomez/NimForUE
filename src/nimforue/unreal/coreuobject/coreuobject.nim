@@ -193,7 +193,7 @@ type
     inVal* {.importcpp: "InVal".}: float32
 
   FLinearColor* {.importcpp.} = object
-    a* {.importcpp: "A".}: float32
+    a* {.importcpp: "A".}: float32 = 1.0
     b* {.importcpp: "B".}: float32
     g* {.importcpp: "G".}: float32
     r* {.importcpp: "R".}: float32

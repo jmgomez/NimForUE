@@ -291,6 +291,7 @@ type
   FTextureResource* {.importcpp.} = object of FTexture
   FGameplayTag* {.importcpp, pure.} = object
     # tagName* {.importcpp: "TagName".}: FName Field is protected look for GetTagName
+  FGameplayTagQuery* {.importcpp, pure.} = object
   FGameplayTagContainer* {.importcpp, pure.} = object
   UDeveloperSettings* {.importcpp .} = object of UObject
   # UEdGraph* {.importcpp .} = object of UObject
