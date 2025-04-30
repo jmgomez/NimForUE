@@ -933,7 +933,12 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   when T is not void:
     newCls.cppClassStaticFunctions = uobjectCppClassStaticFunctionsForUClass(T)
   # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
-  newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32)
+  newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32) #TODO this would cause issues if we have an or here. 
+  let flagsToAdd = @[CLASS_HasInstancedReference, CLASS_EditInlineNew]
+  for flag in flagsToAdd:
+    if bitand(ueType.clsFlags.uint32, flag.uint32) != 0 or bitand(parent.classFlags.uint32, flag.uint32) != 0:
+      newCls.classFlags = newCls.classFlags or flag
+
   newCls.classCastFlags = parent.classCastFlags
   newCls.propertiesSize = cast[int32](sizeof(T))
   newCls.minAlignment = cast[int32](alignof(T))

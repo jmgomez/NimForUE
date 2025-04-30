@@ -48,13 +48,17 @@ func fromCallNodeToIdentDenf(n: NimNode): NimNode =
   let pragms = newEmptyNode() #no pragmas for now
   nnkIdentDefs.newTree(name, typ, pragms)    
 
-func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata], isInterface: bool) : (EClassFlags, seq[UEMetadata]) = 
+func getClassFlags*(body:NimNode, classMetadata:seq[UEMetadata], isInterface: bool, fields: seq[UEField]) : (EClassFlags, seq[UEMetadata]) = 
     var metas = classMetadata
     var flags = CLASS_Native
     if isInterface:
       flags = flags or (CLASS_Interface | CLASS_Abstract)
     else:
-      flags = flags or (CLASS_Inherit ) #| CLASS_CompiledFromBlueprint
+      flags = flags or (CLASS_Inherit | CLASS_CompiledFromBlueprint)
+
+    for field in fields:
+      if field.hasUEMetadata(InstancedMetadataKey):
+        flags = flags or CLASS_HasInstancedReference    
 
     for meta in classMetadata:
         if meta.name.toLower() == "config": #Game config. The rest arent supported just yet
@@ -308,7 +312,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
     let (className, parent, interfaces) = getTypeNodeFromUClassName(name)    
     let ueProps = getUPropsAsFieldsForType(body, className)
     let isInterface = parent == "UInterface"
-    var (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body), isInterface)
+    var (classFlags, classMetas) = getClassFlags(body,  getMetasForType(body), isInterface, ueProps)
     if "DisplayName" notin classMetas.mapIt(it.name):
       classMetas.add(makeUEMetadata("DisplayName", className.removeFirstLetter()))
 
@@ -319,6 +323,7 @@ proc uClassImpl*(name:NimNode, body:NimNode, withForwards = true): (NimNode, Nim
 
 
     var ueType = makeUEClass(className, parent, classFlags, ueProps, classMetas)
+
     when WithEditor:
       # path is relative to the Plugins/NimForUE/Source/GameNim.Build.cs since classes are emitted to GameNim package
       ueType.moduleRelativePath = ".." / ".." / ".." / ".." / name.lineInfoObj.filename[gameDir.len .. ^1]

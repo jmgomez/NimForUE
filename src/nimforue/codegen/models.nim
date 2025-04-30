@@ -252,7 +252,12 @@ func contains*(metas:seq[UEMetadata], name:string): bool =
     if meta.name.toLower() == name.toLower():
       return true
 
-func hasUEMetadata*(val: UEField, name: string): bool = val.metadata.any(m => m.name.toLower == name.toLower)
+func hasUEMetadata*(val: UEField, name: string): bool = 
+    for meta in val.metadata:
+        if meta.name.toLower() == name.toLower():
+            return true
+    false    
+
 func hasUEMetadata*(val: UEType, name: string): bool = val.metadata.any(m => m.name.toLower == name.toLower)
 func hasUEMetadataDefaultValue*(val: UEField): bool = val.metadata.any(m => m.name.toLower.contains(CPP_Default_MetadataKeyPrefix.toLower))
 func shouldBeLoadedEarly*(uet: UEType): bool = uet.hasUEMetadata(EarlyLoadMetadataKey)
