@@ -634,7 +634,7 @@ func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone, isImporting: bool) 
     if prop.isProtected: continue
     let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
     let propIden = 
-      if uet.isInPCH and prop.isPublic:
+      if uet.isInPCH:
         nnkIdentDefs.newTree(
           nnkPragmaExpr.newTree(
             (if prop.isPublic: identPublic fieldName else: ident fieldName),
