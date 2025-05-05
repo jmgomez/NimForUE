@@ -779,9 +779,13 @@ proc getAllModulesFrom(dir, entryPoint:string) : seq[NimModule] =
     entryPoint &
     getAllImportsAsRelativePathsFromFileTree(entryPointFileTree)
     .mapIt(it.absolutePath(dir) & ".nim")      
-  let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
-  let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
-  return modules
+  try:
+    let fileTrees = nimRelativeFilePaths.mapIt(it.readFile.parseStmt)
+    let modules = fileTrees.mapi((modAst:NimNode, idx:int) => createModuleFrom(nimRelativeFilePaths[idx], modAst))
+    return modules
+  except Exception as e:
+    echo "Error parsing file: " & nimRelativeFilePaths[0]
+    raise e
 
 #todo cache to a file
 when not defined(game) or defined(vmhost):

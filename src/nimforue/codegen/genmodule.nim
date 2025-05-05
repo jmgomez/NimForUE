@@ -237,7 +237,7 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
   for typeDef in moduleDef.types:
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
-    of uetClass, uetStruct, uetEnum:
+    of uetClass, uetStruct, uetEnum:      
       result.add genTypeDecl(typeDef, rules, uexExport)      
       # if typeDef.kind == uetClass and not typeDef.isInPCH: 
         # if (moduleDef.isCommon and typeDef.isInCommon) or (not moduleDef.isCommon and not typeDef.forwardDeclareOnly):          
@@ -249,6 +249,9 @@ proc genExportModuleDecl*(moduleDef: UEModule): NimNode =
     if typeDef.kind == uetStruct:      
       if bitand(typeDef.structFlags.uint32, STRUCT_ZeroConstructor.uint32) == 0 and not typeDef.isInPCH:
         result.add genStructConstructor(typeDef)
+      for field in typeDef.fields:
+        if field.isProtected:
+          result.add genStructProtectedField(typeDef, field)
 
 
 proc genVMModuleDecl*(moduleDef: UEModule): NimNode =

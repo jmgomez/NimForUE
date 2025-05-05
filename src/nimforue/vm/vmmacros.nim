@@ -243,7 +243,8 @@ func genUStructCodegenTypeDefBinding*(ueType: UEType, target: CodegenTarget): Ni
         ])
       
   var recList = ueType.fields
-    .filter(isAllowedField)
+    .filter(isAllowedField) #This is wrong for the import case
+    .filterIt(not it.isProtected)
     .map(prop => nnkIdentDefs.newTree(
         getFieldIdentWithPCH(ueType, prop, target == ctImport),
         prop.getTypeNodeFromUProp(isVarContext=false),

@@ -181,6 +181,15 @@ uClass AActorCodegen of AActor:
       for p in struct.getFPropsFromUStruct():
         log $p
       # UE_Log $struct
+    
+    proc dumpScriptStructAsUEType() = 
+      let struct = self.inspectStruct
+      if struct.isNil():
+        UE_Error "Struct is null"
+        return
+      let ueType = struct.toUEType(@[])
+      UE_Log $ueType
+      
     proc dumpDefinedTypesInCode() = 
       UE_Log $NimDefinedTypesNames
 

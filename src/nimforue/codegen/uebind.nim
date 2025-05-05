@@ -495,7 +495,7 @@ func getFieldIdentWithPCH*(typeDef: UEType, prop:UEField, isImportCpp: bool = fa
   else:
     getFieldIdent(prop)
 
-func genUStructTypeDef*(typeDef: UEType,  rule: UERule = uerNone, typeExposure: UEExposure): NimNode = 
+func genUStructTypeDef*(typeDef: UEType,  rule: UERule = uerNone, typeExposure: UEExposure): NimNode =  
   let suffix = "_"
   let typeName = 
     case typeExposure: 
@@ -629,10 +629,12 @@ func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone, isImporting: bool) 
   if genPad and uet.kind == uetClass:
     offset = uet.parentSize #TODO FStructs doenst have inheritance applied yet, so they can start at 0
 
-  for prop in uet.fields.filterIt(it.kind == uefProp):
+  for prop in uet.fields:
+    if prop.kind != uefProp: continue   
+    if prop.isProtected: continue
     let fieldName = ueNameToNimName(toLower($prop.name[0])&prop.name.substr(1)).nimToCppConflictsFreeName()    
     let propIden = 
-      if uet.isInPCH:
+      if uet.isInPCH and prop.isPublic:
         nnkIdentDefs.newTree(
           nnkPragmaExpr.newTree(
             (if prop.isPublic: identPublic fieldName else: ident fieldName),
@@ -644,7 +646,7 @@ func genPropsAsRecList*(uet: UEType, rule: UERule = uerNone, isImporting: bool) 
           newEmptyNode())
         else: 
           nnkIdentDefs.newTree(getFieldIdent(prop), prop.getTypeNodeFromUProp(isVarContext=false), newEmptyNode())
-
+   
     # if isImporting: continue
 
     let offsetDelta = prop.offset - offset
@@ -694,6 +696,32 @@ proc genStructConstructor*(typeDef: UEType): NimNode =
   genAst(ctorName, nameLit = newStrLitNode(name), typeName = ident typeDef.name):
     proc ctorName(): typeName {.constructor.} =       
        getScriptStructByName(nameLit).initializeStruct(addr result)
+
+proc genStructProtectedField*(uet: UEType, uef: UEField): NimNode = 
+  #Returns a getter/setter so the protected field can be accessed
+  #[
+  #Example:
+  proc specifiedColor*(self: FSlateColor): FLinearColor = 
+    cast[ptr FLinearColor](cast[ByteAddress](addr self) + offset)[]
+
+  proc `specifiedColor=`*(self: var FSlateColor, value: FLinearColor) = 
+    cast[ptr FLinearColor](cast[ByteAddress](addr self) + offset)[] = value
+
+  ]#
+  let getterName = ident uef.name.firstToLow()
+  let setterName = ident &"{uef.name.firstToLow()}="
+  let typeName = ident uet.name
+  let returnType = uef.getTypeNodeFromUProp(isVarContext=false)
+  let offset = newLit uef.offset.int #so it doesnt produce suffix
+
+  result = genAst(getterName, setterName, typeName, offset, returnType):
+    proc getterName*(self{.inject.}: typeName): returnType = 
+      let address{.inject.} = cast[ByteAddress](addr self) + offset
+      cast[ptr returnType](address)[]
+
+    proc `setterName`*(self{.inject.}: typeName, value {.inject.}: returnType) = 
+      let address{.inject.} = cast[ByteAddress](addr self) + offset
+      cast[ptr returnType](address)[] = value
 
 proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexDsl,  lineInfo: Option[LineInfo] = none(LineInfo)) : NimNode = 
   case typeDef.kind:
