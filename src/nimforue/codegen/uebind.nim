@@ -710,11 +710,13 @@ proc genStructProtectedField*(uet: UEType, uef: UEField): NimNode =
   ]#
   let getterName = ident uef.name.firstToLow()
   let setterName = ident &"{uef.name.firstToLow()}="
+  let setterNameExport = ident &"set{uef.name}"
+  
   let typeName = ident uet.name
   let returnType = uef.getTypeNodeFromUProp(isVarContext=false)
   let offset = newLit uef.offset.int #so it doesnt produce suffix
 
-  result = genAst(getterName, setterName, typeName, offset, returnType):
+  result = genAst(getterName, setterName, setterNameExport, typeName, offset, returnType):
     proc getterName*(self{.inject.}: typeName): returnType = 
       let address{.inject.} = cast[ByteAddress](addr self) + offset
       cast[ptr returnType](address)[]
@@ -722,6 +724,10 @@ proc genStructProtectedField*(uet: UEType, uef: UEField): NimNode =
     proc `setterName`*(self{.inject.}: typeName, value {.inject.}: returnType) = 
       let address{.inject.} = cast[ByteAddress](addr self) + offset
       cast[ptr returnType](address)[] = value
+    # proc `setterNameExport`*(self{.inject.}: typeName, value {.inject.}: returnType) {.exportcpp.} = 
+    #   let address{.inject.} = cast[ByteAddress](addr self) + offset
+    #   cast[ptr returnType](address)[] = value
+
 
 proc genTypeDecl*(typeDef : UEType, rule : UERule = uerNone, typeExposure = uexDsl,  lineInfo: Option[LineInfo] = none(LineInfo)) : NimNode = 
   case typeDef.kind:

@@ -147,6 +147,31 @@ func genUClassImportCTypeDef(typeDef: UEType, rule: UERule = uerNone): NimNode =
   if not (typeDef.forwardDeclareOnly and typeDef.isInCommon): #the common def doesnt have interfaces
     result = nnkStmtList.newTree(genInterfaceConverers(typeDef, uexImport), result)
 
+proc genStructProtectedFields*(typeDef: UEType, field: UEField): NimNode =
+  # #[
+  #   Generate the import version of the protected fields as funcs
+  #   proc specifiedColor*(self: FSlateColor): FLinearColor {.importcpp:"specifiedColor(@)".}
+  #   proc `specifiedColor=`*(self: var FSlateColor, value: FLinearColor) {.importcpp:"setSpecifiedColor(@)"}
+  #THIS CODE IS COMMENTED OUT BECAUSE THERE IS A LINKING ISSUE (symbol collision). IF WE CHANGE THE NAME VIA exportc WE MAY GET AROUND IT.
+  #NOT A BIG DEAL THOUGH AS THERE ARENT MANY FIELDS LIKE THIS
+
+  # ]#
+  # let getterName = ident &"{field.name}"
+  # let getterNameLit = newStrLitNode &"{field.name}(@)"
+  # let setterName = ident &"set{field.name}"
+  # let setterNameLit = newStrLitNode &"set{field.name}(@)"  
+  # let typeName = ident typeDef.name
+  # let returnType = field.getTypeNodeForReturn(field.getTypeNodeFromUProp(isVarContext=false))
+  # result = genAst(getterName, getterNameLit, setterName, setterNameLit, typeName, returnType):
+  #   proc getterName*(self{.inject.}: typeName): returnType {.importcpp: getterNameLit.}
+  #   proc `setterName`*(self{.inject.}: var typeName, value {.inject.}: returnType) {.importcpp: setterNameLit.}
+  genStructProtectedField(typeDef, field)
+
+proc genFStructsProtectedFields*(typeDef: UEType): NimNode =
+  result = nnkStmtList.newTree()
+  for field in typeDef.fields:
+    if field.isProtected:
+      result.add genStructProtectedField(typeDef, field)
 
 proc genImportCTypeDecl*(typeDef: UEType, rule: UERule = uerNone): NimNode =
   case typeDef.kind:
@@ -199,7 +224,9 @@ proc genImportCModuleDecl*(moduleDef: UEModule): NimNode =
     let rules = moduleDef.getAllMatchingRulesForType(typeDef)
     case typeDef.kind:
     of uetClass:
-      result.add genImportCTypeDecl(typeDef, rules)    
+      result.add genUClassImportCTypeDef(typeDef, rules)
+    of uetStruct:
+      result.add genFStructsProtectedFields(typeDef)
     else:
       continue
 
