@@ -390,6 +390,8 @@ proc setFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->
 proc clearFlags*(obj:UObjectPtr, inFlags : EObjectFlags) : void {. importcpp: "#->ClearFlags(#)" .}
 
 proc addToRoot*(obj:UObjectPtr) : void {. importcpp: "#->AddToRoot()" .}
+proc removeFromRoot*(obj:UObjectPtr) : void {. importcpp: "#->RemoveFromRoot()" .}
+proc isRooted*(obj:UObjectPtr) : void {. importcpp: "#->IsRooted()" .}
 
 proc getClass*(obj : UObjectPtr) : UClassPtr {. ureflect, importcpp: "#->GetClass()" .}
 proc getOuter*(obj : UObjectPtr) : UObjectPtr {. ureflect, importcpp: "#->GetOuter()" .}
