@@ -226,9 +226,8 @@ task ubuild, "Calls Unreal Build Tool for your project":
 
 task lib, "Builds a game lib":
   if config.targetConfiguration == Debug:
-    if "debug" notin taskOptions:
-      taskOptions["debug"] = ""
-      taskOptions["noline"] = ""
+    taskOptions["debug"] = ""
+    taskOptions["noline"] = ""
 
   let pluginName = if "pluginname" in taskOptions: taskOptions["pluginname"] else: "Nue" & GameName()
 
