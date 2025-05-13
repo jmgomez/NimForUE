@@ -143,6 +143,8 @@ func getActiveViewport*(editor:UEditorEnginePtr) : FViewportPtr {.importcpp: "#-
 let onBeginPIEEvent* {.importcpp:"FEditorDelegates::BeginPIE", nodecl.}  : FOnPIEEvent
 let onEndPIEEvent* {.importcpp:"FEditorDelegates::EndPIE", nodecl.}  : FOnPIEEvent
 
+proc getEditorSubsystem*[T](): ptr T {.importcpp: "GEditor->GetEditorSubsystem<'*0>()".}
+
 proc getPieWorldContext*(editor:UEditorEnginePtr, worldPIEInstance:int32 = 0) : FWorldContextPtr {.importcpp: "#->GetPIEWorldContext(#)".}
 
 proc getAllViewportClients*(editor:UEditorEnginePtr) : TArray[FEditorViewportClientPtr] {.importcpp: "#->GetAllViewportClients()".}
