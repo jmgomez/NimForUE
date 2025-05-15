@@ -15,6 +15,7 @@ proc getMulticastDelegate*(prop: FMulticastDelegatePropertyPtr, propValue: point
 proc setMulticastDelegate*(prop: FMulticastDelegatePropertyPtr, propValue: pointer, scriptDel: FMulticastScriptDelegate) : void {.importcpp:"#->SetMulticastDelegate(#, #)".}
 proc addDelegate*(prop: FMulticastDelegatePropertyPtr, del: FScriptDelegate, obj: UObjectPtr): void {.importcpp:"#->AddDelegate(@)".}
 proc clearDelegate*(prop: FMulticastDelegatePropertyPtr, parent: UObjectPtr): void {.importcpp:"#->ClearDelegate(@)".}
+proc removeDelegate*(prop: FMulticastDelegatePropertyPtr, del: FScriptDelegate, obj: UObjectPtr): void {.importcpp:"#->RemoveDelegate(@)".}
 
 proc makeScriptDelegate*() : FScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
 # proc makeMulticastScriptDelegate() : FMulticastScriptDelegate {. importcpp:"FScriptDelegate()", constructor .}
@@ -51,6 +52,8 @@ proc removeAll*(ownerProp: (UObjectPtr, FMulticastDelegatePropertyPtr), obj: UOb
   let (owner, prop) = ownerProp
   let del = getMulticastDelegate(prop, getPropertyValuePtr[FMulticastScriptDelegate](prop, owner))
   del.removeAll(obj)
+
+proc remove*(scriptDel: var FMulticastScriptDelegate, obj: UObjectPtr, ufuncName: FName) : void {.importcpp: "#.Remove(@)" .}
 
 #this is the same thing as processEvent (onFunctionCall)
 #params should be a struct
