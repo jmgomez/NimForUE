@@ -373,6 +373,8 @@ proc getPropertyValue*(prop:FBoolPropertyPtr, container: pointer) : bool {. impo
 
 
 #Notice T is not an UObject but the Cpp interface
+#T is real interface, I class type, not the reflection interface, U class type.
+proc makeTScriptInterface*[T](obj: UObjectPtr): TScriptInterface[T] {.importcpp:"'0(#)", constructor.}
 proc getInterface*[T](scriptInterface:TScriptInterface[T]) : ptr T {. importcpp: "(#.GetInterface())".}
 proc getUObject*(scriptInterface:TScriptInterface) : UObjectPtr {. importcpp: "(#.GetObject())".}
 proc getUInterface*[T](scriptInterface:TScriptInterface) : ptr T =
