@@ -495,12 +495,13 @@ task showincludes, "Traverses UEDeps.h gathering includes and shows then in the 
 task showtypes, "Traverses UEDeps.h looking for types (uclasses only for now)":
   let pchFiles = [NimHeadersDir / "UEDeps.h", config.gameDir / "NimForUE" / "nuegame.h"]
   let headerDataDir = PluginDir / ".headerdata"
-  let headerDataModTime = getFileInfo(headerDataDir).lastWriteTime
-  for pchFile in pchFiles:
-    if getFileInfo(pchFile).lastWriteTime > headerDataModTime:
-      log &"PCH file {pchFile} has changed. Need to update headerdata"
-      removeDir(headerDataDir)
-      break
+  if dirExists(headerDataDir):
+    let headerDataModTime = getFileInfo(headerDataDir).lastWriteTime
+    for pchFile in pchFiles:
+      if getFileInfo(pchFile).lastWriteTime > headerDataModTime:
+        log &"PCH file {pchFile} has changed. Need to update headerdata"
+        removeDir(headerDataDir)
+        break
   # for pchFile in pchFiles:
   let useCache = "usecache" in taskOptions
   let types = getAllPCHTypes(useCache)
