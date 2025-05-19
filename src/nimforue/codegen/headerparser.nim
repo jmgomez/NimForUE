@@ -1,10 +1,9 @@
 # include ../unreal/prelude
 
-import std/[strformat, tables, enumerate, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, strscans]
-import ../../buildscripts/nimforueconfig
+import std/[strformat, tables, enumerate, times, options, sugar, json, osproc, strutils, jsonutils,  sequtils, os, pegs]
+import ../../buildscripts/[nimforueconfig, buildcommon]
 import models
 import ../utils/utils
-
 
 type
   CppTypeInfo* = object
@@ -12,28 +11,16 @@ type
     cppDefinitionLine : string #The line where the type is defined. This will be the body at some point
     needsObjectInitializerCtor*: bool
 
+var includeMatch = newSeq[string](1)
+let includePeg = peg"""\skip(\s*) '#include' ["<] {(!'>' !'"' .)+} [">]"""
 proc getIncludesFromHeader(path, header: string): seq[string] = 
   #path only passed to show better errors
-  let lines = header.split("\n")
-  func getHeaderFromIncludeLine(line: string): string = 
-    line.multiReplace(@[
-      ("#include", ""),
-      ("<", ""),
-      (">", ""),
-      ("\"", ""),
-      ("\t", ""),
-    ]).strip()
-
+  let lines = header.splitLines()
   let currentIncludeOrderVersion = UEVersion() #We assume the UEVersion matches the IncludeOrderVersion (we could read it from the cs file though)
   # echo "Current Include Order Version: ", currentIncludeOrderVersion
   assert currentIncludeOrderVersion != 0, "Current version is 0. This is not expected. Which means this function is running at compile time and it shouldnt. The cache file must be generated before compiling guest"
   #Everything within 
   #if UE_ENABLE_INCLUDE_ORDER_DEPRECATED_IN_MAJOR_MINOR should only be included if the current version is that one.
-
-  proc isInclude(line: string): bool = 
-    # if line.contains("//") and "#include" in line: discard
-    #   echo "Warning: Commented include found in header", line
-    "#include" in line  #this may introduce incorrect includes? like in comments. 
 
   var insideConditionalBlock = false
   var includesInsideCurrentBlock = newSeq[string]()
@@ -66,10 +53,14 @@ proc getIncludesFromHeader(path, header: string): seq[string] =
       isNegated = ("!" & IncludeOrderDeprecated) in line
       insideConditionalBlock = true
       continue
-    if insideConditionalBlock and line.isInclude:
-      includesInsideCurrentBlock.add line.getHeaderFromIncludeLine()
-    elif line.isInclude:
-      result.add line.getHeaderFromIncludeLine()
+
+    if insideConditionalBlock:
+      if line.match(includePeg, includeMatch):
+        includesInsideCurrentBlock.add includeMatch[0]
+        #log &"> {includeMatch[0]} {line = }"
+    elif line.match(includePeg, includeMatch):
+      #log &"> {includeMatch[0]} {line = }"
+      result.add includeMatch[0]
 
     if insideConditionalBlock:
       if line.contains("#endif"):
@@ -144,17 +135,15 @@ proc getHeaderIncludesFromIncludePaths(headerName:string, includePaths:seq[strin
   newSeq[string]()
 
 
-proc traverseAllIncludes*(entryPoint:string, includePaths:seq[string], visited:seq[string], depth=0, maxDepth=3) : seq[string] = 
+proc traverseAllIncludes*(entryPoint:string, includePaths:seq[string], visited:CountTableRef[string], depth=0, maxDepth=3) = 
   let includes = getHeaderIncludesFromIncludePaths(entryPoint, includePaths).filterIt(it notin visited)
-  let newVisited = (visited & includes).deduplicate()
+  for header in includes:
+    visited.inc(header)
   if depth >= maxDepth:
-    return newVisited
-  result = 
-    includes & includes
-      .mapIt(traverseAllIncludes(it, includePaths, newVisited, depth+1))
-      .flatten()
+    return
+  for header in includes:
+    traverseAllIncludes(header, includePaths, visited, depth+1)
   # echo "result", result
-
 
 proc saveIncludesToFile*(path:string, includes:seq[string]) =   
   writeFile(path, $includes.toJson())
@@ -169,19 +158,21 @@ proc getPCHIncludes*(useCache=true) : seq[string] =
   pchIncludes = 
     if useCache and fileExists(path): #TODO Check it's newer than the PCH
       readFile(path).parseJson().to(seq[string])
-    else:      
+    else:
       let includePaths = getAllIncludePaths()
-      var includes = newSeq[string]()
-      includes.add traverseAllIncludes("UEDeps.h", includePaths, @[])
-      includes.add traverseAllIncludes("nuegame.h", includePaths, @[])
-      includes = includes.deduplicate() 
+      var includesTable = newCountTable[string]()
+      traverseAllIncludes("UEDeps.h", includePaths, includesTable)
+      traverseAllIncludes("nuegame.h", includePaths, includesTable)
       # echo "indlude paths", pchIncludes
-      if useCache: 
+      var includes = collect:
+        for header in includesTable.keys:
+          header
+      if useCache:
         saveIncludesToFile(path, includes)
       includes
-  pchIncludes  
+  pchIncludes
 
-  
+
   # UE_Log &"Includes found on the PCH: {pchIncludes.len}"
   # let uniquePCHIncludes = pchIncludes.mapIt(it.split("/")[^1]).deduplicate()
   # UE_Log &"Unique Includes found on the PCH: {uniquePCHIncludes.len}"
@@ -201,7 +192,6 @@ proc getPCHIncludes*(useCache=true) : seq[string] =
 #   saveIncludesToFile(path, allTypes.deduplicate())
 
 
-
 proc readHeader(searchPaths:seq[string], header:string) : Option[string]  = 
   result = 
     searchPaths
@@ -210,64 +200,66 @@ proc readHeader(searchPaths:seq[string], header:string) : Option[string]  =
   if result.isNone and header.split("/").len>1:    
     return readHeader(searchPaths, header.split("/")[^1])
 
-func getContentBetween(content: string, startChar = '{', endChar = '}'): string =
-  #It assumes startChar are not nested. If another startChar is found, it will count it but it will continue until it finds the endChar with the same nesting level.
-  var level = 0 
-  result = ""
-  for c in content:
-    if c == startChar: inc level
-    elif c == endChar: dec level
-    if level > 0: result.add(c)
-    if level == 0 and c == endChar: break
 
-  return result
+let typePeg = peg"""
+\skip(\s*)
+t <- (uenum / uclass / ustruct / class / struct)
+class <- {'class'} typeName minheritance body
+struct <- {'struct'} typeName minheritance body
+minheritance <- (':' (sinheritance ',')* sinheritance)?
+sinheritance <- \ident? \ident
+uclass <- 'UCLASS' metadata class
+ustruct <- 'USTRUCT' metadata struct
+uenum <- 'UENUM' metadata {'enum'} 'class' {\ident} ':' \ident body
+metadata <- '(' metainner* ')'
+metainner <- (metaentry / metastring / metakv / \ident) ','?
+metaentry <- \ident '=' metadata
+metastring <- \ident '=' '"' @'"'
+metakv <- \ident '=' \ident
+typeName <- (dllexport {\ident} 'final') / ({\ident} 'final') / (dllexport {\ident}) / {\ident}
+dllexport <- \ident
+body <- {'{' innerBody '};'}
+innerBody <- (block / nonblock)*
+block <- '{' innerBody '}' ';'?
+nonblock <- (!'{' !'}' .)+
+"""
 
-func doesClassHaveConstructorInitializerOnly(content, clsName: string): bool =
-  let ctorLines = content.splitLines().filterIt(clsName in it)
-  #Notive assigments (default value) makes the ctor default
-  let isFObjectInitilalizerCtor = ctorLines.mapIt(getContentBetween(it, '(', ')')).filterIt("FObjectInitializer" in it and "=" notin it and "<" notin it).len > 0 
-  result = ctorLines.len == 1 and isFObjectInitilalizerCtor
-  if result:
-    debugEcho clsName, " has FObjectInitializer ctor"
+let commentPeg = peg"""
+comment <- {multiline / single}
+multiline <- '/*' (!'*/' .)* '*/'
+single <- '//' (!\n .)* \n
+"""
 
-proc getUClassesNamesFromHeaders(cppCode:string) : seq[CppTypeInfo] =   
-  let lines = cppCode.splitLines()
-  #Two cases (for UStructs and FStrucs) Need to do UEnums
-  #1. via separating class ad hoc
-  #2. Next line after UCLASS 
-  #Probably there is something else nto matching. But this should cover most scenarios
-  #At some point we are doing full AST parsing anyways. So this is just a temporary solution
-  func getTypeSeparatingSemicolon(typ:string): seq[CppTypeInfo] = 
-    var needToContains = [typ, ":" ] #only class that has a base
-    for idx, line in enumerate(lines):   
-      if needToContains.mapIt(line.contains(it)).foldl(a and b, true):
-        let separator = if line.contains("final") : "final" else: ":"
-        var clsName = line.split(separator)[0].strip.split(" ")[^1] 
-        let clsContent = lines[idx..^1].join("\n").getContentBetween('{', '}')
-        
-        let needsObjectInitializerCtor = clsContent.doesClassHaveConstructorInitializerOnly(clsName)
-        result.add(CppTypeInfo(name:clsName, cppDefinitionLine:line, needsObjectInitializerCtor:needsObjectInitializerCtor))
-
-  func getTypeAfterUType(utype, typ:string) : seq[CppTypeInfo] = 
-    for idx, line in enumerate(lines):  
-      if line.contains(utype):
-        if len(lines) > idx+1:
-          let nextLine = lines[idx+1]
-          if nextLine.contains(typ):
-            let separator = if line.contains("final") : "final" else: ":"
-            if nextLine.contains(separator):
-              continue# captured above. This could cause picking a parent that is not defined
-            var clsName = nextline.strip.split(" ")[^1]     
-            result.add(CppTypeInfo(name:clsName, cppDefinitionLine:nextline))
-
-  result = getTypeSeparatingSemicolon("class")
-  result.add(getTypeSeparatingSemicolon("struct"))
-  result.add(getTypeAfterUType("UCLASS", "class"))
-  result.add(getTypeAfterUType("USTRUCT", "struct"))
-  result.add(getTypeAfterUType("UEnum", "enum"))
-  result = result.deduplicate()
+let initPeg = peg" \skip(\s*) \ident '(const FObjectInitializer'"
 
 
+var matches = newSeq[string]()
+proc getUClassesNamesFromHeaders(cppCode:string) : seq[CppTypeInfo] =
+  var i = 0
+  while i < cppCode.len:
+    # skip C++ comments
+    var commentCap: Captures
+    var clen = cppCode.rawMatch(commentPeg, i, commentCap)
+    if clen >= 0:
+      i = i + clen
+
+    var typeCap: Captures
+    var len = cppCode.rawMatch(typePeg, i, typeCap)
+    if len >= 0:
+      #let typeType = cppCode[(typeCap.bounds(0).first)..(typeCap.bounds(0).last)]
+      let typeName = cppCode[(typeCap.bounds(1).first)..(typeCap.bounds(1).last)]
+      let body = cppCode[(typeCap.bounds(2).first)..(typeCap.bounds(2).last)]
+
+      let needsObjectInitializerCtor = body.find(initPeg, matches, 0) != -1
+      #if needsObjectInitializerCtor:
+        #log &"{typeName} has initializer constructor"
+      # we can store the body of the class for future parsing of functions in CppTypeInfo's cppDefinitionLine, but leaving it out for now since we're not using it for anything
+      #result.add CppTypeInfo(name: typeName, cppDefinitionLine: cppCode[c.bounds(1).first ..< c.bounds(2).first], needsObjectInitializerCtor: needsObjectInitializerCtor)
+      result.add CppTypeInfo(name: typeName, cppDefinitionLine:"", needsObjectInitializerCtor: needsObjectInitializerCtor)
+
+      i = i + len
+    else:
+      inc i
 
 proc getAllTypesFromHeader*(includePaths:seq[string], headerName:string) :  seq[CppTypeInfo] = 
   let header = readHeader(includePaths, headerName)
@@ -307,12 +299,3 @@ func getAllPCHTypes*(useCache:bool=true) : lent Table[string, CppTypeInfo] =
           writeFile(path, $pchTypes.toJson())
 
     result = pchTypes
-
-        
-
-
-
-
-
-
-

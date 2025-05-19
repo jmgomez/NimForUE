@@ -507,7 +507,9 @@ task showtypes, "Traverses UEDeps.h looking for types (uclasses only for now)":
   let types = getAllPCHTypes(useCache)
   log &"There are {len(types)} PCH types"
 
-
+task removeheaderdata, "Deletes the .headerdata directory":
+  log "Rebuilding .headerData"
+  removeDir(PluginDir / ".headerdata")
 
 task ok, "prints ok if NUE and Host are built":
   if fileExists(HostLibPath()):
