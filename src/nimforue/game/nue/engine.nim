@@ -1,6 +1,5 @@
 
 include ../unreal/prelude
-import ../unreal/core/containers/containers
 import ../codegen/[ueemit, emitter]
 import ../codegen/[gencppclass]
 

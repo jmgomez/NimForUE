@@ -1,5 +1,5 @@
 include ../unreal/prelude
-import ../unreal/core/containers/containers
+import ../unreal/core/containers/ticker
 import ../codegen/[ueemit, emitter, nuemacrocache]
 import unreal/nimforue/nimforuebindings
 

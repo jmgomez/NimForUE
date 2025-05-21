@@ -2,7 +2,6 @@ include ../unreal/prelude
 import ../unreal/editor/editor
 
 import ../../buildscripts/[nimforueconfig]
-import ../unreal/core/containers/containers
 
 import std/[os, times, asyncdispatch, json, jsonutils, tables, hashes, locks]
 import std/[strutils, options, tables, sequtils, strformat, strutils, sugar]
