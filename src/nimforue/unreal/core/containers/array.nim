@@ -15,6 +15,7 @@ func reserve*[T](arr:TArray[T], value:Natural) {.importcpp: "#.Reserve(#)".}
 func indexOf*[T](arr:TArray[T], value:T): int32 {.importcpp: "#.IndexOfByKey(#)"}
 func pop*[T](arr:TArray[T]): T {.importcpp: "#.Pop()"}
 func push*[T](arr:TArray[T], value: T): T {.importcpp: "#.Push()"}
+func sort*[T](arr:TArray[T]) {.importcpp: "#.Sort()"}
 
 
 # proc `[]`*[T](arr:TArray[T], i: int): var T {. inline, noSideEffect.} = arr[i.int32]
