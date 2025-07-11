@@ -475,8 +475,8 @@ func getCapabilities*(ops:ICppStructOpsPtr): FCapabilities {. importcpp:"#->GetC
 
 proc get*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
 proc getValid*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"GetValid(#)".}
-converter toUObjectPtr*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
-converter fromObjectPtr*[T: UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
+proc toUObjectPtr*[T : UObject](obj:TObjectPtr[T]) : ptr T {.importcpp:"#.Get()".}
+proc fromObjectPtr*[T: UObject](obj:ptr T) : TObjectPtr[T] {.importcpp:"TObjectPtr<'*0>(#)".}
 
 type ERenameFlag* = distinct uint32
 const REN_None* = ERenameFlag(0x0000)

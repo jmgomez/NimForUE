@@ -498,7 +498,7 @@ task showtypes, "Traverses UEDeps.h looking for types (uclasses only for now)":
   if dirExists(headerDataDir):
     let headerDataModTime = getFileInfo(headerDataDir).lastWriteTime
     for pchFile in pchFiles:
-      if getFileInfo(pchFile).lastWriteTime > headerDataModTime:
+      if fileExists(pchFile) and getFileInfo(pchFile).lastWriteTime > headerDataModTime:
         log &"PCH file {pchFile} has changed. Need to update headerdata"
         removeDir(headerDataDir)
         break
