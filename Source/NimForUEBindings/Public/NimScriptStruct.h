@@ -7,6 +7,7 @@
 #include "UObject/Object.h"
 #include "NimScriptStruct.generated.h"
 
+
 /** Template to manage dynamic access to C++ struct construction and destruction **/
 	template<class CPPSTRUCT>
 	struct TNimCppStructOps final : public UScriptStruct::ICppStructOps
@@ -449,12 +450,12 @@
 
 #if  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
 
-		virtual EPropertyVisitorControlFlow Visit(FPropertyVisitorPath& Path, const FPropertyVisitorData& Data, const TFunctionRef<EPropertyVisitorControlFlow(const FPropertyVisitorPath& /*Path*/, const FPropertyVisitorData& /*Data*/)> InFunc) const override
+		virtual EPropertyVisitorControlFlow Visit(FPropertyVisitorContext& Context, const TFunctionRef<EPropertyVisitorControlFlow(const FPropertyVisitorContext& Context)> InFunc) const override
 		{
 			if constexpr (TStructOpsTypeTraits<CPPSTRUCT>::WithVisitor)
 			{
-				CPPSTRUCT* Struct = (CPPSTRUCT*)Data.PropertyData;
-				return Struct->Visit(Path, Data, InFunc);
+				CPPSTRUCT* Struct = (CPPSTRUCT*)Context.Data.PropertyData;
+				return Struct->Visit(Context, InFunc);
 			}
 			else
 			{
@@ -520,6 +521,48 @@
 			}
 		}
 #endif
+//5.6 up
+#if  (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+virtual bool Serialize(FArchive& Ar, void* Data, UStruct* DefaultsStruct, const void* Defaults) override
+		{
+			check(TTraits::WithSerializer); // don't call this if we have indicated it is not necessary
+			if constexpr (TStructOpsTypeTraits<CPPSTRUCT>::WithSerializer)
+			{
+				if constexpr (TModels_V<CStructSerializableWithDefaults, CPPSTRUCT>)
+				{
+					return ((CPPSTRUCT*)Data)->Serialize(Ar, DefaultsStruct, Defaults);
+				}
+				else
+				{
+					return ((CPPSTRUCT*)Data)->Serialize(Ar);
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+		virtual bool Serialize(FStructuredArchive::FSlot Slot, void* Data, UStruct* DefaultsStruct, const void* Defaults) override
+		{
+			check(TTraits::WithStructuredSerializer); // don't call this if we have indicated it is not necessary
+			if constexpr (TStructOpsTypeTraits<CPPSTRUCT>::WithStructuredSerializer)
+			{
+				if constexpr (TModels_V<CStructStructuredSerializableWithDefaults, CPPSTRUCT>)
+				{
+					return ((CPPSTRUCT*)Data)->Serialize(Slot, DefaultsStruct, Defaults);
+				}
+				else
+				{
+					return ((CPPSTRUCT*)Data)->Serialize(Slot);
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+#endif
+
 	};
 
 

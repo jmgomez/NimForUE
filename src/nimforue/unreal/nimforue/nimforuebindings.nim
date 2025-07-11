@@ -92,8 +92,7 @@ proc constructFromVTable*(clsVTableHelperCtor:VTableConstructor) : UObjectPtr {.
 #     }
 #     return result;
 #   """.}
-
-#METADATA handling
+const FMetadataName = when UEMajorVersion >= 5 and UEMinorVersion >= 6: "FMetaData" else: "UMetaData"
 
 #UFIELD
 when WithEditor:
@@ -107,11 +106,11 @@ when WithEditor:
     # proc getMetadata*(field:UFieldPtr|FFieldPtr, key:FString) :var FString {.importcpp:"#->GetMetaData(*#)".}
     proc findMetaData*(field:UFieldPtr|FFieldPtr, key:FString) : ptr FString {.importcpp:"const_cast<FString*>(#->FindMetaData(*#))".}
     #notice it also checks for the ue value. It will return false on "false"
-    proc copyMetadata*(src, dst : UObjectPtr) : void {.importcpp:"UMetaData::CopyMetadata(@)".}
-
+    proc copyMetadata*(src, dst : UObjectPtr) : void {.importcpp: FMetadataName & "::CopyMetadata(@)".}
+    
     func getMetaDataMapPtr(field:FFieldPtr) : ptr TMap[FName, FString] {.importcpp:"const_cast<'0>(#->GetMetaDataMap())".}
     
-    func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
+    func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp: FMetadataName & "::GetMapForObject(#)".}
 
     func getMetadataMap*(field:FFieldPtr) : TMap[FName, FString] =      
       let metadataMap = getMetadataMapPtr(field)
@@ -133,9 +132,9 @@ else:
     #3. WithEditor False and Unreal targeting no neditor (Global custom metadatamap)
     func getMetaDataMapPtrEditorRuntime(field:FFieldPtr) : ptr TMap[FName, FString] {.importcpp:"const_cast<'0>(#->GetMetaDataMap())".}
     
-    func getMetaDataMapPtrEditorRuntime(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
+    func getMetaDataMapPtrEditorRuntime(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp: FMetadataName & "::GetMapForObject(#)".}
     func getMetaDataMapPtr(field:FFieldPtr) : ptr TMap[FName, FString] {.importcpp:"const_cast<'0>(#->GetMetaDataMap())".}
-    func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp:"(UMetaData::GetMapForObject(#))".}
+    func getMetaDataMapPtr(field:UObjectPtr) : ptr TMap[FName, FString] {.importcpp: FMetadataName & "::GetMapForObject(#)".}
     func getMetadataMapEditorRuntime*(field:FFieldPtr) : TMap[FName, FString] =      
       withinEditorRuntime:
         let metadataMap = getMetadataMapPtr(field)
@@ -155,6 +154,7 @@ else:
     proc setMetadataEditorRuntime*(field: FFieldPtr, key: FName, inValue:FString) : void {.importcpp:"#->SetMetaData(#, *#)".}
     proc setMetadataEditorRuntime*(field: UFieldPtr, key: FName, inValue:FString): void {.importcpp:"#->SetMetaData(#, *#)".}
     proc setMetadataEditorRuntime*(field: UEnumPtr, key: FString, inValue:FString): void {.importcpp:"#->SetMetaData(*#, *#)".}
+    #This doesnt seem to be used. But if it fails, it likely due to it needs either FMetadata or UDeprecatedUMetaData
     proc copyMetadataEditorRuntime*(src, dst : UObjectPtr) : void {.importcpp:"UMetaData::CopyMetadata(@)".}
 
     #only used in non editor builds (metadata is not available in non editor builds)

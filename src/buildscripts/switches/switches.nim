@@ -32,6 +32,10 @@ proc uesymbols*(): seq[string] =
   let config = getNimForUEConfig()
   getUESymbols(config).map(symbolPath => "-l:" & escape(quotes(symbolPath)))
 
+
+let ueVersion = ($UEVersion()).split(".")
+let (ueMajor, ueMinor) = (ueVersion[0].parseInt(), ueVersion[1].parseInt())
+
 let buildSwitches* = @[
   "--outdir:./Binaries/nim/",
   "--mm:orc",
@@ -56,7 +60,8 @@ let buildSwitches* = @[
   "-d:pluginDir:" & quotes(PluginDir),
   "-d:withEditor:" & $WithEditor,
   "--cincludes:" & quotes(PluginDir / "NimHeaders"),
-  
+  "-d:UEMajorVersion:" & $ueMajor,
+  "-d:UEMinorVersion:" & $ueMinor,
 ]
 
 #Probably this needs to be platform specific as well

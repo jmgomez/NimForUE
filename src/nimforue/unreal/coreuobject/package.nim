@@ -58,6 +58,9 @@ func getUETypeByName*[T : UObject](pkg:UPackagePtr, name:FString) : ptr T =
 func tryGetUETypeByName*[T : UObject](pkg:UPackagePtr, name:FString) : Option[ptr T] = 
     someNil(getUETypeByName[T](pkg, name))
 
-func setModuleRelativePath*(pkg:UPackagePtr, obj: UObjectPtr, path: FString) {.importcpp:"#->GetMetaData()->SetValue(#, TEXT(\"ModuleRelativePath\"), *#)".}
+when UEMajorVersion >= 5 and UEMinorVersion >= 6:
+  func setModuleRelativePath*(pkg:UPackagePtr, obj: UObjectPtr, path: FString) {.importcpp:"#->GetMetaData().SetValue(#, TEXT(\"ModuleRelativePath\"), *#)".}
+else:
+  func setModuleRelativePath*(pkg:UPackagePtr, obj: UObjectPtr, path: FString) {.importcpp:"#->SetMetaData(TEXT(\"ModuleRelativePath\"), *#)".}
 
 proc savePackage*(pkg: UPackagePtr, obj: UObjectPtr, packageFileName: FString, saveArgs: FSavePackageArgs): bool {.importcpp: "UPackage::SavePackage(#, #, *#, #)".}

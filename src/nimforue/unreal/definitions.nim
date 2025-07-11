@@ -27,4 +27,6 @@ when defined(vcc):
 
 
 const WithEditor* {.booldefine.} = true 
+const UEMajorVersion* {.intdefine.} = 0
+const UEMinorVersion* {.intdefine.} = 0
 template ureflect* {.pragma.} #will make a native proc/func be reflected as part of the NimLibrary in VM module. 
