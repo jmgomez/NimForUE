@@ -835,18 +835,26 @@ proc initComponents*(initializer: var FObjectInitializer, actor:AActorPtr, actor
   #Handles attachments
   for objProp in actorCls.getAllPropsOf[:FObjectProperty]():
         let comp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](objProp, actor)[])
-        # UE_Log &"Comp: {comp} {objProp}"
         if comp.isNotNil():
           if objProp.hasMetadata(AttachMetadataKey):
+              # log &"Comp: {comp} has metadata {objProp.getMetadata(AttachMetadataKey).get()}"
+
               #Tries to find it both, camelCase and PascalCase. Probably we should push PascalCase to UE
               var attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata(AttachMetadataKey).get())
               if attachToCompProp.isNil():
+                # log &"Didnt found {objProp.getMetadata(AttachMetadataKey).get()} in {actor.getClass().getName()}... trying to capitalize"
                 attachToCompProp = actor.getClass().getFPropertyByName(objProp.getMetadata(AttachMetadataKey).get().capitalizeASCII)
+                # if attachToCompProp.isNil():
+                  # log &"Didnt found {objProp.getMetadata(AttachMetadataKey).get().capitalizeASCII} in {actor.getClass().getName()} neither"      
+              # else:
+              #   log &"Found {attachToCompProp.getName()} in {actor.getClass().getName()} attaching {comp.getName()} to {attachToCompProp.getName()}"
+              comp.setupAttachment(actor.getRootComponent())
 
               let attachToComp = ueCast[USceneComponent](getPropertyValuePtr[USceneComponentPtr](attachToCompProp, actor)[])
-              var socket =  makeFName objProp.getMetadata(SocketMetadataKey).get()
+              var socket =  makeFName objProp.getMetadata(SocketMetadataKey).get($ENone)
               comp.setupAttachment(attachToComp, socket)
           else:
+              # log &"Comp: {comp} has no metadata"
               if comp != actor.getRootComponent():
                 comp.setupAttachment(actor.getRootComponent())
 
