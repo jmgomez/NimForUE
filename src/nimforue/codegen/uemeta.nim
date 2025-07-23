@@ -938,7 +938,12 @@ proc emitUClass*[T](ueType: UEType, package: UPackagePtr, fnTable: seq[FnEmitter
   newCls.classConfigName = parent.classConfigName
   newCls.setSuperStruct(parent)
   newCls.classVTableHelperCtorCaller = vtableConstructor
-  when T is not void:
+  when T is not void and T is not UUserWidget: 
+    #Note When T is void means dinamically emitted (NimVM)
+    #When T is UUserWidget we dont add it because its calling addReferencedObjects which is protected.
+    #This latter one can be improved by either:
+      # Parsing headers to detect if there is a protected static function in the parent and automatically emitted them in the childs (too convoluted)
+      # Wrapping the uobjectCppClassStaticFunctionsForUClass in a member in the class so the context is protected allowed. 
     newCls.cppClassStaticFunctions = uobjectCppClassStaticFunctionsForUClass(T)
   # use explicit casting between uint32 and enum to avoid range checking bug https://github.com/nim-lang/Nim/issues/20024
   newCls.classFlags = cast[EClassFlags](ueType.clsFlags.uint32 and parent.classFlags.uint32) #TODO this would cause issues if we have an or here. 
