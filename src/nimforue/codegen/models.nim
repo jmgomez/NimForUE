@@ -25,6 +25,7 @@ const BlueprintImplementableEventMetadataKey* = "BlueprintImplementableEvent"
 const FieldNotifyMetadataKey* = "FieldNotify" 
 const MulticastDelegateMetadataKey* = "MulticastDelegate"
 const DelegateMetadataKey* = "Delegate"
+const InterpMetadataKey* = "Interp"
     
 #UEType metadata
 const NoDeclMetadataKey* = "NoDecl"

@@ -420,6 +420,8 @@ func fromStringAsMetaToFlag(meta:seq[string], preMetas:seq[UEMetadata], ueTypeNa
           flags = flags | CPF_RepNotify
         if m == "SaveGame":
           flags = flags | CPF_SaveGame
+        if m == InterpMetadataKey:
+          flags = flags | CPF_Interp
         if m.toLower() == "config":
                 flags = flags | CPF_Config  
         if m.toLower() == InstancedMetadataKey.toLower():
