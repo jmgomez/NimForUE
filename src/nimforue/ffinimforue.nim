@@ -7,7 +7,7 @@ import ../nimforue/codegen/[ffi,emitter, genreflectiondatav2, models, uemeta, ue
 import std/[options, strformat, dynlib, os, osproc, tables, asyncdispatch, times, json, jsonutils]
 import ../buildscripts/[nimforueconfig, buildscripts, keyboard]
 import unreal/nimforue/nimforuebindings
-
+import unreal/coreuobject/uobjectiterator
 
 const withEngineBindings = fileExists(BindingsImportedDir/"engine"/"engine.nim")
 # when withEngineBindings:
@@ -90,21 +90,77 @@ proc compileBps(emitter:UEEmitterPtr) =
       UE_Log &"Compiling blueprint {bp.getName()}"
       # bp.compileBlueprint()
 
+type 
+  ReinstanceInstance = object
+    prevInstance: UObjectPtr
+    prevOuter: UObjectPtr
+    prevCls: UClassPtr
+    newCls: UClassPtr
+
+proc updateInstances(reinstanceInstances: TArray[ReinstanceInstance]) = 
+  var iter = makeTObjectIterator[UObject]()
+  var count = 0
+  for instance in iter:
+    let obj = instance.get()
+    for reinstance in reinstanceInstances:
+      if obj.getOuter == nil: continue
+      if reinstance.prevOuter == nil: 
+        UE_Log "!!!rev instance outer is nil"
+        continue
+      if obj.getClass() == reinstance.newCls and obj.getOuter() == reinstance.prevOuter:   
+        UE_Warn &"Reinstance instance: {obj.getName()} is a {obj.getClass.getName()} and outer is {obj.getOuter().getName()}"    
+        for prevProp in reinstance.prevCls.getFPropertiesFrom():
+          for newProp in reinstance.newCls.getFPropertiesFrom():
+            if prevProp.getName == newProp.getName:# and prevProp.getName == "maxSpeed":
+              # UE_Log &"Copying property {prevProp.getName}"
+              #copy
+              discard copyFPropertyValue(reinstance.prevInstance, prevProp, obj, newProp)
+
+              # # UE_Warn &"Gonna update property {prevProp.getName}"
+              # let prevValue = getPropertyValuePtr[float32](prevProp, reinstance.prevInstance)              
+              # UE_Log &"Prev value is {prevValue[]}"     
+              # setPropertyValuePtr[float32](newProp, obj, prevValue)
+
+
+proc getReinstanceInstances(hotReload: FNimHotReloadPtr): TArray[ReinstanceInstance] = 
+  #Find all classes that derive from the previous class
+  result = makeTArray[ReinstanceInstance]()
+  var iter = makeTObjectIterator[UObject]()
+  var count = 0
+  for instance in iter:
+    inc count
+    for prevCls, newCls in hotReload.classesToReinstance:
+      let obj = instance.get()                
+      if obj.getClass() == prevCls:     
+        UE_Error &"Reinstance instance: {obj.getName()} is a {obj.getClass.getName()} and outer is {obj.getOuter().getName()}"    
+        result.add(ReinstanceInstance(
+          prevInstance: obj,
+          prevCls: prevCls,
+          prevOuter: obj.getOuter(),
+          newCls: newCls
+        ))
+
 proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, loadingPhase: NueLoadedFrom, reuseHotReload:bool) : bool = 
     try:
         log "Emitting types for package: " & packageName
         let nimHotReload = emitUStructsForPackage(emitter, packageName, loadingPhase)
+        
+
         if not nimHotReload.bShouldHotReload:
           UE_Log "Nothing to re/instance"
           return false
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets
+          let reinstanceInstances = getReinstanceInstances(nimHotReload)
           reinstanceNueTypes(packageName, nimHotReload, "", reuseHotReload)
+          updateInstances(reinstanceInstances)
           compileBps(emitter)
           return;
        
         proc onPIEEndCallback(isSimulating:bool, packageName:string, hotReload:FNimHotReloadPtr, handle:FDelegateHandlePtr, emitter: UEEmitterPtr) {.cdecl.} = 
+          let reinstanceInstances = getReinstanceInstances(hotReload)
           reinstanceNueTypes(packageName, hotReload, "", false)
+          updateInstances(reinstanceInstances)
           compileBps(emitter)
           onEndPIEEvent.remove(handle[])
           deleteCpp(handle)

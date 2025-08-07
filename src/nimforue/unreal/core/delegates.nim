@@ -29,6 +29,7 @@ proc reset*(del : var FDelegateHandle) {.importcpp: "#.Reset()"}
 type 
   TMulticastDelegate*{.importc, nodecl.} = object
   TMulticastDelegateOneParam*[T] {.importcpp:"TMulticastDelegate<void('0)>", inheritable, nodecl.} = object
+  TMulticastDelegateTwoParam*[T, P] {.importcpp:"TMulticastDelegate<void('0, '1)>", inheritable, nodecl.} = object
   TDelegateRetOneParam*[R, T] {.importcpp:"TDelegate<'0('1)>", nodecl, inheritable.} = object
 
 #TODO add macro that binds all delegates with all params

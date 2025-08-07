@@ -54,4 +54,6 @@ proc isActive*(abilitySpec: ptr FGameplayAbilitySpec): bool {.importcpp: "#->IsA
 #FGameplayAbilitySpec* UAbilitySystemComponent::FindAbilitySpecFromClass(TSubclassOf<UGameplayAbility> InAbilityClass) const
 proc findAbilitySpecFromClass*(asc: UAbilitySystemComponentPtr, inAbilityCls: TSubclassOf[UGameplayAbility]): ptr FGameplayAbilitySpec {.importcpp:"#->FindAbilitySpecFromClass(@)".}
 
+type FOnGameplayEffectTagCountChanged* {.importcpp.} = TMulticastDelegateTwoParam[FGameplayTag, int32]
 
+proc registerGameplayTagEvent*(abilitySystemComponent: UAbilitySystemComponentPtr, tag: FGameplayTag): var FOnGameplayEffectTagCountChanged {.importcpp: "#->RegisterGameplayTagEvent(@)".} #NewOrRemoved only for now

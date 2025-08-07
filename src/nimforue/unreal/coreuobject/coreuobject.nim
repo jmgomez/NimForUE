@@ -552,6 +552,8 @@ func `*`*(a : SomeFloat | SomeNumber, b: FVector2D): FVector2D {.importcpp:"# * 
 func `*`*(a : FVector2D, b: SomeNumber | SomeFloat): FVector2D {.importcpp:"# * #".}
 
 func `+`*(a,b: FRotator): FRotator {.importcpp:"# + #".}
+proc `+`(a: FBox, b: FVector): FBox {.importcpp: "# + #".}
+
 
 func toVector*(vec2: FVector2D, z: float32 = 0): FVector = makeFVector(vec2.x, vec2.y, z)
 func getCenterAndExtents*(box: FBox, center, extends: var FVector) {.importcpp: "#.GetCenterAndExtents(@)".}
@@ -564,7 +566,6 @@ proc lock*(bulkData: FByteBulkData, lockFlags: EBulkDataLockFlags) {.importcpp: 
 proc lockReadOnly*(bulkData: FByteBulkData): pointer {.importcpp: "const_cast<void*>(#.LockReadOnly())".}
 proc unlock*(bulkData: FByteBulkData) {.importcpp: "#.Unlock()".}
 proc realloc*(bulkData: FByteBulkData, size: int32): ptr uint8 {.importcpp: "#.Realloc(@)".}
-
 # Data Validation
 proc addWarning*(context: FDataValidationContext, text:FText) {.importcpp:"#.AddWarning(#)".}
 proc addError*(context: FDataValidationContext, text:FText) {.importcpp:"#.AddError(#)".}

@@ -37,7 +37,13 @@ func `*`*(a : FVector, b: SomeNumber | SomeFloat): FVector {.importcpp:"# * #".}
 func `/`*(a : FVector, b: SomeNumber | SomeFloat): FVector {.importcpp:"# / #".}
 # func `==`*(a,b: FVector): bool {.importcpp:"FVector::Equals(@)".}
 # func `==`*(a,b: FVector): bool = a.x == b.x and a.y == b.y and a.z == b.z
-
+proc size2D*(a: FVector): float32 {.importcpp: "#.Size2D()".}
+proc buildAABB*(origin: FVector, extent: FVector): FBox {.importcpp: "FBox::BuildAABB(@)".}
+proc lerp*(a, b: FVector, t: float32): FVector {.importcpp: "FMath::Lerp(@)".}
+proc size*(a: FVector): float32 {.importcpp: "#.Size()".}
+proc normalized*(a: FVector): FVector = 
+  result = a
+  result.normalize()
 
 
 type 
