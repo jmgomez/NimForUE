@@ -27,7 +27,7 @@ proc getFPropertyByName*(struct:UStructPtr, propName:FString) : FPropertyPtr =
 proc getPropertyValuePtr*[T](property:FPropertyPtr, container : pointer) : ptr T {.importcpp: "GetPropertyValuePtr<'*0>(@)".}
 proc setPropertyValuePtr*[T](property:FPropertyPtr, container : pointer, value : ptr T) : void {.importcpp: "SetPropertyValuePtr<'*3>(@)".}
 proc setPropertyValue*[T](property:FPropertyPtr, container : pointer, value : T) : void {.importcpp: "SetPropertyValue<'3>(@)".}
-
+proc copyFPropertyValue*(srcContainer: pointer, srcProp: FPropertyPtr, dstContainer: pointer, dstProp: FPropertyPtr) : bool {.importcpp: "CopyFPropertyValue(@)".}
 
 
 

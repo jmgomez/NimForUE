@@ -18,6 +18,27 @@ static void SetPropertyValue(FProperty* Property, void* Container, T ValuePtr) {
 	
 };
 
+static bool CopyFPropertyValue(
+        void*      SrcContainer,
+        FProperty* SrcProp,
+        void*      DstContainer,
+        FProperty* DstProp)
+{
+    if (!SrcProp || !DstProp || !SrcProp->SameType(DstProp))
+    {
+        return false;                 // types don’t match – nothing copied
+    }
+
+    // Find the raw data that each FProperty describes inside its container
+    void* SrcValue = SrcProp->ContainerPtrToValuePtr<void>(SrcContainer);  // ⬅ ptr into source
+    void* DstValue = DstProp->ContainerPtrToValuePtr<void>(DstContainer);  // ⬅ ptr into dest
+
+    // Deep-copy the entire property (arrays/maps/instanced sub-objects included)
+    DstProp->CopyCompleteValue(DstValue, SrcValue);                        // ✔
+
+    return true;
+};
+
 template <typename PropertyBaseClass>
 class TPropertyWithSetterAndGetterNim : public PropertyBaseClass //This needs to be in sync with TPropertyWithSetterAndGetter
 {

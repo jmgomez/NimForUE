@@ -7,6 +7,7 @@ import ../utils/[utils, ueutils]
 import nuemacrocache
 import ../codegen/[emitter,modelconstructor, models, uemeta, uebind,gencppclass, headerparser, uebindcore]
 import ../../buildscripts/[nimforueconfig]
+import ../unreal/nimforue/bindingdeps
 
 const WithEditor* {.booldefine.} = true 
 
@@ -155,6 +156,7 @@ proc prepReinst(prev:UObjectPtr) =
     # prev.clearFlags(cast[EObjectFlags](RF_Public.uint32 or RF_Standalone.uint32 or RF_MarkAsRootSet.uint32))
     let prevNameStr : FString =  fmt("{prev.getName()}{ReinstSuffix}")
     let oldClassName = makeUniqueObjectName(getTransientPackage(), prev.getClass(), makeFName(prevNameStr))
+    UE_Log &"Reinstancing {prev.getName()} to {oldClassName.toFString()}"
     discard prev.rename(oldClassName.toFString(), nil, REN_DontCreateRedirectors)
 
 proc prepareForReinst(prevClass : UClassPtr) = 
@@ -250,7 +252,8 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, loadingP
                     hotReloadInfo.newClasses.add(newClassPtr.get())
      
                 if prevClassPtr.isSome() and newClassPtr.isSome() :
-                    hotReloadInfo.classesToReinstance.add(prevClassPtr.get(), newClassPtr.get())
+                    hotReloadInfo.classesToReinstance.add(prevClassPtr.get(), newClassPtr.get())                   
+
                 if prevClassPtr.isSome() and newClassPtr.isNone(): #make sure the constructor is updated
                     let prevCls = prevClassPtr.get()
                     #We update the prev class pointer to hook the new vfuncs in the new objects
@@ -261,7 +264,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, loadingP
                         prevCls.setClassConstructor(ctorInfo.fn)
                         prevCls.classVTableHelperCtorCaller = ctorInfo.vTableConstructor
                         if ctorInfo.updateVTableForType.isNotNil():
-                            ctorInfo.updateVTableForType(prevCls)
+                            ctorInfo.updateVTableForType(prevCls)                   
             of uetEnum:
                 let prevEnumPtr = someNil getUTypeByName[UNimEnum](emitter.ueType.name)
                 let newEnumPtr = emitUStructInPackage(pkg, emitter, prevEnumPtr, not wasAlreadyLoaded)
