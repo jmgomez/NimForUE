@@ -90,6 +90,16 @@ proc compileBps(emitter:UEEmitterPtr) =
       UE_Log &"Compiling blueprint {bp.getName()}"
       # bp.compileBlueprint()
 
+proc refreshAllNodes(bp: UBlueprintPtr) {.importcpp: "FBlueprintEditorUtils::RefreshAllNodes(@)".}
+
+proc refreshBlueprints(hotReload: FNimHotReloadPtr) = 
+  #only do it if there are delegates
+  var iter = makeTObjectIterator[UBlueprint]()
+  for it in iter:
+    let bp = it.get()    
+    bp.refreshAllNodes()
+
+
 type 
   ReinstanceInstance = object
     prevInstance: UObjectPtr
@@ -155,6 +165,7 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, loadingPhase: NueL
           reinstanceNueTypes(packageName, nimHotReload, "", reuseHotReload)
           updateInstances(reinstanceInstances)
           compileBps(emitter)
+          refreshBlueprints(nimHotReload)
           return;
        
         proc onPIEEndCallback(isSimulating:bool, packageName:string, hotReload:FNimHotReloadPtr, handle:FDelegateHandlePtr, emitter: UEEmitterPtr) {.cdecl.} = 
@@ -162,6 +173,7 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, loadingPhase: NueL
           reinstanceNueTypes(packageName, hotReload, "", false)
           updateInstances(reinstanceInstances)
           compileBps(emitter)
+          refreshBlueprints(hotReload)
           onEndPIEEvent.remove(handle[])
           deleteCpp(handle)
           UE_LOG(&"NimUE: PIE ended, reinstanciated nue types {packageName}")

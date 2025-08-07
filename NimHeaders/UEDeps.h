@@ -80,8 +80,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "UserSettings\EnhancedInputUserSettings.h"
-
-#if WITH_EDITORONLY_DATA
+#if WITH_EDITOR || WITH_EDITORONLY_DATA
   #include "Editor/UnrealEdEngine.h"
   #include "Editor/UnrealEd/Public/Editor.h"
   #include "Editor/UnrealEd/Public/EditorViewportClient.h"
@@ -89,7 +88,7 @@
   #include "Editor/UnrealEd/Public/LevelEditorViewport.h"
   #include "Editor/UnrealEd/Public/AssetEditorViewportLayout.h"
   #include "Editor/UnrealEd/Public/ScopedTransaction.h"
-  #include "Editor/UnrealEd/Public/Kismet2/KismetEditorUtilities.h"
+  #include "Kismet2/BlueprintEditorUtils.h"
   #include "Factories/Factory.h"
   #include "WorkflowOrientedApp/WorkflowTabManager.h"
   #include "WorkflowOrientedApp/WorkflowTabFactory.h"

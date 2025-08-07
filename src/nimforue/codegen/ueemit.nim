@@ -288,7 +288,7 @@ proc emitUStructsForPackage*(ueEmitter : UEEmitterPtr, pkgName: string, loadingP
                     #This doesnt affect not editor builds
                     for del in @[prevDelPtr, newDelPtr]:
                         if del.isSome:
-                            del.get.emitPropertiesForDelegate()
+                            del.get.emitPropertiesForDelegate()                  
                 
             of uetInterface:
                 assert false, "Interfaces are not supported yet"
