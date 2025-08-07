@@ -552,9 +552,9 @@ func `*`*(a : SomeFloat | SomeNumber, b: FVector2D): FVector2D {.importcpp:"# * 
 func `*`*(a : FVector2D, b: SomeNumber | SomeFloat): FVector2D {.importcpp:"# * #".}
 
 func `+`*(a,b: FRotator): FRotator {.importcpp:"# + #".}
-proc `+`(a: FBox, b: FVector): FBox {.importcpp: "# + #".}
+proc `+`*(a: FBox, b: FVector): FBox {.importcpp: "# + #".}
 
-
+proc buildAABB*(origin: FVector, extent: FVector): FBox {.importcpp: "FBox::BuildAABB(@)".}
 func toVector*(vec2: FVector2D, z: float32 = 0): FVector = makeFVector(vec2.x, vec2.y, z)
 func getCenterAndExtents*(box: FBox, center, extends: var FVector) {.importcpp: "#.GetCenterAndExtents(@)".}
 func getCenter*(box: FBox): FVector {.importcpp: "#.GetCenter()".}

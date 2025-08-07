@@ -103,7 +103,12 @@ proc netSerialize*(vec: FVector, ar: var FArchive, map: UPackageMapPtr, bOutSucc
 proc getComponent*[C: UActorComponent](actor: AActorPtr, T: typedesc[C]): ptr T {.inline.} = 
   ###usage example: self.getCharacter.getComponent(UAbilitySystemComponent)
   actor.getComponentByClass(T.subClass).ueCast(T)
-  
+
+proc normalized*(a: FVector): FVector = 
+  result = a
+  result.normalize()
+
+proc invalidate*(handle: FTimerHandle) {.importcpp: "#.Invalidate()".}
 
 #Textures
 proc getResource*(texture: UTexturePtr): ptr FTextureResource {.importcpp:"#->GetResource(@)".}
