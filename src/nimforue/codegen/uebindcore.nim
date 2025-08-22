@@ -3,6 +3,7 @@ import models, modelconstructor, enumops
 import std/[strformat, sequtils, macros, options, sugar, strutils, genasts, algorithm, bitops]
 import ../utils/[utils, ueutils]
 from nuemacrocache import addPropAssignment, isMulticastDelegate, isDelegate, getPropAssignment
+import definitions
 
 when not defined(nuevm):
   import ../unreal/coreuobject/uobjectflags
@@ -575,7 +576,9 @@ func generateFieldNotify*(typedef: UEType): Option[(string, string)] =
 
   for field in notifyFields:
     let firstDecl = if isFirst: "_BEGIN" else: ""
-    declareFields.add(&"""UE_FIELD_NOTIFICATION_DECLARE_FIELD({field.name})  \""" & "\n")
+    let api_name = "NIM_API" #5.6 > requires to call the func with a second param
+    let args = if UEMajorVersion >= 5 and UEMinorVersion >= 6: &"{field.name}, {api_name}" else: field.name
+    declareFields.add(&"""UE_FIELD_NOTIFICATION_DECLARE_FIELD({args})  \""" & "\n")
     declareEnumFields.add(&"""UE_FIELD_NOTIFICATION_DECLARE_ENUM_FIELD{firstDecl}({field.name})  \""" & "\n")
     implementFields.add(&"""UE_FIELD_NOTIFICATION_IMPLEMENT_FIELD({typedef.name}, {field.name})  """ & "\n")
     implementEnumFields.add(&"""UE_FIELD_NOTIFICATION_IMPLEMENT_ENUM_FIELD({typedef.name}, {field.name})  """ & "\n")

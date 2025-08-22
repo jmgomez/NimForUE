@@ -93,6 +93,7 @@
   #include "WorkflowOrientedApp/WorkflowTabManager.h"
   #include "WorkflowOrientedApp/WorkflowTabFactory.h"
   #include "SCommonEditorViewportToolbarBase.h"
+  #include "Kismet2/KismetEditorUtilities.h"
 
   #include "AdvancedPreviewScene.h"
   #include "SAdvancedPreviewDetailsTab.h"
@@ -123,9 +124,8 @@
 
 #endif
 
-
-
 // #include "UPropertyCaller.h"
 
+#define NIM_API 
 
 #include "UEInterop.h"

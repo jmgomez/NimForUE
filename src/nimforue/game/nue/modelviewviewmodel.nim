@@ -38,7 +38,7 @@ proc getViewModelCollectionWithContextFor(T: typedesc, worldContext: UObjectPtr)
     contextClass: makeTSubclassOf[UMVVMViewModelBase](T.staticClass),
     contextName: T.staticClass.getFName()
   )
-  let col = vmSubsystem.get.getViewModelCollection()
+  let col = vmSubsystem.getViewModelCollection()
   (col, vmContext)
 
 proc addViewModelToCollection*(T: typedesc, worldContext: UObjectPtr): ptr T  =
