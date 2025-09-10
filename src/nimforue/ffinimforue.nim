@@ -98,7 +98,11 @@ proc refreshBlueprints(hotReload: FNimHotReloadPtr) =
   for it in iter:
     let bp = it.get()    
     bp.refreshAllNodes()
-
+    let pkg = bp.getOutermost()
+    let fileName = getLongPackagePath(pkg.getName())
+    let saveArgs = FSavePackageArgs(topLevelFlags: RF_Public or RF_Standalone)
+    discard pkg.savePackage(bp, fileName, saveArgs)
+    
 
 type 
   ReinstanceInstance = object
@@ -158,6 +162,7 @@ proc emitNueTypes*(emitter: UEEmitterPtr, packageName:string, loadingPhase: NueL
 
         if not nimHotReload.bShouldHotReload:
           UE_Log "Nothing to re/instance"
+          refreshBlueprints(nimHotReload)
           return false
         #For now we assume is fine to EmitUStructs even in PIE. IF this is not the case, we need to extract the logic from the FnNativePtrs and constructor so we can update them anyways
         if GEditor.isNotNil() and not GEditor.isInPIE():#Not sure if we should do it only for non guest targets

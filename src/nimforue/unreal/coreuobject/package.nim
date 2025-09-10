@@ -64,3 +64,5 @@ else:
   func setModuleRelativePath*(pkg:UPackagePtr, obj: UObjectPtr, path: FString) {.importcpp:"#->SetMetaData(TEXT(\"ModuleRelativePath\"), *#)".}
 
 proc savePackage*(pkg: UPackagePtr, obj: UObjectPtr, packageFileName: FString, saveArgs: FSavePackageArgs): bool {.importcpp: "UPackage::SavePackage(#, #, *#, #)".}
+
+proc getLongPackagePath*(inPackageName: FString): FString {.importcpp: "FPackageName::GetLongPackagePath(#)".}
