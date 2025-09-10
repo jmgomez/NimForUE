@@ -3,7 +3,7 @@ import models, modelconstructor, enumops
 import std/[strformat, sequtils, macros, options, sugar, strutils, genasts, algorithm, bitops]
 import ../utils/[utils, ueutils]
 from nuemacrocache import addPropAssignment, isMulticastDelegate, isDelegate, getPropAssignment
-import definitions
+import ../unreal/definitions
 
 when not defined(nuevm):
   import ../unreal/coreuobject/uobjectflags
