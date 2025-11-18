@@ -18,22 +18,40 @@
 #endif
 
 UClass* UReflectionHelpers::GetClassByName(FString ClassName) {
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 7)
+	// UE 5.7+: ANY_PACKAGE was removed, use FindFirstObject
+	UClass* Class = FindFirstObject<UClass>(*ClassName, EFindFirstObjectOptions::NativeFirst);
+#else
+	// UE 5.6 and below: Use ANY_PACKAGE with FindObject
 	UObject* ClassPackage = ANY_PACKAGE;
 	UClass* Class = FindObject<UClass>(ClassPackage, *ClassName);
+#endif
 	return Class;
 }
 
 UScriptStruct* UReflectionHelpers::GetScriptStructByName(FString StructName) {
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 7)
+	// UE 5.7+: ANY_PACKAGE was removed, use FindFirstObject
+	UScriptStruct* Struct = FindFirstObject<UScriptStruct>(*StructName, EFindFirstObjectOptions::NativeFirst);
+#else
+	// UE 5.6 and below: Use ANY_PACKAGE with FindObject
 	UObject* ClassPackage = ANY_PACKAGE;
 	UScriptStruct* Struct = FindObject<UScriptStruct>(ClassPackage, *StructName);
+#endif
 	return Struct;
 }
 
 UStruct* UReflectionHelpers::GetUStructByName(FString StructName) {
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 7)
+	// UE 5.7+: ANY_PACKAGE was removed, use FindFirstObject
+	UStruct* Struct = FindFirstObject<UStruct>(*StructName, EFindFirstObjectOptions::NativeFirst);
+#else
+	// UE 5.6 and below: Use ANY_PACKAGE with FindObject
 	UObject* StructPackage = ANY_PACKAGE;
+	UStruct* Struct = FindObject<UStruct>(StructPackage, *StructName);
+#endif
 	// TMap<int, int> M;
 	// M.GenerateValueArray()
-	UStruct* Struct = FindObject<UStruct>(StructPackage, *StructName);
 	return Struct;
 }
 
@@ -85,7 +103,13 @@ FString UReflectionHelpers::GetCppType(FProperty* Property) {
 TArray<UClass*> UReflectionHelpers::GetAllClassesFromModule(FString ModuleName) {
 	//Should I grab only native classes?
 	FString ModulePackageName = FPackageName::ConvertToLongScriptPackageName(*ModuleName);
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 7)
+	// UE 5.7+: FindObjectFast signature changed, removed boolean parameters
+	UPackage* Package = FindObjectFast<UPackage>(nullptr, *ModulePackageName);
+#else
+	// UE 5.6 and below: FindObjectFast with boolean parameters
 	UPackage* Package = FindObjectFast<UPackage>(NULL, *ModulePackageName, false, false);
+#endif
 	// TObjectIterator<UClass> It (Package)
 	if(!Package) return {};
 	TArray<UClass*> Classes = {};
@@ -103,40 +127,40 @@ UWorld* UReflectionHelpers::GetCurrentActiveWorld()
 	UWorld* world = nullptr;
 #if PLATFORM_WINDOWS
 	#if WITH_EDITOR
-		if (GIsEditor)
-		{
-			if (GPlayInEditorID == -1)
-			{
-				FWorldContext* worldContext = GEditor->GetPIEWorldContext(1);
-				if (worldContext == nullptr)
-				{
-					if (UGameViewportClient* viewport = GEngine->GameViewport)
-					{
-						world = viewport->GetWorld();
-					}
-				}
-				else
-				{
-					world = worldContext->World();
-				}
-			}
-			else
-			{
-				FWorldContext* worldContext = GEditor->GetPIEWorldContext(GPlayInEditorID);
-				if (worldContext == nullptr)
-				{
-					return nullptr;
-				}
-				world = worldContext->World();
-			}
-		}
-		else
-		{
-			world = GEngine->GetCurrentPlayWorld(nullptr);
-		}
+	// 	if (GIsEditor)
+	// 	{
+	// 		if (GPlayInEditorID == -1)
+	// 		{
+	// 			FWorldContext* worldContext = GEditor->GetPIEWorldContext(1);
+	// 			if (worldContext == nullptr)
+	// 			{
+	// 				if (UGameViewportClient* viewport = GEngine->GameViewport)
+	// 				{
+	// 					world = viewport->GetWorld();
+	// 				}
+	// 			}
+	// 			else
+	// 			{
+	// 				world = worldContext->World();
+	// 			}
+	// 		}
+	// 		else
+	// 		{
+	// 			FWorldContext* worldContext = GEditor->GetPIEWorldContext(GPlayInEditorID);
+	// 			if (worldContext == nullptr)
+	// 			{
+	// 				return nullptr;
+	// 			}
+	// 			world = worldContext->World();
+	// 		}
+	// 	}
+	// 	else
+	// 	{
+	// 		world = GEngine->GetCurrentPlayWorld(nullptr);
+	// 	}
 
-	#else
-		world = GEngine->GetCurrentPlayWorld(nullptr);
+	// #else
+	// 	world = GEngine->GetCurrentPlayWorld(nullptr);
 	#endif
 #endif
 	return world;

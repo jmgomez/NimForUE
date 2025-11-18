@@ -7,7 +7,11 @@
 #include "UObject/Object.h"
 #include "NimScriptStruct.generated.h"
 
-
+// For UE 5.7+, just use the standard TCppStructOps since it no longer has virtual functions
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 7)
+	template<class CPPSTRUCT>
+	using TNimCppStructOps = UScriptStruct::TCppStructOps<CPPSTRUCT>;
+#else
 /** Template to manage dynamic access to C++ struct construction and destruction **/
 	template<class CPPSTRUCT>
 	struct TNimCppStructOps final : public UScriptStruct::ICppStructOps
@@ -561,9 +565,10 @@ virtual bool Serialize(FArchive& Ar, void* Data, UStruct* DefaultsStruct, const 
 				return false;
 			}
 		}
-#endif
+#endif // UE 5.6+ Serialize overloads
 
 	};
+#endif // ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 7
 
 
 

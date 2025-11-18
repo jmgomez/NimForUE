@@ -92,7 +92,8 @@ proc compileBps(emitter:UEEmitterPtr) =
 
 proc refreshAllNodes(bp: UBlueprintPtr) {.importcpp: "FBlueprintEditorUtils::RefreshAllNodes(@)".}
 
-proc refreshBlueprints(hotReload: FNimHotReloadPtr) = 
+proc refreshBlueprints(hotReload: FNimHotReloadPtr) =
+  const topLevelFlags = RF_Public or RF_Standalone
   #only do it if there are delegates
   var iter = makeTObjectIterator[UBlueprint]()
   for it in iter:
@@ -100,7 +101,7 @@ proc refreshBlueprints(hotReload: FNimHotReloadPtr) =
     bp.refreshAllNodes()
     let pkg = bp.getOutermost()
     let fileName = getLongPackagePath(pkg.getName())
-    let saveArgs = FSavePackageArgs(topLevelFlags: RF_Public or RF_Standalone)
+    let saveArgs = FSavePackageArgs(topLevelFlags: topLevelFlags)
     discard pkg.savePackage(bp, fileName, saveArgs)
     
 

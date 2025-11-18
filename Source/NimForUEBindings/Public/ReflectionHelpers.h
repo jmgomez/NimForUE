@@ -27,8 +27,14 @@ public:
 
 	template<typename T>
 	static T* GetUTypeByName(FString StructName) {
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 7)
+		// UE 5.7+: ANY_PACKAGE was removed, use FindFirstObject
+		T* Struct = FindFirstObject<T>(*StructName, EFindFirstObjectOptions::NativeFirst);
+#else
+		// UE 5.6 and below: Use ANY_PACKAGE with FindObject
 		UObject* ClassPackage = ANY_PACKAGE;
 		T* Struct = FindObject<T>(ClassPackage, *StructName);
+#endif
 		return Struct;
 	}
 
